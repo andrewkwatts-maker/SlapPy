@@ -1,0 +1,121 @@
+window:
+  title: "SlapPyEngine"
+  width: 800
+  height: 600
+  clear_color: [0.08, 0.08, 0.12, 1.0]
+  vsync: true
+
+rendering:
+  max_layers_per_asset: 16
+  max_frames_per_animation: 256
+  texture_format: "bgra8unorm"
+  backend: "auto"              # "auto" | "vulkan" | "metal" | "dx12" | "webgpu"
+  power_preference: "high_performance"  # "auto" | "low_power" | "high_performance"
+
+residency:
+  streaming_radius_gpu: 500
+  streaming_radius_ram: 2000
+  vram_budget_mb: 512
+  ram_budget_mb: 2048
+  tile_cache_size: 64
+  save_dir: "."
+
+compute:
+  workgroup_size_x: 16
+  workgroup_size_y: 16
+  max_readback_buffers: 8
+
+physics:
+  default_dt: 0.016667
+  substeps: 1
+
+tags:
+  max_bits: 32
+
+materials:
+  auto_dispatch: true          # run material_dispatch.wgsl each frame to set pixel tags from color
+  max_materials: 64            # maximum number of material entries in the uniform buffer
+  dispatch_frequency: 1        # run material dispatch every N frames (1 = every frame)
+
+z_height:
+  default_z: 0.0
+  cloud_z: 500.0
+  shadow_z_scale: 0.002   # screen-pixels of shadow offset per z-unit per radian of light elevation
+  parallax_enabled: true
+
+pixel_physics:
+  gravity: 98.0
+  melt_temp: 100.0
+  boil_temp: 300.0
+  max_vel: 500.0
+
+fluid_sim:
+  enabled: false
+  pad_pixels: 64
+  lod_mode: "exp"        # "exp" | "log" | "uniform"
+  lod_zones: 4
+  viscosity: 0.1
+  diffusion: 0.02
+  buoyancy: 0.0
+  gravity: 0.0
+  density_decay: 0.995
+  velocity_decay: 0.99
+  init_mode: "noise"     # "noise" | "texture" | "zero"
+  noise_type: "fbm"      # "fbm" | "worley" | "uniform"
+  noise_scale: 0.003
+  noise_seed: 42
+  god_rays: true
+  caustics: false
+  force_strength: 50.0
+  render_tint: [0.8, 0.9, 1.0]
+  render_alpha_scale: 1.0
+
+net:
+  enabled: false
+  tick_rate: 30
+  timeout_ms: 100
+  max_players: 8
+  use_lan_discovery: true
+  use_dht_discovery: true
+  udp_port: 0              # 0 = OS-assigned random port
+
+lighting:
+  enabled: true
+  ambient_color: [0.15, 0.15, 0.20]
+  ambient_intensity: 0.15
+  max_point_lights: 16
+  max_cone_lights: 8
+  max_flash_lights: 16
+  max_shape_lights: 4
+  max_gravity_sources: 4
+  radiance_cascades: false
+  radiance_probes_spacing: 8
+  radiance_rays: 64
+  radiance_num_cascades: 4
+  shadow_softness: 1
+  blackbody_emission: true
+  emission_threshold_k: 800.0
+  emission_max_k: 6000.0
+  emission_scale: 1.5
+  geodesic_warping: true
+  max_render_channels: 4
+  clustered_lighting: true       # use tile-based clustered pass instead of per-light dispatches
+  cluster_tile_size: 8           # pixels per tile side (must match cull_lights workgroup_size)
+  max_lights_per_tile: 64        # upper bound on light indices stored per tile
+
+input:
+  default_player0: "wasd"   # "wasd" | "arrows" | "ijkl" | "custom"
+  default_player1: "arrows"
+
+split_screen:
+  enabled: false
+  border_px: 2
+  border_color: [30, 30, 30]
+
+post_process:
+  night_vision:
+    gain: 3.0               # green-channel amplification factor
+    grain_strength: 0.08    # noise amplitude (green gets 100 %, red/blue get 30 %)
+    vignette_strength: 1.2  # edge-darkening intensity (higher = darker edges)
+  chromatic_aberration:
+    strength: 0.005         # radial channel-split magnitude (fraction of dist-from-center)

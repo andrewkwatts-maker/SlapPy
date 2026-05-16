@@ -1,0 +1,64 @@
+materials:
+  - name: water
+    color_range:
+      r: [0, 40]
+      g: [0, 80]
+      b: [180, 255]
+    alpha_meaning: strength
+    behaviors: [fluid]
+    params:
+      viscosity: 0.001
+      density: 1.0
+      indestructible: true
+
+  - name: soil
+    color_range:
+      r: [80, 160]
+      g: [50, 120]
+      b: [0, 60]
+    alpha_meaning: opacity
+    behaviors: [rigid, clump]
+    params:
+      density: 1.8
+      cohesion: 0.4
+      indestructible: false
+
+  - name: rock
+    color_range:
+      r: [100, 180]
+      g: [100, 180]
+      b: [100, 180]
+    alpha_meaning: opacity
+    behaviors: [rigid]
+    params:
+      density: 2.7
+      hardness: 0.95
+      indestructible: true
+
+  - name: fire
+    color_range:
+      r: [200, 255]
+      g: [50, 180]
+      b: [0, 40]
+    alpha_meaning: intensity
+    behaviors: [fluid, emit_light]
+    params:
+      temperature: 1200.0
+      spread_rate: 0.3
+      indestructible: false
+
+node_materials:
+  passthrough:
+    description: "Identity passthrough effect — outputs pixel color unchanged"
+    nodes:
+      - id: col0
+        type: PixelColor
+        params: {}
+      - id: out0
+        type: FinalColor
+        params: {}
+    edges:
+      - from_node: col0
+        from_port: color
+        to_node: out0
+        to_port: color

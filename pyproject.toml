@@ -1,0 +1,76 @@
+[build-system]
+requires = ["maturin>=1.4,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "slappyengine"
+version = "0.1.0"
+description = "2D pixel-art game engine with optional 3D layers, Rust backends, and wgpu rendering"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+keywords = ["game-engine", "pixel-art", "2d", "3d", "wgpu", "rust"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Games/Entertainment",
+    "Topic :: Multimedia :: Graphics",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Rust",
+]
+dependencies = [
+    "wgpu>=0.18",
+    "numpy>=1.24",
+    "Pillow>=10.0",
+    "glfw>=2.5",
+    "pyyaml>=6.0",
+    "lz4>=4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/andrewkwatts-maker/SlapPy"
+Repository = "https://github.com/andrewkwatts-maker/SlapPy"
+Issues = "https://github.com/andrewkwatts-maker/SlapPy/issues"
+
+[project.optional-dependencies]
+editor = ["dearpygui>=1.11", "pywebview>=4.0"]
+video = ["av>=12.0"]
+audio = ["sounddevice>=0.4", "soundfile>=0.12"]
+dev = ["pytest>=7.0", "pytest-asyncio>=0.21"]
+ai = ["httpx>=0.27"]
+network = [
+    "kademlia>=2.2.2",
+    "aioice>=0.9.0",
+    "zeroconf>=0.131",
+]
+# 3D mesh + PBR rendering support.
+# wgpu is already a core dependency, so no additional Python packages are needed.
+# The _core Rust crate's "3d" feature flag is activated at build time:
+#   maturin build --features 3d
+# Install with: pip install slappyengine[3d]
+3d = []
+
+[tool.maturin]
+python-source = "python"
+module-name = "slappyengine._core"
+features = ["pyo3/extension-module"]
+# Exclude development artifacts from the wheel
+exclude = [
+    "**/__pycache__",
+    "**/*.pyc",
+    "**/*.pyo",
+    "**/tests",
+    "**/examples",
+    "**/.pytest_cache",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
