@@ -43,7 +43,7 @@ def test_quad_geometry_layout():
 
 def test_camera_matrix_identity():
     """Default camera at origin produces correct view matrix."""
-    from slappyengine.camera import Camera
+    from playslap.camera import Camera
     cam = Camera(position=(0.0, 0.0), zoom=1.0)
     cam._viewport_size = (800, 600)
     mat = cam.view_matrix()

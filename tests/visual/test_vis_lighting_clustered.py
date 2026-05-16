@@ -10,8 +10,8 @@ TEST_NAME = "lighting_clustered"
 
 def _build_scene():
     try:
-        from slappyengine.scene import Scene
-        from slappyengine.lighting import PointLight, LightingSystem
+        from playslap.scene import Scene
+        from playslap.lighting import PointLight, LightingSystem
         rng = random.Random(42)
         scene = Scene()
         # LightingSystem requires a live GPUContext; collect light objects instead

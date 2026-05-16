@@ -1,0 +1,447 @@
+"""YAML-backed configuration loader for SlapPyEngine.
+
+Finds ``config/engine.yml`` (and optionally ``config/materials.yml``) relative
+to the package root, or at the directory given by the ``SLAPPY_CONFIG_DIR``
+environment variable.  The resulting :class:`Config` object is a module-level
+singleton; call :func:`engine_config` to retrieve it.
+"""
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Optional
+
+import yaml
+
+# ---------------------------------------------------------------------------
+# Typed sub-configs (all values come from engine.yml — nothing is hard-coded)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class WindowConfig:
+    title: str
+    width: int
+    height: int
+    clear_color: tuple[float, float, float, float]
+    vsync: bool
+
+
+@dataclass
+class RenderingConfig:
+    max_layers_per_asset: int
+    max_frames_per_animation: int
+    texture_format: str
+    backend: str = "auto"
+    power_preference: str = "high_performance"
+
+
+@dataclass
+class ResidencyConfig:
+    streaming_radius_gpu: int = 500
+    streaming_radius_ram: int = 2000
+    vram_budget_mb: int = 512
+    ram_budget_mb: int = 2048
+    tile_cache_size: int = 64
+    save_dir: str = "."
+
+
+@dataclass
+class ComputeConfig:
+    workgroup_size_x: int = 16
+    workgroup_size_y: int = 16
+    max_readback_buffers: int = 8
+
+
+@dataclass
+class PhysicsConfig:
+    default_dt: float = 0.016667
+    substeps: int = 1
+
+
+@dataclass
+class TagsConfig:
+    max_bits: int = 64
+
+
+@dataclass
+class MaterialsConfig:
+    auto_dispatch: bool = True
+    max_materials: int = 64
+    dispatch_frequency: int = 1
+
+
+@dataclass
+class ZHeightConfig:
+    default_z: float = 0.0
+    cloud_z: float = 500.0
+    shadow_z_scale: float = 0.002
+    parallax_enabled: bool = True
+
+
+@dataclass
+class PixelPhysicsConfig:
+    gravity: float = 98.0
+    melt_temp: float = 100.0
+    boil_temp: float = 300.0
+    max_vel: float = 500.0
+
+
+@dataclass
+class FluidSimConfig:
+    enabled: bool = False
+    pad_pixels: int = 64
+    lod_mode: str = "exp"
+    lod_zones: int = 4
+    viscosity: float = 0.1
+    diffusion: float = 0.02
+    buoyancy: float = 0.0
+    gravity: float = 0.0
+    density_decay: float = 0.995
+    velocity_decay: float = 0.99
+    init_mode: str = "noise"
+    noise_type: str = "fbm"
+    noise_scale: float = 0.003
+    noise_seed: int = 42
+    god_rays: bool = True
+    caustics: bool = False
+    force_strength: float = 50.0
+    render_tint: tuple[float, float, float] = field(default_factory=lambda: (0.8, 0.9, 1.0))
+    render_alpha_scale: float = 1.0
+
+
+@dataclass
+class NetConfig:
+    enabled: bool = False
+    tick_rate: int = 30
+    timeout_ms: int = 100
+    max_players: int = 8
+    use_lan_discovery: bool = True
+    use_dht_discovery: bool = True
+    udp_port: int = 0
+
+
+@dataclass
+class LightingConfig:
+    enabled: bool = True
+    ambient_color: tuple[float, float, float] = field(default_factory=lambda: (0.15, 0.15, 0.20))
+    ambient_intensity: float = 0.15
+    max_point_lights: int = 16
+    max_cone_lights: int = 8
+    max_flash_lights: int = 16
+    max_shape_lights: int = 4
+    max_gravity_sources: int = 4
+    radiance_cascades: bool = False
+    radiance_probes_spacing: int = 8
+    radiance_rays: int = 64
+    radiance_num_cascades: int = 4
+    shadow_softness: int = 1
+    blackbody_emission: bool = True
+    emission_threshold_k: float = 800.0
+    emission_max_k: float = 6000.0
+    emission_scale: float = 1.5
+    geodesic_warping: bool = True
+    max_render_channels: int = 4
+    clustered_lighting: bool = True
+    cluster_tile_size: int = 8
+    max_lights_per_tile: int = 64
+
+
+@dataclass
+class InputConfig:
+    default_player0: str = "wasd"
+    default_player1: str = "arrows"
+
+
+@dataclass
+class SplitScreenConfig:
+    enabled: bool = False
+    border_px: int = 2
+    border_color: tuple[int, int, int] = field(default_factory=lambda: (30, 30, 30))
+
+
+@dataclass
+class Config:
+    """Root configuration object loaded from ``engine.yml``."""
+
+    window: WindowConfig
+    rendering: RenderingConfig
+    residency: ResidencyConfig
+    compute: ComputeConfig
+    physics: PhysicsConfig
+    tags: TagsConfig
+    materials: MaterialsConfig = field(default_factory=MaterialsConfig)
+    z_height: ZHeightConfig = field(default_factory=ZHeightConfig)
+    pixel_physics: PixelPhysicsConfig = field(default_factory=PixelPhysicsConfig)
+    fluid_sim: FluidSimConfig = field(default_factory=FluidSimConfig)
+    net: NetConfig = field(default_factory=NetConfig)
+    lighting: LightingConfig = field(default_factory=LightingConfig)
+    input: InputConfig = field(default_factory=InputConfig)
+    split_screen: SplitScreenConfig = field(default_factory=SplitScreenConfig)
+
+
+# ---------------------------------------------------------------------------
+# Path resolution helpers
+# ---------------------------------------------------------------------------
+
+def _find_config_dir() -> Path:
+    """Return the directory that contains ``engine.yml``.
+
+    Search order:
+    1. ``SLAPPY_CONFIG_DIR`` environment variable (absolute or relative to cwd).
+    2. ``config/`` directory at the repository root, discovered by walking up
+       from this file's location until a directory containing ``engine.yml``
+       is found.
+    """
+    env_dir = os.environ.get("SLAPPY_CONFIG_DIR")
+    if env_dir:
+        p = Path(env_dir)
+        if not p.is_absolute():
+            p = Path.cwd() / p
+        if (p / "engine.yml").exists():
+            return p
+        raise FileNotFoundError(
+            f"SLAPPY_CONFIG_DIR={env_dir!r} does not contain engine.yml"
+        )
+
+    # Walk up from the package file looking for a sibling config/ dir
+    candidate = Path(__file__).resolve().parent
+    for _ in range(10):  # bounded search
+        config_dir = candidate / "config"
+        if (config_dir / "engine.yml").exists():
+            return config_dir
+        parent = candidate.parent
+        if parent == candidate:
+            break
+        candidate = parent
+
+    raise FileNotFoundError(
+        "Cannot locate engine.yml. Set SLAPPY_CONFIG_DIR or ensure the "
+        "config/ directory is present in the repository root."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Parsing helpers
+# ---------------------------------------------------------------------------
+
+def _parse_window(raw: dict) -> WindowConfig:
+    cc = raw["clear_color"]
+    return WindowConfig(
+        title=str(raw["title"]),
+        width=int(raw["width"]),
+        height=int(raw["height"]),
+        clear_color=(float(cc[0]), float(cc[1]), float(cc[2]), float(cc[3])),
+        vsync=bool(raw["vsync"]),
+    )
+
+
+def _parse_rendering(raw: dict) -> RenderingConfig:
+    return RenderingConfig(
+        max_layers_per_asset=int(raw["max_layers_per_asset"]),
+        max_frames_per_animation=int(raw["max_frames_per_animation"]),
+        texture_format=str(raw["texture_format"]),
+        backend=str(raw.get("backend", "auto")),
+        power_preference=str(raw.get("power_preference", "high_performance")),
+    )
+
+
+def _parse_residency(raw: dict) -> ResidencyConfig:
+    return ResidencyConfig(
+        streaming_radius_gpu=int(raw["streaming_radius_gpu"]),
+        streaming_radius_ram=int(raw["streaming_radius_ram"]),
+        vram_budget_mb=int(raw["vram_budget_mb"]),
+        ram_budget_mb=int(raw["ram_budget_mb"]),
+        tile_cache_size=int(raw["tile_cache_size"]),
+        save_dir=str(raw.get("save_dir", ".")),
+    )
+
+
+def _parse_compute(raw: dict) -> ComputeConfig:
+    return ComputeConfig(
+        workgroup_size_x=int(raw["workgroup_size_x"]),
+        workgroup_size_y=int(raw["workgroup_size_y"]),
+        max_readback_buffers=int(raw["max_readback_buffers"]),
+    )
+
+
+def _parse_physics(raw: dict) -> PhysicsConfig:
+    return PhysicsConfig(
+        default_dt=float(raw["default_dt"]),
+        substeps=int(raw["substeps"]),
+    )
+
+
+def _parse_tags(raw: dict) -> TagsConfig:
+    return TagsConfig(
+        max_bits=int(raw["max_bits"]),
+    )
+
+
+def _parse_materials(raw: dict) -> MaterialsConfig:
+    return MaterialsConfig(
+        auto_dispatch=bool(raw.get("auto_dispatch", True)),
+        max_materials=int(raw.get("max_materials", 64)),
+        dispatch_frequency=int(raw.get("dispatch_frequency", 1)),
+    )
+
+
+def _parse_z_height(raw: dict) -> ZHeightConfig:
+    return ZHeightConfig(
+        default_z=float(raw.get("default_z", 0.0)),
+        cloud_z=float(raw.get("cloud_z", 500.0)),
+        shadow_z_scale=float(raw.get("shadow_z_scale", 0.002)),
+        parallax_enabled=bool(raw.get("parallax_enabled", True)),
+    )
+
+
+def _parse_pixel_physics(raw: dict) -> PixelPhysicsConfig:
+    return PixelPhysicsConfig(
+        gravity=float(raw.get("gravity", 98.0)),
+        melt_temp=float(raw.get("melt_temp", 100.0)),
+        boil_temp=float(raw.get("boil_temp", 300.0)),
+        max_vel=float(raw.get("max_vel", 500.0)),
+    )
+
+
+def _parse_fluid_sim(raw: dict) -> FluidSimConfig:
+    tint = raw.get("render_tint", [0.8, 0.9, 1.0])
+    return FluidSimConfig(
+        enabled=bool(raw.get("enabled", False)),
+        pad_pixels=int(raw.get("pad_pixels", 64)),
+        lod_mode=str(raw.get("lod_mode", "exp")),
+        lod_zones=int(raw.get("lod_zones", 4)),
+        viscosity=float(raw.get("viscosity", 0.1)),
+        diffusion=float(raw.get("diffusion", 0.02)),
+        buoyancy=float(raw.get("buoyancy", 0.0)),
+        gravity=float(raw.get("gravity", 0.0)),
+        density_decay=float(raw.get("density_decay", 0.995)),
+        velocity_decay=float(raw.get("velocity_decay", 0.99)),
+        init_mode=str(raw.get("init_mode", "noise")),
+        noise_type=str(raw.get("noise_type", "fbm")),
+        noise_scale=float(raw.get("noise_scale", 0.003)),
+        noise_seed=int(raw.get("noise_seed", 42)),
+        god_rays=bool(raw.get("god_rays", True)),
+        caustics=bool(raw.get("caustics", False)),
+        force_strength=float(raw.get("force_strength", 50.0)),
+        render_tint=(float(tint[0]), float(tint[1]), float(tint[2])),
+        render_alpha_scale=float(raw.get("render_alpha_scale", 1.0)),
+    )
+
+
+def _parse_net(raw: dict) -> NetConfig:
+    return NetConfig(
+        enabled=bool(raw.get("enabled", False)),
+        tick_rate=int(raw.get("tick_rate", 30)),
+        timeout_ms=int(raw.get("timeout_ms", 100)),
+        max_players=int(raw.get("max_players", 8)),
+        use_lan_discovery=bool(raw.get("use_lan_discovery", True)),
+        use_dht_discovery=bool(raw.get("use_dht_discovery", True)),
+        udp_port=int(raw.get("udp_port", 0)),
+    )
+
+
+def _parse_lighting(raw: dict) -> LightingConfig:
+    ac = raw.get("ambient_color", [0.15, 0.15, 0.20])
+    return LightingConfig(
+        enabled=bool(raw.get("enabled", True)),
+        ambient_color=(float(ac[0]), float(ac[1]), float(ac[2])),
+        ambient_intensity=float(raw.get("ambient_intensity", 0.15)),
+        max_point_lights=int(raw.get("max_point_lights", 16)),
+        max_cone_lights=int(raw.get("max_cone_lights", 8)),
+        max_flash_lights=int(raw.get("max_flash_lights", 16)),
+        max_shape_lights=int(raw.get("max_shape_lights", 4)),
+        max_gravity_sources=int(raw.get("max_gravity_sources", 4)),
+        radiance_cascades=bool(raw.get("radiance_cascades", False)),
+        radiance_probes_spacing=int(raw.get("radiance_probes_spacing", 8)),
+        radiance_rays=int(raw.get("radiance_rays", 64)),
+        radiance_num_cascades=int(raw.get("radiance_num_cascades", 4)),
+        shadow_softness=int(raw.get("shadow_softness", 1)),
+        blackbody_emission=bool(raw.get("blackbody_emission", True)),
+        emission_threshold_k=float(raw.get("emission_threshold_k", 800.0)),
+        emission_max_k=float(raw.get("emission_max_k", 6000.0)),
+        emission_scale=float(raw.get("emission_scale", 1.5)),
+        geodesic_warping=bool(raw.get("geodesic_warping", True)),
+        max_render_channels=int(raw.get("max_render_channels", 4)),
+        clustered_lighting=bool(raw.get("clustered_lighting", True)),
+        cluster_tile_size=int(raw.get("cluster_tile_size", 8)),
+        max_lights_per_tile=int(raw.get("max_lights_per_tile", 64)),
+    )
+
+
+def _parse_input(raw: dict) -> InputConfig:
+    return InputConfig(
+        default_player0=str(raw.get("default_player0", "wasd")),
+        default_player1=str(raw.get("default_player1", "arrows")),
+    )
+
+
+def _parse_split_screen(raw: dict) -> SplitScreenConfig:
+    bc = raw.get("border_color", [30, 30, 30])
+    return SplitScreenConfig(
+        enabled=bool(raw.get("enabled", False)),
+        border_px=int(raw.get("border_px", 2)),
+        border_color=(int(bc[0]), int(bc[1]), int(bc[2])),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+_config_cache: Optional[Config] = None
+
+
+def load_config(path: str | None = None) -> Config:
+    """Load and return a :class:`Config` from *path* (an ``engine.yml`` file).
+
+    If *path* is ``None`` the file is discovered automatically via
+    :func:`_find_config_dir`.  The result is **not** cached — use
+    :func:`engine_config` when you want the shared singleton.
+    """
+    if path is not None:
+        yml_path = Path(path)
+    else:
+        yml_path = _find_config_dir() / "engine.yml"
+
+    with yml_path.open("r", encoding="utf-8") as fh:
+        raw = yaml.safe_load(fh)
+
+    return Config(
+        window=_parse_window(raw["window"]),
+        rendering=_parse_rendering(raw["rendering"]),
+        residency=_parse_residency(raw["residency"]) if "residency" in raw else ResidencyConfig(),
+        compute=_parse_compute(raw["compute"]) if "compute" in raw else ComputeConfig(),
+        physics=_parse_physics(raw["physics"]) if "physics" in raw else PhysicsConfig(),
+        tags=_parse_tags(raw["tags"]) if "tags" in raw else TagsConfig(),
+        materials=_parse_materials(raw["materials"]) if "materials" in raw else MaterialsConfig(),
+        z_height=_parse_z_height(raw["z_height"]) if "z_height" in raw else ZHeightConfig(),
+        pixel_physics=_parse_pixel_physics(raw["pixel_physics"]) if "pixel_physics" in raw else PixelPhysicsConfig(),
+        fluid_sim=_parse_fluid_sim(raw["fluid_sim"]) if "fluid_sim" in raw else FluidSimConfig(),
+        net=_parse_net(raw["net"]) if "net" in raw else NetConfig(),
+        lighting=_parse_lighting(raw["lighting"]) if "lighting" in raw else LightingConfig(),
+        input=_parse_input(raw["input"]) if "input" in raw else InputConfig(),
+        split_screen=_parse_split_screen(raw["split_screen"]) if "split_screen" in raw else SplitScreenConfig(),
+    )
+
+
+def load_engine_config(path: str | None = None) -> Config:
+    """Alias for :func:`load_config`; loads a fresh (non-cached) :class:`Config`.
+
+    Prefer this name when writing engine-startup code or tests.
+    """
+    return load_config(path)
+
+
+def engine_config(path: str | None = None) -> Config:
+    """Return the module-level singleton :class:`Config`.
+
+    On the first call the YAML file is read and parsed.  Subsequent calls
+    return the cached instance regardless of *path*.  Pass *path* only during
+    initialisation (e.g. inside :class:`~playslap.engine.Engine.__init__`).
+    """
+    global _config_cache
+    if _config_cache is None:
+        _config_cache = load_config(path)
+    return _config_cache

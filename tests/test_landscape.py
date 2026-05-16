@@ -1,15 +1,15 @@
 """
-Tests for slappyengine.landscape — no GPU required.
+Tests for playslap.landscape — no GPU required.
 """
 import pytest
 import numpy as np
 
 try:
-    from slappyengine.landscape import TileCoord, Tile, Landscape
-    from slappyengine.camera import Camera
+    from playslap.landscape import TileCoord, Tile, Landscape
+    from playslap.camera import Camera
 except ImportError as _landscape_err:
     pytest.skip(
-        f"slappyengine.landscape not importable: {_landscape_err}",
+        f"playslap.landscape not importable: {_landscape_err}",
         allow_module_level=True,
     )
 

@@ -20,15 +20,15 @@ import pytest
 # Module-level guard — import only the lightweight submodules used in tests
 # ---------------------------------------------------------------------------
 try:
-    from slappyengine.asset import Asset          # noqa: F401
-    from slappyengine.layer import Layer          # noqa: F401
-    from slappyengine.material.map import MaterialMap, ColorRange  # noqa: F401
-    from slappyengine.animation.graph import (    # noqa: F401
+    from playslap.asset import Asset          # noqa: F401
+    from playslap.layer import Layer          # noqa: F401
+    from playslap.material.map import MaterialMap, ColorRange  # noqa: F401
+    from playslap.animation.graph import (    # noqa: F401
         AnimationGraph, AnimState, AnimTransition,
     )
 except Exception as _import_err:
     pytest.skip(
-        f"slappyengine submodules not importable: {_import_err}",
+        f"playslap submodules not importable: {_import_err}",
         allow_module_level=True,
     )
 
@@ -76,8 +76,8 @@ def stub_dearpygui(monkeypatch):
 
 def _make_asset(width=64, height=64, n_layers=1):
     """Return a minimal Asset with n_layers blank layers (no GPU needed)."""
-    from slappyengine.asset import Asset
-    from slappyengine.layer import Layer
+    from playslap.asset import Asset
+    from playslap.layer import Layer
 
     asset = Asset(name="test_asset", size=(width, height))
     for i in range(n_layers):
@@ -87,7 +87,7 @@ def _make_asset(width=64, height=64, n_layers=1):
 
 def _make_material_map():
     """Return a MaterialMap with two pre-populated entries."""
-    from slappyengine.material.map import MaterialMap, ColorRange
+    from playslap.material.map import MaterialMap, ColorRange
 
     mm = MaterialMap()
     mm.add("water", ColorRange(r=(0, 40), g=(0, 80), b=(180, 255)),
@@ -99,7 +99,7 @@ def _make_material_map():
 
 def _make_anim_graph():
     """Return an AnimationGraph with two states and one transition."""
-    from slappyengine.animation.graph import AnimationGraph, AnimState, AnimTransition
+    from playslap.animation.graph import AnimationGraph, AnimState, AnimTransition
 
     graph = AnimationGraph()
     graph.add_state(AnimState(name="idle", clip_indices=[0, 1], fps=12.0))
@@ -118,7 +118,7 @@ class TestLayerPanel:
 
     def _panel(self):
         try:
-            from slappyengine.ui.editor.layer_panel import LayerPanel
+            from playslap.ui.editor.layer_panel import LayerPanel
         except ImportError as e:
             pytest.skip(f"LayerPanel not importable: {e}")
         return LayerPanel()
@@ -206,7 +206,7 @@ class TestPropertyInspector:
 
     def _panel(self):
         try:
-            from slappyengine.ui.editor.property_inspector import PropertyInspector
+            from playslap.ui.editor.property_inspector import PropertyInspector
         except ImportError as e:
             pytest.skip(f"PropertyInspector not importable: {e}")
         return PropertyInspector()
@@ -235,7 +235,7 @@ class TestPropertyInspector:
 
     # Extra: _iter_fields returns public attributes of a plain object
     def test_property_inspector_iter_fields_plain_object(self):
-        from slappyengine.animation.graph import AnimState
+        from playslap.animation.graph import AnimState
 
         panel = self._panel()
         state = AnimState(name="idle")
@@ -254,7 +254,7 @@ class TestMaterialEditor:
 
     def _panel(self):
         try:
-            from slappyengine.ui.editor.material_editor import MaterialEditor
+            from playslap.ui.editor.material_editor import MaterialEditor
         except ImportError as e:
             pytest.skip(f"MaterialEditor not importable: {e}")
         return MaterialEditor()
@@ -332,7 +332,7 @@ class TestTagPainter:
 
     def _panel(self):
         try:
-            from slappyengine.ui.editor.tag_painter import TagPainter
+            from playslap.ui.editor.tag_painter import TagPainter
         except ImportError as e:
             pytest.skip(f"TagPainter not importable: {e}")
         return TagPainter()
@@ -370,7 +370,7 @@ class TestAnimGraphPanel:
 
     def _panel(self):
         try:
-            from slappyengine.ui.editor.anim_graph_panel import AnimGraphPanel
+            from playslap.ui.editor.anim_graph_panel import AnimGraphPanel
         except ImportError as e:
             pytest.skip(f"AnimGraphPanel not importable: {e}")
         return AnimGraphPanel()

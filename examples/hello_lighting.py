@@ -13,11 +13,11 @@ lights that should affect every layer globally.
 Run:
     python examples/hello_lighting.py
 """
-import slappyengine as se
-from slappyengine.asset import Asset
-from slappyengine.layer import Layer
-from slappyengine.scene import Scene
-from slappyengine.lighting import LightingContext, DirectionalLight, PointLight
+import playslap as se
+from playslap.asset import Asset
+from playslap.layer import Layer
+from playslap.scene import Scene
+from playslap.lighting import LightingContext, DirectionalLight, PointLight
 
 engine = se.Engine(width=640, height=360, title="Hello Lighting")
 scene = Scene(name="HelloLighting")

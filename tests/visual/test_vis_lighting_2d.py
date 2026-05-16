@@ -10,8 +10,8 @@ TEST_NAME = "lighting_2d"
 
 def _build_scene():
     try:
-        from slappyengine.scene import Scene
-        from slappyengine.lighting import PointLight, DirectionalLight, LightingSystem
+        from playslap.scene import Scene
+        from playslap.lighting import PointLight, DirectionalLight, LightingSystem
         scene = Scene()
         # LightingSystem requires a live GPUContext; collect light objects instead
         lights = []

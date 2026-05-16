@@ -11,13 +11,13 @@ at the centre of the viewport in a orthographic-like projection.
 Run:
     python examples/hello_3d_layer.py
 """
-import slappyengine as se
-from slappyengine.asset import Asset
-from slappyengine.layer import Layer
-from slappyengine.scene import Scene
-from slappyengine.gpu.mesh import GpuMesh
-from slappyengine.gpu.pbr_material import PbrMaterial
-from slappyengine.lighting import LightingContext, PointLight
+import playslap as se
+from playslap.asset import Asset
+from playslap.layer import Layer
+from playslap.scene import Scene
+from playslap.gpu.mesh import GpuMesh
+from playslap.gpu.pbr_material import PbrMaterial
+from playslap.lighting import LightingContext, PointLight
 
 engine = se.Engine(width=640, height=360, title="Hello 3D Layer")
 scene = Scene(name="Hello3DLayer")

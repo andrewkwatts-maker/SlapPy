@@ -6,16 +6,16 @@ only calls PIL inside _render_to_canvas(), which is guarded with a
 try/except ImportError. Tests that trigger tick() will silently skip the
 render step when PIL is absent, which is fine.
 
-Module-level guard skips the whole module when slappyengine.ui is not
+Module-level guard skips the whole module when playslap.ui is not
 importable (e.g. Rust _core extension not yet compiled).
 """
 import pytest
 
 try:
-    from slappyengine.ui.scene_ui import SceneUIEntity
-    from slappyengine.layer import Layer
+    from playslap.ui.scene_ui import SceneUIEntity
+    from playslap.layer import Layer
 except Exception as e:
-    pytest.skip(f"slappyengine.ui not importable: {e}", allow_module_level=True)
+    pytest.skip(f"playslap.ui not importable: {e}", allow_module_level=True)
 
 
 # ---------------------------------------------------------------------------

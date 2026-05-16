@@ -3,7 +3,7 @@ requires = ["maturin>=1.4,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "slappyengine"
+name = "playslap"
 version = "0.1.0"
 description = "2D pixel-art game engine with optional 3D layers, Rust backends, and wgpu rendering"
 readme = "README.md"
@@ -31,9 +31,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/andrewkwatts-maker/SlapPy"
-Repository = "https://github.com/andrewkwatts-maker/SlapPy"
-Issues = "https://github.com/andrewkwatts-maker/SlapPy/issues"
+Homepage = "https://github.com/andrewkwatts-maker/SlapPyEngine"
+Repository = "https://github.com/andrewkwatts-maker/SlapPyEngine"
+Issues = "https://github.com/andrewkwatts-maker/SlapPyEngine/issues"
 
 [project.optional-dependencies]
 editor = ["dearpygui>=1.11", "pywebview>=4.0"]
@@ -50,12 +50,12 @@ network = [
 # wgpu is already a core dependency, so no additional Python packages are needed.
 # The _core Rust crate's "3d" feature flag is activated at build time:
 #   maturin build --features 3d
-# Install with: pip install slappyengine[3d]
+# Install with: pip install playslap[3d]
 3d = []
 
 [tool.maturin]
 python-source = "python"
-module-name = "slappyengine._core"
+module-name = "playslap._core"
 features = ["pyo3/extension-module"]
 # Exclude development artifacts from the wheel
 exclude = [

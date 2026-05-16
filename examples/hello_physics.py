@@ -15,10 +15,10 @@ Run:
 """
 import random
 import numpy as np
-import slappyengine as se
-from slappyengine.asset import Asset
-from slappyengine.layer import Layer
-from slappyengine.scene import Scene
+import playslap as se
+from playslap.asset import Asset
+from playslap.layer import Layer
+from playslap.scene import Scene
 
 engine = se.Engine(width=256, height=256, title="Hello Physics")
 scene = Scene(name="HelloPhysics")

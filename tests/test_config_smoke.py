@@ -8,7 +8,7 @@ os.environ.setdefault(
     str(__import__("pathlib").Path(__file__).resolve().parent.parent / "config"),
 )
 
-from slappyengine.config import load_engine_config
+from playslap.config import load_engine_config
 
 
 def test_config_smoke():

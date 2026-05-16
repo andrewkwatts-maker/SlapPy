@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine.material import ColorRange, MaterialDef, MaterialMap
+from playslap.material import ColorRange, MaterialDef, MaterialMap
 
 
 # ---------------------------------------------------------------------------

@@ -6,14 +6,14 @@ Health module channels: health, max_health
 Damage: each tick, skin health drops; when it falls below 0.3, the layer alpha fades.
 """
 import numpy as np
-from slappyengine import Engine
-from slappyengine.scene import Scene
-from slappyengine.asset import Asset
-from slappyengine.layer import Layer
-from slappyengine.camera import Camera
-from slappyengine.material import MaterialMap, ColorRange
-from slappyengine.modules.health import HealthModule
-from slappyengine.animation.procedural import ProceduralRig, ControlPoint
+from playslap import Engine
+from playslap.scene import Scene
+from playslap.asset import Asset
+from playslap.layer import Layer
+from playslap.camera import Camera
+from playslap.material import MaterialMap, ColorRange
+from playslap.modules.health import HealthModule
+from playslap.animation.procedural import ProceduralRig, ControlPoint
 
 
 def make_warrior(width: int = 64, height: int = 128) -> Asset:

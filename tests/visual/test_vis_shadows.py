@@ -15,7 +15,7 @@ def _build_scene():
     LightingSystem requires a GPUContext; we skip gracefully if GPU is unavailable.
     """
     try:
-        from slappyengine.lighting import DirectionalLight, LightingSystem
+        from playslap.lighting import DirectionalLight, LightingSystem
         # LightingSystem needs (gpu, width, height) — return just the light descriptor
         # so callers can pass it to a renderer that owns a GPUContext.
         light = DirectionalLight(

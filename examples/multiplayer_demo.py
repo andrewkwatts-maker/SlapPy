@@ -4,7 +4,7 @@ Multiplayer demo -- two players, P2P via DHT, no server needed.
 Player 1 (host):   python multiplayer_demo.py host
 Player 2 (join):   python multiplayer_demo.py join <ROOM_CODE>
 
-Requires: pip install slappyengine[network]
+Requires: pip install playslap[network]
 
 Architecture notes:
 - Peers find each other via Kademlia DHT (BitTorrent bootstrap nodes)
@@ -16,8 +16,8 @@ Architecture notes:
 import asyncio
 import sys
 
-from slappyengine.net import GameSession, SessionConfig, InputFrame
-from slappyengine.input import ActionMap
+from playslap.net import GameSession, SessionConfig, InputFrame
+from playslap.input import ActionMap
 
 
 async def main():

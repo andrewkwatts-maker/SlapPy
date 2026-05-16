@@ -2,8 +2,8 @@
 
 
 def test_layer_lighting_independent():
-    from slappyengine.layer import Layer
-    from slappyengine.lighting import LightingContext, DirectionalLight
+    from playslap.layer import Layer
+    from playslap.lighting import LightingContext, DirectionalLight
 
     layer_a = Layer.blank(64, 64, name="A")
     layer_b = Layer.blank(64, 64, name="B")
@@ -21,7 +21,7 @@ def test_layer_lighting_independent():
 
 
 def test_layer_lighting_none_inherits_scene():
-    from slappyengine.layer import Layer
+    from playslap.layer import Layer
 
     layer = Layer.blank(64, 64, name="C")
     assert layer.lighting is None  # defaults to scene-global

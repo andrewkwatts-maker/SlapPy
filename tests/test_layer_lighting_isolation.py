@@ -11,8 +11,8 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def _imports():
-    from slappyengine.layer import Layer
-    from slappyengine.lighting import (
+    from playslap.layer import Layer
+    from playslap.lighting import (
         LightingContext, DirectionalLight, PointLight, ConeLight,
     )
     return Layer, LightingContext, DirectionalLight, PointLight, ConeLight

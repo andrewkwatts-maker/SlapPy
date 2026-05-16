@@ -11,12 +11,12 @@ Run: python examples/hud_demo.py
 """
 
 try:
-    import slappyengine as se
-    from slappyengine.engine import Engine
-    from slappyengine.scene import Scene
-    from slappyengine.asset import Asset
-    from slappyengine.layer import Layer
-    from slappyengine.ui.scene_ui import SceneUIEntity
+    import playslap as se
+    from playslap.engine import Engine
+    from playslap.scene import Scene
+    from playslap.asset import Asset
+    from playslap.layer import Layer
+    from playslap.ui.scene_ui import SceneUIEntity
 except ImportError as e:
     print(f"Import error: {e}")
     print("Run 'maturin develop' to build the Rust extension first.")

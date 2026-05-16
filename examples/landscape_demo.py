@@ -13,9 +13,9 @@ tiles are visible.
 import tempfile
 import numpy as np
 from pathlib import Path
-from slappyengine import Engine
-from slappyengine.scene import Scene
-from slappyengine.camera import Camera
+from playslap import Engine
+from playslap.scene import Scene
+from playslap.camera import Camera
 
 
 def paint_sample_tiles(landscape, tile_dir: Path) -> None:
@@ -48,7 +48,7 @@ def main() -> None:
     scene.camera = Camera()
 
     try:
-        from slappyengine.landscape import Landscape
+        from playslap.landscape import Landscape
         landscape = Landscape(tile_size=256, tile_dir=tile_dir, cache_size=16)
         paint_sample_tiles(landscape, tile_dir)
         scene.landscape = landscape
