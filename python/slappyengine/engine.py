@@ -7,7 +7,7 @@ try:
     def run(): _rc_loop.run()
 except ImportError:
     from wgpu.gui.auto import WgpuCanvas, run  # type: ignore[assignment]
-from slappyengine.config import engine_config, Config
+from slappyengine.config import engine_config, Config, ConfigManager, _find_config_dir
 from slappyengine.struct_registry import StructRegistry
 from slappyengine.shader_gen import ShaderGen
 from slappyengine.tags import TagRegistry
@@ -41,6 +41,13 @@ class Engine:
                 setattr(self._cfg.window, key, val)
             else:
                 raise TypeError(f"Unknown Engine override: '{key}'")
+
+        # Resolve the absolute path to engine.yml for ConfigManager
+        if config_path is not None:
+            _engine_yml = str(Path(config_path))
+        else:
+            _engine_yml = str(_find_config_dir() / "engine.yml")
+        self._config_manager = ConfigManager(_engine_yml)
 
         self._scene: Scene | None = None
         self._registry: StructRegistry = StructRegistry()
@@ -98,6 +105,28 @@ class Engine:
         self._scene = scene
         if self._gpu is not None:
             self._wire_compute(scene)
+
+    def watch_config(self, callback) -> None:
+        """Register callback(changed_keys: dict) for config hot-reload.
+
+        The callback receives a flat dict of dotted key paths to their new
+        values whenever ``engine.yml`` changes on disk.  Keys that require an
+        engine restart (``window.width``, ``window.height``, ``window.title``)
+        are excluded from the callback and emit a :mod:`warnings` warning
+        instead.
+
+        Requires ``watchdog`` (``pip install watchdog``).  If watchdog is not
+        installed this method is a no-op — no exception is raised.
+
+        Example::
+
+            def on_config_change(changed):
+                if "physics.default_dt" in changed:
+                    engine._cfg.physics.default_dt = changed["physics.default_dt"]
+
+            engine.watch_config(on_config_change)
+        """
+        self._config_manager.watch(callback)
 
     def register_module(self, module) -> None:
         """Register a StructModule before run() is called."""
@@ -611,9 +640,62 @@ class Engine:
                 self._input.frame_reset()
 
         run()
+        self._config_manager.stop()
+
+    # -----------------------------------------------------------------------
+    # Project detection helpers
+    # -----------------------------------------------------------------------
+
+    def _find_project(self) -> str | None:
+        """Look for project.slap_proj in cwd and parent dirs (up to 3 levels).
+
+        Returns the absolute path string if found, or ``None`` if no project
+        file is present in any of the searched directories.
+        """
+        from pathlib import Path
+        cwd = Path.cwd()
+        for d in [cwd, cwd.parent, cwd.parent.parent]:
+            p = d / "project.slap_proj"
+            if p.exists():
+                return str(p)
+        return None
+
+    def _show_project_wizard(self) -> None:
+        """Show the pywebview project wizard until a project is created or user cancels.
+
+        Blocks until the pywebview window is closed.  If pywebview is not
+        installed, falls back to a plain CLI message so the engine never crashes.
+        """
+        try:
+            import webview
+        except ImportError:
+            print("No project found. Run: slap new <ProjectName>")
+            return
+
+        from pathlib import Path
+        from slappyengine.ui.project_manager import ProjectManager
+
+        manager = ProjectManager(engine=self)
+        html_path = Path(__file__).parent / "ui" / "project_ui.html"
+        manager._window = webview.create_window(
+            "SlapPyEngine — Open or Create Project",
+            str(html_path) + "?wizard=1",
+            js_api=manager._api,
+            width=900,
+            height=600,
+            min_size=(700, 460),
+            background_color="#0d0d14",
+        )
+        webview.start(debug=False)
 
     def run_editor(self) -> None:
         """Launch the engine in Dear PyGui editor mode.
+
+        If no ``project.slap_proj`` is found in the current working directory
+        or its two immediate parents, the pywebview project creation wizard is
+        shown first.  The editor opens only after the user selects or creates a
+        project.  If the user cancels the wizard without creating a project the
+        method returns immediately without opening the editor.
 
         The wgpu canvas is created for GPU rendering, but the main event loop
         is driven by Dear PyGui rather than wgpu's ``run()``.  On every DPG
@@ -627,6 +709,16 @@ class Engine:
 
                 pip install SlapPyEngine[editor]
         """
+        # --- Project detection (before any DPG window is created) -------
+        project_path = self._find_project()
+        if project_path is None:
+            # No project found — show the wizard so the user can create or open one
+            self._show_project_wizard()
+            project_path = self._find_project()
+            if project_path is None:
+                # User cancelled the wizard without creating/opening a project
+                return
+
         # --- Lazy imports (all editor deps are optional) ----------------
         try:
             import dearpygui.dearpygui as dpg  # noqa: F401 (checked here, used below)
@@ -750,6 +842,7 @@ class Engine:
                     pass
 
         dpg.destroy_context()
+        self._config_manager.stop()
 
     def open_project_manager(self) -> str:
         """Open the HTML project manager window.

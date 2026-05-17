@@ -105,9 +105,10 @@ class CollisionWorld:
         except ValueError:
             pass
 
-    def tick(self):
-        """Check all pairs, fire callbacks."""
+    def tick(self) -> list[tuple]:
+        """Check all pairs, fire callbacks. Returns list of (entity_a, entity_b) hit pairs."""
         from slappyengine.z_height import check_z_aabb
+        hits: list[tuple] = []
         ents = [e for e in self._entities if hasattr(e, "collision_shape") and e.collision_shape is not None]
         for i in range(len(ents)):
             for j in range(i + 1, len(ents)):
@@ -116,8 +117,10 @@ class CollisionWorld:
                     continue  # different Z heights — no collision
                 hit, overlap = self._check_pair(a, b)
                 if hit:
+                    hits.append((a, b))
                     self._fire(a, b, overlap)
                     self._fire(b, a, (-overlap[0], -overlap[1]))
+        return hits
 
     def _check_pair(self, a, b) -> tuple[bool, tuple[float, float]]:
         sa, sb = a.collision_shape, b.collision_shape
@@ -258,6 +261,16 @@ class CollisionWorld:
         except Exception:
             return []
 
+    # --- step() interface (used by CollisionManager / scene wiring) ---
+
+    def step(self) -> list[tuple]:
+        """Alias for tick() that returns hit pairs without firing event bus.
+
+        Returns list of (entity_a, entity_b) pairs for the caller to dispatch.
+        Callbacks on scripts are still fired internally (same as tick).
+        """
+        return self.tick()
+
     def fire_pixel_callbacks(self, hits: list) -> None:
         """Fire on_pixel_collision callbacks and Layer 3 deformation writeback."""
         for entity_a, entity_b, px, py in hits:
@@ -283,3 +296,60 @@ class CollisionWorld:
                         pixels.write(px, py, {"health": 0})
                     except Exception:
                         pass
+
+
+# ---------------------------------------------------------------------------
+# CollisionManager — thin façade over CollisionWorld, spec-compatible API
+# ---------------------------------------------------------------------------
+
+class CollisionManager(CollisionWorld):
+    """
+    Backwards-compatible façade that exposes the spec-requested API
+    (register/unregister by shape, step(), on_collision()) while delegating
+    all heavy lifting to the proven CollisionWorld implementation.
+
+    Scene wires both:
+        scene.collision  → CollisionManager instance (primary)
+        (CollisionWorld subclass, so all GPU layer methods still work)
+
+    Shape registration:
+        CollisionWorld uses entity.collision_shape attributes directly.
+        CollisionManager.register() sets that attribute so the two
+        registration paths are fully interchangeable.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._callbacks: list = []
+
+    # --- spec API ---
+
+    def register(self, entity, shape=None) -> None:  # type: ignore[override]
+        """Register entity with optional explicit shape.
+
+        If *shape* is provided it is stored on entity.collision_shape.
+        If omitted, entity.collision_shape is used as-is (already set by caller).
+        Delegates to CollisionWorld.register() for list management.
+        """
+        if shape is not None:
+            entity.collision_shape = shape
+        super().register(entity)
+
+    def unregister(self, entity) -> None:  # type: ignore[override]
+        """Remove entity from the collision world."""
+        super().unregister(entity)
+
+    def step(self) -> list[tuple]:
+        """Run broad-phase checks. Returns (entity_a, entity_b) pairs and fires on_collision callbacks."""
+        hits = super().step()  # CollisionWorld.step() calls tick() internally
+        for ea, eb in hits:
+            for cb in self._callbacks:
+                try:
+                    cb(ea, eb)
+                except Exception as exc:
+                    print(f"[CollisionManager] on_collision callback error: {exc}")
+        return hits
+
+    def on_collision(self, callback) -> None:
+        """Register a callback(entity_a, entity_b) fired for every broad-phase hit."""
+        self._callbacks.append(callback)

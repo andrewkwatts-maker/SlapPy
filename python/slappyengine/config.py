@@ -445,3 +445,93 @@ def engine_config(path: str | None = None) -> Config:
     if _config_cache is None:
         _config_cache = load_config(path)
     return _config_cache
+
+
+# ---------------------------------------------------------------------------
+# Config hot-reload
+# ---------------------------------------------------------------------------
+
+
+class ConfigManager:
+    """Watches engine.yml and calls registered callbacks on change.
+
+    Requires watchdog: pip install watchdog
+    Falls back to no-op if watchdog is not installed.
+    """
+
+    _RESTART_REQUIRED = {"window.width", "window.height", "window.title"}
+
+    def __init__(self, config_path: str):
+        self._path = config_path
+        self._callbacks: list = []
+        self._observer = None
+        self._last_config = self._load()
+
+    def _load(self) -> dict:
+        import yaml
+        try:
+            with open(self._path) as f:
+                return yaml.safe_load(f) or {}
+        except Exception:
+            return {}
+
+    def watch(self, callback) -> None:
+        """Register callback(changed_keys: dict) called on config change."""
+        self._callbacks.append(callback)
+        if self._observer is None:
+            self._start_watcher()
+
+    def _start_watcher(self):
+        try:
+            from watchdog.observers import Observer
+            from watchdog.events import FileSystemEventHandler
+
+            mgr = self
+            class _Handler(FileSystemEventHandler):
+                def on_modified(self, event):
+                    if event.src_path.endswith(mgr._path.split("/")[-1]):
+                        mgr._on_file_changed()
+
+            import os
+            self._observer = Observer()
+            self._observer.schedule(_Handler(), os.path.dirname(self._path) or ".", recursive=False)
+            self._observer.daemon = True
+            self._observer.start()
+        except ImportError:
+            pass  # watchdog not installed — silent no-op
+
+    def _on_file_changed(self):
+        new_config = self._load()
+        diff = self._diff(self._last_config, new_config)
+        if not diff:
+            return
+        restart_needed = [k for k in diff if k in self._RESTART_REQUIRED]
+        if restart_needed:
+            import warnings
+            warnings.warn(f"Config keys {restart_needed} require engine restart to take effect.")
+        # Fire callbacks only for hot-reloadable keys
+        hot_diff = {k: v for k, v in diff.items() if k not in self._RESTART_REQUIRED}
+        if hot_diff:
+            for cb in self._callbacks:
+                try:
+                    cb(hot_diff)
+                except Exception:
+                    pass
+        self._last_config = new_config
+
+    def _diff(self, old: dict, new: dict, prefix: str = "") -> dict:
+        """Flat diff of nested dicts. Returns {dotted.key: new_value}."""
+        result = {}
+        for k in set(list(old.keys()) + list(new.keys())):
+            full_key = f"{prefix}{k}" if not prefix else f"{prefix}.{k}"
+            ov, nv = old.get(k), new.get(k)
+            if isinstance(ov, dict) and isinstance(nv, dict):
+                result.update(self._diff(ov, nv, full_key))
+            elif ov != nv:
+                result[full_key] = nv
+        return result
+
+    def stop(self):
+        if self._observer:
+            self._observer.stop()
+            self._observer.join()

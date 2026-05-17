@@ -204,6 +204,10 @@ class ProjectManagerAPI:
                 pass
         return ""
 
+    def get_wizard_mode(self) -> bool:
+        """Called from JS to check if running in wizard mode."""
+        return getattr(self, '_wizard_mode', False)
+
 
 class ProjectManager:
     def __init__(self, engine: "Engine"):

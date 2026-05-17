@@ -30,6 +30,9 @@ __all__ = [
     "Scene",
     "Engine",
     "Camera",
+    # scripts
+    "Script",
+    "ScriptComponent",
     # assets / render targets
     "Asset",
     "CubeArray",
@@ -90,6 +93,16 @@ __all__ = [
     # split-screen
     "SplitScreenManager",
     "Viewport",
+    # components
+    "Component",
+    "ComponentBase",
+    "PhysicsComponent",
+    "CollisionComponent",
+    # collision
+    "CollisionManager",
+    "CollisionWorld",
+    "AABBShape",
+    "CircleShape",
     # generic data / events
     "DataComponent",
     "EventBus",
@@ -101,6 +114,13 @@ __all__ = [
     "SdfExtruder",
     # 3D / PBR
     "PbrMaterial",
+    # layer classes
+    "Layer",
+    "Layer2D",
+    "Layer3D",
+    "LayerDataBuffer",
+    # asset database
+    "AssetDatabase",
 ]
 
 # ---------------------------------------------------------------------------
@@ -113,6 +133,9 @@ _LAZY_MAP: dict[str, str] = {
     "Scene":            ".scene",
     "Engine":           ".engine",
     "Camera":           ".camera",
+    # scripts
+    "Script":           ".script",
+    "ScriptComponent":  ".script",
     # assets / render targets
     "Asset":            ".asset",
     "CubeArray":        ".cube_array",
@@ -170,6 +193,16 @@ _LAZY_MAP: dict[str, str] = {
     # split-screen
     "SplitScreenManager":              ".split_screen",
     "Viewport":                        ".split_screen",
+    # components
+    "Component":                       ".components",
+    "ComponentBase":                   ".components",
+    "PhysicsComponent":                ".components",
+    "CollisionComponent":              ".components",
+    # collision shapes / managers
+    "CollisionManager":                ".collision",
+    "CollisionWorld":                  ".collision",
+    "AABBShape":                       ".collision",
+    "CircleShape":                     ".collision",
     # generic data / events
     "DataComponent":                   ".data_component",
     "EventBus":                        ".event_bus",
@@ -181,6 +214,13 @@ _LAZY_MAP: dict[str, str] = {
     "SdfExtruder":                     ".gpu.sdf_extruder",
     # 3D / PBR
     "PbrMaterial":                     ".gpu.pbr_material",
+    # layer classes
+    "Layer":                           ".layer",
+    "Layer2D":                         ".layer",
+    "Layer3D":                         ".layer",
+    "LayerDataBuffer":                 ".layer",
+    # asset database
+    "AssetDatabase":                   ".assets.database",
 }
 
 # ---------------------------------------------------------------------------
@@ -236,6 +276,7 @@ def __getattr__(name: str):
     # Subpackages returned as modules
     _subpackages = {
         "animation",
+        "assets",
         "compute",
         "ext",
         "gpu",

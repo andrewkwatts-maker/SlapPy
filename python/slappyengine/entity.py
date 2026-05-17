@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from slappyengine.z_height import ZLayer, ZAABBShape
     from slappyengine.angle_sprite import AngleSpriteMap
     from slappyengine.data_component import DataComponent
+    from slappyengine.components import Component
 
 class Entity:
     def __init__(self, name: str = "", position: tuple[float,float] = (0.0, 0.0)):
@@ -34,6 +35,9 @@ class Entity:
                 script.on_tick(self, dt)
         if self.data is not None:
             self.data.tick()
+        # Drive all attached components.
+        for component in getattr(self, "_components", {}).values():
+            component.update(dt)
 
     @classmethod
     def on_compile(cls) -> None:
@@ -78,7 +82,46 @@ class Entity:
         self.data.bind(when, then, once)
 
     def attach_script(self, script) -> None:
+        from slappyengine.script import Script
+        if not isinstance(script, Script) and not hasattr(script, 'on_update'):
+            import warnings
+            warnings.warn(
+                f"{type(script).__name__} does not subclass Script or implement on_update. "
+                "Consider subclassing slappyengine.Script for IDE support and type hints.",
+                stacklevel=2,
+            )
         self._scripts.append(script)
 
     def add_emitter(self, emitter) -> None:
         self._emitters.append(emitter)
+
+    # ------------------------------------------------------------------
+    # Component system
+    # ------------------------------------------------------------------
+
+    def add_component(self, component: "Component") -> "Component":
+        """Attach *component* to this entity and return it.
+
+        Only one component of each concrete type may be attached at a time.
+        Adding a second instance of the same type replaces the first (the
+        old component's ``on_detach`` is called before replacement).
+        """
+        if not hasattr(self, "_components"):
+            self._components: "dict[type, Component]" = {}
+        t = type(component)
+        if t in self._components:
+            self._components[t].on_detach(self)
+        self._components[t] = component
+        component.on_attach(self)
+        return component
+
+    def get_component(self, component_type: type) -> "Component | None":
+        """Return the attached component of *component_type*, or ``None``."""
+        return getattr(self, "_components", {}).get(component_type)
+
+    def remove_component(self, component_type: type) -> None:
+        """Detach and discard the component of *component_type* if present."""
+        comps = getattr(self, "_components", {})
+        if component_type in comps:
+            comps[component_type].on_detach(self)
+            del comps[component_type]

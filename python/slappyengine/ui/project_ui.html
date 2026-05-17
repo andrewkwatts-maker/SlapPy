@@ -495,11 +495,42 @@
 
   /* ---- Scrollbars ---- */
   * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+  /* ---- Wizard-mode banner ---- */
+  #wizard-banner {
+    display: none;
+    background: #2a5298;
+    color: #fff;
+    padding: 8px 16px;
+    font-size: 13px;
+    text-align: center;
+    flex-shrink: 0;
+  }
 </style>
+<script>
+// Wizard-mode detection: inject banner when ?wizard=1 is present.
+// Runs synchronously so the banner is visible before DOMContentLoaded.
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('wizard') === '1') {
+    document.addEventListener('DOMContentLoaded', function () {
+      var banner = document.getElementById('wizard-banner');
+      if (banner) {
+        banner.style.display = 'block';
+      }
+    });
+  }
+})();
+</script>
 </head>
 <body>
 
 <div id="app">
+
+  <!-- Wizard-mode banner (shown when launched with ?wizard=1) -->
+  <div id="wizard-banner">
+    No project found &#8212; create a new project or open an existing one to continue.
+  </div>
 
   <!-- Header -->
   <div id="header">

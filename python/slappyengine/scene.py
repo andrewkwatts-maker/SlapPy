@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 class Scene:
     def __init__(self, name: str = "Scene"):
-        from slappyengine.collision import CollisionWorld
+        from slappyengine.collision import CollisionManager
         self.name = name
         self._entities: dict[str, Entity] = {}   # id → entity
         self.camera: Camera | None = None
@@ -23,23 +23,30 @@ class Scene:
         self.decals: DecalSystem | None = None
         self.region_effects: list = []
         self.landscape = None
-        self.collision: CollisionWorld = CollisionWorld()
+        # CollisionManager subclasses CollisionWorld — all GPU layer methods still available.
+        self.collision: CollisionManager = CollisionManager()
         self.strata: "StrataWorld | None" = None
         self._z_layers: list = []  # list[ZLayer], ordered by z ascending
         # Fluid simulation reference — set by engine.enable_fluid_sim()
         self.fluid: "GlobalFluidSim | None" = None  # type: ignore[name-defined]
         self.bus: EventBus = EventBus()
+        # events is a public alias for bus (spec-compatible name)
+        self.events: EventBus = self.bus
 
     def add(self, entity: Entity) -> Entity:
         self._entities[entity.id] = entity
         entity.scene = self  # back-reference so scripts can reach the scene
         entity.on_create()
+        # Register with collision world if entity has a collision shape
+        if getattr(entity, "collision_shape", None) is not None:
+            self.collision.register(entity)
         self.bus.publish("entity:created", entity=entity, scene=self)
         return entity
 
     def remove(self, entity: Entity) -> None:
         self.bus.publish("entity:destroyed", entity=entity, scene=self)
         entity.on_destroy()
+        self.collision.unregister(entity)
         entity.scene = None
         self._entities.pop(entity.id, None)
 
@@ -75,7 +82,8 @@ class Scene:
     def _tick(self, dt: float) -> None:
         for entity in list(self._entities.values()):
             entity.tick(dt)
-        self.collision.tick()
+        for ea, eb in self.collision.step():
+            self.bus.publish("collision", entity_a=ea, entity_b=eb)
         if self.strata is not None:
             self.strata.tick(dt)
 

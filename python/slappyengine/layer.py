@@ -254,3 +254,65 @@ class Layer:
         if src is not None:
             from pathlib import Path
             self.mesh_material.albedo_texture = Path(src)
+
+
+class Layer2D(Layer):
+    """Layer subclass for 2D pixel-art rendering. mode is always '2D'."""
+    def __init__(self, name: str = "layer", width: int = 64, height: int = 64):
+        super().__init__(name=name, mode="2D")
+        # Pre-allocate image data
+        self._image_data = np.zeros((height, width, 4), dtype=np.uint8)
+
+    @classmethod
+    def from_image(cls, path, name: str | None = None) -> "Layer2D":
+        """Create a Layer2D from an image file."""
+        from PIL import Image
+        img = Image.open(path).convert("RGBA")
+        arr = np.asarray(img, dtype=np.uint8)
+        h, w = arr.shape[:2]
+        inst = cls(name=name or Path(path).stem, width=w, height=h)
+        inst._image_data = arr
+        return inst
+
+    @classmethod
+    def blank(cls, width: int, height: int, name: str = "layer") -> "Layer2D":
+        return cls(name=name, width=width, height=height)
+
+
+class Layer3D(Layer):
+    """Layer subclass for 3D mesh rendering. mode is always '3D'."""
+    def __init__(self, name: str = "layer"):
+        super().__init__(name=name, mode="3D")
+
+    @property
+    def mesh(self):
+        return self.mesh_geometry
+
+    @mesh.setter
+    def mesh(self, value):
+        self.mesh_geometry = value
+
+    @property
+    def material(self):
+        return self.mesh_material
+
+    @material.setter
+    def material(self, value):
+        self.mesh_material = value
+
+
+class LayerDataBuffer(Layer2D):
+    """Layer2D that also carries per-pixel struct data for compute shaders."""
+    def __init__(self, name: str, width: int, height: int, struct_fields: list[str]):
+        super().__init__(name=name, width=width, height=height)
+        self.struct_fields = struct_fields
+        n = len(struct_fields)
+        self._data_array = np.zeros((height, width, n), dtype=np.float32)
+
+    def get_field(self, field: str):
+        idx = self.struct_fields.index(field)
+        return self._data_array[:, :, idx]
+
+    def set_field(self, field: str, values):
+        idx = self.struct_fields.index(field)
+        self._data_array[:, :, idx] = values
