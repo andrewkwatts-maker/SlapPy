@@ -9,13 +9,13 @@ Build fast, expressive games in Python — from classic pixel-art shooters to hy
 ## Features
 
 - **2D pixel-art pipeline** — per-tile compute shaders, sprite batching, palette swapping, and atlas packing
-- **Optional 3D layers** — PBR mesh rendering composited over the 2D scene (`pip install slappyengine[3d]`)
+- **Optional 3D layers** — PBR mesh rendering composited over the 2D scene (`pip install slappy-engine[3d]`)
 - **Per-layer lighting** — independent ambient, point, and directional lights on each scene layer
 - **Cross-platform GPU** — wgpu backend targets Vulkan, Metal, and DirectX 12 from a single code path
 - **Rust `_core` backend** — performance-critical subsystems (asset I/O, LZ4 compression, physics) compiled via PyO3/maturin
-- **DearPyGui editor** — Nova3D dark-themed in-engine editor with toolbar, gizmos, and Code Mode (`pip install slappyengine[editor]`)
-- **P2P networking** — Kademlia DHT + ICE hole-punching for low-latency peer-to-peer multiplayer (`pip install slappyengine[network]`)
-- **Spatial audio** — positional audio with rolloff curves (`pip install slappyengine[audio]`)
+- **DearPyGui editor** — Nova3D dark-themed in-engine editor with toolbar, gizmos, and Code Mode (`pip install slappy-engine[editor]`)
+- **P2P networking** — Kademlia DHT + ICE hole-punching for low-latency peer-to-peer multiplayer (`pip install slappy-engine[network]`)
+- **Spatial audio** — positional audio with rolloff curves (`pip install slappy-engine[audio]`)
 
 ---
 
@@ -23,13 +23,13 @@ Build fast, expressive games in Python — from classic pixel-art shooters to hy
 
 ```bash
 # Core engine (2D only)
-pip install slappyengine
+pip install slappy-engine
 
 # With 3D layer support
-pip install slappyengine[3d]
+pip install slappy-engine[3d]
 
 # Full stack: editor, networking, audio, video
-pip install slappyengine[editor,network,audio,video]
+pip install slappy-engine[editor,network,audio,video]
 ```
 
 Requires Python 3.11+ and a GPU driver that supports Vulkan, Metal, or DirectX 12.

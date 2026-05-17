@@ -10,8 +10,8 @@ SlapPyEngine is a GPU-accelerated pixel-art game engine whose primary render tar
 
 | Install variant | Command | Approximate size |
 |---|---|---|
-| Core 2D | `pip install slappyengine` | ~15 MB |
-| With 3D | `pip install slappyengine[3d]` | ~35 MB |
+| Core 2D | `pip install slappy-engine` | ~15 MB |
+| With 3D | `pip install slappy-engine[3d]` | ~35 MB |
 | Full dev rig | `pip install -e ".[dev,editor,audio,network]"` | varies |
 
 Three first-party games ship alongside the engine as living integration tests:
@@ -516,7 +516,7 @@ frame = InputFrame(tick=session.sync.tick, player_id=0,
 all_inputs = await session.sync.tick_async(frame, session.broadcast)
 ```
 
-Requires the `[network]` extra: `pip install slappyengine[network]`.
+Requires the `[network]` extra: `pip install slappy-engine[network]`.
 
 ### Post-Processing
 
@@ -696,7 +696,7 @@ engine.load_scene(scene)
 engine.run_editor()   # DPG-driven loop instead of wgpu loop
 ```
 
-Requires `pip install slappyengine[editor]`.
+Requires `pip install slappy-engine[editor]`.
 
 ### Layout
 

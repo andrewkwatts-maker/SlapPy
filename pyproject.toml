@@ -3,7 +3,7 @@ requires = ["maturin>=1.4,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "slappyengine"
+name = "slappy-engine"
 version = "0.1.0a0"
 description = "2D pixel-art game engine with optional 3D layers, Rust backends, and wgpu rendering"
 readme = "README.md"
