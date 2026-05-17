@@ -27,6 +27,18 @@ jobs:
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
 
+    - name: Create virtual environment
+      run: python -m venv .venv
+
+    - name: Add venv to PATH (Unix)
+      if: runner.os != 'Windows'
+      run: echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
+
+    - name: Add venv to PATH (Windows)
+      if: runner.os == 'Windows'
+      run: echo "${{ github.workspace }}\.venv\Scripts" >> $env:GITHUB_PATH
+      shell: pwsh
+
     - name: Install maturin
       run: pip install maturin
 
@@ -38,10 +50,11 @@ jobs:
     - name: Run tests
       run: pytest tests/ -v --tb=short
 
-    - name: Run tests (3d feature)
-      run: |
-        maturin develop --features 3d --extras dev
-        pytest tests/test_lazy_3d.py tests/test_bake_pipeline.py tests/test_mixed_2d_3d.py -v
+    - name: Build and install with 3D feature
+      run: maturin develop --features 3d --extras dev
+
+    - name: Run 3D tests
+      run: pytest tests/test_lazy_3d.py tests/test_bake_pipeline.py tests/test_mixed_2d_3d.py -v
 
   wheel-size:
     name: Wheel size check
@@ -104,12 +117,23 @@ jobs:
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
 
-    - run: pip install maturin ruff
+    - name: Create virtual environment
+      run: python -m venv .venv
 
-    - run: maturin develop
+    - name: Add venv to PATH
+      run: echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
 
-    - run: ruff check python/ --select E,F,W --ignore E501
+    - name: Install tools
+      run: pip install maturin ruff
 
-    - run: cargo check
+    - name: Build extension
+      run: maturin develop
 
-    - run: cargo check --features 3d
+    - name: Lint Python
+      run: ruff check python/ --select E,F,W --ignore E501
+
+    - name: Check Rust (2D)
+      run: cargo check
+
+    - name: Check Rust (3D)
+      run: cargo check --features 3d
