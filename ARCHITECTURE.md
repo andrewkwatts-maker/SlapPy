@@ -1,4 +1,4 @@
-# SlapPyEngine — Architecture Guide for Claude Code
+# SlapPyEngine — Architecture Guide
 
 ## Repository Layout
 

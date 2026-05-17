@@ -1,6 +1,6 @@
 ﻿# SlapPyEngine — Contributor Onboarding
 
-Welcome to SlapPyEngine. This document covers the architecture, the data model, and everything you need to ship your first change in about ten minutes. Read it top-to-bottom once; afterwards the [CLAUDE.md](CLAUDE.md) file is a faster reference for day-to-day conventions.
+Welcome to SlapPyEngine. This document covers the architecture, the data model, and everything you need to ship your first change in about ten minutes. Read it top-to-bottom once; afterwards the [ARCHITECTURE.md](ARCHITECTURE.md) file is a faster reference for day-to-day conventions.
 
 ---
 

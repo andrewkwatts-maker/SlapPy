@@ -82,16 +82,70 @@ The `slappyengine._core` extension module (compiled via PyO3 + maturin) provides
 
 ---
 
-## Games Built with SlapPyEngine
+## Making Your Game
 
-### Bullet Strata
-Top-down arena shooter with procedurally generated wave patterns, per-layer parallax backgrounds, and online P2P co-op. Features a multi-layer boss arena where foreground and background are independent 2D layers with shared lighting.
+### 1 — Scaffold a new project
 
-### Ochema Circuit
-Vehicle builder and racing game. Players assemble vehicles from pixel-art part tiles; the physics simulation (Rust core) resolves per-part joints at 120 Hz. Tracks are hand-authored `.slap` asset bundles.
+```bash
+slap new MyGame
+cd MyGame
+slap run
+```
 
-### Stone Keep
-Castle defense strategy game with a hybrid 2D/3D view: the castle is a 3D layer, the battlefield is a 2D pixel-art layer beneath it. Spatial audio routes unit sounds through the engine's positional mixer.
+This creates a ready-to-run project with `Content/`, `Source/`, `Config/`, and `Builds/` folders plus platform build scripts (`Build_EXE.bat`, `Build_Web.bat`, `Build_APK.bat`).
+
+### 2 — Add a scene
+
+```python
+# Source/scenes/level1.py
+import slappyengine as se
+
+class Level1(se.Scene):
+    def on_create(self):
+        hero = se.Asset.from_image("Content/Assets/sprites/hero.png", name="Hero")
+        hero.position = (400.0, 300.0)
+        self.add(hero)
+
+        self.lighting.add(se.DirectionalLight(direction=(0.707, 0.707), intensity=1.2))
+```
+
+### 3 — Wire player input
+
+```python
+from slappyengine.input import ActionMap
+
+engine.add_player(ActionMap.wasd(player_id=0))
+# Scripts receive on_action(action, player_id, pressed) calls automatically
+```
+
+### 4 — Add physics
+
+```python
+from slappyengine import PhysicsComponent, CollisionComponent, AABBShape
+
+hero.add_component(PhysicsComponent(gravity_scale=1.0))
+hero.add_component(CollisionComponent(shape=AABBShape(32, 48)))
+```
+
+### 5 — Script behaviour
+
+```python
+from slappyengine.script import Script
+
+class EnemyAI(Script):
+    def on_update(self, entity, dt):
+        entity.position = (entity.position[0] - 60 * dt, entity.position[1])
+
+enemy.attach_script(EnemyAI())
+```
+
+### 6 — Build and ship
+
+```bash
+slap build --target=exe      # Windows EXE via PyInstaller
+slap build --target=web      # Browser (Pyodide + WebGPU)
+slap build --target=apk      # Android APK via Buildozer
+```
 
 ---
 
