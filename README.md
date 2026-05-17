@@ -9,13 +9,13 @@ Build fast, expressive games in Python — from classic pixel-art shooters to hy
 ## Features
 
 - **2D pixel-art pipeline** — per-tile compute shaders, sprite batching, palette swapping, and atlas packing
-- **Optional 3D layers** — PBR mesh rendering composited over the 2D scene (`pip install playslap[3d]`)
+- **Optional 3D layers** — PBR mesh rendering composited over the 2D scene (`pip install slappyengine[3d]`)
 - **Per-layer lighting** — independent ambient, point, and directional lights on each scene layer
 - **Cross-platform GPU** — wgpu backend targets Vulkan, Metal, and DirectX 12 from a single code path
 - **Rust `_core` backend** — performance-critical subsystems (asset I/O, LZ4 compression, physics) compiled via PyO3/maturin
-- **DearPyGui editor** — Nova3D dark-themed in-engine editor with toolbar, gizmos, and Code Mode (`pip install playslap[editor]`)
-- **P2P networking** — Kademlia DHT + ICE hole-punching for low-latency peer-to-peer multiplayer (`pip install playslap[network]`)
-- **Spatial audio** — positional audio with rolloff curves (`pip install playslap[audio]`)
+- **DearPyGui editor** — Nova3D dark-themed in-engine editor with toolbar, gizmos, and Code Mode (`pip install slappyengine[editor]`)
+- **P2P networking** — Kademlia DHT + ICE hole-punching for low-latency peer-to-peer multiplayer (`pip install slappyengine[network]`)
+- **Spatial audio** — positional audio with rolloff curves (`pip install slappyengine[audio]`)
 
 ---
 
@@ -23,13 +23,13 @@ Build fast, expressive games in Python — from classic pixel-art shooters to hy
 
 ```bash
 # Core engine (2D only)
-pip install playslap
+pip install slappyengine
 
 # With 3D layer support
-pip install playslap[3d]
+pip install slappyengine[3d]
 
 # Full stack: editor, networking, audio, video
-pip install playslap[editor,network,audio,video]
+pip install slappyengine[editor,network,audio,video]
 ```
 
 Requires Python 3.11+ and a GPU driver that supports Vulkan, Metal, or DirectX 12.
@@ -39,7 +39,7 @@ Requires Python 3.11+ and a GPU driver that supports Vulkan, Metal, or DirectX 1
 ## Quick Start
 
 ```python
-import playslap as sle
+import slappyengine as sle
 
 engine = sle.Engine(title="My Game", width=640, height=360)
 
@@ -67,11 +67,11 @@ Each `Layer2D` is a WGSL compute pass. Tiles are packed into a GPU buffer; per-f
 
 ### Cross-Layer Baking
 
-The compositor (`playslap.compose`) resolves layer order, blending modes, and shared lighting probes into a single swap-chain frame. Baked lightmaps are stored in `.slap` asset bundles (LZ4-compressed, built by the Rust core).
+The compositor (`slappyengine.compose`) resolves layer order, blending modes, and shared lighting probes into a single swap-chain frame. Baked lightmaps are stored in `.slap` asset bundles (LZ4-compressed, built by the Rust core).
 
 ### Rust `_core`
 
-The `playslap._core` extension module (compiled via PyO3 + maturin) provides:
+The `slappyengine._core` extension module (compiled via PyO3 + maturin) provides:
 
 | Module | Responsibility |
 |---|---|

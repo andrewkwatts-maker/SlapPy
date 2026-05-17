@@ -1,12 +1,12 @@
-"""
+﻿"""
 Tests for struct registry and shader generation — no GPU required.
 """
 import pytest
 
-from playslap.struct_registry import StructRegistry, StructModule
-from playslap.shader_gen import ShaderGen
-from playslap.modules.health import HealthModule
-from playslap.modules.physics import PhysicsModule
+from slappyengine.struct_registry import StructRegistry, StructModule
+from slappyengine.shader_gen import ShaderGen
+from slappyengine.modules.health import HealthModule
+from slappyengine.modules.physics import PhysicsModule
 
 
 # ---------------------------------------------------------------------------

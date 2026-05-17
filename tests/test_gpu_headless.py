@@ -1,4 +1,4 @@
-"""GPU tests that run without a display window.
+﻿"""GPU tests that run without a display window.
 
 All tests skip gracefully if no GPU adapter is available (CI).
 """
@@ -48,9 +48,9 @@ def test_texture_upload(gpu_device):
 
 def test_storage_buffer_size(gpu_device):
     """Storage buffer stride matches struct registry layout."""
-    from playslap.struct_registry import StructRegistry
-    from playslap.modules.health import HealthModule
-    from playslap.modules.physics import PhysicsModule
+    from slappyengine.struct_registry import StructRegistry
+    from slappyengine.modules.health import HealthModule
+    from slappyengine.modules.physics import PhysicsModule
 
     reg = StructRegistry()
     reg.register(HealthModule)

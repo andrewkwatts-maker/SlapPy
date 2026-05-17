@@ -1,4 +1,4 @@
-"""Hello Bake — 3D-to-2D baking and 2D-to-3D heightmap displacement.
+﻿"""Hello Bake — 3D-to-2D baking and 2D-to-3D heightmap displacement.
 
 Demonstrates two cross-layer baking operations:
 
@@ -15,12 +15,12 @@ Run:
     python examples/hello_bake.py
 """
 import numpy as np
-import playslap as se
-from playslap.asset import Asset
-from playslap.layer import Layer
-from playslap.scene import Scene
-from playslap.gpu.mesh import GpuMesh
-from playslap.gpu.pbr_material import PbrMaterial
+import slappyengine as se
+from slappyengine.asset import Asset
+from slappyengine.layer import Layer
+from slappyengine.scene import Scene
+from slappyengine.gpu.mesh import GpuMesh
+from slappyengine.gpu.pbr_material import PbrMaterial
 
 engine = se.Engine(width=640, height=360, title="Hello Bake")
 scene = Scene(name="HelloBake")

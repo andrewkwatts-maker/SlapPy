@@ -1,5 +1,5 @@
-"""
-Tests for the FABRIK inverse-kinematics solver exposed by playslap._core.
+﻿"""
+Tests for the FABRIK inverse-kinematics solver exposed by SlapPyEngine._core.
 
 All tests use pytest.importorskip so the suite degrades gracefully when the
 Rust extension has not been built yet (i.e. before `maturin develop` is run).
@@ -13,7 +13,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def test_compute_bone_lengths_basic():
-    _core = pytest.importorskip("playslap._core")
+    _core = pytest.importorskip("SlapPyEngine._core")
     positions = [(0.0, 0.0), (1.0, 0.0), (2.0, 0.0)]
     lengths = _core.compute_bone_lengths(positions)
     assert len(lengths) == 2
@@ -26,7 +26,7 @@ def test_compute_bone_lengths_basic():
 # ---------------------------------------------------------------------------
 
 def test_compute_bone_lengths_diagonal():
-    _core = pytest.importorskip("playslap._core")
+    _core = pytest.importorskip("SlapPyEngine._core")
     positions = [(0.0, 0.0), (1.0, 1.0)]
     lengths = _core.compute_bone_lengths(positions)
     assert abs(lengths[0] - math.sqrt(2.0)) < 0.001
@@ -38,7 +38,7 @@ def test_compute_bone_lengths_diagonal():
 
 def test_solve_ik_reaches_target():
     """End effector should reach the target within tolerance."""
-    _core = pytest.importorskip("playslap._core")
+    _core = pytest.importorskip("SlapPyEngine._core")
     # 2-link chain, each bone length 1.0
     chain = [(0.0, 0.0), (1.0, 0.0), (2.0, 0.0)]
     lengths = _core.compute_bone_lengths(chain)
@@ -56,7 +56,7 @@ def test_solve_ik_reaches_target():
 
 def test_solve_ik_root_stays_fixed():
     """Root joint must not move after solving."""
-    _core = pytest.importorskip("playslap._core")
+    _core = pytest.importorskip("SlapPyEngine._core")
     chain = [(0.0, 0.0), (1.0, 0.0), (2.0, 0.0)]
     lengths = _core.compute_bone_lengths(chain)
     target = (0.5, 1.5)
@@ -71,7 +71,7 @@ def test_solve_ik_root_stays_fixed():
 
 def test_solve_ik_bone_lengths_preserved():
     """Each bone length should be approximately preserved after solving."""
-    _core = pytest.importorskip("playslap._core")
+    _core = pytest.importorskip("SlapPyEngine._core")
     chain = [(0.0, 0.0), (0.0, 1.0), (0.0, 2.0), (0.0, 3.0)]
     lengths = _core.compute_bone_lengths(chain)
     target = (1.0, 2.0)
@@ -91,7 +91,7 @@ def test_solve_ik_bone_lengths_preserved():
 
 def test_solve_ik_unreachable_target():
     """When target is beyond reach, chain should stretch toward it without crashing."""
-    _core = pytest.importorskip("playslap._core")
+    _core = pytest.importorskip("SlapPyEngine._core")
     chain = [(0.0, 0.0), (1.0, 0.0)]
     lengths = _core.compute_bone_lengths(chain)
     target = (100.0, 0.0)  # far beyond reach
@@ -107,7 +107,7 @@ def test_solve_ik_unreachable_target():
 
 def test_solve_ik_three_link():
     """Three-link chain IK test."""
-    _core = pytest.importorskip("playslap._core")
+    _core = pytest.importorskip("SlapPyEngine._core")
     chain = [(0.0, 0.0), (1.0, 0.0), (2.0, 0.0), (3.0, 0.0)]
     lengths = _core.compute_bone_lengths(chain)
     target = (0.0, 3.0)  # 90-degree rotation
@@ -123,7 +123,7 @@ def test_solve_ik_three_link():
 
 def test_solve_ik_already_at_target():
     """No-op: end effector is already at target."""
-    _core = pytest.importorskip("playslap._core")
+    _core = pytest.importorskip("SlapPyEngine._core")
     chain = [(0.0, 0.0), (1.0, 0.0)]
     lengths = _core.compute_bone_lengths(chain)
     target = (1.0, 0.0)

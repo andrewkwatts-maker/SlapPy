@@ -1,7 +1,7 @@
-"""
+﻿"""
 Tests for the node-based material graph system.
 
-The NodeMaterial class lives in playslap.material.node_material, which is
+The NodeMaterial class lives in SlapPyEngine.material.node_material, which is
 being created by a parallel agent.  Every import of that subpackage is wrapped
 in a try/except ImportError so the suite degrades gracefully when the module
 (or the Rust _core extension) is not yet present.
@@ -16,9 +16,9 @@ import pytest
 
 def test_node_def_auto_id():
     try:
-        from playslap.material.node_material import NodeDef, UVNode
+        from slappyengine.material.node_material import NodeDef, UVNode
     except ImportError:
-        pytest.skip("playslap.material.node_material not available")
+        pytest.skip("SlapPyEngine.material.node_material not available")
 
     n = UVNode()
     assert isinstance(n.id, str)
@@ -32,9 +32,9 @@ def test_node_def_auto_id():
 
 def test_node_def_ids_are_unique():
     try:
-        from playslap.material.node_material import UVNode
+        from slappyengine.material.node_material import UVNode
     except ImportError:
-        pytest.skip("playslap.material.node_material not available")
+        pytest.skip("SlapPyEngine.material.node_material not available")
 
     ids = {UVNode().id for _ in range(50)}
     assert len(ids) == 50
@@ -46,7 +46,7 @@ def test_node_def_ids_are_unique():
 
 def test_node_material_build_and_serialize():
     try:
-        from playslap.material.node_material import (
+        from slappyengine.material.node_material import (
             NodeMaterial,
             UVNode,
             GravityWarpNode,
@@ -54,7 +54,7 @@ def test_node_material_build_and_serialize():
             FinalColorNode,
         )
     except ImportError:
-        pytest.skip("playslap.material.node_material not available")
+        pytest.skip("SlapPyEngine.material.node_material not available")
 
     mat = NodeMaterial("test")
     uv = mat.node(UVNode())
@@ -79,13 +79,13 @@ def test_node_material_build_and_serialize():
 
 def test_node_material_roundtrip():
     try:
-        from playslap.material.node_material import (
+        from slappyengine.material.node_material import (
             NodeMaterial,
             UVNode,
             FinalColorNode,
         )
     except ImportError:
-        pytest.skip("playslap.material.node_material not available")
+        pytest.skip("SlapPyEngine.material.node_material not available")
 
     mat = NodeMaterial("rt")
     mat.node(UVNode())
@@ -105,12 +105,12 @@ def test_node_material_roundtrip():
 def test_node_material_roundtrip_name():
     """from_json must use the supplied name, not one from the JSON blob."""
     try:
-        from playslap.material.node_material import (
+        from slappyengine.material.node_material import (
             NodeMaterial,
             UVNode,
         )
     except ImportError:
-        pytest.skip("playslap.material.node_material not available")
+        pytest.skip("SlapPyEngine.material.node_material not available")
 
     mat = NodeMaterial("original")
     mat.node(UVNode())
@@ -126,9 +126,9 @@ def test_node_material_roundtrip_name():
 def test_node_material_json_structure():
     """Serialised JSON must contain top-level 'nodes' and 'edges' keys."""
     try:
-        from playslap.material.node_material import NodeMaterial, UVNode
+        from slappyengine.material.node_material import NodeMaterial, UVNode
     except ImportError:
-        pytest.skip("playslap.material.node_material not available")
+        pytest.skip("SlapPyEngine.material.node_material not available")
 
     mat = NodeMaterial("s")
     mat.node(UVNode())
@@ -147,13 +147,13 @@ def test_node_material_json_structure():
 def test_node_material_node_entries():
     """Each serialised node must carry at least 'id' and 'type'."""
     try:
-        from playslap.material.node_material import (
+        from slappyengine.material.node_material import (
             NodeMaterial,
             UVNode,
             FinalColorNode,
         )
     except ImportError:
-        pytest.skip("playslap.material.node_material not available")
+        pytest.skip("SlapPyEngine.material.node_material not available")
 
     mat = NodeMaterial("s")
     uv = mat.node(UVNode())
@@ -172,9 +172,9 @@ def test_node_material_node_entries():
 
 def test_graph_schema_valid():
     try:
-        from playslap.material.graph_schema import validate_node_graph
+        from slappyengine.material.graph_schema import validate_node_graph
     except ImportError:
-        pytest.skip("playslap.material.graph_schema not available")
+        pytest.skip("SlapPyEngine.material.graph_schema not available")
 
     graph = {
         "nodes": [
@@ -200,9 +200,9 @@ def test_graph_schema_valid():
 
 def test_graph_schema_duplicate_ids():
     try:
-        from playslap.material.graph_schema import validate_node_graph
+        from slappyengine.material.graph_schema import validate_node_graph
     except ImportError:
-        pytest.skip("playslap.material.graph_schema not available")
+        pytest.skip("SlapPyEngine.material.graph_schema not available")
 
     graph = {
         "nodes": [
@@ -221,9 +221,9 @@ def test_graph_schema_duplicate_ids():
 
 def test_graph_schema_bad_edge_ref():
     try:
-        from playslap.material.graph_schema import validate_node_graph
+        from slappyengine.material.graph_schema import validate_node_graph
     except ImportError:
-        pytest.skip("playslap.material.graph_schema not available")
+        pytest.skip("SlapPyEngine.material.graph_schema not available")
 
     graph = {
         "nodes": [{"id": "a", "type": "UV", "params": {}}],
@@ -246,9 +246,9 @@ def test_graph_schema_bad_edge_ref():
 
 def test_graph_schema_empty_graph():
     try:
-        from playslap.material.graph_schema import validate_node_graph
+        from slappyengine.material.graph_schema import validate_node_graph
     except ImportError:
-        pytest.skip("playslap.material.graph_schema not available")
+        pytest.skip("SlapPyEngine.material.graph_schema not available")
 
     graph = {"nodes": [], "edges": []}
     errors = validate_node_graph(graph)
@@ -262,9 +262,9 @@ def test_graph_schema_empty_graph():
 
 def test_graph_schema_edge_to_missing_target():
     try:
-        from playslap.material.graph_schema import validate_node_graph
+        from slappyengine.material.graph_schema import validate_node_graph
     except ImportError:
-        pytest.skip("playslap.material.graph_schema not available")
+        pytest.skip("SlapPyEngine.material.graph_schema not available")
 
     graph = {
         "nodes": [{"id": "a", "type": "UV", "params": {}}],
@@ -287,13 +287,13 @@ def test_graph_schema_edge_to_missing_target():
 
 def test_node_material_compile_requires_core():
     try:
-        from playslap.material.node_material import (
+        from slappyengine.material.node_material import (
             NodeMaterial,
             UVNode,
             FinalColorNode,
         )
     except ImportError:
-        pytest.skip("playslap.material.node_material not available")
+        pytest.skip("SlapPyEngine.material.node_material not available")
 
     mat = NodeMaterial("test")
     mat.node(UVNode())
@@ -317,9 +317,9 @@ def test_node_material_compile_requires_core():
 
 def test_gravity_warp_node_params():
     try:
-        from playslap.material.node_material import GravityWarpNode
+        from slappyengine.material.node_material import GravityWarpNode
     except ImportError:
-        pytest.skip("playslap.material.node_material not available")
+        pytest.skip("SlapPyEngine.material.node_material not available")
 
     node = GravityWarpNode(strength=2.0, radius=0.5)
     assert node.node_type == "GravityWarp"

@@ -1,4 +1,4 @@
-"""Hello Physics — pixel compute physics demo.
+﻿"""Hello Physics — pixel compute physics demo.
 
 Scatters 500 sand-coloured pixels near the top of a 256x256 canvas and
 enables the scene's pixel physics pass. On each GPU frame the engine
@@ -15,10 +15,10 @@ Run:
 """
 import random
 import numpy as np
-import playslap as se
-from playslap.asset import Asset
-from playslap.layer import Layer
-from playslap.scene import Scene
+import slappyengine as se
+from slappyengine.asset import Asset
+from slappyengine.layer import Layer
+from slappyengine.scene import Scene
 
 engine = se.Engine(width=256, height=256, title="Hello Physics")
 scene = Scene(name="HelloPhysics")

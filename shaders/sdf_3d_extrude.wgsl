@@ -30,7 +30,7 @@
 // CPU-SIDE FALLBACK DESCRIPTION
 // ─────────────────────────────────────────────────────────────────────────────
 // When a GPU context is unavailable the same mesh can be generated on CPU
-// (see SdfExtruder._extrude_cpu in python/playslap/gpu/sdf_extruder.py).
+// (see SdfExtruder._extrude_cpu in python/slappyengine/gpu/sdf_extruder.py).
 //
 // Algorithm outline:
 //   1. Normalise the alpha mask to [0.0, 1.0].

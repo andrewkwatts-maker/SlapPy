@@ -1,7 +1,7 @@
-"""
+﻿"""
 Editor demo — opens the DPG editor shell with a sample scene.
 
-Requirements: pip install playslap[editor]
+Requirements: pip install SlapPyEngine[editor]
 Run:          python examples/editor_demo.py
 
 What this example sets up
@@ -23,15 +23,15 @@ try:
     import dearpygui.dearpygui  # noqa: F401 — guard before any engine import
 except ImportError:
     print("Missing dependency: dearpygui")
-    print("Install with:  pip install playslap[editor]")
+    print("Install with:  pip install SlapPyEngine[editor]")
     raise SystemExit(1)
 
-import playslap as se
-from playslap.asset import Asset
-from playslap.layer import Layer
-from playslap.material import MaterialMap, ColorRange
-from playslap.scene import Scene
-from playslap.animation.graph import AnimationGraph, AnimState, AnimTransition
+import slappyengine as se
+from slappyengine.asset import Asset
+from slappyengine.layer import Layer
+from slappyengine.material import MaterialMap, ColorRange
+from slappyengine.scene import Scene
+from slappyengine.animation.graph import AnimationGraph, AnimState, AnimTransition
 
 
 # ---------------------------------------------------------------------------

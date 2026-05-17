@@ -1,11 +1,11 @@
-"""
+﻿"""
 Tests for ColorRange, MaterialDef, and MaterialMap — no GPU required.
 """
 from pathlib import Path
 
 import pytest
 
-from playslap.material import ColorRange, MaterialDef, MaterialMap
+from slappyengine.material import ColorRange, MaterialDef, MaterialMap
 
 
 # ---------------------------------------------------------------------------

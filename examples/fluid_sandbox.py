@@ -1,4 +1,4 @@
-"""
+﻿"""
 SlapPyEngine — Fluid Sandbox
 
 Demonstrates the material system and fluid simulation.
@@ -6,11 +6,11 @@ Blue pixels flow as water; brown pixels clump as soil.
 (Compute shaders implemented in M4 — this example shows the API.)
 """
 import numpy as np
-import playslap as se
-from playslap.asset import Asset
-from playslap.layer import Layer
-from playslap.material import MaterialMap, ColorRange
-from playslap.scene import Scene
+import slappyengine as se
+from slappyengine.asset import Asset
+from slappyengine.layer import Layer
+from slappyengine.material import MaterialMap, ColorRange
+from slappyengine.scene import Scene
 
 engine = se.Engine(title="Fluid Sandbox")
 scene = Scene(name="Sandbox")
@@ -42,7 +42,7 @@ asset.material_map.add(
 
 # Optional: apply a NodeMaterial vortex effect (requires _core extension)
 try:
-    from playslap.material.node_material import (
+    from slappyengine.material.node_material import (
         NodeMaterial, UVNode, GravityWarpNode, SampleTextureNode, FinalColorNode
     )
     mat = NodeMaterial("vortex")

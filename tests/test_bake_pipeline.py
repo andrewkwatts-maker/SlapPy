@@ -1,11 +1,11 @@
-"""Tests for cross-layer baking: 3D→2D and 2D→3D inputs — no GPU required."""
+﻿"""Tests for cross-layer baking: 3D→2D and 2D→3D inputs — no GPU required."""
 import numpy as np
 import pytest
 
 
 def test_bake_to_2d_no_renderer():
     """bake_to_2d() on a 3D layer with no renderer returns a blank 2D Layer."""
-    from playslap.layer import Layer
+    from slappyengine.layer import Layer
 
     layer = Layer.blank(64, 64, mode="3D")
     baked = layer.bake_to_2d((32, 32))
@@ -17,7 +17,7 @@ def test_bake_to_2d_no_renderer():
 
 def test_bake_to_2d_name_contains_baked():
     """bake_to_2d() names the returned layer with '_baked' suffix."""
-    from playslap.layer import Layer
+    from slappyengine.layer import Layer
 
     layer = Layer.blank(64, 64, name="City3D", mode="3D")
     baked = layer.bake_to_2d((32, 32))
@@ -27,7 +27,7 @@ def test_bake_to_2d_name_contains_baked():
 
 def test_bake_to_2d_output_size():
     """bake_to_2d() returns a Layer whose image data matches the requested size."""
-    from playslap.layer import Layer
+    from slappyengine.layer import Layer
 
     layer = Layer.blank(64, 64, mode="3D")
     baked = layer.bake_to_2d((32, 32))
@@ -41,7 +41,7 @@ def test_bake_to_2d_output_size():
 
 def test_bake_to_2d_wrong_mode():
     """bake_to_2d() on a 2D layer raises ValueError."""
-    from playslap.layer import Layer
+    from slappyengine.layer import Layer
 
     layer = Layer.blank(64, 64)
     with pytest.raises(ValueError, match="3D"):
@@ -50,7 +50,7 @@ def test_bake_to_2d_wrong_mode():
 
 def test_apply_heightmap_no_mesh():
     """apply_heightmap() on a 3D layer with no mesh is a no-op (no crash)."""
-    from playslap.layer import Layer
+    from slappyengine.layer import Layer
 
     layer_3d = Layer.blank(64, 64, mode="3D")
     layer_2d = Layer.blank(64, 64)
@@ -62,8 +62,8 @@ def test_apply_heightmap_no_mesh():
 
 def test_apply_heightmap_displaces_vertices():
     """apply_heightmap() displaces vertex Z positions by pixel luminance × scale."""
-    from playslap.layer import Layer
-    from playslap.gpu.mesh import GpuMesh
+    from slappyengine.layer import Layer
+    from slappyengine.gpu.mesh import GpuMesh
 
     layer_3d = Layer.blank(64, 64, mode="3D")
     layer_3d.mesh_geometry = GpuMesh.unit_quad()
@@ -85,8 +85,8 @@ def test_apply_heightmap_displaces_vertices():
 
 def test_apply_heightmap_scale_zero_no_displacement():
     """apply_heightmap() with scale=0.0 leaves all vertex Z positions unchanged."""
-    from playslap.layer import Layer
-    from playslap.gpu.mesh import GpuMesh
+    from slappyengine.layer import Layer
+    from slappyengine.gpu.mesh import GpuMesh
 
     layer_3d = Layer.blank(64, 64, mode="3D")
     layer_3d.mesh_geometry = GpuMesh.unit_quad()
@@ -103,8 +103,8 @@ def test_apply_heightmap_scale_zero_no_displacement():
 
 def test_apply_heightmap_black_image_no_displacement():
     """apply_heightmap() with an all-black image leaves Z positions unchanged."""
-    from playslap.layer import Layer
-    from playslap.gpu.mesh import GpuMesh
+    from slappyengine.layer import Layer
+    from slappyengine.gpu.mesh import GpuMesh
 
     layer_3d = Layer.blank(64, 64, mode="3D")
     layer_3d.mesh_geometry = GpuMesh.unit_quad()
@@ -122,8 +122,8 @@ def test_apply_heightmap_black_image_no_displacement():
 
 def test_apply_heightmap_invalidates_gpu_buffer():
     """apply_heightmap() sets _vertex_buf to None to force re-upload."""
-    from playslap.layer import Layer
-    from playslap.gpu.mesh import GpuMesh
+    from slappyengine.layer import Layer
+    from slappyengine.gpu.mesh import GpuMesh
 
     layer_3d = Layer.blank(64, 64, mode="3D")
     layer_3d.mesh_geometry = GpuMesh.unit_quad()
@@ -139,8 +139,8 @@ def test_apply_heightmap_invalidates_gpu_buffer():
 
 def test_apply_normal_map_creates_material():
     """apply_normal_map() creates PbrMaterial if none exists."""
-    from playslap.layer import Layer
-    from playslap.gpu.pbr_material import PbrMaterial
+    from slappyengine.layer import Layer
+    from slappyengine.gpu.pbr_material import PbrMaterial
 
     layer_3d = Layer.blank(64, 64, mode="3D")
     layer_2d = Layer.blank(64, 64)
@@ -154,8 +154,8 @@ def test_apply_normal_map_creates_material():
 
 def test_apply_normal_map_reuses_existing_material():
     """apply_normal_map() does not replace an existing PbrMaterial instance."""
-    from playslap.layer import Layer
-    from playslap.gpu.pbr_material import PbrMaterial
+    from slappyengine.layer import Layer
+    from slappyengine.gpu.pbr_material import PbrMaterial
 
     layer_3d = Layer.blank(64, 64, mode="3D")
     existing = PbrMaterial(metallic=0.9, roughness=0.1)
@@ -171,7 +171,7 @@ def test_apply_normal_map_reuses_existing_material():
 
 def test_apply_normal_map_wrong_mode():
     """apply_normal_map() on a 2D layer raises ValueError."""
-    from playslap.layer import Layer
+    from slappyengine.layer import Layer
 
     layer_2d_target = Layer.blank(64, 64)
     layer_2d_source = Layer.blank(64, 64)
@@ -182,8 +182,8 @@ def test_apply_normal_map_wrong_mode():
 
 def test_apply_albedo_creates_material():
     """apply_albedo() creates PbrMaterial if none exists."""
-    from playslap.layer import Layer
-    from playslap.gpu.pbr_material import PbrMaterial
+    from slappyengine.layer import Layer
+    from slappyengine.gpu.pbr_material import PbrMaterial
 
     layer_3d = Layer.blank(64, 64, mode="3D")
     layer_2d = Layer.blank(64, 64)
@@ -197,8 +197,8 @@ def test_apply_albedo_creates_material():
 
 def test_apply_albedo_reuses_existing_material():
     """apply_albedo() does not replace an existing PbrMaterial instance."""
-    from playslap.layer import Layer
-    from playslap.gpu.pbr_material import PbrMaterial
+    from slappyengine.layer import Layer
+    from slappyengine.gpu.pbr_material import PbrMaterial
 
     layer_3d = Layer.blank(64, 64, mode="3D")
     existing = PbrMaterial(metallic=0.3, roughness=0.8)
@@ -213,7 +213,7 @@ def test_apply_albedo_reuses_existing_material():
 
 def test_apply_albedo_wrong_mode():
     """apply_albedo() on a 2D layer raises ValueError."""
-    from playslap.layer import Layer
+    from slappyengine.layer import Layer
 
     layer_2d_target = Layer.blank(64, 64)
     layer_2d_source = Layer.blank(64, 64)
@@ -224,7 +224,7 @@ def test_apply_albedo_wrong_mode():
 
 def test_apply_heightmap_wrong_mode():
     """apply_heightmap() on a 2D layer raises ValueError."""
-    from playslap.layer import Layer
+    from slappyengine.layer import Layer
 
     layer_2d_target = Layer.blank(64, 64)
     layer_2d_source = Layer.blank(64, 64)
@@ -235,7 +235,7 @@ def test_apply_heightmap_wrong_mode():
 
 def test_bake_pipeline_roundtrip_size():
     """bake_to_2d returns a layer with the exact requested dimensions."""
-    from playslap.layer import Layer
+    from slappyengine.layer import Layer
 
     for size in [(16, 16), (64, 32), (128, 256)]:
         layer = Layer.blank(64, 64, mode="3D")
