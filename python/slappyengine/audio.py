@@ -1,8 +1,11 @@
-﻿"""
+"""
 Audio system — spatial sound playback via sounddevice + soundfile.
 
 Optional extra: pip install SlapPyEngine[audio]
-Falls back gracefully if sounddevice/soundfile not installed.
+Falls back gracefully if sounddevice/soundfile not installed. When
+sounddevice is missing, the engine logs a single WARNING at import time
+(see `audio_runtime`) and playback becomes a no-op stub rather than
+raising — games stay importable but ship muted, loudly.
 
 Usage:
     audio = engine.audio
@@ -13,8 +16,9 @@ Usage:
 """
 from __future__ import annotations
 import threading
-from pathlib import Path
 from typing import Any
+
+from . import audio_runtime
 
 
 class SoundHandle:
@@ -33,16 +37,20 @@ class AudioManager:
     """
 
     def __init__(self):
+        # Playback is routed through `audio_runtime` so we degrade gracefully
+        # when sounddevice is missing. `soundfile` is still a soft import
+        # because it owns `load()`; without it, the manager reports
+        # unavailable and returns None from `load()`.
         try:
-            import sounddevice as sd
             import soundfile as sf
-            self._sd = sd
             self._sf = sf
-            self._available = True
         except ImportError:
-            self._sd = None
             self._sf = None
-            self._available = False
+        backend = audio_runtime.get_backend()
+        # Available iff we can both decode files and route them to a real
+        # backend. Stub backend ⇒ no audible playback ⇒ available == False
+        # (preserves prior contract: `audio.available` gates spawn calls).
+        self._available = (self._sf is not None) and backend.is_real()
         self._cache: dict[str, SoundHandle] = {}
         self._master_volume: float = 1.0
 
@@ -51,7 +59,7 @@ class AudioManager:
         return self._available
 
     def load(self, path: str) -> SoundHandle | None:
-        if not self._available:
+        if self._sf is None:
             return None
         if path in self._cache:
             return self._cache[path]
@@ -70,20 +78,25 @@ class AudioManager:
         volume: float = 1.0,
         loop: bool = False,
     ) -> None:
-        if handle is None or not self._available:
+        if handle is None:
             return
         vol = volume * self._master_volume
         data = handle.data * vol
-        sd = self._sd
         sr = handle.samplerate
+        backend = audio_runtime.get_backend()
 
         def _play():
             try:
-                sd.play(data, sr)
+                backend.play_buffer(data, sr)
                 if loop:
+                    # Best-effort loop: re-submit on a fixed cadence based
+                    # on buffer length. Real backend's sd.wait() isn't on the
+                    # AudioBackend protocol, so we sleep instead.
+                    import time
+                    interval = max(len(data) / float(sr), 0.01)
                     while True:
-                        sd.wait()
-                        sd.play(data, sr)
+                        time.sleep(interval)
+                        backend.play_buffer(data, sr)
             except Exception:
                 pass
 
@@ -98,7 +111,7 @@ class AudioManager:
         max_dist: float = 500.0,
         loop: bool = False,
     ) -> None:
-        if handle is None or not self._available:
+        if handle is None:
             return
         dx = source_pos[0] - listener_pos[0]
         dy = source_pos[1] - listener_pos[1]
@@ -117,17 +130,15 @@ class AudioManager:
         right_vol = volume * (1.0 + min(0.0, pan))
         data[:, 0] *= left_vol * self._master_volume
         data[:, 1] *= right_vol * self._master_volume
-        sd = self._sd
         sr = handle.samplerate
-        t = threading.Thread(target=lambda: sd.play(data, sr), daemon=True)
+        backend = audio_runtime.get_backend()
+        t = threading.Thread(
+            target=lambda: backend.play_buffer(data, sr), daemon=True
+        )
         t.start()
 
     def stop_all(self) -> None:
-        if self._available:
-            try:
-                self._sd.stop()
-            except Exception:
-                pass
+        audio_runtime.get_backend().stop_all()
 
     @property
     def master_volume(self) -> float:
@@ -136,3 +147,16 @@ class AudioManager:
     @master_volume.setter
     def master_volume(self, v: float) -> None:
         self._master_volume = max(0.0, min(1.0, v))
+
+
+def play_sound(handle: SoundHandle | None, sample_rate: int | None = None) -> None:
+    """Module-level convenience playback hook.
+
+    Routes through `audio_runtime.get_backend().play_buffer(...)` so tests
+    (and downstream callers) can submit a raw buffer without instantiating
+    an `AudioManager`. Returns silently when `handle` is None.
+    """
+    if handle is None:
+        return
+    sr = sample_rate if sample_rate is not None else getattr(handle, "samplerate", 44100)
+    audio_runtime.get_backend().play_buffer(handle.data, sr)
