@@ -80,6 +80,7 @@ class SceneOutliner:
                     label="+ Add",
                     width=70,
                     height=22,
+                    tag="outliner_add_btn",
                     callback=self._on_add_entity,
                 )
                 dpg.add_button(
@@ -88,6 +89,36 @@ class SceneOutliner:
                     height=22,
                     callback=self._on_delete_entity,
                 )
+
+            # Popup attached to the "+ Add" button — contains the
+            # spawn_menu.SPAWN_ACTIONS entries.  Left-click on the button
+            # opens the popup (mousebutton=0).
+            try:
+                from slappyengine.ui.editor.spawn_menu import (
+                    SPAWN_ACTIONS,
+                    open_spawn_modal,
+                )
+            except Exception:
+                SPAWN_ACTIONS = []
+                open_spawn_modal = None  # type: ignore[assignment]
+
+            if SPAWN_ACTIONS and open_spawn_modal is not None:
+                with dpg.popup(
+                    parent="outliner_add_btn",
+                    mousebutton=0,
+                    tag="outliner_add_popup",
+                ):
+                    dpg.add_text("Spawn", color=[180, 180, 200, 255])
+                    dpg.add_separator()
+                    for action in SPAWN_ACTIONS:
+                        # Bind action at default-arg time so the closure
+                        # doesn't capture the loop variable.
+                        dpg.add_menu_item(
+                            label=action["label"],
+                            callback=lambda s, a, u, act=action: (
+                                open_spawn_modal(act, self._scene)
+                            ),
+                        )
 
             dpg.add_separator()
 
