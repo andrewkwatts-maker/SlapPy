@@ -288,6 +288,12 @@ def __getattr__(name: str):
         "tools",
         "ui",
         "ai",
+        # Phase B: generic zone primitive (damage zones, trigger volumes,
+        # spawn pads). Registered as a subpackage so
+        # ``from slappyengine import zones`` returns the module itself.
+        # See ``slappyengine.zones.RectZone`` / ``ThresholdZone`` /
+        # ``ZoneManager`` for the public surface.
+        "zones",
     }
     if name in _subpackages:
         import importlib
