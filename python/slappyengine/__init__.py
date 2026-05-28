@@ -151,6 +151,25 @@ _LAZY_MAP: dict[str, str] = {
     "PlayerInputProvider": ".input_provider",
     "CacheMode":           ".residency.manager",
     "PixelCollisionPass":  ".collision",
+    # vehicle (softbody.vehicle re-exports for legacy game imports)
+    "build_vehicle":          ".softbody.vehicle",
+    "VehicleSpec":            ".softbody.vehicle",
+    "WheelSpec":              ".softbody.vehicle",
+    "apply_drivetrain_torque":".softbody.vehicle",
+    # post-process passes Ochema's RaceScene composes
+    "DofPass":         ".post_process.dof",
+    "MotionBlurPass":  ".post_process.motion_blur",
+    "GTAOPass":        ".post_process.gtao",
+    # render channels (Ochema's render-channel ordering)
+    "RenderPass":      ".render_channel",
+    "NightVisionPass": ".render_channel",
+    # GI configuration (lighting context flag in race scene)
+    "RadianceCascadeConfig": ".lighting",
+    "LightingContext":       ".lighting",
+    # sim frequency / deform controller (per-frame physics budget)
+    "SimFrequencyBudget": ".deform_controller",
+    "SimState":           ".deform_controller",
+    "DeformController":   ".deform_controller",
     # residency
     "ResidencyManager": ".residency.manager",
     # animation
