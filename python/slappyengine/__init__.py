@@ -278,6 +278,7 @@ def __getattr__(name: str):
         "animation",
         "assets",
         "compute",
+        "dynamics",
         "ext",
         "gpu",
         "input",
