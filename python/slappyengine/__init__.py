@@ -221,6 +221,8 @@ _LAZY_MAP: dict[str, str] = {
     "LayerDataBuffer":                 ".layer",
     # asset database
     "AssetDatabase":                   ".assets.database",
+    # thermal (heat-Laplacian repackage — Phase B)
+    "thermal":                         ".thermal",
 }
 
 # ---------------------------------------------------------------------------
@@ -285,6 +287,7 @@ def __getattr__(name: str):
         "modules",
         "post_process",
         "residency",
+        "thermal",
         "tools",
         "ui",
         "ai",
