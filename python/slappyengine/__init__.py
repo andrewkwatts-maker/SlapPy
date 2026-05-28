@@ -290,6 +290,7 @@ def __getattr__(name: str):
         "numerics",
         "post_process",
         "residency",
+        "testing",
         "thermal",
         "tools",
         "ui",
