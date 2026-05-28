@@ -285,6 +285,7 @@ def __getattr__(name: str):
         "modules",
         "post_process",
         "residency",
+        "testing",
         "tools",
         "ui",
         "ai",
