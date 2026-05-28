@@ -129,6 +129,14 @@ class EditorShell:
             from slappyengine.ui.editor.scene_outliner import SceneOutliner
             self._scene_outliner = SceneOutliner()
 
+        # Register the spawn menu — the outliner reads
+        # ``spawn_menu.SPAWN_ACTIONS`` from its ``+ Add`` popup.  We
+        # surface the module on the shell so external code (e.g.
+        # plugin layers) can extend ``SPAWN_ACTIONS`` before the
+        # outliner is built.
+        from slappyengine.ui.editor import spawn_menu as _spawn_menu
+        self._spawn_menu = _spawn_menu
+
         if self._content_browser is None:
             from slappyengine.ui.editor.content_browser import ContentBrowser
             self._content_browser = ContentBrowser()
