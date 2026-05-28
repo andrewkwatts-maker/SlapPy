@@ -144,6 +144,13 @@ _LAZY_MAP: dict[str, str] = {
     "Landscape":        ".landscape",
     "Tile":             ".landscape",
     "TileCoord":        ".landscape",
+    # spline + track (race / spline-driven scenes)
+    "CatmullRomSpline": ".spline",
+    "SplineTrack":      ".track",
+    # input + collision (race scene + game systems)
+    "PlayerInputProvider": ".input_provider",
+    "CacheMode":           ".residency.manager",
+    "PixelCollisionPass":  ".collision",
     # residency
     "ResidencyManager": ".residency.manager",
     # animation
