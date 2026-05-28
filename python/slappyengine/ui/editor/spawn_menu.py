@@ -97,6 +97,151 @@ class SandSpec:
 
 
 # ---------------------------------------------------------------------------
+# Phase B+ dynamics primitives (rope / ragdoll / IK).
+#
+# The underlying ``slappyengine.dynamics`` builders accept the real
+# ``RopeSpec`` / ``RagdollSpec`` / ``IKChainSpec`` plus extra positional
+# arguments (anchor points, target points, root pin flags).  We mirror their
+# primitive fields here as authoring specs so the property-inspector
+# reflection picks each one up as a simple widget, and translate to the
+# real spec + extra args inside small adapter factories below.
+# ---------------------------------------------------------------------------
+
+@dataclass
+class RopeSpawnSpec:
+    """Parameters for ``_spawn_rope`` — flattened :class:`RopeSpec` + anchors."""
+    name: str = "rope"
+    node_count: int = 16
+    total_length: float = 32.0
+    mass_per_node: float = 0.1
+    stiffness: float = 1.0e6
+    damping: float = 0.05
+    bend_stiffness: float = 0.0
+    anchor_a: tuple[float, float] = (0.0, 0.0)
+    anchor_b: tuple[float, float] = (32.0, 0.0)
+    anchor_a_pinned: bool = True
+    anchor_b_pinned: bool = False
+
+
+@dataclass
+class RagdollSpawnSpec:
+    """Parameters for ``_spawn_ragdoll`` — basic humanoid stick figure.
+
+    Builds a default 4-bone skeleton (head, torso, two legs) at
+    ``anchor_pos`` with the given segment ``bone_length``.  Stiffness /
+    damping match :class:`RagdollSpec` defaults but expose them so authors
+    can tune the rig without leaving the modal.
+    """
+    name: str = "ragdoll"
+    anchor_pos: tuple[float, float] = (0.0, 0.0)
+    bone_count: int = 4
+    bone_length: float = 8.0
+    bone_mass: float = 1.0
+    stiffness: float = 5.0e6
+    damping: float = 0.05
+    pin_root: bool = True
+
+
+@dataclass
+class IKChainSpawnSpec:
+    """Parameters for ``_spawn_ik_chain``.
+
+    ``node_indices_csv`` is a CSV string the inspector can edit as a plain
+    text field; the adapter parses it back to a list of ints before
+    constructing the real :class:`IKChainSpec`.
+    """
+    name: str = "ik_chain"
+    node_indices_csv: str = "0,1,2,3"
+    target: tuple[float, float] = (16.0, 0.0)
+    fixed_root: bool = True
+    iterations: int = 10
+    tolerance: float = 0.01
+
+
+# ---------------------------------------------------------------------------
+# Adapter factories for dynamics primitives.
+#
+# The dynamics builders take ``(spec, world, *extra)``; the spawn modal
+# calls ``factory(world, **kwargs)``.  These adapters bridge the two —
+# they live at module scope so :func:`_resolve_factory` can find them via
+# the standard dotted-path lookup just like the softbody / fluid entries.
+# ---------------------------------------------------------------------------
+
+def _spawn_rope(world: Any, **kwargs: Any) -> Any:
+    """Build a :class:`RopeSpec` from kwargs and call :func:`build_rope`."""
+    from slappyengine.dynamics.rope import RopeSpec, build_rope
+
+    anchor_a = kwargs.pop("anchor_a", (0.0, 0.0))
+    anchor_b = kwargs.pop("anchor_b", (32.0, 0.0))
+    kwargs.pop("name", None)  # cosmetic only; not on RopeSpec
+    spec = RopeSpec(**kwargs)
+    return build_rope(spec, world, anchor_a, anchor_b)
+
+
+def _spawn_ragdoll(world: Any, **kwargs: Any) -> Any:
+    """Build a default ragdoll skeleton and call :func:`build_ragdoll`.
+
+    Lays out ``bone_count`` bones in a vertical chain (root → tip), all
+    with the same ``bone_length`` / ``bone_mass``.  Authors who need a
+    custom topology should call :func:`build_ragdoll` directly with their
+    own :class:`BoneSpec` list.
+    """
+    from slappyengine.dynamics.ragdoll import (
+        BoneSpec, RagdollSpec, build_ragdoll,
+    )
+
+    kwargs.pop("name", None)
+    anchor_pos = kwargs.pop("anchor_pos", (0.0, 0.0))
+    pin_root = kwargs.pop("pin_root", True)
+    bone_count = int(kwargs.pop("bone_count", 4))
+    bone_length = float(kwargs.pop("bone_length", 8.0))
+    bone_mass = float(kwargs.pop("bone_mass", 1.0))
+
+    bones: list[BoneSpec] = []
+    for i in range(max(1, bone_count)):
+        bones.append(
+            BoneSpec(
+                parent_idx=i - 1,
+                length=bone_length,
+                mass=bone_mass,
+                direction=(0.0, -1.0),
+                label=f"bone_{i}",
+            )
+        )
+    spec = RagdollSpec(bones=bones, **kwargs)
+    return build_ragdoll(spec, world, anchor_pos, pin_root=pin_root)
+
+
+def _spawn_ik_chain(world: Any, **kwargs: Any) -> bool:
+    """Build an :class:`IKChainSpec` from kwargs and call :func:`solve_ik`.
+
+    IK is a solver rather than a body — returns the bool result of
+    :func:`solve_ik` (``True`` when the tip reaches the target).
+    """
+    from slappyengine.dynamics.ik import IKChainSpec, solve_ik
+
+    kwargs.pop("name", None)
+    csv = kwargs.pop("node_indices_csv", "")
+    node_indices = [
+        int(piece.strip())
+        for piece in csv.split(",")
+        if piece.strip()
+    ]
+    target = kwargs.pop("target", (0.0, 0.0))
+    fixed_root = bool(kwargs.pop("fixed_root", True))
+    iterations = int(kwargs.pop("iterations", 10))
+    tolerance = float(kwargs.pop("tolerance", 0.01))
+
+    spec = IKChainSpec(
+        node_indices=node_indices,
+        target=target,
+        fixed_root=fixed_root,
+        **kwargs,
+    )
+    return solve_ik(spec, world, iterations=iterations, tolerance=tolerance)
+
+
+# ---------------------------------------------------------------------------
 # Action table.
 #
 # `factory` is a dotted path resolved at click time so a missing softbody/
@@ -128,6 +273,21 @@ SPAWN_ACTIONS: list[dict] = [
         "label":   "Add Sand Pile",
         "factory": "slappyengine.fluid.world.spawn_sand_pile",
         "spec":    SandSpec,
+    },
+    {
+        "label":   "Add Rope",
+        "factory": "slappyengine.ui.editor.spawn_menu._spawn_rope",
+        "spec":    RopeSpawnSpec,
+    },
+    {
+        "label":   "Add Ragdoll",
+        "factory": "slappyengine.ui.editor.spawn_menu._spawn_ragdoll",
+        "spec":    RagdollSpawnSpec,
+    },
+    {
+        "label":   "Add IK Chain",
+        "factory": "slappyengine.ui.editor.spawn_menu._spawn_ik_chain",
+        "spec":    IKChainSpawnSpec,
     },
 ]
 
