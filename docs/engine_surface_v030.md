@@ -10,9 +10,9 @@ native; Python is glue, ergonomics, and config. Ships on PyPI as
 `slappy-engine`.
 
 * Engine version (runtime): `0.1.0`
-* Native `_core` available: `False`
+* Native `_core` available: `True`
 * Top-level names in `__all__`: **75**
-* Declared subpackages: **13**
+* Declared subpackages: **19**
 
 
 ## Top-level surface (`import slappyengine`)
@@ -23,7 +23,7 @@ Every name below is reachable as `slappyengine.<Name>`. Module column is relativ
 
 | Name | Kind | Module | Signature | Description |
 |---|---|---|---|---|
-| `Camera` | class | `camera` | `(position: 'tuple[float, float]' = (0.0, 0.0), zoom: 'float' = 1.0)` |  |
+| `Camera` | class | `camera` | `(position: 'tuple[float, float]' = (0.0, 0.0), zoom: 'float' = 1.0, rotation: 'float' =...` |  |
 | `Engine` | class | `engine` | `(config_path: 'str | None' = None, **overrides)` |  |
 | `Entity` | class | `entity` | `(name: str = '', position: tuple[float, float] = (0.0, 0.0))` |  |
 | `Scene` | class | `scene` | `(name: 'str' = 'Scene')` |  |
@@ -50,7 +50,7 @@ Every name below is reachable as `slappyengine.<Name>`. Module column is relativ
 
 | Name | Kind | Module | Signature | Description |
 |---|---|---|---|---|
-| `EventBus` | class | `event_bus` | `() -> 'None'` | Lightweight synchronous pub-sub event bus. |
+| `EventBus` | class | `event_bus` | `(thread_safe: 'bool' = False) -> 'None'` | Synchronous pub/sub event bus with handle-based unsubscription. |
 
 ### Physics & collision
 
@@ -119,7 +119,7 @@ Every name below is reachable as `slappyengine.<Name>`. Module column is relativ
 
 | Name | Kind | Module | Signature | Description |
 |---|---|---|---|---|
-| `PostProcessChain` | class | `post_process.chain` | `()` | Ordered chain of post-process compute passes. Fully wired in M10. |
+| `PostProcessChain` | class | `post_process.chain` | `(passes: 'list[PostProcessPass] | None' = None)` | Ordered chain of post-process compute passes. Fully wired in M10. |
 | `PostProcessPass` | dataclass | `post_process.chain` | `(shader_path: 'str', params: 'dict' = None, label: 'str' = '', enabled: 'bool' = True, ...` | PostProcessPass(shader_path: 'str', params: 'dict' = None, label: 'str' = '', enabled: 'bool' = True,... |
 
 ### UI
@@ -231,7 +231,15 @@ Compute subpackage — lazy-loaded to avoid eager wgpu/numpy imports.
 
 **Public attributes:** `asset_compute`, `mutator`, `pipeline`, `readback`, `spatial`, `stats`
 
-**Inner modules:** `asset_compute`, `ast_compiler`, `effect`, `mutator`, `pipeline`, `readback`, `spatial`, `stats`
+**Inner modules:** `asset_compute`, `ast_compiler`, `effect`, `hull`, `library`, `mutator`, `pipeline`, `readback`, `shader_cache`, `spatial`, `stats`, `wgsl_chunks`
+
+### `slappyengine.dynamics`
+
+Unified dynamics primitives layered on top of the XPBD substrate.
+
+**Public attributes:** `Body`, `BoneSpec`, `IKChainSpec`, `JointSpec`, `KIND_PARAM_KEYS`, `Material`, `MotorSpec`, `RagdollSpec`, `RopeSpec`, `SoftBodyWorld`, `SpringSpec`, `World`, `body`, `build_ragdoll`, `build_rope`, `ik`, `joint`, `make_motor`, `make_spring`, `material`, `motor`, `ragdoll`, `resolve_joint`, `rope`, `solve_ik`, `spring`, `world`
+
+**Inner modules:** `body`, `ik`, `joint`, `material`, `motor`, `ragdoll`, `rope`, `spring`, `world`
 
 ### `slappyengine.ext`
 
@@ -247,7 +255,7 @@ GPU subpackage — lazy-loaded to avoid eager wgpu imports.
 
 **Public attributes:** `buffer_manager`, `context`, `entity_renderer`, `pbr_material`, `render_pipeline`, `sdf_extruder`, `texture_manager`
 
-**Inner modules:** `buffer_manager`, `cluster_3d`, `cluster_pipeline`, `context`, `entity_renderer`, `ibl`, `material_buffer`, `mesh`, `mesh_pipeline`, `mesh_renderer`, `pbr_material`, `render_pipeline`, `sdf_extruder`, `sdf_renderer`, `texture_manager`
+**Inner modules:** `adaptive_quality`, `buffer_manager`, `cluster_3d`, `cluster_pipeline`, `context`, `entity_renderer`, `ibl`, `material_buffer`, `mesh`, `mesh_pipeline`, `mesh_renderer`, `pbr_material`, `render_pipeline`, `sdf_extruder`, `sdf_renderer`, `texture_manager`
 
 ### `slappyengine.input`
 
@@ -256,6 +264,14 @@ SlapPyEngine.input
 **Public attributes:** `ActionMap`, `InputManager`, `action_map`
 
 **Inner modules:** `_manager`, `action_map`
+
+### `slappyengine.iso`
+
+SlapPyEngine.iso — Isometric 2D-grid-with-Z rendering subsystem.
+
+**Public attributes:** `IsoCamera`, `IsoCell`, `IsoEntity`, `IsoGrid`, `IsoScene`, `IsoTileDef`, `IsoViewpoint`, `iso_camera`, `iso_entity`, `iso_grid`, `iso_scene`, `projection`
+
+**Inner modules:** `combat`, `iso_camera`, `iso_entity`, `iso_grid`, `iso_scene`, `projection`
 
 ### `slappyengine.material`
 
@@ -273,13 +289,19 @@ Modules subpackage — lazy-loaded.
 
 **Inner modules:** `fluid_params`, `health`, `physics`, `pixel_physics`
 
+### `slappyengine.numerics`
+
+Generic numerical primitives.
+
+**Public attributes:** `compute_residual`, `np`, `sor_smooth`, `vcycle_poisson`
+
 ### `slappyengine.post_process`
 
 Post-process subpackage — lazy-loaded to avoid eager wgpu imports.
 
 **Public attributes:** `chain`
 
-**Inner modules:** `chain`, `executor`, `gtao`, `shadow_csm`, `taa`, `volumetric_fog`
+**Inner modules:** `chain`, `dof`, `executor`, `gtao`, `motion_blur`, `shadow_csm`, `ssr`, `taa`, `volumetric_fog`
 
 ### `slappyengine.residency`
 
@@ -289,11 +311,25 @@ Residency subpackage — lazy-loaded to avoid eager imports.
 
 **Inner modules:** `compression`, `manager`, `slap_format`
 
+### `slappyengine.testing`
+
+slappyengine.testing — visual regression harness.
+
+**Public attributes:** `Any`, `BASELINES_DIR`, `DIFF_DIR`, `Path`, `assert_scene_matches`, `diff_pngs`, `logging`, `np`, `render_scene_to_png`
+
+### `slappyengine.thermal`
+
+Heat diffusion + pairwise heat exchange — Phase B public surface.
+
+**Public attributes:** `HeatField`, `Iterable`, `Tuple`, `exchange_two_regions`, `math`, `np`
+
 ### `slappyengine.tools`
+
+slappyengine.tools — asset manipulation utilities (CPU-only, no wgpu required).
 
 **Public attributes:** _(none exposed at package level)_
 
-**Inner modules:** `gen_placeholders`
+**Inner modules:** `audio_tools`, `gen_placeholders`, `sprite_tools`, `texture_tools`, `track_tools`, `video`
 
 ### `slappyengine.ui`
 
@@ -301,14 +337,20 @@ UI subpackage — lazy-loaded to avoid eager numpy/wgpu imports.
 
 **Public attributes:** `hud_widgets`, `scene_ui`
 
-**Inner modules:** `editor`, `html_overlay`, `hud_widgets`, `project_manager`, `scene_ui`
+**Inner modules:** `debug_overlay`, `editor`, `html_overlay`, `hud_widgets`, `project_manager`, `scene_ui`, `widgets`
+
+### `slappyengine.zones`
+
+slappyengine.zones — Generic zone primitives.
+
+**Public attributes:** `Any`, `Callable`, `EnterExitCallback`, `EntityId`, `Hashable`, `Iterable`, `Position`, `RectZone`, `ThresholdCallback`, `ThresholdZone`, `ZoneManager`, `dataclasses`
 
 ## Stability notes
 
 ### Stable (v0.3 — committed contract)
 
 - The 75 top-level lazy exports listed above.
-- The 13 declared subpackages: `ai`, `animation`, `assets`, `compute`, `ext`, `gpu`, `input`, `material`, `modules`, `post_process`, `residency`, `tools`, `ui`.
+- The 19 declared subpackages: `ai`, `animation`, `assets`, `compute`, `dynamics`, `ext`, `gpu`, `input`, `iso`, `material`, `modules`, `numerics`, `post_process`, `residency`, `testing`, `thermal`, `tools`, `ui`, `zones`.
 
 ### Beta (may evolve)
 
