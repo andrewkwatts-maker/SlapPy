@@ -283,6 +283,7 @@ def __getattr__(name: str):
         "input",
         "material",
         "modules",
+        "numerics",
         "post_process",
         "residency",
         "tools",
