@@ -284,6 +284,7 @@ def __getattr__(name: str):
         "ext",
         "gpu",
         "input",
+        "iso",
         "material",
         "modules",
         "numerics",
