@@ -16,6 +16,7 @@ from typing import Any
 
 import numpy as np
 
+from ._validation import validate_anchor, validate_world
 from .body import Body
 from .joint import JointSpec
 
@@ -31,6 +32,12 @@ class BoneSpec:
     band in radians, measured relative to the parent bone direction.
     ``direction`` is the bone's offset vector (unit) — combined with
     ``length`` it places the child endpoint.
+
+    Raises
+    ------
+    ValueError
+        If ``length <= 0``, ``mass <= 0``, ``angle_limit`` is mis-shaped or
+        has ``min > max``, or ``direction`` is mis-shaped.
     """
     parent_idx: int = -1
     length: float = 1.0
@@ -39,13 +46,132 @@ class BoneSpec:
     direction: tuple[float, float] = (0.0, -1.0)
     label: str = ""
 
+    def __post_init__(self) -> None:
+        try:
+            pidx = int(self.parent_idx)
+        except (TypeError, ValueError) as exc:
+            raise TypeError(
+                f"BoneSpec.parent_idx must be int-coercible; "
+                f"got {self.parent_idx!r}"
+            ) from exc
+        if pidx < -1:
+            raise ValueError(
+                f"BoneSpec.parent_idx must be -1 (root) or a non-negative "
+                f"index; got {self.parent_idx!r}"
+            )
+        length = float(self.length)
+        if not math.isfinite(length) or length <= 0.0:
+            raise ValueError(
+                f"BoneSpec.length must be finite and > 0; "
+                f"got {self.length!r}"
+            )
+        mass = float(self.mass)
+        if not math.isfinite(mass) or mass <= 0.0:
+            raise ValueError(
+                f"BoneSpec.mass must be finite and > 0; got {self.mass!r}"
+            )
+        # angle_limit: (min, max), both finite, min <= max.
+        if not hasattr(self.angle_limit, "__len__") or len(self.angle_limit) != 2:
+            raise ValueError(
+                f"BoneSpec.angle_limit must be a (min, max) 2-sequence; "
+                f"got {self.angle_limit!r}"
+            )
+        amin = float(self.angle_limit[0])
+        amax = float(self.angle_limit[1])
+        if not (math.isfinite(amin) and math.isfinite(amax)):
+            raise ValueError(
+                f"BoneSpec.angle_limit entries must be finite; "
+                f"got {self.angle_limit!r}"
+            )
+        if amin > amax:
+            raise ValueError(
+                f"BoneSpec.angle_limit must satisfy min <= max; "
+                f"got ({amin!r}, {amax!r})"
+            )
+        if not hasattr(self.direction, "__len__") or len(self.direction) != 2:
+            raise ValueError(
+                f"BoneSpec.direction must be a 2-sequence; "
+                f"got {self.direction!r}"
+            )
+        dx = float(self.direction[0])
+        dy = float(self.direction[1])
+        if not (math.isfinite(dx) and math.isfinite(dy)):
+            raise ValueError(
+                f"BoneSpec.direction entries must be finite; "
+                f"got {self.direction!r}"
+            )
+
 
 @dataclass
 class RagdollSpec:
+    """Skeleton description for :func:`build_ragdoll`.
+
+    Raises
+    ------
+    TypeError
+        If ``bones`` or ``joints`` is not a list, or any entry is wrong type.
+    ValueError
+        If ``bones`` is empty, any bone references a non-existent parent
+        index, ``stiffness <= 0``, or ``damping`` is outside ``[0, 1]``.
+    """
     bones: list[BoneSpec] = field(default_factory=list)
     joints: list[JointSpec] = field(default_factory=list)
     stiffness: float = 5.0e6
     damping: float = 0.05
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.bones, list):
+            raise TypeError(
+                f"RagdollSpec.bones must be a list; "
+                f"got {type(self.bones).__name__}"
+            )
+        if not isinstance(self.joints, list):
+            raise TypeError(
+                f"RagdollSpec.joints must be a list; "
+                f"got {type(self.joints).__name__}"
+            )
+        if not self.bones:
+            raise ValueError(
+                "RagdollSpec.bones must not be empty; at least one "
+                "BoneSpec is required (the root)"
+            )
+        for i, bone in enumerate(self.bones):
+            if not isinstance(bone, BoneSpec):
+                raise TypeError(
+                    f"RagdollSpec.bones[{i}] must be a BoneSpec; "
+                    f"got {type(bone).__name__}"
+                )
+            if bone.parent_idx >= 0 and bone.parent_idx >= len(self.bones):
+                raise ValueError(
+                    f"RagdollSpec.bones[{i}].parent_idx={bone.parent_idx} "
+                    f"is out of range for bones list of length "
+                    f"{len(self.bones)}"
+                )
+            # Parent must precede child (the builder walks the list once).
+            if bone.parent_idx >= 0 and bone.parent_idx >= i:
+                raise ValueError(
+                    f"RagdollSpec.bones[{i}].parent_idx={bone.parent_idx} "
+                    f"must reference an earlier bone (parent < child); "
+                    f"either reorder bones or set parent_idx < {i}"
+                )
+        for j, joint in enumerate(self.joints):
+            if not isinstance(joint, JointSpec):
+                raise TypeError(
+                    f"RagdollSpec.joints[{j}] must be a JointSpec; "
+                    f"got {type(joint).__name__}"
+                )
+        stiffness = float(self.stiffness)
+        if not math.isfinite(stiffness) or stiffness <= 0.0:
+            raise ValueError(
+                f"RagdollSpec.stiffness must be finite and > 0; "
+                f"got {self.stiffness!r}"
+            )
+        damping = float(self.damping)
+        if math.isnan(damping) or not (0.0 <= damping <= 1.0):
+            raise ValueError(
+                f"RagdollSpec.damping must be in [0, 1]; "
+                f"got {self.damping!r}"
+            )
 
 
 def build_ragdoll(
@@ -61,9 +187,24 @@ def build_ragdoll(
 
     Returns a :class:`Body` covering all spawned nodes (root + one child node
     per bone).
+
+    Raises
+    ------
+    TypeError
+        If ``spec`` is not a :class:`RagdollSpec`, ``world`` is not
+        compatible, or ``anchor_pos`` is not a 2-sequence.
+    ValueError
+        If ``anchor_pos`` contains non-finite values, or any bone references
+        a parent that has not been built yet (legacy guard kept for safety).
     """
-    if not spec.bones:
-        raise ValueError("RagdollSpec.bones is empty")
+    if not isinstance(spec, RagdollSpec):
+        raise TypeError(
+            f"build_ragdoll: spec must be a RagdollSpec; "
+            f"got {type(spec).__name__}"
+        )
+    validate_world("build_ragdoll", world)
+    ax, ay = validate_anchor("anchor_pos", "build_ragdoll", anchor_pos)
+    anchor_pos = (ax, ay)
 
     # Pre-compute node positions following the parent chain.
     bone_count = len(spec.bones)

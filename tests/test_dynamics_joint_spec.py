@@ -82,11 +82,11 @@ def test_prismatic_keys_match_schema():
 
 
 def test_unknown_kind_raises():
-    from slappyengine.dynamics.joint import resolve as resolve_joint
-    w = _world_with_pair()
-    bad = JointSpec(kind="not-a-thing", node_a=0, node_b=1)
-    with pytest.raises(ValueError):
-        resolve_joint(bad, w, 1.0 / 60.0)
+    # Validation now fires at construction time (was previously lazy at
+    # resolve-time). Both paths surface ValueError so the contract is
+    # strengthened, not changed in spirit.
+    with pytest.raises(ValueError, match="kind"):
+        JointSpec(kind="not-a-thing", node_a=0, node_b=1)
 
 
 def test_all_kinds_listed_in_schema():

@@ -69,6 +69,16 @@ class JointSpec:
         Joint deactivates once the latest correction magnitude exceeds this.
     enabled:
         Lets builders disable a joint without removing it from the list.
+
+    Raises
+    ------
+    TypeError
+        If ``kind`` is not a ``str`` or ``params`` is not a ``dict``.
+    ValueError
+        If ``kind`` is not one of the seven documented values, ``node_a``
+        equals ``node_b``, ``rest_length`` is negative, ``stiffness`` is not
+        strictly positive, ``damping`` is outside ``[0, 1]``, or
+        ``break_force`` is not strictly positive.
     """
     kind: str
     node_a: int
@@ -79,6 +89,64 @@ class JointSpec:
     params: dict[str, Any] = field(default_factory=dict)
     break_force: float = math.inf
     enabled: bool = True
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.kind, str):
+            raise TypeError(
+                f"JointSpec.kind must be a str; got {type(self.kind).__name__}"
+            )
+        if self.kind not in KIND_PARAM_KEYS:
+            allowed = sorted(KIND_PARAM_KEYS.keys())
+            raise ValueError(
+                f"JointSpec.kind must be one of {allowed}; got {self.kind!r}"
+            )
+        if not isinstance(self.params, dict):
+            raise TypeError(
+                f"JointSpec.params must be a dict; got "
+                f"{type(self.params).__name__}"
+            )
+        # node_a / node_b sanity. Accept numpy ints transparently.
+        try:
+            na = int(self.node_a)
+            nb = int(self.node_b)
+        except (TypeError, ValueError) as exc:
+            raise TypeError(
+                f"JointSpec.node_a and node_b must be int-coercible; "
+                f"got node_a={self.node_a!r}, node_b={self.node_b!r}"
+            ) from exc
+        if na < 0 or nb < 0:
+            raise ValueError(
+                f"JointSpec node indices must be non-negative; "
+                f"got node_a={na}, node_b={nb}"
+            )
+        if na == nb:
+            raise ValueError(
+                f"JointSpec.node_a and node_b must differ; both are {na}"
+            )
+        rest_length = float(self.rest_length)
+        if not math.isfinite(rest_length) or rest_length < 0.0:
+            raise ValueError(
+                f"JointSpec.rest_length must be finite and >= 0; "
+                f"got {self.rest_length!r}"
+            )
+        stiffness = float(self.stiffness)
+        if not math.isfinite(stiffness) or stiffness <= 0.0:
+            raise ValueError(
+                f"JointSpec.stiffness must be finite and > 0; "
+                f"got {self.stiffness!r}"
+            )
+        damping = float(self.damping)
+        if not (0.0 <= damping <= 1.0) or math.isnan(damping):
+            raise ValueError(
+                f"JointSpec.damping must be in [0, 1]; got {self.damping!r}"
+            )
+        break_force = float(self.break_force)
+        # break_force may be +inf (default), but must be > 0 and not NaN.
+        if math.isnan(break_force) or break_force <= 0.0:
+            raise ValueError(
+                f"JointSpec.break_force must be > 0 or +inf; "
+                f"got {self.break_force!r}"
+            )
 
 
 # ---------------------------------------------------------------------------

@@ -12,13 +12,24 @@ from typing import Any
 
 import numpy as np
 
+from ._validation import validate_anchor, validate_world
 from .body import Body
 from .joint import JointSpec
 
 
 @dataclass
 class RopeSpec:
-    """Description of a rope between two anchor points."""
+    """Description of a rope between two anchor points.
+
+    Raises
+    ------
+    TypeError
+        If ``params`` is not a ``dict``.
+    ValueError
+        If ``node_count < 2``, ``total_length <= 0``, ``mass_per_node <= 0``,
+        ``stiffness <= 0``, ``damping`` is outside ``[0, 1]``, or
+        ``bend_stiffness`` is negative.
+    """
     node_count: int
     total_length: float
     mass_per_node: float = 0.1
@@ -28,6 +39,54 @@ class RopeSpec:
     anchor_a_pinned: bool = True
     anchor_b_pinned: bool = False
     params: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.params, dict):
+            raise TypeError(
+                f"RopeSpec.params must be a dict; got "
+                f"{type(self.params).__name__}"
+            )
+        try:
+            n = int(self.node_count)
+        except (TypeError, ValueError) as exc:
+            raise TypeError(
+                f"RopeSpec.node_count must be int-coercible; "
+                f"got {self.node_count!r}"
+            ) from exc
+        if n < 2:
+            raise ValueError(
+                f"RopeSpec.node_count must be >= 2 (need at least two nodes "
+                f"to form a segment); got {self.node_count!r}"
+            )
+        total_length = float(self.total_length)
+        if not math.isfinite(total_length) or total_length <= 0.0:
+            raise ValueError(
+                f"RopeSpec.total_length must be finite and > 0; "
+                f"got {self.total_length!r}"
+            )
+        mass = float(self.mass_per_node)
+        if not math.isfinite(mass) or mass <= 0.0:
+            raise ValueError(
+                f"RopeSpec.mass_per_node must be finite and > 0; "
+                f"got {self.mass_per_node!r}"
+            )
+        stiffness = float(self.stiffness)
+        if not math.isfinite(stiffness) or stiffness <= 0.0:
+            raise ValueError(
+                f"RopeSpec.stiffness must be finite and > 0; "
+                f"got {self.stiffness!r}"
+            )
+        damping = float(self.damping)
+        if math.isnan(damping) or not (0.0 <= damping <= 1.0):
+            raise ValueError(
+                f"RopeSpec.damping must be in [0, 1]; got {self.damping!r}"
+            )
+        bend = float(self.bend_stiffness)
+        if math.isnan(bend) or bend < 0.0:
+            raise ValueError(
+                f"RopeSpec.bend_stiffness must be >= 0; "
+                f"got {self.bend_stiffness!r}"
+            )
 
 
 def build_rope(
@@ -41,12 +100,31 @@ def build_rope(
     Returns a :class:`Body` whose ``node_offset`` / ``node_count`` cover the
     spawned nodes. The first and last nodes are pinned according to the
     spec's ``anchor_*_pinned`` flags.
+
+    Raises
+    ------
+    TypeError
+        If ``spec`` is not a :class:`RopeSpec`, ``world`` is not a compatible
+        world object, or the anchors are not 2-sequences.
+    ValueError
+        If anchor entries are non-finite or ``anchor_a == anchor_b``.
     """
+    if not isinstance(spec, RopeSpec):
+        raise TypeError(
+            f"build_rope: spec must be a RopeSpec; "
+            f"got {type(spec).__name__}"
+        )
+    validate_world("build_rope", world)
+    ax, ay = validate_anchor("anchor_a", "build_rope", anchor_a)
+    bx, by = validate_anchor("anchor_b", "build_rope", anchor_b)
+    if ax == bx and ay == by:
+        raise ValueError(
+            f"build_rope: anchor_a and anchor_b must differ; "
+            f"both are ({ax!r}, {ay!r})"
+        )
     n = int(spec.node_count)
-    if n < 2:
-        raise ValueError("RopeSpec.node_count must be >= 2")
-    a = np.asarray(anchor_a, dtype=np.float64)
-    b = np.asarray(anchor_b, dtype=np.float64)
+    a = np.asarray((ax, ay), dtype=np.float64)
+    b = np.asarray((bx, by), dtype=np.float64)
     positions = np.linspace(a, b, n)
     segment_len = float(spec.total_length) / (n - 1)
 

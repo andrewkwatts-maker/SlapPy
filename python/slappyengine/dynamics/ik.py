@@ -13,14 +13,61 @@ from typing import Any
 
 import numpy as np
 
+from ._validation import validate_anchor, validate_world
+
 
 @dataclass
 class IKChainSpec:
-    """Description of a kinematic chain + target point."""
+    """Description of a kinematic chain + target point.
+
+    Raises
+    ------
+    TypeError
+        If ``node_indices`` is not a sequence or ``params`` is not a dict.
+    ValueError
+        If ``node_indices`` is empty, contains negatives or non-ints, or
+        ``target`` is not a finite 2-tuple.
+    """
     node_indices: list[int]
     target: tuple[float, float]
     fixed_root: bool = True
     params: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if isinstance(self.node_indices, (str, bytes)) or not hasattr(
+            self.node_indices, "__iter__"
+        ):
+            raise TypeError(
+                f"IKChainSpec.node_indices must be a sequence; "
+                f"got {type(self.node_indices).__name__}"
+            )
+        nodes = list(self.node_indices)
+        if not nodes:
+            raise ValueError(
+                "IKChainSpec.node_indices must not be empty"
+            )
+        for k, idx in enumerate(nodes):
+            try:
+                v = int(idx)
+            except (TypeError, ValueError) as exc:
+                raise TypeError(
+                    f"IKChainSpec.node_indices[{k}] must be int-coercible; "
+                    f"got {idx!r}"
+                ) from exc
+            if v < 0:
+                raise ValueError(
+                    f"IKChainSpec.node_indices[{k}] must be non-negative; "
+                    f"got {idx!r}"
+                )
+        # target: finite 2-tuple
+        tx, ty = validate_anchor("target", "IKChainSpec", self.target)
+        # Normalise so callers see consistent shapes downstream.
+        self.target = (tx, ty)
+        if not isinstance(self.params, dict):
+            raise TypeError(
+                f"IKChainSpec.params must be a dict; "
+                f"got {type(self.params).__name__}"
+            )
 
 
 def _rotate_about(point: np.ndarray, pivot: np.ndarray, angle: float) -> np.ndarray:
@@ -40,7 +87,38 @@ def solve_ik(
     Mutates ``world.positions`` in place for every node in
     ``spec.node_indices``. Returns ``True`` if the tip ends within
     ``tolerance`` of the target; ``False`` otherwise.
+
+    Raises
+    ------
+    TypeError
+        If ``spec`` is not an :class:`IKChainSpec` or ``world`` is not
+        a compatible world object.
+    ValueError
+        If ``iterations <= 0`` or ``tolerance <= 0``.
     """
+    if not isinstance(spec, IKChainSpec):
+        raise TypeError(
+            f"solve_ik: spec must be an IKChainSpec; "
+            f"got {type(spec).__name__}"
+        )
+    validate_world("solve_ik", world)
+    try:
+        iters = int(iterations)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(
+            f"solve_ik: iterations must be int-coercible; "
+            f"got {iterations!r}"
+        ) from exc
+    if iters <= 0:
+        raise ValueError(
+            f"solve_ik: iterations must be > 0; got {iterations!r}"
+        )
+    tol = float(tolerance)
+    if not math.isfinite(tol) or tol <= 0.0:
+        raise ValueError(
+            f"solve_ik: tolerance must be finite and > 0; "
+            f"got {tolerance!r}"
+        )
     nodes = list(spec.node_indices)
     if len(nodes) < 2:
         return False
