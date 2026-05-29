@@ -196,6 +196,46 @@ class PostProcessChain:
         self.add(p)
         return p
 
+    def add_tonemap(
+        self,
+        exposure_ev: float = 0.0,
+        mode: int = 0,
+        saturation: float = 1.0,
+        contrast: float = 1.0,
+        lift: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        gain: tuple[float, float, float] = (1.0, 1.0, 1.0),
+        gamma: float = 1.0,
+        auto_ev: "AutoExposurePass | None" = None,
+    ) -> PostProcessPass:
+        """Round-7 tonemap + colour-grading helper with optional auto-EV.
+
+        When ``auto_ev`` is None, the manual ``exposure_ev`` is forwarded
+        byte-for-byte. Pass an
+        :class:`~slappyengine.post_process.auto_exposure.AutoExposurePass`
+        and call ``auto_ev.apply_cpu(scene)`` per frame to drive ``exposure_ev``
+        from the scene's geometric-mean log luminance.
+        """
+        if auto_ev is not None:
+            try:
+                exposure_ev = float(auto_ev.current_ev)
+            except AttributeError:
+                pass
+        p = PostProcessPass(
+            shader_path="tonemap.wgsl",
+            params={
+                "exposure_ev": float(exposure_ev),
+                "mode": int(mode),
+                "saturation": float(saturation),
+                "contrast": float(contrast),
+                "lift": tuple(float(c) for c in lift),
+                "gain": tuple(float(c) for c in gain),
+                "gamma": float(gamma),
+            },
+            label="tonemap",
+        )
+        self.add(p)
+        return p
+
     @property
     def passes(self) -> list[PostProcessPass]:
         return [p for p in self._passes if p.enabled]
