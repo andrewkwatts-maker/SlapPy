@@ -225,7 +225,27 @@ class ZoneManager:
     tracking independent — a damage zone can be threshold-only with no
     entities tracked, and a spawn pad can be enter/exit-only with no
     threshold measurement.
+
+    Spatial hash acceleration
+    -------------------------
+
+    By default, :meth:`update` runs through a uniform-grid spatial hash:
+    entities are bucketed into cells once per call (O(entities)), and
+    each zone only tests the points in cells overlapping its AABB. This
+    drops the naive O(zones × entities) cost to roughly
+    O(entities + zones × cells_per_zone) for typical low-density
+    scenarios. The hash is opt-out via :meth:`enable_spatial_hash` —
+    when disabled, :meth:`update` falls back to the historical linear
+    scan with byte-identical enter/exit event semantics.
     """
+
+    # Cell-size policy: clamp ``max_zone_dim * _CELL_DIM_MULTIPLIER`` to
+    # ``[_CELL_MIN, _CELL_MAX]``. Multiplier > 1 keeps the average zone
+    # touching a handful of cells (not just one); the clamp bounds the
+    # bucket dict size for very thin or very fat zones.
+    _CELL_DIM_MULTIPLIER: float = 1.5
+    _CELL_MIN: float = 4.0
+    _CELL_MAX: float = 16.0
 
     def __init__(self) -> None:
         self._zones: dict[str, RectZone] = {}
@@ -233,6 +253,15 @@ class ZoneManager:
         self._occupancy: dict[str, set[EntityId]] = {}
         # Threshold-zone destruction state (re-arms on recovery).
         self._fired: dict[str, bool] = {}
+        # Spatial-hash state. The hash is rebuilt lazily on the next
+        # :meth:`update` call whenever ``_hash_dirty`` is set (after a
+        # zone is added, removed, or mutated via :meth:`enable_spatial_hash`).
+        self._spatial_hash_enabled: bool = True
+        self._hash_dirty: bool = True
+        self._cell_size: float = self._CELL_MIN
+        # Per-zone tuple of (min_cx, min_cy, max_cx, max_cy) inclusive
+        # cell-coord range covering the zone's AABB. Computed on rebuild.
+        self._zone_cells: dict[str, tuple[int, int, int, int]] = {}
 
     # ── Authoring ──────────────────────────────────────────────────────────
 
@@ -243,6 +272,7 @@ class ZoneManager:
         self._zones[zone.name] = zone
         self._occupancy[zone.name] = set()
         self._fired[zone.name] = False
+        self._hash_dirty = True
         return zone
 
     def remove(self, name: str) -> bool:
@@ -252,6 +282,8 @@ class ZoneManager:
         del self._zones[name]
         self._occupancy.pop(name, None)
         self._fired.pop(name, None)
+        self._zone_cells.pop(name, None)
+        self._hash_dirty = True
         return True
 
     def get(self, name: str) -> RectZone | None:
@@ -300,6 +332,16 @@ class ZoneManager:
         else:
             items = list(positions)
 
+        if self._spatial_hash_enabled and self._zones:
+            self._update_spatial_hash(items)
+        else:
+            self._update_linear_scan(items)
+
+    def _update_linear_scan(
+        self,
+        items: list[tuple[EntityId, Position]],
+    ) -> None:
+        """Reference O(zones * entities) path — preserved for parity."""
         for name, zone in self._zones.items():
             prev = self._occupancy[name]
             now: set[EntityId] = set()
@@ -318,6 +360,160 @@ class ZoneManager:
                     zone.on_exit(eid)
 
             self._occupancy[name] = now
+
+    def _update_spatial_hash(
+        self,
+        items: list[tuple[EntityId, Position]],
+    ) -> None:
+        """Spatial-hash accelerated update path.
+
+        Bucket every entity into its (cx, cy) cell once. For each zone,
+        union the entity lists across the (inclusive) cell range covering
+        its AABB, then run ``contains_point`` on just those candidates.
+
+        Produces identical ``now`` sets — and therefore identical
+        ``entered``/``exited`` sets — to :meth:`_update_linear_scan`,
+        because ``contains_point`` is the final gating predicate in both
+        paths. Set construction is order-independent.
+        """
+        if self._hash_dirty:
+            self._rebuild_zone_index()
+
+        cell_size = self._cell_size
+
+        # Bucket entities by cell. dict-of-list keeps allocation cheap
+        # vs. a 2D numpy grid (zone counts are far smaller than entity
+        # counts in the target regime). ``//`` produces a floor-division
+        # int that handles negative coordinates correctly.
+        buckets: dict[tuple[int, int], list[tuple[EntityId, Position]]] = {}
+        for entry in items:
+            pos = entry[1]
+            cx = int(pos[0] // cell_size)
+            cy = int(pos[1] // cell_size)
+            key = (cx, cy)
+            bucket = buckets.get(key)
+            if bucket is None:
+                buckets[key] = [entry]
+            else:
+                bucket.append(entry)
+
+        for name, zone in self._zones.items():
+            prev = self._occupancy[name]
+            now: set[EntityId] = set()
+
+            cell_range = self._zone_cells.get(name)
+            if cell_range is None:
+                # Defensive: a zone present in ``_zones`` but not in
+                # ``_zone_cells`` means the index is stale. Rebuild and
+                # look again instead of silently missing the zone.
+                self._rebuild_zone_index()
+                cell_range = self._zone_cells[name]
+            min_cx, min_cy, max_cx, max_cy = cell_range
+
+            x0 = zone.x
+            y0 = zone.y
+            x1 = x0 + zone.w
+            y1 = y0 + zone.h
+
+            for cx in range(min_cx, max_cx + 1):
+                for cy in range(min_cy, max_cy + 1):
+                    bucket = buckets.get((cx, cy))
+                    if bucket is None:
+                        continue
+                    for eid, pos in bucket:
+                        px = pos[0]
+                        py = pos[1]
+                        if x0 <= px < x1 and y0 <= py < y1:
+                            now.add(eid)
+
+            entered = now - prev
+            exited = prev - now
+
+            if zone.on_enter is not None:
+                for eid in entered:
+                    zone.on_enter(eid)
+            if zone.on_exit is not None:
+                for eid in exited:
+                    zone.on_exit(eid)
+
+            self._occupancy[name] = now
+
+    def _rebuild_zone_index(self) -> None:
+        """Recompute cell size + per-zone cell ranges.
+
+        Cell size is ``max_zone_dim * _CELL_DIM_MULTIPLIER`` clamped to
+        ``[_CELL_MIN, _CELL_MAX]``. Larger cells trade more candidates
+        per zone for fewer cells per zone (and a smaller bucket dict);
+        the clamp keeps both ends sane.
+        """
+        if not self._zones:
+            self._zone_cells = {}
+            self._cell_size = self._CELL_MIN
+            self._hash_dirty = False
+            return
+
+        max_dim = 0.0
+        for zone in self._zones.values():
+            if zone.w > max_dim:
+                max_dim = zone.w
+            if zone.h > max_dim:
+                max_dim = zone.h
+        cell_size = max_dim * self._CELL_DIM_MULTIPLIER
+        if cell_size < self._CELL_MIN:
+            cell_size = self._CELL_MIN
+        elif cell_size > self._CELL_MAX:
+            cell_size = self._CELL_MAX
+        self._cell_size = cell_size
+
+        zone_cells: dict[str, tuple[int, int, int, int]] = {}
+        for name, zone in self._zones.items():
+            # Inclusive cell range covering the half-open zone rect.
+            # The min uses floor-div; for the max we floor-div the
+            # exclusive far edge, then pull back if it lands exactly on
+            # a cell boundary (that cell starts *at* x1, so no point in
+            # the zone can land in it).
+            x0 = zone.x
+            y0 = zone.y
+            x1 = x0 + zone.w
+            y1 = y0 + zone.h
+            min_cx = int(x0 // cell_size)
+            min_cy = int(y0 // cell_size)
+            max_cx = int(x1 // cell_size)
+            if max_cx * cell_size == x1:
+                max_cx -= 1
+            max_cy = int(y1 // cell_size)
+            if max_cy * cell_size == y1:
+                max_cy -= 1
+            if max_cx < min_cx:
+                max_cx = min_cx
+            if max_cy < min_cy:
+                max_cy = min_cy
+            zone_cells[name] = (min_cx, min_cy, max_cx, max_cy)
+        self._zone_cells = zone_cells
+        self._hash_dirty = False
+
+    def enable_spatial_hash(self, enabled: bool = True) -> None:
+        """Enable (default) or disable the spatial-hash acceleration.
+
+        When disabled, :meth:`update` falls back to the historical
+        O(zones × entities) linear scan with byte-identical enter/exit
+        event semantics. This is the escape hatch for diagnosing
+        suspected acceleration bugs and for parity tests.
+        """
+        if not isinstance(enabled, bool):
+            raise TypeError(
+                "ZoneManager.enable_spatial_hash: enabled must be a bool; "
+                f"got {type(enabled).__name__}"
+            )
+        if self._spatial_hash_enabled != enabled:
+            self._spatial_hash_enabled = enabled
+            # Re-enabling after edits should rebuild the index.
+            self._hash_dirty = True
+
+    @property
+    def spatial_hash_enabled(self) -> bool:
+        """Whether :meth:`update` currently uses the spatial-hash path."""
+        return self._spatial_hash_enabled
 
     def occupancy(self, name: str) -> set[EntityId]:
         """Return the set of entities currently inside the named zone."""
