@@ -19,6 +19,14 @@ struct GtaoParams {
     bias:             f32,           // horizon angle bias to suppress self-shadowing (rad)
     width:            u32,
     height:           u32,
+    // ── Distance-aware AO (Jimenez 2016, SIGGRAPH "Practical Realtime
+    // Strategies for Accurate Indirect Occlusion").  At small depths we want a
+    // small radius (fine crevices); at large depths we want a wider radius
+    // (smooth ambient).  depth_falloff = 0 disables adaptation.
+    depth_falloff:    f32,           // exponential adaptation rate (m⁻¹)
+    min_radius_scale: f32,           // lower clamp on the per-pixel scale (0..1)
+    _pad0:            u32,
+    _pad1:            u32,
 }
 
 @group(0) @binding(0) var<uniform> gtao_params : GtaoParams;
@@ -106,10 +114,23 @@ fn ao_gtao_main(@builtin(global_invocation_id) gid: vec3u) {
     // Project the world-space radius onto the screen at the sample's depth.
     // Approximation: pixel_radius ≈ radius / (|P.z| * tan(half_fov_y)).
     // We derive the pixel-per-unit scale from inv_proj[1][1] = 1/tan(half_fov_y).
+    //
+    // Before projecting we apply the Jimenez 2016 distance-aware scale so the
+    // world-space radius shrinks for nearby surfaces and grows for distant
+    // ones.  When depth_falloff is 0 the scale is exactly 1 and behaviour
+    // matches the legacy fixed-radius pass byte-for-byte.
+    let view_z          = abs(P.z);
+    var adapt_scale     = 1.0;
+    if gtao_params.depth_falloff > 0.0 {
+        let raw_scale = 1.0 - exp(-gtao_params.depth_falloff * view_z);
+        adapt_scale   = clamp(raw_scale, gtao_params.min_radius_scale, 1.0);
+    }
+    let adapted_radius   = gtao_params.radius * adapt_scale;
+
     let tan_half_fov_inv = gtao_params.inv_proj[1][1];  // = 1/tan(half_fov_y)
     let pixel_scale      = (f32(h) * 0.5) * tan_half_fov_inv;
     let pixel_radius     = clamp(
-        gtao_params.radius * pixel_scale / max(abs(P.z), 0.001),
+        adapted_radius * pixel_scale / max(view_z, 0.001),
         1.0,
         gtao_params.max_pixel_radius,
     );
