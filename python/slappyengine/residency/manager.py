@@ -3,6 +3,12 @@ import math
 from pathlib import Path
 from typing import TYPE_CHECKING
 from slappyengine.config import engine_config
+from slappyengine.residency._validation import (
+    validate_entity,
+    validate_entity_list,
+    validate_finite_2tuple,
+    validate_save_dir,
+)
 
 if TYPE_CHECKING:
     from slappyengine.entity import Entity
@@ -18,6 +24,15 @@ class ResidencyManager:
     TIER_DISK = "disk"
 
     def __init__(self, ctx=None, buf_mgr=None, tex_mgr=None, save_dir: str | Path = "."):
+        """Construct a residency manager rooted at ``save_dir``.
+
+        Raises
+        ------
+        TypeError
+            If ``save_dir`` is neither ``str`` nor ``pathlib.Path``.
+        ValueError
+            If ``save_dir`` is the empty string.
+        """
         cfg = engine_config().residency
         self.streaming_radius_gpu  = cfg.streaming_radius_gpu
         self.streaming_radius_ram  = cfg.streaming_radius_ram
@@ -26,15 +41,39 @@ class ResidencyManager:
         self._ctx     = ctx
         self._buf     = buf_mgr
         self._tex     = tex_mgr
-        self._save_dir = Path(save_dir)
+        self._save_dir = validate_save_dir("save_dir", "ResidencyManager", save_dir)
         self._save_dir.mkdir(parents=True, exist_ok=True)
         self._tiers: dict[str, str] = {}  # entity_id → tier
 
     def tier(self, entity) -> str:
+        """Return the current tier (``"gpu"``/``"ram"``/``"disk"``).
+
+        Raises
+        ------
+        TypeError
+            If ``entity`` is ``None`` or lacks ``.id`` / ``.layers``.
+        """
+        validate_entity("entity", "ResidencyManager.tier", entity)
         return self._tiers.get(entity.id, self.TIER_GPU)
 
     def update(self, camera_pos: tuple[float, float], entities: list) -> None:
+        """Re-tier ``entities`` against ``camera_pos``.
+
+        Raises
+        ------
+        TypeError
+            If ``camera_pos`` isn't a 2-element sequence of real numbers, or
+            ``entities`` isn't a list/tuple.
+        ValueError
+            If ``camera_pos`` has wrong length or contains NaN/inf.
+        """
         from slappyengine.asset import Asset
+        camera_pos = validate_finite_2tuple(
+            "camera_pos", "ResidencyManager.update", camera_pos,
+        )
+        entities = validate_entity_list(
+            "entities", "ResidencyManager.update", entities,
+        )
         cx, cy = camera_pos
         for entity in entities:
             if not isinstance(entity, Asset):
@@ -64,6 +103,14 @@ class ResidencyManager:
                 self._tiers[entity.id] = self.TIER_DISK
 
     def evict_to_ram(self, entity) -> None:
+        """Evict ``entity`` from GPU back to RAM.
+
+        Raises
+        ------
+        TypeError
+            If ``entity`` is ``None`` or lacks ``.id`` / ``.layers``.
+        """
+        validate_entity("entity", "ResidencyManager.evict_to_ram", entity)
         for layer in entity.layers:
             if self._buf is not None:
                 buf = self._buf.get_pixel_buffer(layer)
@@ -81,6 +128,14 @@ class ResidencyManager:
         self._tiers[entity.id] = self.TIER_RAM
 
     def evict_to_disk(self, entity) -> None:
+        """Evict ``entity`` all the way to disk (writes a ``.slap`` file).
+
+        Raises
+        ------
+        TypeError
+            If ``entity`` is ``None`` or lacks ``.id`` / ``.layers``.
+        """
+        validate_entity("entity", "ResidencyManager.evict_to_disk", entity)
         if self.tier(entity) == self.TIER_GPU:
             self.evict_to_ram(entity)
         self._write_to_disk(entity)
@@ -88,6 +143,14 @@ class ResidencyManager:
         self._tiers[entity.id] = self.TIER_DISK
 
     def prefetch(self, entity) -> None:
+        """Promote ``entity`` to GPU regardless of current tier.
+
+        Raises
+        ------
+        TypeError
+            If ``entity`` is ``None`` or lacks ``.id`` / ``.layers``.
+        """
+        validate_entity("entity", "ResidencyManager.prefetch", entity)
         t = self.tier(entity)
         if t == self.TIER_DISK:
             self._promote_disk_to_ram(entity)

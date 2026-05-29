@@ -15,6 +15,13 @@ import time
 from pathlib import Path
 from typing import Callable, Any
 
+from slappyengine.assets._validation import (
+    validate_bool,
+    validate_callable,
+    validate_extension,
+    validate_path_like,
+)
+
 
 class AssetRecord:
     __slots__ = ("path", "asset", "asset_type", "size_bytes", "last_modified", "thumbnail_path")
@@ -60,8 +67,21 @@ class AssetDatabase:
     # --- Public API ---
 
     def load(self, path: str | Path, force_reload: bool = False) -> Any:
-        """Load asset at path. Returns cached result if up-to-date."""
-        abs_path = str(Path(path).resolve())
+        """Load asset at path. Returns cached result if up-to-date.
+
+        Raises
+        ------
+        TypeError
+            If ``path`` is not ``str``/``Path`` or ``force_reload`` is not
+            ``bool``.
+        ValueError
+            If ``path`` is the empty string.
+        """
+        path = validate_path_like("path", "AssetDatabase.load", path)
+        force_reload = validate_bool(
+            "force_reload", "AssetDatabase.load", force_reload,
+        )
+        abs_path = str(path.resolve())
         if not force_reload and abs_path in self._registry:
             rec = self._registry[abs_path]
             try:
@@ -72,21 +92,55 @@ class AssetDatabase:
         return self._import(abs_path)
 
     def register_handler(self, ext: str, loader: Callable) -> None:
-        """Register a custom loader for a file extension (e.g. '.tmx')."""
-        self._handlers[ext.lower()] = loader
+        """Register a custom loader for a file extension (e.g. '.tmx').
+
+        Raises
+        ------
+        TypeError
+            If ``ext`` is not a ``str`` or ``loader`` is not callable.
+        ValueError
+            If ``ext`` is empty, does not start with ``.``, contains a path
+            separator, or contains whitespace.
+        """
+        ext = validate_extension("ext", "AssetDatabase.register_handler", ext)
+        loader = validate_callable(
+            "loader", "AssetDatabase.register_handler", loader,
+        )
+        self._handlers[ext] = loader
 
     def watch(self, directory: str | Path) -> None:
-        """Watch a directory for changes and auto-reload assets."""
-        directory = str(Path(directory).resolve())
-        if directory not in self._watch_dirs:
-            self._watch_dirs.append(directory)
-            self._start_watcher(directory)
+        """Watch a directory for changes and auto-reload assets.
+
+        Raises
+        ------
+        TypeError
+            If ``directory`` is not ``str``/``Path``.
+        ValueError
+            If ``directory`` is the empty string.
+        """
+        directory = validate_path_like(
+            "directory", "AssetDatabase.watch", directory,
+        )
+        directory_str = str(directory.resolve())
+        if directory_str not in self._watch_dirs:
+            self._watch_dirs.append(directory_str)
+            self._start_watcher(directory_str)
 
     def all_records(self) -> list[AssetRecord]:
         return list(self._registry.values())
 
     def get_record(self, path: str | Path) -> AssetRecord | None:
-        return self._registry.get(str(Path(path).resolve()))
+        """Return the cached record for ``path`` or ``None`` if absent.
+
+        Raises
+        ------
+        TypeError
+            If ``path`` is not ``str``/``Path``.
+        ValueError
+            If ``path`` is the empty string.
+        """
+        path = validate_path_like("path", "AssetDatabase.get_record", path)
+        return self._registry.get(str(path.resolve()))
 
     # --- Internal ---
 
