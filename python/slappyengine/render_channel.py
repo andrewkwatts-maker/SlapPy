@@ -2,6 +2,12 @@
 
 Supports: lerp, additive, multiply, screen blends between named render passes.
 Used for: night vision, strata layer transitions, thermal vision, etc.
+
+Round-8 polish (compositor topological ordering):
+    Channels may declare ``depends_on`` to enforce composite order.  When any
+    active pass declares dependencies, ``sorted_active_passes`` performs a
+    deterministic Kahn topological sort that breaks ties by insertion order,
+    keeping legacy behaviour for callers that never set ``depends_on``.
 """
 from __future__ import annotations
 import struct
@@ -13,9 +19,18 @@ if TYPE_CHECKING:
     from slappyengine.gpu.context import GPUContext
 
 
+class RenderChannelCycleError(ValueError):
+    """Raised when ``depends_on`` declarations form a cycle among active passes."""
+
+
 @dataclass
 class RenderPass:
-    """A named render channel with its own lighting overrides and blend settings."""
+    """A named render channel with its own lighting overrides and blend settings.
+
+    Round-8 polish: ``depends_on`` declares pass names that must composite
+    *before* this pass.  An empty list (the default) preserves the historical
+    insertion-order behaviour, so existing callers are unaffected.
+    """
     name: str
     tint: tuple[float, float, float] = (1.0, 1.0, 1.0)
     gain: float = 1.0
@@ -24,6 +39,9 @@ class RenderPass:
     blend_alpha: float = 0.0        # 0=invisible, 1=fully blended
     lighting_overrides: dict = field(default_factory=dict)
     post_shaders: list[str] = field(default_factory=list)
+    # Names of render passes that must composite before this one (round-8).
+    # Empty (default) ⇒ no constraint; legacy insertion-order behaviour kept.
+    depends_on: list[str] = field(default_factory=list)
 
 
 # Pre-built pass definitions
@@ -108,10 +126,15 @@ class RenderChannelCompositor:
             del self._transitions[name]
 
     def dispatch(self, encoder, base_tex, out_tex) -> None:
-        """Composite all active passes onto base_tex → out_tex."""
+        """Composite all active passes onto base_tex → out_tex.
+
+        Round-8 polish: composite order now respects ``depends_on`` via
+        :meth:`sorted_active_passes`.  Passes without dependencies still
+        composite in insertion order, preserving backward compatibility.
+        """
         import wgpu  # deferred import — avoids hard failure in headless mode
 
-        active = self.active_passes
+        active = self.sorted_active_passes
         if not active:
             return
 
@@ -185,3 +208,72 @@ class RenderChannelCompositor:
     @property
     def active_passes(self) -> list[RenderPass]:
         return [p for p in self._passes.values() if p.blend_alpha > 0.001]
+
+    @property
+    def sorted_active_passes(self) -> list[RenderPass]:
+        """Active passes sorted by declared dependencies (Kahn topological sort).
+
+        Round-8 polish.  The compositor previously dispatched passes in dict
+        insertion order, which silently re-ordered work when callers swapped
+        registration order.  Each pass may now declare ``depends_on`` listing
+        names that must composite *before* it; this property returns a
+        topological order satisfying those constraints, with ties broken by
+        insertion order so existing scenes that never set ``depends_on``
+        produce the exact same sequence as :pyattr:`active_passes`.
+
+        Dependencies that reference inactive (or unregistered) passes are
+        treated as already-satisfied.  Cycles among active passes raise
+        :class:`RenderChannelCycleError`.
+        """
+        active = self.active_passes
+        if not active:
+            return []
+
+        # Map name → index in the active list (defines tie-break order).
+        index_of: dict[str, int] = {p.name: i for i, p in enumerate(active)}
+
+        # Build adjacency restricted to the active set so dependencies on
+        # disabled passes are ignored (treated as already satisfied).
+        active_names: set[str] = set(index_of)
+        deps: dict[str, list[str]] = {
+            p.name: [d for d in p.depends_on if d in active_names]
+            for p in active
+        }
+
+        # Kahn's algorithm with deterministic tie-break by insertion index.
+        indegree: dict[str, int] = {name: len(deps[name]) for name in index_of}
+        # Stable list of currently-zero indegree names, sorted by index.
+        ready = sorted((n for n, d in indegree.items() if d == 0),
+                       key=lambda n: index_of[n])
+
+        # Reverse adjacency for indegree updates.
+        children: dict[str, list[str]] = {n: [] for n in index_of}
+        for n, parents in deps.items():
+            for parent in parents:
+                children[parent].append(n)
+
+        ordered: list[RenderPass] = []
+        by_name = {p.name: p for p in active}
+        while ready:
+            n = ready.pop(0)
+            ordered.append(by_name[n])
+            for c in children[n]:
+                indegree[c] -= 1
+                if indegree[c] == 0:
+                    # Insert keeping tie-break ordering by original index.
+                    idx = index_of[c]
+                    lo, hi = 0, len(ready)
+                    while lo < hi:
+                        mid = (lo + hi) // 2
+                        if index_of[ready[mid]] < idx:
+                            lo = mid + 1
+                        else:
+                            hi = mid
+                    ready.insert(lo, c)
+
+        if len(ordered) != len(active):
+            remaining = [n for n, d in indegree.items() if d > 0]
+            raise RenderChannelCycleError(
+                f"RenderChannel depends_on forms a cycle among: {sorted(remaining)}"
+            )
+        return ordered
