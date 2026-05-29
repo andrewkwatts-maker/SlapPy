@@ -13,6 +13,12 @@ from __future__ import annotations
 
 import numpy as np
 
+from ._validation import (
+    validate_bool_array,
+    validate_edges_array,
+    validate_non_negative_int,
+)
+
 
 BACKGROUND_LABEL = -1
 
@@ -70,11 +76,19 @@ def connected_components(
         ``[0, n_components)``. Masked nodes are :data:`BACKGROUND_LABEL`.
     n_components
         Number of distinct clusters across the live nodes.
+
+    Raises
+    ------
+    TypeError
+        If ``n_nodes`` is not an int, ``edges`` is not a numpy ndarray of
+        integral dtype, or ``active`` / ``node_mask`` are not bool ndarrays.
+    ValueError
+        If ``n_nodes`` is negative, ``edges`` is not ``(E, 2)``, any edge
+        endpoint falls outside ``[0, n_nodes)``, or ``active`` /
+        ``node_mask`` have the wrong length.
     """
-    if n_nodes < 0:
-        raise ValueError("n_nodes must be non-negative")
-    if edges.ndim != 2 or edges.shape[1] != 2:
-        raise ValueError(f"edges must be (E, 2); got {edges.shape}")
+    n_nodes = validate_non_negative_int("n_nodes", "connected_components", n_nodes)
+    edges = validate_edges_array("connected_components", edges, n_nodes)
 
     parent = np.arange(n_nodes, dtype=np.int64)
     size = np.ones(n_nodes, dtype=np.int64)
@@ -83,19 +97,15 @@ def connected_components(
     if active is None:
         active_view = None
     else:
-        if active.shape != (n_edges,):
-            raise ValueError(
-                f"active must be (E,) matching edges; got {active.shape}"
-            )
+        validate_bool_array("active", "connected_components", active, n_edges)
         active_view = active
 
     if node_mask is None:
         is_live = np.ones(n_nodes, dtype=bool)
     else:
-        if node_mask.shape != (n_nodes,):
-            raise ValueError(
-                f"node_mask must be (n_nodes,); got {node_mask.shape}"
-            )
+        validate_bool_array(
+            "node_mask", "connected_components", node_mask, n_nodes,
+        )
         is_live = node_mask.astype(bool, copy=False)
 
     a_col = edges[:, 0].astype(np.int64, copy=False)

@@ -38,8 +38,16 @@ from __future__ import annotations
 
 import numpy as np
 
+from ._validation import (
+    validate_2d_array,
+    validate_matching_shape,
+    validate_omega,
+    validate_positive_float,
+    validate_positive_int,
+)
 
-__all__ = ["vcycle_poisson"]
+
+__all__ = ["vcycle_poisson", "sor_smooth", "compute_residual"]
 
 
 # ---------------------------------------------------------------------------
@@ -275,7 +283,7 @@ def _v_cycle(
 
 def vcycle_poisson(
     rhs: np.ndarray,
-    mask: np.ndarray,
+    mask: np.ndarray | None = None,
     iters_per_level: int = 2,
     levels: int = 3,
     *,
@@ -283,6 +291,8 @@ def vcycle_poisson(
     omega: float = 1.5,
     coarse_iters: int = 8,
     initial: np.ndarray | None = None,
+    smooth_pre: int | None = None,
+    smooth_post: int | None = None,
 ) -> np.ndarray:
     """Solve ``Δp = rhs`` with ``n_cycles`` multigrid V-cycles.
 
@@ -324,30 +334,48 @@ def vcycle_poisson(
     p : ``(H, W)`` float32
         Approximate solution; vacuum cells exactly zero. NaN / ±inf are
         scrubbed so the caller can safely persist the field across frames.
-    """
-    if rhs.ndim != 2:
-        raise ValueError(f"rhs must be 2-D; got shape {rhs.shape}")
-    if mask.shape != rhs.shape:
-        raise ValueError(
-            f"mask shape {mask.shape} must match rhs shape {rhs.shape}"
-        )
-    if iters_per_level < 0:
-        raise ValueError(f"iters_per_level must be ≥ 0; got {iters_per_level}")
-    if levels < 1:
-        raise ValueError(f"levels must be ≥ 1; got {levels}")
-    if n_cycles < 1:
-        raise ValueError(f"n_cycles must be ≥ 1; got {n_cycles}")
 
-    mask_f = (np.asarray(mask) >= 0.5).astype(np.float32, copy=False)
+    Raises
+    ------
+    TypeError
+        If ``rhs`` is not a 2-D numpy ndarray, or ``mask`` / ``initial``
+        are non-ndarray when provided, or ``iters_per_level`` / ``levels``
+        / ``n_cycles`` are not integers, or ``omega`` is not a real number.
+    ValueError
+        If ``rhs`` is not 2-D, ``mask`` / ``initial`` shapes do not match
+        ``rhs``, the iteration counters are < 1, or ``omega`` is non-finite
+        or outside ``(0, 2)``.
+    """
+    rhs = validate_2d_array("rhs", "vcycle_poisson", rhs)
+    if mask is not None:
+        validate_matching_shape("mask", "vcycle_poisson", mask, rhs.shape)
+    # Back-compat: legacy callers pass smooth_pre / smooth_post explicitly
+    # (separate pre/post smoothers). The unified V-cycle uses one
+    # iters_per_level setting; take the max so the smoothing effort
+    # matches or exceeds the legacy intent.
+    if smooth_pre is not None or smooth_post is not None:
+        iters_per_level = max(
+            int(iters_per_level),
+            int(smooth_pre or 0),
+            int(smooth_post or 0),
+        )
+    iters_per_level = validate_positive_int(
+        "iters_per_level", "vcycle_poisson", iters_per_level,
+    )
+    levels = validate_positive_int("levels", "vcycle_poisson", levels)
+    n_cycles = validate_positive_int("n_cycles", "vcycle_poisson", n_cycles)
+    omega = validate_omega("vcycle_poisson", omega)
+
+    if mask is None:
+        mask_f = np.ones(rhs.shape, dtype=np.float32)
+    else:
+        mask_f = (np.asarray(mask) >= 0.5).astype(np.float32, copy=False)
     rhs_f = np.asarray(rhs, dtype=np.float32) * mask_f
 
     if initial is None:
         p = np.zeros(rhs.shape, dtype=np.float32)
     else:
-        if initial.shape != rhs.shape:
-            raise ValueError(
-                f"initial shape {initial.shape} must match rhs shape {rhs.shape}"
-            )
+        validate_matching_shape("initial", "vcycle_poisson", initial, rhs.shape)
         p = np.asarray(initial, dtype=np.float32).copy() * mask_f
 
     for _ in range(int(n_cycles)):
@@ -365,3 +393,113 @@ def vcycle_poisson(
     p[outside] = 0.0
     p = np.nan_to_num(p, nan=0.0, posinf=0.0, neginf=0.0)
     return p
+
+
+# ---------------------------------------------------------------------------
+# Public smoother / residual entry points
+# ---------------------------------------------------------------------------
+
+
+def sor_smooth(
+    p: np.ndarray,
+    rhs: np.ndarray,
+    iters: int = 1,
+    omega: float = 1.5,
+    *,
+    mask: np.ndarray | None = None,
+) -> np.ndarray:
+    """Run ``iters`` Red-Black SOR sweeps on ``Δp = rhs``.
+
+    Public wrapper around the internal Red-Black SOR smoother. Mutates
+    and returns ``p`` so it can be chained. Pure numpy.
+
+    Parameters
+    ----------
+    p : ``(H, W)`` float
+        Current pressure / solution estimate. Mutated in place.
+    rhs : ``(H, W)`` float
+        Right-hand side. Must have the same shape as ``p``.
+    iters : int, default 1
+        Number of full Red-Black sweeps to perform. Must be ≥ 1.
+    omega : float, default 1.5
+        SOR over-relaxation factor. Must be in ``(0, 2)``.
+    mask : ``(H, W)`` bool or float, optional
+        Live-cell mask. Defaults to all-ones (every cell solved for).
+
+    Returns
+    -------
+    p : ``(H, W)`` float
+        The mutated solution buffer.
+
+    Raises
+    ------
+    TypeError
+        If ``p`` or ``rhs`` is not a numpy ndarray, or ``iters`` is not an
+        integer, or ``omega`` is not a real number.
+    ValueError
+        If shapes mismatch, ``iters < 1``, or ``omega`` is outside
+        ``(0, 2)``.
+    """
+    p = validate_2d_array("p", "sor_smooth", p)
+    rhs = validate_matching_shape("rhs", "sor_smooth", rhs, p.shape)
+    iters = validate_positive_int("iters", "sor_smooth", iters)
+    omega = validate_omega("sor_smooth", omega)
+
+    if mask is None:
+        mask_f = np.ones(p.shape, dtype=np.float32)
+    else:
+        validate_matching_shape("mask", "sor_smooth", mask, p.shape)
+        mask_f = (np.asarray(mask) >= 0.5).astype(np.float32, copy=False)
+
+    p32 = p.astype(np.float32, copy=False)
+    rhs32 = (np.asarray(rhs, dtype=np.float32) * mask_f)
+    m_l, m_r, m_t, m_b = _build_neighbour_masks(mask_f)
+    _sor_sweep(p32, rhs32, mask_f, m_l, m_r, m_t, m_b, iters, omega)
+    return p32
+
+
+def compute_residual(
+    p: np.ndarray,
+    rhs: np.ndarray,
+    *,
+    mask: np.ndarray | None = None,
+) -> np.ndarray:
+    """Return ``rhs − Δp`` on the masked 5-point Laplacian.
+
+    Public wrapper around the internal residual kernel.
+
+    Parameters
+    ----------
+    p : ``(H, W)`` float
+        Current solution estimate.
+    rhs : ``(H, W)`` float
+        Right-hand side; must match ``p`` in shape.
+    mask : ``(H, W)`` bool or float, optional
+        Live-cell mask; defaults to all-ones.
+
+    Returns
+    -------
+    residual : ``(H, W)`` float32
+        Residual array. Zero outside the live mask.
+
+    Raises
+    ------
+    TypeError
+        If ``p`` or ``rhs`` is not a numpy ndarray.
+    ValueError
+        If ``p`` is not 2-D, or ``rhs`` / ``mask`` shapes do not match
+        ``p``.
+    """
+    p = validate_2d_array("p", "compute_residual", p)
+    rhs = validate_matching_shape("rhs", "compute_residual", rhs, p.shape)
+
+    if mask is None:
+        mask_f = np.ones(p.shape, dtype=np.float32)
+    else:
+        validate_matching_shape("mask", "compute_residual", mask, p.shape)
+        mask_f = (np.asarray(mask) >= 0.5).astype(np.float32, copy=False)
+
+    p32 = p.astype(np.float32, copy=False)
+    rhs32 = (np.asarray(rhs, dtype=np.float32) * mask_f)
+    m_l, m_r, m_t, m_b = _build_neighbour_masks(mask_f)
+    return _compute_residual(p32, rhs32, mask_f, m_l, m_r, m_t, m_b)

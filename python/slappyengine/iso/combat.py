@@ -29,8 +29,15 @@ Determinism is a contract, not an aspiration:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from math import hypot
+from math import hypot, isfinite
 from typing import List, Tuple
+
+from ._validation import (
+    validate_finite_float,
+    validate_non_negative_float,
+    validate_positive_float,
+    validate_positive_int,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +118,54 @@ def resolve_attack(attacker: Attacker, defender: Defender) -> Tuple[float, bool]
     -----
     Pure: no globals, no RNG. The only side effect is mutating
     ``defender.hp``.
+
+    Raises
+    ------
+    TypeError
+        If ``attacker`` lacks ``pos`` / ``damage`` / ``reach``, or
+        ``defender`` lacks ``pos`` / ``hp``.
+    ValueError
+        If ``attacker.damage`` / ``attacker.reach`` / ``defender.hp`` are
+        negative or non-finite.
     """
+    for required in ("pos", "damage", "reach"):
+        if not hasattr(attacker, required):
+            raise TypeError(
+                f"resolve_attack: attacker missing required attribute "
+                f"{required!r} (got {type(attacker).__name__})"
+            )
+    for required in ("pos", "hp"):
+        if not hasattr(defender, required):
+            raise TypeError(
+                f"resolve_attack: defender missing required attribute "
+                f"{required!r} (got {type(defender).__name__})"
+            )
+    if not (isinstance(attacker.damage, (int, float)) and isfinite(attacker.damage)):
+        raise ValueError(
+            f"resolve_attack: attacker.damage must be a finite real; "
+            f"got {attacker.damage!r}"
+        )
+    if attacker.damage < 0.0:
+        raise ValueError(
+            f"resolve_attack: attacker.damage must be ≥ 0; "
+            f"got {attacker.damage!r}"
+        )
+    if not (isinstance(attacker.reach, (int, float)) and isfinite(attacker.reach)):
+        raise ValueError(
+            f"resolve_attack: attacker.reach must be a finite real; "
+            f"got {attacker.reach!r}"
+        )
+    if attacker.reach < 0.0:
+        raise ValueError(
+            f"resolve_attack: attacker.reach must be ≥ 0; "
+            f"got {attacker.reach!r}"
+        )
+    if not (isinstance(defender.hp, (int, float)) and isfinite(defender.hp)):
+        raise ValueError(
+            f"resolve_attack: defender.hp must be a finite real; "
+            f"got {defender.hp!r}"
+        )
+
     dx = defender.pos[0] - attacker.pos[0]
     dy = defender.pos[1] - attacker.pos[1]
     dist = hypot(dx, dy)
@@ -154,6 +208,41 @@ class WaveSpec:
     hp_each: float
     interval: float
     delay: float = 0.0
+
+    def __post_init__(self) -> None:
+        """Validate wave parameters at construction.
+
+        Raises
+        ------
+        TypeError
+            If ``count`` is not an int, ``hp_each`` / ``interval`` /
+            ``delay`` are not real numbers, or ``spawn_points`` is not a
+            sequence.
+        ValueError
+            If ``count`` < 1, ``spawn_points`` is empty, ``hp_each`` ≤ 0,
+            or ``interval`` / ``delay`` are negative / non-finite.
+        """
+        self.count = validate_positive_int("count", "WaveSpec", self.count)
+        if isinstance(self.spawn_points, (str, bytes)) or not hasattr(
+            self.spawn_points, "__len__"
+        ):
+            raise TypeError(
+                f"WaveSpec: spawn_points must be a sequence; "
+                f"got {type(self.spawn_points).__name__}"
+            )
+        if len(self.spawn_points) == 0:
+            raise ValueError(
+                "WaveSpec: spawn_points must be non-empty"
+            )
+        self.hp_each = validate_positive_float(
+            "hp_each", "WaveSpec", self.hp_each,
+        )
+        self.interval = validate_non_negative_float(
+            "interval", "WaveSpec", self.interval,
+        )
+        self.delay = validate_non_negative_float(
+            "delay", "WaveSpec", self.delay,
+        )
 
 
 @dataclass
@@ -212,11 +301,16 @@ class WaveSchedule:
         leftover ``dt`` into the next wave on a wave transition, so the
         same total dt always produces the same spawn pattern regardless
         of how it is sliced.
-        """
-        spawned: List[Defender] = []
-        if dt < 0:
-            return spawned
 
+        Raises
+        ------
+        TypeError
+            If ``dt`` is not a real number.
+        ValueError
+            If ``dt`` is non-finite or negative.
+        """
+        dt = validate_non_negative_float("dt", "WaveSchedule.tick", dt)
+        spawned: List[Defender] = []
         remaining = dt
         # Loop until we've consumed `dt` AND emitted any spawns that are
         # already due at the current elapsed time. The `first_pass` flag

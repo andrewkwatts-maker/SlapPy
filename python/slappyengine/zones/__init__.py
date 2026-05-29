@@ -43,6 +43,12 @@ from __future__ import annotations
 import dataclasses
 from typing import Any, Callable, Hashable, Iterable
 
+from ._validation import (
+    validate_finite_float,
+    validate_non_negative_float,
+    validate_positive_float,
+)
+
 
 __all__ = [
     "RectZone",
@@ -99,6 +105,22 @@ class RectZone:
     material: str | None = None
     on_enter: EnterExitCallback | None = dataclasses.field(default=None, repr=False)
     on_exit: EnterExitCallback | None = dataclasses.field(default=None, repr=False)
+
+    def __post_init__(self) -> None:
+        """Validate rect geometry at construction time.
+
+        Raises
+        ------
+        TypeError
+            If ``x`` / ``y`` / ``w`` / ``h`` are not real numbers.
+        ValueError
+            If ``w`` or ``h`` is not strictly positive, or any coordinate
+            is non-finite.
+        """
+        self.x = validate_finite_float("x", "RectZone", self.x)
+        self.y = validate_finite_float("y", "RectZone", self.y)
+        self.w = validate_positive_float("w", "RectZone", self.w)
+        self.h = validate_positive_float("h", "RectZone", self.h)
 
     # ── Geometry ──────────────────────────────────────────────────────────
 
@@ -159,6 +181,26 @@ class ThresholdZone(RectZone):
     on_threshold: ThresholdCallback | None = dataclasses.field(default=None, repr=False)
     strength_scale: float = 1.0
     on_destroy_event: str = "Zone.Destroyed"
+
+    def __post_init__(self) -> None:
+        """Validate rect geometry plus threshold/hysteresis.
+
+        Raises
+        ------
+        TypeError
+            If ``threshold`` / ``hysteresis`` are not real numbers (in
+            addition to the rect-geometry checks inherited from
+            :class:`RectZone`).
+        ValueError
+            If ``threshold`` is non-finite or ``hysteresis`` is negative.
+        """
+        super().__post_init__()
+        self.threshold = validate_finite_float(
+            "threshold", "ThresholdZone", self.threshold,
+        )
+        self.hysteresis = validate_non_negative_float(
+            "hysteresis", "ThresholdZone", self.hysteresis,
+        )
 
 
 # ── ZoneManager ───────────────────────────────────────────────────────────
@@ -239,9 +281,22 @@ class ZoneManager:
         positions:
             A dict ``{entity_id: (x, y)}`` or an iterable of
             ``(entity_id, (x, y))`` pairs.
+
+        Raises
+        ------
+        TypeError
+            If ``positions`` is a scalar / string / bytes (i.e. not a dict
+            nor a non-string iterable of pairs).
         """
         if isinstance(positions, dict):
             items = list(positions.items())
+        elif isinstance(positions, (str, bytes)) or not hasattr(
+            positions, "__iter__"
+        ):
+            raise TypeError(
+                "ZoneManager.update: positions must be a dict or iterable "
+                f"of (id, (x, y)) pairs; got {type(positions).__name__}"
+            )
         else:
             items = list(positions)
 

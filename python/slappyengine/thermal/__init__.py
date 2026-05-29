@@ -37,6 +37,15 @@ from typing import Iterable, Tuple
 
 import numpy as np
 
+from ._validation import (
+    validate_diffusivity,
+    validate_finite_float,
+    validate_grid_2d_float,
+    validate_non_negative_float,
+    validate_positive_float,
+    validate_positive_int,
+)
+
 
 __all__ = ["HeatField", "exchange_two_regions"]
 
@@ -162,18 +171,28 @@ class HeatField:
         conductivity: float = 1.0,
         diffusivity: float = 0.1,
     ) -> None:
-        if not isinstance(grid, np.ndarray):
-            raise TypeError(
-                f"grid must be a numpy ndarray, got {type(grid).__name__}"
-            )
-        if grid.ndim != 2:
-            raise ValueError(f"grid must be 2-D, got shape {grid.shape}")
+        """Hold a 2-D temperature grid and stepping parameters.
+
+        Raises
+        ------
+        TypeError
+            If ``grid`` is not a 2-D float numpy ndarray, or if
+            ``conductivity`` / ``diffusivity`` are not real numbers.
+        ValueError
+            If ``grid`` is smaller than 2x2, ``conductivity`` is negative,
+            or ``diffusivity`` falls outside ``(0, 1]``.
+        """
+        validate_grid_2d_float("grid", "HeatField", grid)
         if grid.shape[0] < 2 or grid.shape[1] < 2:
-            raise ValueError(f"grid must be at least 2x2, got {grid.shape}")
+            raise ValueError(
+                f"HeatField: grid must be at least 2x2; got shape {grid.shape}"
+            )
 
         self.temperature = grid  # held by reference, mutated in place
-        self.conductivity = float(conductivity)
-        self.diffusivity = float(diffusivity)
+        self.conductivity = validate_non_negative_float(
+            "conductivity", "HeatField", conductivity,
+        )
+        self.diffusivity = validate_diffusivity("HeatField", diffusivity)
 
     @property
     def shape(self) -> tuple[int, int]:
@@ -216,13 +235,38 @@ class HeatField:
             Optional manual override of the internal substepping.
             By default the field substeps so the effective coupling
             per substep stays at or below the CFL-style cap ``1/4``.
+
+        Raises
+        ------
+        TypeError
+            If ``dt`` is not a real number, or ``boundary`` is not a string,
+            or ``substeps`` (when provided) is not an integer.
+        ValueError
+            If ``dt`` is non-finite or negative, ``boundary`` is not one
+            of ``{"periodic", "clamp"}``, or ``substeps`` < 1.
         """
+        if not isinstance(boundary, str):
+            raise TypeError(
+                f"HeatField.step: boundary must be a string; "
+                f"got {type(boundary).__name__}"
+            )
         if boundary not in _VALID_BOUNDARIES:
             raise ValueError(
-                f"boundary must be one of {_VALID_BOUNDARIES}, got {boundary!r}"
+                f"HeatField.step: boundary must be one of {_VALID_BOUNDARIES}; "
+                f"got {boundary!r}"
             )
-        if dt <= 0.0:
+        # Allow dt == 0.0 (no-op) for parity with existing callers, but
+        # reject anything negative or non-finite outright.
+        dt_v = validate_finite_float("dt", "HeatField.step", dt)
+        if dt_v < 0.0:
+            raise ValueError(f"HeatField.step: dt must be ≥ 0; got {dt_v!r}")
+        if substeps is not None:
+            substeps = validate_positive_int(
+                "substeps", "HeatField.step", substeps,
+            )
+        if dt_v == 0.0:
             return
+        dt = dt_v
 
         # Effective per-axis coupling factor (mirrors the explicit
         # Laplacian's α·dt/h² scale; we fix h = 1 in this surface and
@@ -341,9 +385,48 @@ class HeatField:
         float
             Total heat moved from ``self`` to ``other`` (positive if
             ``self`` was hotter on net). Useful for telemetry / tests.
+
+        Raises
+        ------
+        TypeError
+            If ``other`` is not a :class:`HeatField`, or ``contact_pairs``
+            is not iterable, or ``dt`` / ``conductivity`` are not real
+            numbers.
+        ValueError
+            If ``dt`` is non-finite or negative, or ``conductivity`` is
+            non-finite or negative.
         """
-        if dt <= 0.0:
+        if not isinstance(other, HeatField):
+            raise TypeError(
+                f"HeatField.exchange_with: other must be a HeatField; "
+                f"got {type(other).__name__}"
+            )
+        if isinstance(contact_pairs, (str, bytes)) or not hasattr(
+            contact_pairs, "__iter__"
+        ):
+            raise TypeError(
+                f"HeatField.exchange_with: contact_pairs must be iterable; "
+                f"got {type(contact_pairs).__name__}"
+            )
+        dt_v = validate_finite_float("dt", "HeatField.exchange_with", dt)
+        if dt_v < 0.0:
+            raise ValueError(
+                f"HeatField.exchange_with: dt must be ≥ 0; got {dt_v!r}"
+            )
+        if conductivity is not None:
+            # Conductivity may be 0 explicitly (no flux); reject negative
+            # / non-finite.
+            k_check = validate_finite_float(
+                "conductivity", "HeatField.exchange_with", conductivity,
+            )
+            if k_check < 0.0:
+                raise ValueError(
+                    f"HeatField.exchange_with: conductivity must be ≥ 0; "
+                    f"got {k_check!r}"
+                )
+        if dt_v == 0.0:
             return 0.0
+        dt = dt_v
 
         if conductivity is None:
             k_a = self.conductivity
