@@ -14,6 +14,8 @@ struct TaaParams {
     sharpening:   f32,   // post-sharpen strength (0.0 = none, 0.2 = mild)
     width:        u32,
     height:       u32,
+    karis_weight: u32,   // round 3: 0 = legacy linear blend, 1 = luminance-inverse weighting (Karis 2014)
+    _pad:         u32,   // alignment padding
 }
 
 @group(0) @binding(0) var<uniform> taa_params    : TaaParams;
@@ -82,6 +84,11 @@ fn clip_to_aabb(history_ycocg: vec3f, aabb_min: vec3f, aabb_max: vec3f) -> vec3f
     return clamp(history_ycocg, aabb_min, aabb_max);
 }
 
+// Rec. 709 luminance.  Used by the Karis weighted blend.
+fn luminance(c: vec3f) -> f32 {
+    return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+}
+
 // ── Entry point ───────────────────────────────────────────────────────────────
 
 @compute @workgroup_size(8, 8)
@@ -125,8 +132,21 @@ fn taa_resolve_main(@builtin(global_invocation_id) gid: vec3u) {
     let history_clipped = ycocg_to_rgb(clipped_ycocg);
 
     // ── 6. Temporal blend: small blend_factor = slower convergence, less noise ─
-    let blend   = clamp(taa_params.blend_factor, 0.0, 1.0);
-    var blended = mix(history_clipped, current_color, blend);
+    let blend = clamp(taa_params.blend_factor, 0.0, 1.0);
+    var blended: vec3f;
+    if taa_params.karis_weight != 0u {
+        // Karis 2014 luminance-inverse weighted average.  Bright transient
+        // pixels (high luminance) get a *smaller* weight in the running
+        // average, so a one-frame firefly cannot drag the history toward a
+        // stale brightness.  See "High Quality Temporal Supersampling".
+        let w_cur  = blend         / (1.0 + luminance(current_color));
+        let w_hist = (1.0 - blend) / (1.0 + luminance(history_clipped));
+        let denom  = max(w_cur + w_hist, 1e-6);
+        blended = (current_color * w_cur + history_clipped * w_hist) / denom;
+    } else {
+        // Legacy linear blend (rounds 1 and 2).
+        blended = mix(history_clipped, current_color, blend);
+    }
 
     // ── 7. Optional sharpening (simple 3×3 unsharp mask) ─────────────────────
     if taa_params.sharpening > 0.0 {
