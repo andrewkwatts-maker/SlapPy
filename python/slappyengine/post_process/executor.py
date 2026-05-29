@@ -84,19 +84,6 @@ class PostProcessExecutor:
                 float(params.get("time", 0.0)),
                 w, h, 0, 0,
             )
-        elif pass_.shader_path == "vignette.wgsl":
-            # Params struct layout (32 bytes):
-            #   strength(f32), width(u32), height(u32),
-            #   inner_radius(f32), feather(f32),
-            #   _pad0(u32), _pad1(u32), _pad2(u32)
-            data = struct.pack(
-                "<fIIffIII",
-                float(params.get("strength", 1.0)),
-                w, h,
-                float(params.get("inner_radius", 0.0)),
-                float(params.get("feather", 0.0)),
-                0, 0, 0,
-            )
         elif pass_.shader_path == "chromatic_aberration.wgsl":
             # Params struct layout (32 bytes):
             #   strength(f32), center_x(f32), center_y(f32), _pad(f32),
@@ -107,6 +94,23 @@ class PostProcessExecutor:
                 float(params.get("center_x", 0.5)),
                 float(params.get("center_y", 0.5)),
                 0.0,  # _pad
+                w, h, 0, 0,
+            )
+        elif pass_.shader_path == "outline.wgsl":
+            # Round-5 layout (48 bytes, std140-compatible):
+            #   outline_r(f32), outline_g(f32), outline_b(f32), outline_a(f32),
+            #   threshold(f32), softness(f32), use_sobel(u32), _pad0(u32),
+            #   width(u32), height(u32), _pad1(u32), _pad2(u32)
+            data = struct.pack(
+                "<ffffffIIIIII",
+                float(params.get("outline_r", 1.0)),
+                float(params.get("outline_g", 0.0)),
+                float(params.get("outline_b", 0.0)),
+                float(params.get("outline_a", 1.0)),
+                float(params.get("threshold", 0.1)),
+                float(params.get("softness", 0.0)),
+                int(params.get("use_sobel", 0)),
+                0,  # _pad0
                 w, h, 0, 0,
             )
         elif pass_.shader_path == "tonemap.wgsl":

@@ -49,13 +49,46 @@ class PostProcessChain:
         self.add(p)
         return p
 
-    def add_outline(self, color=(1.0, 0.0, 0.0, 1.0), threshold=0.1) -> PostProcessPass:
+    def add_outline(
+        self,
+        color=(1.0, 0.0, 0.0, 1.0),
+        threshold=0.1,
+        softness: float = 0.0,
+        use_sobel: bool = False,
+    ) -> PostProcessPass:
+        """Append an outline pass to the chain.
+
+        Round-5 added the ``softness`` and ``use_sobel`` knobs.  When
+        both are at their defaults (``softness=0.0``, ``use_sobel=False``)
+        the shader runs the pre-round-5 binary 4-cardinal-neighbour
+        path bit-for-bit — existing call sites are unaffected.
+
+        Parameters
+        ----------
+        color
+            ``(r, g, b, a)`` RGBA tuple in linear ``[0, 1]``.
+        threshold
+            Edge cutoff.  Interpreted as an alpha threshold when
+            ``use_sobel=False`` and as a Sobel-magnitude cutoff when
+            ``use_sobel=True``.
+        softness
+            Half-width of the smoothstep transition around the
+            threshold.  ``0`` selects the legacy binary cliff
+            (backward-compat); ``> 0`` produces an anti-aliased
+            outline that no longer pops frame-to-frame.
+        use_sobel
+            ``False`` (default) keeps the legacy 4-cardinal-neighbour
+            binary path; ``True`` enables the round-5 Sobel-magnitude
+            detector.
+        """
         p = PostProcessPass(
             shader_path="outline.wgsl",
             params={
                 "outline_r": color[0], "outline_g": color[1],
                 "outline_b": color[2], "outline_a": color[3],
                 "threshold": threshold,
+                "softness":  float(softness),
+                "use_sobel": int(bool(use_sobel)),
             },
             label="outline",
         )
@@ -106,37 +139,6 @@ class PostProcessChain:
             },
             label="night_vision",
             entry_point="nv_grain_main",
-        )
-        self.add(p)
-        return p
-
-    def add_vignette(
-        self,
-        strength: float = 1.0,
-        inner_radius: float = 0.0,
-        feather: float = 0.0,
-    ) -> PostProcessPass:
-        """Round-4 vignette pass with optional smoothstep falloff.
-
-        Args:
-            strength: Peak darkening factor at the outer edge (default 1.0).
-            inner_radius: Normalised radius (0 = centre, 1 = nearest edge
-                midpoint) at which falloff begins.  Ignored when
-                ``feather <= 0`` (legacy hard-quadratic path).
-            feather: Width of the smoothstep transition band.  Set to a
-                positive value to opt into the smooth shoulder; leave at
-                ``0.0`` to reproduce the pre-round-4 ``pow(d*s, 2)``
-                curve bit-for-bit.
-        """
-        # Params struct layout (32 bytes): see executor._make_params_buffer.
-        p = PostProcessPass(
-            shader_path="vignette.wgsl",
-            params={
-                "strength": strength,
-                "inner_radius": inner_radius,
-                "feather": feather,
-            },
-            label="vignette",
         )
         self.add(p)
         return p
