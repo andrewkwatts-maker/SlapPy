@@ -1,6 +1,11 @@
 from __future__ import annotations
 from typing import Callable, Any
 
+from slappyengine._event_bus_validation import (
+    validate_event_type,
+    validate_callback,
+)
+
 
 class EventBus:
     """
@@ -41,9 +46,30 @@ class EventBus:
         self._listeners: dict[str, list[Callable]] = {}
 
     def subscribe(self, event_type: str, callback: Callable[[dict], None]) -> None:
+        """Register ``callback`` to fire on ``event_type``.
+
+        Raises
+        ------
+        TypeError
+            If ``event_type`` is not a ``str`` or ``callback`` is not callable.
+        ValueError
+            If ``event_type`` is the empty string.
+        """
+        validate_event_type("event_type", "EventBus.subscribe", event_type)
+        validate_callback("callback", "EventBus.subscribe", callback)
         self._listeners.setdefault(event_type, []).append(callback)
 
     def unsubscribe(self, event_type: str, callback: Callable) -> None:
+        """Remove a previously-registered ``callback`` from ``event_type``.
+
+        Raises
+        ------
+        TypeError
+            If ``event_type`` is not a ``str``.
+        ValueError
+            If ``event_type`` is the empty string.
+        """
+        validate_event_type("event_type", "EventBus.unsubscribe", event_type)
         lst = self._listeners.get(event_type, [])
         try:
             lst.remove(callback)
@@ -51,21 +77,51 @@ class EventBus:
             pass
 
     def once(self, event_type: str, callback: Callable[[dict], None]) -> None:
-        """Subscribe for exactly one firing, then auto-unsubscribe."""
+        """Subscribe for exactly one firing, then auto-unsubscribe.
+
+        Raises
+        ------
+        TypeError
+            If ``event_type`` is not a ``str`` or ``callback`` is not callable.
+        ValueError
+            If ``event_type`` is the empty string.
+        """
+        validate_event_type("event_type", "EventBus.once", event_type)
+        validate_callback("callback", "EventBus.once", callback)
+
         def _wrapper(payload: dict) -> None:
             callback(payload)
             self.unsubscribe(event_type, _wrapper)
         self.subscribe(event_type, _wrapper)
 
     def on(self, event_type: str) -> Callable:
-        """Decorator: @bus.on("event:type")"""
+        """Decorator: ``@bus.on("event:type")``.
+
+        Raises
+        ------
+        TypeError
+            If ``event_type`` is not a ``str``.
+        ValueError
+            If ``event_type`` is the empty string.
+        """
+        validate_event_type("event_type", "EventBus.on", event_type)
+
         def decorator(fn: Callable) -> Callable:
             self.subscribe(event_type, fn)
             return fn
         return decorator
 
     def publish(self, event_type: str, **payload: Any) -> None:
-        """Fire all subscribers for event_type with payload as a dict."""
+        """Fire all subscribers for ``event_type`` with payload as a dict.
+
+        Raises
+        ------
+        TypeError
+            If ``event_type`` is not a ``str``.
+        ValueError
+            If ``event_type`` is the empty string.
+        """
+        validate_event_type("event_type", "EventBus.publish", event_type)
         for cb in list(self._listeners.get(event_type, [])):
             try:
                 cb(payload)

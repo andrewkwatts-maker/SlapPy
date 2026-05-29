@@ -1,6 +1,11 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 
+from slappyengine.input._validation import (
+    validate_action_name,
+    validate_keys_arg,
+)
+
 
 # ---------------------------------------------------------------------------
 # Key-name normalisation helpers
@@ -89,8 +94,22 @@ class ActionMap:
     # ------------------------------------------------------------------
 
     def bind(self, action: str, key: str) -> None:
-        """Bind *action* to *key* (replaces any previous binding for that action)."""
-        canonical = normalize_key(key)
+        """Bind *action* to *key* (replaces any previous binding for that action).
+
+        Raises
+        ------
+        TypeError
+            If ``action`` is not a ``str``, or ``key`` is not a ``str`` /
+            non-empty iterable of ``str``.
+        ValueError
+            If ``action`` is the empty string, or ``key`` is empty (empty
+            string / empty iterable / contains empty entries).
+        """
+        validate_action_name("action", "ActionMap.bind", action)
+        validated_key = validate_keys_arg("key", "ActionMap.bind", key)
+        # Historical single-key contract: take the first key if a list is given.
+        first_key = validated_key if isinstance(validated_key, str) else validated_key[0]
+        canonical = normalize_key(first_key)
         # Remove old binding if present
         if action in self._bindings:
             old_key = self._bindings[action]
@@ -102,7 +121,16 @@ class ActionMap:
         self._state.setdefault(action, False)
 
     def unbind(self, action: str) -> None:
-        """Remove the binding for *action*."""
+        """Remove the binding for *action*.
+
+        Raises
+        ------
+        TypeError
+            If ``action`` is not a ``str``.
+        ValueError
+            If ``action`` is the empty string.
+        """
+        validate_action_name("action", "ActionMap.unbind", action)
         if action in self._bindings:
             key = self._bindings.pop(action)
             lst = self._reverse.get(key, [])

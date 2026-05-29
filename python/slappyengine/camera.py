@@ -1,12 +1,73 @@
 from __future__ import annotations
 import math
 
+from slappyengine._camera_validation import (
+    validate_finite_2tuple,
+    validate_positive_finite_float,
+)
+
+
 class Camera:
     def __init__(self, position: tuple[float, float] = (0.0, 0.0),
                  zoom: float = 1.0):
-        self.position: tuple[float, float] = position
-        self.zoom: float = zoom
+        """Construct a camera.
+
+        Raises
+        ------
+        TypeError
+            If ``position`` is not a 2-element sequence of real numbers, or
+            ``zoom`` is not a real number.
+        ValueError
+            If ``position`` elements are NaN/inf, the sequence has wrong
+            length, or ``zoom <= 0`` / NaN / inf.
+        """
+        # Bypass the property setters so we run validation once with the
+        # constructor-frame fn-name in error messages.
+        self._position: tuple[float, float] = validate_finite_2tuple(
+            "position", "Camera", position,
+        )
+        self._zoom: float = validate_positive_finite_float(
+            "zoom", "Camera", zoom,
+        )
         self._viewport_size: tuple[int, int] = (800, 600)  # updated by engine
+
+    @property
+    def position(self) -> tuple[float, float]:
+        return self._position
+
+    @position.setter
+    def position(self, value: tuple[float, float]) -> None:
+        """Set the camera centre (world-space pixels).
+
+        Raises
+        ------
+        TypeError
+            If ``value`` is not a 2-element sequence of real numbers.
+        ValueError
+            If ``value`` has wrong length or contains NaN/inf.
+        """
+        self._position = validate_finite_2tuple(
+            "position", "Camera.position", value,
+        )
+
+    @property
+    def zoom(self) -> float:
+        return self._zoom
+
+    @zoom.setter
+    def zoom(self, value: float) -> None:
+        """Set the camera zoom factor (>0; >1 zooms in, <1 zooms out).
+
+        Raises
+        ------
+        TypeError
+            If ``value`` is not a real number.
+        ValueError
+            If ``value <= 0``, NaN, or inf.
+        """
+        self._zoom = validate_positive_finite_float(
+            "zoom", "Camera.zoom", value,
+        )
 
     def world_to_screen(self, world: tuple[float, float]) -> tuple[float, float]:
         cx, cy = self.position
