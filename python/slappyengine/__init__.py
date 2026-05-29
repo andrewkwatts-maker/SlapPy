@@ -316,6 +316,7 @@ def __getattr__(name: str):
         "numerics",
         "post_process",
         "residency",
+        "telemetry",
         "testing",
         "thermal",
         "tools",
