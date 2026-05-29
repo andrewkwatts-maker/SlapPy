@@ -26,6 +26,13 @@ from .material import Material
 from .motor import MotorSpec, make_motor
 from .ragdoll import BoneSpec, RagdollSpec, build_ragdoll
 from .rope import RopeSpec, build_rope
+from .serialize import (
+    SCHEMA_VERSION,
+    load_world,
+    save_world,
+    world_from_dict,
+    world_to_dict,
+)
 from .spring import SpringSpec, make_spring
 from .world import (
     OVERDAMPING_THRESHOLD,
@@ -55,4 +62,9 @@ __all__ = [
     "SoftBodyWorld",
     "estimate_effective_damping",
     "OVERDAMPING_THRESHOLD",
+    "SCHEMA_VERSION",
+    "world_to_dict",
+    "world_from_dict",
+    "save_world",
+    "load_world",
 ]
