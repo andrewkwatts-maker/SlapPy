@@ -59,18 +59,29 @@ symbols across 19 declared subpackages.
   baseline.
 - `examples/hello_ik_chain.py` — CCD IK over a 5-link chain tracking
   an orbiting target.
+- `examples/hello_motor.py` — `MotorSpec` driving a wheel hub + two
+  rims (ω error 0.05%, 5/5 green).
+- `examples/hello_spring.py` — 1D Hookean oscillator with period
+  verification (2.06% period error vs analytic).
 - Editor `spawn_menu` gains rope / ragdoll / IK chain actions; property
   inspector and material editor extended via reflection.
 
 ### Improved
 
-- **Lighting round 2** — GTAO depth-adaptive radius (Jimenez 2016).
-- **Lighting round 3 (bloom)** — Lottes 2017 smooth threshold replaces
-  the binary cutoff (14/14 regression tests green).
-- **Lighting round 3 (TAA)** — Karis luminance-inverse weighted blend
-  cuts ghosting by ~41% on motion-heavy scenes.
-- **Hardening** — dynamics primitives now validate input at the public
-  API boundary; 89-test hardening suite catches 8 silent-bug classes.
+- **Lighting rounds 2-4 (perceptual polish across GTAO / Bloom / TAA /
+  Vignette):**
+  - **Round 2 (GTAO)** — depth-adaptive sample radius (Jimenez 2016).
+  - **Round 3 (Bloom)** — Lottes 2017 smooth threshold replaces the
+    binary cutoff (14/14 regression tests green).
+  - **Round 3 (TAA)** — Karis luminance-inverse weighted blend cuts
+    ghosting on motion-heavy scenes by 41.3%.
+  - **Round 4 (Vignette)** — smoothstep falloff with `inner_radius` +
+    `feather` parameters (19/19 green, -23% banding versus the legacy
+    quadratic falloff).
+- **Telemetry perf** — first-segment bucket index on the subscriber
+  table lands a **6.42x speedup at 1000 subscribers** while keeping the
+  86ns no-subscriber emit (14/14 green). Bench harness at
+  `tools/bench_telemetry.py`.
 - **Audio runtime** — `slappyengine.ext.audio_runtime` soft-imports
   with a silent-stub fallback so headless test environments load
   cleanly.
@@ -86,18 +97,35 @@ symbols across 19 declared subpackages.
   candidates and their consumer counts at
   [`docs/strip_pass_v2_audit.md`](docs/strip_pass_v2_audit.md). No
   files deleted; gated on downstream-game CI.
+- **Hardening — input validation at public boundaries.** Two rounds
+  caught **32 silent-acceptance bugs** across the v0.3 surface:
+  - **Round 1 (dynamics)** — `Body`, `Material`, `JointSpec` family,
+    `RopeSpec`, `RagdollSpec`, `IKChainSpec`, and the `build_*` /
+    `make_*` helpers raise on invalid input at construction instead of
+    deep inside the solver. **8 silent-bug classes caught** (89 tests
+    green).
+  - **Round 2 (zones / topology / numerics / thermal / iso)** —
+    `_validation` modules added to all five Phase-B subpackages.
+    **24 silent-acceptance bugs caught** (111 tests green); the worst
+    offender was `WaveSpec(spawn_points=[])` which previously slipped
+    through construction and raised `ZeroDivisionError` deep inside
+    `tick()`.
 - **Cross-package integration scene** — `iso/zones/thermal/dynamics`
-  exercised together as one 6/6 regression test.
-- **Visual harness** — `slappyengine.testing` underpins demo baselines
-  (hello_rope, hello_ragdoll, hello_ik_chain).
+  exercised together as one 6/6 regression test (v2 of the harness).
+- **Visual harness baselines** — `slappyengine.testing` underpins
+  demo baselines for `hello_rope`, `hello_ragdoll`, `hello_ik_chain`,
+  `hello_motor`, and `hello_spring`, plus the
+  `vignette_round4_legacy.png` / `vignette_round4_smooth.png`
+  side-by-side baselines for the lighting round-4 regression.
 
 ### Documentation
 
 - [`docs/engine_surface_v030.md`](docs/engine_surface_v030.md) — auto-generated reference for the v0.3 public surface (regenerate via `scripts/gen_engine_surface_doc.py`).
 - [`docs/dynamics_design.md`](docs/dynamics_design.md) — XPBD substrate, `JointSpec` kinds, authoring helpers, failure modes.
+- [`docs/dynamics_quickstart.md`](docs/dynamics_quickstart.md) — 10-minute hands-on quick-start guide for the dynamics primitives, with 6 runnable snippets (4/4 tripwire tests green).
 - [`docs/strip_pass_v2_audit.md`](docs/strip_pass_v2_audit.md) — Phase D deletion-candidate audit (dry-run).
 - [`docs/sprite_audit_recipe.md`](docs/sprite_audit_recipe.md) — sprite-anchor audit workflow.
-- [`docs/telemetry_design.md`](docs/telemetry_design.md) — telemetry module design.
+- [`docs/telemetry_design.md`](docs/telemetry_design.md) — telemetry module design, plus the round-2 first-segment bucket-index notes that justify the 6.42x subscriber-dispatch speedup.
 
 ## [0.2.0a0] — 2026-05-25
 

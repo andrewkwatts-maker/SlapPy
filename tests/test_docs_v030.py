@@ -78,6 +78,81 @@ def test_changelog_030_mentions_hardening(changelog_text: str) -> None:
     )
 
 
+def test_changelog_mentions_lighting_rounds(changelog_text: str) -> None:
+    """0.3.0 must mention the GTAO / Bloom / TAA / Vignette lighting polish.
+
+    Either each round-name is called out explicitly, or the section
+    references "rounds 2-4" so we know all four passes are covered.
+    """
+    section = _extract_030_section(changelog_text)
+    has_rounds_phrase = (
+        "rounds 2-4" in section
+        or "rounds 2 - 4" in section
+        or "rounds 2–4" in section  # en-dash
+        or "rounds 2 – 4" in section
+    )
+    individually_named = all(
+        token in section for token in ("GTAO", "Bloom", "TAA", "Vignette")
+    )
+    assert has_rounds_phrase or individually_named, (
+        "0.3.0 section must mention 'rounds 2-4' OR call out each of "
+        "GTAO / Bloom / TAA / Vignette explicitly"
+    )
+
+
+def test_changelog_mentions_hardening_bug_count(changelog_text: str) -> None:
+    """0.3.0 must mention 'silent-acceptance' (or similar) + a number >= 30.
+
+    We have 8 (dynamics round 1) + 24 (round 2) = 32 silent-acceptance
+    bugs caught at the public boundary so far. The CHANGELOG must
+    surface that count so reviewers can audit the hardening claim.
+    """
+    section = _extract_030_section(changelog_text)
+    lower = section.lower()
+    has_phrase = (
+        "silent-acceptance" in lower
+        or "silent acceptance" in lower
+        or "silent-bug" in lower
+        or "silent bug" in lower
+    )
+    assert has_phrase, (
+        "0.3.0 must mention 'silent-acceptance' or 'silent-bug' "
+        "to characterise the hardening bug class"
+    )
+
+    import re
+    numbers = [int(m.group()) for m in re.finditer(r"\b\d+\b", section)]
+    assert any(n >= 30 for n in numbers), (
+        "0.3.0 must mention a hardening bug count >= 30 "
+        "(8 dynamics + 24 zones/topology/numerics/thermal/iso = 32)"
+    )
+
+
+def test_changelog_mentions_demos(changelog_text: str) -> None:
+    """0.3.0 must name each of the five hello_* dynamics demos."""
+    section = _extract_030_section(changelog_text)
+    required_demos = (
+        "hello_rope",
+        "hello_ragdoll",
+        "hello_motor",
+        "hello_spring",
+        "hello_ik_chain",
+    )
+    missing = [demo for demo in required_demos if demo not in section]
+    assert not missing, (
+        f"0.3.0 section missing references to demos: {missing}"
+    )
+
+
+def test_changelog_mentions_perf_speedup(changelog_text: str) -> None:
+    """0.3.0 must mention the telemetry perf win (6.42x or 'telemetry')."""
+    section = _extract_030_section(changelog_text).lower()
+    assert "6.42x" in section or "telemetry" in section, (
+        "0.3.0 section must mention '6.42x' or 'telemetry' to surface "
+        "the telemetry first-segment-bucket perf win"
+    )
+
+
 def _extract_030_section(text: str) -> str:
     """Return everything in the 0.3.0 section up to the next ## heading."""
     marker = "## [0.3.0]"
