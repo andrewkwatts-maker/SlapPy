@@ -85,16 +85,20 @@ class PostProcessExecutor:
                 w, h, 0, 0,
             )
         elif pass_.shader_path == "chromatic_aberration.wgsl":
-            # Params struct layout (32 bytes):
-            #   strength(f32), center_x(f32), center_y(f32), _pad(f32),
-            #   width(u32), height(u32), _pad0(u32), _pad1(u32)
+            # Params struct layout (32 bytes) — round-6 polynomial falloff:
+            #   strength(f32), center_x(f32), center_y(f32), falloff_power(f32),
+            #   width(u32), height(u32), falloff_amount(f32), _pad1(u32)
+            # Backward-compat defaults (power=1.0, amount=0.0) reproduce
+            # the legacy linear behaviour bit-exactly.
             data = struct.pack(
-                "<ffffIIII",
+                "<ffffIIfI",
                 float(params.get("strength", 0.005)),
                 float(params.get("center_x", 0.5)),
                 float(params.get("center_y", 0.5)),
-                0.0,  # _pad
-                w, h, 0, 0,
+                float(params.get("falloff_power", 1.0)),
+                w, h,
+                float(params.get("falloff_amount", 0.0)),
+                0,
             )
         elif pass_.shader_path == "outline.wgsl":
             # Round-5 layout (48 bytes, std140-compatible):

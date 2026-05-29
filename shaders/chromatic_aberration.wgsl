@@ -1,17 +1,31 @@
 // chromatic_aberration.wgsl — Chromatic aberration post-process pass
 // Samples the R, G, and B channels at radially-offset UVs proportional to
 // the distance from a configurable center point × strength.
+//
+// Round-6 polish (Lottes 2014): the radial offset is multiplied by a
+// polynomial falloff so the aberration grows non-linearly with distance,
+// matching the off-axis behaviour of real photographic lenses where
+// lateral chromatic aberration scales roughly with r^2 or r^3.
+//
+// Effective offset magnitude is:
+//   m(r) = strength * r * (1 + falloff_amount * r^max(0, falloff_power-1))
+//
+// `falloff_power = 1.0` and `falloff_amount = 0.0` reproduce the legacy
+// strictly-linear behaviour exactly (m(r) = strength * r). Common useful
+// values: power=2 amount=2 (quadratic edge bias), power=3 amount=4
+// (cubic, very pronounced edge fringing).
+//
 // Binding convention: binding 0 = input_tex, binding 1 = output_tex, binding 2 = params uniform.
 
 struct Params {
-    strength: f32,
-    center_x: f32,
-    center_y: f32,
-    _pad:     f32,
-    width:    u32,
-    height:   u32,
-    _pad0:    u32,
-    _pad1:    u32,
+    strength:       f32,
+    center_x:       f32,
+    center_y:       f32,
+    falloff_power:  f32,
+    width:          u32,
+    height:         u32,
+    falloff_amount: f32,
+    _pad1:          u32,
 }
 
 @group(0) @binding(0) var input_tex  : texture_2d<f32>;
@@ -58,7 +72,18 @@ fn chromatic_aberration_main(@builtin(global_invocation_id) gid: vec3u) {
 
     // Each channel is offset radially outward by a scalar multiple of strength.
     // R is pushed furthest, G stays near center, B is pushed inward relative to G.
-    let offset = dir * dist * params.strength;
+    //
+    // Lottes 2014 polynomial falloff:
+    //   m(r) = strength * r * (1 + falloff_amount * r^max(0, falloff_power-1))
+    // When falloff_power == 1.0 and falloff_amount == 0.0 this reduces to the
+    // strictly-linear m(r) = strength * r (legacy / backward-compat path).
+    let extra_pow = max(params.falloff_power - 1.0, 0.0);
+    // pow(0, 0) is implementation-defined; clamp away from zero so dist=0 at
+    // the centre stays a no-op regardless of the exponent. dist is already
+    // non-negative.
+    let falloff_term = params.falloff_amount * pow(max(dist, 0.0), extra_pow);
+    let magnitude    = params.strength * dist * (1.0 + falloff_term);
+    let offset       = dir * magnitude;
 
     let uv_r = uv + offset;
     let uv_g = uv;

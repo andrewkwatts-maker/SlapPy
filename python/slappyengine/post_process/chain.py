@@ -171,23 +171,24 @@ class PostProcessChain:
         self,
         strength: float = 0.005,
         center: tuple[float, float] = (0.5, 0.5),
+        falloff_power: float = 1.0,
+        falloff_amount: float = 0.0,
     ) -> PostProcessPass:
         """WP-2.9 Chromatic aberration effect.
 
-        Args:
-            strength: Radial channel-split magnitude as a fraction of the
-                distance from center (default 0.005).
-            center: Normalised (x, y) origin of the aberration (default centre
-                of screen).
+        Round-6 polish: optional Lottes 2014 polynomial radial falloff
+        ``m(r) = strength * r * (1 + falloff_amount * r**max(0, falloff_power - 1))``.
+        Defaults (`falloff_power=1.0, falloff_amount=0.0`) reproduce the
+        legacy strictly-linear behaviour bit-exactly.
         """
-        # Pack: strength(f32), center_x(f32), center_y(f32), _pad(f32),
-        #       width(u32), height(u32), _pad0(u32), _pad1(u32)
         p = PostProcessPass(
             shader_path="chromatic_aberration.wgsl",
             params={
                 "strength": strength,
                 "center_x": center[0],
                 "center_y": center[1],
+                "falloff_power": falloff_power,
+                "falloff_amount": falloff_amount,
             },
             label="chromatic_aberration",
             entry_point="chromatic_aberration_main",
