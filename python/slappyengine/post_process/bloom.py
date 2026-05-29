@@ -29,6 +29,7 @@ from typing import Iterable
 import numpy as np
 
 from .chain import PostProcessPass
+from ._validation import validate_non_negative_float
 
 
 _SHADER = "bloom_threshold.wgsl"
@@ -107,11 +108,24 @@ class BloomPass:
         knee: float = 0.2,
         intensity: float = 1.0,
     ) -> None:
-        if knee < 0.0:
-            raise ValueError(f"knee must be >= 0, got {knee!r}")
-        self.threshold = float(threshold)
-        self.knee = float(knee)
-        self.intensity = float(intensity)
+        """Construct a bloom extraction pass.
+
+        Raises
+        ------
+        TypeError
+            If ``threshold`` / ``knee`` / ``intensity`` are not real numbers.
+        ValueError
+            If any of them is NaN/inf or negative.
+        """
+        self.threshold = validate_non_negative_float(
+            "threshold", "BloomPass", threshold,
+        )
+        self.knee = validate_non_negative_float(
+            "knee", "BloomPass", knee,
+        )
+        self.intensity = validate_non_negative_float(
+            "intensity", "BloomPass", intensity,
+        )
 
     # ----------------------------------------------------------- config glue
     @classmethod

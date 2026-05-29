@@ -2,6 +2,11 @@ from __future__ import annotations
 import struct
 from typing import Optional
 from .chain import PostProcessPass
+from ._validation import (
+    validate_bool,
+    validate_non_negative_float,
+    validate_unit_interval,
+)
 
 _SHADER = "taa_resolve.wgsl"
 _ENTRY  = "taa_resolve_main"
@@ -31,6 +36,18 @@ class TAAPass:
         motion_weight: float = 1.0,
         karis_weight: bool = False,
     ) -> None:
+        """Construct a temporal anti-aliasing pass.
+
+        Raises
+        ------
+        TypeError
+            If ``alpha`` / ``variance_clip_gamma`` / ``motion_weight`` are
+            not real numbers, or ``karis_weight`` is not a ``bool``.
+        ValueError
+            If ``alpha`` is outside ``[0, 1]``, or
+            ``variance_clip_gamma`` / ``motion_weight`` are negative
+            or NaN/inf.
+        """
         # blend_factor = alpha (fraction of current frame blended in).
         # variance_clip_gamma and motion_weight are kept for API completeness;
         # the current shader encodes them implicitly via sharpening (gamma) and
@@ -41,9 +58,15 @@ class TAAPass:
         # (sparks, fireflies) don't anchor the history toward a stale brightness.
         # When False (default) the legacy mix(history, current, alpha) blend
         # used in rounds 1 and 2 is preserved bit-for-bit.
-        self.alpha = alpha
+        self.alpha = validate_unit_interval("alpha", "TAAPass", alpha)
+        validate_non_negative_float(
+            "variance_clip_gamma", "TAAPass", variance_clip_gamma,
+        )
         self.sharpening = max(0.0, variance_clip_gamma - 1.0)
-        self.motion_weight = motion_weight
+        self.motion_weight = validate_non_negative_float(
+            "motion_weight", "TAAPass", motion_weight,
+        )
+        validate_bool("karis_weight", "TAAPass", karis_weight)
         self.karis_weight = bool(karis_weight)
 
     @classmethod

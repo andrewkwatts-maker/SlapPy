@@ -20,6 +20,14 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any, Iterable
 
+from ._sprite_audit_validation import (
+    validate_inventory_entry,
+    validate_pathlike,
+    validate_pattern_list,
+    validate_positive_int,
+    validate_rgba_tuple,
+)
+
 __all__ = [
     "SpriteInventoryEntry",
     "inventory_sprites",
@@ -124,8 +132,15 @@ def inventory_sprites(
 
     Files that fail to open are silently skipped — broken images should not
     abort the whole audit.
+
+    Raises
+    ------
+    TypeError
+        If ``root`` is not str / os.PathLike, or ``patterns`` is not a list
+        of strings.
     """
-    root = Path(root)
+    root = validate_pathlike("root", "inventory_sprites", root)
+    validate_pattern_list("patterns", "inventory_sprites", patterns)
     if not root.is_dir():
         return []
 
@@ -212,13 +227,22 @@ def render_zoom(
 ) -> None:
     """Paste the sprite over ``bg_color`` and upscale by ``zoom`` using
     nearest-neighbour so individual pixels stay crisp. Save to ``output``.
+
+    Raises
+    ------
+    TypeError
+        If ``image_path`` / ``output`` are not str / os.PathLike, ``zoom``
+        is not an int, or ``bg_color`` is not a 4-sequence of ints.
+    ValueError
+        If ``zoom < 1``, ``bg_color`` is not length 4, or any
+        ``bg_color`` channel is outside ``[0, 255]``.
     """
-    if zoom < 1:
-        raise ValueError(f"zoom must be >= 1, got {zoom}")
+    image_path = validate_pathlike("image_path", "render_zoom", image_path)
+    output = validate_pathlike("output", "render_zoom", output)
+    validate_positive_int("zoom", "render_zoom", zoom)
+    bg_color = validate_rgba_tuple("bg_color", "render_zoom", bg_color)
     from PIL import Image
 
-    image_path = Path(image_path)
-    output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
 
     sprite = Image.open(image_path).convert("RGBA")
@@ -250,12 +274,21 @@ def make_before_after(
     """Side-by-side OLD | NEW comparison: labelled OLD strip + old sprite at
     ``zoom``, a small gap, then labelled NEW strip + new sprite at ``zoom``.
     Useful for change verification.
+
+    Raises
+    ------
+    TypeError
+        If any of ``old_path``, ``new_path``, ``output`` is not str /
+        os.PathLike, or ``zoom`` is not an int.
+    ValueError
+        If ``zoom < 1``.
     """
+    old_path = validate_pathlike("old_path", "make_before_after", old_path)
+    new_path = validate_pathlike("new_path", "make_before_after", new_path)
+    output = validate_pathlike("output", "make_before_after", output)
+    validate_positive_int("zoom", "make_before_after", zoom)
     from PIL import Image
 
-    old_path = Path(old_path)
-    new_path = Path(new_path)
-    output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
 
     bg = (10, 14, 20, 255)
@@ -325,7 +358,15 @@ def assess_quality(entry: SpriteInventoryEntry) -> dict[str, Any]:
     (:data:`ALPHA_COVERAGE_CUTOFF`, :data:`SATURATION_CUTOFF`,
     :data:`MIN_DIMENSION_CUTOFF`) so downstream games can monkey-patch them
     if their art style needs different tolerances.
+
+    Raises
+    ------
+    TypeError
+        If ``entry`` is not a :class:`SpriteInventoryEntry` (or a
+        duck-compatible object exposing ``alpha_coverage``, ``mean_rgb``,
+        ``width``, ``height``).
     """
+    validate_inventory_entry("assess_quality", entry)
     flags: list[str] = []
 
     if entry.alpha_coverage < ALPHA_COVERAGE_CUTOFF:

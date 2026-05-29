@@ -26,6 +26,10 @@ from typing import Tuple
 import numpy as np
 
 from .chain import PostProcessPass
+from ._validation import (
+    validate_non_negative_float,
+    validate_unit_interval,
+)
 
 
 _SHADER = "vignette.wgsl"
@@ -138,15 +142,27 @@ class VignettePass:
         inner_radius: float = 0.0,
         feather: float = 0.0,
     ) -> None:
-        if strength < 0.0:
-            raise ValueError(f"strength must be >= 0, got {strength!r}")
-        if inner_radius < 0.0:
-            raise ValueError(f"inner_radius must be >= 0, got {inner_radius!r}")
-        if feather < 0.0:
-            raise ValueError(f"feather must be >= 0, got {feather!r}")
-        self.strength = float(strength)
-        self.inner_radius = float(inner_radius)
-        self.feather = float(feather)
+        """Construct a vignette darkening pass.
+
+        Raises
+        ------
+        TypeError
+            If ``strength`` / ``inner_radius`` / ``feather`` are not
+            real numbers.
+        ValueError
+            If ``strength`` is negative or NaN/inf, ``inner_radius`` is
+            outside ``[0, 1]`` or NaN/inf, or ``feather`` is negative
+            or NaN/inf.
+        """
+        self.strength = validate_non_negative_float(
+            "strength", "VignettePass", strength,
+        )
+        self.inner_radius = validate_unit_interval(
+            "inner_radius", "VignettePass", inner_radius,
+        )
+        self.feather = validate_non_negative_float(
+            "feather", "VignettePass", feather,
+        )
 
     @classmethod
     def from_config(cls, cfg) -> "VignettePass":

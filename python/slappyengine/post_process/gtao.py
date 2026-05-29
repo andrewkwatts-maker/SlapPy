@@ -2,6 +2,13 @@ from __future__ import annotations
 import math
 import struct
 from .chain import PostProcessPass
+from ._validation import (
+    validate_mat4_tuple,
+    validate_non_negative_float,
+    validate_positive_float,
+    validate_positive_int,
+    validate_unit_interval,
+)
 
 _SHADER = "ao_gtao.wgsl"
 _ENTRY  = "ao_gtao_main"
@@ -95,6 +102,37 @@ class GTAOPass:
         depth_falloff: float = 0.0,
         min_radius_scale: float = 0.25,
     ) -> None:
+        """Construct a GTAO ambient-occlusion pass.
+
+        Raises
+        ------
+        TypeError
+            If any numeric kwarg is the wrong type (bools/strings refused).
+        ValueError
+            If any positive-only kwarg (``num_directions``, ``num_steps``,
+            ``radius``, ``intensity``, ``max_pixel_radius``) is ≤ 0;
+            if ``bias`` / ``depth_falloff`` are negative or NaN/inf; if
+            ``min_radius_scale`` is outside ``[0, 1]``; if ``inv_proj``
+            is not a 16-element matrix of finite floats.
+        """
+        validate_positive_int(
+            "num_directions", "GTAOPass", num_directions,
+        )
+        validate_positive_int("num_steps", "GTAOPass", num_steps)
+        validate_positive_float("radius", "GTAOPass", radius)
+        validate_positive_float("intensity", "GTAOPass", intensity)
+        validate_non_negative_float("bias", "GTAOPass", bias)
+        validate_positive_float(
+            "max_pixel_radius", "GTAOPass", max_pixel_radius,
+        )
+        validate_mat4_tuple("inv_proj", "GTAOPass", inv_proj)
+        validate_non_negative_float(
+            "depth_falloff", "GTAOPass", depth_falloff,
+        )
+        validate_unit_interval(
+            "min_radius_scale", "GTAOPass", min_radius_scale,
+        )
+
         self.num_directions = num_directions
         self.num_steps = num_steps
         self.radius = radius

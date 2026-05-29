@@ -50,6 +50,13 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 
+from ._validation import (
+    validate_bool,
+    validate_callable,
+    validate_non_negative_int,
+    validate_str,
+)
+
 __all__ = [
     "TelemetryEvent",
     "emit",
@@ -126,7 +133,15 @@ def emit(name: str, **payload: Any) -> None:
         Dotted event name, e.g. ``"physics.step"``.
     **payload : Any
         Arbitrary key/value data. Copied into the event's payload dict.
+
+    Raises
+    ------
+    TypeError
+        If ``name`` is not a ``str``.
+    ValueError
+        If ``name`` is the empty string.
     """
+    validate_str("name", "emit", name, allow_empty=False)
     # Fast path: nothing to do. Two attribute lookups + a bool — no alloc.
     if not _subscribers and _history_capacity == 0:
         return
@@ -219,7 +234,14 @@ def subscribe(
     int
         Opaque handle. Pass it to :func:`unsubscribe` to drop the
         subscription.
+
+    Raises
+    ------
+    TypeError
+        If ``name_pattern`` is not a ``str`` or ``callback`` is not callable.
     """
+    validate_str("name_pattern", "subscribe", name_pattern)
+    validate_callable("callback", "subscribe", callback)
     global _next_handle
     with _lock:
         handle = _next_handle
@@ -355,7 +377,13 @@ def enable_pattern_index(enabled: bool = True) -> None:
     ----------
     enabled : bool
         ``True`` to enable indexed dispatch, ``False`` to disable.
+
+    Raises
+    ------
+    TypeError
+        If ``enabled`` is not a ``bool``.
     """
+    validate_bool("enabled", "enable_pattern_index", enabled)
     global _pattern_index_enabled
     with _lock:
         _pattern_index_enabled = bool(enabled)
@@ -378,13 +406,19 @@ def set_history_capacity(capacity: int) -> None:
     :func:`emit`.
 
     Existing events beyond the new capacity are dropped (oldest first).
+
+    Raises
+    ------
+    TypeError
+        If ``capacity`` is not a plain ``int`` (floats/bools refused).
+    ValueError
+        If ``capacity < 0``.
     """
-    if capacity < 0:
-        raise ValueError(f"capacity must be >= 0, got {capacity!r}")
+    validate_non_negative_int("capacity", "set_history_capacity", capacity)
 
     global _history, _history_capacity
     with _lock:
-        _history_capacity = capacity
+        _history_capacity = int(capacity)
         if capacity == 0:
             _history = deque(maxlen=0)
         else:

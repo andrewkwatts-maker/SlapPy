@@ -49,6 +49,30 @@ class PostProcessChain:
         self.add(p)
         return p
 
+    def add_vignette(
+        self,
+        strength: float = 1.0,
+        inner_radius: float = 0.0,
+        feather: float = 0.0,
+    ) -> PostProcessPass:
+        """Append a vignette pass (round-4 smoothstep falloff opt-in).
+
+        ``feather <= 0`` reproduces the legacy pre-round-4
+        ``pow(d*s, 2)`` curve bit-for-bit; any positive value opts into
+        the smooth shoulder starting at ``inner_radius``.
+        """
+        p = PostProcessPass(
+            shader_path="vignette.wgsl",
+            params={
+                "strength": strength,
+                "inner_radius": inner_radius,
+                "feather": feather,
+            },
+            label="vignette",
+        )
+        self.add(p)
+        return p
+
     def add_outline(
         self,
         color=(1.0, 0.0, 0.0, 1.0),

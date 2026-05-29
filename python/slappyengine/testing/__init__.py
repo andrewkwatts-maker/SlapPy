@@ -43,6 +43,15 @@ from typing import Any
 
 import numpy as np
 
+from ._validation import (
+    validate_baseline_name,
+    validate_non_negative_float,
+    validate_non_negative_int,
+    validate_pathlike,
+    validate_positive_int,
+    validate_tolerance,
+)
+
 __all__ = [
     "render_scene_to_png",
     "diff_pngs",
@@ -261,10 +270,21 @@ def render_scene_to_png(
 
     Returns:
         ``Path(path)`` for chaining.
+
+    Raises:
+        TypeError: if ``path`` is not str / os.PathLike, or ``width`` /
+            ``height`` / ``frames_to_settle`` are not plain ints.
+        ValueError: if ``width`` or ``height`` < 1, or
+            ``frames_to_settle`` < 0.
     """
     from PIL import Image
 
-    path = Path(path)
+    path = validate_pathlike("path", "render_scene_to_png", path)
+    validate_positive_int("width", "render_scene_to_png", width)
+    validate_positive_int("height", "render_scene_to_png", height)
+    validate_non_negative_int(
+        "frames_to_settle", "render_scene_to_png", frames_to_settle,
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
 
     if scene is not None:
@@ -311,8 +331,19 @@ def diff_pngs(
         ``diff_path`` : ``Path | None`` (always None here — diff PNGs
             are written by :func:`assert_scene_matches`, not by this
             primitive).
+
+    Raises:
+        TypeError: if ``actual_path`` / ``baseline_path`` are not str /
+            os.PathLike, or ``tolerance`` is not a real number.
+        ValueError: if ``tolerance`` is NaN/inf or outside ``[0, 1]``.
     """
     from PIL import Image
+
+    actual_path = validate_pathlike("actual_path", "diff_pngs", actual_path)
+    baseline_path = validate_pathlike(
+        "baseline_path", "diff_pngs", baseline_path,
+    )
+    validate_tolerance("tolerance", "diff_pngs", tolerance)
 
     a = np.asarray(Image.open(actual_path).convert("RGBA"), dtype=np.int16)
     b = np.asarray(Image.open(baseline_path).convert("RGBA"), dtype=np.int16)
@@ -388,7 +419,21 @@ def assert_scene_matches(
         width / height: render resolution. Must match the baseline; the
             diff will resize if they don't, so changing it mid-stream
             isn't fatal — just noisier.
+
+    Raises:
+        TypeError: if ``baseline_name`` is not a ``str``, or ``tolerance`` /
+            ``width`` / ``height`` are not numeric.
+        ValueError: if ``baseline_name`` contains path separators or
+            disallowed characters (only ``[A-Za-z0-9_-]+`` accepted to
+            prevent path traversal), or ``tolerance`` < 0, or
+            ``width`` / ``height`` < 1.
     """
+    validate_baseline_name("assert_scene_matches", baseline_name)
+    validate_non_negative_float(
+        "tolerance", "assert_scene_matches", tolerance,
+    )
+    validate_positive_int("width", "assert_scene_matches", width)
+    validate_positive_int("height", "assert_scene_matches", height)
     BASELINES_DIR.mkdir(parents=True, exist_ok=True)
     baseline = BASELINES_DIR / f"{baseline_name}.png"
 
