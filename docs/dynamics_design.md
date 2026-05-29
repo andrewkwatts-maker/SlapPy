@@ -270,6 +270,65 @@ working. The `SoftBodyWorld = World` alias at the bottom of
 old code that talks to a `SoftBodyWorld`, it is now talking to a
 `dynamics.World`, no shim layer in between.
 
+## Damping and iteration interaction
+
+XPBD position damping is applied as a scalar multiplier
+`(1 - damping)` on every constraint correction *inside* the inner
+solver loop. After `solver_iterations` passes the constraint correction
+has been attenuated by `(1 - damping)^iters`, so the *effective* per-step
+damping — i.e. the fraction of the elastic response bled out within a
+single `World.step` — is:
+
+```text
+effective = 1 - (1 - damping)^iters
+```
+
+The interaction matters because the default
+`World.solver_iterations = 8` combined with even modest `damping` values
+quickly drives that effective damping near 1, silently turning oscillating
+springs into stiff welds. Concrete sample values:
+
+| `damping` | `iters` | `effective` | Behaviour                                        |
+|-----------|---------|-------------|--------------------------------------------------|
+| 0.01      | 1       | 0.010       | Visible oscillation, ~98% energy retained per step. |
+| 0.01      | 8       | 0.077       | Mild bleed, multiple visible cycles.             |
+| 0.05      | 8       | 0.337       | Noticeable amplitude decay; usable spring.       |
+| 0.1       | 8       | 0.570       | **Over-damped** — converges to equilibrium fast. |
+| 0.4       | 8       | 0.983       | Spring degenerates to noise within one step.     |
+| 0.5       | 4       | 0.938       | Same — critically damped inside one step.        |
+
+The discovery case: the `hello_spring` demo (commit `0a799a6`) defaults
+to `damping=0.01` at `dt=1/120`. With `solver_iterations=8` the
+effective damping is 7.7 % per step — innocuous numerically, but combined
+with the per-frame timestep it bleeds amplitude faster than the
+analytical Hooke oscillator predicts; the period measured from
+zero-crossings drifts and tests fail. The demo's workaround is
+`world.solver_iterations = 1` (effective damping = 0.01), which restores
+the analytical 2.0 % period error.
+
+**Recommended bound** for any joint that should *oscillate* (springs,
+rope cables, suspension):
+
+```text
+iters * damping <= 0.3
+```
+
+(approximately equivalent to `effective <= 0.3`). For stiff welds and
+rigid distance constraints the bound does not matter — those joints
+*should* converge to equilibrium in one step.
+
+`estimate_effective_damping(damping, iters)` in
+`python/slappyengine/dynamics/world.py` computes the formula above for
+you. `World.step` calls it on first invocation against every spring /
+distance joint; if any exceed `OVERDAMPING_THRESHOLD = 0.5` it emits a
+`RuntimeWarning` naming the offending joint, the iteration count, the
+damping value, and a suggested correction. The warning is one-shot per
+`(id(joint), iters, damping)` tuple so repeated `step()` calls do not
+spam the log, and changing either `solver_iterations` or
+`joint.damping` re-arms the check. Set `world.warn_overdamping = False`
+to silence (e.g. for stiff weld joints where the converged behaviour
+is desired).
+
 ## Failure modes and how to detect them
 
 XPBD is *very* well behaved compared to force-based simulators, but there

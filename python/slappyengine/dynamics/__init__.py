@@ -27,7 +27,12 @@ from .motor import MotorSpec, make_motor
 from .ragdoll import BoneSpec, RagdollSpec, build_ragdoll
 from .rope import RopeSpec, build_rope
 from .spring import SpringSpec, make_spring
-from .world import SoftBodyWorld, World
+from .world import (
+    OVERDAMPING_THRESHOLD,
+    SoftBodyWorld,
+    World,
+    estimate_effective_damping,
+)
 
 __all__ = [
     "Body",
@@ -48,4 +53,6 @@ __all__ = [
     "solve_ik",
     "World",
     "SoftBodyWorld",
+    "estimate_effective_damping",
+    "OVERDAMPING_THRESHOLD",
 ]
