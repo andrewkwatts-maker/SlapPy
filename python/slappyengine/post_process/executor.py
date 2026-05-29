@@ -84,6 +84,19 @@ class PostProcessExecutor:
                 float(params.get("time", 0.0)),
                 w, h, 0, 0,
             )
+        elif pass_.shader_path == "vignette.wgsl":
+            # Params struct layout (32 bytes):
+            #   strength(f32), width(u32), height(u32),
+            #   inner_radius(f32), feather(f32),
+            #   _pad0(u32), _pad1(u32), _pad2(u32)
+            data = struct.pack(
+                "<fIIffIII",
+                float(params.get("strength", 1.0)),
+                w, h,
+                float(params.get("inner_radius", 0.0)),
+                float(params.get("feather", 0.0)),
+                0, 0, 0,
+            )
         elif pass_.shader_path == "chromatic_aberration.wgsl":
             # Params struct layout (32 bytes):
             #   strength(f32), center_x(f32), center_y(f32), _pad(f32),

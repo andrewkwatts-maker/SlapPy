@@ -110,6 +110,37 @@ class PostProcessChain:
         self.add(p)
         return p
 
+    def add_vignette(
+        self,
+        strength: float = 1.0,
+        inner_radius: float = 0.0,
+        feather: float = 0.0,
+    ) -> PostProcessPass:
+        """Round-4 vignette pass with optional smoothstep falloff.
+
+        Args:
+            strength: Peak darkening factor at the outer edge (default 1.0).
+            inner_radius: Normalised radius (0 = centre, 1 = nearest edge
+                midpoint) at which falloff begins.  Ignored when
+                ``feather <= 0`` (legacy hard-quadratic path).
+            feather: Width of the smoothstep transition band.  Set to a
+                positive value to opt into the smooth shoulder; leave at
+                ``0.0`` to reproduce the pre-round-4 ``pow(d*s, 2)``
+                curve bit-for-bit.
+        """
+        # Params struct layout (32 bytes): see executor._make_params_buffer.
+        p = PostProcessPass(
+            shader_path="vignette.wgsl",
+            params={
+                "strength": strength,
+                "inner_radius": inner_radius,
+                "feather": feather,
+            },
+            label="vignette",
+        )
+        self.add(p)
+        return p
+
     def add_chromatic_aberration(
         self,
         strength: float = 0.005,
