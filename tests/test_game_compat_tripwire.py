@@ -240,15 +240,13 @@ def test_game_surface(game: str, name: str) -> None:
 
     Known-broken pairs are xfailed so the suite stays green while the gap is
     visible. Closing a gap should remove the entry from ``_KNOWN_BROKEN``.
-    """
-    if (game, name) in _KNOWN_BROKEN:
-        import pytest as _pt
-        _pt.xfail(f"known Phase C gap: slappyengine.{name} not resolvable")
-
     Dotted names (``iso.combat.resolve_attack``) are walked segment by
     segment, so subpackage exports are exercised too. The failure message
     pins down which game would break on next import.
     """
+    if (game, name) in _KNOWN_BROKEN:
+        import pytest as _pt
+        _pt.xfail(f"known Phase C gap: slappyengine.{name} not resolvable")
     mod = importlib.import_module("slappyengine")
     assert _has_dotted(mod, name), (
         f"slappyengine.{name} is missing — would break {game} on next import. "
