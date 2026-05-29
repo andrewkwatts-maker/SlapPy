@@ -47,14 +47,15 @@ class IKChainSpec:
                 "IKChainSpec.node_indices must not be empty"
             )
         for k, idx in enumerate(nodes):
-            try:
-                v = int(idx)
-            except (TypeError, ValueError) as exc:
+            # Reject floats / bools / strings before int() — int(1.5) silently
+            # truncates to 1 which was the docstring-vs-validator mismatch the
+            # API ref auto-gen agent surfaced.
+            if isinstance(idx, bool) or not isinstance(idx, int):
                 raise TypeError(
-                    f"IKChainSpec.node_indices[{k}] must be int-coercible; "
-                    f"got {idx!r}"
-                ) from exc
-            if v < 0:
+                    f"IKChainSpec.node_indices[{k}] must be int; "
+                    f"got {type(idx).__name__} {idx!r}"
+                )
+            if idx < 0:
                 raise ValueError(
                     f"IKChainSpec.node_indices[{k}] must be non-negative; "
                     f"got {idx!r}"
