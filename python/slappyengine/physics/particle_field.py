@@ -175,6 +175,15 @@ class ParticleField:
 
     # Per-pixel solid mask (the world).
     mask: np.ndarray = field(init=False)
+    # Per-pixel "loose" flag — True for pixels added by settled
+    # particles, False for fixed terrain set via fill_ground(). Only
+    # loose pixels participate in the slump pass, so the original
+    # crater bowl stays open as chunks pile around it.
+    loose: np.ndarray = field(init=False)
+    # Companion fixed-mask used to keep slump from touching terrain
+    # that was placed by fill_ground / direct mask writes.
+    _fixed_mask: np.ndarray = field(init=False)
+    _rng: np.random.Generator = field(init=False)
     region_grid: RegionGrid = field(init=False)
     _name_to_id: dict[str, int] = field(init=False)
 
@@ -192,6 +201,9 @@ class ParticleField:
         self.settled = np.zeros(0, dtype=bool)
         self.bake_flag = np.zeros(0, dtype=bool)
         self.mask = np.zeros((self.height, self.width, 4), dtype=np.uint8)
+        self.loose = np.zeros((self.height, self.width), dtype=bool)
+        self._fixed_mask = np.zeros((self.height, self.width), dtype=bool)
+        self._rng = np.random.default_rng(2026)
         self.region_grid = RegionGrid(
             width=self.width, height=self.height, cell_size=self.cell_size,
         )
@@ -274,6 +286,10 @@ class ParticleField:
     def fill_ground(self, *, top_y: int, color: _RGB, sub_color: _RGB | None = None) -> None:
         """Paint a flat ground line into the mask. ``top_y`` rows below
         get ``color``; rows below that get ``sub_color`` (or the same).
+
+        Pixels written here are marked FIXED in ``_fixed_mask`` so the
+        slump pass skips them — original terrain stays put while
+        settled particles around it can still flow.
         """
         if sub_color is None:
             sub_color = color
@@ -281,15 +297,22 @@ class ParticleField:
         self.mask[top_y, :, 3] = 255
         self.mask[top_y + 1: self.height, :, :3] = sub_color
         self.mask[top_y + 1: self.height, :, 3] = 255
+        self._fixed_mask[top_y:self.height, :] = True
 
     def carve(self, mask_bool: np.ndarray) -> None:
-        """Clear alpha to 0 wherever ``mask_bool`` (shape ``(H, W)``) is True."""
+        """Clear alpha to 0 wherever ``mask_bool`` (shape ``(H, W)``) is True.
+
+        Carved pixels also lose their fixed flag — if particles re-fill
+        them later, the new pixels are loose and can slump.
+        """
         if mask_bool.shape != (self.height, self.width):
             raise ValueError(
                 f"mask_bool must be ({self.height}, {self.width}); "
                 f"got {mask_bool.shape}"
             )
         self.mask[mask_bool, 3] = 0
+        self._fixed_mask[mask_bool] = False
+        self.loose[mask_bool] = False
 
     # ── Step ───────────────────────────────────────────────────────────
 
@@ -300,8 +323,9 @@ class ParticleField:
         pixel collision against ``mask``. Landed particles slide with
         friction. Settled-non-baked particles get baked into ``mask``
         and removed from the live loop. Fluid materials skip the
-        binding settle path (always integrate). Slump pass applied
-        per-material for non-cohesive substances.
+        binding settle path (always integrate) and get a lightweight
+        density-relaxation pass so they pool. Slump pass runs on
+        ``loose`` pixels for the most cohesion-deficient material.
         """
         if self.pos.shape[0] == 0:
             return
@@ -309,6 +333,11 @@ class ParticleField:
         if air_mask.any():
             self._integrate(air_mask, dt)
             self._collide(air_mask, dt)
+        # Fluid pooling — particles whose material has binding_force=0
+        # get pushed apart so they cluster into a contiguous body
+        # rather than stacking on a single pixel. Cheap O(N) over the
+        # fluid subset.
+        self._fluid_relax(dt)
         slide_mask = self.landed & ~self.settled
         if slide_mask.any():
             self._slide(slide_mask, dt)
@@ -319,6 +348,13 @@ class ParticleField:
             landed=self.landed, settled=self.settled,
             bake_flag=self.bake_flag, terrain_rgba=self.mask,
         )
+        # Mark the newly-baked pixels as LOOSE so the slump pass can
+        # rearrange them. The baked function set alpha=255 at every
+        # stamped pixel, so we replay the same condition here.
+        self._mark_newly_baked_loose()
+        # Per-frame slump on loose pixels for the LEAST cohesive
+        # baked material currently sitting on the field.
+        self._slump_loose(dt)
         # Region tracking — static cells are skipped on subsequent
         # frames, the big perf knob for large maps.
         live = ~self.bake_flag
@@ -327,6 +363,161 @@ class ParticleField:
         else:
             self.region_grid.record_live(np.zeros((0, 2), dtype=np.float32))
         self.region_grid.mark_static_when_idle(idle_frames=30)
+
+    def _mark_newly_baked_loose(self) -> None:
+        """Mark every alpha-solid pixel as loose if it isn't already
+        flagged fixed. Cheap: just OR the alpha mask into ``loose``.
+
+        Pixels written by ``fill_ground`` were marked loose=False at
+        write time (see :meth:`fill_ground`); everything else baked via
+        settled particles is loose by default.
+        """
+        # Only flip loose where alpha is set AND loose is currently
+        # False. We don't want to flip fixed-ground pixels just because
+        # they're solid.
+        # NB: fill_ground records its own pixels into a side-table; if
+        # the user writes directly to mask we don't auto-promote.
+        new_solid = (self.mask[..., 3] > 0) & ~self._fixed_mask
+        self.loose |= new_solid
+
+    def _slump_loose(self, dt: float) -> None:
+        """Cellular fall + diagonal slump on loose pixels only.
+
+        Operates on the LEAST-cohesive baked material's settings (one
+        global pass per frame keeps it cheap). Fixed terrain is never
+        touched, so the original crater bowl stays open.
+        """
+        # Pick the least-cohesive material currently represented in the
+        # loose mask. If no loose pixels, skip.
+        if not self.loose.any():
+            return
+        # Heuristic: use the lowest-cohesion material we've seen in the
+        # settled particle set as the slump rate driver.
+        if self.settled.any():
+            cohs = np.array(
+                [self.materials[int(self.material_id[i])].cohesion
+                 for i in np.nonzero(self.settled)[0]],
+                dtype=np.float32,
+            )
+            min_coh = float(cohs.min())
+            angle = float(self.materials[
+                int(self.material_id[np.argmin(cohs)])].slump_angle_deg)
+        else:
+            return
+        if min_coh >= 1.0:
+            return
+        fall_prob = (1.0 - min_coh) * 0.08
+        side_prob = fall_prob * 0.4
+        if fall_prob <= 0.0:
+            return
+        # Cheap CA pass on the loose subset. Iterate bottom-up so a
+        # falling pixel isn't re-tested in the same sweep.
+        Hh, Ww = self.loose.shape
+        solid = self.mask[..., 3] > 0
+        rng = self._rng
+        for y in range(Hh - 2, 0, -1):
+            row_loose = self.loose[y]
+            if not row_loose.any():
+                continue
+            below_empty = ~solid[y + 1]
+            fall = row_loose & below_empty
+            if fall.any() and fall_prob > 0.0:
+                roll = rng.random(Ww) < fall_prob
+                fall &= roll
+                if fall.any():
+                    idx = np.where(fall)[0]
+                    self.mask[y + 1, idx] = self.mask[y, idx]
+                    self.mask[y, idx, 3] = 0
+                    self.loose[y + 1, idx] = True
+                    self.loose[y, idx] = False
+                    solid[y + 1, idx] = True
+                    solid[y, idx] = False
+            # Sideways slump into a step-down neighbour.
+            if side_prob > 0.0:
+                still = row_loose & ~below_empty
+                left_lower = np.zeros(Ww, bool)
+                left_lower[1:] = (
+                    still[1:]
+                    & ~solid[y + 1, :-1]
+                    & ~solid[y, :-1]
+                )
+                right_lower = np.zeros(Ww, bool)
+                right_lower[:-1] = (
+                    still[:-1]
+                    & ~solid[y + 1, 1:]
+                    & ~solid[y, 1:]
+                )
+                slump_l = left_lower & (rng.random(Ww) < side_prob)
+                slump_r = right_lower & (rng.random(Ww) < side_prob)
+                if slump_l.any():
+                    idx = np.where(slump_l)[0]
+                    self.mask[y, idx - 1] = self.mask[y, idx]
+                    self.mask[y, idx, 3] = 0
+                    self.loose[y, idx - 1] = True
+                    self.loose[y, idx] = False
+                    solid[y, idx - 1] = True
+                    solid[y, idx] = False
+                if slump_r.any():
+                    idx = np.where(slump_r)[0]
+                    self.mask[y, idx + 1] = self.mask[y, idx]
+                    self.mask[y, idx, 3] = 0
+                    self.loose[y, idx + 1] = True
+                    self.loose[y, idx] = False
+                    solid[y, idx + 1] = True
+                    solid[y, idx] = False
+
+    def _fluid_relax(self, dt: float) -> None:
+        """Light density-relaxation for fluid materials.
+
+        Real PBF (Macklin 2013) does a constraint-projection pass on
+        density; this is a cheap single-pass approximation: each fluid
+        particle gets a small push away from its nearest neighbour
+        when too close. Enough for water-on-mud to pool naturally
+        without dragging the full PBF stack into this module.
+        """
+        if self.pos.shape[0] < 2:
+            return
+        # Subset: fluid materials only.
+        fluid_mask = np.zeros(self.pos.shape[0], dtype=bool)
+        for mi, mat in enumerate(self.materials):
+            if mat.is_fluid:
+                fluid_mask |= self.material_id == mi
+        # Live fluid only (not baked).
+        fluid_mask &= ~self.bake_flag
+        n_fluid = int(fluid_mask.sum())
+        if n_fluid < 2:
+            return
+        idx = np.nonzero(fluid_mask)[0]
+        fp = self.pos[idx]
+        # Bin into small cells so we only test in-cell pairs (O(N) avg).
+        bin_size = 6.0
+        bx = (fp[:, 0] / bin_size).astype(np.int32)
+        by = (fp[:, 1] / bin_size).astype(np.int32)
+        bins: dict[tuple[int, int], list[int]] = {}
+        for k, (bxk, byk) in enumerate(zip(bx, by)):
+            bins.setdefault((int(bxk), int(byk)), []).append(k)
+        rest = 3.0
+        push = np.zeros_like(fp)
+        for (cx, cy), members in bins.items():
+            if len(members) < 2:
+                continue
+            for a in members:
+                for b in members:
+                    if a >= b:
+                        continue
+                    dx = fp[a, 0] - fp[b, 0]
+                    dy = fp[a, 1] - fp[b, 1]
+                    d2 = dx * dx + dy * dy
+                    if d2 < rest * rest and d2 > 0.0:
+                        d = math.sqrt(d2)
+                        f = (rest - d) * 0.5
+                        nx = dx / d
+                        ny = dy / d
+                        push[a, 0] += nx * f
+                        push[a, 1] += ny * f
+                        push[b, 0] -= nx * f
+                        push[b, 1] -= ny * f
+        self.pos[idx] += push
 
     # ── Internals ──────────────────────────────────────────────────────
 

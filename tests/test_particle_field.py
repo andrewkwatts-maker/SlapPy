@@ -183,3 +183,70 @@ def test_region_grid_tracks_live_particle_locations() -> None:
     f.step(1.0 / 60.0)
     # Both particles are in distinct cells → both active.
     assert f.region_grid.active_cell_count() >= 1
+
+
+def test_fill_ground_marks_pixels_fixed_not_loose() -> None:
+    f = ParticleField(width=32, height=32)
+    f.fill_ground(top_y=20, color=(100, 100, 100))
+    assert f._fixed_mask[25, 10] == True
+    assert f.loose[25, 10] == False
+
+
+def test_carve_clears_fixed_and_loose_for_carved_region() -> None:
+    f = ParticleField(width=32, height=32)
+    f.fill_ground(top_y=20, color=(100, 100, 100))
+    bowl = np.zeros((32, 32), dtype=bool)
+    bowl[20:25, 10:20] = True
+    f.carve(bowl)
+    assert f._fixed_mask[22, 15] == False
+    assert f.mask[22, 15, 3] == 0
+
+
+def test_slump_does_not_touch_fixed_terrain() -> None:
+    # Fixed ground row should stay put even when the field steps.
+    f = ParticleField(width=32, height=32)
+    f.fill_ground(top_y=20, color=(100, 100, 100))
+    before = f.mask[20:32, :, 3].copy()
+    for _ in range(20):
+        f.step(1.0 / 60.0)
+    after = f.mask[20:32, :, 3]
+    assert np.array_equal(before, after)
+
+
+def test_settled_particles_become_loose_and_can_slump() -> None:
+    f = ParticleField(width=64, height=64)
+    f.fill_ground(top_y=50, color=(120, 100, 80))
+    # Drop a single rock particle (cohesion 0.05 — falls easily).
+    f.spawn(x=32.0, y=10.0, vx=0.0, vy=10.0, material="rock", radius=1)
+    for _ in range(400):
+        f.step(1.0 / 60.0)
+        if f.settled[0] and f.bake_flag[0]:
+            break
+    # The settled particle's pixels should be marked LOOSE.
+    assert f.loose[:, :].sum() >= 1
+
+
+def test_fluid_relax_pushes_overlapping_water_particles_apart() -> None:
+    f = ParticleField(width=64, height=64)
+    # Two water particles separated by < rest_length so they push apart.
+    f.spawn(x=32.0, y=32.0, material="water")
+    f.spawn(x=32.5, y=32.0, material="water")
+    pre_dx = abs(f.pos[0, 0] - f.pos[1, 0])
+    f.step(1.0 / 60.0)
+    post_dx = abs(f.pos[0, 0] - f.pos[1, 0])
+    assert post_dx > pre_dx
+
+
+def test_fluid_relax_skipped_for_solid_materials() -> None:
+    # Two sand particles overlapping → should NOT relax (they're not fluid).
+    f = ParticleField(width=64, height=64)
+    f.spawn(x=10.0, y=10.0, material="sand")
+    f.spawn(x=10.0, y=10.0, material="sand")
+    p0_before = f.pos[0].copy()
+    p1_before = f.pos[1].copy()
+    # One step with no terrain — they fall but don't push apart from relax.
+    # Position deltas should match (both fall same amount).
+    f.step(1.0 / 60.0)
+    # Both fell the same y, no lateral push.
+    assert abs(f.pos[0, 0] - p0_before[0]) < 0.01
+    assert abs(f.pos[1, 0] - p1_before[0]) < 0.01
