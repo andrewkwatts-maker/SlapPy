@@ -1,0 +1,311 @@
+"""Crater / explosion presets — splattable particle profiles.
+
+Each :class:`SplatterPreset` packs the per-material knobs a Worms-style
+particle explosion needs: spread cone, grain/chunk mix, gravity,
+friction, splat width, and palette. Game code (Ochema, Bullet Strata)
+loads a preset by name and pipes it into the same simulator core.
+
+The same preset object is consumed by:
+
+* ``examples/sand_crater_demo.py`` — standalone PIL renderer
+* The pixel/texture asset pipeline — :func:`materialise_texture`
+  bakes a preset into a stamp that the per-pixel sim and the
+  paint-on-collision deformer can sample from
+
+Builtins:
+
+* ``sand`` — Worms-classic, tan/brown, mid-cone 45°, light friction
+* ``mud``  — heavier, brown, narrower cone, sticky landings, big splats
+* ``sloppy`` — wet mud, very narrow cone, almost zero air time, huge
+              splat radius, fast settle
+* ``rock`` — chunky-heavy, mid cone, low friction, sharp splat
+* ``snow`` — pale, wide cone, very slow gravity, drift-y settling
+
+Custom presets via :func:`make_preset`.
+"""
+from __future__ import annotations
+
+import math
+from dataclasses import dataclass, field
+from typing import Sequence
+
+import numpy as np
+
+
+_RGB = tuple[int, int, int]
+
+
+@dataclass(frozen=True)
+class SplatterPreset:
+    """Knobs for one explosion / splatter material profile."""
+
+    name: str
+
+    # Spread cone (degrees from vertical). 0 = pure-vertical jet,
+    # 90 = full hemisphere.
+    max_blast_angle_deg: float = 45.0
+
+    # Particle count + mix.
+    n_grains: int = 900
+    n_chunks: int = 120
+
+    # Speed range (px/sec). Higher = particles fly further before falling.
+    grain_speed_min: float = 80.0
+    grain_speed_max: float = 480.0
+    chunk_speed_min: float = 140.0
+    chunk_speed_max: float = 320.0
+
+    # Size in pixels.
+    grain_radius_min: int = 1
+    grain_radius_max: int = 2
+    chunk_radius_min: int = 2
+    chunk_radius_max: int = 3
+
+    # Physics knobs.
+    gravity: float = 720.0
+    air_drag_per_sec: float = 0.55  # per-second retention (1.0 = no drag)
+    friction_per_sec: float = 0.05  # horizontal slide friction after landing
+    splat_radius_px: int = 5        # column-spread for chunks
+    splat_lift_max: int = 3         # peak heightmap lift per chunk landing
+    settle_speed_threshold: float = 10.0  # px/s — settled below this
+
+    # Palettes (grains tan, chunks darker by default).
+    grain_palette: tuple[_RGB, ...] = (
+        (228, 188, 110),
+        (212, 168, 90),
+        (192, 148, 76),
+        (172, 130, 64),
+    )
+    chunk_palette: tuple[_RGB, ...] = (
+        (148, 110, 50),
+        (132, 92, 38),
+        (118, 80, 30),
+    )
+
+    # Post-blast colour shift (Worms-style "scorched" look). On spawn each
+    # particle samples a darken factor uniformly from this range and the
+    # palette colour gets multiplied by (1 - factor). 0.0 = same colour,
+    # 0.10 = 10 % darker. Set both ends to 0.0 to disable, or widen the
+    # range for a more variegated rubble look.
+    post_blast_darken_min: float = 0.0
+    post_blast_darken_max: float = 0.10
+
+    # ── Asset / texture support ────────────────────────────────────────
+    # When this preset is "materialised" onto a sprite or per-pixel sim
+    # mask, these knobs control how the splatter writes back into the
+    # texture. The pipeline (slappyengine.material.* + the per-pixel
+    # sim) reads these to build a stamp.
+    texture_stain_color: _RGB = (172, 130, 64)  # paint colour
+    texture_stain_alpha: int = 220              # 0..255 alpha at landing
+    texture_decay_per_sec: float = 0.0          # 0 = permanent stain
+
+    @property
+    def n_particles(self) -> int:
+        return self.n_grains + self.n_chunks
+
+    @property
+    def max_blast_angle_rad(self) -> float:
+        return math.radians(self.max_blast_angle_deg)
+
+
+# ── Built-in presets ──────────────────────────────────────────────────
+
+
+SAND = SplatterPreset(name="sand")  # all defaults
+
+MUD = SplatterPreset(
+    name="mud",
+    max_blast_angle_deg=35.0,
+    n_grains=600,
+    n_chunks=300,
+    grain_speed_max=320.0,
+    chunk_speed_max=240.0,
+    chunk_radius_min=3,
+    chunk_radius_max=5,
+    gravity=820.0,
+    air_drag_per_sec=0.40,
+    friction_per_sec=0.02,       # mud sticks fast
+    splat_radius_px=8,           # wider splat
+    splat_lift_max=4,
+    grain_palette=(
+        (110, 78, 42),
+        (96, 66, 34),
+        (78, 52, 26),
+    ),
+    chunk_palette=(
+        (72, 50, 24),
+        (58, 38, 18),
+        (44, 28, 12),
+    ),
+    texture_stain_color=(70, 48, 22),
+    texture_stain_alpha=240,
+    # Wet mud reflects light unevenly — wider scorch range.
+    post_blast_darken_min=0.0,
+    post_blast_darken_max=0.20,
+)
+
+SLOPPY = SplatterPreset(
+    name="sloppy",
+    max_blast_angle_deg=25.0,
+    n_grains=400,
+    n_chunks=400,                # heavy on big globs
+    grain_speed_min=40.0,
+    grain_speed_max=180.0,
+    chunk_speed_min=80.0,
+    chunk_speed_max=200.0,
+    chunk_radius_min=4,
+    chunk_radius_max=7,
+    gravity=900.0,               # falls fast
+    air_drag_per_sec=0.30,
+    friction_per_sec=0.0,        # sticks instantly
+    splat_radius_px=12,
+    splat_lift_max=5,
+    grain_palette=(
+        (84, 58, 30),
+        (66, 44, 22),
+    ),
+    chunk_palette=(
+        (58, 38, 18),
+        (38, 24, 10),
+    ),
+    texture_stain_color=(58, 38, 18),
+    texture_stain_alpha=255,
+)
+
+ROCK = SplatterPreset(
+    name="rock",
+    max_blast_angle_deg=50.0,
+    n_grains=300,
+    n_chunks=300,
+    grain_speed_max=420.0,
+    chunk_speed_min=180.0,
+    chunk_speed_max=360.0,
+    chunk_radius_min=3,
+    chunk_radius_max=5,
+    gravity=760.0,
+    air_drag_per_sec=0.65,
+    friction_per_sec=0.15,       # rocks roll a bit
+    splat_radius_px=4,
+    splat_lift_max=3,
+    grain_palette=(
+        (140, 130, 120),
+        (110, 100, 90),
+        (80, 72, 64),
+    ),
+    chunk_palette=(
+        (70, 64, 58),
+        (50, 46, 42),
+    ),
+    texture_stain_color=(60, 54, 48),
+    texture_stain_alpha=200,
+)
+
+SNOW = SplatterPreset(
+    name="snow",
+    max_blast_angle_deg=75.0,
+    n_grains=1400,
+    n_chunks=50,
+    grain_speed_min=40.0,
+    grain_speed_max=240.0,
+    chunk_speed_min=80.0,
+    chunk_speed_max=180.0,
+    grain_radius_min=1,
+    grain_radius_max=2,
+    chunk_radius_min=2,
+    chunk_radius_max=3,
+    gravity=420.0,               # slow fall
+    air_drag_per_sec=0.30,       # heavy drag, lots of drift
+    friction_per_sec=0.30,
+    splat_radius_px=3,
+    splat_lift_max=2,
+    grain_palette=(
+        (245, 248, 252),
+        (220, 228, 240),
+        (200, 212, 230),
+    ),
+    chunk_palette=(
+        (230, 235, 245),
+        (210, 220, 235),
+    ),
+    texture_stain_color=(232, 240, 250),
+    texture_stain_alpha=180,
+    texture_decay_per_sec=0.02,  # snow melts off textures slowly
+)
+
+
+PRESETS: dict[str, SplatterPreset] = {
+    "sand": SAND,
+    "mud": MUD,
+    "sloppy": SLOPPY,
+    "rock": ROCK,
+    "snow": SNOW,
+}
+
+
+def get(name: str) -> SplatterPreset:
+    """Look up a builtin preset by name."""
+    if name not in PRESETS:
+        raise KeyError(
+            f"unknown splatter preset {name!r}; available: {sorted(PRESETS)}"
+        )
+    return PRESETS[name]
+
+
+def make_preset(
+    name: str,
+    base: str | SplatterPreset = "sand",
+    **overrides,
+) -> SplatterPreset:
+    """Derive a custom preset from a base by name + per-knob overrides.
+
+    >>> mud_lite = make_preset("mud_lite", base="mud", n_chunks=100,
+    ...                       max_blast_angle_deg=50.0)
+    """
+    if isinstance(base, str):
+        base = get(base)
+    from dataclasses import replace
+    return replace(base, name=name, **overrides)
+
+
+def materialise_texture(
+    preset: SplatterPreset,
+    stamp_size: int = 16,
+) -> np.ndarray:
+    """Bake a preset into an RGBA stamp the asset pipeline can paint with.
+
+    Returns ``(stamp_size, stamp_size, 4)`` uint8. The stamp is a soft
+    radial blob coloured by ``preset.texture_stain_color`` with alpha
+    falling off to zero at the edge — game code paints this onto a
+    sprite's diffuse map every time the splatter lands a chunk near a
+    sprite footprint.
+    """
+    if stamp_size <= 0:
+        raise ValueError(f"stamp_size must be > 0; got {stamp_size!r}")
+    out = np.zeros((stamp_size, stamp_size, 4), dtype=np.uint8)
+    cx = cy = (stamp_size - 1) / 2
+    r_max = stamp_size / 2
+    r, g, b = preset.texture_stain_color
+    a_peak = float(preset.texture_stain_alpha)
+    for y in range(stamp_size):
+        for x in range(stamp_size):
+            dx = x - cx
+            dy = y - cy
+            d = math.hypot(dx, dy)
+            t = max(0.0, 1.0 - (d / r_max))
+            alpha = int(t * t * a_peak)  # quadratic falloff
+            out[y, x] = (r, g, b, alpha)
+    return out
+
+
+__all__ = [
+    "SplatterPreset",
+    "PRESETS",
+    "SAND",
+    "MUD",
+    "SLOPPY",
+    "ROCK",
+    "SNOW",
+    "get",
+    "make_preset",
+    "materialise_texture",
+]
