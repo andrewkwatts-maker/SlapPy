@@ -18,6 +18,17 @@ if TYPE_CHECKING:
     from slappyengine.gpu.texture_manager import TextureManager
 
 
+import enum
+
+
+class CacheMode(enum.Enum):
+    """Asset residency tier. Games (Ochema Circuit, Bullet Strata) read
+    ``Asset.cache_mode`` to decide eviction priority and lazy-load policy."""
+    GPU = "gpu"
+    RAM = "ram"
+    DISK = "disk"
+
+
 class ResidencyManager:
     TIER_GPU  = "gpu"
     TIER_RAM  = "ram"

@@ -140,3 +140,57 @@ class EventBus:
     def __repr__(self) -> str:
         total = sum(len(v) for v in self._listeners.values())
         return f"EventBus({len(self._listeners)} event types, {total} listeners)"
+
+
+# Module-level default bus + thin function proxies. Legacy game code
+# (slappyengine.trigger, slappyengine.deform_zones) imports
+# ``from slappyengine.event_bus import publish, subscribe``; we keep that
+# shape working by exposing a process-wide ``_DEFAULT_BUS`` singleton.
+_DEFAULT_BUS = EventBus()
+
+
+def publish(event_type: str, **payload) -> None:
+    """Publish to the module-level default :class:`EventBus`."""
+    _DEFAULT_BUS.publish(event_type, **payload)
+
+
+def subscribe(event_type: str, listener) -> None:
+    """Subscribe on the module-level default :class:`EventBus`."""
+    _DEFAULT_BUS.subscribe(event_type, listener)
+
+
+def unsubscribe(event_type: str, listener) -> None:
+    """Unsubscribe from the module-level default :class:`EventBus`."""
+    _DEFAULT_BUS.unsubscribe(event_type, listener)
+
+
+def get_default_bus() -> EventBus:
+    """Return the module-level default :class:`EventBus` singleton."""
+    return _DEFAULT_BUS
+
+
+class Observable:
+    """Mixin for objects that publish change events through an EventBus.
+
+    Games (Bullet Strata's reactive HUD per project_bullet_strata.md)
+    subscribe to ``"changed"`` to rebuild on dirty state. ``notify(**payload)``
+    forwards to the bus; ``subscribe(listener)`` is a thin proxy.
+    """
+
+    __slots__ = ("_bus", "_observable_topic")
+
+    def __init__(self, bus: "EventBus | None" = None, topic: str = "changed") -> None:
+        self._bus = bus if bus is not None else EventBus()
+        self._observable_topic = topic
+
+    def notify(self, **payload) -> None:
+        """Publish ``self._observable_topic`` on the bus with the given payload."""
+        self._bus.publish(self._observable_topic, **payload)
+
+    def subscribe(self, listener) -> None:
+        """Subscribe ``listener`` to this observable's topic."""
+        self._bus.subscribe(self._observable_topic, listener)
+
+    def unsubscribe(self, listener) -> None:
+        """Drop ``listener`` from this observable's topic."""
+        self._bus.unsubscribe(self._observable_topic, listener)

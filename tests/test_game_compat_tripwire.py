@@ -202,23 +202,7 @@ def _has_dotted(mod, dotted: str) -> bool:
 # to this set converts a hard failure into an xfail so the suite stays green
 # while the gaps remain visible in the test report. Removing an entry here
 # without landing the underlying export is a regression.
-_KNOWN_BROKEN: set[tuple[str, str]] = {
-    ("ochema_circuit", "CacheMode"),
-    ("ochema_circuit", "PixelCollisionPass"),
-    ("bullet_strata", "TriggerSystem"),
-    ("bullet_strata", "TriggerVolume"),
-    ("bullet_strata", "MaterialPreset"),
-    ("bullet_strata", "ZoneMap"),
-    ("bullet_strata", "GpuParticleSystem"),
-    ("bullet_strata", "ParticleEmitter"),
-    ("bullet_strata", "CrackMode"),
-    ("bullet_strata", "PixelMaterialMap"),
-    ("bullet_strata", "CacheMode"),
-    ("bullet_strata", "Observable"),
-    ("bullet_strata", "audio_runtime"),
-    ("bullet_strata", "StrataWorld"),
-    ("bullet_strata", "StrataLayer"),
-}
+_KNOWN_BROKEN: set[tuple[str, str]] = set()
 
 
 # Flatten the per-game contracts into a single parametrisation list so each

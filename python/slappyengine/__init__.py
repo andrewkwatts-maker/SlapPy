@@ -150,7 +150,7 @@ _LAZY_MAP: dict[str, str] = {
     # input + collision (race scene + game systems)
     "PlayerInputProvider": ".input_provider",
     "CacheMode":           ".residency.manager",
-    "PixelCollisionPass":  ".collision",
+    "PixelCollisionPass":  ".collision_pixel",
     # vehicle (softbody.vehicle re-exports for legacy game imports)
     "build_vehicle":          ".softbody.vehicle",
     "VehicleSpec":            ".softbody.vehicle",
@@ -170,6 +170,19 @@ _LAZY_MAP: dict[str, str] = {
     "SimFrequencyBudget": ".deform_controller",
     "SimState":           ".deform_controller",
     "DeformController":   ".deform_controller",
+    # Bullet Strata surface (per project_bullet_strata.md)
+    "TriggerSystem":      ".trigger",
+    "TriggerVolume":      ".trigger",
+    "StrataWorld":        ".strata",
+    "StrataLayer":        ".strata",
+    "ZoneMap":            ".deform_zones",
+    "MaterialPreset":     ".deform_modes",
+    "CrackMode":          ".deform_modes",
+    "GpuParticleSystem":  ".particles",
+    "ParticleEmitter":    ".particles",
+    "PixelMaterialMap":   ".pixel_material",
+    "Observable":         ".event_bus",
+    "CacheMode":          ".residency.manager",
     # residency
     "ResidencyManager": ".residency.manager",
     # animation
@@ -317,6 +330,7 @@ def __getattr__(name: str):
         "post_process",
         "residency",
         "telemetry",
+        "audio_runtime",
         "testing",
         "thermal",
         "tools",
