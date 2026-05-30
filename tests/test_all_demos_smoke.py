@@ -79,15 +79,18 @@ class _DemoResult:
 
 
 def _build_argv(name: str, out_path: Path) -> list[str]:
+    # Demos that DON'T accept --frames (their default count is enough for
+    # the render). The aggregate test passes --render + --out only.
+    _NO_FRAMES_FLAG = {"hello_topology", "hello_numerics", "hello_audio"}
     argv = [
         sys.executable,
         str(_EXAMPLES / f"{name}.py"),
         "--render",
-        "--frames",
-        str(_FRAMES),
         "--out",
         str(out_path),
     ]
+    if name not in _NO_FRAMES_FLAG:
+        argv += ["--frames", str(_FRAMES)]
     # hello_audio sleeps a wall-clock second by default; the CI-friendly
     # flag skips that wait so this test stays under its 60s budget.
     if name == "hello_audio":
