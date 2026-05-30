@@ -75,6 +75,12 @@ class Material:
     buoyancy: float = 1.0         # multiplier on density vs surrounding medium
     gravity_scale: float = 1.0    # 1.0 = standard; < 1 = floaty (snow)
     air_drag_per_sec: float = 0.55
+    # Horizontal-slide friction. Low value = particles decay fast (mud
+    # stops quickly); high value = particles roll a long way (rock).
+    # Matches the friction_per_sec knob on SplatterPreset.
+    friction_per_sec: float = 0.05
+    settle_speed_threshold: float = 10.0
+    settle_jitter: float = 0.35
 
     # Rendering.
     color: _RGB = (200, 200, 200)
@@ -563,18 +569,18 @@ class ParticleField:
 
     def _slide(self, slide_mask: np.ndarray, dt: float) -> None:
         H, W = self.mask.shape[:2]
-        # Friction per-material.
         for mi, mat in enumerate(self.materials):
             m = slide_mask & (self.material_id == mi)
             if not m.any():
                 continue
-            # Reuse cohesion as friction proxy: more cohesive = more
-            # friction. Cap so cohesion=0 still has some friction.
-            friction = 0.2 + 0.7 * mat.cohesion
-            self.vel[m, 0] *= friction ** dt
+            # Lower friction_per_sec = harder braking. Mud (0.02)
+            # decays vel by 98%^(1/30) ≈ 5.7%/frame; sand (0.05) by
+            # ~9.5%/frame; rock (0.15) by ~6%/frame.
+            self.vel[m, 0] *= mat.friction_per_sec ** dt
             self.vel[m, 1] = 0.0
         self.pos[slide_mask, 0] += self.vel[slide_mask, 0] * dt
-        # Per-particle surface re-snap.
+        # Per-particle surface re-snap + per-material settle threshold
+        # with jitter so particles stop over a band of frames.
         for i in np.nonzero(slide_mask)[0]:
             x = int(self.pos[i, 0])
             y = int(self.pos[i, 1])
@@ -582,7 +588,12 @@ class ParticleField:
                 while y > 0 and self.mask[y, x, 3] > 0:
                     y -= 1
                 self.pos[i, 1] = float(y)
-            if abs(self.vel[i, 0]) < 5.0:
+            mat = self.materials[int(self.material_id[i])]
+            jitter = mat.settle_jitter
+            base = mat.settle_speed_threshold
+            threshold = base * (1.0 + float(self._rng.uniform(-jitter, jitter))) \
+                if jitter > 0 else base
+            if abs(self.vel[i, 0]) < threshold:
                 self.settled[i] = True
                 self.vel[i, 0] = 0.0
 

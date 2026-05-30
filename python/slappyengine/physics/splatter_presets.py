@@ -114,6 +114,17 @@ class SplatterPreset:
     # blast centre. Helps "blast out the edges" so they spread further.
     edge_outward_boost: float = 0.0
 
+    # ── "Up and out" blast feel ────────────────────────────────────────
+    # Two flat boosts added on top of the per-particle direction*speed
+    # at spawn, used by physics.blast.detonate() to dial the dramatic
+    # ejecta. up_boost is a flat negative-vy term (upward push for
+    # every particle, in px/s); radial_boost is a flat horizontal push
+    # whose sign matches the spawn-offset side (so rim particles fly
+    # further OUT). Compose with edge_outward_boost (which scales by
+    # rim distance) for stacked effect.
+    blast_up_boost: float = 80.0
+    blast_radial_boost: float = 40.0
+
     # ── Impact dynamics ────────────────────────────────────────────────
     # A landing chunk's kinetic energy is computed as
     # ``ke = 0.5 * radius**2 * (vx**2 + vy**2)``. If that KE exceeds
@@ -206,7 +217,9 @@ SAND = SplatterPreset(
     name="sand",
     max_blast_angle_deg=55.0,
     direction_blend=0.15,
-    edge_outward_boost=140.0,
+    edge_outward_boost=220.0,    # rim particles fly hard outward
+    blast_up_boost=40.0,         # modest upward kick (cone speed dominates)
+    blast_radial_boost=150.0,    # flat outward push so centre particles spread
     no_collide_frames=3,
     impact_binding_ke=2.0e5,
     impact_drill_max_px=3.5,
@@ -228,7 +241,9 @@ MUD = SplatterPreset(
     # rim particles real horizontal spread.
     max_blast_angle_deg=55.0,
     direction_blend=0.20,
-    edge_outward_boost=120.0,
+    edge_outward_boost=180.0,
+    blast_up_boost=40.0,
+    blast_radial_boost=130.0,
     no_collide_frames=4,
     n_grains=600,
     n_chunks=300,
@@ -282,7 +297,9 @@ SLOPPY = SplatterPreset(
     # spread-out splat rather than a fountain.
     max_blast_angle_deg=60.0,
     direction_blend=0.10,
-    edge_outward_boost=130.0,
+    edge_outward_boost=180.0,
+    blast_up_boost=30.0,
+    blast_radial_boost=120.0,
     no_collide_frames=5,
     n_grains=500,
     n_chunks=180,
@@ -323,7 +340,9 @@ ROCK = SplatterPreset(
     name="rock",
     max_blast_angle_deg=60.0,
     direction_blend=0.20,
-    edge_outward_boost=160.0,    # rocks fly outward hard
+    edge_outward_boost=240.0,    # rocks fly outward hard
+    blast_up_boost=60.0,         # some up but mostly out
+    blast_radial_boost=200.0,
     no_collide_frames=3,
     n_grains=300,
     n_chunks=300,
@@ -367,7 +386,9 @@ SNOW = SplatterPreset(
     # particles spray uniformly across the full cone (no rim bias).
     max_blast_angle_deg=85.0,
     direction_blend=0.05,
-    edge_outward_boost=80.0,
+    edge_outward_boost=140.0,
+    blast_up_boost=100.0,        # snow drifts higher; slow gravity catches it
+    blast_radial_boost=100.0,
     no_collide_frames=8,
     n_grains=1400,
     n_chunks=50,

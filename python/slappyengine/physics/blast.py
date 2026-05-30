@@ -1,0 +1,204 @@
+"""Explosion / blast helper — carve a crater and eject particles onto a field.
+
+One entry point, :func:`detonate`, ties :mod:`splatter_presets` to
+:class:`~slappyengine.physics.particle_field.ParticleField`. It:
+
+1. Carves a parabolic bowl out of the field's per-pixel mask.
+2. Samples the **original pixel colours** from the carved region BEFORE
+   clearing them — those colours become the per-particle colour of the
+   ejecta, so chunks fly out inheriting the ground's hue instead of a
+   detached palette. (User-driven behaviour: "use the original pixels".)
+3. Builds a particle batch with up + out trajectories from the cone /
+   blend / boost knobs on the preset (``blast_up_boost``,
+   ``blast_radial_boost``, ``edge_outward_boost``, ``direction_blend``,
+   ``max_blast_angle_deg``).
+4. Calls :meth:`ParticleField.spawn_batch` once. From there, the field's
+   own ``step()`` handles airborne, landing, sliding, settle-bake, and
+   slump — everything is governed by the preset's per-material knobs.
+
+The function also takes care of registering a :class:`Material` derived
+from the preset if one with that name isn't already on the field.
+"""
+from __future__ import annotations
+
+import math
+
+import numpy as np
+
+from slappyengine.physics.particle_field import Material, ParticleField
+from slappyengine.physics.splatter_presets import SplatterPreset
+
+
+def material_from_preset(preset: SplatterPreset) -> Material:
+    """Translate a :class:`SplatterPreset` into a :class:`Material`
+    suitable for registering with a :class:`ParticleField`. The
+    binding force is set from ``impact_binding_ke`` (scaled to the
+    field's KE units) and the rest comes straight off the preset.
+    """
+    return Material(
+        name=preset.name,
+        binding_force=preset.impact_binding_ke,
+        cohesion=preset.cohesion,
+        slump_angle_deg=preset.slump_angle_deg,
+        density=1.0,
+        air_drag_per_sec=preset.air_drag_per_sec,
+        gravity_scale=1.0,
+        friction_per_sec=preset.friction_per_sec,
+        settle_speed_threshold=preset.settle_speed_threshold,
+        settle_jitter=preset.settle_jitter,
+        color=preset.chunk_palette[0] if preset.chunk_palette else (200, 200, 200),
+        radius_min=max(0, preset.grain_radius_min),
+        radius_max=max(1, preset.chunk_radius_max),
+    )
+
+
+def ensure_preset_material(field: ParticleField, preset: SplatterPreset) -> int:
+    """Return the material id for ``preset`` on ``field``, registering
+    a new :class:`Material` derived from the preset if necessary."""
+    if preset.name in field._name_to_id:
+        return field._name_to_id[preset.name]
+    new_mat = material_from_preset(preset)
+    field.materials.append(new_mat)
+    field._name_to_id[preset.name] = len(field.materials) - 1
+    return field._name_to_id[preset.name]
+
+
+def detonate(
+    field: ParticleField,
+    preset: SplatterPreset,
+    *,
+    x: float,
+    y: float,
+    crater_radius: float,
+    crater_depth: float,
+    rng: np.random.Generator | None = None,
+) -> int:
+    """Carve a crater and inject the preset's ejecta onto ``field``.
+
+    Returns the number of particles spawned. The bowl is parabolic
+    (cosine-of-x²); particles spawn AT the original surface band
+    (avoids the "fall from the top of the screen" bug) with velocities
+    governed by the preset's cone / blend / boosts.
+
+    Per-particle colours are sampled from the **original mask pixels**
+    in the carved region. If the bowl has no solid pixels (e.g. the
+    blast is in mid-air), we fall back to the preset's palettes.
+    """
+    if rng is None:
+        rng = np.random.default_rng()
+
+    H, W = field.height, field.width
+    mid = ensure_preset_material(field, preset)
+
+    # ── 1. Carve bowl + capture source colours ──────────────────────────
+    bowl = np.zeros((H, W), dtype=bool)
+    xi = int(x)
+    yi = int(y)
+    r = int(crater_radius)
+    d = int(crater_depth)
+    for col_off in range(-r, r + 1):
+        col = xi + col_off
+        if not (0 <= col < W):
+            continue
+        depth = int(d * (1.0 - (col_off / float(r)) ** 2))
+        y0 = max(0, yi)
+        y1 = min(H, yi + depth + 1)
+        bowl[y0:y1, col] = True
+
+    solid_in_bowl = bowl & (field.mask[..., 3] > 0)
+    sampled_rgb: np.ndarray = field.mask[solid_in_bowl, :3].copy()
+    field.carve(bowl)
+
+    # ── 2. Build particle batch ────────────────────────────────────────
+    n_chunks = preset.n_chunks
+    n_grains = preset.n_grains
+    n = n_chunks + n_grains
+    if n == 0:
+        return 0
+    is_chunk = np.zeros(n, dtype=bool)
+    is_chunk[:n_chunks] = True
+
+    cone_rad = preset.max_blast_angle_rad
+
+    # Spawn positions — uniform across the crater rim, just above the
+    # original surface band. Avoids walking up through empty alpha
+    # (which sent particles to the top of the screen earlier).
+    offs = rng.uniform(-crater_radius, crater_radius, n).astype(np.float32)
+    pos = np.column_stack([
+        x + offs,
+        np.full(n, float(yi) - 2.0, dtype=np.float32),
+    ]).astype(np.float32)
+
+    # Direction: uniform within cone, blended with radial-outward.
+    base_ang = rng.uniform(-cone_rad, cone_rad, n).astype(np.float32)
+    radial_ang = (offs / max(1.0, crater_radius)) * cone_rad
+    blend = preset.direction_blend
+    final_ang = base_ang * (1.0 - blend) + radial_ang * blend
+    final_ang = np.clip(final_ang, -cone_rad, cone_rad)
+
+    # Speed sampling per kind.
+    chunk_speeds = rng.uniform(
+        preset.chunk_speed_min, preset.chunk_speed_max, n
+    ).astype(np.float32)
+    grain_speeds = rng.uniform(
+        preset.grain_speed_min, preset.grain_speed_max, n
+    ).astype(np.float32)
+    speeds = np.where(is_chunk, chunk_speeds, grain_speeds)
+
+    # Velocity: direction * speed + edge boost + flat up/radial bias.
+    dir_x = np.sin(final_ang)
+    dir_y = -np.cos(final_ang)
+    edge_kick = (offs / max(1.0, crater_radius)) * preset.edge_outward_boost
+    radial_kick = np.sign(offs) * preset.blast_radial_boost
+    vel = np.column_stack([
+        dir_x * speeds + edge_kick + radial_kick,
+        dir_y * speeds - preset.blast_up_boost,  # negative vy = upward
+    ]).astype(np.float32)
+
+    # Radii (separate from bake radius — those control airborne look).
+    chunk_radii = rng.integers(
+        preset.chunk_radius_min, preset.chunk_radius_max + 1, n
+    )
+    grain_radii = rng.integers(
+        preset.grain_radius_min, preset.grain_radius_max + 1, n
+    )
+    radii = np.where(is_chunk, chunk_radii, grain_radii).astype(np.float32)
+
+    # ── 3. Colour sourcing: original pixels first, palette as fallback.
+    colours = np.zeros((n, 3), dtype=np.uint8)
+    if sampled_rgb.shape[0] > 0:
+        # Sample with replacement; randomised so chunks/grains get
+        # varied hues from the original bowl.
+        pick = rng.integers(0, sampled_rgb.shape[0], n)
+        colours = sampled_rgb[pick].astype(np.uint8)
+    # For any particle without a sampled colour, fall back to the
+    # palette (when bowl was empty, e.g. mid-air blast).
+    if sampled_rgb.shape[0] == 0:
+        grain_pal = np.asarray(preset.grain_palette, dtype=np.uint8)
+        chunk_pal = np.asarray(preset.chunk_palette, dtype=np.uint8)
+        gi = rng.integers(0, len(grain_pal), n)
+        ci = rng.integers(0, len(chunk_pal), n)
+        for k in range(n):
+            colours[k] = chunk_pal[ci[k]] if is_chunk[k] else grain_pal[gi[k]]
+
+    # Post-blast darkening (variegated scorched look).
+    if preset.post_blast_darken_max > 0.0:
+        darken = rng.uniform(
+            preset.post_blast_darken_min,
+            preset.post_blast_darken_max,
+            n,
+        ).astype(np.float32)
+        scale = np.clip(1.0 - darken, 0.0, 1.0)
+        colours = (colours.astype(np.float32) * scale[:, None]).astype(np.uint8)
+
+    field.spawn_batch(
+        pos=pos,
+        vel=vel,
+        material_ids=np.full(n, mid, dtype=np.int32),
+        radii=radii,
+        colors=colours,
+    )
+    return n
+
+
+__all__ = ["detonate", "material_from_preset", "ensure_preset_material"]
