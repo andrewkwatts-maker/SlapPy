@@ -111,7 +111,9 @@ def test_waveschedule_round_trip(tmp_path: Path) -> None:
     p = tmp_path / "sched.yml"
     save(sched, p)
     sched2 = load(p)
-    assert len(sched2.specs) == 1
+    # Re-loaded schedule's internal _waves list mirrors the input specs.
+    assert len(sched2._waves) == 1
+    assert sched2._waves[0].spec.count == 2
 
 
 # ── Telemetry ──────────────────────────────────────────────────────────────
