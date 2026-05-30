@@ -283,6 +283,23 @@ class Layer3D(Layer):
     """Layer subclass for 3D mesh rendering. mode is always '3D'."""
     def __init__(self, name: str = "layer"):
         super().__init__(name=name, mode="3D")
+        # "unlit" | "lit" | "lit_with_gbuffer" — drives the renderer's
+        # lighting pass. Default unlit so existing 3D layers behave as before.
+        self.lighting_mode: str = "unlit"
+        self._gbuffer_target: "Layer | None" = None
+
+    @property
+    def gbuffer_target(self) -> "Layer | None":
+        return self._gbuffer_target
+
+    @gbuffer_target.setter
+    def gbuffer_target(self, layer) -> None:
+        self._gbuffer_target = layer
+        # Setting a target switches mode to defer_2d (2D lighting layer
+        # receives the G-buffer data); a None target leaves the mode
+        # untouched per existing-test contract.
+        if layer is not None:
+            self.lighting_mode = "defer_2d"
 
     @property
     def mesh(self):
