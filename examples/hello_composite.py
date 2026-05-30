@@ -75,6 +75,7 @@ from typing import List, Tuple
 
 import numpy as np
 
+import slappyengine.telemetry as telemetry
 from slappyengine.dynamics import RopeSpec, World, build_rope
 from slappyengine.iso.combat import (
     Attacker,
@@ -187,6 +188,10 @@ class Scene:
     rope_edges: "np.ndarray | None" = None
     # topology
     rope_components_history: List[int] = field(default_factory=list)
+    # telemetry counters (self-subscribed during step_scene)
+    telemetry_physics_step_count: int = 0
+    telemetry_combat_hit_count: int = 0
+    telemetry_zone_enter_count: int = 0
     # diagnostics
     nan_seen: bool = False
 
@@ -197,14 +202,21 @@ class Scene:
 
 
 def _build_zone_manager() -> Tuple[ZoneManager, dict]:
-    """Build the foundry zone manager + an enter-record sink for diagnostics."""
+    """Build the foundry zone manager + an enter-record sink for diagnostics.
+
+    The ``on_enter`` callback also publishes a ``zone.enter`` telemetry
+    event so downstream subscribers (tests, in-game HUDs) can react to
+    zone crossings without polling.
+    """
     records: dict = {"enter": [], "exit": []}
 
     def _on_enter(eid):
         records["enter"].append(eid)
+        telemetry.emit("zone.enter", zone=ZONE_NAME, entity_id=eid)
 
     def _on_exit(eid):
         records["exit"].append(eid)
+        telemetry.emit("zone.exit", zone=ZONE_NAME, entity_id=eid)
 
     manager = ZoneManager()
     manager.add(
@@ -421,6 +433,26 @@ def step_scene(
     max_step = ATTACKER_SPEED * dt
     n_rope_nodes = int(world.positions.shape[0])
 
+    # ── Telemetry self-subscription ─────────────────────────────────────
+    # The demo emits physics.step / combat.hit / zone.enter events; we
+    # subscribe in-line so the printed summary can report counts without
+    # forcing callers to attach their own listener. The handles are torn
+    # down before we return so the global telemetry bus stays clean.
+    def _on_physics_step(_event: telemetry.TelemetryEvent) -> None:
+        scene.telemetry_physics_step_count += 1
+
+    def _on_combat_hit(_event: telemetry.TelemetryEvent) -> None:
+        scene.telemetry_combat_hit_count += 1
+
+    def _on_zone_enter(_event: telemetry.TelemetryEvent) -> None:
+        scene.telemetry_zone_enter_count += 1
+
+    _t_handles = [
+        telemetry.subscribe("physics.step", _on_physics_step),
+        telemetry.subscribe("combat.hit", _on_combat_hit),
+        telemetry.subscribe("zone.enter", _on_zone_enter),
+    ]
+
     for frame in range(1, frames + 1):
         # ── 1. Wave spawns ───────────────────────────────────────────────
         for spawn in schedule.tick(dt):
@@ -467,6 +499,13 @@ def step_scene(
                 )
                 if dmg > 0.0:
                     scene.damage_dealt_to[target_idx] += float(dmg)
+                    telemetry.emit(
+                        "combat.hit",
+                        attacker_team="enemy",
+                        defender_index=int(target_idx),
+                        damage=float(dmg),
+                        defender_alive=bool(def_alive),
+                    )
                 if not def_alive and defenders[target_idx].hp < 0.0:
                     defenders[target_idx].hp = 0.0
 
@@ -476,10 +515,18 @@ def step_scene(
                 continue
             view = defender_views[d_idx]
             view.pos = defender.pos
-            for live in attackers:
+            for atk_idx, live in enumerate(attackers):
                 if live.dead:
                     continue
                 _dmg, alive = resolve_attack(view, live.body)
+                if _dmg > 0.0:
+                    telemetry.emit(
+                        "combat.hit",
+                        attacker_team="player",
+                        defender_index=int(atk_idx),
+                        damage=float(_dmg),
+                        defender_alive=bool(alive),
+                    )
                 if not alive:
                     live.dead = True
                     scene.attackers_killed += 1
@@ -506,6 +553,7 @@ def step_scene(
 
         # ── 7. Rope dynamics step ────────────────────────────────────────
         world.step(dt)
+        telemetry.emit("physics.step", frame=int(frame), dt=float(dt))
 
         # ── 8. Topology: rope must stay one connected piece ──────────────
         _labels, n_components = connected_components(n_rope_nodes, rope_edges)
@@ -530,6 +578,10 @@ def step_scene(
                                 and np.isfinite(live.body.hp)):
                             scene.nan_seen = True
                             break
+
+    # ── Detach telemetry subscribers ────────────────────────────────────
+    for _h in _t_handles:
+        telemetry.unsubscribe(_h)
 
     return scene
 
@@ -558,6 +610,10 @@ def summarise(scene: Scene, frames: int) -> dict:
         "rope_connected": bool(rope_connected),
         "max_heat": max_heat,
         "nan_seen": bool(scene.nan_seen),
+        # Telemetry counts captured by self-subscribed listeners.
+        "telemetry_physics_step_count": int(scene.telemetry_physics_step_count),
+        "telemetry_combat_hit_count": int(scene.telemetry_combat_hit_count),
+        "telemetry_zone_enter_count": int(scene.telemetry_zone_enter_count),
     }
 
 
@@ -575,6 +631,10 @@ def print_summary(summary: dict) -> None:
     print(f"  rope still connected  : {'yes' if summary['rope_connected'] else 'no'}")
     print(f"  max heat @ frame {summary['frames']:>3d}  : {summary['max_heat']:.4f}")
     print(f"  any NaN in state      : {summary['nan_seen']}")
+    print("  telemetry events")
+    print(f"    physics.step        : {summary['telemetry_physics_step_count']}")
+    print(f"    combat.hit          : {summary['telemetry_combat_hit_count']}")
+    print(f"    zone.enter          : {summary['telemetry_zone_enter_count']}")
 
 
 # ---------------------------------------------------------------------------
