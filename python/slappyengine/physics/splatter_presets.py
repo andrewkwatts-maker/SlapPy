@@ -67,6 +67,11 @@ class SplatterPreset:
     friction_per_sec: float = 0.05  # horizontal slide friction after landing
     splat_radius_px: int = 5        # column-spread for chunks
     splat_lift_max: int = 3         # peak heightmap lift per chunk landing
+    splat_pile_cap_px: int = 30     # pile-slump cap: per-chunk lift
+                                    # falls to zero as the column rises
+                                    # this many px above the original
+                                    # ground. Stops chunk-on-chunk landing
+                                    # from growing unbounded towers.
     settle_speed_threshold: float = 10.0  # px/s — settled below this
 
     # Palettes (grains tan, chunks darker by default).
@@ -90,6 +95,44 @@ class SplatterPreset:
     post_blast_darken_min: float = 0.0
     post_blast_darken_max: float = 0.10
 
+    # Direction blend: 0.0 = every particle goes straight up (Worms-flat,
+    # ignores the spawn offset → most horizontal spread), 1.0 = direction
+    # is the radial outward vector from the blast centre (current
+    # behaviour, more vertical from edges). Values > 1.0 overshoot →
+    # the particle's launch direction points slightly *back* toward the
+    # blast — useful for snow that wants to drift backward over the rim.
+    direction_blend: float = 0.35
+
+    # Self-collision grace period (frames) — for the first N frames after
+    # spawn, particles ignore the heightmap landing test so rim-spawned
+    # particles can clear the crater edge without immediately piling up.
+    # Set to 0 to disable.
+    no_collide_frames: int = 4
+
+    # Edge-amplifier: if non-zero, the edge particles get an extra
+    # horizontal velocity boost proportional to their distance from the
+    # blast centre. Helps "blast out the edges" so they spread further.
+    edge_outward_boost: float = 0.0
+
+    # ── Impact dynamics ────────────────────────────────────────────────
+    # A landing chunk's kinetic energy is computed as
+    # ``ke = 0.5 * radius**2 * (vx**2 + vy**2)``. If that KE exceeds
+    # ``impact_binding_ke`` (a per-material "cohesion" threshold), the
+    # *excess* drives extra ground displacement at the landing site:
+    # the heightmap is dug DOWN by ``impact_displace_scale * excess /
+    # impact_binding_ke`` pixels. So fast/heavy chunks landing on tightly
+    # bound mud still pile UP, but high-KE chunks landing inside the
+    # crater (where the ground is loose) will continue digging.
+    # Set ``impact_binding_ke`` very high to disable.
+    impact_binding_ke: float = 1.2e5
+    impact_displace_scale: float = 6.0  # max extra dig pixels per chunk
+    # Crater-floor bonus: chunks landing where the heightmap is already
+    # below ``GROUND_Y`` (i.e. inside the existing crater bowl) get this
+    # multiplier applied to their excess KE — loose dirt offers less
+    # binding than packed dirt. 1.0 = same as undisturbed ground, 2.0 =
+    # twice as easy to dig.
+    impact_loose_ground_multiplier: float = 2.0
+
     # ── Asset / texture support ────────────────────────────────────────
     # When this preset is "materialised" onto a sprite or per-pixel sim
     # mask, these knobs control how the splatter writes back into the
@@ -111,22 +154,48 @@ class SplatterPreset:
 # ── Built-in presets ──────────────────────────────────────────────────
 
 
-SAND = SplatterPreset(name="sand")  # all defaults
+SAND = SplatterPreset(
+    name="sand",
+    # Sand defaults: wide cone, uniform spawn (low blend), strong edge
+    # boost. Reproduces the original "flat horizontal spray" look.
+    max_blast_angle_deg=55.0,
+    direction_blend=0.15,
+    edge_outward_boost=140.0,
+    no_collide_frames=3,
+    # Sand binding tuned so most grains pile, fast chunks dig moderately.
+    impact_binding_ke=2.0e5,
+    impact_displace_scale=3.5,
+    impact_loose_ground_multiplier=2.0,
+)
 
 MUD = SplatterPreset(
     name="mud",
-    max_blast_angle_deg=35.0,
+    # Mud — wider cone than before; lower gravity so it actually arcs
+    # outward instead of dropping back in the crater. Edge-boost gives
+    # rim particles real horizontal spread.
+    max_blast_angle_deg=55.0,
+    direction_blend=0.20,
+    edge_outward_boost=120.0,
+    no_collide_frames=4,
     n_grains=600,
     n_chunks=300,
-    grain_speed_max=320.0,
-    chunk_speed_max=240.0,
+    grain_speed_min=120.0,
+    grain_speed_max=380.0,
+    chunk_speed_min=100.0,
+    chunk_speed_max=280.0,
     chunk_radius_min=3,
     chunk_radius_max=5,
-    gravity=820.0,
-    air_drag_per_sec=0.40,
+    gravity=620.0,
+    air_drag_per_sec=0.55,
     friction_per_sec=0.02,       # mud sticks fast
     splat_radius_px=8,           # wider splat
     splat_lift_max=4,
+    # Mud is cohesive — but big chunks landing in the loose bowl still
+    # displace. Binding sits well below chunk-median KE so most chunks
+    # contribute to the crater, while grains keep piling on the rim.
+    impact_binding_ke=1.2e5,
+    impact_displace_scale=4.0,
+    impact_loose_ground_multiplier=2.5,
     grain_palette=(
         (110, 78, 42),
         (96, 66, 34),
@@ -146,20 +215,32 @@ MUD = SplatterPreset(
 
 SLOPPY = SplatterPreset(
     name="sloppy",
-    max_blast_angle_deg=25.0,
-    n_grains=400,
-    n_chunks=400,                # heavy on big globs
-    grain_speed_min=40.0,
-    grain_speed_max=180.0,
+    # Sloppy = wet mud. Fewer big chunks, lower per-chunk lift so the
+    # accumulated pile stays natural-flat instead of growing into
+    # twin mountains. Wider cone + strong edge boost reads as a
+    # spread-out splat rather than a fountain.
+    max_blast_angle_deg=60.0,
+    direction_blend=0.10,
+    edge_outward_boost=130.0,
+    no_collide_frames=5,
+    n_grains=500,
+    n_chunks=180,
+    grain_speed_min=60.0,
+    grain_speed_max=240.0,
     chunk_speed_min=80.0,
     chunk_speed_max=200.0,
-    chunk_radius_min=4,
-    chunk_radius_max=7,
-    gravity=900.0,               # falls fast
-    air_drag_per_sec=0.30,
+    chunk_radius_min=3,
+    chunk_radius_max=5,
+    gravity=700.0,
+    air_drag_per_sec=0.40,
     friction_per_sec=0.0,        # sticks instantly
-    splat_radius_px=12,
-    splat_lift_max=5,
+    splat_radius_px=6,
+    splat_lift_max=2,
+    # Sloppy = squishy globs; binding sits a bit below median KE so the
+    # biggest globs dig and grains pile on the rim.
+    impact_binding_ke=1.5e5,
+    impact_displace_scale=4.0,
+    impact_loose_ground_multiplier=2.5,
     grain_palette=(
         (84, 58, 30),
         (66, 44, 22),
@@ -174,7 +255,10 @@ SLOPPY = SplatterPreset(
 
 ROCK = SplatterPreset(
     name="rock",
-    max_blast_angle_deg=50.0,
+    max_blast_angle_deg=60.0,
+    direction_blend=0.20,
+    edge_outward_boost=160.0,    # rocks fly outward hard
+    no_collide_frames=3,
     n_grains=300,
     n_chunks=300,
     grain_speed_max=420.0,
@@ -187,6 +271,11 @@ ROCK = SplatterPreset(
     friction_per_sec=0.15,       # rocks roll a bit
     splat_radius_px=4,
     splat_lift_max=3,
+    # Rocks impact hard but only the fastest dig further — middling
+    # binding so most pile on the rim and only a fraction punch through.
+    impact_binding_ke=4.0e5,
+    impact_displace_scale=4.0,
+    impact_loose_ground_multiplier=1.5,
     grain_palette=(
         (140, 130, 120),
         (110, 100, 90),
@@ -202,7 +291,13 @@ ROCK = SplatterPreset(
 
 SNOW = SplatterPreset(
     name="snow",
-    max_blast_angle_deg=75.0,
+    # Snow — very wide cone, gentle gravity; long no-collide so the drift
+    # can carry over the rim and behind. direction_blend close to 0 so
+    # particles spray uniformly across the full cone (no rim bias).
+    max_blast_angle_deg=85.0,
+    direction_blend=0.05,
+    edge_outward_boost=80.0,
+    no_collide_frames=8,
     n_grains=1400,
     n_chunks=50,
     grain_speed_min=40.0,
@@ -230,6 +325,10 @@ SNOW = SplatterPreset(
     texture_stain_color=(232, 240, 250),
     texture_stain_alpha=180,
     texture_decay_per_sec=0.02,  # snow melts off textures slowly
+    # Snow has very low binding — even soft impacts displace.
+    impact_binding_ke=5.0e4,
+    impact_displace_scale=2.5,
+    impact_loose_ground_multiplier=1.5,
 )
 
 
