@@ -299,6 +299,17 @@ _defined in `slappyengine.dynamics.world`_
 
 Effective per-step damping ratio after N iterations of multiplicative per-iter damping.
 
+### `load_world(path: 'Path | str') -> 'World'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Read a JSON world file and deserialise it.
+
+#### Raises
+
+- `ValueError` — If ``path`` does not end in ``.json``, the file is not valid JSON, or the contents do not describe a well-formed world.
+- `FileNotFoundError` — If ``path`` does not exist.
+
 ### `make_motor(hub: 'int', rim_a: 'int', rim_b: 'int', target_omega: 'float', max_torque: 'float', radius: 'float' = 0.0, axis: 'tuple[float, float]' = (1.0, 0.0), stiffness: 'float' = 100000000.0, damping: 'float' = 0.02) -> 'JointSpec'`
 
 _defined in `slappyengine.dynamics.motor`_
@@ -327,6 +338,17 @@ _defined in `slappyengine.dynamics.joint`_
 
 Dispatch a joint to its XPBD projection. Returns correction magnitude.
 
+### `save_world(world: 'World', path: 'Path | str') -> 'None'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+JSON-encode ``world`` and write it to ``path``.
+
+#### Raises
+
+- `TypeError` — If ``world`` is not a :class:`World`.
+- `ValueError` — If ``path`` does not end in ``.json``.
+
 ### `solve_ik(spec: 'IKChainSpec', world, iterations: 'int' = 10, tolerance: 'float' = 0.01) -> 'bool'`
 
 _defined in `slappyengine.dynamics.ik`_
@@ -337,6 +359,26 @@ Solve the chain toward the target using CCD.
 
 - `TypeError` — If ``spec`` is not an :class:`IKChainSpec` or ``world`` is not a compatible world object.
 - `ValueError` — If ``iterations <= 0`` or ``tolerance <= 0``.
+
+### `world_from_dict(d: 'dict') -> 'World'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Reconstruct a :class:`World` from a dict produced by :func:`world_to_dict`.
+
+#### Raises
+
+- `ValueError` — If ``d`` is not a dict, is missing required keys, has the wrong schema version, or contains malformed arrays / joints / bodies.
+
+### `world_to_dict(world: 'World') -> 'dict[str, Any]'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Serialise ``world`` into a JSON-compatible dict.
+
+#### Raises
+
+- `TypeError` — If ``world`` is not a :class:`World`.
 
 ## Constants
 
@@ -352,6 +394,12 @@ _float — defined in `slappyengine.dynamics`_
 
 Value: `0.5`
 
+### `SCHEMA_VERSION`
+
+_int — defined in `slappyengine.dynamics`_
+
+Value: `1`
+
 ## Inner modules
 
 - `slappyengine.dynamics.body`
@@ -361,5 +409,6 @@ Value: `0.5`
 - `slappyengine.dynamics.motor`
 - `slappyengine.dynamics.ragdoll`
 - `slappyengine.dynamics.rope`
+- `slappyengine.dynamics.serialize`
 - `slappyengine.dynamics.spring`
 - `slappyengine.dynamics.world`

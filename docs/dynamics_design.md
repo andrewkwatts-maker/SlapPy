@@ -228,7 +228,7 @@ The per-kind dispatchers compose these:
 |-------------|---------------------------------------------------------------------------------------------|
 | `distance`  | One `_project_distance` call between `node_a` and `node_b`.                                 |
 | `spring`    | Identical to `distance` — the *behaviour* difference is the builder's softer defaults.      |
-| `weld`      | Identical to `distance`; convention is to set `stiffness=1.0e9` (the dataclass default).    |
+| `weld`      | Identical to `distance` but the rest-length is offset by `params["rest_offset"]` (default 0.0); convention is to set `stiffness=1.0e9` (the dataclass default). |
 | `ball`      | `_project_distance` with `rest_length=0` regardless of the field value.                     |
 | `hinge`     | `_project_distance` (holds rest length) **plus** `_project_angle` (clamps to band).         |
 | `motor`     | Two `_project_distance` calls (`hub→rim_a`, `hub→rim_b`) **plus** a tangential velocity push capped by `max_torque * dt`. |
