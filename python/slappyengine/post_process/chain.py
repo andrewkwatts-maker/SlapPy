@@ -1,6 +1,6 @@
 from __future__ import annotations
 import struct
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +14,11 @@ class PostProcessPass:
     entry_point: str = "main"
     # Pre-packed uniform bytes.  When set, bypasses _make_params_buffer entirely.
     raw_params_bytes: bytes | None = None
+    # Names of post-process passes that must run before this one.  Mirrors the
+    # round-8 ``RenderPass.depends_on`` convention; an empty list (default)
+    # preserves the historical insertion-order behaviour so legacy chains are
+    # unaffected.  Consumed by preset chains and forward-compatible executors.
+    depends_on: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         if self.params is None:
@@ -233,6 +238,57 @@ class PostProcessChain:
             },
             label="tonemap",
         )
+        self.add(p)
+        return p
+
+    def add_bloom(
+        self,
+        threshold: float = 1.0,
+        knee: float = 0.2,
+        intensity: float = 1.0,
+    ) -> PostProcessPass:
+        """Append a bloom extraction pass (Lottes 2017 smooth-knee threshold).
+
+        Delegates to :class:`~slappyengine.post_process.bloom.BloomPass` so the
+        chain helper, the standalone pass object, and the GPU shader stay in
+        sync on uniform layout. ``knee == 0`` reproduces the legacy hard
+        cutoff bit-for-bit.
+        """
+        from .bloom import BloomPass
+
+        bp = BloomPass(threshold=threshold, knee=knee, intensity=intensity)
+        p = bp.make_pass()
+        self.add(p)
+        return p
+
+    def add_dof(
+        self,
+        focal_distance: float = 0.5,
+        focal_range: float = 0.3,
+        max_coc_radius: float = 12.0,
+        bokeh_samples: int = 16,
+        focus_transition: float = 1.0,
+        scene_tex: Any = None,
+        depth_tex: Any = None,
+    ) -> PostProcessPass:
+        """Append a Depth-of-Field pass (round-9 ``focus_transition`` knob).
+
+        Convenience wrapper over :class:`~slappyengine.post_process.dof.DofPass`.
+        ``scene_tex`` / ``depth_tex`` are optional in headless contexts (preset
+        composition / tests) — the executor will bind real textures at dispatch
+        time.  ``focus_transition == 1.0`` (default) reproduces the legacy
+        strictly-linear CoC ramp.
+        """
+        from .dof import DofPass
+
+        dof = DofPass(
+            focal_distance=focal_distance,
+            focal_range=focal_range,
+            max_coc_radius=max_coc_radius,
+            bokeh_samples=bokeh_samples,
+            focus_transition=focus_transition,
+        )
+        p = dof.make_pass(scene_tex, depth_tex)
         self.add(p)
         return p
 

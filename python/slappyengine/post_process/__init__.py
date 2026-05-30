@@ -9,6 +9,9 @@ __all__ = [
     "GTAOPass",
     "ShadowCSM",
     "VolumetricFog",
+    "cinematic_chain",
+    "arcade_chain",
+    "iso_strategy_chain",
 ]
 
 _LAZY_MAP: dict[str, str] = {
@@ -19,6 +22,9 @@ _LAZY_MAP: dict[str, str] = {
     "GTAOPass":            ".gtao",
     "ShadowCSM":           ".shadow_csm",
     "VolumetricFog":       ".volumetric_fog",
+    "cinematic_chain":     ".preset_chains",
+    "arcade_chain":        ".preset_chains",
+    "iso_strategy_chain":  ".preset_chains",
 }
 
 
