@@ -53,6 +53,84 @@ CRATER_RADIUS = 60
 CRATER_DEPTH = 28
 
 
+def _slump_step(
+    bake_layer: np.ndarray,
+    *,
+    rng: np.random.Generator,
+    fall_prob: float,
+    slump_angle_deg: float,
+    protect_y_above: int,
+) -> None:
+    """One frame of falling-sand / angle-of-repose update.
+
+    For every solid pixel ABOVE ``protect_y_above`` (so the original
+    sub-ground stays put), check support directly below. If empty,
+    fall with probability ``fall_prob``. Otherwise check diagonal
+    support — if the neighbour column is significantly lower (steeper
+    than ``slump_angle_deg``), slump sideways into it.
+    """
+    Hh, Ww, _ = bake_layer.shape
+    solid = bake_layer[..., 3] > 0
+    y_start = max(0, protect_y_above - 1)
+    max_step = max(1, int(round(math.tan(
+        math.radians(min(89.0, slump_angle_deg))))))
+    # Per-frame fall rate is heavily damped — fall_prob is the
+    # *eventual* probability, not the per-frame one. Scale so even
+    # zero-cohesion (rock, sand) needs ~20 frames to settle, giving
+    # the user time to see the pile form before slump erases it.
+    frame_fall = min(1.0, fall_prob * 0.08)
+    side_fall = frame_fall * 0.4
+    # Random fall mask for all candidate pixels.
+    for y in range(y_start, 0, -1):
+        row = solid[y]
+        if not row.any():
+            continue
+        # Empty pixel directly below → vertical fall.
+        below_empty = ~solid[y + 1] if y + 1 < Hh else np.zeros(Ww, bool)
+        # Choose which pixels to fall this frame.
+        fall = row & below_empty
+        if fall.any() and frame_fall > 0.0:
+            roll = rng.random(Ww) < frame_fall
+            fall &= roll
+            if fall.any():
+                idx = np.where(fall)[0]
+                bake_layer[y + 1, idx] = bake_layer[y, idx]
+                bake_layer[y, idx, 3] = 0
+                solid[y + 1, idx] = True
+                solid[y, idx] = False
+        # Sideways slump: pixel has support below but a neighbour column
+        # is much lower → slide diagonally.
+        if side_fall > 0.0 and y + max_step < Hh:
+            still = solid[y] & ~below_empty
+            # left neighbour lower
+            left_lower = np.zeros(Ww, bool)
+            left_lower[1:] = (
+                still[1:]
+                & ~solid[y + 1, :-1]
+                & ~solid[y, :-1]
+            )
+            right_lower = np.zeros(Ww, bool)
+            right_lower[:-1] = (
+                still[:-1]
+                & ~solid[y + 1, 1:]
+                & ~solid[y, 1:]
+            )
+            slump_l = left_lower & (rng.random(Ww) < side_fall)
+            slump_r = right_lower & (rng.random(Ww) < side_fall)
+            if slump_l.any():
+                idx = np.where(slump_l)[0]
+                bake_layer[y, idx - 1] = bake_layer[y, idx]
+                bake_layer[y, idx, 3] = 0
+                solid[y, idx - 1] = True
+                solid[y, idx] = False
+            if slump_r.any():
+                idx = np.where(slump_r)[0]
+                bake_layer[y, idx + 1] = bake_layer[y, idx]
+                bake_layer[y, idx, 3] = 0
+                solid[y, idx + 1] = True
+                solid[y, idx] = False
+
+
 def _bg_for_preset(preset: SplatterPreset) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
     """Sky-gradient endpoints chosen so the splatter palette pops."""
     if preset.name == "snow":
@@ -285,13 +363,12 @@ def run_preset(preset: SplatterPreset, frames: int = 130) -> Path:
                         pos[i, 1] = float(y - 1)
                         landed[i] = True
                         if is_chunk[i]:
-                            # KE-driven impact = drill + ejecta. The
-                            # chunk punches a narrow column of its
-                            # colour DOWN into the ground (drill); the
-                            # displaced volume is re-ejected as a wider
-                            # rim splat ABOVE the impact (no mass loss
-                            # at impact_eject_gain=1.0). User-tunable
-                            # via the impact_* knobs on the preset.
+                            # KE-driven impact = drill + ejecta ONLY.
+                            # The chunk's own body bakes at SETTLE time
+                            # (after sliding) via bake_settled_particles
+                            # — that way sliding particles end up in
+                            # the bake layer where they actually stop,
+                            # not where they first hit ground.
                             vsq = float(vel[i, 0] ** 2 + vel[i, 1] ** 2)
                             ke = 0.5 * (radius[i] ** 2) * vsq
                             excess = max(0.0, ke - preset.impact_binding_ke)
@@ -325,37 +402,33 @@ def run_preset(preset: SplatterPreset, frames: int = 130) -> Path:
                                 bake_layer[y_top:y_bot + 1, col, 2] = cb
                                 bake_layer[y_top:y_bot + 1, col, 3] = 255
                                 drilled_pixels += (y_bot - y_top + 1)
-                            # ── Surface splat (up + out): wider band,
-                            # extra lift from conserved drilled volume.
-                            ejected = drilled_pixels * preset.impact_eject_gain
-                            row_budget = (
-                                ejected / max(1, 2 * splat_half + 1)
-                            )
-                            for dx in range(-splat_half, splat_half + 1):
-                                col = x + dx
-                                if not (0 <= col < W):
-                                    continue
-                                falloff = 1.0 - abs(dx) / (splat_half + 1)
-                                lift_px = max(1, int(round(
-                                    (preset.splat_lift_max + row_budget)
-                                    * falloff)))
-                                y_top = max(0, y - lift_px)
-                                y_bot = min(H - 1, y - 1)
-                                if y_bot >= y_top:
+                            # ── Conserved rim ejecta: the drilled
+                            # volume gets redistributed to the surface
+                            # splat above the impact (NOT the chunk's
+                            # body — that bakes at settle time). With
+                            # impact_eject_gain=1.0 the total visible
+                            # material delta is zero on drilled impacts.
+                            if drilled_pixels > 0:
+                                ejected = drilled_pixels * preset.impact_eject_gain
+                                row_budget = ejected / max(1, 2 * splat_half + 1)
+                                for dx in range(-splat_half, splat_half + 1):
+                                    col = x + dx
+                                    if not (0 <= col < W):
+                                        continue
+                                    falloff = 1.0 - abs(dx) / (splat_half + 1)
+                                    lift_px = int(round(
+                                        row_budget * falloff))
+                                    if lift_px <= 0:
+                                        continue
+                                    y_top = max(0, y - lift_px)
+                                    y_bot = min(H - 1, y - 1)
                                     bake_layer[y_top:y_bot + 1, col, 0] = cr
                                     bake_layer[y_top:y_bot + 1, col, 1] = cg
                                     bake_layer[y_top:y_bot + 1, col, 2] = cb
                                     bake_layer[y_top:y_bot + 1, col, 3] = 255
-                        else:
-                            # Grains stamp a single pixel.
-                            cr, cg, cb = colour[i]
-                            for dx in (-1, 0, 1):
-                                col = x + dx
-                                if 0 <= col < W:
-                                    bake_layer[y, col, 0] = cr
-                                    bake_layer[y, col, 1] = cg
-                                    bake_layer[y, col, 2] = cb
-                                    bake_layer[y, col, 3] = 255
+                        # Grains and chunk bodies bake at SETTLE time —
+                        # see bake_settled_particles below. Nothing more
+                        # to do at landing.
 
             slide_mask = landed & ~settled
             if slide_mask.any():
@@ -376,12 +449,31 @@ def run_preset(preset: SplatterPreset, frames: int = 130) -> Path:
                         settled[i] = True
                         vel[i, 0] = 0.0
 
-            # Per-pixel impacts already wrote into bake_layer at landing
-            # time. Mark every landed-and-settled particle as baked so
-            # the live render loop skips it. (No separate bake call.)
-            new_baked = landed & settled & ~bake_flag
-            if new_baked.any():
-                bake_flag[new_baked] = True
+            # Settle-time bake: stamp each settled particle's BODY into
+            # the bake layer at its FINAL position (post-slide). This
+            # is where the chunk colour ends up — landing-time painting
+            # would have left mis-positioned ghosts for any particle
+            # that slid horizontally.
+            bake_settled_particles(
+                pos=pos, radius=radius, colour=colour,
+                landed=landed, settled=settled,
+                bake_flag=bake_flag, terrain_rgba=bake_layer,
+            )
+
+            # ── Slump / collapse pass for non-cohesive materials ──
+            # Per-pixel cellular update: every solid pixel with empty
+            # space directly below "falls" by 1 with probability
+            # (1 - cohesion). Adds a 45° / configurable angle of repose
+            # so chunks pile naturally instead of growing rigid towers.
+            # Skipped entirely when cohesion >= 1.0 (cost-free for mud).
+            if preset.cohesion < 1.0:
+                _slump_step(
+                    bake_layer,
+                    rng=rng,
+                    fall_prob=1.0 - preset.cohesion,
+                    slump_angle_deg=preset.slump_angle_deg,
+                    protect_y_above=GROUND_Y + CRATER_DEPTH + 8,
+                )
 
             # Region partition — record live (= still simulating)
             # particles per cell, then transition empty-for-N-frames

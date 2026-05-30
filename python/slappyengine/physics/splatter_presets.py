@@ -144,6 +144,23 @@ class SplatterPreset:
     # 1.0 to make crater-bowl impacts behave identically to surface.
     impact_loose_ground_multiplier: float = 2.0
 
+    # ── Settlement / cohesion / slump ──────────────────────────────────
+    # cohesion controls how sticky settled material is. 1.0 = sticks
+    # forever (snow, mud); 0.0 = no stickiness, unsupported pixels fall
+    # straight down each frame (perfect sand). Intermediate values
+    # = chance per frame an unsupported pixel falls.
+    cohesion: float = 0.8
+    # Angle of repose (degrees from horizontal) for the slump pass.
+    # If a settled pixel sees a neighbour column more than this much
+    # lower, it slumps sideways into the gap. 90° = no slumping (rigid),
+    # 30° = sand-like, 15° = liquid-like spread. Only applies when
+    # cohesion < 1.0 (a fully cohesive material doesn't slump).
+    slump_angle_deg: float = 35.0
+    # Mass gain/loss on settle. < 1.0 means some material is "lost"
+    # when chunks settle (compaction); > 1.0 means each chunk's stamp
+    # is enlarged (used for dramatic Worms-style scenes). 1.0 = exact.
+    settle_mass_gain: float = 1.0
+
     # ── Asset / texture support ────────────────────────────────────────
     # When this preset is "materialised" onto a sprite or per-pixel sim
     # mask, these knobs control how the splatter writes back into the
@@ -167,16 +184,17 @@ class SplatterPreset:
 
 SAND = SplatterPreset(
     name="sand",
-    # Sand defaults: wide cone, uniform spawn (low blend), strong edge
-    # boost. Reproduces the original "flat horizontal spray" look.
     max_blast_angle_deg=55.0,
     direction_blend=0.15,
     edge_outward_boost=140.0,
     no_collide_frames=3,
-    # Sand binding tuned so most grains pile, fast chunks dig moderately.
     impact_binding_ke=2.0e5,
     impact_drill_max_px=3.5,
     impact_loose_ground_multiplier=2.0,
+    # Sand barely sticks; steep slump (~33°) gives that natural
+    # dune-edge spread.
+    cohesion=0.15,
+    slump_angle_deg=33.0,
 )
 
 MUD = SplatterPreset(
@@ -207,6 +225,10 @@ MUD = SplatterPreset(
     impact_binding_ke=1.2e5,
     impact_drill_max_px=4.0,
     impact_loose_ground_multiplier=2.5,
+    # Mud is fully cohesive — no slump, no falling unsupported pixels.
+    # That lets it form small overhangs.
+    cohesion=0.95,
+    slump_angle_deg=70.0,
     grain_palette=(
         (110, 78, 42),
         (96, 66, 34),
@@ -252,6 +274,9 @@ SLOPPY = SplatterPreset(
     impact_binding_ke=1.5e5,
     impact_drill_max_px=4.0,
     impact_loose_ground_multiplier=2.5,
+    # Sloppy is wet but still flows — gentle slump, mostly cohesive.
+    cohesion=0.6,
+    slump_angle_deg=25.0,
     grain_palette=(
         (84, 58, 30),
         (66, 44, 22),
@@ -287,6 +312,9 @@ ROCK = SplatterPreset(
     impact_binding_ke=4.0e5,
     impact_drill_max_px=4.0,
     impact_loose_ground_multiplier=1.5,
+    # Rocks don't stick — fall freely when unsupported, sharp slump.
+    cohesion=0.05,
+    slump_angle_deg=40.0,
     grain_palette=(
         (140, 130, 120),
         (110, 100, 90),
@@ -340,6 +368,9 @@ SNOW = SplatterPreset(
     impact_binding_ke=5.0e4,
     impact_drill_max_px=2.5,
     impact_loose_ground_multiplier=1.5,
+    # Snow drifts (medium cohesion) — light slumping, can hold overhangs.
+    cohesion=0.85,
+    slump_angle_deg=50.0,
 )
 
 
