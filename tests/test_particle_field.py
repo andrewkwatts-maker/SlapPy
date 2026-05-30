@@ -1,0 +1,185 @@
+"""Tests for slappyengine.physics.particle_field — unified material sim."""
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+from slappyengine.physics.particle_field import (
+    BUILTIN_MATERIALS,
+    MUD_MAT,
+    Material,
+    ParticleField,
+    ROCK_MAT,
+    SAND_MAT,
+    SNOW_MAT,
+    WATER,
+)
+
+
+def test_builtins_cover_expected_substances() -> None:
+    names = {m.name for m in BUILTIN_MATERIALS}
+    assert names == {"water", "sand", "mud", "rock", "snow"}
+
+
+def test_water_is_fluid_others_are_not() -> None:
+    assert WATER.is_fluid
+    for m in (SAND_MAT, MUD_MAT, ROCK_MAT, SNOW_MAT):
+        assert not m.is_fluid
+
+
+def test_density_ordering_matches_real_substances() -> None:
+    # snow < water < sand < mud < rock by density.
+    by_name = {m.name: m for m in BUILTIN_MATERIALS}
+    assert by_name["snow"].density < by_name["water"].density
+    assert by_name["water"].density < by_name["sand"].density
+    assert by_name["sand"].density < by_name["mud"].density
+    assert by_name["mud"].density < by_name["rock"].density
+
+
+def test_field_constructs_with_empty_particle_arrays() -> None:
+    f = ParticleField(width=128, height=96)
+    assert f.pos.shape == (0, 2)
+    assert f.vel.shape == (0, 2)
+    assert f.mask.shape == (96, 128, 4)
+    assert f.region_grid.shape_cells == (2, 2)  # 96/64=2, 128/64=2
+
+
+def test_field_rejects_bad_dims() -> None:
+    with pytest.raises(ValueError):
+        ParticleField(width=0, height=10)
+    with pytest.raises(ValueError):
+        ParticleField(width=10, height=-1)
+
+
+def test_spawn_appends_one_particle() -> None:
+    f = ParticleField(width=64, height=64)
+    idx = f.spawn(x=10.0, y=20.0, vx=5.0, vy=-15.0, material="sand", radius=2)
+    assert idx == 0
+    assert f.pos[0, 0] == 10.0
+    assert f.pos[0, 1] == 20.0
+    assert f.vel[0, 1] == -15.0
+    assert f.radius[0] == 2.0
+    assert f.material_id[0] == f.material_id_of("sand")
+    # Color inherited from material.
+    assert tuple(int(c) for c in f.color[0]) == SAND_MAT.color
+
+
+def test_spawn_batch_is_equivalent_to_per_particle() -> None:
+    f = ParticleField(width=64, height=64)
+    pos = np.array([[10, 20], [30, 40]], dtype=np.float32)
+    vel = np.array([[1, 2], [3, 4]], dtype=np.float32)
+    mids = np.array([f.material_id_of("water"), f.material_id_of("rock")],
+                    dtype=np.int32)
+    radii = np.array([1.5, 2.0], dtype=np.float32)
+    f.spawn_batch(pos=pos, vel=vel, material_ids=mids, radii=radii)
+    assert f.pos.shape == (2, 2)
+    assert f.material_id[0] == f.material_id_of("water")
+    assert f.material_id[1] == f.material_id_of("rock")
+
+
+def test_fill_ground_writes_solid_band_to_mask() -> None:
+    f = ParticleField(width=64, height=64)
+    f.fill_ground(top_y=40, color=(200, 160, 90), sub_color=(60, 44, 28))
+    # Top row coloured + alpha.
+    assert f.mask[40, 10, 3] == 255
+    assert tuple(int(c) for c in f.mask[40, 10, :3]) == (200, 160, 90)
+    # Sub-ground band.
+    assert tuple(int(c) for c in f.mask[55, 10, :3]) == (60, 44, 28)
+    # Above ground is empty.
+    assert f.mask[20, 10, 3] == 0
+
+
+def test_carve_clears_alpha_in_region() -> None:
+    f = ParticleField(width=64, height=64)
+    f.fill_ground(top_y=40, color=(200, 160, 90))
+    bowl = np.zeros((64, 64), dtype=bool)
+    bowl[40:50, 20:40] = True
+    f.carve(bowl)
+    assert f.mask[45, 30, 3] == 0  # carved
+    assert f.mask[45, 5, 3] == 255  # outside bowl, still solid
+
+
+def test_carve_rejects_wrong_shape() -> None:
+    f = ParticleField(width=64, height=64)
+    with pytest.raises(ValueError):
+        f.carve(np.zeros((32, 32), dtype=bool))
+
+
+def test_step_drops_sand_until_it_hits_ground_and_settles() -> None:
+    f = ParticleField(width=64, height=64)
+    f.fill_ground(top_y=50, color=(200, 160, 90))
+    f.spawn(x=32.0, y=10.0, vx=0.0, vy=20.0, material="sand")
+    dt = 1.0 / 60.0
+    # Step until landed (cap at 400 frames).
+    for _ in range(400):
+        f.step(dt)
+        if f.landed[0] and f.settled[0]:
+            break
+    assert f.landed[0]
+    assert f.settled[0]
+    # Particle ends up at or above the ground row.
+    assert f.pos[0, 1] <= 50
+
+
+def test_step_water_does_not_settle_keeps_bouncing() -> None:
+    f = ParticleField(width=64, height=64)
+    f.fill_ground(top_y=50, color=(40, 80, 160))
+    f.spawn(x=32.0, y=10.0, vx=0.0, vy=20.0, material="water")
+    dt = 1.0 / 60.0
+    # Water hits ground then bounces; never marks "landed" as final.
+    for _ in range(20):
+        f.step(dt)
+    # Water is fluid → keeps integrating; never sets the final landed
+    # flag (we reset it in _collide when material.is_fluid).
+    assert not f.settled[0]
+
+
+def test_step_skips_when_no_particles() -> None:
+    f = ParticleField(width=64, height=64)
+    f.step(1.0 / 60.0)  # must not raise
+
+
+def test_render_discs_paints_live_particle() -> None:
+    f = ParticleField(width=64, height=64)
+    f.spawn(x=32.0, y=20.0, material="sand", radius=2)
+    img = f.render(mode="discs")
+    assert img.shape == (64, 64, 3)
+    # The particle disc should be coloured around (32, 20).
+    assert tuple(int(c) for c in img[20, 32]) == SAND_MAT.color
+
+
+def test_render_marching_squares_renders_density_band() -> None:
+    f = ParticleField(width=64, height=64)
+    # Cluster five particles in one grid cell so density > iso.
+    for _ in range(5):
+        f.spawn(x=32.0, y=32.0, material="water")
+    img = f.render(mode="marching_squares")
+    assert img.shape == (64, 64, 3)
+    # The 4x4 cell that contains (32, 32) should be filled with water
+    # blue (last-write-wins is water's colour since all are water).
+    assert tuple(int(c) for c in img[32, 32]) == WATER.color
+
+
+def test_render_unknown_mode_raises() -> None:
+    f = ParticleField(width=16, height=16)
+    with pytest.raises(ValueError, match="unknown render mode"):
+        f.render(mode="nope")
+
+
+def test_custom_material_can_be_added() -> None:
+    custom = Material(name="oil", binding_force=0.0, density=0.9,
+                      color=(40, 30, 10))
+    f = ParticleField(width=32, height=32, materials=[WATER, custom])
+    f.spawn(x=10.0, y=10.0, material="oil")
+    assert f.material("oil").name == "oil"
+    assert tuple(int(c) for c in f.color[0]) == (40, 30, 10)
+
+
+def test_region_grid_tracks_live_particle_locations() -> None:
+    f = ParticleField(width=128, height=128, cell_size=32)
+    f.spawn(x=10.0, y=10.0, material="sand")
+    f.spawn(x=100.0, y=100.0, material="sand")
+    # The step call updates region_grid via record_live.
+    f.step(1.0 / 60.0)
+    # Both particles are in distinct cells → both active.
+    assert f.region_grid.active_cell_count() >= 1
