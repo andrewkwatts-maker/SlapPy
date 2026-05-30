@@ -10,7 +10,7 @@ native; Python is glue, ergonomics, and config. Ships on PyPI as
 `slappy-engine`.
 
 * Engine version (runtime): `0.1.0`
-* Native `_core` available: `False`
+* Native `_core` available: `True`
 * Top-level names in `__all__`: **75**
 * Declared subpackages: **21**
 
@@ -237,7 +237,7 @@ Compute subpackage — lazy-loaded to avoid eager wgpu/numpy imports.
 
 **Public attributes:** `asset_compute`, `mutator`, `pipeline`, `readback`, `spatial`, `stats`
 
-**Inner modules:** `asset_compute`, `ast_compiler`, `effect`, `mutator`, `pipeline`, `readback`, `spatial`, `stats`
+**Inner modules:** `asset_compute`, `ast_compiler`, `effect`, `hull`, `library`, `mutator`, `pipeline`, `readback`, `shader_cache`, `spatial`, `stats`, `wgsl_chunks`
 
 ### `slappyengine.dynamics`
 
@@ -261,7 +261,7 @@ GPU subpackage — lazy-loaded to avoid eager wgpu imports.
 
 **Public attributes:** `buffer_manager`, `context`, `entity_renderer`, `pbr_material`, `render_pipeline`, `sdf_extruder`, `texture_manager`
 
-**Inner modules:** `buffer_manager`, `cluster_3d`, `cluster_pipeline`, `context`, `entity_renderer`, `ibl`, `material_buffer`, `mesh`, `mesh_pipeline`, `mesh_renderer`, `pbr_material`, `render_pipeline`, `sdf_extruder`, `sdf_renderer`, `texture_manager`
+**Inner modules:** `adaptive_quality`, `buffer_manager`, `cluster_3d`, `cluster_pipeline`, `context`, `entity_renderer`, `ibl`, `material_buffer`, `mesh`, `mesh_pipeline`, `mesh_renderer`, `pbr_material`, `render_pipeline`, `sdf_extruder`, `sdf_renderer`, `texture_manager`
 
 ### `slappyengine.input`
 
@@ -309,7 +309,7 @@ Post-process subpackage — lazy-loaded to avoid eager wgpu imports.
 
 **Public attributes:** `chain`
 
-**Inner modules:** `_validation`, `auto_exposure`, `bloom`, `chain`, `dof`, `executor`, `gtao`, `outline`, `shadow_csm`, `taa`, `tonemap`, `vignette`, `volumetric_fog`
+**Inner modules:** `_validation`, `auto_exposure`, `bloom`, `chain`, `dof`, `executor`, `gtao`, `motion_blur`, `outline`, `preset_chains`, `shadow_csm`, `ssr`, `taa`, `tonemap`, `vignette`, `volumetric_fog`
 
 ### `slappyengine.residency`
 
@@ -347,7 +347,7 @@ Heat diffusion + pairwise heat exchange — Phase B public surface.
 
 **Public attributes:** _(none exposed at package level)_
 
-**Inner modules:** `_sprite_audit_validation`, `gen_placeholders`, `sprite_audit`
+**Inner modules:** `_sprite_audit_validation`, `audio_tools`, `gen_placeholders`, `sprite_audit`, `sprite_tools`, `texture_tools`, `track_tools`, `video`
 
 ### `slappyengine.ui`
 
@@ -355,7 +355,7 @@ UI subpackage — lazy-loaded to avoid eager numpy/wgpu imports.
 
 **Public attributes:** `hud_widgets`, `scene_ui`
 
-**Inner modules:** `editor`, `html_overlay`, `hud_widgets`, `project_manager`, `scene_ui`
+**Inner modules:** `debug_overlay`, `editor`, `html_overlay`, `hud_widgets`, `project_manager`, `scene_ui`, `widgets`
 
 ### `slappyengine.zones`
 
