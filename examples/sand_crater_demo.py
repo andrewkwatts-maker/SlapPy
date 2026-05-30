@@ -445,19 +445,29 @@ def run_preset(preset: SplatterPreset, frames: int = 130) -> Path:
                         while y > 0 and bake_layer[y, x, 3] > 0:
                             y -= 1
                         pos[i, 1] = float(y)
-                    if abs(vel[i, 0]) < preset.settle_speed_threshold:
+                    # Per-particle settle jitter on the threshold so
+                    # particles stop over a band of frames, not all at
+                    # once. Keeps the bake looking organic.
+                    jitter = preset.settle_jitter
+                    if jitter > 0.0:
+                        threshold = preset.settle_speed_threshold * (
+                            1.0 + float(rng.uniform(-jitter, jitter)))
+                    else:
+                        threshold = preset.settle_speed_threshold
+                    if abs(vel[i, 0]) < threshold:
                         settled[i] = True
                         vel[i, 0] = 0.0
 
             # Settle-time bake: stamp each settled particle's BODY into
-            # the bake layer at its FINAL position (post-slide). This
-            # is where the chunk colour ends up — landing-time painting
-            # would have left mis-positioned ghosts for any particle
-            # that slid horizontally.
+            # the bake layer at its FINAL position (post-slide). With
+            # bake_radius_override=0, each particle = 1 pixel = 1 unit
+            # of mass, so total bake mass tracks particle count instead
+            # of (2r+1)² per particle (which over-grew the pile).
             bake_settled_particles(
                 pos=pos, radius=radius, colour=colour,
                 landed=landed, settled=settled,
                 bake_flag=bake_flag, terrain_rgba=bake_layer,
+                bake_radius_override=preset.bake_radius_override,
             )
 
             # ── Slump / collapse pass for non-cohesive materials ──

@@ -160,6 +160,26 @@ class SplatterPreset:
     # when chunks settle (compaction); > 1.0 means each chunk's stamp
     # is enlarged (used for dramatic Worms-style scenes). 1.0 = exact.
     settle_mass_gain: float = 1.0
+    # ── Bake stamp size ────────────────────────────────────────────────
+    # Decouples visual airborne radius (what the user sees in flight)
+    # from how many pixels each particle leaves in the bake layer when
+    # it stops. 0 = single pixel per particle (one-particle / one-unit-
+    # of-mass: total bake mass matches particle count, no growth-after-
+    # the-fact). 1 = 3x3 disc. Set to ``None`` to fall back to the
+    # particle's own ``radius`` array (legacy behaviour, can over-grow).
+    bake_radius_override: int | None = 0
+    # ── Settle randomisation ───────────────────────────────────────────
+    # Per-particle jitter on the settle threshold. The settler triggers
+    # when |vx| < settle_speed_threshold * (1 + uniform(-J, J)). > 0
+    # spreads settle times across many frames so the bake looks
+    # organic instead of all-at-once.
+    settle_jitter: float = 0.35
+    # Per-particle bake-radius variation. When bake_radius_override is
+    # not None, the actual per-chunk bake radius is
+    # ``bake_radius_override + uniform(0, chunk_bake_jitter)`` (int
+    # rounded). 0 = uniform stamps; > 0 = some chunks visible as
+    # slightly-bigger clumps.
+    chunk_bake_jitter: int = 0
 
     # ── Asset / texture support ────────────────────────────────────────
     # When this preset is "materialised" onto a sprite or per-pixel sim
@@ -195,6 +215,10 @@ SAND = SplatterPreset(
     # dune-edge spread.
     cohesion=0.15,
     slump_angle_deg=33.0,
+    # Sand grains = 1px each. Chunks pick up +0..1 px of jitter so a
+    # few stand out as larger clumps.
+    bake_radius_override=0,
+    chunk_bake_jitter=1,
 )
 
 MUD = SplatterPreset(
@@ -229,6 +253,10 @@ MUD = SplatterPreset(
     # That lets it form small overhangs.
     cohesion=0.95,
     slump_angle_deg=70.0,
+    # Mud particles bake as tiny stamps (radius 0-1) so 900 particles
+    # don't generate 36k pixels of new mass. Chunks vary by 1 px.
+    bake_radius_override=0,
+    chunk_bake_jitter=1,
     grain_palette=(
         (110, 78, 42),
         (96, 66, 34),
@@ -277,6 +305,8 @@ SLOPPY = SplatterPreset(
     # Sloppy is wet but still flows — gentle slump, mostly cohesive.
     cohesion=0.6,
     slump_angle_deg=25.0,
+    bake_radius_override=0,
+    chunk_bake_jitter=2,  # sloppy = bigger glob variation
     grain_palette=(
         (84, 58, 30),
         (66, 44, 22),
@@ -315,6 +345,8 @@ ROCK = SplatterPreset(
     # Rocks don't stick — fall freely when unsupported, sharp slump.
     cohesion=0.05,
     slump_angle_deg=40.0,
+    bake_radius_override=0,
+    chunk_bake_jitter=1,
     grain_palette=(
         (140, 130, 120),
         (110, 100, 90),
@@ -371,6 +403,8 @@ SNOW = SplatterPreset(
     # Snow drifts (medium cohesion) — light slumping, can hold overhangs.
     cohesion=0.85,
     slump_angle_deg=50.0,
+    bake_radius_override=0,
+    chunk_bake_jitter=0,
 )
 
 

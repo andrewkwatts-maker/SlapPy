@@ -45,6 +45,7 @@ def bake_settled_particles(
     settled: np.ndarray,
     bake_flag: np.ndarray,
     terrain_rgba: np.ndarray,
+    bake_radius_override: int | None = None,
 ) -> int:
     """Write every settled-but-not-yet-baked particle into ``terrain_rgba``.
 
@@ -61,6 +62,12 @@ def bake_settled_particles(
     terrain_rgba
         Static RGBA terrain buffer the colours get stamped into. Shape
         (H, W, 4) uint8.
+    bake_radius_override
+        If set, every particle stamps as a (2r+1)² square with this
+        radius, regardless of its per-particle ``radius``. Use 0 to
+        bake a single pixel per particle — matches the "one particle =
+        one unit of mass" intuition and stops the bake from inflating
+        total volume past the crater carve.
 
     Returns
     -------
@@ -77,11 +84,14 @@ def bake_settled_particles(
     for i in np.nonzero(to_bake)[0]:
         x = int(pos[i, 0])
         y = int(pos[i, 1])
-        r = int(radius[i])
-        if r < 1:
-            r = 1
+        if bake_radius_override is not None:
+            r = max(0, bake_radius_override)
+        else:
+            r = int(radius[i])
+            if r < 1:
+                r = 1
         rgb = colour[i]
-        # Stamp a soft (2r+1)² square with full alpha at centre.
+        # Stamp (2r+1)² square. r=0 → single pixel.
         for dy in range(-r, r + 1):
             for dx in range(-r, r + 1):
                 nx, ny = x + dx, y + dy
