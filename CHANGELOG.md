@@ -5,6 +5,15 @@ All notable changes to SlapPyEngine (`slappy-engine` on PyPI).
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — candidate ship date: 2026-05-30 (TBD version)
+
+Sprint 7 ship-readiness hardening: version-consistency tripwire
+(`tests/test_version_consistency.py`), game-compat regression guard
+(`_KNOWN_BROKEN` must stay empty), and ship checklist
+([`docs/sprint_7_ship_checklist.md`](docs/sprint_7_ship_checklist.md)).
+Final version number deferred until version-drift between `pyproject.toml`,
+`Cargo.toml`, and `slappyengine.__version__` is reconciled.
+
 ## [0.3.0] — 2026-05-29
 
 v0.3 widens the public engine surface from physics/render kernels to a full

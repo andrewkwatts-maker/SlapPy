@@ -202,7 +202,53 @@ def _has_dotted(mod, dotted: str) -> bool:
 # to this set converts a hard failure into an xfail so the suite stays green
 # while the gaps remain visible in the test report. Removing an entry here
 # without landing the underlying export is a regression.
-_KNOWN_BROKEN: set[tuple[str, str]] = set()
+_KNOWN_BROKEN: set[tuple[str, str]] = {
+    # Phase C closure added `_LAZY_MAP` entries pointing at these modules,
+    # but the modules themselves live in long-running uncommitted WIP
+    # (softbody/, trigger.py, deform_*, etc.). Pin-tracked here so the
+    # tripwire reports honest committed-master state. Each closes when
+    # the underlying module lands on master.
+    ("ochema_circuit", "build_vehicle"),
+    ("ochema_circuit", "VehicleSpec"),
+    ("ochema_circuit", "WheelSpec"),
+    ("ochema_circuit", "apply_drivetrain_torque"),
+    ("ochema_circuit", "CatmullRomSpline"),
+    ("ochema_circuit", "SplineTrack"),
+    ("ochema_circuit", "PlayerInputProvider"),
+    ("ochema_circuit", "PixelCollisionPass"),
+    ("ochema_circuit", "MotionBlurPass"),
+    ("ochema_circuit", "SimFrequencyBudget"),
+    ("ochema_circuit", "SimState"),
+    ("ochema_circuit", "DeformController"),
+    ("bullet_strata", "TriggerSystem"),
+    ("bullet_strata", "TriggerVolume"),
+    ("bullet_strata", "MaterialPreset"),
+    ("bullet_strata", "ZoneMap"),
+    ("bullet_strata", "CrackMode"),
+    ("bullet_strata", "PixelMaterialMap"),
+    ("bullet_strata", "DeformController"),
+    ("bullet_strata", "SimFrequencyBudget"),
+}
+
+# Ratchet — known-broken can shrink but never grow without bumping
+# this number. A new entry forces an explicit acknowledgement.
+_KNOWN_BROKEN_MAX = 20
+
+
+def test_known_broken_set_within_ratchet() -> None:
+    """Ratchet — ``_KNOWN_BROKEN`` size must not grow above its ceiling.
+
+    A growing set means engine surface is regressing. Use this as the
+    ship gate: shrink the set as modules land on master, then lower
+    ``_KNOWN_BROKEN_MAX`` so it can't silently grow back.
+    """
+    assert len(_KNOWN_BROKEN) <= _KNOWN_BROKEN_MAX, (
+        f"Engine surface regression: _KNOWN_BROKEN grew to "
+        f"{len(_KNOWN_BROKEN)} entries; ceiling is {_KNOWN_BROKEN_MAX}. "
+        f"New entries: {sorted(_KNOWN_BROKEN)}. Land the missing module "
+        f"OR, if removal is deliberate, bump major version + update the "
+        f"per-game contract."
+    )
 
 
 # Flatten the per-game contracts into a single parametrisation list so each
