@@ -172,22 +172,19 @@ def run_preset(preset: SplatterPreset, frames: int = 130) -> Path:
             is_chunk[: preset.n_chunks] = True
             is_chunk[preset.n_chunks :] = False
             for i in range(N):
-                # Centered triangular spawn — biases particles toward the
-                # blast centre (fewer at the rim) so the perimeter doesn't
-                # accumulate spawn-position pile-up. Triangular(-R, 0, R)
-                # has a peak at 0 and falls off linearly.
-                start_off = float(rng.triangular(
-                    -CRATER_RADIUS, 0.0, CRATER_RADIUS))
+                # Uniform spawn across crater radius — gives the wide
+                # natural pile the original (heightmap) version had.
+                # Triangular spawn buried particles in the crater bowl
+                # and starved the rim pile.
+                start_off = float(rng.uniform(
+                    -CRATER_RADIUS, CRATER_RADIUS))
                 start_x = BLAST_X + start_off
-                # Spawn above the existing solid mask. Walk up from
-                # GROUND_Y until we find empty space — this handles the
-                # crater bowl (start_y inside the dug-out region) and
-                # any future overhangs/caves naturally.
-                xi = int(np.clip(start_x, 0, W - 1))
-                start_y = GROUND_Y
-                while start_y > 0 and bake_layer[start_y, xi, 3] == 0:
-                    start_y -= 1
-                start_y -= 2.0  # 2px above the first solid pixel below
+                # Spawn just above the ORIGINAL ground level so all
+                # particles start from the same band. (Walking up
+                # through the now-empty crater mask drove start_y to
+                # y=0 — that's why particles appeared to fall from the
+                # top of the screen.)
+                start_y = float(GROUND_Y - 2)
                 # Small colour-flavour dig (chunks read as deeper-soil).
                 if is_chunk[i]:
                     dig = float(rng.uniform(0.0, CRATER_DEPTH * 0.25))
@@ -270,73 +267,85 @@ def run_preset(preset: SplatterPreset, frames: int = 130) -> Path:
                         continue
                     if y < 0:
                         continue  # above frame; no collision yet
-                    # Velocity-aware per-pixel landing: only check
-                    # collision when falling (vy >= 0). The collision is
-                    # a single alpha-channel query at the particle's
-                    # current pixel. Rising particles skip — they're
-                    # blasting out and can't be caught by their own
-                    # spawn surface. This supports overhangs/caves
-                    # naturally since we never assumed monotone tops.
                     if vel[i, 1] < 0:
                         continue
-                    if bake_layer[y, x, 3] > 0:
-                        # Back off one pixel so we sit ON the surface
-                        # rather than inside it.
+                    # Swept collision: a fast-falling chunk may move
+                    # several pixels per frame. Scan the column from
+                    # last-frame y to current y for any solid pixel —
+                    # otherwise we tunnel through 1-pixel layers and
+                    # the chunk vanishes into the deep sub-ground.
+                    prev_y = int(pos[i, 1] - vel[i, 1] * dt)
+                    hit_y = -1
+                    for yi in range(max(0, prev_y), min(H, y + 1)):
+                        if bake_layer[yi, x, 3] > 0:
+                            hit_y = yi
+                            break
+                    if hit_y >= 0:
+                        y = hit_y
                         pos[i, 1] = float(y - 1)
                         landed[i] = True
                         if is_chunk[i]:
-                            # KE-based impact: above the binding
-                            # threshold, the chunk DIGS instead of piling.
-                            # Loose-ground multiplier doubles excess when
-                            # the landing site is already below GROUND_Y.
+                            # KE-driven impact = drill + ejecta. The
+                            # chunk punches a narrow column of its
+                            # colour DOWN into the ground (drill); the
+                            # displaced volume is re-ejected as a wider
+                            # rim splat ABOVE the impact (no mass loss
+                            # at impact_eject_gain=1.0). User-tunable
+                            # via the impact_* knobs on the preset.
                             vsq = float(vel[i, 0] ** 2 + vel[i, 1] ** 2)
                             ke = 0.5 * (radius[i] ** 2) * vsq
                             excess = max(0.0, ke - preset.impact_binding_ke)
                             if y > GROUND_Y:  # inside crater bowl
                                 excess *= preset.impact_loose_ground_multiplier
-                            # Saturating dig formula — per-chunk dig
-                            # asymptotes at impact_displace_scale so a
-                            # huge ejection swarm can't tunnel a single
-                            # column straight through the map. ratio is
-                            # excess/binding (0..inf); saturation 0..1.
                             if excess > 0:
                                 ratio = excess / preset.impact_binding_ke
-                                saturation = 1.0 - math.exp(-ratio * 0.6)
-                                dig_px = int(round(
-                                    preset.impact_displace_scale * saturation
-                                ))
+                                drive = 1.0 - math.exp(-ratio * 0.6)
+                                drill_px = int(round(
+                                    preset.impact_drill_max_px * drive))
                             else:
-                                dig_px = 0
-                            # Per-pixel paint: a chunk impact stamps a
-                            # disc of chunk-colour pixels at the landing
-                            # point. If KE exceeds binding, the disc
-                            # extends DOWN by ``dig_px`` (drilling into
-                            # the loose crater bowl); otherwise it
-                            # stamps a flat splat on top of the
-                            # existing surface. The per-pixel mask
-                            # naturally caps how tall the chunk pile
-                            # can grow — chunks landing on a tall pile
-                            # simply land higher up and stamp there.
-                            half = int(preset.splat_radius_px)
+                                drill_px = 0
                             cr, cg, cb = colour[i]
-                            for dx in range(-half, half + 1):
+                            splat_half = int(preset.splat_radius_px)
+                            drill_half = max(0, int(round(
+                                splat_half * preset.impact_drill_width_factor)))
+                            # ── Drill (down): narrow column ──────────
+                            drilled_pixels = 0
+                            for dx in range(-drill_half, drill_half + 1):
                                 col = x + dx
                                 if not (0 <= col < W):
                                     continue
-                                falloff = 1.0 - abs(dx) / (half + 1)
-                                # Stamp a small vertical extent — 1px
-                                # for the rim columns, up to splat_lift
-                                # for the centre. Drill_px adds extra
-                                # downward extent on hard impacts.
-                                lift_px = max(1, int(round(
-                                    preset.splat_lift_max * falloff)))
-                                drill = max(0, int(round(dig_px * falloff)))
-                                y_top = max(0, y - lift_px + 1)
-                                y_bot = min(H - 1, y + drill)
+                                fall = 1.0 - abs(dx) / (drill_half + 1)
+                                d = int(round(drill_px * fall))
+                                if d <= 0:
+                                    continue
+                                y_top = y
+                                y_bot = min(H - 1, y + d)
                                 bake_layer[y_top:y_bot + 1, col, 0] = cr
                                 bake_layer[y_top:y_bot + 1, col, 1] = cg
                                 bake_layer[y_top:y_bot + 1, col, 2] = cb
                                 bake_layer[y_top:y_bot + 1, col, 3] = 255
+                                drilled_pixels += (y_bot - y_top + 1)
+                            # ── Surface splat (up + out): wider band,
+                            # extra lift from conserved drilled volume.
+                            ejected = drilled_pixels * preset.impact_eject_gain
+                            row_budget = (
+                                ejected / max(1, 2 * splat_half + 1)
+                            )
+                            for dx in range(-splat_half, splat_half + 1):
+                                col = x + dx
+                                if not (0 <= col < W):
+                                    continue
+                                falloff = 1.0 - abs(dx) / (splat_half + 1)
+                                lift_px = max(1, int(round(
+                                    (preset.splat_lift_max + row_budget)
+                                    * falloff)))
+                                y_top = max(0, y - lift_px)
+                                y_bot = min(H - 1, y - 1)
+                                if y_bot >= y_top:
+                                    bake_layer[y_top:y_bot + 1, col, 0] = cr
+                                    bake_layer[y_top:y_bot + 1, col, 1] = cg
+                                    bake_layer[y_top:y_bot + 1, col, 2] = cb
+                                    bake_layer[y_top:y_bot + 1, col, 3] = 255
                         else:
                             # Grains stamp a single pixel.
                             cr, cg, cb = colour[i]

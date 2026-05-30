@@ -117,20 +117,31 @@ class SplatterPreset:
     # ── Impact dynamics ────────────────────────────────────────────────
     # A landing chunk's kinetic energy is computed as
     # ``ke = 0.5 * radius**2 * (vx**2 + vy**2)``. If that KE exceeds
-    # ``impact_binding_ke`` (a per-material "cohesion" threshold), the
-    # *excess* drives extra ground displacement at the landing site:
-    # the heightmap is dug DOWN by ``impact_displace_scale * excess /
-    # impact_binding_ke`` pixels. So fast/heavy chunks landing on tightly
-    # bound mud still pile UP, but high-KE chunks landing inside the
-    # crater (where the ground is loose) will continue digging.
-    # Set ``impact_binding_ke`` very high to disable.
+    # ``impact_binding_ke`` (per-material "cohesion" threshold), the
+    # *excess* drives a saturating drill effect: the chunk punches a
+    # narrow trail of its own colour DOWN into the ground, and the
+    # displaced volume is conserved by being re-ejected as a wider
+    # rim splat above the impact. So fast/heavy chunks visibly "spread"
+    # outward as they bite into the surface.
+    # Set ``impact_binding_ke`` very high to disable drilling entirely.
     impact_binding_ke: float = 1.2e5
-    impact_displace_scale: float = 6.0  # max extra dig pixels per chunk
-    # Crater-floor bonus: chunks landing where the heightmap is already
-    # below ``GROUND_Y`` (i.e. inside the existing crater bowl) get this
-    # multiplier applied to their excess KE — loose dirt offers less
-    # binding than packed dirt. 1.0 = same as undisturbed ground, 2.0 =
-    # twice as easy to dig.
+    # Maximum drill depth in pixels (the saturating limit). The actual
+    # per-chunk drill is ``impact_drill_max_px * (1 - e^(-0.6*ratio))``
+    # where ratio = excess_ke / impact_binding_ke.
+    impact_drill_max_px: int = 6
+    # Drill bit width as a fraction of ``splat_radius_px``. < 1.0 means
+    # the drill is narrower than the surface splat (concentrated push).
+    impact_drill_width_factor: float = 0.6
+    # Material-conservation gain: of the volume drilled out, how much
+    # gets re-ejected to the rim splat. 1.0 = fully conserved (mass
+    # preserved); < 1.0 = some material "compacted" into the floor;
+    # > 1.0 = chunks bring extra ground material outward (Worms-style
+    # exaggerated ejecta).
+    impact_eject_gain: float = 1.0
+    # Crater-floor bonus: when the landing site is below ``GROUND_Y``
+    # (already inside the existing crater bowl), excess KE gets this
+    # multiplier applied — loose dirt offers less resistance. Set to
+    # 1.0 to make crater-bowl impacts behave identically to surface.
     impact_loose_ground_multiplier: float = 2.0
 
     # ── Asset / texture support ────────────────────────────────────────
@@ -164,7 +175,7 @@ SAND = SplatterPreset(
     no_collide_frames=3,
     # Sand binding tuned so most grains pile, fast chunks dig moderately.
     impact_binding_ke=2.0e5,
-    impact_displace_scale=3.5,
+    impact_drill_max_px=3.5,
     impact_loose_ground_multiplier=2.0,
 )
 
@@ -194,7 +205,7 @@ MUD = SplatterPreset(
     # displace. Binding sits well below chunk-median KE so most chunks
     # contribute to the crater, while grains keep piling on the rim.
     impact_binding_ke=1.2e5,
-    impact_displace_scale=4.0,
+    impact_drill_max_px=4.0,
     impact_loose_ground_multiplier=2.5,
     grain_palette=(
         (110, 78, 42),
@@ -239,7 +250,7 @@ SLOPPY = SplatterPreset(
     # Sloppy = squishy globs; binding sits a bit below median KE so the
     # biggest globs dig and grains pile on the rim.
     impact_binding_ke=1.5e5,
-    impact_displace_scale=4.0,
+    impact_drill_max_px=4.0,
     impact_loose_ground_multiplier=2.5,
     grain_palette=(
         (84, 58, 30),
@@ -274,7 +285,7 @@ ROCK = SplatterPreset(
     # Rocks impact hard but only the fastest dig further — middling
     # binding so most pile on the rim and only a fraction punch through.
     impact_binding_ke=4.0e5,
-    impact_displace_scale=4.0,
+    impact_drill_max_px=4.0,
     impact_loose_ground_multiplier=1.5,
     grain_palette=(
         (140, 130, 120),
@@ -327,7 +338,7 @@ SNOW = SplatterPreset(
     texture_decay_per_sec=0.02,  # snow melts off textures slowly
     # Snow has very low binding — even soft impacts displace.
     impact_binding_ke=5.0e4,
-    impact_displace_scale=2.5,
+    impact_drill_max_px=2.5,
     impact_loose_ground_multiplier=1.5,
 )
 
