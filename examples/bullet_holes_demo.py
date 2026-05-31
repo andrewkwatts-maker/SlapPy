@@ -47,8 +47,12 @@ def main() -> Path:
     bullet = field.register_material(Material(
         name="bullet",
         binding_force=2.0e3,
-        drill_max_px=6,
-        drill_velocity_loss=0.85,
+        drill_max_px=10,
+        # 0.65 per pixel: a bullet entering a 5x5 crater (25 px) keeps
+        # only 0.65^25 ≈ 0.0003 of its initial KE — punches in, almost
+        # always lodges. A few high-energy rounds will still punch
+        # cleanly out the other side.
+        drill_velocity_loss=0.65,
         drill_eject_gain=0.8,
         mass_conservation=1.0,
         gravity_scale=0.5,

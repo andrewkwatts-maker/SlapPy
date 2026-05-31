@@ -1325,8 +1325,13 @@ class ParticleField:
         bullet_mid = int(self.material_id[i])
         # ── Entry impact crater ──────────────────────────────────────
         # Clear a small disc at the impact point before the drill walk
-        # begins. Visual win: bullets read as IMPACT, not just a 1-px
-        # pinhole. Per-material configurable.
+        # begins. Each cleared pixel COSTS the same velocity loss as a
+        # drill-walk pixel, so a wide entry crater costs the bullet
+        # proportionally more KE. Without this, bullets used to clear
+        # the crater for free and then punch through the wall at full
+        # velocity (user: "bullets are drilling all the way through,
+        # seems like recursive/no energy loss").
+        crater_stopped = False
         if mat.drill_entry_crater > 0:
             cr = mat.drill_entry_crater
             for ddy in range(-cr, cr + 1):
@@ -1347,6 +1352,27 @@ class ParticleField:
                         self.mask[cy, cx, 3] = 0
                         self.loose[cy, cx] = False
                         drilled += 1
+                        # Apply per-pixel velocity loss for the crater
+                        # clear, same as the drill walk. Stops bullets
+                        # blowing through walls for free.
+                        self.vel[i, 0] *= mat.drill_velocity_loss
+                        self.vel[i, 1] *= mat.drill_velocity_loss
+                        vsq = (self.vel[i, 0] ** 2 + self.vel[i, 1] ** 2)
+                        ke = 0.5 * (max(1.0, self.radius[i]) ** 2) * vsq
+                        if ke < mat.binding_force * 0.5:
+                            # Bullet lodged in the crater. Stamp it and
+                            # bake immediately (no slide teleport).
+                            self.mask[cy, cx, 0] = self.color[i, 0]
+                            self.mask[cy, cx, 1] = self.color[i, 1]
+                            self.mask[cy, cx, 2] = self.color[i, 2]
+                            self.mask[cy, cx, 3] = 255
+                            self.pos[i, 0] = float(cx)
+                            self.pos[i, 1] = float(cy)
+                            self._set_phase(i, Phase.BAKED)
+                            crater_stopped = True
+                            break
+                if crater_stopped:
+                    break
         while drilled < mat.drill_max_px:
             xi = int(px)
             yi = int(py)
@@ -1507,44 +1533,51 @@ class ParticleField:
             if 0 <= x < W:
                 while y > 0 and self.mask[y, x, 3] > 0:
                     y -= 1
-                # Roll-downhill: track the BEST left drop and BEST right
-                # drop independently, then pick the deeper side. Ties go
-                # to a random side (was deterministic-left, which made
-                # every particle drift leftward across the screen — the
-                # "constant left movement" bug).
-                my_top = y
-                slump_step = 1
-                best_left_drop = 0
-                best_right_drop = 0
-                for d in range(1, 6):
-                    cx_l = x - d
-                    if 0 <= cx_l < W:
-                        drop_l = self._column_top(cx_l) - my_top
-                        if drop_l > best_left_drop:
-                            best_left_drop = drop_l
-                    cx_r = x + d
-                    if 0 <= cx_r < W:
-                        drop_r = self._column_top(cx_r) - my_top
-                        if drop_r > best_right_drop:
-                            best_right_drop = drop_r
-                if best_left_drop >= slump_step or best_right_drop >= slump_step:
-                    if best_left_drop > best_right_drop:
-                        best_direction = -1
-                        best_drop = best_left_drop
-                    elif best_right_drop > best_left_drop:
-                        best_direction = 1
-                        best_drop = best_right_drop
+                # Roll-downhill: only fires when (a) there's a
+                # significant slope AND (b) the particle is still moving
+                # fast enough that it could plausibly redirect. Slow
+                # particles SETTLE in place — the redirect used to add
+                # a velocity kick every frame, which kept ejecta
+                # accelerating sideways indefinitely instead of clumping
+                # (user: "dust ejected seems to accelerate left once it
+                # hits the ground rather than clumping in a pile").
+                mat_here = self.materials[int(self.material_id[i])]
+                redirect_min_vel = max(20.0, mat_here.settle_speed_threshold * 2.0)
+                if abs(self.vel[i, 0]) > redirect_min_vel:
+                    my_top = y
+                    slump_step = 2  # was 1 — small piles don't trigger
+                    best_left_drop = 0
+                    best_right_drop = 0
+                    for d in range(1, 6):
+                        cx_l = x - d
+                        if 0 <= cx_l < W:
+                            drop_l = self._column_top(cx_l) - my_top
+                            if drop_l > best_left_drop:
+                                best_left_drop = drop_l
+                        cx_r = x + d
+                        if 0 <= cx_r < W:
+                            drop_r = self._column_top(cx_r) - my_top
+                            if drop_r > best_right_drop:
+                                best_right_drop = drop_r
+                    if best_left_drop >= slump_step or best_right_drop >= slump_step:
+                        if best_left_drop > best_right_drop:
+                            best_direction = -1
+                            best_drop = best_left_drop
+                        elif best_right_drop > best_left_drop:
+                            best_direction = 1
+                            best_drop = best_right_drop
+                        else:
+                            best_direction = -1 if self._rng.random() < 0.5 else 1
+                            best_drop = best_left_drop
+                        new_x = max(0, min(W - 1, x + best_direction))
+                        new_y = self._column_top(new_x) - 1
+                        self.pos[i, 0] = float(new_x)
+                        self.pos[i, 1] = float(max(0, new_y))
+                        # NO velocity kick — let existing friction +
+                        # any residual vx carry the particle. The kick
+                        # was what made slow particles keep accelerating.
                     else:
-                        # Equal drop on both sides — pick randomly so
-                        # particles spread laterally instead of all
-                        # drifting the same way.
-                        best_direction = -1 if self._rng.random() < 0.5 else 1
-                        best_drop = best_left_drop
-                    new_x = max(0, min(W - 1, x + best_direction))
-                    new_y = self._column_top(new_x) - 1
-                    self.pos[i, 0] = float(new_x)
-                    self.pos[i, 1] = float(max(0, new_y))
-                    self.vel[i, 0] += best_direction * (4.0 + 2.0 * best_drop)
+                        self.pos[i, 1] = float(y)
                 else:
                     self.pos[i, 1] = float(y)
             mat = self.materials[int(self.material_id[i])]
