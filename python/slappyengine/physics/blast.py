@@ -142,8 +142,14 @@ def detonate(
     governed by the preset's cone / blend / boosts.
 
     Per-particle colours are sampled from the **original mask pixels**
-    in the carved region. If the bowl has no solid pixels (e.g. the
-    blast is in mid-air), we fall back to the preset's palettes.
+    in the carved region. Per-particle materials are likewise sampled
+    from the field's ``material_grid`` at those same pixels, so a blast
+    through layered terrain (mud over rock) yields ejecta whose material
+    matches each chunk's origin layer. The preset's ``Material`` is
+    still registered (and used as a fallback when a sampled pixel has
+    no ``material_grid`` value, or the bowl is empty / mid-air) — its
+    KE / cohesion / drag knobs drive airborne physics for the mixed
+    ejecta independent of the per-particle material.
     """
     if rng is None:
         rng = np.random.default_rng()
@@ -180,6 +186,12 @@ def detonate(
 
     solid_in_bowl = bowl & (field.mask[..., 3] > 0)
     sampled_rgb: np.ndarray = field.mask[solid_in_bowl, :3].copy()
+    # Sample the per-pixel material id of each solid bowl pixel BEFORE
+    # carving — so ejecta inherit the actual material under the impact
+    # (mud-over-rock layered terrain yields mud chunks on top, rock
+    # chunks below). -1 entries fall back to the preset material id
+    # later when assigning per-particle materials.
+    sampled_mids: np.ndarray = field.material_grid[solid_in_bowl].copy()
     field.carve(bowl)
 
     # ── 2. Build particle batch ────────────────────────────────────────
@@ -269,15 +281,27 @@ def detonate(
     # "1 particle = X pixels" mapping. Clamp to >= 0 (1-pixel floor).
     bake_radii = np.maximum(0, radii.astype(np.int32) - 1).astype(np.int32)
 
-    # ── 3. Colour sourcing: original pixels first, palette as fallback.
+    # ── 3. Colour + material sourcing: original pixels first, palette
+    #       / preset material as fallback. Colour and material come from
+    #       the SAME pick(idx) so a chunk taken from a mud pixel gets
+    #       both the mud colour AND the mud material id — that's what
+    #       lets layered terrain produce ejecta of the correct kind.
     colours = np.zeros((n, 3), dtype=np.uint8)
+    particle_mids = np.full(n, mid, dtype=np.int32)
     if sampled_rgb.shape[0] > 0:
         # Sample with replacement; randomised so chunks/grains get
         # varied hues from the original bowl.
         pick = rng.integers(0, sampled_rgb.shape[0], n)
         colours = sampled_rgb[pick].astype(np.uint8)
+        # Per-particle material id from the SAME pick. -1 entries
+        # (pixel had no material_grid value set) fall back to the
+        # preset's material id — `mid` is already pre-filled.
+        picked_mids = sampled_mids[pick].astype(np.int32)
+        valid = picked_mids >= 0
+        particle_mids[valid] = picked_mids[valid]
     # For any particle without a sampled colour, fall back to the
-    # palette (when bowl was empty, e.g. mid-air blast).
+    # palette (when bowl was empty, e.g. mid-air blast). The preset
+    # material id (already in particle_mids) is kept as-is.
     if sampled_rgb.shape[0] == 0:
         grain_pal = np.asarray(preset.grain_palette, dtype=np.uint8)
         chunk_pal = np.asarray(preset.chunk_palette, dtype=np.uint8)
@@ -299,7 +323,7 @@ def detonate(
     field.spawn_batch(
         pos=pos,
         vel=vel,
-        material_ids=np.full(n, mid, dtype=np.int32),
+        material_ids=particle_mids,
         radii=radii,
         colors=colours,
         bake_radii=bake_radii,
