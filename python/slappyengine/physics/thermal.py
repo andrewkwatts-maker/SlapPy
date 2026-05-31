@@ -87,6 +87,63 @@ class ThermalProfile:
     freeze_at: float | None = None
     freeze_to_material: str | None = None
 
+    # ── Black-body emissive glow ─────────────────────────────────────
+    # Particles hotter than ``glow_start_temp`` start emitting toward
+    # ``glow_color``; at ``glow_max_temp`` the emissive contribution
+    # fully saturates. Returns black at any temp below glow_start.
+    # Set glow_start_temp very high to disable (default = inert).
+    glow_start_temp: float = 1.0e9
+    glow_max_temp: float = 1.0e9
+    glow_color: tuple[int, int, int] = (0, 0, 0)
+
+
+def emissive_for_temperature(
+    temperature: float,
+    profile: ThermalProfile,
+) -> tuple[int, int, int]:
+    """Linear black-body-style ramp from black to ``glow_color`` over
+    ``[glow_start_temp, glow_max_temp]``. Each material can define
+    its own glow curve — lava is orange, plasma is white, etc.
+    """
+    if temperature <= profile.glow_start_temp:
+        return (0, 0, 0)
+    span = max(1.0, profile.glow_max_temp - profile.glow_start_temp)
+    t = min(1.0, (temperature - profile.glow_start_temp) / span)
+    r = int(profile.glow_color[0] * t)
+    g = int(profile.glow_color[1] * t)
+    b = int(profile.glow_color[2] * t)
+    return (r, g, b)
+
+
+def emissive_for_temperatures(
+    temperatures: np.ndarray,
+    material_ids: np.ndarray,
+    profiles: Sequence[ThermalProfile],
+) -> np.ndarray:
+    """Vectorised version. Returns (N, 3) uint8 — per-particle
+    emissive RGB contribution. Add to the base colour at render time.
+    """
+    n = temperatures.shape[0]
+    out = np.zeros((n, 3), dtype=np.uint8)
+    if n == 0:
+        return out
+    safe_ids = np.clip(material_ids, 0, len(profiles) - 1)
+    for mi, prof in enumerate(profiles):
+        if prof.glow_start_temp >= 1.0e8:
+            continue
+        m = safe_ids == mi
+        if not m.any():
+            continue
+        T = temperatures[m]
+        span = max(1.0, prof.glow_max_temp - prof.glow_start_temp)
+        t = np.clip(
+            (T - prof.glow_start_temp) / span, 0.0, 1.0
+        ).astype(np.float32)
+        out[m, 0] = (prof.glow_color[0] * t).astype(np.uint8)
+        out[m, 1] = (prof.glow_color[1] * t).astype(np.uint8)
+        out[m, 2] = (prof.glow_color[2] * t).astype(np.uint8)
+    return out
+
 
 # Predefined profiles — calibrated to match the demo material set.
 WATER_THERMAL = ThermalProfile(
@@ -109,9 +166,17 @@ LAVA_THERMAL = ThermalProfile(
     decay_per_sec=0.05,
     freeze_at=700.0,
     freeze_to_material="rock",
+    # Glows orange-red between 600°C and 1200°C — stops glowing as it
+    # cools to the freezing point.
+    glow_start_temp=600.0,
+    glow_max_temp=1200.0,
+    glow_color=(255, 100, 30),
 )
 SNOW_THERMAL = ThermalProfile(
-    initial_temperature=-5.0,
+    # Snow ejecta melts INSTANTLY in flight (decay rate ≫ 1 → falls
+    # through to water in 1 frame). User-requested behaviour: "snow
+    # possibly should melt to water straight away".
+    initial_temperature=10.0,
     ambient_temperature=20.0,
     decay_per_sec=0.4,
     melt_at=2.0,

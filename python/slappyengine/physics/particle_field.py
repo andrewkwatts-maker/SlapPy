@@ -61,6 +61,7 @@ from slappyengine.physics.baked_terrain import (
 )
 from slappyengine.physics.fragment import (
     FragmentFamily,
+    ICE_FAMILY,
     SAND_FAMILY,
     SHAPE_CIRCLE,
     SHAPE_BLOB,
@@ -78,6 +79,7 @@ from slappyengine.physics.fragment import (
 from slappyengine.physics.splat import SplatConfig, compute_splat
 from slappyengine.physics.fluid_bridge import FluidBridgeConfig, bridge_step
 from slappyengine.physics.thermal import (
+    ICE_THERMAL,
     ROCK_THERMAL,
     SAND_THERMAL,
     SNOW_THERMAL,
@@ -335,8 +337,26 @@ SNOW_MAT = Material(
 )
 
 
+ICE_MAT = Material(
+    name="ice",
+    binding_force=2.0e5,
+    cohesion=0.95,                # ice is rigid; no slump
+    slump_angle_deg=80.0,
+    density=0.92,
+    color=(180, 220, 240),
+    radius_min=1,
+    radius_max=2,
+    fragment_family=ICE_FAMILY,
+    thermal=ICE_THERMAL,
+    rigidify_frames_min=2,
+    rigidify_frames_max=5,
+    impact_stickiness=0.7,
+    kinetic_fluidity=0.1,
+)
+
+
 BUILTIN_MATERIALS: tuple[Material, ...] = (
-    WATER, SAND_MAT, MUD_MAT, ROCK_MAT, SNOW_MAT,
+    WATER, SAND_MAT, MUD_MAT, ROCK_MAT, SNOW_MAT, ICE_MAT,
 )
 
 
@@ -668,6 +688,30 @@ class ParticleField:
         # the bowl pixels so ejecta inherit the right material. They
         # can clear the carved region afterward if needed.
 
+    def stamp_temperature_region(
+        self,
+        x: float,
+        y: float,
+        radius: float,
+        delta_temperature: float,
+    ) -> int:
+        """Add ``delta_temperature`` to every live particle within
+        ``radius`` of ``(x, y)``. Used for explosion temperature
+        bumps and material-surface heat sources.
+
+        Returns the number of particles affected.
+        """
+        if self.pos.shape[0] == 0:
+            return 0
+        dx = self.pos[:, 0] - x
+        dy = self.pos[:, 1] - y
+        in_region = (dx * dx + dy * dy) < (radius * radius)
+        in_region &= ~self.bake_flag
+        if not in_region.any():
+            return 0
+        self.temperature[in_region] += np.float32(delta_temperature)
+        return int(in_region.sum())
+
     # ── Step ───────────────────────────────────────────────────────────
 
     def step(self, dt: float) -> None:
@@ -888,8 +932,18 @@ class ParticleField:
                     & ~solid[y + 1, 1:]
                     & ~solid[y, 1:]
                 )
-                slump_l = left_lower & (rng.random(Ww) < side_prob)
-                slump_r = right_lower & (rng.random(Ww) < side_prob)
+                # Direction-balanced sideways slump: when a pixel
+                # can slump EITHER way, pick randomly to prevent the
+                # leftward bias that came from processing slump_l
+                # before slump_r. Pixels with only one valid side
+                # keep that side.
+                both = left_lower & right_lower
+                random_choice = rng.random(Ww) < 0.5
+                slump_l = (left_lower & ~both) | (both & random_choice)
+                slump_r = (right_lower & ~both) | (both & ~random_choice)
+                # Probability gate per side.
+                slump_l = slump_l & (rng.random(Ww) < side_prob)
+                slump_r = slump_r & (rng.random(Ww) < side_prob)
                 if slump_l.any():
                     idx = np.where(slump_l)[0]
                     self.mask[y, idx - 1] = self.mask[y, idx]

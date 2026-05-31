@@ -18,7 +18,7 @@ from slappyengine.physics.particle_field import (
 
 def test_builtins_cover_expected_substances() -> None:
     names = {m.name for m in BUILTIN_MATERIALS}
-    assert names == {"water", "sand", "mud", "rock", "snow"}
+    assert names == {"water", "sand", "mud", "rock", "snow", "ice"}
 
 
 def test_water_is_fluid_others_are_not() -> None:

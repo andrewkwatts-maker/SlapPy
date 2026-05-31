@@ -88,6 +88,14 @@ class DetonateCurves:
     up_velocity_scale: float = 1.0
     lateral_velocity_scale: float = 1.0
 
+    # ── Thermal bump on detonation ───────────────────────────────────
+    # Added to every spawned particle's initial temperature. Use
+    # this to model the explosion's heat: snow ejecta starts hot →
+    # melts to water on the first thermal step → cools in flight →
+    # may re-freeze to ice (or back to snow) when temperature drops.
+    # 0 = no bump (particles get their material's normal initial T).
+    temperature_bump: float = 0.0
+
 
 def material_from_preset(preset: SplatterPreset) -> Material:
     """Translate a :class:`SplatterPreset` into a :class:`Material`
@@ -328,6 +336,13 @@ def detonate(
         colors=colours,
         bake_radii=bake_radii,
     )
+    # Apply the explosion's temperature bump to the freshly-spawned
+    # particles. The bump models the heat the blast deposits into
+    # the ejecta — particles cool toward ambient over subsequent
+    # frames via the thermal step.
+    if curves.temperature_bump != 0.0:
+        n_total = field.pos.shape[0]
+        field.temperature[n_total - n:] += np.float32(curves.temperature_bump)
     return n
 
 
