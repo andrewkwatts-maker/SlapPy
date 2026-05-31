@@ -143,3 +143,9 @@ monkey-patching `Engine.run` to a no-op and re-executing each via `runpy`;
 all 11 reached the patched `engine.run()` call with no exception. A future
 hardening pass should add an `Engine.run(max_frames=...)` keyword so these
 demos can be exercised end-to-end in CI without window manipulation.
+
+**Update 2026-05-31:** `Engine.run(max_frames=N)` has landed — when `N` is
+given the engine drives the per-frame draw callback exactly `N` times
+in-process and returns without entering the platform event loop, so all 11
+demos above can now be smoke-tested end-to-end in CI without window
+manipulation.  Regression test: `tests/test_engine_max_frames.py`.

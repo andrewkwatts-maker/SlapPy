@@ -364,7 +364,19 @@ class Engine:
             output_format=str(self._gpu.surface_format),
         )
 
-    def run(self) -> None:
+    def run(self, max_frames: int | None = None) -> None:
+        """Open the engine window and enter the main loop.
+
+        Parameters
+        ----------
+        max_frames:
+            When ``None`` (default), block in the platform event loop until
+            the window is closed — today's behaviour.  When given an ``int``
+            ``N >= 0``, drive the draw callback exactly ``N`` times in-process
+            (no event loop, no window blocking) and return.  This is the
+            CI-driveable smoke path that examples calling ``engine.run()``
+            with no arguments rely on for headless testing.
+        """
         canvas = WgpuCanvas(
             title=self._cfg.window.title,
             size=(self._cfg.window.width, self._cfg.window.height),
@@ -375,7 +387,6 @@ class Engine:
 
         cc = tuple(self._cfg.window.clear_color)
 
-        @canvas.request_draw
         def _draw():
             # --- Frame timing (WP-7.7) -----------------------------------------
             _frame_start = time.perf_counter()
@@ -639,7 +650,20 @@ class Engine:
             if self._input is not None:
                 self._input.frame_reset()
 
-        run()
+        if max_frames is None:
+            # Live mode — register the draw callback and hand control to the
+            # platform event loop until the window is closed.
+            canvas.request_draw(_draw)
+            run()
+        else:
+            # Headless / CI smoke mode — drive the draw callback ``max_frames``
+            # times in-process and return.  No event loop, no window blocking.
+            if max_frames < 0:
+                raise ValueError(
+                    f"max_frames must be >= 0, got {max_frames}"
+                )
+            for _ in range(max_frames):
+                _draw()
         self._config_manager.stop()
 
     # -----------------------------------------------------------------------
