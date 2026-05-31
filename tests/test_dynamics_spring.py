@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 from slappyengine.dynamics import World, make_spring
+from slappyengine.dynamics.world import _reset_warning_cache
 
 
 def test_spring_oscillates_and_damps():
@@ -65,6 +66,10 @@ def test_spring_with_damping_loses_energy():
     w_yes.add_joint(make_spring(0, 1, 1.0, stiffness=400.0, damping=0.4))
 
     dt = 1.0 / 240.0
+    # The over-damp warning is throttled process-wide on
+    # (kind, damping, iters); reset so this test can observe it
+    # regardless of which suite ran before us.
+    _reset_warning_cache()
     with pytest.warns(RuntimeWarning, match="over-damp"):
         for _ in range(2400):
             w_no.step(dt)

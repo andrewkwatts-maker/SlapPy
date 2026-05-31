@@ -49,6 +49,31 @@ def estimate_effective_damping(damping: float, iters: int) -> float:
 OVERDAMPING_THRESHOLD: float = 0.5
 
 
+# Process-wide throttle for the over-damp RuntimeWarning.
+#
+# Without this, every joint (and every World) re-emits the same diagnostic on
+# its first step, which buries other warnings during demo smoke tests
+# (hello_rope / hello_joint were responsible for 71 emissions in the v0.3
+# sprint G suite). The key is the *category* of the warning — the same
+# ``(kind, damping, iters)`` combination always produces the same effective
+# per-step damping — so reporting it once per process is sufficient.
+#
+# Tests that need to observe the warning (notably
+# ``test_spring_with_damping_loses_energy``) call
+# :func:`_reset_warning_cache` in a fixture to clear this set.
+_OVER_DAMPED_WARNED: set[tuple[str, float, int]] = set()
+
+
+def _reset_warning_cache() -> None:
+    """Clear the module-level over-damp warning throttle.
+
+    Intended for test fixtures that want to re-observe the warning. The
+    throttle is process-wide, so without an explicit reset only the first
+    test to trigger the diagnostic would see it.
+    """
+    _OVER_DAMPED_WARNED.clear()
+
+
 class World:
     """Container of nodes + bodies + joints with a single :meth:`step` loop.
 
@@ -134,9 +159,14 @@ class World:
         :func:`estimate_effective_damping`; values above
         :data:`OVERDAMPING_THRESHOLD` mean the constraint correction has
         been bled down to near-equilibrium within a single ``step`` call,
-        which silently turns a spring into a stiff weld. We only warn once
-        per unique ``(id(joint), iters, damping)`` tuple to avoid spamming
-        the inner solver loop.
+        which silently turns a spring into a stiff weld.
+
+        Throttling is two-tier: the *process-wide* :data:`_OVER_DAMPED_WARNED`
+        set is keyed on ``(kind, damping, iters)`` so the same configuration
+        emits at most one warning across the entire interpreter session
+        (this is what stops demo smoke tests from logging 70+ identical
+        diagnostics). The *per-World* ``_overdamp_warned`` set is kept for
+        backward compatibility with callers that introspect it.
         """
         if not self.warn_overdamping:
             return
@@ -152,6 +182,12 @@ class World:
             effective = estimate_effective_damping(damping, iters)
             if effective > OVERDAMPING_THRESHOLD:
                 self._overdamp_warned.add(key)
+                global_key = (str(kind), damping, iters)
+                if global_key in _OVER_DAMPED_WARNED:
+                    # Same (kind, damping, iters) already reported earlier
+                    # in this process — silently mark this joint resolved.
+                    continue
+                _OVER_DAMPED_WARNED.add(global_key)
                 warnings.warn(
                     (
                         f"slappyengine.dynamics: joint id={id(joint)} "

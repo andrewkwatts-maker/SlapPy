@@ -30,6 +30,22 @@ from slappyengine.dynamics import (
     estimate_effective_damping,
     make_spring,
 )
+from slappyengine.dynamics.world import _reset_warning_cache
+
+
+@pytest.fixture(autouse=True)
+def _clear_overdamp_warning_cache():
+    """Reset the process-wide throttle so each test observes the warning.
+
+    ``World._check_overdamping`` deduplicates by
+    ``(kind, damping, iters)`` across the entire interpreter to keep
+    demo smoke tests quiet — without this fixture a later test sharing
+    the same configuration as an earlier one would silently observe
+    zero warnings.
+    """
+    _reset_warning_cache()
+    yield
+    _reset_warning_cache()
 
 
 # ---------------------------------------------------------------------------
@@ -198,4 +214,64 @@ def test_warning_re_arms_when_iters_change():
     assert len(overdamp) == 1, (
         f"raising iters into the over-damp band must re-warn; "
         f"got {[str(r.message) for r in caught]}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Process-wide throttle: same (kind, damping, iters) only warns once even
+# across 50 joints / multiple worlds (regression for the 71-warning floor
+# seen during v0.3 sprint G demo smoke tests).
+# ---------------------------------------------------------------------------
+
+
+def test_warning_throttled_across_many_joints():
+    """50 joints with the same (kind, damping, iters) emit at most one warning."""
+    w = World(gravity=(0.0, 0.0))
+    w.solver_iterations = 4
+    # Anchor.
+    w.add_node((0.0, 0.0), mass=0.0)
+    for i in range(50):
+        w.add_node((1.0 + 0.01 * i, 0.0), mass=1.0)
+        w.add_joint(
+            make_spring(0, i + 1, rest_length=1.0, stiffness=400.0, damping=0.5)
+        )
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        for _ in range(3):
+            w.step(1.0 / 240.0)
+    overdamp = [
+        rec for rec in caught
+        if issubclass(rec.category, RuntimeWarning)
+        and "over-damp" in str(rec.message).lower()
+    ]
+    assert len(overdamp) <= 1, (
+        f"50 identical joints should yield at most one over-damp warning; "
+        f"got {len(overdamp)}: {[str(r.message) for r in overdamp]}"
+    )
+
+
+def test_warning_throttled_across_multiple_worlds():
+    """Two distinct Worlds with the same key share the throttle."""
+    def build(damping: float, iters: int) -> World:
+        w = World(gravity=(0.0, 0.0))
+        w.solver_iterations = iters
+        w.add_node((0.0, 0.0), mass=0.0)
+        w.add_node((1.2, 0.0), mass=1.0)
+        w.add_joint(
+            make_spring(0, 1, rest_length=1.0, stiffness=400.0, damping=damping)
+        )
+        return w
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        for _ in range(5):
+            build(damping=0.5, iters=4).step(1.0 / 240.0)
+    overdamp = [
+        rec for rec in caught
+        if issubclass(rec.category, RuntimeWarning)
+        and "over-damp" in str(rec.message).lower()
+    ]
+    assert len(overdamp) == 1, (
+        f"5 worlds with identical (kind, damping, iters) must produce "
+        f"exactly one warning; got {len(overdamp)}"
     )
