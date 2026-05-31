@@ -13,6 +13,26 @@ KNOWN_NODE_TYPES: frozenset[str] = frozenset({
     "SampleTexture",
     "FinalColor",
     "Discard",
+    # Sim-field / math / output nodes (lowercase to match node factory contract)
+    "read_field",
+    "write_field",
+    "sample_sim_field",
+    "sin",
+    "cos",
+    "pow",
+    "remap",
+    "length",
+    "normalize",
+    "dot",
+    "noise",
+    "world_pos",
+    "time",
+    "offset_uv",
+    "reflect_uv",
+    "accumulate",
+    "ray_march",
+    "force_output",
+    "reduce_output",
 })
 
 KNOWN_PORT_TYPES: dict[str, dict] = {
@@ -27,6 +47,7 @@ KNOWN_PORT_TYPES: dict[str, dict] = {
     "PixelColor": {"outputs": ["color"], "inputs": []},
     "PixelChannel": {"outputs": ["val"], "inputs": []},
     "Discard": {"outputs": [], "inputs": []},
+    "ray_march": {"outputs": ["hit"], "inputs": ["origin", "dir"]},
 }
 
 
