@@ -82,6 +82,31 @@ class Material:
     settle_speed_threshold: float = 10.0
     settle_jitter: float = 0.35
 
+    # ── High-velocity drilling (bullet holes, fragments) ───────────────
+    # When this particle's kinetic energy at impact exceeds
+    # ``binding_force``, it can punch through up to ``drill_max_px``
+    # mask pixels along its velocity direction. Each drilled pixel
+    # multiplies the particle's velocity by ``drill_velocity_loss``,
+    # so a high loss (close to 1.0) means almost no slowdown (bullet
+    # passes cleanly); a low loss (0.1) means heavy braking after a
+    # few pixels. Set drill_max_px=0 to disable (default — only the
+    # blast.detonate() path triggers drilling for most materials).
+    drill_max_px: int = 0
+    drill_velocity_loss: float = 0.7
+    # Of the drilled pixel-volume, what fraction is spawned as ejecta
+    # particles flying back out of the hole (Worms-style splash). 0.0
+    # = no ejecta (clean tunnel); 1.0 = every drilled pixel becomes
+    # a small new particle. Sits with ``mass_conservation`` (below) as
+    # the system-wide knob for how much material survives the impact.
+    drill_eject_gain: float = 0.0
+
+    # General mass-conservation dial. Multiplied into every "create
+    # particle" path (drill ejecta, drill drill-trail painting). < 1.0
+    # = some material is lost on impact (compaction); 1.0 = exact;
+    # > 1.0 = Worms-style exaggerated debris. Composed with the
+    # per-path gains so the user can tune both at once.
+    mass_conservation: float = 1.0
+
     # Rendering.
     color: _RGB = (200, 200, 200)
     radius_min: int = 1
@@ -546,26 +571,137 @@ class ParticleField:
                 self.landed[i] = True
                 self.settled[i] = True
                 continue
-            if y < 0 or self.vel[i, 1] < 0:
+            if y < 0:
                 continue
-            # Swept-y check to avoid 1-px tunneling on fast falls.
-            prev_y = int(self.pos[i, 1] - self.vel[i, 1] * dt)
-            hit = -1
-            for yi in range(max(0, prev_y), min(H, y + 1)):
-                if self.mask[yi, x, 3] > 0:
-                    hit = yi
-                    break
-            if hit < 0:
-                continue
-            self.pos[i, 1] = float(hit - 1)
-            self.landed[i] = True
-            # Fluid materials don't settle — they keep integrating each
-            # frame; just clamp position so they sit on the surface and
-            # let the next step bounce them off if vy reverses.
             mat = self.materials[int(self.material_id[i])]
+            # Drilling materials always check collision regardless of
+            # direction (bullets going up should still hit ceilings).
+            # Settling materials skip when moving upward (no catching
+            # on their own launch surface).
+            if mat.drill_max_px == 0 and self.vel[i, 1] < 0:
+                continue
+            # Swept-xy DDA from previous-frame pixel to current pixel —
+            # catches both fast falls (vertical) and fast bullets
+            # (horizontal). One alpha probe per step along the line.
+            prev_x = int(self.pos[i, 0] - self.vel[i, 0] * dt)
+            prev_y = int(self.pos[i, 1] - self.vel[i, 1] * dt)
+            dx = x - prev_x
+            dy = y - prev_y
+            steps = max(abs(dx), abs(dy), 1)
+            hit_x = -1
+            hit_y = -1
+            for s in range(steps + 1):
+                cx = prev_x + (dx * s) // steps
+                cy = prev_y + (dy * s) // steps
+                if not (0 <= cx < W and 0 <= cy < H):
+                    continue
+                if self.mask[cy, cx, 3] > 0:
+                    hit_x = cx
+                    hit_y = cy
+                    break
+            if hit_x < 0:
+                continue
+            # ── High-velocity drilling path ──────────────────────────
+            if mat.drill_max_px > 0:
+                vsq = float(self.vel[i, 0] ** 2 + self.vel[i, 1] ** 2)
+                ke = 0.5 * (max(1.0, self.radius[i]) ** 2) * vsq
+                if ke > mat.binding_force:
+                    self._drill_through(i, hit_x, hit_y, mat)
+                    if not self.landed[i]:
+                        continue
+                    else:
+                        continue
+            # Settle (or fluid-bounce) at the hit point.
+            self.pos[i, 0] = float(hit_x)
+            self.pos[i, 1] = float(hit_y - 1)
+            self.landed[i] = True
             if mat.is_fluid:
                 self.vel[i, 1] = -self.vel[i, 1] * 0.3  # gentle bounce
                 self.landed[i] = False  # keep integrating
+
+    def _drill_through(self, i: int, x: int, hit_y: int, mat: Material) -> None:
+        """High-KE particle punches into the mask along its velocity.
+
+        Walks a DDA-style line from the impact point, clearing alpha
+        pixels until ``drill_max_px`` is exhausted OR the particle's KE
+        drops below ``binding_force``. Optionally spawns ejecta at the
+        impact point. Sets ``landed[i] = True`` if the drill stops
+        inside the mask; otherwise leaves the particle airborne with
+        a reduced velocity past the exit pixel.
+        """
+        H, W = self.mask.shape[:2]
+        vx = float(self.vel[i, 0])
+        vy = float(self.vel[i, 1])
+        speed = math.hypot(vx, vy)
+        if speed <= 0.0:
+            self.landed[i] = True
+            return
+        dx = vx / speed
+        dy = vy / speed
+        # Start at the hit pixel and step in unit increments along the
+        # velocity direction. Clear alpha as we go.
+        px = float(x) + 0.5
+        py = float(hit_y) + 0.5
+        drilled = 0
+        gain = mat.drill_eject_gain * mat.mass_conservation
+        # Capture some colours along the drill line so any ejecta we
+        # spawn carries the terrain's hue.
+        line_colours: list[tuple[int, int, int]] = []
+        while drilled < mat.drill_max_px:
+            xi = int(px)
+            yi = int(py)
+            if not (0 <= xi < W and 0 <= yi < H):
+                break
+            if self.mask[yi, xi, 3] == 0:
+                break  # exited the wall
+            line_colours.append((
+                int(self.mask[yi, xi, 0]),
+                int(self.mask[yi, xi, 1]),
+                int(self.mask[yi, xi, 2]),
+            ))
+            self.mask[yi, xi, 3] = 0
+            self.loose[yi, xi] = False
+            drilled += 1
+            # Velocity drops per pixel drilled. Then re-check KE.
+            self.vel[i, 0] *= mat.drill_velocity_loss
+            self.vel[i, 1] *= mat.drill_velocity_loss
+            vsq = (self.vel[i, 0] ** 2 + self.vel[i, 1] ** 2)
+            ke = 0.5 * (max(1.0, self.radius[i]) ** 2) * vsq
+            if ke < mat.binding_force * 0.5:
+                # Out of steam — stop inside the wall.
+                self.pos[i, 0] = float(xi)
+                self.pos[i, 1] = float(yi)
+                self.landed[i] = True
+                break
+            px += dx
+            py += dy
+        else:
+            # Loop completed without break — exited cleanly.
+            self.pos[i, 0] = px
+            self.pos[i, 1] = py
+            self.landed[i] = False
+        # Spawn ejecta proportional to drilled pixels.
+        n_eject = int(round(drilled * gain))
+        if n_eject > 0 and line_colours:
+            ej_pos = np.tile([float(x), float(hit_y)], (n_eject, 1)).astype(np.float32)
+            angles = self._rng.uniform(-math.pi / 2, math.pi / 2, n_eject)
+            speeds = self._rng.uniform(80.0, 220.0, n_eject)
+            ej_vel = np.column_stack([
+                np.sin(angles) * speeds,
+                -np.cos(angles) * speeds,
+            ]).astype(np.float32)
+            ej_mids = np.full(n_eject, int(self.material_id[i]), dtype=np.int32)
+            ej_radii = np.zeros(n_eject, dtype=np.float32)
+            # Sample a colour from the drilled line per ejecta.
+            ej_colours = np.zeros((n_eject, 3), dtype=np.uint8)
+            pick = self._rng.integers(0, len(line_colours), n_eject)
+            for k in range(n_eject):
+                ej_colours[k] = line_colours[int(pick[k])]
+            self.spawn_batch(
+                pos=ej_pos, vel=ej_vel,
+                material_ids=ej_mids, radii=ej_radii,
+                colors=ej_colours,
+            )
 
     def _slide(self, slide_mask: np.ndarray, dt: float) -> None:
         H, W = self.mask.shape[:2]

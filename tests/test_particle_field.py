@@ -250,3 +250,90 @@ def test_fluid_relax_skipped_for_solid_materials() -> None:
     # Both fell the same y, no lateral push.
     assert abs(f.pos[0, 0] - p0_before[0]) < 0.01
     assert abs(f.pos[1, 0] - p1_before[0]) < 0.01
+
+
+def test_bullet_drills_through_thin_wall() -> None:
+    f = ParticleField(width=64, height=64)
+    bullet_mat = Material(
+        name="bullet",
+        binding_force=1.0e3,
+        drill_max_px=10,
+        drill_velocity_loss=0.95,
+        drill_eject_gain=0.0,
+        gravity_scale=0.0,
+        air_drag_per_sec=1.0,
+    )
+    f.materials.append(bullet_mat)
+    f._name_to_id["bullet"] = len(f.materials) - 1
+    # Solid 3-px wall at x=32.
+    f.mask[:, 30:33, 3] = 255
+    f.mask[:, 30:33, :3] = (200, 200, 200)
+    # Bullet flying right at high speed, started close enough to hit
+    # the wall in a few small steps.
+    f.spawn(x=25.0, y=30.0, vx=1500.0, vy=0.0, material="bullet", radius=1)
+    for _ in range(10):
+        f.step(1.0 / 120.0)
+    # The wall should now have holes (alpha=0 in at least one pixel).
+    assert (f.mask[30, 30:33, 3] == 0).any()
+
+
+def test_bullet_drill_with_eject_spawns_particles() -> None:
+    f = ParticleField(width=64, height=64)
+    bullet_mat = Material(
+        name="bullet",
+        binding_force=1.0e3,
+        drill_max_px=5,
+        drill_velocity_loss=0.9,
+        drill_eject_gain=2.0,        # 5 drilled → ~10 ejecta
+        mass_conservation=1.0,
+        gravity_scale=0.0,
+        air_drag_per_sec=1.0,
+    )
+    f.materials.append(bullet_mat)
+    f._name_to_id["bullet"] = len(f.materials) - 1
+    # Solid wall column.
+    f.mask[20:40, 30:35, 3] = 255
+    f.mask[20:40, 30:35, :3] = (180, 50, 30)
+    n_before = f.pos.shape[0]
+    f.spawn(x=25.0, y=30.0, vx=2000.0, vy=0.0, material="bullet", radius=1)
+    for _ in range(10):
+        f.step(1.0 / 120.0)
+    # Drilled at least one pixel → ejecta spawned.
+    n_after = f.pos.shape[0]
+    # before + 1 bullet + N ejecta
+    assert n_after > n_before + 1
+
+
+def test_low_velocity_particle_does_not_drill() -> None:
+    f = ParticleField(width=64, height=64)
+    f.fill_ground(top_y=50, color=(100, 100, 100))
+    # Sand has drill_max_px=0 by default → never drills.
+    f.spawn(x=32.0, y=10.0, vx=0.0, vy=400.0, material="sand")
+    for _ in range(60):
+        f.step(1.0 / 60.0)
+    # The ground row should still be fully solid (no holes).
+    assert (f.mask[50, :, 3] == 255).all()
+
+
+def test_drill_clears_loose_flag_on_drilled_pixels() -> None:
+    f = ParticleField(width=64, height=64)
+    bullet_mat = Material(
+        name="bullet", binding_force=1.0e3,
+        drill_max_px=5, drill_velocity_loss=0.95,
+        gravity_scale=0.0, air_drag_per_sec=1.0,
+    )
+    f.materials.append(bullet_mat)
+    f._name_to_id["bullet"] = len(f.materials) - 1
+    # Loose wall — settled-particle territory.
+    f.mask[30, 20:25, 3] = 255
+    f.mask[30, 20:25, :3] = (50, 50, 50)
+    f.loose[30, 20:25] = True
+    f.spawn(x=18.0, y=30.0, vx=1500.0, vy=0.0, material="bullet", radius=1)
+    for _ in range(10):
+        f.step(1.0 / 120.0)
+    # After drilling, the cleared pixels' loose flag is False.
+    cleared = f.mask[30, 20:25, 3] == 0
+    if cleared.any():
+        for k, c in enumerate(cleared):
+            if c:
+                assert f.loose[30, 20 + k] == False
