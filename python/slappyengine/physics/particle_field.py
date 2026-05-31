@@ -76,6 +76,7 @@ from slappyengine.physics.fragment import (
     FragmentShape,
 )
 from slappyengine.physics.splat import SplatConfig, compute_splat
+from slappyengine.physics.fluid_bridge import FluidBridgeConfig, bridge_step
 
 
 _RGB = tuple[int, int, int]
@@ -338,6 +339,12 @@ class ParticleField:
     gravity: float = 720.0
     materials: list[Material] = field(default_factory=lambda: list(BUILTIN_MATERIALS))
     cell_size: int = 64
+    # When True (default), fluid materials route through the canonical
+    # PBF solver via physics.fluid_bridge. Set False to use the
+    # legacy naive _fluid_relax (useful for unit tests that need a
+    # predictable in-Python path).
+    use_pbf_bridge: bool = True
+    pbf_config: FluidBridgeConfig = field(default_factory=FluidBridgeConfig)
 
     # Particle SoA — initialised empty, grown via spawn().
     pos: np.ndarray = field(init=False)
@@ -653,7 +660,15 @@ class ParticleField:
         # get pushed apart so they cluster into a contiguous body
         # rather than stacking on a single pixel. Cheap O(N) over the
         # fluid subset.
-        self._fluid_relax(dt)
+        # Route fluid particles through the canonical PBF solver
+        # (slappyengine.fluid.pbf_step via physics.fluid_bridge). Replaces
+        # the naive _fluid_relax for proper Macklin 2013 density
+        # constraints. _fluid_relax kept as a fallback if the bridge
+        # is disabled via use_pbf_bridge=False on the field.
+        if self.use_pbf_bridge:
+            self._pbf_bridge_step(dt)
+        else:
+            self._fluid_relax(dt)
         # Kinetic-phase relax — landed-but-not-rigid solid particles
         # also push apart (lateral spread), mimicking a wet glob phase
         # that crystallises as the rigidify timer expires.
@@ -952,6 +967,33 @@ class ParticleField:
                         push[b, 0] -= nx * f
                         push[b, 1] -= ny * f
         self.pos[idx] += push
+
+    def _pbf_bridge_step(self, dt: float) -> None:
+        """Route fluid-material particles through the canonical PBF.
+
+        Extracts the fluid subset, runs ``physics.fluid_bridge.bridge_step``
+        with the field's mask as the collision boundary, writes the
+        updated positions/velocities back. Cheap: only fires when there
+        are fluid particles.
+        """
+        if self.pos.shape[0] == 0:
+            return
+        fluid_mask = np.zeros(self.pos.shape[0], dtype=bool)
+        for mi, mat in enumerate(self.materials):
+            if mat.is_fluid:
+                fluid_mask |= self.material_id == mi
+        fluid_mask &= ~self.bake_flag
+        if not fluid_mask.any():
+            return
+        idx = np.nonzero(fluid_mask)[0]
+        sub_pos = self.pos[idx].copy()
+        sub_vel = self.vel[idx].copy()
+        new_pos, new_vel = bridge_step(
+            fluid_pos=sub_pos, fluid_vel=sub_vel,
+            mask_grid=self.mask, cfg=self.pbf_config, dt=dt,
+        )
+        self.pos[idx] = new_pos
+        self.vel[idx] = new_vel
 
     def _fluid_relax(self, dt: float) -> None:
         """Per-material density-relaxation for fluid particles.

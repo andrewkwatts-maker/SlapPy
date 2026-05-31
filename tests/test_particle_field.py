@@ -284,7 +284,9 @@ def test_settled_particles_become_loose_and_can_slump() -> None:
 
 
 def test_fluid_relax_pushes_overlapping_water_particles_apart() -> None:
-    f = ParticleField(width=64, height=64)
+    # Naive _fluid_relax only — PBF requires >= ~7 particles for the
+    # density constraint to fire (well-documented canonical behaviour).
+    f = ParticleField(width=64, height=64, use_pbf_bridge=False)
     # Two water particles separated by < rest_length so they push apart.
     f.spawn(x=32.0, y=32.0, material="water")
     f.spawn(x=32.5, y=32.0, material="water")
