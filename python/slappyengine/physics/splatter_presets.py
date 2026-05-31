@@ -284,18 +284,21 @@ SLOPPY = SplatterPreset(
     # accumulated pile stays natural-flat instead of growing into
     # twin mountains. Wider cone + strong edge boost reads as a
     # spread-out splat rather than a fountain.
-    max_blast_angle_deg=60.0,
-    direction_blend=0.10,
-    edge_outward_boost=180.0,
-    blast_up_boost=30.0,
-    blast_radial_boost=120.0,
+    # Sloppy was user's favourite — bias toward MORE UP, less sideways.
+    # Narrower cone + bigger up_boost + smaller lateral push gives
+    # a "fountain" feel without losing the wet-glob look.
+    max_blast_angle_deg=45.0,
+    direction_blend=0.15,
+    edge_outward_boost=80.0,
+    blast_up_boost=160.0,        # the dramatic upward kick
+    blast_radial_boost=50.0,
     no_collide_frames=5,
     n_grains=500,
     n_chunks=180,
-    grain_speed_min=60.0,
-    grain_speed_max=240.0,
-    chunk_speed_min=80.0,
-    chunk_speed_max=200.0,
+    grain_speed_min=80.0,
+    grain_speed_max=300.0,        # faster grains = higher fountain
+    chunk_speed_min=140.0,
+    chunk_speed_max=280.0,
     gravity=700.0,
     air_drag_per_sec=0.40,
     friction_per_sec=0.0,        # sticks instantly

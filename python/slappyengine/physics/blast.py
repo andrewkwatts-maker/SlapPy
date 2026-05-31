@@ -68,6 +68,26 @@ class DetonateCurves:
     # 1.0 = exact; > 1.0 = exaggerated debris; < 1.0 = compaction.
     mass_conservation: float = 1.0
 
+    # ── Crater shape ─────────────────────────────────────────────────
+    # Bowl profile: depth(offs) = crater_depth * (1 - (offs/R)^pow).
+    # 2.0 = parabolic (default, broad bowl). 1.0 = cone (V-shape).
+    # 3.0+ = wide flat floor + steep walls (impact crater).
+    crater_curve_pow: float = 2.0
+    # Bowl noise — fraction of crater_depth used as random perturbation
+    # per column. 0.0 = perfect smooth bowl; 0.25 = naturally rough.
+    crater_noise: float = 0.15
+
+    # ── Blast direction ──────────────────────────────────────────────
+    # Master vector direction the blast pushes particles in.
+    # 0° = straight up (default explosion); 90° = right; -90° = left;
+    # 180° = downward (directed bomb hitting floor). The cone spread
+    # is taken around this axis, not always vertical.
+    blast_direction_deg: float = 0.0
+    # Per-axis multiplier — useful for "tall thin column" (>1 up_scale)
+    # vs "wide flat splash" (>1 lateral_scale).
+    up_velocity_scale: float = 1.0
+    lateral_velocity_scale: float = 1.0
+
 
 def material_from_preset(preset: SplatterPreset) -> Material:
     """Translate a :class:`SplatterPreset` into a :class:`Material`
@@ -112,6 +132,7 @@ def detonate(
     crater_radius: float,
     crater_depth: float,
     rng: np.random.Generator | None = None,
+    curves: DetonateCurves | None = None,
 ) -> int:
     """Carve a crater and inject the preset's ejecta onto ``field``.
 
@@ -126,6 +147,8 @@ def detonate(
     """
     if rng is None:
         rng = np.random.default_rng()
+    if curves is None:
+        curves = DetonateCurves()
 
     H, W = field.height, field.width
     mid = ensure_preset_material(field, preset)
@@ -136,11 +159,21 @@ def detonate(
     yi = int(y)
     r = int(crater_radius)
     d = int(crater_depth)
+    noise_amp = max(0.0, curves.crater_noise) * d
+    pow_curve = max(0.5, curves.crater_curve_pow)
     for col_off in range(-r, r + 1):
         col = xi + col_off
         if not (0 <= col < W):
             continue
-        depth = int(d * (1.0 - (col_off / float(r)) ** 2))
+        # Bowl shape governed by curves.crater_curve_pow:
+        #   2.0 = parabolic (smooth saucer)
+        #   1.0 = cone
+        #   3.0+ = wide flat floor + steep walls (impact crater).
+        base_depth = d * (1.0 - (abs(col_off) / float(r)) ** pow_curve)
+        # Per-column noise breaks the rim from a perfect curve.
+        if noise_amp > 0.0:
+            base_depth += float(rng.uniform(-noise_amp, noise_amp))
+        depth = max(0, int(round(base_depth)))
         y0 = max(0, yi)
         y1 = min(H, yi + depth + 1)
         bowl[y0:y1, col] = True
@@ -198,14 +231,28 @@ def detonate(
     speeds = np.where(is_chunk, chunk_speeds, grain_speeds)
 
     # Velocity: direction * speed + edge boost + flat up/radial bias.
+    # Then optionally rotate the whole vector field by the blast
+    # direction (0° = straight up; 90° = right; 180° = into the floor).
     dir_x = np.sin(final_ang)
     dir_y = -np.cos(final_ang)
     edge_kick = (offs / max(1.0, crater_radius)) * preset.edge_outward_boost
     radial_kick = np.sign(offs) * preset.blast_radial_boost
-    vel = np.column_stack([
-        dir_x * speeds + edge_kick + radial_kick,
-        dir_y * speeds - preset.blast_up_boost,  # negative vy = upward
-    ]).astype(np.float32)
+    vx_raw = dir_x * speeds + edge_kick + radial_kick
+    vy_raw = dir_y * speeds - preset.blast_up_boost  # negative = up
+    # Per-axis scales — useful for "tall column" (up_scale > 1) vs
+    # "wide splash" (lateral_scale > 1).
+    vx_raw = vx_raw * curves.lateral_velocity_scale
+    vy_raw = vy_raw * curves.up_velocity_scale
+    # Rotate the velocity field by blast_direction_deg around the
+    # standard "up = +0°" axis (positive = tilt to the right; 180°
+    # = blast pushes down).
+    if abs(curves.blast_direction_deg) > 1e-3:
+        theta = math.radians(curves.blast_direction_deg)
+        c, s = math.cos(theta), math.sin(theta)
+        vx_rot = vx_raw * c - vy_raw * s
+        vy_rot = vx_raw * s + vy_raw * c
+        vx_raw, vy_raw = vx_rot, vy_rot
+    vel = np.column_stack([vx_raw, vy_raw]).astype(np.float32)
 
     # Airborne disc radii (what the user sees in flight).
     chunk_radii = rng.integers(

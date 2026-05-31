@@ -84,3 +84,58 @@ def test_detonate_velocities_reflect_up_and_radial_boosts() -> None:
     assert float(f.vel[:, 1].mean()) < -50.0
     # Mean |vx| should be substantial — rocks fly outward.
     assert float(np.abs(f.vel[:, 0]).mean()) > 30.0
+
+
+def test_detonate_crater_noise_breaks_smooth_bowl() -> None:
+    from slappyengine.physics.blast import DetonateCurves
+    # Without noise: bowl depth is monotonically deepest at centre.
+    f = ParticleField(width=128, height=96)
+    f.fill_ground(top_y=60, color=(200, 160, 90))
+    detonate(f, get_preset("sand"), x=64, y=60,
+              crater_radius=20, crater_depth=15,
+              rng=np.random.default_rng(0),
+              curves=DetonateCurves(crater_noise=0.0))
+    smooth = f.mask[..., 3].copy()
+    # With noise: depth perturbed per column.
+    f2 = ParticleField(width=128, height=96)
+    f2.fill_ground(top_y=60, color=(200, 160, 90))
+    detonate(f2, get_preset("sand"), x=64, y=60,
+              crater_radius=20, crater_depth=15,
+              rng=np.random.default_rng(0),
+              curves=DetonateCurves(crater_noise=0.5))
+    noisy = f2.mask[..., 3].copy()
+    # The two carves should differ.
+    assert not np.array_equal(smooth, noisy)
+
+
+def test_detonate_blast_direction_rotates_velocity_field() -> None:
+    from slappyengine.physics.blast import DetonateCurves
+    f = ParticleField(width=128, height=96)
+    f.fill_ground(top_y=60, color=(200, 160, 90))
+    # 90° blast direction → velocity field rotates: "up" becomes "right".
+    detonate(f, get_preset("sand"), x=64, y=60,
+              crater_radius=20, crater_depth=10,
+              rng=np.random.default_rng(0),
+              curves=DetonateCurves(blast_direction_deg=90.0))
+    # Mean vx should be positive (pointing right) instead of mean vy < 0.
+    assert float(f.vel[:, 0].mean()) > 30.0
+
+
+def test_detonate_up_velocity_scale_amplifies_vertical() -> None:
+    from slappyengine.physics.blast import DetonateCurves
+    f1 = ParticleField(width=128, height=96)
+    f1.fill_ground(top_y=60, color=(200, 160, 90))
+    detonate(f1, get_preset("sand"), x=64, y=60,
+              crater_radius=20, crater_depth=10,
+              rng=np.random.default_rng(0),
+              curves=DetonateCurves(up_velocity_scale=1.0))
+    base_vy = float(f1.vel[:, 1].mean())
+    f2 = ParticleField(width=128, height=96)
+    f2.fill_ground(top_y=60, color=(200, 160, 90))
+    detonate(f2, get_preset("sand"), x=64, y=60,
+              crater_radius=20, crater_depth=10,
+              rng=np.random.default_rng(0),
+              curves=DetonateCurves(up_velocity_scale=2.0))
+    boosted_vy = float(f2.vel[:, 1].mean())
+    # Doubled up_scale should make vy ~2x more negative.
+    assert boosted_vy < base_vy * 1.5
