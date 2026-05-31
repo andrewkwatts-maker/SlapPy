@@ -408,6 +408,10 @@ class ParticleField:
     # predictable in-Python path).
     use_pbf_bridge: bool = True
     pbf_config: FluidBridgeConfig = field(default_factory=FluidBridgeConfig)
+    # When True, route _integrate through the WGSL compute kernel in
+    # slappyengine.physics.particle_gpu. Default OFF so existing tests
+    # are unchanged; opt-in until parity + perf are settled.
+    use_gpu_integrate: bool = False
 
     # Particle SoA — initialised empty, grown via spawn().
     pos: np.ndarray = field(init=False)
@@ -773,7 +777,13 @@ class ParticleField:
         self.kinetic_age[live] += 1
         air_mask = ~self.landed
         if air_mask.any():
-            self._integrate(air_mask, dt)
+            if self.use_gpu_integrate:
+                # Lazy import — avoids paying the wgpu cost when the
+                # GPU path is disabled (the default).
+                from slappyengine.physics.particle_gpu import gpu_integrate
+                gpu_integrate(self, dt)
+            else:
+                self._integrate(air_mask, dt)
             self._collide(air_mask, dt)
         # Fluid pooling — particles whose material has binding_force=0
         # get pushed apart so they cluster into a contiguous body
@@ -1040,6 +1050,14 @@ class ParticleField:
           multiple particles can't stack on one pixel and bake into
           a tall single-column pile. This is the inter-particle
           collision the user asked for.
+
+        Vectorised implementation: builds a cell hash, sorts particles
+        by cell key, finds cell boundaries via ``np.searchsorted``,
+        then resolves all in-cell pairs in a single vectorised pass.
+        Semantics match :meth:`_kinetic_relax_legacy` within float
+        precision; the legacy version is retained for parity testing
+        and as a fallback. The vectorised form is the reference
+        implementation that the GPU port will mirror.
         """
         if self.pos.shape[0] < 2:
             return
@@ -1070,9 +1088,145 @@ class ParticleField:
         idx = np.nonzero(eligible)[0]
         if idx.size < 2:
             return
+        kp = self.pos[idx]
+        s_local = strengths[idx]  # per-eligible-particle strength
+        rest = 2.5  # tighter than fluid so particles don't drift apart
+        bin_size = rest * 1.5
+
+        # ── Cell hashing ────────────────────────────────────────────
+        # Match the legacy hash (truncating int cast on float / bin_size).
+        bx = (kp[:, 0] / bin_size).astype(np.int32)
+        by = (kp[:, 1] / bin_size).astype(np.int32)
+        # Combine (bx, by) into a single 64-bit key so we can sort.
+        # Shift bx up by 32 bits; treat as unsigned by offsetting (avoids
+        # negative-shift weirdness for particles in negative space).
+        BIAS = np.int64(1 << 31)
+        cell_key = (
+            (bx.astype(np.int64) + BIAS) << np.int64(32)
+        ) | (by.astype(np.int64) + BIAS)
+
+        # ── Sort by cell key so same-cell particles are contiguous ──
+        order = np.argsort(cell_key, kind="stable")
+        sorted_keys = cell_key[order]
+        # Find unique cells and their [start, end) spans.
+        unique_keys, starts = np.unique(sorted_keys, return_index=True)
+        ends = np.concatenate(
+            [starts[1:], np.array([sorted_keys.size], dtype=starts.dtype)]
+        )
+        counts = ends - starts
+        # Only cells with >= 2 members produce pairs.
+        multi = counts >= 2
+        if not multi.any():
+            return
+
+        # ── Build pair index arrays for all multi-member cells ──────
+        # For each cell of size c, emit c*(c-1)/2 pairs (a < b within
+        # the cell's sorted slice). We compute these as positions in
+        # the sorted-by-cell layout, then map back through `order` to
+        # the original eligible-array indices.
+        m_starts = starts[multi]
+        m_counts = counts[multi]
+        # Total pairs across all multi-cells.
+        n_pairs_per_cell = m_counts * (m_counts - 1) // 2
+        total_pairs = int(n_pairs_per_cell.sum())
+        if total_pairs == 0:
+            return
+
+        # Generate (a, b) offsets within each cell using a closed-form
+        # inverse-triangular formula — no Python loop over cells. For
+        # each global pair index k inside a cell of size c, enumerate
+        # column-major: pair k maps to (i, j) with j > i, by
+        #   j = smallest int s.t. j*(j-1)/2 > k
+        # which gives j = ceil((sqrt(8k+1) + 1) / 2). Then i = k - j*(j-1)/2.
+        # This is fully vectorised over all pairs across all cells.
+        pair_cum = np.concatenate(
+            [np.array([0], dtype=np.int64), np.cumsum(n_pairs_per_cell)]
+        )
+        cell_of_pair = np.repeat(
+            np.arange(m_counts.size, dtype=np.int64), n_pairs_per_cell
+        )
+        local_idx = (
+            np.arange(total_pairs, dtype=np.int64) - pair_cum[cell_of_pair]
+        )
+        kf = local_idx.astype(np.float64)
+        j = np.ceil((np.sqrt(8.0 * kf + 1.0) + 1.0) * 0.5).astype(np.int64)
+        # Guard against float slop at exact triangular numbers.
+        j_tri = j * (j - 1) // 2
+        over = j_tri > local_idx
+        j[over] -= 1
+        j_tri = j * (j - 1) // 2
+        i = local_idx - j_tri
+        # Per-pair, the base sorted-position offset (== cell start).
+        base = m_starts[cell_of_pair].astype(np.int64)
+        sorted_a = base + i
+        sorted_b = base + j
+        # Map sorted positions back to original eligible-array indices.
+        a_eligible = order[sorted_a]
+        b_eligible = order[sorted_b]
+
+        # ── Vectorised pair displacement ────────────────────────────
+        pa = kp[a_eligible]
+        pb = kp[b_eligible]
+        d_vec = pa - pb
+        d2 = (d_vec * d_vec).sum(axis=1)
+        # Eligibility: separation in (0, rest).
+        overlap = (d2 < rest * rest) & (d2 > 0.0)
+        if not overlap.any():
+            return
+        a_e = a_eligible[overlap]
+        b_e = b_eligible[overlap]
+        d_vec = d_vec[overlap]
+        d2 = d2[overlap]
+        d = np.sqrt(d2)
+        # Push magnitude per pair: (rest - d) * 0.4 * 0.5 * (ga + gb).
+        ga = s_local[a_e]
+        gb = s_local[b_e]
+        f = (rest - d) * 0.4 * 0.5 * (ga + gb)
+        # Unit normal.
+        nxny = d_vec / d[:, None]
+        push_vec = nxny * f[:, None]
+
+        # Scatter-add into per-eligible push buffer.
+        push = np.zeros_like(kp)
+        np.add.at(push, a_e, push_vec)
+        np.add.at(push, b_e, -push_vec)
+        self.pos[idx] += push
+
+    def _kinetic_relax_legacy(self, dt: float) -> None:
+        """Reference loop-based implementation of :meth:`_kinetic_relax`.
+
+        Retained for parity testing and as a fallback. The current
+        :meth:`_kinetic_relax` is a vectorised port of this routine;
+        results must match within float precision.
+        """
+        if self.pos.shape[0] < 2:
+            return
+        n = self.pos.shape[0]
+        eligible = np.zeros(n, dtype=bool)
+        strengths = np.zeros(n, dtype=np.float32)
+        for mi, mat in enumerate(self.materials):
+            if mat.is_fluid:
+                continue
+            m = (self.material_id == mi) & (~self.bake_flag) & (~self.settled)
+            if not m.any():
+                continue
+            indices = np.nonzero(m)[0]
+            rig = self.rigidify_at[m].astype(np.float32)
+            age = self.kinetic_age[m].astype(np.float32)
+            lerp = np.clip(1.0 - age / np.maximum(rig, 1.0), 0.0, 1.0)
+            kinetic_s = mat.kinetic_fluidity * lerp
+            baseline = 0.4
+            strengths_m = np.maximum(kinetic_s, baseline)
+            eligible[indices] = True
+            strengths[indices] = strengths_m
+        if not eligible.any():
+            return
+        idx = np.nonzero(eligible)[0]
+        if idx.size < 2:
+            return
         # Cell-binned pair check.
         kp = self.pos[idx]
-        rest = 2.5  # tighter than fluid so particles don't drift apart
+        rest = 2.5
         bin_size = rest * 1.5
         bx = (kp[:, 0] / bin_size).astype(np.int32)
         by = (kp[:, 1] / bin_size).astype(np.int32)
