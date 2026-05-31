@@ -47,6 +47,24 @@ _DEMOS: list[str] = [
     "hello_audio",
 ]
 
+# Demos whose subprocess-rendered frames currently diverge from their
+# committed baselines (seed / timing non-determinism); their per-demo
+# in-process baseline tests at ``tests/test_demo_<name>.py`` pin tighter
+# tolerances. Removing a name from this set means the demo now matches the
+# subprocess-rendered baseline within :data:`_TOLERANCE`; if it regresses
+# the parametrised baseline test fires.
+_BASELINE_FLAKY: frozenset[str] = frozenset({
+    "hello_rope",
+    "hello_ragdoll",
+    "hello_motor",
+    "hello_spring",
+    "hello_ik_chain",
+    "hello_joint",
+    "hello_iso",
+    "hello_zone",
+    "hello_composite",
+})
+
 # ── Paths ───────────────────────────────────────────────────────────────────
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _EXAMPLES = _REPO_ROOT / "examples"
@@ -182,13 +200,32 @@ def test_demo_exits_zero(name: str, _demo_results: Dict[str, _DemoResult]) -> No
     )
 
 
-@pytest.mark.parametrize("name", _DEMOS)
-@pytest.mark.xfail(
-    reason="Subprocess-rendered frames diverge from in-process baselines due "
-           "to seed/timing non-determinism across the dynamics demos. Per-demo "
-           "tests at tests/test_demo_<name>.py pin tighter, in-process baselines.",
-    strict=False,
-)
+def _baseline_params() -> list[Any]:
+    """Build the parametrize list, attaching xfail only to flaky demos."""
+    out: list[Any] = []
+    for name in _DEMOS:
+        if name in _BASELINE_FLAKY:
+            out.append(
+                pytest.param(
+                    name,
+                    marks=pytest.mark.xfail(
+                        reason=(
+                            "Subprocess-rendered frames diverge from in-process "
+                            "baselines for this demo due to seed/timing "
+                            "non-determinism; the per-demo test at "
+                            "tests/test_demo_" + name + ".py pins a tighter "
+                            "in-process baseline."
+                        ),
+                        strict=False,
+                    ),
+                )
+            )
+        else:
+            out.append(pytest.param(name))
+    return out
+
+
+@pytest.mark.parametrize("name", _baseline_params())
 def test_demo_renders_against_baseline(
     name: str, _demo_results: Dict[str, _DemoResult]
 ) -> None:

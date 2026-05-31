@@ -21,9 +21,11 @@ def test_rope_builds_expected_node_count():
 def test_rope_droops_into_catenary():
     w = World(gravity=(0.0, -9.81))
     w.solver_iterations = 16
+    # damping=0.019 keeps effective per-step damping (~0.27 at iters=16) below
+    # the 0.5 over-damped warning threshold; the catenary settle still passes.
     spec = RopeSpec(
         node_count=21, total_length=5.0, mass_per_node=0.05,
-        stiffness=5.0e6, damping=0.1,
+        stiffness=5.0e6, damping=0.019,
         anchor_a_pinned=True, anchor_b_pinned=True,
     )
     body = build_rope(spec, w,

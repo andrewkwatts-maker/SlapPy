@@ -346,9 +346,12 @@ def test_stone_keep_wave_schedule_100_frames_no_nan() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Phase C residual gaps — xfail one assertion per missing symbol so the gap
-# is visible per-test. Each test asserts the symbol resolves; xfail flips to
-# xpass the moment the underlying module lands.
+# Phase C closed-gap surface — every symbol previously tracked in
+# :data:`_MISSING_MODULES` now resolves off the master ``slappyengine``
+# package. The parametrised test below enforces that as a forward-looking
+# regression tripwire: if a symbol disappears from the export surface, this
+# test fails outright (no longer xfail-cushioned) and the sibling tripwire
+# test pinpoints which game-team surface broke.
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize(
@@ -356,13 +359,11 @@ def test_stone_keep_wave_schedule_100_frames_no_nan() -> None:
     sorted(_MISSING_MODULES.items()),
     ids=sorted(_MISSING_MODULES),
 )
-@pytest.mark.xfail(
-    strict=False,
-    reason="Phase C residual gap: symbol in _LAZY_MAP but module not on master",
-)
 def test_missing_module_residual_gap(symbol: str, module: str) -> None:
-    """One xfail per Phase C residual gap — auto-flips when the module lands."""
+    """One assertion per previously-missing Phase C symbol — must resolve now."""
     import slappyengine
     assert hasattr(slappyengine, symbol), (
-        f"{symbol} still missing — module {module} not on master."
+        f"{symbol} regressed off the public surface — module {module} "
+        f"was previously a Phase C residual gap that has been closed; "
+        f"removing it again would re-break game-team installs."
     )

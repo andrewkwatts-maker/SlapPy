@@ -49,6 +49,10 @@ def test_spring_oscillates_and_damps():
 
 
 def test_spring_with_damping_loses_energy():
+    # damping=0.4 at the default solver_iterations=8 deliberately exceeds the
+    # over-damped warning threshold (effective per-step damping ~0.98) so the
+    # damped world bleeds energy faster than the undamped one. Catch the
+    # diagnostic so it doesn't pollute the suite-wide warning summary.
     mass = 1.0
     w_no = World(gravity=(0.0, 0.0))
     w_no.add_node((0.0, 0.0), mass=0.0)
@@ -61,9 +65,10 @@ def test_spring_with_damping_loses_energy():
     w_yes.add_joint(make_spring(0, 1, 1.0, stiffness=400.0, damping=0.4))
 
     dt = 1.0 / 240.0
-    for _ in range(2400):
-        w_no.step(dt)
-        w_yes.step(dt)
+    with pytest.warns(RuntimeWarning, match="over-damp"):
+        for _ in range(2400):
+            w_no.step(dt)
+            w_yes.step(dt)
     e_no = float(np.linalg.norm(w_no.velocities[1]))
     e_yes = float(np.linalg.norm(w_yes.velocities[1]))
     assert e_yes < e_no + 1e-6

@@ -50,8 +50,10 @@ def _build_toy_ragdoll(world: World) -> None:
 
 
 def _build_toy_rope(world: World) -> None:
+    # damping=0.037 keeps effective per-step damping (~0.26 at iters=8) below
+    # the 0.5 over-damped warning threshold while still bleeding rope energy.
     spec = RopeSpec(node_count=8, total_length=2.0, mass_per_node=0.05,
-                    stiffness=1.0e6, damping=0.1)
+                    stiffness=1.0e6, damping=0.037)
     build_rope(spec, world, anchor_a=(-3.0, 5.0), anchor_b=(-1.0, 5.0))
 
 
