@@ -40,8 +40,50 @@ green** (see §d for the exact pytest gate).
 
 | # | Module | LOC | Consumers (main repo, non-worktree) | Classification |
 |---|---|---:|---|---|
-| 1 | `python/slappyengine/physics/frontier.py` | 361 | `physics/__init__.py` (re-export), `physics/world.py` (lines 43, 194, 326-373, 490, 718-731, 825-844) + 4 tests (`test_frontier.py`, `test_phase_a_activation.py`, `test_nan_guards.py`, `test_phase_b_residency.py`) | `world.py` keeps a `frontier.enabled` flag for tests; once `world.py` itself dies (Phase D step 9) the flag dies with it. `test_frontier.py` is dead-with-module. The other three tests only touch `world.config.frontier.enabled = False` — purely defensive flag flips that come out with `world.py`. |
+| 1 | `python/slappyengine/physics/frontier.py` | 361 | `physics/__init__.py` (re-export), `physics/world.py` (lines 43, 194, 326-373, 490, 718-731, 825-844) + 4 tests (`test_frontier.py`, `test_phase_a_activation.py`, `test_nan_guards.py`, `test_phase_b_residency.py`) | `world.py` keeps a `frontier.enabled` flag for tests; once `world.py` itself dies (Phase D step 9) the flag dies with it. `test_frontier.py` is dead-with-module. The other three tests only touch `world.config.frontier.enabled = False` — purely defensive flag flips that come out with `world.py`. **BLOCKED 2026-05-31 — see "Step 1 blocker found" callout below.** |
 | 2 | `python/slappyengine/physics/granular_render.py` | 344 | `physics/__init__.py` (re-export) only | Superseded by `fluid.render.FluidRenderer`. Zero non-physics callers. |
+
+#### Step 1 blocker found — 2026-05-31
+
+A re-audit during step 1 execution confirmed that `physics/world.py` has
+**33 live `frontier`/`Frontier` references** — not a flag-only consumer
+as the step 1 row suggested. The hard import at `world.py:43`
+(`from slappyengine.physics.frontier import FrontierConfig, FrontierSolver`)
+plus the `FrontierYamlConfig` dataclass (L193-210), the
+`PhysicsYaml.frontier` field (L227), the 35-line YAML loader block
+(L326-360), `self._frontier: FrontierSolver | None` (L490), the
+auto-tick block in `step()` (L700-731), and `_ensure_frontier_solver`
+(L825-844) together mean deleting `frontier.py` would either (a) hard-
+break `import slappyengine.physics` (because `physics/__init__.py:45`
+also re-exports), or (b) require a real `world.py` refactor that the
+step 1 entry does not authorize.
+
+Additionally `python/tests/test_phase_a_activation.py` is **not** a
+"flag-flip only" test — it imports `FrontierConfig` / `FrontierSolver`
+directly (lines 25-26) and asserts `FrontierSolver.tick` runs once per
+`world.step` (lines 156-186). That test is genuinely co-dead with
+`frontier.py`, not "comes out with `world.py`".
+
+**Unblock plan.** Step 1 must either be re-scoped to ALSO trim the
+`frontier`-using surface of `world.py` (a ~40-line refactor: drop the
+import, drop `FrontierYamlConfig`, drop the YAML loader block, drop
+`_ensure_frontier_solver`, drop the auto-tick branch, drop
+`self._frontier`), OR step 1 must be **moved AFTER step 9** in the cut
+order (i.e., delete `world.py` first, then `frontier.py` becomes a
+genuine leaf). Recommend the in-place trim approach since it keeps step
+1 a one-commit operation and proves the consumer-trim pattern on a
+small surface before the larger `deform_modes.py` cut in step 5. The
+auto-tick block in `step()` is already gated behind
+`self.config.frontier.enabled`, so removing it is purely subtractive —
+no replacement path needed. The 41 frontier-touching tests
+(`test_frontier.py`, `test_phase_a_activation.py`, plus the
+flag-flip lines in `test_nan_guards.py` and `test_phase_b_residency.py`)
+all co-delete or have their two `world.config.frontier.enabled = False`
+lines removed; no behavioural test depends on the auto-tick firing
+outside `test_phase_a_activation.py` (which dies with frontier).
+
+`granular_render.py` (entry #2) remains a genuine leaf and can be cut
+as planned without waiting for the frontier unblock.
 
 **Cut order rationale.** `frontier.py` and `granular_render.py` have no
 public surface outside the `physics/` package; deleting them requires
