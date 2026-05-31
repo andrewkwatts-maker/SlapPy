@@ -63,9 +63,21 @@ class DetonateCurves:
     # outward bias; < 1.0 = edge particles look more like centre ones.
     direction_blend_curve_pow: float = 1.0
 
-    # Mass conservation multiplier applied to all ejecta from this
-    # blast (overrides Material.mass_conservation for the blast path).
-    # 1.0 = exact; > 1.0 = exaggerated debris; < 1.0 = compaction.
+    # Conservation ratio enforced by the detonate pipeline.
+    #
+    # The blast removes K mask pixels from the carved bowl. After all
+    # ejecta settle and bake, exactly round(K * mass_conservation) new
+    # mask pixels should appear elsewhere on the field. Examples:
+    #   0.5  — half the removed mass returns; net loss of 50%.
+    #   1.0  — full conservation (default).
+    #   1.5  — explosion produces 50% extra debris (e.g. spalling).
+    #
+    # The pipeline enforces this by sizing the spawn batch directly:
+    # n_total = round(K * mass_conservation), with the grain:chunk
+    # ratio preserved from the preset. Each spawned particle bakes as
+    # exactly 1 pixel (bake_radius_override=0), so total bake mass =
+    # particle count = K * ratio. Validated by tests in
+    # tests/test_blast_conservation.py.
     mass_conservation: float = 1.0
 
     # ── Crater shape ─────────────────────────────────────────────────
@@ -194,17 +206,29 @@ def detonate(
 
     solid_in_bowl = bowl & (field.mask[..., 3] > 0)
     sampled_rgb: np.ndarray = field.mask[solid_in_bowl, :3].copy()
-    # Sample the per-pixel material id of each solid bowl pixel BEFORE
-    # carving — so ejecta inherit the actual material under the impact
-    # (mud-over-rock layered terrain yields mud chunks on top, rock
-    # chunks below). -1 entries fall back to the preset material id
-    # later when assigning per-particle materials.
     sampled_mids: np.ndarray = field.material_grid[solid_in_bowl].copy()
+    # Count pixels removed BEFORE carving so we can size the ejecta
+    # batch to enforce ``curves.mass_conservation``. K = number of
+    # alpha=255 pixels inside the bowl that will be cleared.
+    pixels_removed = int(solid_in_bowl.sum())
     field.carve(bowl)
 
-    # ── 2. Build particle batch ────────────────────────────────────────
-    n_chunks = preset.n_chunks
-    n_grains = preset.n_grains
+    # ── 2. Build particle batch — conservation enforced ────────────────
+    # Total particle count is derived from pixels_removed and the
+    # mass_conservation ratio. Each particle bakes as exactly 1 pixel
+    # via bake_radii=0 below, so total bake mass equals particle count
+    # which equals K * ratio. Grain:chunk proportion preserved from
+    # the preset so the visual mix matches Worms-style mud (lots of
+    # small grains + a few big globs).
+    n_target = int(round(pixels_removed * float(curves.mass_conservation)))
+    preset_total = preset.n_chunks + preset.n_grains
+    if preset_total > 0 and n_target > 0:
+        chunk_frac = preset.n_chunks / preset_total
+        n_chunks = int(round(n_target * chunk_frac))
+        n_grains = n_target - n_chunks
+    else:
+        n_chunks = preset.n_chunks
+        n_grains = preset.n_grains
     n = n_chunks + n_grains
     if n == 0:
         return 0
@@ -283,11 +307,13 @@ def detonate(
     )
     radii = np.where(is_chunk, chunk_radii, grain_radii).astype(np.float32)
 
-    # Bake stamp size derives directly from the particle's own
-    # airborne radius — fragment size determines bake amount, as the
-    # user asked. Big chunks bake big, small grains bake tiny. No flat
-    # "1 particle = X pixels" mapping. Clamp to >= 0 (1-pixel floor).
-    bake_radii = np.maximum(0, radii.astype(np.int32) - 1).astype(np.int32)
+    # Bake stamp size = 0 (single pixel per particle). This is what
+    # makes mass_conservation EXACT: total bake mass = particle count
+    # = K * mass_conservation. Airborne visual radius still varies
+    # per the preset's grain/chunk distinction — only the BAKED
+    # footprint is collapsed to 1 px. Chunks remain visibly distinct
+    # in flight via their bigger live render disc.
+    bake_radii = np.zeros(n, dtype=np.int32)
 
     # ── 3. Colour + material sourcing: original pixels first, palette
     #       / preset material as fallback. Colour and material come from

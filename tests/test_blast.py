@@ -37,8 +37,14 @@ def test_detonate_carves_bowl_and_spawns_particles() -> None:
     f.fill_ground(top_y=60, color=(200, 160, 90), sub_color=(60, 44, 28))
     p = get_preset("sand")
     rng = np.random.default_rng(0)
+    # Spawn count is now driven by curves.mass_conservation × removed
+    # pixels (see test_blast_conservation.py for the contract). At
+    # ratio=1.0 with this bowl, count ~= removed-pixel count.
+    before = int((f.mask[..., 3] > 0).sum())
     n = detonate(f, p, x=64, y=60, crater_radius=20, crater_depth=10, rng=rng)
-    assert n == p.n_grains + p.n_chunks
+    after = int((f.mask[..., 3] > 0).sum())
+    pixels_removed = before - after
+    assert abs(n - pixels_removed) <= 1
     # Bowl carved (alpha cleared in centre).
     assert f.mask[63, 64, 3] == 0
     # Outside the bowl still solid.
