@@ -1308,38 +1308,44 @@ class ParticleField:
             if 0 <= x < W:
                 while y > 0 and self.mask[y, x, 3] > 0:
                     y -= 1
-                # Roll-downhill: ANY pile in the current column that's
-                # taller than lateral neighbours pushes the particle
-                # sideways. Threshold lowered to 1 px so even the
-                # first pile-up triggers redirect — fixes "particles
-                # roll sideways then move upwards when baking".
+                # Roll-downhill: track the BEST left drop and BEST right
+                # drop independently, then pick the deeper side. Ties go
+                # to a random side (was deterministic-left, which made
+                # every particle drift leftward across the screen — the
+                # "constant left movement" bug).
                 my_top = y
-                # Sample a wider neighbourhood — walk further until we
-                # find a column with comparable or lower top.
                 slump_step = 1
-                best_direction = 0
-                best_distance = 0
-                for d in range(1, 6):  # search up to 5 cols away
-                    for s in (-1, 1):
-                        cx = x + d * s
-                        if not (0 <= cx < W):
-                            continue
-                        ct = self._column_top(cx)
-                        if ct - my_top >= slump_step:
-                            if d > best_distance:
-                                best_distance = d
-                                best_direction = s
-                if best_direction != 0:
-                    # Take one step in the chosen direction (don't
-                    # teleport — let friction carry the rest).
+                best_left_drop = 0
+                best_right_drop = 0
+                for d in range(1, 6):
+                    cx_l = x - d
+                    if 0 <= cx_l < W:
+                        drop_l = self._column_top(cx_l) - my_top
+                        if drop_l > best_left_drop:
+                            best_left_drop = drop_l
+                    cx_r = x + d
+                    if 0 <= cx_r < W:
+                        drop_r = self._column_top(cx_r) - my_top
+                        if drop_r > best_right_drop:
+                            best_right_drop = drop_r
+                if best_left_drop >= slump_step or best_right_drop >= slump_step:
+                    if best_left_drop > best_right_drop:
+                        best_direction = -1
+                        best_drop = best_left_drop
+                    elif best_right_drop > best_left_drop:
+                        best_direction = 1
+                        best_drop = best_right_drop
+                    else:
+                        # Equal drop on both sides — pick randomly so
+                        # particles spread laterally instead of all
+                        # drifting the same way.
+                        best_direction = -1 if self._rng.random() < 0.5 else 1
+                        best_drop = best_left_drop
                     new_x = max(0, min(W - 1, x + best_direction))
                     new_y = self._column_top(new_x) - 1
                     self.pos[i, 0] = float(new_x)
                     self.pos[i, 1] = float(max(0, new_y))
-                    # Larger velocity kick proportional to the slope
-                    # distance, so steeper drops carry the particle
-                    # further (rolling momentum).
-                    self.vel[i, 0] += best_direction * (8.0 + 4.0 * best_distance)
+                    self.vel[i, 0] += best_direction * (4.0 + 2.0 * best_drop)
                 else:
                     self.pos[i, 1] = float(y)
             mat = self.materials[int(self.material_id[i])]
