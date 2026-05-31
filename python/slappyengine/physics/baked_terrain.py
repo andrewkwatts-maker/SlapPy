@@ -48,6 +48,9 @@ def bake_settled_particles(
     bake_radius_override: int | None = None,
     per_particle_bake_radius: np.ndarray | None = None,
     jagged: bool = False,
+    shape_masks: list[np.ndarray] | None = None,
+    material_id: np.ndarray | None = None,
+    material_grid: np.ndarray | None = None,
 ) -> int:
     """Write every settled-but-not-yet-baked particle into ``terrain_rgba``.
 
@@ -95,6 +98,30 @@ def bake_settled_particles(
             if r < 1:
                 r = 1
         rgb = colour[i]
+        mat_id = int(material_id[i]) if material_id is not None else 0
+        # If a per-particle polygon shape mask is supplied, stamp the
+        # mask directly. This is what gives non-circular fragments
+        # (boulders, shards, flakes, blobs) their natural footprint —
+        # no more boxy chunks. The mask is centred on (x, y); we use
+        # the mask's own (h, w) instead of the legacy radius rect.
+        if shape_masks is not None and i < len(shape_masks) and shape_masks[i] is not None:
+            sm = shape_masks[i]
+            mh, mw = sm.shape
+            sx = x - mw // 2
+            sy = y - mh // 2
+            ys, xs = np.where(sm)
+            for py, px in zip(ys, xs):
+                nx, ny = sx + int(px), sy + int(py)
+                if 0 <= nx < W and 0 <= ny < H:
+                    terrain_rgba[ny, nx, 0] = rgb[0]
+                    terrain_rgba[ny, nx, 1] = rgb[1]
+                    terrain_rgba[ny, nx, 2] = rgb[2]
+                    terrain_rgba[ny, nx, 3] = 255
+                    if material_grid is not None:
+                        material_grid[ny, nx] = mat_id
+            bake_flag[i] = True
+            n_baked += 1
+            continue
         # Always stamp the centre pixel — both for r=0 and as a
         # guarantee against the jagged-edge dither eating the visible
         # heart of the chunk.
@@ -103,6 +130,8 @@ def bake_settled_particles(
             terrain_rgba[y, x, 1] = rgb[1]
             terrain_rgba[y, x, 2] = rgb[2]
             terrain_rgba[y, x, 3] = 255
+            if material_grid is not None:
+                material_grid[y, x] = mat_id
         if r > 0:
             # Stable per-particle RNG so re-bakes give the same shape.
             local_rng = (np.random.default_rng(int(i) * 13 + 7)
