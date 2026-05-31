@@ -75,6 +75,7 @@ from slappyengine.physics.fragment import (
     WATER_FAMILY,
     FragmentShape,
 )
+from slappyengine.physics.splat import SplatConfig, compute_splat
 
 
 _RGB = tuple[int, int, int]
@@ -183,6 +184,16 @@ class Material:
     # on flat); higher = jagged tumble (rock fragments / boulders).
     tumble_kick: float = 0.0
 
+    # ── Splat deformation ─────────────────────────────────────────────
+    # When the particle lands, its polygon stamp can squash along the
+    # impact direction and stretch perpendicular — driven by current
+    # fluidity (kinetic_age/rigidify_at lerp) and impact speed.
+    # Rigid materials (rock, ice) use SPLAT_NONE; mud/water deform.
+    # See physics/splat.SplatConfig for the field semantics.
+    splat_squash: float = 0.0
+    splat_stretch: float = 0.0
+    splat_fluidity_gate: float = 0.3
+
     # Rendering.
     color: _RGB = (200, 200, 200)
     radius_min: int = 1
@@ -265,6 +276,10 @@ MUD_MAT = Material(
     impact_stickiness=0.85,        # mud STICKS hard on impact
     kinetic_fluidity=0.5,         # globs slosh while in flight
     fragment_family=MUD_FAMILY,
+    # Mud deforms strongly on impact — sloshy globs flatten.
+    splat_squash=0.5,
+    splat_stretch=0.4,
+    splat_fluidity_gate=0.1,
 )
 
 ROCK_MAT = Material(
@@ -366,6 +381,11 @@ class ParticleField:
     # via fluid-like collision BEFORE baking, not via bake-time mask
     # overlap. The bake only fires once settle_age >= 3.
     settle_age: np.ndarray = field(init=False)
+    # Impact velocity captured at landing — drives splat deformation
+    # at bake time. (vx, vy) recorded the frame the particle's phase
+    # transitions to LANDED. Fluids and tumble-re-airborne particles
+    # get fresh impacts each landing event.
+    impact_vel: np.ndarray = field(init=False)
 
     # Per-pixel solid mask (the world).
     mask: np.ndarray = field(init=False)
@@ -406,6 +426,7 @@ class ParticleField:
         self.kinetic_age = np.zeros(0, dtype=np.int32)
         self.rigidify_at = np.zeros(0, dtype=np.int32)
         self.settle_age = np.zeros(0, dtype=np.int32)
+        self.impact_vel = np.zeros((0, 2), dtype=np.float32)
         self.mask = np.zeros((self.height, self.width, 4), dtype=np.uint8)
         # -1 = empty / unknown material.
         self.material_grid = np.full(
@@ -474,6 +495,8 @@ class ParticleField:
         self.kinetic_age = np.append(self.kinetic_age, np.int32(0))
         self.rigidify_at = np.append(
             self.rigidify_at, np.int32(rigid_at)).astype(np.int32)
+        self.impact_vel = np.vstack(
+            [self.impact_vel, [[0.0, 0.0]]]).astype(np.float32)
         # Pick a fragment shape + random rotation per particle.
         s_idx = mat.fragment_family.sample_index(self._rng)
         rot = float(self._rng.uniform(0.0, 2.0 * math.pi))
@@ -540,6 +563,8 @@ class ParticleField:
             [self.kinetic_age, np.zeros(n, dtype=np.int32)])
         self.rigidify_at = np.concatenate(
             [self.rigidify_at, rigidify_at.astype(np.int32)])
+        self.impact_vel = np.concatenate(
+            [self.impact_vel, np.zeros((n, 2), dtype=np.float32)], axis=0)
         # Per-particle fragment shape + rotation from each material's
         # family (weighted choice). Particles of the same material
         # naturally vary in shape and orientation.
@@ -661,10 +686,37 @@ class ParticleField:
                 si = int(self.shape_idx[i]) % len(family.shapes)
                 shape = family.shapes[si]
                 br = max(1, int(self.bake_radius[i]) + 1)
-                shape_masks.append(
-                    shape.bake_mask(scale=float(br),
-                                    rotation=float(self.shape_rotation[i]))
-                )
+                # ── Splat deformation ─────────────────────────────────
+                # Apply per-material splat: polygon squashes along
+                # impact direction, stretches perpendicular. The
+                # current fluidity at settle (kinetic_age vs
+                # rigidify_at lerp) gates how much; rigid materials
+                # (rock/ice) with splat_squash=0 stamp unchanged.
+                if mat.splat_squash > 0.0 or mat.splat_stretch > 0.0:
+                    cfg = SplatConfig(
+                        squash_strength=mat.splat_squash,
+                        stretch_strength=mat.splat_stretch,
+                        fluidity_gate=mat.splat_fluidity_gate,
+                    )
+                    rig = max(1, int(self.rigidify_at[i]))
+                    age = int(self.kinetic_age[i])
+                    current_fluidity = max(0.0, 1.0 - age / rig)
+                    sx, sy, rot = compute_splat(
+                        impact_vel=(float(self.impact_vel[i, 0]),
+                                    float(self.impact_vel[i, 1])),
+                        current_fluidity=current_fluidity,
+                        base_scale=float(br),
+                        base_rotation=float(self.shape_rotation[i]),
+                        cfg=cfg,
+                    )
+                    shape_masks.append(
+                        shape.bake_mask_xy(scale_x=sx, scale_y=sy, rotation=rot)
+                    )
+                else:
+                    shape_masks.append(
+                        shape.bake_mask(scale=float(br),
+                                        rotation=float(self.shape_rotation[i]))
+                    )
         bake_settled_particles(
             pos=self.pos, radius=self.radius, colour=self.color,
             landed=self.landed, settled=self.settled,
@@ -1012,6 +1064,10 @@ class ParticleField:
                         continue
                     else:
                         continue
+            # Capture impact velocity for splat deformation BEFORE we
+            # zero/mutate self.vel.
+            self.impact_vel[i, 0] = self.vel[i, 0]
+            self.impact_vel[i, 1] = self.vel[i, 1]
             self.pos[i, 0] = float(hit_x)
             self.pos[i, 1] = float(hit_y - 1)
             self._set_phase(i, Phase.LANDED)
