@@ -77,6 +77,15 @@ from slappyengine.physics.fragment import (
 )
 from slappyengine.physics.splat import SplatConfig, compute_splat
 from slappyengine.physics.fluid_bridge import FluidBridgeConfig, bridge_step
+from slappyengine.physics.thermal import (
+    ROCK_THERMAL,
+    SAND_THERMAL,
+    SNOW_THERMAL,
+    ThermalProfile,
+    WATER_THERMAL,
+    detect_phase_changes,
+    step_temperatures,
+)
 
 
 _RGB = tuple[int, int, int]
@@ -195,6 +204,12 @@ class Material:
     splat_stretch: float = 0.0
     splat_fluidity_gate: float = 0.3
 
+    # ── Thermal profile ───────────────────────────────────────────────
+    # Drives per-particle temperature decay + phase changes (water
+    # freezes → ice; ice melts → water; lava cools → rock; snow melts
+    # → water). See physics/thermal.ThermalProfile.
+    thermal: ThermalProfile = field(default_factory=ThermalProfile)
+
     # Rendering.
     color: _RGB = (200, 200, 200)
     radius_min: int = 1
@@ -247,6 +262,7 @@ WATER = Material(
     # Water naturally pools as a smooth iso-surface rather than a
     # blocky disc per particle.
     render_mode="marching_squares",
+    thermal=WATER_THERMAL,
 )
 
 SAND_MAT = Material(
@@ -262,6 +278,7 @@ SAND_MAT = Material(
     kinetic_fluidity=0.4,
     tumble_kick=0.0,              # sand rolls smoothly
     fragment_family=SAND_FAMILY,
+    thermal=SAND_THERMAL,
 )
 
 MUD_MAT = Material(
@@ -297,6 +314,7 @@ ROCK_MAT = Material(
     kinetic_fluidity=0.2,         # minimal in-flight push
     fragment_family=ROCK_FAMILY,
     tumble_kick=0.15,              # rocks kick as they tumble
+    thermal=ROCK_THERMAL,
 )
 
 SNOW_MAT = Material(
@@ -313,6 +331,7 @@ SNOW_MAT = Material(
     impact_stickiness=0.4,         # snow drifts before settling
     kinetic_fluidity=0.6,
     fragment_family=SNOW_FAMILY,
+    thermal=SNOW_THERMAL,
 )
 
 
@@ -393,6 +412,10 @@ class ParticleField:
     # transitions to LANDED. Fluids and tumble-re-airborne particles
     # get fresh impacts each landing event.
     impact_vel: np.ndarray = field(init=False)
+    # Per-particle temperature (°C). Set from material's thermal
+    # profile on spawn; relaxes toward ambient per step; triggers
+    # phase changes (water → ice, lava → rock, snow → water).
+    temperature: np.ndarray = field(init=False)
 
     # Per-pixel solid mask (the world).
     mask: np.ndarray = field(init=False)
@@ -434,6 +457,7 @@ class ParticleField:
         self.rigidify_at = np.zeros(0, dtype=np.int32)
         self.settle_age = np.zeros(0, dtype=np.int32)
         self.impact_vel = np.zeros((0, 2), dtype=np.float32)
+        self.temperature = np.zeros(0, dtype=np.float32)
         self.mask = np.zeros((self.height, self.width, 4), dtype=np.uint8)
         # -1 = empty / unknown material.
         self.material_grid = np.full(
@@ -504,6 +528,10 @@ class ParticleField:
             self.rigidify_at, np.int32(rigid_at)).astype(np.int32)
         self.impact_vel = np.vstack(
             [self.impact_vel, [[0.0, 0.0]]]).astype(np.float32)
+        self.temperature = np.append(
+            self.temperature,
+            np.float32(mat.thermal.initial_temperature)
+        ).astype(np.float32)
         # Pick a fragment shape + random rotation per particle.
         s_idx = mat.fragment_family.sample_index(self._rng)
         rot = float(self._rng.uniform(0.0, 2.0 * math.pi))
@@ -572,6 +600,13 @@ class ParticleField:
             [self.rigidify_at, rigidify_at.astype(np.int32)])
         self.impact_vel = np.concatenate(
             [self.impact_vel, np.zeros((n, 2), dtype=np.float32)], axis=0)
+        # Per-particle initial temperature from each material's thermal
+        # profile (so lava chunks start at 1200 °C, snow at -5 °C, etc.).
+        new_temps = np.zeros(n, dtype=np.float32)
+        for k in range(n):
+            mat = self.materials[int(material_ids[k])]
+            new_temps[k] = mat.thermal.initial_temperature
+        self.temperature = np.concatenate([self.temperature, new_temps])
         # Per-particle fragment shape + rotation from each material's
         # family (weighted choice). Particles of the same material
         # naturally vary in shape and orientation.
@@ -660,6 +695,12 @@ class ParticleField:
         # get pushed apart so they cluster into a contiguous body
         # rather than stacking on a single pixel. Cheap O(N) over the
         # fluid subset.
+        # Per-particle thermal relaxation + phase changes. Each
+        # particle's temperature decays toward its material's ambient;
+        # crossing melt_at or freeze_at flips its material_id (water →
+        # ice, snow → water, lava → rock). Skipped when no thermal
+        # profile has any phase-change rules.
+        self._thermal_step(dt)
         # Route fluid particles through the canonical PBF solver
         # (slappyengine.fluid.pbf_step via physics.fluid_bridge). Replaces
         # the naive _fluid_relax for proper Macklin 2013 density
@@ -967,6 +1008,34 @@ class ParticleField:
                         push[b, 0] -= nx * f
                         push[b, 1] -= ny * f
         self.pos[idx] += push
+
+    def _thermal_step(self, dt: float) -> None:
+        """Relax each particle's temperature toward its material's
+        ambient and flip material_id when phase-change thresholds
+        are crossed."""
+        if self.pos.shape[0] == 0:
+            return
+        profiles = [m.thermal for m in self.materials]
+        # Skip the work entirely if nobody decays or phase-changes.
+        if not any(
+            p.decay_per_sec > 0.0 or p.melt_at is not None or p.freeze_at is not None
+            for p in profiles
+        ):
+            return
+        step_temperatures(
+            self.temperature, self.material_id, profiles, dt,
+        )
+        new_ids = detect_phase_changes(
+            self.temperature, self.material_id, profiles, self._name_to_id,
+        )
+        # Apply phase changes — colour follows the new material; spawn
+        # the particle as if just re-spawned (kinetic_age reset).
+        changed = new_ids != self.material_id
+        if changed.any():
+            self.material_id[changed] = new_ids[changed]
+            for i in np.nonzero(changed)[0]:
+                new_mat = self.materials[int(new_ids[i])]
+                self.color[i] = new_mat.color
 
     def _pbf_bridge_step(self, dt: float) -> None:
         """Route fluid-material particles through the canonical PBF.
