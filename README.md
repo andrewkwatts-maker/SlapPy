@@ -2,7 +2,11 @@
 
 **2D pixel-art game engine with optional 3D layers, a Rust core, and wgpu rendering.**
 
-Build expressive 2D games in Python — from classic pixel-art shooters to hybrid 2D/3D worlds — backed by a Rust `_core` extension (PyO3 / maturin) and cross-platform GPU rendering via wgpu. The v0.3 line widens the public surface from physics + render kernels to a full game-side contract: dynamics, zones, topology, numerics, thermal, iso, telemetry, and a visual-regression testing harness.
+Build expressive 2D games in Python — from classic pixel-art shooters to hybrid 2D/3D worlds — backed by a Rust `_core` extension (PyO3 / maturin) and cross-platform GPU rendering via wgpu.
+
+## What's new in v0.3.0
+
+The v0.3 line widens the public surface from physics + render kernels to a full game-side contract: dynamics, zones, topology, numerics, thermal, iso, telemetry, and a visual-regression testing harness. See the full [CHANGELOG](CHANGELOG.md#030--2026-05-31) and the auto-generated [engine surface reference](docs/engine_surface_v030.md).
 
 ---
 
