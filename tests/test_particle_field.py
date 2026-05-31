@@ -21,6 +21,34 @@ def test_builtins_cover_expected_substances() -> None:
     assert names == {"water", "sand", "mud", "rock", "snow", "ice"}
 
 
+def test_use_thermal_false_keeps_snow_as_snow() -> None:
+    """With ``use_thermal=False`` the thermal pass is skipped, so
+    snow particles never melt to water — useful for "stays snow"
+    rendering mode."""
+    f = ParticleField(width=64, height=64, use_thermal=False)
+    snow_mid = f.material_id_of("snow")
+    water_mid = f.material_id_of("water")
+    f.spawn(x=32, y=10, vx=0, vy=20, material="snow", radius=1)
+    for _ in range(60):
+        f.step(1.0 / 60.0)
+    assert (f.material_id == snow_mid).all()
+    assert int((f.material_id == water_mid).sum()) == 0
+
+
+def test_use_thermal_true_default_melts_snow() -> None:
+    """Confirm the default behaviour (use_thermal=True) still applies
+    phase changes — so the explicit-disable test above isn't a no-op."""
+    f = ParticleField(width=64, height=64)  # use_thermal=True default
+    snow_mid = f.material_id_of("snow")
+    water_mid = f.material_id_of("water")
+    f.spawn(x=32, y=10, vx=0, vy=20, material="snow", radius=1)
+    for _ in range(60):
+        f.step(1.0 / 60.0)
+    # Snow's SNOW_THERMAL: initial 10°C, ambient 20°C, melt_at 2°C →
+    # phase-changes to water on the first frame.
+    assert int(f.material_id[0]) == water_mid
+
+
 def test_engine_user_can_register_custom_material() -> None:
     # The whole point of Material being a public dataclass is that
     # users can define their own substances. Verify the flow.

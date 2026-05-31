@@ -77,9 +77,11 @@ def run_preset(
     *,
     frames: int = 130,
     render_mode: str = "discs",
+    use_thermal: bool = True,
 ) -> Path:
     rng = np.random.default_rng(2026)
-    field = ParticleField(width=W, height=H, gravity=preset.gravity)
+    field = ParticleField(width=W, height=H, gravity=preset.gravity,
+                          use_thermal=use_thermal)
     ground_top, ground_sub = _ground_for_preset(preset)
     field.fill_ground(top_y=GROUND_Y, color=ground_top, sub_color=ground_sub)
 
@@ -127,6 +129,8 @@ def run_preset(
     out_dir = Path(__file__).parent / "output" / "particles"
     out_dir.mkdir(parents=True, exist_ok=True)
     suffix = "" if preset.name == "sand" else f"_{preset.name}"
+    if not use_thermal:
+        suffix += "_solid"  # snow stays snow, etc.
     if render_mode != "discs":
         suffix += f"_{render_mode}"
     out_path = out_dir / f"sand_crater{suffix}.gif"
@@ -171,15 +175,18 @@ def main() -> None:
     ap.add_argument("--frames", type=int, default=130)
     ap.add_argument("--render", default="discs",
                     choices=["discs", "marching_squares"])
+    ap.add_argument("--no-thermal", action="store_true",
+                    help="disable thermal phase changes (snow stays snow)")
     args = ap.parse_args()
 
+    use_thermal = not args.no_thermal
     if args.all:
         for name in PRESETS:
             run_preset(get_preset(name), frames=args.frames,
-                       render_mode=args.render)
+                       render_mode=args.render, use_thermal=use_thermal)
     else:
         run_preset(get_preset(args.preset), frames=args.frames,
-                   render_mode=args.render)
+                   render_mode=args.render, use_thermal=use_thermal)
 
 
 if __name__ == "__main__":

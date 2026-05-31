@@ -421,6 +421,12 @@ class ParticleField:
     # in slappyengine.physics.particle_gpu (gpu_thermal_step). Default
     # OFF — mirrors use_gpu_integrate's opt-in pattern.
     use_gpu_thermal: bool = False
+    # Master toggle for the thermal pass. When False, _thermal_step
+    # (and gpu_thermal_step) are skipped — particle temperatures never
+    # relax and phase changes never fire. Useful for "snow that stays
+    # snow" mode where the user doesn't want the default melt-on-spawn
+    # behaviour. Default True preserves the current SNOW_MAT semantics.
+    use_thermal: bool = True
     # When True, route _kinetic_relax through the WGSL compute kernel.
     # Default OFF — see particle_gpu.gpu_kinetic_relax for the break-even
     # particle count (round-trip is slower than vectorised numpy until
@@ -902,13 +908,14 @@ class ParticleField:
         # crossing melt_at or freeze_at flips its material_id (water →
         # ice, snow → water, lava → rock). Skipped when no thermal
         # profile has any phase-change rules.
-        if self.use_gpu_thermal:
-            # Lazy import — avoids paying the wgpu cost when the
-            # GPU path is disabled (the default).
-            from slappyengine.physics.particle_gpu import gpu_thermal_step
-            gpu_thermal_step(self, dt)
-        else:
-            self._thermal_step(dt)
+        if self.use_thermal:
+            if self.use_gpu_thermal:
+                # Lazy import — avoids paying the wgpu cost when the
+                # GPU path is disabled (the default).
+                from slappyengine.physics.particle_gpu import gpu_thermal_step
+                gpu_thermal_step(self, dt)
+            else:
+                self._thermal_step(dt)
         # Route fluid particles through the canonical PBF solver
         # (slappyengine.fluid.pbf_step via physics.fluid_bridge). Replaces
         # the naive _fluid_relax for proper Macklin 2013 density
