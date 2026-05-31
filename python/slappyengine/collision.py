@@ -165,13 +165,91 @@ class CollisionWorld:
         self._mask_initialized = True
 
     def stamp_entity(self, encoder, entity, entity_idx: int) -> None:
-        """CPU-side: stamp entity AABB onto mask texture via buffer write."""
+        """CPU-side: stamp entity silhouette onto the mask texture.
+
+        Reads the alpha channel of the entity's primary Layer (``entity.layers[0]``)
+        and uploads a r32uint stamp where every pixel with ``alpha > 127`` carries
+        ``entity_idx``. Anything off the mask is clipped. ``entity_idx == 0`` is
+        reserved for "empty" in the collision_mask shader and is skipped.
+
+        No-op if GPU init was never performed.
+        """
         # Skip if no GPU context
         if not getattr(self, '_mask_initialized', False):
             return
-        # For now, mark regions in a CPU numpy array and upload at end of frame
-        # Full GPU-side stamp shader is a future enhancement
-        pass
+        # entity_idx 0 is reserved for "empty" in the shader
+        if entity_idx == 0:
+            return
+
+        import numpy as np
+
+        layers = getattr(entity, "layers", None)
+        if not layers:
+            return
+        img = getattr(layers[0], "_image_data", None)
+        if img is None or img.ndim != 3 or img.shape[2] < 4:
+            return
+
+        eh, ew = img.shape[0], img.shape[1]
+        # Entity position is the top-left of the silhouette in mask space.
+        px = int(round(float(entity.position[0])))
+        py = int(round(float(entity.position[1])))
+
+        mw, mh = self._mask_width, self._mask_height
+
+        # Compute clipped intersection of [px, px+ew) × [py, py+eh) with [0, mw) × [0, mh).
+        x0 = max(px, 0)
+        y0 = max(py, 0)
+        x1 = min(px + ew, mw)
+        y1 = min(py + eh, mh)
+        if x0 >= x1 or y0 >= y1:
+            return  # fully offscreen
+
+        # Slice the entity's alpha channel for the in-bounds region.
+        sx0 = x0 - px
+        sy0 = y0 - py
+        sx1 = sx0 + (x1 - x0)
+        sy1 = sy0 + (y1 - y0)
+        alpha = img[sy0:sy1, sx0:sx1, 3]
+        stamp = np.where(alpha > 127, np.uint32(entity_idx), np.uint32(0))
+        stamp = np.ascontiguousarray(stamp, dtype=np.uint32)
+
+        w = x1 - x0
+        h = y1 - y0
+        self._gpu.device.queue.write_texture(
+            {"texture": self._mask_texture, "origin": (x0, y0, 0)},
+            stamp.tobytes(),
+            {"bytes_per_row": w * 4, "rows_per_image": h},
+            (w, h, 1),
+        )
+
+    def stamp_all_entities(self, encoder, entities) -> None:
+        """Clear the mask once, then stamp every collidable entity.
+
+        Entities with ``collision_shape is None`` are skipped. Each remaining
+        entity is stamped with a 1-based index (so id 0 stays reserved for
+        "empty" in the collision_mask shader).
+        """
+        if not getattr(self, '_mask_initialized', False):
+            return
+
+        import numpy as np
+
+        mw, mh = self._mask_width, self._mask_height
+        clear = np.zeros((mh, mw), dtype=np.uint32)
+        self._gpu.device.queue.write_texture(
+            {"texture": self._mask_texture, "origin": (0, 0, 0)},
+            clear.tobytes(),
+            {"bytes_per_row": mw * 4, "rows_per_image": mh},
+            (mw, mh, 1),
+        )
+
+        idx = 1
+        for entity in entities:
+            if getattr(entity, "collision_shape", None) is None:
+                continue
+            self.stamp_entity(encoder, entity, idx)
+            idx += 1
 
     def dispatch_pixel_scan(self, encoder) -> None:
         """Dispatch the collision_mask compute shader over the mask texture."""
