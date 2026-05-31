@@ -970,8 +970,7 @@ class ParticleField:
             x = int(self.pos[i, 0])
             y = int(self.pos[i, 1])
             if x < 0 or x >= W or y >= H:
-                self.landed[i] = True
-                self.settled[i] = True
+                self._set_phase(i, Phase.SETTLING)
                 continue
             if y < 0:
                 continue
@@ -1015,7 +1014,7 @@ class ParticleField:
                         continue
             self.pos[i, 0] = float(hit_x)
             self.pos[i, 1] = float(hit_y - 1)
-            self.landed[i] = True
+            self._set_phase(i, Phase.LANDED)
             if mat.is_fluid:
                 # Fluid landing: kill the downward velocity but do NOT
                 # bounce. Bouncing kept water oscillating at the surface
@@ -1023,7 +1022,9 @@ class ParticleField:
                 # vy=0 lets gravity re-accelerate immediately, so the
                 # particle falls into any hole that opens beneath it.
                 self.vel[i, 1] = 0.0
-                self.landed[i] = False  # keep integrating
+                # Fluids never permanently land — pop back to AIRBORNE
+                # so gravity carries them into the next hole.
+                self._set_phase(i, Phase.AIRBORNE)
             else:
                 # Solid impact: collapse the remaining kinetic time by
                 # ``impact_stickiness``. impact_stickiness=0 leaves the
@@ -1051,7 +1052,7 @@ class ParticleField:
         vy = float(self.vel[i, 1])
         speed = math.hypot(vx, vy)
         if speed <= 0.0:
-            self.landed[i] = True
+            self._set_phase(i, Phase.LANDED)
             return
         dx = vx / speed
         dy = vy / speed
@@ -1088,7 +1089,7 @@ class ParticleField:
                 # Out of steam — stop inside the wall.
                 self.pos[i, 0] = float(xi)
                 self.pos[i, 1] = float(yi)
-                self.landed[i] = True
+                self._set_phase(i, Phase.LANDED)
                 break
             px += dx
             py += dy
@@ -1096,7 +1097,7 @@ class ParticleField:
             # Loop completed without break — exited cleanly.
             self.pos[i, 0] = px
             self.pos[i, 1] = py
-            self.landed[i] = False
+            self._set_phase(i, Phase.AIRBORNE)
         # Spawn ejecta proportional to drilled pixels.
         n_eject = int(round(drilled * gain))
         if n_eject > 0 and line_colours:
@@ -1182,15 +1183,14 @@ class ParticleField:
                 kick = mat.tumble_kick * abs(self.vel[i, 0]) * \
                     float(self._rng.uniform(0.3, 1.0))
                 self.vel[i, 1] = -kick  # negative = upward
-                # Once kicked, particle re-enters airborne (vy < 0 → no
-                # collide until falling), so unset landed for one frame.
-                self.landed[i] = False
+                # Tumble kick re-airbornes the particle for one frame.
+                self._set_phase(i, Phase.AIRBORNE)
             jitter = mat.settle_jitter
             base = mat.settle_speed_threshold
             threshold = base * (1.0 + float(self._rng.uniform(-jitter, jitter))) \
                 if jitter > 0 else base
             if abs(self.vel[i, 0]) < threshold:
-                self.settled[i] = True
+                self._set_phase(i, Phase.SETTLING)
                 self.vel[i, 0] = 0.0
 
     # ── State machine transitions ────────────────────────────────────
