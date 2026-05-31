@@ -144,6 +144,25 @@ class Material:
     # the system-wide knob for how much material survives the impact.
     drill_eject_gain: float = 0.0
 
+    # ── Drill polish ──────────────────────────────────────────────────
+    # Radius of the impact crater cleared at the bullet's entry point
+    # BEFORE the drill walk begins. 0 = single-pixel pinhole; 2 = 5x5
+    # entry wound; 3 = 7x7. Configurable per material — soft tissue
+    # (mud) gives big craters, hard ceramic (rock) gives small ones.
+    drill_entry_crater: int = 0
+    # Per-pixel deflection: at each drill step, the bullet's direction
+    # gets nudged toward whatever neighbouring pixels are already
+    # empty. Higher = stronger bias toward existing holes (creates
+    # natural clustering when many bullets hit a small area).
+    drill_deflection: float = 0.0
+    # Fracture threshold — after drilling, count the fraction of empty
+    # pixels in a 7x7 window around the final position. If that
+    # fraction exceeds drill_fracture_threshold, expand the hole by
+    # one ring (simulates structural failure under concentrated fire).
+    # 0.0 disables. 1.0 = never trigger (requires every neighbour to
+    # already be empty, which means hole is fully developed).
+    drill_fracture_threshold: float = 1.0
+
     # General mass-conservation dial. Multiplied into every "create
     # particle" path (drill ejecta, drill drill-trail painting). < 1.0
     # = some material is lost on impact (compaction); 1.0 = exact;
@@ -1300,13 +1319,34 @@ class ParticleField:
         drilled = 0
         gain = mat.drill_eject_gain * mat.mass_conservation
         # Capture colours AND material ids along the drill line so any
-        # ejecta we spawn inherits the WALL's material (not the bullet's,
-        # which would make ejecta drill recursively → exponential
-        # explosion). The wall's material id is what the user sees as
-        # fragments of stone, brick, etc.
+        # ejecta we spawn inherits the WALL's material.
         line_colours: list[tuple[int, int, int]] = []
         line_mids: list[int] = []
         bullet_mid = int(self.material_id[i])
+        # ── Entry impact crater ──────────────────────────────────────
+        # Clear a small disc at the impact point before the drill walk
+        # begins. Visual win: bullets read as IMPACT, not just a 1-px
+        # pinhole. Per-material configurable.
+        if mat.drill_entry_crater > 0:
+            cr = mat.drill_entry_crater
+            for ddy in range(-cr, cr + 1):
+                for ddx in range(-cr, cr + 1):
+                    if ddx * ddx + ddy * ddy > cr * cr:
+                        continue
+                    cx, cy = x + ddx, hit_y + ddy
+                    if not (0 <= cx < W and 0 <= cy < H):
+                        continue
+                    if self.mask[cy, cx, 3] > 0:
+                        line_colours.append((
+                            int(self.mask[cy, cx, 0]),
+                            int(self.mask[cy, cx, 1]),
+                            int(self.mask[cy, cx, 2]),
+                        ))
+                        wm = int(self.material_grid[cy, cx])
+                        line_mids.append(wm if wm >= 0 else bullet_mid)
+                        self.mask[cy, cx, 3] = 0
+                        self.loose[cy, cx] = False
+                        drilled += 1
         while drilled < mat.drill_max_px:
             xi = int(px)
             yi = int(py)
@@ -1330,11 +1370,46 @@ class ParticleField:
             vsq = (self.vel[i, 0] ** 2 + self.vel[i, 1] ** 2)
             ke = 0.5 * (max(1.0, self.radius[i]) ** 2) * vsq
             if ke < mat.binding_force * 0.5:
-                # Out of steam — stop inside the wall.
+                # Out of steam — bullet LODGES in the wall. Stamp it
+                # directly into the mask so the slide path can't walk
+                # it back up to the wall surface (user: "bullets seem
+                # to teleport to the top of the object after stopping").
+                if 0 <= xi < W and 0 <= yi < H:
+                    self.mask[yi, xi, 0] = self.color[i, 0]
+                    self.mask[yi, xi, 1] = self.color[i, 1]
+                    self.mask[yi, xi, 2] = self.color[i, 2]
+                    self.mask[yi, xi, 3] = 255
                 self.pos[i, 0] = float(xi)
                 self.pos[i, 1] = float(yi)
-                self._set_phase(i, Phase.LANDED)
+                self._set_phase(i, Phase.BAKED)
                 break
+            # ── Deflection toward existing holes ─────────────────────
+            # At each drilled pixel, nudge the velocity direction
+            # toward any empty neighbour (existing drill hole). Creates
+            # natural clustering when many bullets hit a small area.
+            if mat.drill_deflection > 0.0:
+                bias_x = 0.0
+                bias_y = 0.0
+                for nx_off in (-1, 0, 1):
+                    for ny_off in (-1, 0, 1):
+                        if nx_off == 0 and ny_off == 0:
+                            continue
+                        nx, ny = xi + nx_off, yi + ny_off
+                        if not (0 <= nx < W and 0 <= ny < H):
+                            continue
+                        if self.mask[ny, nx, 3] == 0:
+                            bias_x += float(nx_off)
+                            bias_y += float(ny_off)
+                if bias_x != 0.0 or bias_y != 0.0:
+                    bnorm = math.hypot(bias_x, bias_y)
+                    bx = bias_x / bnorm
+                    by = bias_y / bnorm
+                    s = mat.drill_deflection
+                    dx = (1.0 - s) * dx + s * bx
+                    dy = (1.0 - s) * dy + s * by
+                    n = math.hypot(dx, dy) or 1.0
+                    dx /= n
+                    dy /= n
             px += dx
             py += dy
         else:
@@ -1378,6 +1453,39 @@ class ParticleField:
                 material_ids=ej_mids, radii=ej_radii,
                 colors=ej_colours,
             )
+        # ── Fracture pass ────────────────────────────────────────────
+        # If the local hole density around the final position exceeds
+        # the threshold, expand the hole by clearing the surrounding
+        # ring. Simulates structural failure under concentrated fire.
+        if mat.drill_fracture_threshold < 1.0 and drilled > 0:
+            cx, cy = int(px), int(py)
+            R = 3  # 7x7 window
+            empty_count = 0
+            total = 0
+            for ddy in range(-R, R + 1):
+                for ddx in range(-R, R + 1):
+                    nx, ny = cx + ddx, cy + ddy
+                    if not (0 <= nx < W and 0 <= ny < H):
+                        continue
+                    total += 1
+                    if self.mask[ny, nx, 3] == 0:
+                        empty_count += 1
+            if total > 0:
+                density = empty_count / total
+                if density > mat.drill_fracture_threshold:
+                    # Expand: clear a 5x5 ring of new pixels.
+                    ER = R + 2
+                    for ddy in range(-ER, ER + 1):
+                        for ddx in range(-ER, ER + 1):
+                            d2 = ddx * ddx + ddy * ddy
+                            if d2 < R * R or d2 > ER * ER:
+                                continue
+                            nx, ny = cx + ddx, cy + ddy
+                            if not (0 <= nx < W and 0 <= ny < H):
+                                continue
+                            if self.mask[ny, nx, 3] > 0:
+                                self.mask[ny, nx, 3] = 0
+                                self.loose[ny, nx] = False
 
     def _slide(self, slide_mask: np.ndarray, dt: float) -> None:
         H, W = self.mask.shape[:2]

@@ -47,15 +47,21 @@ def main() -> Path:
     bullet = field.register_material(Material(
         name="bullet",
         binding_force=2.0e3,
-        drill_max_px=6,              # was 20 — wall doesn't evaporate
+        drill_max_px=6,
         drill_velocity_loss=0.85,
-        drill_eject_gain=0.8,         # was 2.0 — far less ejecta cascade
+        drill_eject_gain=0.8,
         mass_conservation=1.0,
-        gravity_scale=0.5,            # was 0 — bullets drop in flight
+        gravity_scale=0.5,
         air_drag_per_sec=0.95,
         radius_min=1,
         radius_max=1,
         color=(255, 220, 100),
+        # Drill polish: small entry crater for a real impact wound,
+        # bias drill direction toward existing holes for clustering,
+        # and let concentrated fire fracture the wall.
+        drill_entry_crater=2,                 # 5x5 entry disc
+        drill_deflection=0.25,                # bullets curve toward holes
+        drill_fracture_threshold=0.55,        # >55% local empty → fracture
     ))
     # Stone material the wall is made of. Ejecta inherit THIS via the
     # mask sampling now built into _drill_through (no more bullets-as-
