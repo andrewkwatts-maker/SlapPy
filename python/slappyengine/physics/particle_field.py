@@ -412,6 +412,34 @@ class ParticleField:
     # slappyengine.physics.particle_gpu. Default OFF so existing tests
     # are unchanged; opt-in until parity + perf are settled.
     use_gpu_integrate: bool = False
+    # When True, route the drill branch of _collide through the WGSL
+    # kernel in slappyengine.physics.particle_gpu_drill. Default OFF.
+    # Triggers an ejecta-counter readback per step — the per-frame
+    # CPU/GPU sync is the dominant cost; amortises across many bullets.
+    use_gpu_drill: bool = False
+    # When True, route _thermal_step through the WGSL compute kernel
+    # in slappyengine.physics.particle_gpu (gpu_thermal_step). Default
+    # OFF — mirrors use_gpu_integrate's opt-in pattern.
+    use_gpu_thermal: bool = False
+    # When True, route _kinetic_relax through the WGSL compute kernel.
+    # Default OFF — see particle_gpu.gpu_kinetic_relax for the break-even
+    # particle count (round-trip is slower than vectorised numpy until
+    # the particle count is high enough to amortise the rebuild +
+    # upload + readback cost).
+    use_gpu_kinetic_relax: bool = False
+    # When True, route _collide through the WGSL compute kernel in
+    # slappyengine.physics.particle_gpu (gpu_collide). Default OFF;
+    # opt-in until parity + perf are settled. The drill branch is NOT
+    # implemented in the collide kernel — frames with any active drill
+    # material transparently fall back to the CPU path inside
+    # gpu_collide for correctness.
+    use_gpu_collide: bool = False
+    # When True, route _slide through the WGSL compute kernel in
+    # slappyengine.physics.particle_gpu (gpu_slide). Default OFF.
+    # NB: GPU path uses a per-particle PCG32 RNG instead of the shared
+    # ``self._rng`` — so jitter draws diverge bit-exactly from CPU.
+    # Tolerance is ≈1 px on pos, ≈2 px/s on vel.
+    use_gpu_slide: bool = False
 
     # Particle SoA — initialised empty, grown via spawn().
     pos: np.ndarray = field(init=False)
@@ -464,6 +492,12 @@ class ParticleField:
     # profile on spawn; relaxes toward ambient per step; triggers
     # phase changes (water → ice, lava → rock, snow → water).
     temperature: np.ndarray = field(init=False)
+    # Per-particle PCG32 RNG state — seeded from ``self._rng`` at spawn
+    # so the sequence is reproducible. Advances each step inside
+    # ``gpu_slide`` (and its numpy fallback). Lets every particle draw
+    # its own jitter without serialising on a shared generator, which
+    # is what makes the GPU port practical.
+    rng_state: np.ndarray = field(init=False)
 
     # Per-pixel solid mask (the world).
     mask: np.ndarray = field(init=False)
@@ -506,6 +540,7 @@ class ParticleField:
         self.settle_age = np.zeros(0, dtype=np.int32)
         self.impact_vel = np.zeros((0, 2), dtype=np.float32)
         self.temperature = np.zeros(0, dtype=np.float32)
+        self.rng_state = np.zeros(0, dtype=np.uint32)
         self.mask = np.zeros((self.height, self.width, 4), dtype=np.uint8)
         # -1 = empty / unknown material.
         self.material_grid = np.full(
@@ -602,6 +637,14 @@ class ParticleField:
         self.shape_idx = np.append(self.shape_idx, np.int32(s_idx))
         self.shape_rotation = np.append(
             self.shape_rotation, np.float32(rot)).astype(np.float32)
+        # Seed PCG32 state for this particle from the field RNG.
+        # PCG accepts any non-zero u32; if the draw happens to be 0
+        # we bump to 1 (degenerate state where the multiplier-step
+        # would never escape 0 — pcg32 outputs 0 forever from state 0
+        # in some variants; the multiply-then-shift form we use is
+        # fine but a 0 input makes the first output 0 too).
+        seed_u32 = int(self._rng.integers(1, 2**32, dtype=np.uint32))
+        self.rng_state = np.append(self.rng_state, np.uint32(seed_u32))
         return self.pos.shape[0] - 1
 
     def spawn_batch(
@@ -681,6 +724,11 @@ class ParticleField:
         rotations = self._rng.uniform(0.0, 2.0 * math.pi, n).astype(np.float32)
         self.shape_idx = np.concatenate([self.shape_idx, s_idx])
         self.shape_rotation = np.concatenate([self.shape_rotation, rotations])
+        # PCG32 seeds — one per particle, all non-zero (see spawn()).
+        new_seeds = self._rng.integers(
+            1, 2**32, size=n, dtype=np.uint32)
+        self.rng_state = np.concatenate(
+            [self.rng_state, new_seeds.astype(np.uint32)])
 
     # ── Static-terrain helpers ─────────────────────────────────────────
 
@@ -784,7 +832,34 @@ class ParticleField:
                 gpu_integrate(self, dt)
             else:
                 self._integrate(air_mask, dt)
-            self._collide(air_mask, dt)
+            if self.use_gpu_drill:
+                # Lazy import for the same reason. GPU drill handles
+                # the drill branch of _collide on the device; the CPU
+                # _collide path then runs the non-drill (landing /
+                # fluid bounce / settling) work for any drilling
+                # bullet that didn't lodge AND for every non-drilling
+                # particle. _collide()'s drill branch is gated by
+                # mat.drill_max_px > 0, and when use_gpu_drill is True
+                # we skip that branch (see _collide).
+                from slappyengine.physics.particle_gpu_drill import (
+                    gpu_drill_through,
+                )
+                gpu_drill_through(self, dt)
+                # Re-derive air_mask: GPU drill may have lodged bullets
+                # (phase → BAKED) so they should be excluded from the
+                # subsequent _collide call.
+                air_mask = ~self.landed
+            if air_mask.any():
+                if self.use_gpu_collide:
+                    # Lazy import — only pay the wgpu cost when the GPU
+                    # collide path is opted into. gpu_collide handles
+                    # the same per-particle work as ``_collide`` for the
+                    # AIRBORNE subset. Drill materials fall back to the
+                    # CPU path transparently (see particle_gpu).
+                    from slappyengine.physics.particle_gpu import gpu_collide
+                    gpu_collide(self, dt)
+                else:
+                    self._collide(air_mask, dt)
         # Fluid pooling — particles whose material has binding_force=0
         # get pushed apart so they cluster into a contiguous body
         # rather than stacking on a single pixel. Cheap O(N) over the
@@ -794,7 +869,13 @@ class ParticleField:
         # crossing melt_at or freeze_at flips its material_id (water →
         # ice, snow → water, lava → rock). Skipped when no thermal
         # profile has any phase-change rules.
-        self._thermal_step(dt)
+        if self.use_gpu_thermal:
+            # Lazy import — avoids paying the wgpu cost when the
+            # GPU path is disabled (the default).
+            from slappyengine.physics.particle_gpu import gpu_thermal_step
+            gpu_thermal_step(self, dt)
+        else:
+            self._thermal_step(dt)
         # Route fluid particles through the canonical PBF solver
         # (slappyengine.fluid.pbf_step via physics.fluid_bridge). Replaces
         # the naive _fluid_relax for proper Macklin 2013 density
@@ -807,10 +888,20 @@ class ParticleField:
         # Kinetic-phase relax — landed-but-not-rigid solid particles
         # also push apart (lateral spread), mimicking a wet glob phase
         # that crystallises as the rigidify timer expires.
-        self._kinetic_relax(dt)
+        if self.use_gpu_kinetic_relax:
+            from slappyengine.physics.particle_gpu import gpu_kinetic_relax
+            gpu_kinetic_relax(self, dt)
+        else:
+            self._kinetic_relax(dt)
         slide_mask = self.landed & ~self.settled
         if slide_mask.any():
-            self._slide(slide_mask, dt)
+            if self.use_gpu_slide:
+                # Lazy import — avoids paying the wgpu cost when the
+                # GPU path is disabled (the default).
+                from slappyengine.physics.particle_gpu import gpu_slide
+                gpu_slide(self, dt)
+            else:
+                self._slide(slide_mask, dt)
         # Settle bake — use per-particle bake_radius so chunks bake
         # chunky (3×3 or 5×5) while grains stay 1px. Total bake mass
         # is sum of (2*br+1)² across settled particles — predictable
@@ -1414,7 +1505,17 @@ class ParticleField:
             if hit_x < 0:
                 continue
             # ── High-velocity drilling path ──────────────────────────
+            # When use_gpu_drill is True, the drill branch ran on the
+            # GPU in particle_gpu_drill.gpu_drill_through() before
+            # _collide was called. We still skip the landing-into-mask
+            # path below for drill bullets because a drill bullet that
+            # didn't lodge has already had its pos/vel/phase updated by
+            # the kernel; the CPU-side _collide pass would otherwise
+            # treat it as a fresh hit and stamp it on top of whatever
+            # wall pixel it's currently inside.
             if mat.drill_max_px > 0:
+                if self.use_gpu_drill:
+                    continue
                 vsq = float(self.vel[i, 0] ** 2 + self.vel[i, 1] ** 2)
                 ke = 0.5 * (max(1.0, self.radius[i]) ** 2) * vsq
                 if ke > mat.binding_force:
