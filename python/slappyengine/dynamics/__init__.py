@@ -20,6 +20,15 @@ chains coexist in a single :meth:`World.step` with no special-case branches.
 from __future__ import annotations
 
 from .body import Body
+from .humanoid import (
+    Humanoid,
+    LAYER_BONE,
+    LAYER_MUSCLE,
+    LAYER_SKIN,
+    make_humanoid,
+    place_feet_on_terrain,
+    wrap_in_flesh,
+)
 from .ik import IKChainSpec, solve_ik
 from .joint import JointSpec, KIND_PARAM_KEYS, resolve as resolve_joint
 from .material import Material
@@ -56,6 +65,13 @@ __all__ = [
     "BoneSpec",
     "RagdollSpec",
     "build_ragdoll",
+    "Humanoid",
+    "LAYER_BONE",
+    "LAYER_MUSCLE",
+    "LAYER_SKIN",
+    "make_humanoid",
+    "wrap_in_flesh",
+    "place_feet_on_terrain",
     "IKChainSpec",
     "solve_ik",
     "World",
