@@ -960,6 +960,60 @@ class ParticleField:
         # its bake_radius and shape_rotation. Falls back to the
         # jagged-disc path if a particle has no shape.
         to_bake_mask = self.settled & self.landed & ~self.bake_flag
+        # ── Pre-bake spread w/ angle-of-repose enforcement ──────────
+        # For each settled particle, compute the pile slope from the
+        # target column to lateral neighbours. If the slope exceeds the
+        # material's configured ``slump_angle_deg`` (sand 33°, rock 40°,
+        # mud 70°, snow 50°), redirect to the steepest-drop neighbour.
+        # Then claim the chosen pixel so subsequent particles don't
+        # overlap it ("once a particle is free, it stays free").
+        if to_bake_mask.any() and not gpu_baked:
+            solid = self.mask[..., 3] > 0
+            Hh, Ww = solid.shape
+            # Per-column top y (first solid row from top). Empty cols → Hh.
+            any_solid = solid.any(axis=0)
+            col_top_y = np.where(any_solid, solid.argmax(axis=0), Hh)
+            # Mutable view we update as each particle claims a pixel.
+            claim_top_y = col_top_y.copy()
+            search_r = 12  # lateral search radius
+            for i in np.nonzero(to_bake_mask)[0]:
+                bx = int(self.pos[i, 0])
+                by = int(self.pos[i, 1])
+                if not (0 <= bx < Ww):
+                    continue
+                mat = self.materials[int(self.material_id[i])]
+                max_slope = math.tan(math.radians(
+                    min(89.0, mat.slump_angle_deg)))
+                my_top = claim_top_y[bx]
+                # Pick the LOWEST-pile column within search_r (highest
+                # top_y value = shortest pile). Tie-break randomly.
+                best_x = bx
+                best_top = my_top
+                for dist in range(1, search_r + 1):
+                    for direction in (-1, 1):
+                        nx = bx + direction * dist
+                        if not (0 <= nx < Ww):
+                            continue
+                        # Angle gate: only redirect if the slope from
+                        # original target to neighbour exceeds the
+                        # material's angle of repose. This keeps mud
+                        # (slump_angle_deg=70 → tan=2.75) clumpy while
+                        # sand (33° → tan=0.65) spreads broadly.
+                        slope_to_n = (claim_top_y[nx] - my_top) / dist
+                        if slope_to_n <= max_slope:
+                            continue
+                        # Pick whichever neighbour has the lowest pile.
+                        if claim_top_y[nx] > best_top:
+                            best_top = claim_top_y[nx]
+                            best_x = nx
+                final_x = best_x
+                final_y = claim_top_y[final_x] - 1
+                if final_y < 0:
+                    final_y = 0
+                self.pos[i, 0] = float(final_x)
+                self.pos[i, 1] = float(final_y)
+                if claim_top_y[final_x] > 0:
+                    claim_top_y[final_x] -= 1
         shape_masks: list[np.ndarray | None] = []
         if not gpu_baked and to_bake_mask.any():
             for i in range(self.pos.shape[0]):
@@ -1223,7 +1277,11 @@ class ParticleField:
         for mi, mat in enumerate(self.materials):
             if mat.is_fluid:
                 continue
-            m = (self.material_id == mi) & (~self.bake_flag) & (~self.settled)
+            # Include settled-but-not-yet-baked particles so incoming
+            # sliders bump off them BEFORE bake — user-reported issue:
+            # "Y axis pile up for sand_crater should be happening while
+            # they are rolling/colliding not when bake happens".
+            m = (self.material_id == mi) & (~self.bake_flag)
             if not m.any():
                 continue
             indices = np.nonzero(m)[0]
@@ -1363,7 +1421,11 @@ class ParticleField:
         for mi, mat in enumerate(self.materials):
             if mat.is_fluid:
                 continue
-            m = (self.material_id == mi) & (~self.bake_flag) & (~self.settled)
+            # Include settled-but-not-yet-baked particles so incoming
+            # sliders bump off them BEFORE bake — user-reported issue:
+            # "Y axis pile up for sand_crater should be happening while
+            # they are rolling/colliding not when bake happens".
+            m = (self.material_id == mi) & (~self.bake_flag)
             if not m.any():
                 continue
             indices = np.nonzero(m)[0]
