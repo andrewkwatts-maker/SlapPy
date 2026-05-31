@@ -155,7 +155,7 @@ def detonate(
         dir_y * speeds - preset.blast_up_boost,  # negative vy = upward
     ]).astype(np.float32)
 
-    # Radii (separate from bake radius — those control airborne look).
+    # Airborne disc radii (what the user sees in flight).
     chunk_radii = rng.integers(
         preset.chunk_radius_min, preset.chunk_radius_max + 1, n
     )
@@ -163,6 +163,17 @@ def detonate(
         preset.grain_radius_min, preset.grain_radius_max + 1, n
     )
     radii = np.where(is_chunk, chunk_radii, grain_radii).astype(np.float32)
+
+    # Per-particle bake_radius from preset — chunks get chunky stamps
+    # (3×3 or 5×5), grains stay 1 px. chunk_bake_jitter adds 0..N extra
+    # pixels to a fraction of chunks so the pile reads as varied clumps.
+    bake_radii = np.where(
+        is_chunk,
+        preset.chunk_bake_radius + rng.integers(
+            0, max(1, preset.chunk_bake_jitter + 1), n
+        ),
+        preset.grain_bake_radius,
+    ).astype(np.int32)
 
     # ── 3. Colour sourcing: original pixels first, palette as fallback.
     colours = np.zeros((n, 3), dtype=np.uint8)
@@ -197,6 +208,7 @@ def detonate(
         material_ids=np.full(n, mid, dtype=np.int32),
         radii=radii,
         colors=colours,
+        bake_radii=bake_radii,
     )
     return n
 

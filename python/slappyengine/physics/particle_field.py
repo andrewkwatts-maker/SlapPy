@@ -198,7 +198,8 @@ class ParticleField:
     pos: np.ndarray = field(init=False)
     vel: np.ndarray = field(init=False)
     material_id: np.ndarray = field(init=False)
-    radius: np.ndarray = field(init=False)
+    radius: np.ndarray = field(init=False)         # airborne visual radius
+    bake_radius: np.ndarray = field(init=False)    # per-particle stamp size on settle
     color: np.ndarray = field(init=False)
     landed: np.ndarray = field(init=False)
     settled: np.ndarray = field(init=False)
@@ -227,6 +228,7 @@ class ParticleField:
         self.vel = np.zeros((0, 2), dtype=np.float32)
         self.material_id = np.zeros(0, dtype=np.int32)
         self.radius = np.zeros(0, dtype=np.float32)
+        self.bake_radius = np.zeros(0, dtype=np.int32)
         self.color = np.zeros((0, 3), dtype=np.uint8)
         self.landed = np.zeros(0, dtype=bool)
         self.settled = np.zeros(0, dtype=bool)
@@ -261,8 +263,16 @@ class ParticleField:
         vy: float = 0.0,
         material: str | int = 0,
         radius: int | None = None,
+        bake_radius: int = 0,
     ) -> int:
-        """Append a single particle. Returns its index."""
+        """Append a single particle. Returns its index.
+
+        ``radius`` is the airborne disc size (what the user sees in
+        flight). ``bake_radius`` is the per-particle stamp size when
+        it settles into the mask — 0 = 1 pixel (one unit of mass),
+        1 = 3×3 chunk, 2 = 5×5 boulder. Separating these lets chunks
+        look chunky on the ground without bloating airborne render.
+        """
         mid = self.material_id_of(material) if isinstance(material, str) else material
         mat = self.materials[mid]
         r = radius if radius is not None else mat.radius_min
@@ -272,6 +282,8 @@ class ParticleField:
         self.material_id = np.append(
             self.material_id, np.int32(mid)).astype(np.int32)
         self.radius = np.append(self.radius, np.float32(r)).astype(np.float32)
+        self.bake_radius = np.append(
+            self.bake_radius, np.int32(bake_radius)).astype(np.int32)
         self.color = np.vstack([self.color, [list(mat.color)]]).astype(np.uint8)
         self.landed = np.append(self.landed, False)
         self.settled = np.append(self.settled, False)
@@ -286,6 +298,7 @@ class ParticleField:
         material_ids: np.ndarray,       # (N,) int
         radii: np.ndarray,              # (N,) float
         colors: np.ndarray | None = None,  # (N, 3) uint8; defaults to material color
+        bake_radii: np.ndarray | None = None,  # (N,) int; default 0 (1px each)
     ) -> None:
         """Bulk-append a batch of particles. The hot path for explosions."""
         n = pos.shape[0]
@@ -295,6 +308,8 @@ class ParticleField:
             colors = np.zeros((n, 3), dtype=np.uint8)
             for i in range(n):
                 colors[i] = self.materials[int(material_ids[i])].color
+        if bake_radii is None:
+            bake_radii = np.zeros(n, dtype=np.int32)
         self.pos = np.concatenate(
             [self.pos, pos.astype(np.float32)], axis=0)
         self.vel = np.concatenate(
@@ -303,6 +318,8 @@ class ParticleField:
             [self.material_id, material_ids.astype(np.int32)])
         self.radius = np.concatenate(
             [self.radius, radii.astype(np.float32)])
+        self.bake_radius = np.concatenate(
+            [self.bake_radius, bake_radii.astype(np.int32)])
         self.color = np.concatenate(
             [self.color, colors.astype(np.uint8)], axis=0)
         self.landed = np.concatenate(
@@ -372,16 +389,16 @@ class ParticleField:
         slide_mask = self.landed & ~self.settled
         if slide_mask.any():
             self._slide(slide_mask, dt)
-        # Settle bake — every particle = 1 unit of mass = 1 pixel.
-        # bake_radius_override=0 forces the (2*0+1)² = 1 px stamp,
-        # so total bake mass tracks particle count exactly. Without
-        # the override, the fallback bumped r to 1 (3x3 = 9 px per
-        # particle), which inflated piles ~9× and broke conservation.
+        # Settle bake — use per-particle bake_radius so chunks bake
+        # chunky (3×3 or 5×5) while grains stay 1px. Total bake mass
+        # is sum of (2*br+1)² across settled particles — predictable
+        # and matches the user's visual expectation that chunks look
+        # like clumps in the final pile.
         bake_settled_particles(
             pos=self.pos, radius=self.radius, colour=self.color,
             landed=self.landed, settled=self.settled,
             bake_flag=self.bake_flag, terrain_rgba=self.mask,
-            bake_radius_override=0,
+            per_particle_bake_radius=self.bake_radius,
         )
         # Mark the newly-baked pixels as LOOSE so the slump pass can
         # rearrange them. The baked function set alpha=255 at every

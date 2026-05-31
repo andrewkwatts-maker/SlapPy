@@ -46,6 +46,7 @@ def bake_settled_particles(
     bake_flag: np.ndarray,
     terrain_rgba: np.ndarray,
     bake_radius_override: int | None = None,
+    per_particle_bake_radius: np.ndarray | None = None,
 ) -> int:
     """Write every settled-but-not-yet-baked particle into ``terrain_rgba``.
 
@@ -84,7 +85,9 @@ def bake_settled_particles(
     for i in np.nonzero(to_bake)[0]:
         x = int(pos[i, 0])
         y = int(pos[i, 1])
-        if bake_radius_override is not None:
+        if per_particle_bake_radius is not None:
+            r = max(0, int(per_particle_bake_radius[i]))
+        elif bake_radius_override is not None:
             r = max(0, bake_radius_override)
         else:
             r = int(radius[i])

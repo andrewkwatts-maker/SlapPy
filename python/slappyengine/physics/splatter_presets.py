@@ -172,24 +172,24 @@ class SplatterPreset:
     # is enlarged (used for dramatic Worms-style scenes). 1.0 = exact.
     settle_mass_gain: float = 1.0
     # ── Bake stamp size ────────────────────────────────────────────────
-    # Decouples visual airborne radius (what the user sees in flight)
-    # from how many pixels each particle leaves in the bake layer when
-    # it stops. 0 = single pixel per particle (one-particle / one-unit-
-    # of-mass: total bake mass matches particle count, no growth-after-
-    # the-fact). 1 = 3x3 disc. Set to ``None`` to fall back to the
-    # particle's own ``radius`` array (legacy behaviour, can over-grow).
-    bake_radius_override: int | None = 0
+    # Per-kind bake-radius (in pixels). 0 = single pixel; 1 = 3×3
+    # stamp (9 px); 2 = 5×5 (25 px). Grains bake small (1 px = one
+    # unit of mass), chunks bake chunky so the final pile reads as
+    # "clumps" not "dots". Mass per chunk = (2*r+1)².
+    grain_bake_radius: int = 0
+    chunk_bake_radius: int = 1
+    # Legacy single-radius override kept for back-compat (None = use
+    # the per-kind values above).
+    bake_radius_override: int | None = None
     # ── Settle randomisation ───────────────────────────────────────────
     # Per-particle jitter on the settle threshold. The settler triggers
     # when |vx| < settle_speed_threshold * (1 + uniform(-J, J)). > 0
     # spreads settle times across many frames so the bake looks
     # organic instead of all-at-once.
     settle_jitter: float = 0.35
-    # Per-particle bake-radius variation. When bake_radius_override is
-    # not None, the actual per-chunk bake radius is
-    # ``bake_radius_override + uniform(0, chunk_bake_jitter)`` (int
-    # rounded). 0 = uniform stamps; > 0 = some chunks visible as
-    # slightly-bigger clumps.
+    # Per-particle bake-radius variation. The actual per-chunk bake
+    # radius is ``chunk_bake_radius + rng.integers(0, chunk_bake_jitter)``.
+    # 0 = uniform stamps; > 0 = some chunks visible as bigger clumps.
     chunk_bake_jitter: int = 0
 
     # ── Asset / texture support ────────────────────────────────────────
@@ -228,9 +228,9 @@ SAND = SplatterPreset(
     # dune-edge spread.
     cohesion=0.15,
     slump_angle_deg=33.0,
-    # Sand grains = 1px each. Chunks pick up +0..1 px of jitter so a
-    # few stand out as larger clumps.
-    bake_radius_override=0,
+    # Sand grains = 1 px; chunks bake as 3×3 clumps with small jitter.
+    grain_bake_radius=0,
+    chunk_bake_radius=1,
     chunk_bake_jitter=1,
 )
 
@@ -268,9 +268,10 @@ MUD = SplatterPreset(
     # That lets it form small overhangs.
     cohesion=0.95,
     slump_angle_deg=70.0,
-    # Mud particles bake as tiny stamps (radius 0-1) so 900 particles
-    # don't generate 36k pixels of new mass. Chunks vary by 1 px.
-    bake_radius_override=0,
+    # Mud grains 1 px; chunks chunky (3×3 with jitter to 5×5) so the
+    # pile reads as cohesive globs not a dot-cloud.
+    grain_bake_radius=0,
+    chunk_bake_radius=1,
     chunk_bake_jitter=1,
     grain_palette=(
         (110, 78, 42),
@@ -322,8 +323,10 @@ SLOPPY = SplatterPreset(
     # Sloppy is wet but still flows — gentle slump, mostly cohesive.
     cohesion=0.6,
     slump_angle_deg=25.0,
-    bake_radius_override=0,
-    chunk_bake_jitter=2,  # sloppy = bigger glob variation
+    # Sloppy = biggest globs. Chunks 5×5 with jitter to 7×7.
+    grain_bake_radius=0,
+    chunk_bake_radius=2,
+    chunk_bake_jitter=1,
     grain_palette=(
         (84, 58, 30),
         (66, 44, 22),
@@ -361,10 +364,12 @@ ROCK = SplatterPreset(
     impact_binding_ke=4.0e5,
     impact_drill_max_px=4.0,
     impact_loose_ground_multiplier=1.5,
-    # Rocks don't stick — fall freely when unsupported, sharp slump.
-    cohesion=0.05,
-    slump_angle_deg=40.0,
-    bake_radius_override=0,
+    # Rocks visually rigid: high friction = stop fast, moderate
+    # cohesion = some slump but not water-flow. Chunks 5×5 boulders.
+    cohesion=0.5,
+    slump_angle_deg=45.0,
+    grain_bake_radius=0,
+    chunk_bake_radius=2,
     chunk_bake_jitter=1,
     grain_palette=(
         (140, 130, 120),
@@ -424,7 +429,8 @@ SNOW = SplatterPreset(
     # Snow drifts (medium cohesion) — light slumping, can hold overhangs.
     cohesion=0.85,
     slump_angle_deg=50.0,
-    bake_radius_override=0,
+    grain_bake_radius=0,
+    chunk_bake_radius=1,
     chunk_bake_jitter=0,
 )
 
