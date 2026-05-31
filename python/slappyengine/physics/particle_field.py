@@ -44,6 +44,22 @@ from slappyengine.physics.baked_terrain import (
     RegionGrid,
     bake_settled_particles,
 )
+from slappyengine.physics.fragment import (
+    FragmentFamily,
+    SAND_FAMILY,
+    SHAPE_CIRCLE,
+    SHAPE_BLOB,
+    SHAPE_FLAKE,
+    SHAPE_BOULDER,
+    SHAPE_SHARD,
+    SHAPE_ROUGH,
+    SNOW_FAMILY,
+    MUD_FAMILY,
+    ROCK_FAMILY,
+    SLOPPY_FAMILY,
+    WATER_FAMILY,
+    FragmentShape,
+)
 
 
 _RGB = tuple[int, int, int]
@@ -156,6 +172,9 @@ class Material:
     color: _RGB = (200, 200, 200)
     radius_min: int = 1
     radius_max: int = 2
+    # Fragment shape family — picks a polygon shape per spawned
+    # particle from this collection. Default = circular grains.
+    fragment_family: FragmentFamily = field(default_factory=lambda: SAND_FAMILY)
 
     @property
     def is_fluid(self) -> bool:
@@ -182,6 +201,7 @@ WATER = Material(
     fluid_pressure_factor=0.6,
     fluid_iterations=2,
     fluid_surface_flow=0.3,
+    fragment_family=WATER_FAMILY,
 )
 
 SAND_MAT = Material(
@@ -196,6 +216,7 @@ SAND_MAT = Material(
     impact_stickiness=0.6,        # medium grip
     kinetic_fluidity=0.4,
     tumble_kick=0.0,              # sand rolls smoothly
+    fragment_family=SAND_FAMILY,
 )
 
 MUD_MAT = Material(
@@ -210,6 +231,7 @@ MUD_MAT = Material(
     rigidify_frames_max=8,
     impact_stickiness=0.85,        # mud STICKS hard on impact
     kinetic_fluidity=0.5,         # globs slosh while in flight
+    fragment_family=MUD_FAMILY,
 )
 
 ROCK_MAT = Material(
@@ -224,6 +246,8 @@ ROCK_MAT = Material(
     rigidify_frames_max=5,
     impact_stickiness=0.9,         # rocks thunk and stay
     kinetic_fluidity=0.2,         # minimal in-flight push
+    fragment_family=ROCK_FAMILY,
+    tumble_kick=0.15,              # rocks kick as they tumble
 )
 
 SNOW_MAT = Material(
@@ -239,6 +263,7 @@ SNOW_MAT = Material(
     rigidify_frames_max=20,
     impact_stickiness=0.4,         # snow drifts before settling
     kinetic_fluidity=0.6,
+    fragment_family=SNOW_FAMILY,
 )
 
 
@@ -276,6 +301,15 @@ class ParticleField:
     landed: np.ndarray = field(init=False)
     settled: np.ndarray = field(init=False)
     bake_flag: np.ndarray = field(init=False)
+    # Per-particle fragment shape index — looked up in
+    # material.fragment_family.shapes when baking. Each spawn picks
+    # via family.sample_index() so a sand explosion has a natural
+    # distribution of CIRCLE / ROUGH grains, a rock explosion has
+    # BOULDER / SHARD chunks, etc.
+    shape_idx: np.ndarray = field(init=False)
+    # Per-particle rotation (radians) — randomised at spawn so the
+    # same shape doesn't always face the same way in the pile.
+    shape_rotation: np.ndarray = field(init=False)
     # Per-particle age + rigidify timeout for the fluid→rigid lerp.
     # Each spawn picks a random rigidify_at; kinetic_age increments
     # each step. While age < rigidify_at, particle is "kinetic" and
@@ -287,6 +321,10 @@ class ParticleField:
 
     # Per-pixel solid mask (the world).
     mask: np.ndarray = field(init=False)
+    # Per-pixel material id — int8, -1 = empty / unknown, >= 0 =
+    # material index. Lets layered terrain (mud over rock) yield the
+    # correct ejecta material when carved.
+    material_grid: np.ndarray = field(init=False)
     # Per-pixel "loose" flag — True for pixels added by settled
     # particles, False for fixed terrain set via fill_ground(). Only
     # loose pixels participate in the slump pass, so the original
@@ -313,9 +351,14 @@ class ParticleField:
         self.landed = np.zeros(0, dtype=bool)
         self.settled = np.zeros(0, dtype=bool)
         self.bake_flag = np.zeros(0, dtype=bool)
+        self.shape_idx = np.zeros(0, dtype=np.int32)
+        self.shape_rotation = np.zeros(0, dtype=np.float32)
         self.kinetic_age = np.zeros(0, dtype=np.int32)
         self.rigidify_at = np.zeros(0, dtype=np.int32)
         self.mask = np.zeros((self.height, self.width, 4), dtype=np.uint8)
+        # -1 = empty / unknown material.
+        self.material_grid = np.full(
+            (self.height, self.width), -1, dtype=np.int8)
         self.loose = np.zeros((self.height, self.width), dtype=bool)
         self._fixed_mask = np.zeros((self.height, self.width), dtype=bool)
         self._rng = np.random.default_rng(2026)
@@ -378,6 +421,12 @@ class ParticleField:
         self.kinetic_age = np.append(self.kinetic_age, np.int32(0))
         self.rigidify_at = np.append(
             self.rigidify_at, np.int32(rigid_at)).astype(np.int32)
+        # Pick a fragment shape + random rotation per particle.
+        s_idx = mat.fragment_family.sample_index(self._rng)
+        rot = float(self._rng.uniform(0.0, 2.0 * math.pi))
+        self.shape_idx = np.append(self.shape_idx, np.int32(s_idx))
+        self.shape_rotation = np.append(
+            self.shape_rotation, np.float32(rot)).astype(np.float32)
         return self.pos.shape[0] - 1
 
     def spawn_batch(
@@ -434,16 +483,35 @@ class ParticleField:
             [self.kinetic_age, np.zeros(n, dtype=np.int32)])
         self.rigidify_at = np.concatenate(
             [self.rigidify_at, rigidify_at.astype(np.int32)])
+        # Per-particle fragment shape + rotation from each material's
+        # family (weighted choice). Particles of the same material
+        # naturally vary in shape and orientation.
+        s_idx = np.zeros(n, dtype=np.int32)
+        for k in range(n):
+            mat = self.materials[int(material_ids[k])]
+            s_idx[k] = mat.fragment_family.sample_index(self._rng)
+        rotations = self._rng.uniform(0.0, 2.0 * math.pi, n).astype(np.float32)
+        self.shape_idx = np.concatenate([self.shape_idx, s_idx])
+        self.shape_rotation = np.concatenate([self.shape_rotation, rotations])
 
     # ── Static-terrain helpers ─────────────────────────────────────────
 
-    def fill_ground(self, *, top_y: int, color: _RGB, sub_color: _RGB | None = None) -> None:
+    def fill_ground(
+        self, *,
+        top_y: int,
+        color: _RGB,
+        sub_color: _RGB | None = None,
+        material: str | int | None = None,
+    ) -> None:
         """Paint a flat ground line into the mask. ``top_y`` rows below
         get ``color``; rows below that get ``sub_color`` (or the same).
 
         Pixels written here are marked FIXED in ``_fixed_mask`` so the
         slump pass skips them — original terrain stays put while
         settled particles around it can still flow.
+
+        If ``material`` is provided, the ``material_grid`` is set so
+        ejecta carved from this terrain inherit the correct material.
         """
         if sub_color is None:
             sub_color = color
@@ -452,6 +520,10 @@ class ParticleField:
         self.mask[top_y + 1: self.height, :, :3] = sub_color
         self.mask[top_y + 1: self.height, :, 3] = 255
         self._fixed_mask[top_y:self.height, :] = True
+        if material is not None:
+            mid = (self.material_id_of(material)
+                   if isinstance(material, str) else int(material))
+            self.material_grid[top_y:self.height, :] = mid
 
     def carve(self, mask_bool: np.ndarray) -> None:
         """Clear alpha to 0 wherever ``mask_bool`` (shape ``(H, W)``) is True.
@@ -467,6 +539,10 @@ class ParticleField:
         self.mask[mask_bool, 3] = 0
         self._fixed_mask[mask_bool] = False
         self.loose[mask_bool] = False
+        # Material grid is intentionally LEFT alone — callers (e.g.
+        # blast.detonate) need to sample the pre-carve material_id of
+        # the bowl pixels so ejecta inherit the right material. They
+        # can clear the carved region afterward if needed.
 
     # ── Step ───────────────────────────────────────────────────────────
 
@@ -508,12 +584,39 @@ class ParticleField:
         # is sum of (2*br+1)² across settled particles — predictable
         # and matches the user's visual expectation that chunks look
         # like clumps in the final pile.
+        # Build per-particle polygon stamps for settled particles —
+        # the user's "hierarchical fragment solution". Each particle
+        # rasterises its material.fragment_family.shapes[shape_idx] at
+        # its bake_radius and shape_rotation. Falls back to the
+        # jagged-disc path if a particle has no shape.
+        to_bake_mask = self.settled & self.landed & ~self.bake_flag
+        shape_masks: list[np.ndarray | None] = []
+        if to_bake_mask.any():
+            for i in range(self.pos.shape[0]):
+                if not to_bake_mask[i]:
+                    shape_masks.append(None)
+                    continue
+                mat = self.materials[int(self.material_id[i])]
+                family = mat.fragment_family
+                if family is None:
+                    shape_masks.append(None)
+                    continue
+                si = int(self.shape_idx[i]) % len(family.shapes)
+                shape = family.shapes[si]
+                br = max(1, int(self.bake_radius[i]) + 1)
+                shape_masks.append(
+                    shape.bake_mask(scale=float(br),
+                                    rotation=float(self.shape_rotation[i]))
+                )
         bake_settled_particles(
             pos=self.pos, radius=self.radius, colour=self.color,
             landed=self.landed, settled=self.settled,
             bake_flag=self.bake_flag, terrain_rgba=self.mask,
             per_particle_bake_radius=self.bake_radius,
-            jagged=True,  # rough fragment look — non-circular silhouettes
+            jagged=True,  # fallback path for particles without shape masks
+            shape_masks=shape_masks if shape_masks else None,
+            material_id=self.material_id,
+            material_grid=self.material_grid,
         )
         # ── Push fluids out of newly-baked solid ────────────────────
         # Without this, mud chunks baking on top of water created a
