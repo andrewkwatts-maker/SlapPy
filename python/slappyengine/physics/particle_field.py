@@ -34,9 +34,24 @@ isolated, and lets a single :class:`ParticleField` contain both.
 """
 from __future__ import annotations
 
+import enum
 import math
 from dataclasses import dataclass, field
 from typing import Sequence
+
+
+class Phase(enum.IntEnum):
+    """Particle lifecycle phase. Single source of truth for what a
+    particle is "doing" — replaces the implicit state machine that was
+    spread across ``landed``, ``settled``, and ``bake_flag``.
+
+    Transitions are monotonic except for AIRBORNE re-entry from a
+    tumble kick (rolling rock fragment hopping off the ground).
+    """
+    AIRBORNE = 0   # Flying, integrates physics + collides with mask
+    LANDED = 1     # In contact with mask, slides with friction
+    SETTLING = 2   # Below speed threshold, jostled by relax
+    BAKED = 3      # Stamped into mask, removed from live loop
 
 import numpy as np
 
@@ -316,6 +331,15 @@ class ParticleField:
     radius: np.ndarray = field(init=False)         # airborne visual radius
     bake_radius: np.ndarray = field(init=False)    # per-particle stamp size on settle
     color: np.ndarray = field(init=False)
+    # Phase enum value per particle — source of truth for state.
+    # landed / settled / bake_flag below are derived for back-compat.
+    phase: np.ndarray = field(init=False)
+    # Frames in current phase (replaces per-phase age fields).
+    phase_age: np.ndarray = field(init=False)
+    # Legacy per-particle flags. Now COMPUTED on write through
+    # ``_set_phase``; reads are still O(1) numpy comparisons via
+    # the Phase enum (see properties below). Kept as arrays for
+    # the existing 74 tests that index them directly.
     landed: np.ndarray = field(init=False)
     settled: np.ndarray = field(init=False)
     bake_flag: np.ndarray = field(init=False)
@@ -372,6 +396,8 @@ class ParticleField:
         self.radius = np.zeros(0, dtype=np.float32)
         self.bake_radius = np.zeros(0, dtype=np.int32)
         self.color = np.zeros((0, 3), dtype=np.uint8)
+        self.phase = np.zeros(0, dtype=np.int8)
+        self.phase_age = np.zeros(0, dtype=np.int32)
         self.landed = np.zeros(0, dtype=bool)
         self.settled = np.zeros(0, dtype=bool)
         self.bake_flag = np.zeros(0, dtype=bool)
@@ -435,6 +461,8 @@ class ParticleField:
         self.bake_radius = np.append(
             self.bake_radius, np.int32(bake_radius)).astype(np.int32)
         self.color = np.vstack([self.color, [list(mat.color)]]).astype(np.uint8)
+        self.phase = np.append(self.phase, np.int8(Phase.AIRBORNE))
+        self.phase_age = np.append(self.phase_age, np.int32(0))
         self.landed = np.append(self.landed, False)
         self.settled = np.append(self.settled, False)
         self.bake_flag = np.append(self.bake_flag, False)
@@ -498,6 +526,10 @@ class ParticleField:
             [self.bake_radius, bake_radii.astype(np.int32)])
         self.color = np.concatenate(
             [self.color, colors.astype(np.uint8)], axis=0)
+        self.phase = np.concatenate(
+            [self.phase, np.full(n, np.int8(Phase.AIRBORNE), dtype=np.int8)])
+        self.phase_age = np.concatenate(
+            [self.phase_age, np.zeros(n, dtype=np.int32)])
         self.landed = np.concatenate(
             [self.landed, np.zeros(n, dtype=bool)])
         self.settled = np.concatenate(
@@ -1160,6 +1192,26 @@ class ParticleField:
             if abs(self.vel[i, 0]) < threshold:
                 self.settled[i] = True
                 self.vel[i, 0] = 0.0
+
+    # ── State machine transitions ────────────────────────────────────
+    # Single source of truth for particle phase changes. Every site
+    # that used to write ``landed[i] = True`` or ``settled[i] = True``
+    # should go through these helpers. They keep the legacy bool
+    # arrays in sync with ``phase`` so external readers (and the
+    # existing 74 tests) don't break.
+
+    def _set_phase(self, idx: int | np.ndarray, new_phase: Phase) -> None:
+        """Move particle(s) into ``new_phase``. Resets phase_age to 0
+        and updates the derived bool arrays."""
+        self.phase[idx] = np.int8(new_phase)
+        self.phase_age[idx] = 0
+        self.landed[idx] = new_phase >= Phase.LANDED
+        self.settled[idx] = new_phase >= Phase.SETTLING
+        self.bake_flag[idx] = new_phase == Phase.BAKED
+
+    def is_phase(self, p: Phase) -> np.ndarray:
+        """Boolean mask of live particles currently in ``p``."""
+        return self.phase == np.int8(p)
 
     def _column_top(self, x: int) -> int:
         """Return the y of the topmost solid pixel in column x.
