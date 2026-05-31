@@ -500,6 +500,22 @@ class ParticleField:
     def material_id_of(self, name: str) -> int:
         return self._name_to_id[name]
 
+    def register_material(self, material: Material) -> int:
+        """Add a custom :class:`Material` to the field's catalogue.
+
+        Engine users can define their own substances (glass, copper,
+        lava, sand-of-time, whatever) by constructing a Material with
+        whatever knobs they need and registering it here. Returns the
+        material id. Idempotent — re-registering an existing name
+        returns the existing id without replacing.
+        """
+        if material.name in self._name_to_id:
+            return self._name_to_id[material.name]
+        self.materials.append(material)
+        mid = len(self.materials) - 1
+        self._name_to_id[material.name] = mid
+        return mid
+
     # ── Spawning ───────────────────────────────────────────────────────
 
     def spawn(

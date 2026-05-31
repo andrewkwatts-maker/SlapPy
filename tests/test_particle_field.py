@@ -21,6 +21,30 @@ def test_builtins_cover_expected_substances() -> None:
     assert names == {"water", "sand", "mud", "rock", "snow", "ice"}
 
 
+def test_engine_user_can_register_custom_material() -> None:
+    # The whole point of Material being a public dataclass is that
+    # users can define their own substances. Verify the flow.
+    f = ParticleField(width=64, height=64)
+    glass = Material(
+        name="glass",
+        binding_force=4.0e5,
+        cohesion=0.9,
+        slump_angle_deg=80.0,
+        color=(180, 220, 220),
+        radius_min=1,
+        radius_max=1,
+    )
+    mid = f.register_material(glass)
+    assert mid >= 0
+    # Idempotent — re-registering returns the same id.
+    assert f.register_material(glass) == mid
+    # Resolvable by name.
+    assert f.material("glass").binding_force == 4.0e5
+    # Spawnable.
+    f.spawn(x=10.0, y=10.0, material="glass")
+    assert f.material_id[0] == mid
+
+
 def test_water_is_fluid_others_are_not() -> None:
     assert WATER.is_fluid
     for m in (SAND_MAT, MUD_MAT, ROCK_MAT, SNOW_MAT):
