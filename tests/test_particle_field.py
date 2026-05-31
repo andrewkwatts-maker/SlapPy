@@ -166,6 +166,63 @@ def test_render_unknown_mode_raises() -> None:
         f.render(mode="nope")
 
 
+def test_material_defaults_to_discs_render_mode() -> None:
+    # A bare Material with no overrides should default to disc rendering.
+    m = Material(name="dirt")
+    assert m.render_mode == "discs"
+
+
+def test_water_defaults_to_marching_squares_render_mode() -> None:
+    # WATER ships with render_mode='marching_squares' so it pools smoothly.
+    assert WATER.render_mode == "marching_squares"
+    # And the other built-ins stick with discs.
+    for m in (SAND_MAT, MUD_MAT, ROCK_MAT, SNOW_MAT):
+        assert m.render_mode == "discs"
+
+
+def test_material_rejects_invalid_render_mode() -> None:
+    with pytest.raises(ValueError, match="render_mode"):
+        Material(name="bad", render_mode="potato")
+
+
+def test_render_water_particle_uses_marching_squares_by_default() -> None:
+    # No explicit override → per-material mode. Water cluster should
+    # paint the iso-surface in the cell that contains the particles.
+    f = ParticleField(width=64, height=64)
+    for _ in range(5):
+        f.spawn(x=32.0, y=32.0, material="water")
+    img = f.render()  # no mode/override → per-material
+    assert img.shape == (64, 64, 3)
+    assert tuple(int(c) for c in img[32, 32]) == WATER.color
+
+
+def test_render_mixed_materials_gets_both_pixel_and_iso() -> None:
+    # One sand pixel (disc) and a cluster of water (iso) in the same
+    # frame should each paint with their own renderer.
+    f = ParticleField(width=64, height=64)
+    f.spawn(x=10.0, y=10.0, material="sand", radius=1)
+    for _ in range(5):
+        f.spawn(x=40.0, y=40.0, material="water")
+    img = f.render()
+    # Sand pixel painted as a disc rectangle.
+    assert tuple(int(c) for c in img[10, 10]) == SAND_MAT.color
+    # Water cluster painted as iso-surface in its grid cell.
+    assert tuple(int(c) for c in img[40, 40]) == WATER.color
+
+
+def test_render_override_forces_all_particles_to_discs() -> None:
+    # With override='discs', water should render as a disc even though
+    # its material asks for marching_squares.
+    f = ParticleField(width=64, height=64)
+    f.spawn(x=32.0, y=32.0, material="water", radius=1)
+    img = f.render(override_render_mode="discs")
+    assert tuple(int(c) for c in img[32, 32]) == WATER.color
+    # Single water particle far from any other → marching squares
+    # density (1.0 in one cell, smoothed) wouldn't reach iso=0.5
+    # alone after the blur. The disc override forces a hit.
+    # (Verifies the override path executes the disc branch.)
+
+
 def test_custom_material_can_be_added() -> None:
     custom = Material(name="oil", binding_force=0.0, density=0.9,
                       color=(40, 30, 10))

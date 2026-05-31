@@ -175,6 +175,21 @@ class Material:
     # Fragment shape family — picks a polygon shape per spawned
     # particle from this collection. Default = circular grains.
     fragment_family: FragmentFamily = field(default_factory=lambda: SAND_FAMILY)
+    # Per-material render mode override. ``'discs'`` stamps each particle
+    # as a filled pixel rectangle (fast, pixel-arty); ``'marching_squares'``
+    # contributes to a density grid that gets contoured into a smooth
+    # iso-surface (fluid-y). When ParticleField.render() is called with
+    # ``override_render_mode=None``, each particle uses its material's
+    # render_mode; passing an explicit override forces all particles to
+    # that mode (preserves the original global-mode behaviour).
+    render_mode: str = "discs"
+
+    def __post_init__(self) -> None:
+        if self.render_mode not in ("discs", "marching_squares"):
+            raise ValueError(
+                f"Material.render_mode must be 'discs' or 'marching_squares'; "
+                f"got {self.render_mode!r}"
+            )
 
     @property
     def is_fluid(self) -> bool:
@@ -202,6 +217,9 @@ WATER = Material(
     fluid_iterations=2,
     fluid_surface_flow=0.3,
     fragment_family=WATER_FAMILY,
+    # Water naturally pools as a smooth iso-surface rather than a
+    # blocky disc per particle.
+    render_mode="marching_squares",
 )
 
 SAND_MAT = Material(
@@ -1157,20 +1175,80 @@ class ParticleField:
 
     # ── Rendering ──────────────────────────────────────────────────────
 
-    def render(self, *, mode: str = "discs") -> np.ndarray:
+    def render(
+        self,
+        *,
+        mode: str = "discs",
+        override_render_mode: str | None = None,
+    ) -> np.ndarray:
         """Composite the static mask + live particles to RGB.
 
         Returns ``(H, W, 3)`` uint8.
+
+        - ``override_render_mode=None`` (the default direction for
+          new code): each live particle renders according to its
+          material's ``render_mode``. Discs stamp pixel rectangles,
+          marching-squares particles contribute to a density grid that
+          becomes a smooth iso-surface.
+        - ``override_render_mode='discs'`` or ``'marching_squares'``:
+          force every live particle into that mode (legacy behaviour;
+          equivalent to ``mode='discs'`` on the old signature).
+        - ``mode`` is kept for backwards compatibility and is used
+          only when ``override_render_mode`` is not supplied. Passing
+          ``mode='marching_squares'`` is treated as
+          ``override_render_mode='marching_squares'``.
         """
+        # Resolve the effective override. Old callers that passed
+        # ``mode='discs'`` or ``mode='marching_squares'`` get the same
+        # global behaviour they always did.
+        if override_render_mode is None:
+            if mode == "discs":
+                # Legacy default — but now this means "respect per-
+                # material render_mode" since 'discs' is the per-
+                # material default for everything except water.
+                effective_override: str | None = None
+            elif mode == "marching_squares":
+                effective_override = "marching_squares"
+            else:
+                raise ValueError(f"unknown render mode: {mode!r}")
+        else:
+            if override_render_mode not in ("discs", "marching_squares"):
+                raise ValueError(
+                    f"unknown render mode: {override_render_mode!r}"
+                )
+            effective_override = override_render_mode
+
         H, W = self.mask.shape[:2]
         arr = np.zeros((H, W, 3), dtype=np.uint8)
         m = self.mask[..., 3] > 0
         if m.any():
             arr[m] = self.mask[m, :3]
-        if mode == "discs":
-            for i in range(self.pos.shape[0]):
-                if self.bake_flag[i]:
-                    continue
+
+        # Classify live particles into discs vs marching-squares.
+        n = self.pos.shape[0]
+        if n == 0:
+            return arr
+        live = ~self.bake_flag
+        if not live.any():
+            return arr
+        if effective_override is not None:
+            wants_iso = np.zeros(n, dtype=bool)
+            if effective_override == "marching_squares":
+                wants_iso[live] = True
+            wants_discs = live & ~wants_iso
+        else:
+            # Per-material classification.
+            mode_by_mid = np.array(
+                [m.render_mode == "marching_squares"
+                 for m in self.materials],
+                dtype=bool,
+            )
+            wants_iso = live & mode_by_mid[self.material_id]
+            wants_discs = live & ~wants_iso
+
+        # Discs path — stamp pixel rectangles for each disc particle.
+        if wants_discs.any():
+            for i in np.nonzero(wants_discs)[0]:
                 x = int(self.pos[i, 0])
                 y = int(self.pos[i, 1])
                 r = int(self.radius[i])
@@ -1179,27 +1257,40 @@ class ParticleField:
                 y0 = max(0, y - r); y1 = min(H, y + r + 1)
                 x0 = max(0, x - r); x1 = min(W, x + r + 1)
                 arr[y0:y1, x0:x1] = self.color[i]
-        elif mode == "marching_squares":
-            arr = _render_marching_squares(self, arr)
-        else:
-            raise ValueError(f"unknown render mode: {mode!r}")
+
+        # Marching-squares path — only contribute the subset that asked
+        # for iso-surface rendering. Composites on top of arr.
+        if wants_iso.any():
+            arr = _render_marching_squares(self, arr, subset_mask=wants_iso)
+
         return arr
 
 
 # ── Marching-squares renderer ──────────────────────────────────────────
 
 
-def _render_marching_squares(field: ParticleField, base: np.ndarray) -> np.ndarray:
+def _render_marching_squares(
+    field: ParticleField,
+    base: np.ndarray,
+    subset_mask: np.ndarray | None = None,
+) -> np.ndarray:
     """Sample a density grid from live particles and paint a smoothed
     iso-surface using the nearest particle's colour. The contour is at
     iso=0.5 of the per-cell density; cells above iso get filled.
+
+    If ``subset_mask`` is provided, only particles whose mask entry is
+    True contribute to the density grid. This is how mixed-material
+    rendering keeps disc particles out of the iso pass.
     """
     H, W = field.mask.shape[:2]
     cell = 4  # grid resolution; coarser = smoother + faster
     gh, gw = H // cell, W // cell
     density = np.zeros((gh, gw), dtype=np.float32)
     color_grid = np.zeros((gh, gw, 3), dtype=np.uint8)
-    live = ~field.bake_flag
+    if subset_mask is None:
+        live = ~field.bake_flag
+    else:
+        live = subset_mask
     if not live.any():
         return base
     idx = np.nonzero(live)[0]
