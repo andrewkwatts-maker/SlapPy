@@ -975,18 +975,21 @@ class ParticleField:
             col_top_y = np.where(any_solid, solid.argmax(axis=0), Hh)
             # Mutable view we update as each particle claims a pixel.
             claim_top_y = col_top_y.copy()
-            search_r = 12  # lateral search radius
+            # Pick the SHORTEST pile in a wide neighbourhood. This is
+            # the simplest invariant that gives flat piles regardless
+            # of input rate — particles always find the lowest spot.
+            # The material's angle_of_repose only matters AFTER the
+            # pile has spread to the radius; it's not a gate here.
+            search_r = 24
             for i in np.nonzero(to_bake_mask)[0]:
                 bx = int(self.pos[i, 0])
                 by = int(self.pos[i, 1])
                 if not (0 <= bx < Ww):
                     continue
-                mat = self.materials[int(self.material_id[i])]
-                max_slope = math.tan(math.radians(
-                    min(89.0, mat.slump_angle_deg)))
                 my_top = claim_top_y[bx]
-                # Pick the LOWEST-pile column within search_r (highest
-                # top_y value = shortest pile). Tie-break randomly.
+                # Always pick the column with the LOWEST pile (highest
+                # top_y) within search_r. Tie-break by closer distance
+                # (loop order — closer dist first).
                 best_x = bx
                 best_top = my_top
                 for dist in range(1, search_r + 1):
@@ -994,15 +997,6 @@ class ParticleField:
                         nx = bx + direction * dist
                         if not (0 <= nx < Ww):
                             continue
-                        # Angle gate: only redirect if the slope from
-                        # original target to neighbour exceeds the
-                        # material's angle of repose. This keeps mud
-                        # (slump_angle_deg=70 → tan=2.75) clumpy while
-                        # sand (33° → tan=0.65) spreads broadly.
-                        slope_to_n = (claim_top_y[nx] - my_top) / dist
-                        if slope_to_n <= max_slope:
-                            continue
-                        # Pick whichever neighbour has the lowest pile.
                         if claim_top_y[nx] > best_top:
                             best_top = claim_top_y[nx]
                             best_x = nx
