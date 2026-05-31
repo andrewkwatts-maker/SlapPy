@@ -158,6 +158,25 @@ class IKChainSpawnSpec:
     tolerance: float = 0.01
 
 
+@dataclass
+class HumanoidSpawnSpec:
+    """Parameters for ``_spawn_humanoid``.
+
+    Mirrors the keyword arguments of :func:`make_humanoid` as primitives
+    so the property inspector can reflect each one as a plain widget. The
+    resulting skeleton has 15 nodes (pelvis + neck + head + 2*(shoulder,
+    elbow, wrist) + 2*(hip, knee, ankle)) — same anatomy described in
+    :mod:`slappyengine.dynamics.humanoid`.
+    """
+    name: str = "humanoid"
+    root_position: tuple[float, float] = (0.0, 1.0)
+    bone_mass: float = 1.0
+    head_mass: float = 1.5
+    bone_stiffness: float = 5.0e6
+    bone_damping: float = 0.05
+    bone_break_strain: float = 0.25
+
+
 # ---------------------------------------------------------------------------
 # Adapter factories for dynamics primitives.
 #
@@ -210,6 +229,24 @@ def _spawn_ragdoll(world: Any, **kwargs: Any) -> Any:
         )
     spec = RagdollSpec(bones=bones, **kwargs)
     return build_ragdoll(spec, world, anchor_pos, pin_root=pin_root)
+
+
+def _spawn_humanoid(world: Any, **kwargs: Any) -> Any:
+    """Build a 15-node humanoid skeleton via :func:`make_humanoid`.
+
+    Unlike rope / ragdoll which target the slim XPBD :class:`World`, the
+    humanoid factory in :mod:`slappyengine.dynamics.humanoid` expects a
+    world that exposes the softbody ``.nodes`` / ``.beams`` SoA arrays —
+    typically :class:`slappyengine.softbody.world.SoftBodyWorld`. The
+    adapter passes ``world`` through unchanged so authors can hand the
+    editor either world type and get a clear ``TypeError`` if the world
+    doesn't match (the make_humanoid guard fires immediately).
+    """
+    from slappyengine.dynamics.humanoid import make_humanoid
+
+    kwargs.pop("name", None)
+    root_position = kwargs.pop("root_position", (0.0, 1.0))
+    return make_humanoid(world, root_position=root_position, **kwargs)
 
 
 def _spawn_ik_chain(world: Any, **kwargs: Any) -> bool:
@@ -288,6 +325,11 @@ SPAWN_ACTIONS: list[dict] = [
         "label":   "Add IK Chain",
         "factory": "slappyengine.ui.editor.spawn_menu._spawn_ik_chain",
         "spec":    IKChainSpawnSpec,
+    },
+    {
+        "label":   "Add Humanoid",
+        "factory": "slappyengine.ui.editor.spawn_menu._spawn_humanoid",
+        "spec":    HumanoidSpawnSpec,
     },
 ]
 

@@ -81,10 +81,10 @@ except Exception as _import_err:  # pragma: no cover
 # ---------------------------------------------------------------------------
 
 class TestSpawnActionsTable:
-    def test_eight_actions(self):
-        """5 Phase A actions + 3 Phase B+ dynamics primitives."""
+    def test_nine_actions(self):
+        """5 Phase A actions + 4 Phase B+ dynamics primitives."""
         from slappyengine.ui.editor.spawn_menu import SPAWN_ACTIONS
-        assert len(SPAWN_ACTIONS) == 8
+        assert len(SPAWN_ACTIONS) == 9
 
     def test_required_action_labels(self):
         from slappyengine.ui.editor.spawn_menu import SPAWN_ACTIONS
@@ -97,6 +97,7 @@ class TestSpawnActionsTable:
         assert "Add Rope"              in labels
         assert "Add Ragdoll"           in labels
         assert "Add IK Chain"          in labels
+        assert "Add Humanoid"          in labels
 
     def test_each_action_has_label_factory_spec(self):
         from slappyengine.ui.editor.spawn_menu import SPAWN_ACTIONS
@@ -282,7 +283,7 @@ class TestDynamicsSpawnActions:
         from slappyengine.ui.editor.spawn_menu import open_spawn_modal
 
         world = object()
-        for label in ("Add Rope", "Add Ragdoll", "Add IK Chain"):
+        for label in ("Add Rope", "Add Ragdoll", "Add IK Chain", "Add Humanoid"):
             action = _find_action(label)
             # Must not raise — property_inspector reflection auto-handles
             # primitive dataclass fields with no extension needed.
