@@ -48,10 +48,6 @@ def main() -> Path:
         name="bullet",
         binding_force=2.0e3,
         drill_max_px=10,
-        # 0.65 per pixel: a bullet entering a 5x5 crater (25 px) keeps
-        # only 0.65^25 ≈ 0.0003 of its initial KE — punches in, almost
-        # always lodges. A few high-energy rounds will still punch
-        # cleanly out the other side.
         drill_velocity_loss=0.65,
         drill_eject_gain=0.8,
         mass_conservation=1.0,
@@ -60,12 +56,10 @@ def main() -> Path:
         radius_min=1,
         radius_max=1,
         color=(255, 220, 100),
-        # Drill polish: small entry crater for a real impact wound,
-        # bias drill direction toward existing holes for clustering,
-        # and let concentrated fire fracture the wall.
-        drill_entry_crater=2,                 # 5x5 entry disc
-        drill_deflection=0.25,                # bullets curve toward holes
-        drill_fracture_threshold=0.55,        # >55% local empty → fracture
+        drill_entry_crater=2,
+        drill_entry_crater_jitter=1,          # craters vary 1..3 (3x3..7x7)
+        drill_deflection=0.25,
+        drill_fracture_threshold=0.55,
     ))
     # Stone material the wall is made of. Ejecta inherit THIS via the
     # mask sampling now built into _drill_through (no more bullets-as-
@@ -74,14 +68,17 @@ def main() -> Path:
         name="stone",
         binding_force=8.0e4,
         cohesion=0.4,
-        friction_per_sec=0.1,
+        # Hard floor friction — debris stops quickly instead of gliding.
+        # 0.01/sec ≈ 7%/frame braking (was 0.1 ≈ 3.8%/frame).
+        friction_per_sec=0.01,
         radius_min=1,
         radius_max=1,
         color=(110, 102, 96),
-        kinetic_fluidity=0.3,         # debris can collide mid-flight
+        kinetic_fluidity=0.3,
         rigidify_frames_min=4,
         rigidify_frames_max=10,
-        impact_stickiness=0.6,
+        impact_stickiness=0.7,
+        settle_speed_threshold=18.0,  # debris settles sooner
     ))
     # Build the stone wall — set BOTH mask and material_grid so the
     # drill mechanic samples stone material id for ejecta.
@@ -104,7 +101,10 @@ def main() -> Path:
             y0 = WALL_Y0 + int(rng.uniform(0, WALL_Y1 - WALL_Y0))
             field.spawn(
                 x=20.0, y=float(y0),
-                vx=1800.0, vy=float(rng.uniform(-20, 20)),
+                # Slight velocity randomness so not every bullet has
+                # identical KE / impact behaviour.
+                vx=float(rng.uniform(1500.0, 2100.0)),
+                vy=float(rng.uniform(-30, 30)),
                 material="bullet", radius=1,
             )
             bullets_fired += 1

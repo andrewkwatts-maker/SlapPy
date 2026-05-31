@@ -150,6 +150,11 @@ class Material:
     # entry wound; 3 = 7x7. Configurable per material — soft tissue
     # (mud) gives big craters, hard ceramic (rock) gives small ones.
     drill_entry_crater: int = 0
+    # Random ±N variation added to drill_entry_crater per impact, so
+    # multiple bullets don't all make identical craters. 0 = uniform;
+    # 1 = radius can be ±1 (4×4 to 6×6 if base is 2). Keeps small
+    # values small so the effect is naturalistic noise, not chaos.
+    drill_entry_crater_jitter: int = 0
     # Per-pixel deflection: at each drill step, the bullet's direction
     # gets nudged toward whatever neighbouring pixels are already
     # empty. Higher = stronger bias toward existing holes (creates
@@ -1334,6 +1339,11 @@ class ParticleField:
         crater_stopped = False
         if mat.drill_entry_crater > 0:
             cr = mat.drill_entry_crater
+            if mat.drill_entry_crater_jitter > 0:
+                cr = max(0, cr + int(self._rng.integers(
+                    -mat.drill_entry_crater_jitter,
+                    mat.drill_entry_crater_jitter + 1,
+                )))
             for ddy in range(-cr, cr + 1):
                 for ddx in range(-cr, cr + 1):
                     if ddx * ddx + ddy * ddy > cr * cr:
@@ -1512,6 +1522,51 @@ class ParticleField:
                             if self.mask[ny, nx, 3] > 0:
                                 self.mask[ny, nx, 3] = 0
                                 self.loose[ny, nx] = False
+        # ── Detach isolated pixels (free-floating fragments) ─────────
+        # Vectorised neighbour-count pass — shift the alpha mask in
+        # four directions, sum, and pick pixels with zero neighbours.
+        # O(scan_r²) numpy ops in C, no Python loops.
+        if drilled > 0:
+            cx0, cy0 = int(px), int(py)
+            scan_r = max(4, mat.drill_entry_crater + 3)
+            y_lo = max(1, cy0 - scan_r)
+            y_hi = min(H - 1, cy0 + scan_r + 1)
+            x_lo = max(1, cx0 - scan_r)
+            x_hi = min(W - 1, cx0 + scan_r + 1)
+            if y_hi > y_lo and x_hi > x_lo:
+                # Include a 1-pixel border so we can look at 4-neighbours.
+                win = (self.mask[y_lo - 1:y_hi + 1,
+                                  x_lo - 1:x_hi + 1, 3] > 0)
+                inner = win[1:-1, 1:-1]
+                nb = (win[:-2, 1:-1].astype(np.int8) +
+                      win[2:, 1:-1].astype(np.int8) +
+                      win[1:-1, :-2].astype(np.int8) +
+                      win[1:-1, 2:].astype(np.int8))
+                fixed = self._fixed_mask[y_lo:y_hi, x_lo:x_hi]
+                isolated = inner & (nb == 0) & ~fixed
+                if isolated.any():
+                    ys, xs = np.where(isolated)
+                    ys += y_lo
+                    xs += x_lo
+                    n_det = ys.size
+                    detach_pos = np.column_stack([xs, ys]).astype(np.float32)
+                    detach_cols = self.mask[ys, xs, :3].copy()
+                    detach_mids = self.material_grid[ys, xs].astype(np.int32)
+                    # Replace any -1 with bullet_mid.
+                    unset = detach_mids < 0
+                    if unset.any():
+                        detach_mids[unset] = bullet_mid
+                    # Clear from the mask before spawning so the new
+                    # particles don't immediately re-collide.
+                    self.mask[ys, xs, 3] = 0
+                    self.loose[ys, xs] = False
+                    self.spawn_batch(
+                        pos=detach_pos,
+                        vel=np.zeros((n_det, 2), dtype=np.float32),
+                        material_ids=detach_mids,
+                        radii=np.zeros(n_det, dtype=np.float32),
+                        colors=detach_cols,
+                    )
 
     def _slide(self, slide_mask: np.ndarray, dt: float) -> None:
         H, W = self.mask.shape[:2]
@@ -1533,51 +1588,52 @@ class ParticleField:
             if 0 <= x < W:
                 while y > 0 and self.mask[y, x, 3] > 0:
                     y -= 1
-                # Roll-downhill: only fires when (a) there's a
-                # significant slope AND (b) the particle is still moving
-                # fast enough that it could plausibly redirect. Slow
-                # particles SETTLE in place — the redirect used to add
-                # a velocity kick every frame, which kept ejecta
-                # accelerating sideways indefinitely instead of clumping
-                # (user: "dust ejected seems to accelerate left once it
-                # hits the ground rather than clumping in a pile").
+                # Roll-downhill in two regimes:
+                # 1. FAST particle on a slope: pick deeper-drop side,
+                #    move one column. Used to ride momentum down the
+                #    hill. No velocity kick (friction handles it).
+                # 2. SLOW particle perched on a TALL pile: also redirect
+                #    one column, no velocity. Stops vertical-only
+                #    stacking when ejecta arrive at the same column —
+                #    instead of climbing the pile, they slide off to
+                #    a neighbour. User: "stacking up vertically when
+                #    settling, should be stacking up rather then sliding
+                #    through each other".
                 mat_here = self.materials[int(self.material_id[i])]
-                redirect_min_vel = max(20.0, mat_here.settle_speed_threshold * 2.0)
-                if abs(self.vel[i, 0]) > redirect_min_vel:
-                    my_top = y
-                    slump_step = 2  # was 1 — small piles don't trigger
-                    best_left_drop = 0
-                    best_right_drop = 0
-                    for d in range(1, 6):
-                        cx_l = x - d
-                        if 0 <= cx_l < W:
-                            drop_l = self._column_top(cx_l) - my_top
-                            if drop_l > best_left_drop:
-                                best_left_drop = drop_l
-                        cx_r = x + d
-                        if 0 <= cx_r < W:
-                            drop_r = self._column_top(cx_r) - my_top
-                            if drop_r > best_right_drop:
-                                best_right_drop = drop_r
-                    if best_left_drop >= slump_step or best_right_drop >= slump_step:
-                        if best_left_drop > best_right_drop:
-                            best_direction = -1
-                            best_drop = best_left_drop
-                        elif best_right_drop > best_left_drop:
-                            best_direction = 1
-                            best_drop = best_right_drop
-                        else:
-                            best_direction = -1 if self._rng.random() < 0.5 else 1
-                            best_drop = best_left_drop
-                        new_x = max(0, min(W - 1, x + best_direction))
-                        new_y = self._column_top(new_x) - 1
-                        self.pos[i, 0] = float(new_x)
-                        self.pos[i, 1] = float(max(0, new_y))
-                        # NO velocity kick — let existing friction +
-                        # any residual vx carry the particle. The kick
-                        # was what made slow particles keep accelerating.
+                my_top = y
+                best_left_drop = 0
+                best_right_drop = 0
+                for d in range(1, 6):
+                    cx_l = x - d
+                    if 0 <= cx_l < W:
+                        drop_l = self._column_top(cx_l) - my_top
+                        if drop_l > best_left_drop:
+                            best_left_drop = drop_l
+                    cx_r = x + d
+                    if 0 <= cx_r < W:
+                        drop_r = self._column_top(cx_r) - my_top
+                        if drop_r > best_right_drop:
+                            best_right_drop = drop_r
+                # Two thresholds — fast particles need a small slope to
+                # redirect, slow particles need a bigger one (pile must
+                # be visibly tall before they slide off it).
+                fast_slump_step = 2
+                slow_slump_step = 4
+                fast = abs(self.vel[i, 0]) > max(
+                    20.0, mat_here.settle_speed_threshold * 2.0)
+                step = fast_slump_step if fast else slow_slump_step
+                if best_left_drop >= step or best_right_drop >= step:
+                    if best_left_drop > best_right_drop:
+                        best_direction = -1
+                    elif best_right_drop > best_left_drop:
+                        best_direction = 1
                     else:
-                        self.pos[i, 1] = float(y)
+                        best_direction = -1 if self._rng.random() < 0.5 else 1
+                    new_x = max(0, min(W - 1, x + best_direction))
+                    new_y = self._column_top(new_x) - 1
+                    self.pos[i, 0] = float(new_x)
+                    self.pos[i, 1] = float(max(0, new_y))
+                    # No velocity kick.
                 else:
                     self.pos[i, 1] = float(y)
             mat = self.materials[int(self.material_id[i])]
