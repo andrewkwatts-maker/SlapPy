@@ -372,12 +372,16 @@ class ParticleField:
         slide_mask = self.landed & ~self.settled
         if slide_mask.any():
             self._slide(slide_mask, dt)
-        # Settle bake (mass conservation: particle bodies stamp into
-        # the mask at their final position).
+        # Settle bake — every particle = 1 unit of mass = 1 pixel.
+        # bake_radius_override=0 forces the (2*0+1)² = 1 px stamp,
+        # so total bake mass tracks particle count exactly. Without
+        # the override, the fallback bumped r to 1 (3x3 = 9 px per
+        # particle), which inflated piles ~9× and broke conservation.
         bake_settled_particles(
             pos=self.pos, radius=self.radius, colour=self.color,
             landed=self.landed, settled=self.settled,
             bake_flag=self.bake_flag, terrain_rgba=self.mask,
+            bake_radius_override=0,
         )
         # Mark the newly-baked pixels as LOOSE so the slump pass can
         # rearrange them. The baked function set alpha=255 at every
@@ -611,12 +615,16 @@ class ParticleField:
                         continue
                     else:
                         continue
-            # Settle (or fluid-bounce) at the hit point.
             self.pos[i, 0] = float(hit_x)
             self.pos[i, 1] = float(hit_y - 1)
             self.landed[i] = True
             if mat.is_fluid:
-                self.vel[i, 1] = -self.vel[i, 1] * 0.3  # gentle bounce
+                # Fluid landing: kill the downward velocity but do NOT
+                # bounce. Bouncing kept water oscillating at the surface
+                # so it never noticed terrain being carved out below.
+                # vy=0 lets gravity re-accelerate immediately, so the
+                # particle falls into any hole that opens beneath it.
+                self.vel[i, 1] = 0.0
                 self.landed[i] = False  # keep integrating
 
     def _drill_through(self, i: int, x: int, hit_y: int, mat: Material) -> None:
