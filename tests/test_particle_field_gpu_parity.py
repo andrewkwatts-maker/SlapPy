@@ -245,11 +245,81 @@ def test_drill_cpu_gpu_parity():
 # ── Sprint 3 placeholders ─────────────────────────────────────────────
 
 
-@pytest.mark.skip(reason="GPU kernel not yet ported — Sprint 3")
 def test_slump_cpu_gpu_parity():
-    cpu, gpu = make_paired_fields(n_particles=200)
-    step_both(cpu, gpu, n=20)
-    assert_soa_close(cpu, gpu)
+    """Build a flat sand ground, spawn particles that fall + bake into
+    loose piles, step both fields, and compare mask / loose state.
+
+    The slump GPU port advances a per-pixel PCG32 RNG (one per pixel,
+    once per pass), while the CPU path uses the shared ``self._rng``
+    with vectorised row-at-a-time draws. The two RNG strategies are
+    NOT bit-equivalent — per-pixel exact parity is not expected. We
+    assert distribution-level invariants instead:
+
+      * Mass conservation: total solid-pixel count agrees within 1%
+        (both paths only redistribute, never spawn or destroy mass).
+      * At least 90% of the mask-alpha pixels match between CPU/GPU.
+      * Fixed pixels are NEVER touched by either path.
+    """
+    def _build_field(use_gpu: bool, seed: int) -> ParticleField:
+        f = ParticleField(width=128, height=96)
+        f._rng = np.random.default_rng(seed)
+        f.use_gpu_slump = use_gpu
+        # Fixed ground at y=80 — must NOT be touched by slump.
+        f.fill_ground(
+            top_y=80, color=(120, 90, 60), sub_color=(80, 60, 40),
+            material="sand",
+        )
+        return f
+
+    SEED = 7777
+    cpu = _build_field(use_gpu=False, seed=SEED)
+    gpu = _build_field(use_gpu=True, seed=SEED)
+
+    # Spawn a handful of sand particles that will land + bake into piles.
+    n_particles = 80
+    layout_rng = np.random.default_rng(SEED + 1)
+    sand_id = cpu.material_id_of("sand")
+    pos = layout_rng.uniform(
+        low=[10.0, 20.0], high=[118.0, 60.0],
+        size=(n_particles, 2),
+    ).astype(np.float32)
+    vel = np.zeros((n_particles, 2), dtype=np.float32)
+    vel[:, 1] = layout_rng.uniform(40.0, 80.0, n_particles).astype(np.float32)
+    mids = np.full(n_particles, sand_id, dtype=np.int32)
+    radii = np.full(n_particles, float(SAND_MAT.radius_min), dtype=np.float32)
+    cpu.spawn_batch(pos=pos.copy(), vel=vel.copy(),
+                    material_ids=mids.copy(), radii=radii.copy())
+    gpu.spawn_batch(pos=pos.copy(), vel=vel.copy(),
+                    material_ids=mids.copy(), radii=radii.copy())
+
+    # 30 frames: particles fall, land, settle, bake into loose pixels,
+    # and the slump pass redistributes them every frame.
+    dt = 1.0 / 60.0
+    for _ in range(30):
+        cpu.step(dt)
+        gpu.step(dt)
+
+    # ── Mass conservation ──────────────────────────────────────────
+    cpu_mass = int((cpu.mask[..., 3] > 0).sum())
+    gpu_mass = int((gpu.mask[..., 3] > 0).sum())
+    mass_tol = max(1, int(0.01 * max(cpu_mass, gpu_mass)))
+    assert abs(cpu_mass - gpu_mass) <= mass_tol, (
+        f"slump mass divergence: CPU={cpu_mass}, GPU={gpu_mass}, "
+        f"tol={mass_tol}"
+    )
+
+    # ── Fixed pixels untouched ─────────────────────────────────────
+    assert (cpu.mask[80:, :, 3] == 255).all(), "CPU disturbed fixed ground"
+    assert (gpu.mask[80:, :, 3] == 255).all(), "GPU disturbed fixed ground"
+
+    # ── ≥90% mask alpha overlap ────────────────────────────────────
+    total_pixels = cpu.mask.shape[0] * cpu.mask.shape[1]
+    matching = int((cpu.mask[..., 3] == gpu.mask[..., 3]).sum())
+    pct_match = matching / total_pixels
+    assert pct_match >= 0.90, (
+        f"slump mask alpha overlap too low: {pct_match:.3f} "
+        f"({matching}/{total_pixels})"
+    )
 
 
 def test_kinetic_relax_cpu_gpu_parity():
@@ -367,11 +437,76 @@ def test_thermal_step_cpu_gpu_parity():
     )
 
 
-@pytest.mark.skip(reason="GPU kernel not yet ported — Sprint 3")
 def test_bake_cpu_gpu_parity():
-    cpu, gpu = make_paired_fields(n_particles=200)
-    step_both(cpu, gpu, n=20)
-    assert_soa_close(cpu, gpu)
+    """Spawn 50 sand particles in mid-air over a flat ground; step both
+    fields long enough for everyone to settle and bake; assert mask
+    parity within ~5% pixel difference.
+
+    Tolerance is driven by:
+      * Rotation quantisation — the GPU atlas pre-rasterises shapes at
+        N_ROTATIONS=8 bins; the CPU uses the exact float rotation.
+      * Write-ordering non-determinism — when two polygons overlap the
+        last-write-wins ordering between CPU and GPU can pick different
+        colours (matches the CPU's own iteration-order non-determinism
+        noted in baked_terrain.bake_settled_particles).
+    """
+    # Build two identical fields with a flat sand ground.
+    cpu = ParticleField(width=256, height=256)
+    gpu = ParticleField(width=256, height=256)
+    cpu._rng = np.random.default_rng(42)
+    gpu._rng = np.random.default_rng(42)
+    for f in (cpu, gpu):
+        f.fill_ground(
+            top_y=180, color=(120, 90, 60), sub_color=(80, 60, 40),
+            material="sand",
+        )
+    gpu.use_gpu_bake = True
+
+    # 50 sand particles in mid-air, all moving downward (vy > 0).
+    n_particles = 50
+    layout_rng = np.random.default_rng(43)
+    sand_id = cpu.material_id_of("sand")
+    pos = layout_rng.uniform(
+        low=[16.0, 40.0],
+        high=[240.0, 100.0],
+        size=(n_particles, 2),
+    ).astype(np.float32)
+    vel = layout_rng.uniform(
+        low=[-10.0, 40.0],
+        high=[10.0, 80.0],
+        size=(n_particles, 2),
+    ).astype(np.float32)
+    mids = np.full(n_particles, sand_id, dtype=np.int32)
+    radii = np.full(n_particles, float(SAND_MAT.radius_min), dtype=np.float32)
+    cpu.spawn_batch(pos=pos.copy(), vel=vel.copy(),
+                    material_ids=mids.copy(), radii=radii.copy())
+    gpu.spawn_batch(pos=pos.copy(), vel=vel.copy(),
+                    material_ids=mids.copy(), radii=radii.copy())
+
+    # 100 frames: ~10 fall, then slide/settle, then bake by ~frame 25.
+    dt = 1.0 / 60.0
+    for _ in range(100):
+        cpu.step(dt)
+        gpu.step(dt)
+
+    # Compare the alpha channels of the masks. ~5% slack tolerates
+    # rotation-bin quantisation + write-ordering races.
+    cpu_alpha = cpu.mask[..., 3] > 0
+    gpu_alpha = gpu.mask[..., 3] > 0
+    n_pixels = cpu_alpha.size
+    n_disagree = int((cpu_alpha != gpu_alpha).sum())
+    frac_disagree = n_disagree / float(n_pixels)
+    assert frac_disagree <= 0.05, (
+        f"bake mask alpha divergence too high: "
+        f"{n_disagree}/{n_pixels} pixels differ ({frac_disagree:.3%})"
+    )
+    # Number of baked particles should match closely (both paths gate
+    # on phase == SETTLING and ~bake_flag).
+    cpu_baked = int(cpu.bake_flag.sum())
+    gpu_baked = int(gpu.bake_flag.sum())
+    assert abs(cpu_baked - gpu_baked) <= 2, (
+        f"bake-flag count divergence: CPU={cpu_baked}, GPU={gpu_baked}"
+    )
 
 
 # ── Slide kernel (column_top + per-particle slide) ────────────────────
@@ -449,6 +584,92 @@ def test_slide_cpu_gpu_parity_flat_ground():
     assert abs(cpu_settled - gpu_settled) <= 5, (
         f"settled-particle count diverges too far: "
         f"CPU={cpu_settled}, GPU={gpu_settled}"
+    )
+
+
+def test_detach_isolated_pixels_cpu_gpu_parity():
+    """Build a mask with 5 known isolated pixels + a few clumps;
+    run the CPU detach + the GPU detach on two identical fields and
+    assert both find the SAME 5 pixels (sorted (y, x) lists must
+    compare equal — the detach pass is integer-decision-only so the
+    parity is bit-exact, not within-tolerance).
+
+    Layout (256x128 field)::
+
+        - Five lone pixels at known coords, scattered across the canvas.
+        - A 4x4 solid clump at (40..44, 40..44) — every internal pixel
+          has solid neighbours, so the clump must be ignored entirely.
+        - A 2x2 clump at (200..202, 80..82) — same property.
+        - A solid pixel marked fixed (in ``_fixed_mask``) at (10, 100)
+          with no neighbours — must be skipped because fixed.
+
+    The CPU helper inside particle_gpu mirrors the on-device WGSL
+    kernel exactly; both should detach the FIVE non-fixed lone pixels
+    and nothing else.
+    """
+    from slappyengine.physics.particle_gpu import (
+        gpu_detach_isolated_pixels,
+        _numpy_detach_isolated_pixels,
+        is_gpu_detach_available,
+    )
+
+    def _build_field() -> ParticleField:
+        f = ParticleField(width=256, height=128)
+        sand_id = f.material_id_of("sand")
+        # 5 known isolated pixels — coords chosen to be away from each
+        # other AND away from the canvas border (border pixels are
+        # excluded by the 1-pixel inset on both paths).
+        lone_pixels = [
+            (50, 30),
+            (100, 60),
+            (150, 90),
+            (200, 20),
+            (220, 100),
+        ]
+        for (x, y) in lone_pixels:
+            f.mask[y, x] = (128, 64, 64, 255)
+            f.material_grid[y, x] = sand_id
+        # 4x4 clump.
+        f.mask[40:44, 40:44] = (80, 200, 80, 255)
+        f.material_grid[40:44, 40:44] = sand_id
+        # 2x2 clump.
+        f.mask[80:82, 200:202] = (200, 80, 200, 255)
+        f.material_grid[80:82, 200:202] = sand_id
+        # Fixed lone pixel — must be skipped.
+        f.mask[100, 10] = (255, 255, 255, 255)
+        f._fixed_mask[100, 10] = True
+        return f
+
+    cpu = _build_field()
+    gpu = _build_field()
+
+    cpu_coords = _numpy_detach_isolated_pixels(cpu)
+    gpu_coords = gpu_detach_isolated_pixels(gpu)
+
+    expected = sorted([
+        (30, 50),
+        (60, 100),
+        (90, 150),
+        (20, 200),
+        (100, 220),
+    ])
+    assert cpu_coords == expected, (
+        f"CPU detach missed expected pixels: got {cpu_coords}, "
+        f"expected {expected}"
+    )
+    assert gpu_coords == cpu_coords, (
+        f"CPU and GPU detach diverged: CPU={cpu_coords}, GPU={gpu_coords} "
+        f"(backend={'GPU' if is_gpu_detach_available() else 'numpy-fallback'})"
+    )
+    # Side-effect parity: both fields should have spawned the same number
+    # of particles and cleared the same mask pixels.
+    assert cpu.pos.shape[0] == gpu.pos.shape[0] == 5, (
+        f"spawn_batch count divergence: CPU={cpu.pos.shape[0]}, "
+        f"GPU={gpu.pos.shape[0]}"
+    )
+    np.testing.assert_array_equal(
+        cpu.mask[..., 3] > 0, gpu.mask[..., 3] > 0,
+        err_msg="post-detach mask alpha divergence",
     )
 
 

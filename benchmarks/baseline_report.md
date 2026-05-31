@@ -197,3 +197,217 @@ path at 49%) absorbed all the released frame budget at 62%. To clear
 - The clear next CPU vectorise candidate is `_slide` — 49% → 62% share
   on scenario C, ~82 ms/step. A 5× isolated win on `_slide` would
   approximately double scenario C end-to-end fps.
+
+---
+
+## After Sprint 2 (5 kernels on GPU, default OFF)
+
+- Generated: 2026-05-31 18:01:59
+- Same harness, same scenarios, same dt.
+- Engine changes between Sprint 1 and Sprint 2: 5 new per-particle GPU
+  kernels landed (`_collide`, `_drill_through`, `_slide`, `_kinetic_relax`,
+  `_thermal_step`) plus the column-top precompute pass. All five flags
+  default to `False` — this run measures whether Sprint 2 regressed the
+  CPU path simply by shipping the GPU code paths.
+- **Expected:** numbers identical (within run-to-run variance) to
+  "After Sprint 1". Confirmed below.
+
+### Scenario A (small, sloppy preset) (~680 particles) — Sprint 2 OFF
+
+| method | mean ms/step | p95 ms/step | % total |
+|---|---:|---:|---:|
+| _integrate | 0.037 | 0.088 | 0.9% |
+| _collide | 0.370 | 1.156 | 9.0% |
+| _drill_through | 0.000 | 0.000 | 0.0% |
+| _kinetic_relax | 0.125 | 0.273 | 3.0% |
+| _pbf_bridge_step | 0.006 | 0.009 | 0.1% |
+| _slide | 0.184 | 1.026 | 4.5% |
+| _slump_loose | 1.289 | 2.272 | 31.4% |
+| _thermal_step | 0.041 | 0.065 | 1.0% |
+| bake_settled_particles | 0.066 | 0.337 | 1.6% |
+| **total step()** | **4.111** | **6.911** | **100.0%** |
+
+Steady-state: **243.2 fps**. Top 3: `_slump_loose` (31%), `_collide` (9%), `_slide` (4%).
+
+### Scenario B (medium, snow + mud, aggregated) (~2350 particles) — Sprint 2 OFF
+
+Two separate fields stepped in lockstep — snow=1450, mud=900. ms/step is the combined wall time per (snow.step + mud.step) pair.
+
+| method | mean ms/step | p95 ms/step | % total |
+|---|---:|---:|---:|
+| _integrate | 0.145 | 0.114 | 0.4% |
+| _collide | 2.514 | 2.815 | 6.8% |
+| _drill_through | 0.000 | 0.000 | 0.0% |
+| _kinetic_relax | 0.374 | 0.461 | 1.0% |
+| _pbf_bridge_step | 11.726 | 12.972 | 31.7% |
+| _slide | 8.675 | 16.602 | 23.4% |
+| _slump_loose | 1.671 | 2.066 | 4.5% |
+| _thermal_step | 0.120 | 0.082 | 0.3% |
+| bake_settled_particles | 0.206 | 0.215 | 0.6% |
+| **total step()** | **37.037** | **46.789** | **100.0%** |
+
+Steady-state: **27.0 fps**. Top 3: `_pbf_bridge_step` (32%), `_slide` (23%), `_collide` (7%).
+
+### Scenario C (large, 10x sand detonates staggered) (~10200 particles) — Sprint 2 OFF
+
+Synthesised by 10 sand detonate() calls staggered across 30 setup frames (so particles are at mixed lifetimes before the timing window starts).
+
+| method | mean ms/step | p95 ms/step | % total |
+|---|---:|---:|---:|
+| _integrate | 0.207 | 0.499 | 0.2% |
+| _collide | 4.037 | 12.099 | 3.1% |
+| _drill_through | 0.000 | 0.000 | 0.0% |
+| _kinetic_relax | 4.460 | 9.131 | 3.4% |
+| _pbf_bridge_step | 0.012 | 0.015 | 0.0% |
+| _slide | 81.915 | 140.327 | 62.2% |
+| _slump_loose | 4.360 | 5.780 | 3.3% |
+| _thermal_step | 0.138 | 0.195 | 0.1% |
+| bake_settled_particles | 0.451 | 1.005 | 0.3% |
+| **total step()** | **131.744** | **202.131** | **100.0%** |
+
+Steady-state: **7.6 fps**. Top 3: `_slide` (62%), `_kinetic_relax` (3%), `_slump_loose` (3%).
+
+### Cross-scenario rollup — Sprint 2 OFF
+
+| scenario | particles | fps | top 1 | top 2 | top 3 |
+|---|---:|---:|---|---|---|
+| A small | 680 | 243.2 | _slump_loose (31%) | _collide (9%) | _slide (4%) |
+| B medium | 2350 | 27.0 | _pbf_bridge_step (32%) | _slide (23%) | _collide (7%) |
+| C large | 10200 | 7.6 | _slide (62%) | _kinetic_relax (3%) | _slump_loose (3%) |
+
+### Regression check vs Sprint 1
+
+| scenario | sprint 1 fps | sprint 2 OFF fps | delta |
+|---|---:|---:|---:|
+| A small  | 246.7 | 243.2 | -1.4% (within noise) |
+| B medium |  26.1 |  27.0 | +3.4% (within noise) |
+| C large  |   7.6 |   7.6 | 0.0% |
+
+Confirmed: Sprint 2 added 5 GPU kernels without regressing the CPU path.
+The ±1-3% deltas are run-to-run variance (the C-large number is
+identical because `_slide` dominates at 62% share and `_slide` was
+not touched on the CPU side).
+
+---
+
+## With GPU flags ON (collide + thermal)
+
+- Generated: 2026-05-31 18:03:09
+- Same harness, same scenarios.
+- `field.use_gpu_collide = True` and `field.use_gpu_thermal = True` set
+  on every field before warmup.
+- `use_gpu_slide` and `use_gpu_kinetic_relax` left OFF (slide RNG
+  diverges from CPU by design; relax doesn't win below 2k particles per
+  the f43e67c perf table).
+- `use_gpu_drill` left OFF — none of the three scenarios spawn BULLET
+  particles, so the flag is a no-op here.
+
+### Scenario A (small, sloppy preset, GPU ON) (~680 particles)
+
+| method | mean ms/step | p95 ms/step | % total |
+|---|---:|---:|---:|
+| _integrate | 0.038 | 0.079 | 0.4% |
+| _collide | 0.000 | 0.000 | 0.0% |
+| _drill_through | 0.000 | 0.000 | 0.0% |
+| _kinetic_relax | 0.150 | 0.315 | 1.7% |
+| _pbf_bridge_step | 0.017 | 0.034 | 0.2% |
+| _slide | 0.195 | 1.130 | 2.2% |
+| _slump_loose | 1.338 | 2.352 | 15.1% |
+| _thermal_step | 0.000 | 0.000 | 0.0% |
+| bake_settled_particles | 0.070 | 0.356 | 0.8% |
+| **total step()** | **8.887** | **12.565** | **100.0%** |
+
+Steady-state: **112.5 fps**. Top 3: `_slump_loose` (15%), `_slide` (2%), `_kinetic_relax` (2%).
+
+Note: `_collide` and `_thermal_step` read 0 ms because the GPU paths
+(`gpu_collide` / `gpu_thermal_step`) bypass the wrapped CPU methods. The
+GPU dispatch time shows up only inside the outer `total step()` figure.
+
+### Scenario B (medium, snow + mud, aggregated, GPU ON) (~2350 particles)
+
+Two separate fields stepped in lockstep — snow=1450, mud=900. ms/step is the combined wall time per (snow.step + mud.step) pair.
+
+| method | mean ms/step | p95 ms/step | % total |
+|---|---:|---:|---:|
+| _integrate | 0.154 | 0.122 | 0.3% |
+| _collide | 0.000 | 0.000 | 0.0% |
+| _drill_through | 0.000 | 0.000 | 0.0% |
+| _kinetic_relax | 0.418 | 0.523 | 0.9% |
+| _pbf_bridge_step | 11.884 | 13.107 | 24.2% |
+| _slide | 8.547 | 16.620 | 17.4% |
+| _slump_loose | 1.671 | 1.995 | 3.4% |
+| _thermal_step | 0.000 | 0.000 | 0.0% |
+| bake_settled_particles | 0.208 | 0.206 | 0.4% |
+| **total step()** | **49.013** | **61.093** | **100.0%** |
+
+Steady-state: **20.4 fps**. Top 3: `_pbf_bridge_step` (24%), `_slide` (17%), `_slump_loose` (3%).
+
+### Scenario C (large, 10x sand detonates staggered, GPU ON) (~10200 particles)
+
+Synthesised by 10 sand detonate() calls staggered across 30 setup frames (so particles are at mixed lifetimes before the timing window starts).
+
+| method | mean ms/step | p95 ms/step | % total |
+|---|---:|---:|---:|
+| _integrate | 0.213 | 0.517 | 0.2% |
+| _collide | 0.000 | 0.000 | 0.0% |
+| _drill_through | 0.000 | 0.000 | 0.0% |
+| _kinetic_relax | 4.201 | 8.269 | 3.0% |
+| _pbf_bridge_step | 0.027 | 0.040 | 0.0% |
+| _slide | 82.075 | 140.382 | 59.4% |
+| _slump_loose | 4.399 | 5.960 | 3.2% |
+| _thermal_step | 0.000 | 0.000 | 0.0% |
+| bake_settled_particles | 0.458 | 0.998 | 0.3% |
+| **total step()** | **138.289** | **211.732** | **100.0%** |
+
+Steady-state: **7.2 fps**. Top 3: `_slide` (59%), `_slump_loose` (3%), `_kinetic_relax` (3%).
+
+### Cross-scenario rollup — GPU ON
+
+| scenario | particles | fps | top 1 | top 2 | top 3 |
+|---|---:|---:|---|---|---|
+| A small | 680 | 112.5 | _slump_loose (15%) | _slide (2%) | _kinetic_relax (2%) |
+| B medium | 2350 | 20.4 | _pbf_bridge_step (24%) | _slide (17%) | _slump_loose (3%) |
+| C large | 10200 | 7.2 | _slide (59%) | _slump_loose (3%) | _kinetic_relax (3%) |
+
+### GPU ON vs CPU OFF comparison
+
+| scenario | particles | CPU fps (OFF) | GPU fps (ON) | delta | added ms/step |
+|---|---:|---:|---:|---:|---:|
+| A small  |    680 | 243.2 | 112.5 | **-54%** | +4.78 ms |
+| B medium |  2350 |  27.0 |  20.4 | **-24%** | +11.98 ms |
+| C large  | 10200 |   7.6 |   7.2 | **-5%**  | +6.55 ms |
+
+**GPU flags hurt every scenario.** Even scenario C, which has 10200
+particles, regresses slightly. Two observations:
+
+1. `_collide` and `_thermal_step` are too cheap on CPU to be worth
+   porting at these sizes. Scenario C `_collide` was 4 ms (3% share) and
+   `_thermal_step` 0.14 ms (0.1%). The combined CPU cost is ~4.2 ms;
+   the GPU dispatch + upload + readback adds ~6.5 ms. The kernels
+   are correct but the breakeven N for these two specific kernels is
+   far above 10k.
+2. Scenario A's 54% regression (243 → 112 fps) is the dispatch overhead
+   in stark relief. ~4.8 ms of per-frame GPU overhead on a 4.1 ms CPU
+   baseline is a 2.2× wall-clock slowdown. Confirms the "CPU↔GPU sync
+   overhead dominates at low N" risk escalated in Sprint 1.
+
+### Recommended default-ON threshold (per kernel)
+
+Based on Sprint 2's per-kernel perf tables (kinetic_relax in commit
+f43e67c, this benchmark for collide/thermal), the auto-enable thresholds
+should be:
+
+| kernel | recommended default-ON N | rationale |
+|---|---:|---|
+| `_kinetic_relax` | ≥ 2000 | break-even at ~2000 per f43e67c perf table |
+| `_collide` | ≥ 30000 (estimated) | CPU `_collide` is ~0.4 µs/particle; GPU overhead is ~6 ms/step → break-even ≥ ~15k, with safety margin ≥ 30k |
+| `_thermal_step` | never (unless paired) | CPU is < 0.2 ms in every scenario; GPU only makes sense when fused with another already-GPU kernel |
+| `_drill_through` | ≥ 100 BULLETs sustained | mask/grid readback dominates; only worth it for sustained ejecta workloads |
+| `_slide` | n/a (RNG diverges) | parity is intentionally loose; default-ON would change visible game behaviour |
+
+For Sprint 7 (hardening), wire these thresholds into a `GpuPolicy`
+helper that checks `len(field.pos)` per step and auto-flips the flags.
+For Sprints 3-6, default-OFF remains the right answer — Sprint 2 proved
+that none of these 5 kernels has a clean per-scenario win yet, and the
+upcoming `_slump_loose` and PBF GPU ports will only widen the dispatch
+overhead window.

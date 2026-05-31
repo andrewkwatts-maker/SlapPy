@@ -440,6 +440,35 @@ class ParticleField:
     # ``self._rng`` — so jitter draws diverge bit-exactly from CPU.
     # Tolerance is ≈1 px on pos, ≈2 px/s on vel.
     use_gpu_slide: bool = False
+    # When True, route _slump_loose through the WGSL compute kernel in
+    # slappyengine.physics.particle_gpu (gpu_slump_loose). Default OFF.
+    # NB: GPU path uses a per-pixel PCG32 RNG instead of the shared
+    # ``self._rng``; per-pixel bit-equivalence is NOT expected. Tests
+    # should compare distribution-level invariants (mass conservation,
+    # ~90% loose-mask overlap). Allocates a persistent ``H*W * 4 B``
+    # rng_state buffer on first call (256 KB at 256x256, ~8 MB at
+    # 1920x1080).
+    use_gpu_slump: bool = False
+    # When True, run ``gpu_detach_isolated_pixels`` as a periodic global
+    # cleanup pass every ``detach_period`` frames. Catches free-floating
+    # solid pixels produced by slumps, multiple bullets, bake conflicts,
+    # etc. — the CPU-side detach inside ``_drill_through`` only scans a
+    # window around each drill impact. Default OFF.
+    use_gpu_detach: bool = False
+    # Frame cadence for the periodic detach pass (one in N frames).
+    # 10 = run roughly six times per second at 60 fps — cheap whole-grid
+    # 8x8 dispatch + readback of a typically-small detach count.
+    detach_period: int = 10
+    # When True, route the polygon ``bake_settled_particles`` call
+    # through the WGSL compute kernel in
+    # ``slappyengine.physics.particle_gpu`` (``gpu_bake_settled``).
+    # Default OFF. NB: splat (non-uniform scale) is NOT supported on
+    # GPU — frames containing any settling particle whose material has
+    # splat fall back to the CPU path transparently inside
+    # ``gpu_bake_settled``. Also the GPU path quantises
+    # ``shape_rotation`` to one of N_ROTATIONS bins (Sprint 3);
+    # tolerance is ~5% pixel difference vs CPU.
+    use_gpu_bake: bool = False
 
     # Particle SoA — initialised empty, grown via spawn().
     pos: np.ndarray = field(init=False)
@@ -516,6 +545,10 @@ class ParticleField:
     _rng: np.random.Generator = field(init=False)
     region_grid: RegionGrid = field(init=False)
     _name_to_id: dict[str, int] = field(init=False)
+    # Monotonic frame counter — used to phase periodic passes (e.g. the
+    # periodic GPU detach sweep gated by ``detach_period``). Increments
+    # once per ``step()`` call.
+    _step_idx: int = field(init=False, default=0)
 
     def __post_init__(self) -> None:
         if self.width <= 0 or self.height <= 0:
@@ -907,6 +940,13 @@ class ParticleField:
         # is sum of (2*br+1)² across settled particles — predictable
         # and matches the user's visual expectation that chunks look
         # like clumps in the final pile.
+        # GPU bake path (Sprint 3) — pre-rasterised atlas + per-particle
+        # mask stamp on the compute shader. Bails to CPU if any settling
+        # particle uses a splat material (Sprint 4 will add splat).
+        gpu_baked = False
+        if self.use_gpu_bake:
+            from slappyengine.physics.particle_gpu import gpu_bake_settled
+            gpu_baked = gpu_bake_settled(self)
         # Build per-particle polygon stamps for settled particles —
         # the user's "hierarchical fragment solution". Each particle
         # rasterises its material.fragment_family.shapes[shape_idx] at
@@ -914,7 +954,7 @@ class ParticleField:
         # jagged-disc path if a particle has no shape.
         to_bake_mask = self.settled & self.landed & ~self.bake_flag
         shape_masks: list[np.ndarray | None] = []
-        if to_bake_mask.any():
+        if not gpu_baked and to_bake_mask.any():
             for i in range(self.pos.shape[0]):
                 if not to_bake_mask[i]:
                     shape_masks.append(None)
@@ -958,16 +998,17 @@ class ParticleField:
                         shape.bake_mask(scale=float(br),
                                         rotation=float(self.shape_rotation[i]))
                     )
-        bake_settled_particles(
-            pos=self.pos, radius=self.radius, colour=self.color,
-            landed=self.landed, settled=self.settled,
-            bake_flag=self.bake_flag, terrain_rgba=self.mask,
-            per_particle_bake_radius=self.bake_radius,
-            jagged=True,  # fallback path for particles without shape masks
-            shape_masks=shape_masks if shape_masks else None,
-            material_id=self.material_id,
-            material_grid=self.material_grid,
-        )
+        if not gpu_baked:
+            bake_settled_particles(
+                pos=self.pos, radius=self.radius, colour=self.color,
+                landed=self.landed, settled=self.settled,
+                bake_flag=self.bake_flag, terrain_rgba=self.mask,
+                per_particle_bake_radius=self.bake_radius,
+                jagged=True,  # fallback path for particles without shape masks
+                shape_masks=shape_masks if shape_masks else None,
+                material_id=self.material_id,
+                material_grid=self.material_grid,
+            )
         # ── Push fluids out of newly-baked solid ────────────────────
         # Without this, mud chunks baking on top of water created a
         # "drilled in, came back up" oscillation. Now we explicitly
@@ -980,7 +1021,11 @@ class ParticleField:
         self._mark_newly_baked_loose()
         # Per-frame slump on loose pixels for the LEAST cohesive
         # baked material currently sitting on the field.
-        self._slump_loose(dt)
+        if self.use_gpu_slump:
+            from slappyengine.physics.particle_gpu import gpu_slump_loose
+            gpu_slump_loose(self, dt)
+        else:
+            self._slump_loose(dt)
         # Region tracking — static cells are skipped on subsequent
         # frames, the big perf knob for large maps.
         live = ~self.bake_flag
@@ -989,6 +1034,19 @@ class ParticleField:
         else:
             self.region_grid.record_live(np.zeros((0, 2), dtype=np.float32))
         self.region_grid.mark_static_when_idle(idle_frames=30)
+        # Periodic GPU detach sweep — catches free-floating solid pixels
+        # produced by slumps, multiple bullets, bake conflicts, etc.
+        # Gated on ``use_gpu_detach`` and fires every ``detach_period``
+        # frames. The CPU-side detach inside ``_drill_through`` only
+        # scans a window around each drill impact; this is the global
+        # complement.
+        if self.use_gpu_detach and self.detach_period > 0:
+            if self._step_idx % self.detach_period == 0:
+                from slappyengine.physics.particle_gpu import (
+                    gpu_detach_isolated_pixels,
+                )
+                gpu_detach_isolated_pixels(self)
+        self._step_idx += 1
 
     def _mark_newly_baked_loose(self) -> None:
         """Mark every alpha-solid pixel as loose if it isn't already

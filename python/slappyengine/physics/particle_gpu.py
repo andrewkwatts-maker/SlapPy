@@ -44,7 +44,13 @@ _THERMAL_SHADER_PATH = _SHADER_DIR / "particle_thermal.wgsl"
 _COLUMN_TOP_SHADER_PATH = _SHADER_DIR / "particle_column_top.wgsl"
 _SLIDE_SHADER_PATH = _SHADER_DIR / "particle_slide.wgsl"
 _KINETIC_RELAX_SHADER_PATH = _SHADER_DIR / "particle_kinetic_relax.wgsl"
+_BAKE_SHADER_PATH = _SHADER_DIR / "particle_bake.wgsl"
+_SLUMP_SHADER_PATH = _SHADER_DIR / "particle_slump.wgsl"
 _WORKGROUP_SIZE = 64
+# 2D workgroup for the slump kernel — must mirror @workgroup_size(8, 8)
+# in shaders/particle_slump.wgsl.
+_SLUMP_WG_X = 8
+_SLUMP_WG_Y = 8
 
 # ── Lazy device / pipeline cache ───────────────────────────────────────
 _GPU_PROBED = False
@@ -64,6 +70,13 @@ _SLIDE_PIPELINE = None  # type: ignore[var-annotated]
 _SLIDE_SHADER_SRC: str | None = None
 _KINETIC_RELAX_PIPELINE = None  # type: ignore[var-annotated]
 _KINETIC_RELAX_SHADER_SRC: str | None = None
+_BAKE_PIPELINE = None  # type: ignore[var-annotated]
+_BAKE_SHADER_SRC: str | None = None
+_SLUMP_PIPELINE = None  # type: ignore[var-annotated]
+_SLUMP_SHADER_SRC: str | None = None
+# Cached shape-mask atlas (built once per (process, materials list).
+# Key = id of the materials list so a rebuild on swap reuses the slot.
+_BAKE_ATLAS_CACHE: dict[int, "_BakeAtlas"] = {}
 
 
 def _probe_gpu() -> bool:
@@ -74,6 +87,8 @@ def _probe_gpu() -> bool:
     global _COLUMN_TOP_PIPELINE, _COLUMN_TOP_SHADER_SRC
     global _SLIDE_PIPELINE, _SLIDE_SHADER_SRC
     global _KINETIC_RELAX_PIPELINE, _KINETIC_RELAX_SHADER_SRC
+    global _BAKE_PIPELINE, _BAKE_SHADER_SRC
+    global _SLUMP_PIPELINE, _SLUMP_SHADER_SRC
     if _GPU_PROBED:
         return _GPU_AVAILABLE
     _GPU_PROBED = True
@@ -221,6 +236,42 @@ def _probe_gpu() -> bool:
         )
         return False
 
+    try:
+        bake_src = _BAKE_SHADER_PATH.read_text(encoding="utf-8")
+        bake_module = device.create_shader_module(
+            code=bake_src, label="particle_bake")
+        bake_pipeline = device.create_compute_pipeline(
+            layout="auto",
+            compute={"module": bake_module, "entry_point": "main"},
+            label="particle_bake_pipeline",
+        )
+    except Exception as exc:  # noqa: BLE001
+        warnings.warn(
+            f"particle_gpu: bake pipeline build failed ({exc!r}); "
+            "using numpy fallback.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return False
+
+    try:
+        slump_src = _SLUMP_SHADER_PATH.read_text(encoding="utf-8")
+        slump_module = device.create_shader_module(
+            code=slump_src, label="particle_slump")
+        slump_pipeline = device.create_compute_pipeline(
+            layout="auto",
+            compute={"module": slump_module, "entry_point": "main"},
+            label="particle_slump_pipeline",
+        )
+    except Exception as exc:  # noqa: BLE001
+        warnings.warn(
+            f"particle_gpu: slump pipeline build failed ({exc!r}); "
+            "using numpy fallback.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return False
+
     _WGPU = wgpu
     _DEVICE = device
     _QUEUE = device.queue
@@ -236,6 +287,10 @@ def _probe_gpu() -> bool:
     _SLIDE_SHADER_SRC = slide_src
     _KINETIC_RELAX_PIPELINE = krelax_pipeline
     _KINETIC_RELAX_SHADER_SRC = krelax_src
+    _BAKE_PIPELINE = bake_pipeline
+    _BAKE_SHADER_SRC = bake_src
+    _SLUMP_PIPELINE = slump_pipeline
+    _SLUMP_SHADER_SRC = slump_src
     _GPU_AVAILABLE = True
     return True
 
@@ -1443,6 +1498,1028 @@ def gpu_slide(field: "ParticleField", dt: float) -> None:
         _gpu_slide(field, dt, col_top)
     else:
         _numpy_slide(field, dt)
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Isolated-pixel detach GPU port
+# ──────────────────────────────────────────────────────────────────────
+#
+# GPU port of the vectorised "isolated-pixel detach" pass inside
+# ``ParticleField._drill_through`` (see particle_field.py). The CPU
+# reference scans only a small window around the drill impact site —
+# the GPU port generalises it to the WHOLE mask, suitable for use as a
+# periodic cleanup sweep that catches dangling pixels produced by
+# slumps, multiple bullets, bake conflicts, etc.
+#
+# Per pixel (8x8 workgroups):
+#   1. Skip if alpha == 0 or fixed_mask is set.
+#   2. Count 4-neighbour solid pixels (border treated as 0).
+#   3. Skip pixels on the 1-pixel canvas border (matches the CPU
+#      window inset which excludes them).
+#   4. If neighbour count is 0: atomically reserve a slot, write
+#      (pos, packed colour, material id).
+#
+# CPU side then clears the mask + spawns particles via
+# ``field.spawn_batch``. The split exists because spawn_batch is a
+# Python operation that grows the SoA — there is no benefit to also
+# pushing the mask write to the GPU when a readback is required
+# anyway.
+#
+# Memory cost
+# -----------
+# MAX_DETACH_PER_DISPATCH controls the worst-case dispatch buffer
+# size. At MAX_DETACH=65536:
+#   * detach_pos   : 65536 * 2 * 4 B = 512 KB
+#   * detach_color : 65536     * 4 B = 256 KB
+#   * detach_mid   : 65536     * 4 B = 256 KB
+#   Sum ≈ 1.0 MB GPU + 1.0 MB readback staging. Counter is 4 bytes.
+# Real workloads almost never produce more than a few thousand
+# isolated pixels per cleanup sweep — the cap is sized so a 4K mask
+# with severe fragmentation still has room.
+
+_DETACH_SHADER_PATH = _SHADER_DIR / "particle_detach.wgsl"
+_DETACH_WORKGROUP_X = 8
+_DETACH_WORKGROUP_Y = 8
+MAX_DETACH_PER_DISPATCH = 65536
+
+_DETACH_GPU_PROBED = False
+_DETACH_GPU_AVAILABLE = False
+_DETACH_PIPELINE = None  # type: ignore[var-annotated]
+
+
+def _probe_detach_gpu() -> bool:
+    """One-shot adapter + device + pipeline probe for the detach pass.
+
+    Reuses the main ``_probe_gpu()`` device / queue so we don't open a
+    second wgpu device per process. The pipeline is built lazily on
+    the first call.
+    """
+    global _DETACH_GPU_PROBED, _DETACH_GPU_AVAILABLE, _DETACH_PIPELINE
+    if _DETACH_GPU_PROBED:
+        return _DETACH_GPU_AVAILABLE
+    _DETACH_GPU_PROBED = True
+
+    if not _probe_gpu():
+        return False
+    device = _DEVICE
+    try:
+        src = _DETACH_SHADER_PATH.read_text(encoding="utf-8")
+        module = device.create_shader_module(code=src, label="particle_detach")
+        pipeline = device.create_compute_pipeline(
+            layout="auto",
+            compute={"module": module, "entry_point": "main"},
+            label="particle_detach_pipeline",
+        )
+    except Exception as exc:  # noqa: BLE001
+        warnings.warn(
+            f"particle_gpu: detach pipeline build failed ({exc!r}); "
+            "using numpy fallback.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return False
+
+    _DETACH_PIPELINE = pipeline
+    _DETACH_GPU_AVAILABLE = True
+    return True
+
+
+def _pack_mask_to_u32_detach(mask: np.ndarray) -> np.ndarray:
+    """(H, W, 4) uint8 → (H*W,) uint32 — same layout as the drill kernel."""
+    flat = mask.reshape(-1, 4).astype(np.uint32)
+    return (flat[:, 0]
+            | (flat[:, 1] << 8)
+            | (flat[:, 2] << 16)
+            | (flat[:, 3] << 24))
+
+
+def _numpy_detach_isolated_pixels(
+    field: "ParticleField",
+) -> list[tuple[int, int]]:
+    """Pure-numpy mirror of the GPU pass.
+
+    Returns the sorted list of (y, x) coords of the detached pixels,
+    same as the GPU path returns (after sorting). Used by the GPU path
+    as a fallback when wgpu is unavailable, and by the parity test.
+
+    Mutates ``field.mask`` / ``field.loose`` and calls
+    ``field.spawn_batch`` — bit-identical to the bottom of
+    ``_drill_through``'s detach branch but applied to the whole grid
+    (with the 1-pixel canvas inset).
+    """
+    H, W = field.mask.shape[:2]
+    if H < 3 or W < 3:
+        return []
+    # Inset by 1 pixel so the 4-neighbour shift never touches OOB —
+    # matches the CPU window in _drill_through.
+    win = field.mask[..., 3] > 0
+    inner = win[1:-1, 1:-1]
+    nb = (win[:-2, 1:-1].astype(np.int8)
+          + win[2:,   1:-1].astype(np.int8)
+          + win[1:-1, :-2 ].astype(np.int8)
+          + win[1:-1, 2:  ].astype(np.int8))
+    fixed = field._fixed_mask[1:-1, 1:-1]
+    isolated = inner & (nb == 0) & ~fixed
+    if not isolated.any():
+        return []
+    ys_inner, xs_inner = np.where(isolated)
+    ys = ys_inner + 1
+    xs = xs_inner + 1
+    n_det = ys.size
+    detach_pos = np.column_stack([xs, ys]).astype(np.float32)
+    detach_cols = field.mask[ys, xs, :3].copy()
+    detach_mids = field.material_grid[ys, xs].astype(np.int32)
+    fallback_mid = 0
+    detach_mids[detach_mids < 0] = fallback_mid
+    field.mask[ys, xs, 3] = 0
+    field.loose[ys, xs] = False
+    field.spawn_batch(
+        pos=detach_pos,
+        vel=np.zeros((n_det, 2), dtype=np.float32),
+        material_ids=detach_mids,
+        radii=np.zeros(n_det, dtype=np.float32),
+        colors=detach_cols,
+    )
+    coords = sorted(zip(ys.tolist(), xs.tolist()))
+    return coords
+
+
+def _gpu_detach_isolated_pixels(
+    field: "ParticleField",
+) -> list[tuple[int, int]]:
+    """Dispatch the WGSL detach kernel and apply mask clear + spawn_batch."""
+    H, W = field.mask.shape[:2]
+    if H < 3 or W < 3:
+        return []
+
+    wgpu = _WGPU
+    device = _DEVICE
+    pipeline = _DETACH_PIPELINE
+
+    mask_packed = _pack_mask_to_u32_detach(field.mask)
+    mat_grid_np = field.material_grid.astype(np.int32).ravel()
+    fixed_np = field._fixed_mask.astype(np.uint32).ravel()
+
+    detach_pos_zero = np.zeros((MAX_DETACH_PER_DISPATCH, 2), dtype=np.float32)
+    detach_color_zero = np.zeros(MAX_DETACH_PER_DISPATCH, dtype=np.uint32)
+    detach_mid_zero = np.zeros(MAX_DETACH_PER_DISPATCH, dtype=np.int32)
+    counter_zero = np.zeros(1, dtype=np.uint32)
+
+    USAGE_RW = (
+        wgpu.BufferUsage.STORAGE
+        | wgpu.BufferUsage.COPY_SRC
+        | wgpu.BufferUsage.COPY_DST
+    )
+    USAGE_R = wgpu.BufferUsage.STORAGE | wgpu.BufferUsage.COPY_DST
+
+    def _mkbuf(data: np.ndarray, label: str, rw: bool = False):
+        usage = USAGE_RW if rw else USAGE_R
+        buf = device.create_buffer(size=data.nbytes, usage=usage, label=label)
+        device.queue.write_buffer(buf, 0, np.ascontiguousarray(data))
+        return buf
+
+    mask_buf    = _mkbuf(mask_packed,       "pf_detach_mask",    rw=False)
+    mgrid_buf   = _mkbuf(mat_grid_np,       "pf_detach_mgrid",   rw=False)
+    fixed_buf   = _mkbuf(fixed_np,          "pf_detach_fixed",   rw=False)
+    counter_buf = _mkbuf(counter_zero,      "pf_detach_counter", rw=True)
+    pos_buf     = _mkbuf(detach_pos_zero,   "pf_detach_pos",     rw=True)
+    color_buf   = _mkbuf(detach_color_zero, "pf_detach_color",   rw=True)
+    mid_buf     = _mkbuf(detach_mid_zero,   "pf_detach_mid",     rw=True)
+
+    # ── Params uniform: width, height, max_detach (u32), fallback_mid (i32) ──
+    fallback_mid = 0
+    params_data = struct.pack(
+        "IIIi", W, H, MAX_DETACH_PER_DISPATCH, fallback_mid)
+    params_buf = device.create_buffer(
+        size=len(params_data),
+        usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST,
+        label="pf_detach_params",
+    )
+    device.queue.write_buffer(
+        params_buf, 0, np.frombuffer(params_data, dtype=np.uint8))
+
+    bgl = pipeline.get_bind_group_layout(0)
+    bg = device.create_bind_group(
+        layout=bgl,
+        entries=[
+            {"binding": 0, "resource": {"buffer": mask_buf,    "offset": 0, "size": mask_packed.nbytes}},
+            {"binding": 1, "resource": {"buffer": mgrid_buf,   "offset": 0, "size": mat_grid_np.nbytes}},
+            {"binding": 2, "resource": {"buffer": fixed_buf,   "offset": 0, "size": fixed_np.nbytes}},
+            {"binding": 3, "resource": {"buffer": counter_buf, "offset": 0, "size": counter_zero.nbytes}},
+            {"binding": 4, "resource": {"buffer": pos_buf,     "offset": 0, "size": detach_pos_zero.nbytes}},
+            {"binding": 5, "resource": {"buffer": color_buf,   "offset": 0, "size": detach_color_zero.nbytes}},
+            {"binding": 6, "resource": {"buffer": mid_buf,     "offset": 0, "size": detach_mid_zero.nbytes}},
+            {"binding": 7, "resource": {"buffer": params_buf,  "offset": 0, "size": len(params_data)}},
+        ],
+    )
+
+    encoder = device.create_command_encoder(label="pf_detach_dispatch")
+    cp = encoder.begin_compute_pass()
+    cp.set_pipeline(pipeline)
+    cp.set_bind_group(0, bg)
+    n_gx = max(1, (W + _DETACH_WORKGROUP_X - 1) // _DETACH_WORKGROUP_X)
+    n_gy = max(1, (H + _DETACH_WORKGROUP_Y - 1) // _DETACH_WORKGROUP_Y)
+    cp.dispatch_workgroups(n_gx, n_gy)
+    cp.end()
+    device.queue.submit([encoder.finish()])
+
+    counter_out = _readback(
+        device, counter_buf, counter_zero.nbytes, np.uint32)
+    n_det = int(counter_out[0])
+    if n_det > MAX_DETACH_PER_DISPATCH:
+        warnings.warn(
+            f"particle_gpu: detach overflow — kernel wanted {n_det} "
+            f"detached pixels but max_detach={MAX_DETACH_PER_DISPATCH}; "
+            f"keeping the first {MAX_DETACH_PER_DISPATCH}.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        n_det = MAX_DETACH_PER_DISPATCH
+
+    coords: list[tuple[int, int]] = []
+    if n_det > 0:
+        pos_out = _readback(
+            device, pos_buf,
+            n_det * 2 * 4,
+            np.float32,
+        ).reshape(n_det, 2)
+        color_out = _readback(
+            device, color_buf, n_det * 4, np.uint32)
+        mid_out = _readback(
+            device, mid_buf, n_det * 4, np.int32)
+        xs = pos_out[:, 0].astype(np.int32)
+        ys = pos_out[:, 1].astype(np.int32)
+        # Decode packed rgba8 back to (N, 3) uint8.
+        r = (color_out & 0xFF).astype(np.uint8)
+        g = ((color_out >> 8) & 0xFF).astype(np.uint8)
+        b = ((color_out >> 16) & 0xFF).astype(np.uint8)
+        detach_cols = np.column_stack([r, g, b])
+        detach_pos = np.column_stack([xs, ys]).astype(np.float32)
+        # Clear the mask + loose on CPU — cheap vectorised numpy op.
+        field.mask[ys, xs, 3] = 0
+        field.loose[ys, xs] = False
+        field.spawn_batch(
+            pos=detach_pos,
+            vel=np.zeros((n_det, 2), dtype=np.float32),
+            material_ids=mid_out.astype(np.int32),
+            radii=np.zeros(n_det, dtype=np.float32),
+            colors=detach_cols,
+        )
+        coords = sorted(zip(ys.tolist(), xs.tolist()))
+
+    for buf in (mask_buf, mgrid_buf, fixed_buf, counter_buf,
+                pos_buf, color_buf, mid_buf, params_buf):
+        try:
+            buf.destroy()
+        except Exception:  # noqa: BLE001
+            pass
+
+    return coords
+
+
+def gpu_detach_isolated_pixels(
+    field: "ParticleField",
+    scan_region: tuple[int, int, int, int] | None = None,
+) -> list[tuple[int, int]]:
+    """Scan the mask for isolated solid pixels and detach them.
+
+    Drop-in for the local detach pass at the bottom of
+    ``ParticleField._drill_through``, scaled to the whole mask. Uses
+    a WGSL compute shader when wgpu is available; falls back to a
+    pure-numpy mimic with bit-identical behaviour.
+
+    Parameters
+    ----------
+    field
+        The :class:`ParticleField` to scan + mutate.
+    scan_region
+        Optional ``(x_lo, y_lo, x_hi, y_hi)`` bounding box. Currently
+        accepted for API symmetry but not used to gate the dispatch
+        — the kernel runs on the whole mask. Reserved for a future
+        sub-region optimisation.
+
+    Returns
+    -------
+    list[tuple[int, int]]
+        Sorted ``(y, x)`` coords of the detached pixels (useful for
+        the parity test; the field has already been mutated).
+    """
+    if field.mask.shape[0] < 3 or field.mask.shape[1] < 3:
+        return []
+    _ = scan_region  # placeholder for future sub-region optimisation
+    if _probe_detach_gpu():
+        return _gpu_detach_isolated_pixels(field)
+    return _numpy_detach_isolated_pixels(field)
+
+
+def is_gpu_detach_available() -> bool:
+    """Probe (cached) whether the GPU detach path is active."""
+    return _probe_detach_gpu()
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Slump-loose GPU port
+# ──────────────────────────────────────────────────────────────────────
+#
+# Mirrors ``ParticleField._slump_loose`` — a per-pixel cellular automaton
+# on the ``loose`` mask. Two passes: pass 0 = vertical fall, pass 1 =
+# sideways slump. Pull semantics on a ping-pong (mask_in, mask_out) +
+# (loose_in, loose_out) + (rng_in, rng_out) so no atomics are needed.
+#
+# Ping-pong implementation: 2 passes, no atomics. Each thread owns
+# exactly one output pixel and reads from the previous-pass storage
+# buffers. This sidesteps the race condition that arises when two
+# source pixels both want to flow into the same destination — the
+# destination thread resolves the conflict locally by re-evaluating
+# both neighbours' decisions and tie-breaking against its own
+# rng_in slot.
+#
+# Memory cost of the per-pixel rng_state buffer
+# ----------------------------------------------
+# Per pixel: 4 bytes (u32 PCG32 state). The buffer is persistent across
+# frames so the same pixel re-uses its seed (cached on the field as
+# ``_slump_rng_state``):
+#
+#   256 x 256   →   256 KB
+#   512 x 512   →     1 MB
+#  1024 x 1024  →     4 MB
+#  1920 x 1080  →   ~8 MB
+#
+# At 1080p we pay ~8 MB of VRAM for the persistent rng_state. The cost
+# is bounded by the field's pixel count and amortises over every frame
+# (one allocation, mutated in place). For very large fields the buffer
+# can be swapped to a smaller-state LCG if 8 MB becomes a concern.
+
+
+def _compute_slump_probs_cpu(field: "ParticleField") -> "tuple[float, float]":
+    """Mirror the CPU heuristic: pick the LEAST cohesive material
+    currently represented in the settled set and derive fall + side
+    probabilities from it. Returns ``(fall_prob, side_prob)``; both
+    zero if there's nothing to slump.
+    """
+    if not field.loose.any():
+        return (0.0, 0.0)
+    if not field.settled.any():
+        return (0.0, 0.0)
+    cohs = np.array(
+        [field.materials[int(field.material_id[i])].cohesion
+         for i in np.nonzero(field.settled)[0]],
+        dtype=np.float32,
+    )
+    min_coh = float(cohs.min())
+    if min_coh >= 1.0:
+        return (0.0, 0.0)
+    fall_prob = (1.0 - min_coh) * 0.08
+    side_prob = fall_prob * 0.4
+    if fall_prob <= 0.0:
+        return (0.0, 0.0)
+    return (fall_prob, side_prob)
+
+
+def _ensure_slump_rng(field: "ParticleField") -> np.ndarray:
+    """Lazy-allocate a ``(H*W,) u32`` array of per-pixel PCG32 seeds.
+
+    Stored on the field as ``_slump_rng_state`` so the same buffer is
+    reused frame-to-frame (advancing one PCG step per pass per pixel).
+    Seeded from ``field._rng`` so test runs that pin the field RNG
+    also pin the slump RNG.
+    """
+    cached = getattr(field, "_slump_rng_state", None)
+    expected_size = field.height * field.width
+    if cached is None or cached.size != expected_size:
+        # ``integers(low=1, ...)`` avoids 0 (degenerate PCG state).
+        seeds = field._rng.integers(  # noqa: SLF001
+            1, 2**32, size=expected_size, dtype=np.uint32,
+        ).astype(np.uint32)
+        field._slump_rng_state = seeds  # type: ignore[attr-defined]
+        cached = seeds
+    return cached
+
+
+def _numpy_slump_loose(field: "ParticleField", dt: float) -> None:
+    """Pure-numpy fallback — defer to the CPU implementation so tests
+    that opt into the GPU path still get the same observable behaviour
+    when wgpu is unavailable.
+    """
+    field._slump_loose(dt)  # noqa: SLF001
+
+
+def _gpu_slump_loose(field: "ParticleField", dt: float) -> None:
+    """Dispatch the slump WGSL kernel twice (fall pass + slump pass)
+    with a ping-ponged (mask, loose, rng) triple. Reads back the final
+    mask + loose into the field's arrays.
+    """
+    fall_prob, side_prob = _compute_slump_probs_cpu(field)
+    if fall_prob <= 0.0:
+        return
+
+    wgpu = _WGPU
+    device = _DEVICE
+    pipeline = _SLUMP_PIPELINE
+
+    H, W = field.mask.shape[:2]
+
+    # Pack the RGBA8 mask into one u32 per pixel (little-endian: r,g,b,a).
+    mask_u32 = (
+        field.mask[..., 0].astype(np.uint32)
+        | (field.mask[..., 1].astype(np.uint32) << 8)
+        | (field.mask[..., 2].astype(np.uint32) << 16)
+        | (field.mask[..., 3].astype(np.uint32) << 24)
+    ).reshape(-1)
+    mask_u32 = np.ascontiguousarray(mask_u32, dtype=np.uint32)
+
+    loose_u32 = np.ascontiguousarray(
+        field.loose.astype(np.uint32).reshape(-1), dtype=np.uint32)
+    fixed_u32 = np.ascontiguousarray(
+        field._fixed_mask.astype(np.uint32).reshape(-1),  # noqa: SLF001
+        dtype=np.uint32)
+
+    rng_state = _ensure_slump_rng(field)
+    rng_u32 = np.ascontiguousarray(rng_state, dtype=np.uint32)
+
+    USAGE_RW = (
+        wgpu.BufferUsage.STORAGE
+        | wgpu.BufferUsage.COPY_SRC
+        | wgpu.BufferUsage.COPY_DST
+    )
+    USAGE_R = wgpu.BufferUsage.STORAGE | wgpu.BufferUsage.COPY_DST
+
+    mask_a = device.create_buffer(
+        size=mask_u32.nbytes, usage=USAGE_RW, label="slump_mask_a")
+    mask_b = device.create_buffer(
+        size=mask_u32.nbytes, usage=USAGE_RW, label="slump_mask_b")
+    loose_a = device.create_buffer(
+        size=loose_u32.nbytes, usage=USAGE_RW, label="slump_loose_a")
+    loose_b = device.create_buffer(
+        size=loose_u32.nbytes, usage=USAGE_RW, label="slump_loose_b")
+    rng_a = device.create_buffer(
+        size=rng_u32.nbytes, usage=USAGE_RW, label="slump_rng_a")
+    rng_b = device.create_buffer(
+        size=rng_u32.nbytes, usage=USAGE_RW, label="slump_rng_b")
+    fixed_buf = device.create_buffer(
+        size=fixed_u32.nbytes, usage=USAGE_R, label="slump_fixed")
+
+    device.queue.write_buffer(mask_a, 0, mask_u32)
+    device.queue.write_buffer(loose_a, 0, loose_u32)
+    device.queue.write_buffer(rng_a, 0, rng_u32)
+    device.queue.write_buffer(fixed_buf, 0, fixed_u32)
+
+    # The CPU loop is ``range(H-2, 0, -1)`` so y == 0 is never touched.
+    # Mirror that with protect_y_above = 1 (rows 0..0 are protected).
+    protect_y_above = 1
+
+    def _dispatch(pass_kind, src_mask, dst_mask, src_loose, dst_loose,
+                  src_rng, dst_rng):
+        params_data = struct.pack(
+            "fffIIIII",
+            float(fall_prob),
+            float(side_prob),
+            float(1.0),            # slump_step — reserved for v2
+            int(W),
+            int(H),
+            int(protect_y_above),
+            int(pass_kind),
+            0,
+        )
+        params_buf = device.create_buffer(
+            size=len(params_data),
+            usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST,
+            label="slump_params",
+        )
+        device.queue.write_buffer(
+            params_buf, 0, np.frombuffer(params_data, dtype=np.uint8))
+
+        bgl = pipeline.get_bind_group_layout(0)
+        bg = device.create_bind_group(
+            layout=bgl,
+            entries=[
+                {"binding": 0, "resource": {"buffer": src_mask,   "offset": 0, "size": mask_u32.nbytes}},
+                {"binding": 1, "resource": {"buffer": dst_mask,   "offset": 0, "size": mask_u32.nbytes}},
+                {"binding": 2, "resource": {"buffer": src_loose,  "offset": 0, "size": loose_u32.nbytes}},
+                {"binding": 3, "resource": {"buffer": dst_loose,  "offset": 0, "size": loose_u32.nbytes}},
+                {"binding": 4, "resource": {"buffer": fixed_buf,  "offset": 0, "size": fixed_u32.nbytes}},
+                {"binding": 5, "resource": {"buffer": src_rng,    "offset": 0, "size": rng_u32.nbytes}},
+                {"binding": 6, "resource": {"buffer": dst_rng,    "offset": 0, "size": rng_u32.nbytes}},
+                {"binding": 7, "resource": {"buffer": params_buf, "offset": 0, "size": len(params_data)}},
+            ],
+        )
+        encoder = device.create_command_encoder(label="slump_pass")
+        cp = encoder.begin_compute_pass()
+        cp.set_pipeline(pipeline)
+        cp.set_bind_group(0, bg)
+        nx = max(1, (W + _SLUMP_WG_X - 1) // _SLUMP_WG_X)
+        ny = max(1, (H + _SLUMP_WG_Y - 1) // _SLUMP_WG_Y)
+        cp.dispatch_workgroups(nx, ny, 1)
+        cp.end()
+        device.queue.submit([encoder.finish()])
+        try:
+            params_buf.destroy()
+        except Exception:  # noqa: BLE001
+            pass
+
+    # Pass 0 = vertical fall (A -> B). Pass 1 = sideways slump (B -> A).
+    _dispatch(0, mask_a, mask_b, loose_a, loose_b, rng_a, rng_b)
+    _dispatch(1, mask_b, mask_a, loose_b, loose_a, rng_b, rng_a)
+
+    # Readback the final state (back in the A buffers after pass 1).
+    mask_out = _readback(device, mask_a, mask_u32.nbytes, dtype=np.uint32)
+    loose_out = _readback(device, loose_a, loose_u32.nbytes, dtype=np.uint32)
+    rng_out = _readback(device, rng_a, rng_u32.nbytes, dtype=np.uint32)
+
+    # Unpack mask back into HxWx4 uint8.
+    field.mask[..., 0] = (mask_out & 0xFF).astype(np.uint8).reshape(H, W)
+    field.mask[..., 1] = ((mask_out >> 8) & 0xFF).astype(np.uint8).reshape(H, W)
+    field.mask[..., 2] = ((mask_out >> 16) & 0xFF).astype(np.uint8).reshape(H, W)
+    field.mask[..., 3] = ((mask_out >> 24) & 0xFF).astype(np.uint8).reshape(H, W)
+    field.loose[...] = loose_out.astype(bool).reshape(H, W)
+    # Persist the advanced RNG into the cached field-level slot.
+    field._slump_rng_state[...] = rng_out  # type: ignore[attr-defined]
+
+    for buf in (mask_a, mask_b, loose_a, loose_b, rng_a, rng_b, fixed_buf):
+        try:
+            buf.destroy()
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def gpu_slump_loose(field: "ParticleField", dt: float) -> None:
+    """Drop-in replacement for ``ParticleField._slump_loose(dt)``.
+
+    Runs a per-pixel cellular automaton on the loose mask via the WGSL
+    compute kernel when wgpu is available; otherwise falls back to the
+    CPU implementation.
+
+    Memory cost
+    -----------
+    A persistent ``H*W * 4 B`` PCG32 buffer is allocated on first call
+    (stored as ``field._slump_rng_state``). For a 256x256 field that
+    is 256 KB; 1920x1080 fields pay ~8 MB. Seed data is taken from
+    ``field._rng`` so reproducible test runs stay reproducible.
+
+    RNG divergence
+    --------------
+    Each pixel advances its OWN PCG32 state once per pass; the CPU
+    path uses the shared ``field._rng`` with vectorised row-at-a-time
+    draws. The two RNG strategies are NOT bit-equivalent, so per-pixel
+    parity is not expected — tests should assert distribution-level
+    invariants (mass conservation, settled pixel count, ~90% loose
+    mask overlap) rather than exact equality.
+    """
+    if _probe_gpu():
+        _gpu_slump_loose(field, dt)
+    else:
+        _numpy_slump_loose(field, dt)
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Bake settled particles GPU port
+# ──────────────────────────────────────────────────────────────────────
+#
+# Mirrors the polygon path of
+# ``slappyengine.physics.baked_terrain.bake_settled_particles``. Per
+# particle whose phase == SETTLING (and bake_flag is still False), look
+# up its precomputed polygon mask in a CPU-built atlas and stamp the
+# mask into the field's RGBA mask + material_grid + loose buffers.
+#
+# Atlas
+# -----
+# Built once per (process, materials-list-id). Each registered
+# material's ``fragment_family.shapes`` is rasterised at every
+# ``(scale, rotation)`` pair we expect to see; the resulting binary
+# masks are concatenated into a flat u32 buffer with a parallel
+# ``(offset, width, height)`` table.
+#
+# Scale bins: ``BAKE_SCALES = [1..MAX_SCALE]`` — clamped from the
+# per-particle ``bake_radius + 1`` exactly as the CPU path computes
+# ``br`` inside ParticleField.step.
+#
+# Rotation bins: ``N_ROTATIONS = 8`` (every π/4). Per-particle
+# ``shape_rotation`` is quantised to the nearest bin; the slight
+# rounding is what drives the ~5% pixel-difference tolerance in the
+# parity test — CPU uses the exact float rotation, GPU uses the
+# nearest quantised rasterisation.
+#
+# Splat (non-uniform scale) is NOT supported here. Particles whose
+# material has ``splat_squash > 0 || splat_stretch > 0`` are routed
+# through the CPU path by the caller. Sprint 4 will add splat.
+
+_BAKE_MAX_SCALE   = 8
+_BAKE_N_SCALES    = _BAKE_MAX_SCALE
+_BAKE_N_ROTATIONS = 8
+
+
+class _BakeAtlas:
+    """Precomputed shape-mask atlas + lookup metadata.
+
+    Attributes
+    ----------
+    atlas : np.ndarray (uint32 flat)
+        Concatenated mask bits, one u32 per pixel (0 / 1).
+    meta  : np.ndarray (uint32, N_entries × 4)
+        (offset, width, height, _pad) per (shape_global, scale, rot).
+    shape_global_of : list[list[int]]
+        ``shape_global_of[material_id][shape_idx]`` → global shape
+        index.
+    n_entries : int
+    n_shapes  : int
+    """
+
+    __slots__ = ("atlas", "meta", "shape_global_of", "n_entries", "n_shapes")
+
+    def __init__(self, atlas, meta, shape_global_of, n_entries, n_shapes):
+        self.atlas = atlas
+        self.meta = meta
+        self.shape_global_of = shape_global_of
+        self.n_entries = n_entries
+        self.n_shapes = n_shapes
+
+
+def _build_bake_atlas(field: "ParticleField") -> _BakeAtlas:
+    """Build (or fetch from cache) the shape-mask atlas for ``field``.
+
+    Cached by ``id(field.materials)``. New materials registered after
+    the first bake call will not invalidate the cache automatically —
+    callers can drop ``_BAKE_ATLAS_CACHE.clear()`` if they need to.
+    """
+    cache_key = id(field.materials)
+    cached = _BAKE_ATLAS_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+
+    # Enumerate unique shapes by identity. Each material's family may
+    # share shapes with others (e.g. SHAPE_CIRCLE in both SAND_FAMILY
+    # and WATER_FAMILY); de-dup so the atlas isn't bloated.
+    global_shapes: list = []
+    shape_to_global: dict[int, int] = {}
+    shape_global_of: list[list[int]] = []
+    for mat in field.materials:
+        family = mat.fragment_family
+        if family is None:
+            shape_global_of.append([])
+            continue
+        per_mat: list[int] = []
+        for shape in family.shapes:
+            key = id(shape)
+            gi = shape_to_global.get(key)
+            if gi is None:
+                gi = len(global_shapes)
+                shape_to_global[key] = gi
+                global_shapes.append(shape)
+            per_mat.append(gi)
+        shape_global_of.append(per_mat)
+
+    n_shapes = len(global_shapes)
+    n_entries = n_shapes * _BAKE_N_SCALES * _BAKE_N_ROTATIONS
+
+    # Rasterise every (shape, scale, rot) and pack into a flat u32 buf.
+    import math as _math
+    masks: list[np.ndarray] = []
+    meta = np.zeros((max(1, n_entries), 4), dtype=np.uint32)
+    cursor = 0
+    for gi, shape in enumerate(global_shapes):
+        for s in range(_BAKE_N_SCALES):
+            scale = float(s + 1)
+            for r in range(_BAKE_N_ROTATIONS):
+                rot = (2.0 * _math.pi) * (r / float(_BAKE_N_ROTATIONS))
+                m = shape.bake_mask(scale=scale, rotation=rot)
+                bits = m.astype(np.uint32, copy=False).ravel()
+                idx = gi * (_BAKE_N_SCALES * _BAKE_N_ROTATIONS) \
+                    + s * _BAKE_N_ROTATIONS + r
+                meta[idx, 0] = cursor
+                meta[idx, 1] = m.shape[1]  # width
+                meta[idx, 2] = m.shape[0]  # height
+                meta[idx, 3] = 0
+                masks.append(bits)
+                cursor += bits.size
+
+    if masks:
+        atlas = np.concatenate(masks).astype(np.uint32)
+    else:
+        atlas = np.zeros(1, dtype=np.uint32)
+
+    obj = _BakeAtlas(
+        atlas=atlas,
+        meta=meta,
+        shape_global_of=shape_global_of,
+        n_entries=n_entries,
+        n_shapes=n_shapes,
+    )
+    _BAKE_ATLAS_CACHE[cache_key] = obj
+    return obj
+
+
+def _has_splat_particles(field: "ParticleField") -> bool:
+    """True iff any settling particle is on a material with splat.
+
+    Splat (non-uniform scale) is unsupported in the GPU bake kernel —
+    callers route the whole frame through the CPU path when present.
+    """
+    from slappyengine.physics.particle_field import Phase
+    to_bake = (
+        (field.phase == np.int8(Phase.SETTLING))
+        & ~field.bake_flag
+    )
+    if not to_bake.any():
+        return False
+    for mi, mat in enumerate(field.materials):
+        if mat.splat_squash > 0.0 or mat.splat_stretch > 0.0:
+            if (to_bake & (field.material_id == mi)).any():
+                return True
+    return False
+
+
+def _build_particle_atlas_idx(
+    field: "ParticleField", atlas: _BakeAtlas,
+) -> np.ndarray:
+    """Per-particle global atlas entry index, or -1 for skip-on-GPU.
+
+    Mirrors the CPU resolve at the bake call site:
+      * mat.fragment_family is None   → -1
+      * br  = max(1, bake_radius + 1) clamped to MAX_SCALE
+      * rot = nearest (2π / N_ROTATIONS) bin
+    """
+    import math as _math
+    n = field.pos.shape[0]
+    if n == 0:
+        return np.zeros(0, dtype=np.int32)
+
+    n_per_shape = _BAKE_N_SCALES * _BAKE_N_ROTATIONS
+    n_rot = _BAKE_N_ROTATIONS
+    two_pi = 2.0 * _math.pi
+
+    out = np.full(n, -1, dtype=np.int32)
+    mids = field.material_id
+    for mi, mat in enumerate(field.materials):
+        family = mat.fragment_family
+        if family is None:
+            continue
+        per_mat_shape_globals = atlas.shape_global_of[mi]
+        if not per_mat_shape_globals:
+            continue
+        mask = mids == mi
+        if not mask.any():
+            continue
+        local_idx = field.shape_idx[mask].astype(np.int64, copy=False)
+        # The CPU does `% len(family.shapes)` — replicate.
+        local_idx = local_idx % len(family.shapes)
+        per_arr = np.asarray(per_mat_shape_globals, dtype=np.int32)
+        gi = per_arr[local_idx]
+        br = field.bake_radius[mask].astype(np.int32, copy=False) + 1
+        br = np.clip(br, 1, _BAKE_MAX_SCALE)
+        scale_bin = (br - 1).astype(np.int64)
+        rot = field.shape_rotation[mask].astype(np.float64, copy=False)
+        rot_norm = np.mod(rot, two_pi)
+        rot_bin = np.floor(rot_norm / (two_pi / n_rot) + 0.5).astype(np.int64)
+        rot_bin = np.mod(rot_bin, n_rot)
+        entry = (
+            gi.astype(np.int64) * n_per_shape
+            + scale_bin * n_rot
+            + rot_bin
+        ).astype(np.int32)
+        out[mask] = entry
+    return out
+
+
+def _numpy_bake_settled(field: "ParticleField") -> None:
+    """Numpy fallback — delegate to the CPU code path used by
+    ``ParticleField.step``. Keeps a single source of truth.
+    """
+    from slappyengine.physics.splat import SplatConfig, compute_splat
+
+    to_bake_mask = field.settled & field.landed & ~field.bake_flag
+    if not to_bake_mask.any():
+        return
+    shape_masks: list[np.ndarray | None] = []
+    for i in range(field.pos.shape[0]):
+        if not to_bake_mask[i]:
+            shape_masks.append(None)
+            continue
+        mat = field.materials[int(field.material_id[i])]
+        family = mat.fragment_family
+        if family is None:
+            shape_masks.append(None)
+            continue
+        si = int(field.shape_idx[i]) % len(family.shapes)
+        shape = family.shapes[si]
+        br = max(1, int(field.bake_radius[i]) + 1)
+        if mat.splat_squash > 0.0 or mat.splat_stretch > 0.0:
+            cfg = SplatConfig(
+                squash_strength=mat.splat_squash,
+                stretch_strength=mat.splat_stretch,
+                fluidity_gate=mat.splat_fluidity_gate,
+            )
+            rig = max(1, int(field.rigidify_at[i]))
+            age = int(field.kinetic_age[i])
+            current_fluidity = max(0.0, 1.0 - age / rig)
+            sx, sy, rot = compute_splat(
+                impact_vel=(float(field.impact_vel[i, 0]),
+                            float(field.impact_vel[i, 1])),
+                current_fluidity=current_fluidity,
+                base_scale=float(br),
+                base_rotation=float(field.shape_rotation[i]),
+                cfg=cfg,
+            )
+            shape_masks.append(
+                shape.bake_mask_xy(scale_x=sx, scale_y=sy, rotation=rot)
+            )
+        else:
+            shape_masks.append(
+                shape.bake_mask(scale=float(br),
+                                rotation=float(field.shape_rotation[i]))
+            )
+
+    from slappyengine.physics.baked_terrain import bake_settled_particles
+    bake_settled_particles(
+        pos=field.pos, radius=field.radius, colour=field.color,
+        landed=field.landed, settled=field.settled,
+        bake_flag=field.bake_flag, terrain_rgba=field.mask,
+        per_particle_bake_radius=field.bake_radius,
+        jagged=True,
+        shape_masks=shape_masks if shape_masks else None,
+        material_id=field.material_id,
+        material_grid=field.material_grid,
+    )
+
+
+def _gpu_bake_settled(field: "ParticleField") -> None:
+    """Dispatch the WGSL bake kernel and read back mask + material_grid
+    + loose + bake_flag.
+    """
+    n = int(field.pos.shape[0])
+    if n == 0:
+        return
+
+    wgpu = _WGPU
+    device = _DEVICE
+    pipeline = _BAKE_PIPELINE
+
+    atlas = _build_bake_atlas(field)
+    atlas_idx_np = _build_particle_atlas_idx(field, atlas)
+    if not (atlas_idx_np >= 0).any():
+        return
+
+    H, W = field.mask.shape[:2]
+
+    pos_np = np.ascontiguousarray(field.pos, dtype=np.float32)
+    phase_np = field.phase.astype(np.int32, copy=False)
+    bake_flag_np = field.bake_flag.astype(np.uint32, copy=False)
+    color_rgb = np.ascontiguousarray(field.color, dtype=np.uint8)
+    color_u32 = (
+        (np.uint32(255) << 24)
+        | (color_rgb[:, 2].astype(np.uint32) << 16)
+        | (color_rgb[:, 1].astype(np.uint32) << 8)
+        | color_rgb[:, 0].astype(np.uint32)
+    )
+    color_u32 = np.ascontiguousarray(color_u32, dtype=np.uint32)
+    mid_np = np.ascontiguousarray(field.material_id, dtype=np.int32)
+
+    mask_2d = field.mask  # (H, W, 4) uint8
+    mask_u32 = (
+        (mask_2d[..., 3].astype(np.uint32) << 24)
+        | (mask_2d[..., 2].astype(np.uint32) << 16)
+        | (mask_2d[..., 1].astype(np.uint32) << 8)
+        | mask_2d[..., 0].astype(np.uint32)
+    ).ravel()
+    mask_u32 = np.ascontiguousarray(mask_u32, dtype=np.uint32)
+
+    matgrid_i32 = field.material_grid.astype(np.int32, copy=False).ravel()
+    matgrid_i32 = np.ascontiguousarray(matgrid_i32, dtype=np.int32)
+    loose_u32 = field.loose.astype(np.uint32, copy=False).ravel()
+    loose_u32 = np.ascontiguousarray(loose_u32, dtype=np.uint32)
+
+    atlas_idx_np = np.ascontiguousarray(atlas_idx_np, dtype=np.int32)
+    atlas_buf_np = np.ascontiguousarray(atlas.atlas, dtype=np.uint32)
+    atlas_meta_np = np.ascontiguousarray(atlas.meta, dtype=np.uint32)
+
+    USAGE_RW = (
+        wgpu.BufferUsage.STORAGE
+        | wgpu.BufferUsage.COPY_SRC
+        | wgpu.BufferUsage.COPY_DST
+    )
+    USAGE_R = wgpu.BufferUsage.STORAGE | wgpu.BufferUsage.COPY_DST
+
+    def _safe_size(nbytes: int) -> int:
+        return max(4, nbytes)
+
+    pos_buf       = device.create_buffer(size=_safe_size(pos_np.nbytes),       usage=USAGE_R,  label="pb_pos")
+    phase_buf     = device.create_buffer(size=_safe_size(phase_np.nbytes),     usage=USAGE_R,  label="pb_phase")
+    bake_flag_buf = device.create_buffer(size=_safe_size(bake_flag_np.nbytes), usage=USAGE_RW, label="pb_bake_flag")
+    color_buf     = device.create_buffer(size=_safe_size(color_u32.nbytes),    usage=USAGE_R,  label="pb_color")
+    mid_buf       = device.create_buffer(size=_safe_size(mid_np.nbytes),       usage=USAGE_R,  label="pb_mid")
+    atlas_idx_buf = device.create_buffer(size=_safe_size(atlas_idx_np.nbytes), usage=USAGE_R,  label="pb_atlas_idx")
+    atlas_buf     = device.create_buffer(size=_safe_size(atlas_buf_np.nbytes), usage=USAGE_R,  label="pb_atlas")
+    atlas_meta_buf= device.create_buffer(size=_safe_size(atlas_meta_np.nbytes),usage=USAGE_R,  label="pb_atlas_meta")
+    mask_buf      = device.create_buffer(size=_safe_size(mask_u32.nbytes),     usage=USAGE_RW, label="pb_mask")
+    matgrid_buf   = device.create_buffer(size=_safe_size(matgrid_i32.nbytes),  usage=USAGE_RW, label="pb_matgrid")
+    loose_buf     = device.create_buffer(size=_safe_size(loose_u32.nbytes),    usage=USAGE_RW, label="pb_loose")
+
+    device.queue.write_buffer(pos_buf,        0, pos_np)
+    device.queue.write_buffer(phase_buf,      0, phase_np)
+    device.queue.write_buffer(bake_flag_buf,  0, bake_flag_np)
+    device.queue.write_buffer(color_buf,      0, color_u32)
+    device.queue.write_buffer(mid_buf,        0, mid_np)
+    device.queue.write_buffer(atlas_idx_buf,  0, atlas_idx_np)
+    device.queue.write_buffer(atlas_buf,      0, atlas_buf_np)
+    device.queue.write_buffer(atlas_meta_buf, 0, atlas_meta_np)
+    device.queue.write_buffer(mask_buf,       0, mask_u32)
+    device.queue.write_buffer(matgrid_buf,    0, matgrid_i32)
+    device.queue.write_buffer(loose_buf,      0, loose_u32)
+
+    params_data = struct.pack(
+        "IIII",
+        n, int(W), int(H), int(atlas.n_entries),
+    )
+    params_buf = device.create_buffer(
+        size=len(params_data),
+        usage=wgpu.BufferUsage.UNIFORM | wgpu.BufferUsage.COPY_DST,
+        label="pb_params",
+    )
+    device.queue.write_buffer(
+        params_buf, 0, np.frombuffer(params_data, dtype=np.uint8),
+    )
+
+    bgl = pipeline.get_bind_group_layout(0)
+    bg = device.create_bind_group(
+        layout=bgl,
+        entries=[
+            {"binding": 0,  "resource": {"buffer": pos_buf,        "offset": 0, "size": _safe_size(pos_np.nbytes)}},
+            {"binding": 1,  "resource": {"buffer": phase_buf,      "offset": 0, "size": _safe_size(phase_np.nbytes)}},
+            {"binding": 2,  "resource": {"buffer": bake_flag_buf,  "offset": 0, "size": _safe_size(bake_flag_np.nbytes)}},
+            {"binding": 3,  "resource": {"buffer": color_buf,      "offset": 0, "size": _safe_size(color_u32.nbytes)}},
+            {"binding": 4,  "resource": {"buffer": mid_buf,        "offset": 0, "size": _safe_size(mid_np.nbytes)}},
+            {"binding": 5,  "resource": {"buffer": atlas_idx_buf,  "offset": 0, "size": _safe_size(atlas_idx_np.nbytes)}},
+            {"binding": 6,  "resource": {"buffer": atlas_buf,      "offset": 0, "size": _safe_size(atlas_buf_np.nbytes)}},
+            {"binding": 7,  "resource": {"buffer": atlas_meta_buf, "offset": 0, "size": _safe_size(atlas_meta_np.nbytes)}},
+            {"binding": 8,  "resource": {"buffer": mask_buf,       "offset": 0, "size": _safe_size(mask_u32.nbytes)}},
+            {"binding": 9,  "resource": {"buffer": matgrid_buf,    "offset": 0, "size": _safe_size(matgrid_i32.nbytes)}},
+            {"binding": 10, "resource": {"buffer": loose_buf,      "offset": 0, "size": _safe_size(loose_u32.nbytes)}},
+            {"binding": 11, "resource": {"buffer": params_buf,     "offset": 0, "size": len(params_data)}},
+        ],
+    )
+
+    encoder = device.create_command_encoder(label="pb_bake")
+    cp = encoder.begin_compute_pass()
+    cp.set_pipeline(pipeline)
+    cp.set_bind_group(0, bg)
+    n_groups = max(1, (n + _WORKGROUP_SIZE - 1) // _WORKGROUP_SIZE)
+    cp.dispatch_workgroups(n_groups)
+    cp.end()
+    device.queue.submit([encoder.finish()])
+
+    mask_out  = _readback(device, mask_buf,      mask_u32.nbytes,    dtype=np.uint32)
+    matg_out  = _readback(device, matgrid_buf,   matgrid_i32.nbytes, dtype=np.int32)
+    loose_out = _readback(device, loose_buf,     loose_u32.nbytes,   dtype=np.uint32)
+    bake_out  = _readback(device, bake_flag_buf, bake_flag_np.nbytes,dtype=np.uint32)
+
+    mask_2d_out = mask_out.reshape(H, W)
+    field.mask[..., 0] = (mask_2d_out & 0xFF).astype(np.uint8)
+    field.mask[..., 1] = ((mask_2d_out >> 8) & 0xFF).astype(np.uint8)
+    field.mask[..., 2] = ((mask_2d_out >> 16) & 0xFF).astype(np.uint8)
+    field.mask[..., 3] = ((mask_2d_out >> 24) & 0xFF).astype(np.uint8)
+    field.material_grid[...] = matg_out.reshape(H, W).astype(np.int8, copy=False)
+    field.loose[...] = loose_out.reshape(H, W).astype(bool, copy=False)
+    field.bake_flag[...] = field.bake_flag | bake_out.astype(bool, copy=False)
+
+    for buf in (
+        pos_buf, phase_buf, bake_flag_buf, color_buf, mid_buf,
+        atlas_idx_buf, atlas_buf, atlas_meta_buf,
+        mask_buf, matgrid_buf, loose_buf, params_buf,
+    ):
+        try:
+            buf.destroy()
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def gpu_bake_settled(field: "ParticleField") -> bool:
+    """Run the polygon-stamp bake pass on the GPU.
+
+    Returns
+    -------
+    bool
+        ``True`` if the GPU path handled the frame (caller should skip
+        the CPU bake call). ``False`` if the GPU path bailed (no wgpu,
+        or splat particles present) and the caller should run the CPU
+        path. ``True`` is also returned when there is nothing to bake.
+    """
+    if field.pos.shape[0] == 0:
+        return True
+    if not _probe_gpu():
+        return False
+    if _has_splat_particles(field):
+        return False
+    _gpu_bake_settled(field)
+    return True
+
+
+def bake_atlas_memory_bytes(field: "ParticleField") -> int:
+    """Total bytes held by the cached bake atlas for ``field``.
+
+    Sum of the mask buffer + the entry meta table. Useful for the
+    `Atlas memory cost` line in the Sprint 3 wrap-up.
+    """
+    atlas = _build_bake_atlas(field)
+    return int(atlas.atlas.nbytes + atlas.meta.nbytes)
 
 
 # ── Smoke test ────────────────────────────────────────────────────────
