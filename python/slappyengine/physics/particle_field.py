@@ -318,6 +318,12 @@ class ParticleField:
     # easily, full slump cohesion).
     kinetic_age: np.ndarray = field(init=False)
     rigidify_at: np.ndarray = field(init=False)
+    # Frames since the particle was first marked settled. During this
+    # window kinetic_relax still operates on the particle so it can be
+    # jostled into a stable position by neighbours — particles stack
+    # via fluid-like collision BEFORE baking, not via bake-time mask
+    # overlap. The bake only fires once settle_age >= 3.
+    settle_age: np.ndarray = field(init=False)
 
     # Per-pixel solid mask (the world).
     mask: np.ndarray = field(init=False)
@@ -355,6 +361,7 @@ class ParticleField:
         self.shape_rotation = np.zeros(0, dtype=np.float32)
         self.kinetic_age = np.zeros(0, dtype=np.int32)
         self.rigidify_at = np.zeros(0, dtype=np.int32)
+        self.settle_age = np.zeros(0, dtype=np.int32)
         self.mask = np.zeros((self.height, self.width, 4), dtype=np.uint8)
         # -1 = empty / unknown material.
         self.material_grid = np.full(
@@ -1083,35 +1090,38 @@ class ParticleField:
             if 0 <= x < W:
                 while y > 0 and self.mask[y, x, 3] > 0:
                     y -= 1
-                # Roll-downhill: if the particle would perch on top of
-                # a column that's significantly taller than its lateral
-                # neighbours, redirect it toward the lower side. This
-                # is what stops 7 chunks stacking on one column and
-                # baking into a vertical pile — the user's complaint.
+                # Roll-downhill: ANY pile in the current column that's
+                # taller than lateral neighbours pushes the particle
+                # sideways. Threshold lowered to 1 px so even the
+                # first pile-up triggers redirect — fixes "particles
+                # roll sideways then move upwards when baking".
                 my_top = y
-                left_top = self._column_top(max(0, x - 1))
-                right_top = self._column_top(min(W - 1, x + 1))
-                # Higher y = lower in image. So neighbour "lower"
-                # means neighbour's top > my_top.
-                slump_step = 2  # px difference required to redirect
-                left_drop = left_top - my_top
-                right_drop = right_top - my_top
-                if left_drop >= slump_step and right_drop >= slump_step:
-                    direction = 1 if self._rng.random() > 0.5 else -1
-                elif left_drop >= slump_step:
-                    direction = -1
-                elif right_drop >= slump_step:
-                    direction = 1
-                else:
-                    direction = 0
-                if direction != 0:
-                    new_x = max(0, min(W - 1, x + direction))
+                # Sample a wider neighbourhood — walk further until we
+                # find a column with comparable or lower top.
+                slump_step = 1
+                best_direction = 0
+                best_distance = 0
+                for d in range(1, 6):  # search up to 5 cols away
+                    for s in (-1, 1):
+                        cx = x + d * s
+                        if not (0 <= cx < W):
+                            continue
+                        ct = self._column_top(cx)
+                        if ct - my_top >= slump_step:
+                            if d > best_distance:
+                                best_distance = d
+                                best_direction = s
+                if best_direction != 0:
+                    # Take one step in the chosen direction (don't
+                    # teleport — let friction carry the rest).
+                    new_x = max(0, min(W - 1, x + best_direction))
                     new_y = self._column_top(new_x) - 1
                     self.pos[i, 0] = float(new_x)
                     self.pos[i, 1] = float(max(0, new_y))
-                    # Small velocity kick along the slope so the
-                    # particle keeps moving (more rolling, less stalling).
-                    self.vel[i, 0] += direction * 6.0
+                    # Larger velocity kick proportional to the slope
+                    # distance, so steeper drops carry the particle
+                    # further (rolling momentum).
+                    self.vel[i, 0] += best_direction * (8.0 + 4.0 * best_distance)
                 else:
                     self.pos[i, 1] = float(y)
             mat = self.materials[int(self.material_id[i])]

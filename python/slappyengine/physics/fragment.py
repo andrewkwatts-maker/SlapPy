@@ -123,20 +123,37 @@ class FragmentShape:
     # ── Rasterisation to a stamp mask ────────────────────────────────
 
     def bake_mask(self, scale: float = 1.0, rotation: float = 0.0) -> np.ndarray:
-        """Rasterise the shape at the given scale (pixel radius) and
-        rotation (rad). Returns a ``(size, size)`` bool ndarray
-        centred on the polygon's origin. Uses PIL scanline fill —
-        battle-tested polygon rasteriser.
+        """Rasterise the shape at the given (uniform) scale and rotation.
+        Returns a ``(size, size)`` bool ndarray centred on the polygon's
+        origin. Uses PIL scanline fill.
         """
-        R = max(1, int(math.ceil(self.bounds_radius * scale)) + 1)
+        return self.bake_mask_xy(scale, scale, rotation)
+
+    def bake_mask_xy(
+        self,
+        scale_x: float = 1.0,
+        scale_y: float = 1.0,
+        rotation: float = 0.0,
+    ) -> np.ndarray:
+        """Rasterise with separate x/y scales — drives splat
+        deformation. ``scale_x > scale_y`` stretches the polygon
+        horizontally and squashes vertically (the natural "splat
+        against the ground" shape).
+        """
+        sx = max(0.1, scale_x)
+        sy = max(0.1, scale_y)
+        R = max(1, int(math.ceil(self.bounds_radius * max(sx, sy))) + 1)
         size = 2 * R + 1
         cos_r = math.cos(rotation)
         sin_r = math.sin(rotation)
         pts = []
         for x, y in self.vertices:
+            # Rotation applied in unit space, then non-uniform scale,
+            # so the splat direction is fixed in world frame regardless
+            # of the polygon's own rotation.
             xr = x * cos_r - y * sin_r
             yr = x * sin_r + y * cos_r
-            pts.append((xr * scale + R, yr * scale + R))
+            pts.append((xr * sx + R, yr * sy + R))
         im = Image.new("1", (size, size), 0)
         ImageDraw.Draw(im).polygon(pts, fill=1)
         return np.array(im, dtype=bool)
