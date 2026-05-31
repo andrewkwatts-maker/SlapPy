@@ -1899,8 +1899,32 @@ class ParticleField:
             x = int(self.pos[i, 0])
             y = int(self.pos[i, 1])
             if 0 <= x < W:
-                while y > 0 and self.mask[y, x, 3] > 0:
-                    y -= 1
+                # Lateral-first snap: when the particle's current pixel
+                # is inside an existing solid (it arrived where a pile
+                # already grew), TRY to slide sideways to an empty
+                # column at the SAME y BEFORE climbing the pile. This
+                # is what makes piles spread laterally instead of
+                # stacking vertical columns — user feedback:
+                # "stack up rather than sliding through each other".
+                # Sloppy preset already gets this for free (friction=0
+                # zeroes vx instantly so particles never reach the
+                # slide phase) which is why its piles read as natural.
+                if 0 <= y < H and self.mask[y, x, 3] > 0:
+                    side_pref = -1 if self._rng.random() < 0.5 else 1
+                    moved_laterally = False
+                    # Search up to 2 cols only — wider search makes
+                    # piles spread off-field, breaking mass conservation.
+                    for direction in (side_pref, -side_pref):
+                        test_x = x + direction
+                        if 0 <= test_x < W and self.mask[y, test_x, 3] == 0:
+                            x = test_x
+                            moved_laterally = True
+                            break
+                    if not moved_laterally:
+                        # Both sides solid at current y; fall back to
+                        # walking y up the pile (original behaviour).
+                        while y > 0 and self.mask[y, x, 3] > 0:
+                            y -= 1
                 # Roll-downhill in two regimes:
                 # 1. FAST particle on a slope: pick deeper-drop side,
                 #    move one column. Used to ride momentum down the
