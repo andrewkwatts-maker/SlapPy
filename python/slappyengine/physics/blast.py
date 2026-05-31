@@ -22,11 +22,51 @@ from the preset if one with that name isn't already on the field.
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass
 
 import numpy as np
 
 from slappyengine.physics.particle_field import Material, ParticleField
 from slappyengine.physics.splatter_presets import SplatterPreset
+
+
+@dataclass(frozen=True)
+class DetonateCurves:
+    """Tunable shaping curves for :func:`detonate`. Defaults give a
+    Worms-style "up and out" feel; pass a custom instance per blast for
+    different flavours (nuke, mortar, etc.).
+
+    Each field is a *curve power*: 1.0 is linear; > 1.0 weights the
+    distribution toward the low end; < 1.0 weights toward the high end.
+    Compose multiple curves for richer shaping without re-specifying
+    every per-particle parameter individually.
+    """
+
+    # Spawn-depth curve: at offset=R, sample y uniformly from
+    # [0, depth_at_offs * (1 - bias**curve_pow)]. Lower curve_pow =
+    # particles cluster toward the bowl floor; higher = toward the rim.
+    chunk_depth_curve_pow: float = 1.0
+    grain_depth_curve_pow: float = 1.0
+
+    # Speed weighting: random in [min, max] raised to this power.
+    # > 1.0 = more slow particles (most stay near the blast); < 1.0 =
+    # more fast particles (most fly far).
+    speed_curve_pow: float = 1.0
+
+    # Rigidify spread: scales the random rigidify_at picker. > 1.0 =
+    # more particles rigidify early (rigid look fast); < 1.0 = stay
+    # kinetic longer (fluid-flowing look).
+    rigidify_curve_pow: float = 1.0
+
+    # Direction-blend curve: scales how strongly rim particles bias
+    # toward the radial-outward direction. > 1.0 = stronger edge
+    # outward bias; < 1.0 = edge particles look more like centre ones.
+    direction_blend_curve_pow: float = 1.0
+
+    # Mass conservation multiplier applied to all ejecta from this
+    # blast (overrides Material.mass_conservation for the blast path).
+    # 1.0 = exact; > 1.0 = exaggerated debris; < 1.0 = compaction.
+    mass_conservation: float = 1.0
 
 
 def material_from_preset(preset: SplatterPreset) -> Material:
@@ -120,13 +160,25 @@ def detonate(
 
     cone_rad = preset.max_blast_angle_rad
 
-    # Spawn positions — uniform across the crater rim, just above the
-    # original surface band. Avoids walking up through empty alpha
-    # (which sent particles to the top of the screen earlier).
+    # Spawn positions: each particle comes from its ORIGINAL pixel
+    # inside the carved bowl. For a particle at offset ``offs``, the
+    # bowl extends from y=yi to y=yi+depth(offs); we sample a y
+    # uniformly across that depth so the ejecta visibly comes from
+    # varied depths (not a single horizontal line at the surface).
+    # Chunks favour deeper positions, grains shallower.
     offs = rng.uniform(-crater_radius, crater_radius, n).astype(np.float32)
+    depth_at_offs = (crater_depth
+                      * (1.0 - (offs / max(1.0, crater_radius)) ** 2))
+    # Sample a depth bias per kind: grains in top 60%, chunks anywhere.
+    bias = np.where(
+        is_chunk,
+        rng.uniform(0.0, 1.0, n),
+        rng.uniform(0.0, 0.6, n),
+    ).astype(np.float32)
+    sample_depth = bias * depth_at_offs
     pos = np.column_stack([
         x + offs,
-        np.full(n, float(yi) - 2.0, dtype=np.float32),
+        float(yi) + sample_depth,
     ]).astype(np.float32)
 
     # Direction: uniform within cone, blended with radial-outward.
@@ -164,16 +216,11 @@ def detonate(
     )
     radii = np.where(is_chunk, chunk_radii, grain_radii).astype(np.float32)
 
-    # Per-particle bake_radius from preset — chunks get chunky stamps
-    # (3×3 or 5×5), grains stay 1 px. chunk_bake_jitter adds 0..N extra
-    # pixels to a fraction of chunks so the pile reads as varied clumps.
-    bake_radii = np.where(
-        is_chunk,
-        preset.chunk_bake_radius + rng.integers(
-            0, max(1, preset.chunk_bake_jitter + 1), n
-        ),
-        preset.grain_bake_radius,
-    ).astype(np.int32)
+    # Bake stamp size derives directly from the particle's own
+    # airborne radius — fragment size determines bake amount, as the
+    # user asked. Big chunks bake big, small grains bake tiny. No flat
+    # "1 particle = X pixels" mapping. Clamp to >= 0 (1-pixel floor).
+    bake_radii = np.maximum(0, radii.astype(np.int32) - 1).astype(np.int32)
 
     # ── 3. Colour sourcing: original pixels first, palette as fallback.
     colours = np.zeros((n, 3), dtype=np.uint8)

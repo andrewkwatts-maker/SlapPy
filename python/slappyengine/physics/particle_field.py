@@ -107,6 +107,46 @@ class Material:
     # per-path gains so the user can tune both at once.
     mass_conservation: float = 1.0
 
+    # ── Fluid bulk-flow params (only meaningful when is_fluid) ─────────
+    # Density-relaxation rest distance (px). Higher = water spreads
+    # further before re-pooling; tunes the bulk-flow "wetness" feel.
+    fluid_rest_distance: float = 3.0
+    # Push factor per overlap unit. 0.5 = gentle, 1.5 = aggressive
+    # spreading; high values can blow particles apart.
+    fluid_pressure_factor: float = 0.5
+    # Density-relax iterations per step. 1 = single pass (cheap, fluid
+    # is a bit lumpy); 3-4 = smoother bulk flow, more cost.
+    fluid_iterations: int = 1
+    # Surface-flow nudge: when a fluid particle is resting on solid,
+    # tilt the local horizontal velocity toward whichever side has
+    # an open (empty) neighbour pixel. Drives "flow over the rim"
+    # behaviour without a full pressure-solver. 0 = off.
+    fluid_surface_flow: float = 0.0
+
+    # ── Kinetic-phase fluidity (lerp from fluid → rigid as age grows) ──
+    # Solid particles can behave fluid-like during their airborne /
+    # sliding phase (sloshing globs of mud, dust clouds, etc.) and
+    # then crystallise into rigid stamps once they "dry". The strength
+    # controls how aggressively unsettled particles push apart while
+    # in flight — kills vertical stacking columns. 0 = off; 0.5 is a
+    # gentle "wet" feel; 1.0 is full bulk-flow.
+    kinetic_fluidity: float = 0.0
+    # Each particle picks a random "rigidify time" (in frames) uniformly
+    # from this range at spawn. Below the time it behaves kinetic; above
+    # it crystallises into rigid (slump + settle threshold apply fully).
+    # Keep defaults TIGHT (5-15 frames) so particles consolidate
+    # rapidly instead of flowing endlessly on the surface — that's the
+    # "just flowing on the surface like water" failure mode the user
+    # called out. Widen the range for organic spread.
+    rigidify_frames_min: int = 5
+    rigidify_frames_max: int = 12
+    # On impact (landing), the remaining kinetic time is multiplied
+    # by (1 - impact_stickiness). 0 = no effect; 1 = rigidifies
+    # immediately on first contact (rock thunks down and stays).
+    # Mud / clay: high stickiness; sand: medium; snow: low. Water
+    # ignores this (binding_force=0 makes it permanently fluid).
+    impact_stickiness: float = 0.6
+
     # Rendering.
     color: _RGB = (200, 200, 200)
     radius_min: int = 1
@@ -127,6 +167,16 @@ WATER = Material(
     color=(80, 140, 220),
     radius_min=1,
     radius_max=2,
+    # Water: never rigidifies, no impact-stickiness, plenty of bulk-flow
+    # iterations so it pools cleanly. fluid_surface_flow gives it the
+    # "flow over the rim" nudge instead of just sitting where it lands.
+    rigidify_frames_min=0,
+    rigidify_frames_max=0,
+    impact_stickiness=0.0,
+    fluid_rest_distance=3.5,
+    fluid_pressure_factor=0.6,
+    fluid_iterations=2,
+    fluid_surface_flow=0.3,
 )
 
 SAND_MAT = Material(
@@ -136,6 +186,10 @@ SAND_MAT = Material(
     slump_angle_deg=33.0,
     density=1.6,
     color=(212, 168, 90),
+    rigidify_frames_min=4,
+    rigidify_frames_max=10,
+    impact_stickiness=0.6,        # medium grip
+    kinetic_fluidity=0.4,
 )
 
 MUD_MAT = Material(
@@ -146,6 +200,10 @@ MUD_MAT = Material(
     density=1.8,
     air_drag_per_sec=0.40,
     color=(96, 66, 34),
+    rigidify_frames_min=3,
+    rigidify_frames_max=8,
+    impact_stickiness=0.85,        # mud STICKS hard on impact
+    kinetic_fluidity=0.5,         # globs slosh while in flight
 )
 
 ROCK_MAT = Material(
@@ -156,6 +214,10 @@ ROCK_MAT = Material(
     density=2.5,
     air_drag_per_sec=0.65,
     color=(110, 100, 90),
+    rigidify_frames_min=2,
+    rigidify_frames_max=5,
+    impact_stickiness=0.9,         # rocks thunk and stay
+    kinetic_fluidity=0.2,         # minimal in-flight push
 )
 
 SNOW_MAT = Material(
@@ -167,6 +229,10 @@ SNOW_MAT = Material(
     gravity_scale=0.6,
     air_drag_per_sec=0.30,
     color=(232, 240, 250),
+    rigidify_frames_min=8,
+    rigidify_frames_max=20,
+    impact_stickiness=0.4,         # snow drifts before settling
+    kinetic_fluidity=0.6,
 )
 
 
@@ -204,6 +270,14 @@ class ParticleField:
     landed: np.ndarray = field(init=False)
     settled: np.ndarray = field(init=False)
     bake_flag: np.ndarray = field(init=False)
+    # Per-particle age + rigidify timeout for the fluid→rigid lerp.
+    # Each spawn picks a random rigidify_at; kinetic_age increments
+    # each step. While age < rigidify_at, particle is "kinetic" and
+    # gets a relax push so flying globs spread laterally instead of
+    # stacking. After rigidify_at, particle behaves rigidly (settles
+    # easily, full slump cohesion).
+    kinetic_age: np.ndarray = field(init=False)
+    rigidify_at: np.ndarray = field(init=False)
 
     # Per-pixel solid mask (the world).
     mask: np.ndarray = field(init=False)
@@ -233,6 +307,8 @@ class ParticleField:
         self.landed = np.zeros(0, dtype=bool)
         self.settled = np.zeros(0, dtype=bool)
         self.bake_flag = np.zeros(0, dtype=bool)
+        self.kinetic_age = np.zeros(0, dtype=np.int32)
+        self.rigidify_at = np.zeros(0, dtype=np.int32)
         self.mask = np.zeros((self.height, self.width, 4), dtype=np.uint8)
         self.loose = np.zeros((self.height, self.width), dtype=bool)
         self._fixed_mask = np.zeros((self.height, self.width), dtype=bool)
@@ -288,6 +364,14 @@ class ParticleField:
         self.landed = np.append(self.landed, False)
         self.settled = np.append(self.settled, False)
         self.bake_flag = np.append(self.bake_flag, False)
+        # Pick a per-particle rigidify time from the material range.
+        rigid_min = max(0, mat.rigidify_frames_min)
+        rigid_max = max(rigid_min, mat.rigidify_frames_max)
+        rigid_at = (rigid_min if rigid_min == rigid_max
+                    else int(self._rng.integers(rigid_min, rigid_max + 1)))
+        self.kinetic_age = np.append(self.kinetic_age, np.int32(0))
+        self.rigidify_at = np.append(
+            self.rigidify_at, np.int32(rigid_at)).astype(np.int32)
         return self.pos.shape[0] - 1
 
     def spawn_batch(
@@ -299,6 +383,7 @@ class ParticleField:
         radii: np.ndarray,              # (N,) float
         colors: np.ndarray | None = None,  # (N, 3) uint8; defaults to material color
         bake_radii: np.ndarray | None = None,  # (N,) int; default 0 (1px each)
+        rigidify_at: np.ndarray | None = None,  # (N,) int; per-particle timeout
     ) -> None:
         """Bulk-append a batch of particles. The hot path for explosions."""
         n = pos.shape[0]
@@ -310,6 +395,17 @@ class ParticleField:
                 colors[i] = self.materials[int(material_ids[i])].color
         if bake_radii is None:
             bake_radii = np.zeros(n, dtype=np.int32)
+        # Per-particle rigidify_at: sample from each material's range
+        # if not supplied. Using a per-particle random timeout gives
+        # the organic "some settle fast, some stay wet longer" feel.
+        if rigidify_at is None:
+            rigidify_at = np.zeros(n, dtype=np.int32)
+            for k in range(n):
+                m = self.materials[int(material_ids[k])]
+                lo = max(0, m.rigidify_frames_min)
+                hi = max(lo, m.rigidify_frames_max)
+                rigidify_at[k] = (lo if lo == hi
+                                  else int(self._rng.integers(lo, hi + 1)))
         self.pos = np.concatenate(
             [self.pos, pos.astype(np.float32)], axis=0)
         self.vel = np.concatenate(
@@ -328,6 +424,10 @@ class ParticleField:
             [self.settled, np.zeros(n, dtype=bool)])
         self.bake_flag = np.concatenate(
             [self.bake_flag, np.zeros(n, dtype=bool)])
+        self.kinetic_age = np.concatenate(
+            [self.kinetic_age, np.zeros(n, dtype=np.int32)])
+        self.rigidify_at = np.concatenate(
+            [self.rigidify_at, rigidify_at.astype(np.int32)])
 
     # ── Static-terrain helpers ─────────────────────────────────────────
 
@@ -377,6 +477,10 @@ class ParticleField:
         """
         if self.pos.shape[0] == 0:
             return
+        # Age increment for all live particles — drives the fluid→rigid
+        # lerp via per-particle rigidify_at timeout.
+        live = ~self.bake_flag
+        self.kinetic_age[live] += 1
         air_mask = ~self.landed
         if air_mask.any():
             self._integrate(air_mask, dt)
@@ -386,6 +490,10 @@ class ParticleField:
         # rather than stacking on a single pixel. Cheap O(N) over the
         # fluid subset.
         self._fluid_relax(dt)
+        # Kinetic-phase relax — landed-but-not-rigid solid particles
+        # also push apart (lateral spread), mimicking a wet glob phase
+        # that crystallises as the rigidify timer expires.
+        self._kinetic_relax(dt)
         slide_mask = self.landed & ~self.settled
         if slide_mask.any():
             self._slide(slide_mask, dt)
@@ -400,6 +508,12 @@ class ParticleField:
             bake_flag=self.bake_flag, terrain_rgba=self.mask,
             per_particle_bake_radius=self.bake_radius,
         )
+        # ── Push fluids out of newly-baked solid ────────────────────
+        # Without this, mud chunks baking on top of water created a
+        # "drilled in, came back up" oscillation. Now we explicitly
+        # buoy any fluid particle trapped in solid up to the nearest
+        # empty pixel above.
+        self._push_fluids_out_of_solid()
         # Mark the newly-baked pixels as LOOSE so the slump pass can
         # rearrange them. The baked function set alpha=255 at every
         # stamped pixel, so we replay the same condition here.
@@ -518,38 +632,81 @@ class ParticleField:
                     solid[y, idx + 1] = True
                     solid[y, idx] = False
 
-    def _fluid_relax(self, dt: float) -> None:
-        """Light density-relaxation for fluid materials.
+    def _push_fluids_out_of_solid(self) -> None:
+        """Any live fluid particle sitting in a solid pixel gets buoyed
+        up to the nearest empty pixel above. Called after settle bake
+        so mud chunks falling on top of water can't push the water
+        permanently into the mask (which manifested as "water drills
+        in and comes back up").
+        """
+        H, W = self.mask.shape[:2]
+        live = ~self.bake_flag
+        if not live.any():
+            return
+        for i in np.nonzero(live)[0]:
+            mat = self.materials[int(self.material_id[i])]
+            if not mat.is_fluid:
+                continue
+            x = int(self.pos[i, 0])
+            y = int(self.pos[i, 1])
+            if not (0 <= x < W and 0 <= y < H):
+                continue
+            if self.mask[y, x, 3] == 0:
+                continue  # already in empty space
+            # Walk up until empty.
+            new_y = y
+            while new_y > 0 and self.mask[new_y, x, 3] > 0:
+                new_y -= 1
+            self.pos[i, 1] = float(new_y)
+            self.vel[i, 1] = 0.0  # buoyancy doesn't impart velocity
 
-        Real PBF (Macklin 2013) does a constraint-projection pass on
-        density; this is a cheap single-pass approximation: each fluid
-        particle gets a small push away from its nearest neighbour
-        when too close. Enough for water-on-mud to pool naturally
-        without dragging the full PBF stack into this module.
+    def _kinetic_relax(self, dt: float) -> None:
+        """Push non-fluid particles apart while they are still kinetic.
+
+        ``effective_fluidity = kinetic_fluidity * max(0, 1 - age/rigidify_at)``
+        — particles start at full fluidity at spawn and lerp to 0 over
+        their rigidify timeout. While > 0, they get a small pairwise
+        repulsion from neighbours so flying globs spread laterally
+        instead of stacking on a single column.
         """
         if self.pos.shape[0] < 2:
             return
-        # Subset: fluid materials only.
-        fluid_mask = np.zeros(self.pos.shape[0], dtype=bool)
+        # Gather kinetic-eligible particle indices (solids with
+        # kinetic_fluidity > 0 and within rigidify timeout).
+        n = self.pos.shape[0]
+        eligible = np.zeros(n, dtype=bool)
+        strengths = np.zeros(n, dtype=np.float32)
         for mi, mat in enumerate(self.materials):
-            if mat.is_fluid:
-                fluid_mask |= self.material_id == mi
-        # Live fluid only (not baked).
-        fluid_mask &= ~self.bake_flag
-        n_fluid = int(fluid_mask.sum())
-        if n_fluid < 2:
+            if mat.is_fluid or mat.kinetic_fluidity <= 0.0:
+                continue
+            m = (self.material_id == mi) & (~self.bake_flag) & (~self.settled)
+            if not m.any():
+                continue
+            # Lerp factor per particle: 1 at age 0, 0 at rigidify_at.
+            rig = self.rigidify_at[m].astype(np.float32)
+            age = self.kinetic_age[m].astype(np.float32)
+            lerp = np.clip(1.0 - age / np.maximum(rig, 1.0), 0.0, 1.0)
+            strengths_m = mat.kinetic_fluidity * lerp
+            # Only keep those with positive strength.
+            indices = np.nonzero(m)[0]
+            keep = strengths_m > 0.0
+            eligible[indices[keep]] = True
+            strengths[indices[keep]] = strengths_m[keep]
+        if not eligible.any():
             return
-        idx = np.nonzero(fluid_mask)[0]
-        fp = self.pos[idx]
-        # Bin into small cells so we only test in-cell pairs (O(N) avg).
-        bin_size = 6.0
-        bx = (fp[:, 0] / bin_size).astype(np.int32)
-        by = (fp[:, 1] / bin_size).astype(np.int32)
+        idx = np.nonzero(eligible)[0]
+        if idx.size < 2:
+            return
+        # Cell-binned pair check (same pattern as _fluid_relax).
+        kp = self.pos[idx]
+        rest = 3.5
+        bin_size = rest * 1.5
+        bx = (kp[:, 0] / bin_size).astype(np.int32)
+        by = (kp[:, 1] / bin_size).astype(np.int32)
         bins: dict[tuple[int, int], list[int]] = {}
         for k, (bxk, byk) in enumerate(zip(bx, by)):
             bins.setdefault((int(bxk), int(byk)), []).append(k)
-        rest = 3.0
-        push = np.zeros_like(fp)
+        push = np.zeros_like(kp)
         for (cx, cy), members in bins.items():
             if len(members) < 2:
                 continue
@@ -557,12 +714,14 @@ class ParticleField:
                 for b in members:
                     if a >= b:
                         continue
-                    dx = fp[a, 0] - fp[b, 0]
-                    dy = fp[a, 1] - fp[b, 1]
+                    dx = kp[a, 0] - kp[b, 0]
+                    dy = kp[a, 1] - kp[b, 1]
                     d2 = dx * dx + dy * dy
                     if d2 < rest * rest and d2 > 0.0:
                         d = math.sqrt(d2)
-                        f = (rest - d) * 0.5
+                        ga = strengths[idx[a]]
+                        gb = strengths[idx[b]]
+                        f = (rest - d) * 0.4 * 0.5 * (ga + gb)
                         nx = dx / d
                         ny = dy / d
                         push[a, 0] += nx * f
@@ -570,6 +729,57 @@ class ParticleField:
                         push[b, 0] -= nx * f
                         push[b, 1] -= ny * f
         self.pos[idx] += push
+
+    def _fluid_relax(self, dt: float) -> None:
+        """Per-material density-relaxation for fluid particles.
+
+        Cheap PBF-style approximation. Each fluid material's
+        ``fluid_rest_distance`` sets the spread; ``fluid_pressure_factor``
+        the push strength; ``fluid_iterations`` the number of passes
+        per step (more = smoother flow at higher cost).
+        """
+        if self.pos.shape[0] < 2:
+            return
+        # Per-material loop so each fluid uses its own knobs.
+        for mi, mat in enumerate(self.materials):
+            if not mat.is_fluid:
+                continue
+            fluid_mask = (self.material_id == mi) & (~self.bake_flag)
+            if int(fluid_mask.sum()) < 2:
+                continue
+            idx = np.nonzero(fluid_mask)[0]
+            rest = float(mat.fluid_rest_distance)
+            press = float(mat.fluid_pressure_factor)
+            iters = max(1, int(mat.fluid_iterations))
+            bin_size = max(1.0, rest * 1.5)
+            for _ in range(iters):
+                fp = self.pos[idx]
+                bx = (fp[:, 0] / bin_size).astype(np.int32)
+                by = (fp[:, 1] / bin_size).astype(np.int32)
+                bins: dict[tuple[int, int], list[int]] = {}
+                for k, (bxk, byk) in enumerate(zip(bx, by)):
+                    bins.setdefault((int(bxk), int(byk)), []).append(k)
+                push = np.zeros_like(fp)
+                for members in bins.values():
+                    if len(members) < 2:
+                        continue
+                    for a in members:
+                        for b in members:
+                            if a >= b:
+                                continue
+                            dx = fp[a, 0] - fp[b, 0]
+                            dy = fp[a, 1] - fp[b, 1]
+                            d2 = dx * dx + dy * dy
+                            if d2 < rest * rest and d2 > 0.0:
+                                d = math.sqrt(d2)
+                                f = (rest - d) * press
+                                nx = dx / d
+                                ny = dy / d
+                                push[a, 0] += nx * f
+                                push[a, 1] += ny * f
+                                push[b, 0] -= nx * f
+                                push[b, 1] -= ny * f
+                self.pos[idx] += push
 
     # ── Internals ──────────────────────────────────────────────────────
 
@@ -643,6 +853,17 @@ class ParticleField:
                 # particle falls into any hole that opens beneath it.
                 self.vel[i, 1] = 0.0
                 self.landed[i] = False  # keep integrating
+            else:
+                # Solid impact: collapse the remaining kinetic time by
+                # ``impact_stickiness``. impact_stickiness=0 leaves the
+                # full kinetic window; impact_stickiness=1 rigidifies
+                # the particle on the very next frame (rock thunk).
+                remaining = max(0, int(self.rigidify_at[i]
+                                       - self.kinetic_age[i]))
+                shrink = (1.0 - mat.impact_stickiness)
+                self.rigidify_at[i] = (
+                    self.kinetic_age[i] + int(remaining * shrink)
+                )
 
     def _drill_through(self, i: int, x: int, hit_y: int, mat: Material) -> None:
         """High-KE particle punches into the mask along its velocity.

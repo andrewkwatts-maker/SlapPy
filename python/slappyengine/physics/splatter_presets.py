@@ -217,21 +217,19 @@ SAND = SplatterPreset(
     name="sand",
     max_blast_angle_deg=55.0,
     direction_blend=0.15,
-    edge_outward_boost=220.0,    # rim particles fly hard outward
-    blast_up_boost=40.0,         # modest upward kick (cone speed dominates)
-    blast_radial_boost=150.0,    # flat outward push so centre particles spread
+    edge_outward_boost=220.0,
+    blast_up_boost=40.0,
+    blast_radial_boost=150.0,
     no_collide_frames=3,
     impact_binding_ke=2.0e5,
     impact_drill_max_px=3.5,
     impact_loose_ground_multiplier=2.0,
-    # Sand barely sticks; steep slump (~33°) gives that natural
-    # dune-edge spread.
     cohesion=0.15,
     slump_angle_deg=33.0,
-    # Sand grains = 1 px; chunks bake as 3×3 clumps with small jitter.
-    grain_bake_radius=0,
-    chunk_bake_radius=1,
-    chunk_bake_jitter=1,
+    # Radii drive both flight visuals AND bake size now. Sand grains
+    # radius=1 (1 px bake); chunks radius=2 (3×3 = 9 px bake).
+    grain_radius_min=1, grain_radius_max=1,
+    chunk_radius_min=2, chunk_radius_max=2,
 )
 
 MUD = SplatterPreset(
@@ -251,28 +249,18 @@ MUD = SplatterPreset(
     grain_speed_max=380.0,
     chunk_speed_min=100.0,
     chunk_speed_max=280.0,
-    chunk_radius_min=3,
-    chunk_radius_max=5,
+    grain_radius_min=1, grain_radius_max=1,
+    chunk_radius_min=2, chunk_radius_max=2,
     gravity=620.0,
     air_drag_per_sec=0.55,
     friction_per_sec=0.02,       # mud sticks fast
-    splat_radius_px=8,           # wider splat
+    splat_radius_px=8,
     splat_lift_max=4,
-    # Mud is cohesive — but big chunks landing in the loose bowl still
-    # displace. Binding sits well below chunk-median KE so most chunks
-    # contribute to the crater, while grains keep piling on the rim.
     impact_binding_ke=1.2e5,
     impact_drill_max_px=4.0,
     impact_loose_ground_multiplier=2.5,
-    # Mud is fully cohesive — no slump, no falling unsupported pixels.
-    # That lets it form small overhangs.
     cohesion=0.95,
     slump_angle_deg=70.0,
-    # Mud grains 1 px; chunks chunky (3×3 with jitter to 5×5) so the
-    # pile reads as cohesive globs not a dot-cloud.
-    grain_bake_radius=0,
-    chunk_bake_radius=1,
-    chunk_bake_jitter=1,
     grain_palette=(
         (110, 78, 42),
         (96, 66, 34),
@@ -308,25 +296,19 @@ SLOPPY = SplatterPreset(
     grain_speed_max=240.0,
     chunk_speed_min=80.0,
     chunk_speed_max=200.0,
-    chunk_radius_min=3,
-    chunk_radius_max=5,
     gravity=700.0,
     air_drag_per_sec=0.40,
     friction_per_sec=0.0,        # sticks instantly
     splat_radius_px=6,
     splat_lift_max=2,
-    # Sloppy = squishy globs; binding sits a bit below median KE so the
-    # biggest globs dig and grains pile on the rim.
     impact_binding_ke=1.5e5,
     impact_drill_max_px=4.0,
     impact_loose_ground_multiplier=2.5,
-    # Sloppy is wet but still flows — gentle slump, mostly cohesive.
     cohesion=0.6,
     slump_angle_deg=25.0,
-    # Sloppy = biggest globs. Chunks 5×5 with jitter to 7×7.
-    grain_bake_radius=0,
-    chunk_bake_radius=2,
-    chunk_bake_jitter=1,
+    # Sloppy chunks visibly the biggest globs (5×5 bake).
+    grain_radius_min=1, grain_radius_max=1,
+    chunk_radius_min=3, chunk_radius_max=3,
     grain_palette=(
         (84, 58, 30),
         (66, 44, 22),
@@ -352,8 +334,6 @@ ROCK = SplatterPreset(
     grain_speed_max=420.0,
     chunk_speed_min=180.0,
     chunk_speed_max=360.0,
-    chunk_radius_min=3,
-    chunk_radius_max=5,
     gravity=760.0,
     air_drag_per_sec=0.65,
     friction_per_sec=0.15,       # rocks roll a bit
@@ -364,13 +344,11 @@ ROCK = SplatterPreset(
     impact_binding_ke=4.0e5,
     impact_drill_max_px=4.0,
     impact_loose_ground_multiplier=1.5,
-    # Rocks visually rigid: high friction = stop fast, moderate
-    # cohesion = some slump but not water-flow. Chunks 5×5 boulders.
+    # Rocks visually rigid: chunks 5×5 boulders, moderate cohesion.
     cohesion=0.5,
     slump_angle_deg=45.0,
-    grain_bake_radius=0,
-    chunk_bake_radius=2,
-    chunk_bake_jitter=1,
+    grain_radius_min=1, grain_radius_max=1,
+    chunk_radius_min=3, chunk_radius_max=3,
     grain_palette=(
         (140, 130, 120),
         (110, 100, 90),
@@ -401,10 +379,8 @@ SNOW = SplatterPreset(
     grain_speed_max=240.0,
     chunk_speed_min=80.0,
     chunk_speed_max=180.0,
-    grain_radius_min=1,
-    grain_radius_max=2,
-    chunk_radius_min=2,
-    chunk_radius_max=3,
+    grain_radius_min=1, grain_radius_max=1,
+    chunk_radius_min=2, chunk_radius_max=2,  # tiny snow chunks (3×3 bake)
     gravity=420.0,               # slow fall
     air_drag_per_sec=0.30,       # heavy drag, lots of drift
     friction_per_sec=0.30,
