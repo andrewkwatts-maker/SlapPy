@@ -11,13 +11,15 @@ from ._validation import (
 _SHADER = "taa_resolve.wgsl"
 _ENTRY  = "taa_resolve_main"
 
-# TaaParams layout (24 bytes — round 3):
-#   blend_factor  : f32   offset  0
-#   sharpening    : f32   offset  4
-#   width         : u32   offset  8  — executor splices actual resolution at runtime
-#   height        : u32   offset 12
-#   karis_weight  : u32   offset 16  — 0 = legacy linear blend, 1 = Karis luminance-inverse weighting
-#   _pad          : u32   offset 20  — keeps 8-byte alignment for WGSL uniform layout
+# TaaParams layout (32 bytes — round 4):
+#   blend_factor        : f32   offset  0
+#   sharpening          : f32   offset  4
+#   width               : u32   offset  8  — executor splices actual resolution at runtime
+#   height              : u32   offset 12
+#   karis_weight        : u32   offset 16  — 0 = legacy linear blend, 1 = Karis luminance-inverse weighting
+#   tight_variance_clip : u32   offset 20  — 0 = legacy min/max AABB, 1 = mean ± gamma*sigma (Salvi 2016)
+#   variance_clip_gamma : f32   offset 24  — AABB tightness in stddev units (typical 1.0 .. 1.5)
+#   _pad                : u32   offset 28  — keeps 16-byte uniform alignment
 
 # Luminance coefficients (Rec. 709) used for the Karis weighting.
 # Pre-computed at module level so the hot numpy path doesn't allocate a list.
@@ -35,39 +37,59 @@ class TAAPass:
         variance_clip_gamma: float = 1.0,
         motion_weight: float = 1.0,
         karis_weight: bool = False,
+        tight_variance_clip: bool = False,
+        sharpening: float = 0.0,
     ) -> None:
         """Construct a temporal anti-aliasing pass.
+
+        Parameters
+        ----------
+        alpha
+            Fraction of the current frame blended into the history each
+            frame (``0.1`` ≈ 10%).
+        variance_clip_gamma
+            AABB tightness in stddev units, used by the round-4
+            variance-based neighbourhood clip (Salvi 2016).  ``1.0`` is
+            the canonical 1-sigma envelope; ``1.25`` trades some flicker
+            suppression for ghosting tolerance.  Ignored when
+            ``tight_variance_clip`` is ``False``.
+        motion_weight
+            Reserved — currently baked into the reprojection.
+        karis_weight
+            Karis 2014 luminance-inverse temporal blend (round 3).
+        tight_variance_clip
+            Round 4: when ``True`` the 3x3 YCoCg AABB is tightened to
+            ``mean ± variance_clip_gamma * stddev`` instead of the legacy
+            ``min/max`` envelope.  Massively reduces thin-geometry
+            shimmer (single-pixel features) by ejecting stale history
+            samples that the lax envelope would otherwise accept.
+        sharpening
+            Strength of the post-resolve unsharp pass.  Backward-compat
+            default ``0.0`` matches rounds 1-3 (no sharpening).
 
         Raises
         ------
         TypeError
-            If ``alpha`` / ``variance_clip_gamma`` / ``motion_weight`` are
-            not real numbers, or ``karis_weight`` is not a ``bool``.
+            If any float param is not numeric, or ``karis_weight`` /
+            ``tight_variance_clip`` is not a ``bool``.
         ValueError
-            If ``alpha`` is outside ``[0, 1]``, or
-            ``variance_clip_gamma`` / ``motion_weight`` are negative
-            or NaN/inf.
+            If ``alpha`` is outside ``[0, 1]``, or any non-negative float
+            is negative / NaN / inf.
         """
-        # blend_factor = alpha (fraction of current frame blended in).
-        # variance_clip_gamma and motion_weight are kept for API completeness;
-        # the current shader encodes them implicitly via sharpening (gamma) and
-        # the motion-vector weight is baked into the reprojection.
-        #
-        # karis_weight (round 3, Karis 2014): when True the temporal blend uses
-        # a luminance-inverse weighted average so very bright transient pixels
-        # (sparks, fireflies) don't anchor the history toward a stale brightness.
-        # When False (default) the legacy mix(history, current, alpha) blend
-        # used in rounds 1 and 2 is preserved bit-for-bit.
         self.alpha = validate_unit_interval("alpha", "TAAPass", alpha)
-        validate_non_negative_float(
+        self.variance_clip_gamma = validate_non_negative_float(
             "variance_clip_gamma", "TAAPass", variance_clip_gamma,
         )
-        self.sharpening = max(0.0, variance_clip_gamma - 1.0)
+        self.sharpening = validate_non_negative_float(
+            "sharpening", "TAAPass", sharpening,
+        )
         self.motion_weight = validate_non_negative_float(
             "motion_weight", "TAAPass", motion_weight,
         )
         validate_bool("karis_weight", "TAAPass", karis_weight)
         self.karis_weight = bool(karis_weight)
+        validate_bool("tight_variance_clip", "TAAPass", tight_variance_clip)
+        self.tight_variance_clip = bool(tight_variance_clip)
 
     @classmethod
     def from_config(cls, cfg) -> "TAAPass":
@@ -77,16 +99,20 @@ class TAAPass:
             variance_clip_gamma=taa.variance_clip_gamma,
             motion_weight=taa.motion_weight,
             karis_weight=getattr(taa, "karis_weight", False),
+            tight_variance_clip=getattr(taa, "tight_variance_clip", False),
+            sharpening=getattr(taa, "sharpening", 0.0),
         )
 
     def make_pass(self, frame_tex, history_tex, motion_tex) -> PostProcessPass:
         raw = struct.pack(
-            "<ffIIII",
+            "<ffIIIIfI",
             self.alpha,
             self.sharpening,
             0,                       # width  — executor fills these in
             0,                       # height
             1 if self.karis_weight else 0,
+            1 if self.tight_variance_clip else 0,
+            self.variance_clip_gamma,
             0,                       # _pad — keeps uniform 16-byte aligned
         )
         return PostProcessPass(
@@ -158,12 +184,38 @@ class TAAPass:
         co = 0.5 * padded[..., 0] - 0.5 * padded[..., 2]
         cg = -0.25 * padded[..., 0] + 0.5 * padded[..., 1] - 0.25 * padded[..., 2]
         # 3×3 min/max via a small loop — vectorised over pixels.
-        y_min = np.minimum.reduce([y[i:i + h, j:j + w] for i in range(3) for j in range(3)])
-        y_max = np.maximum.reduce([y[i:i + h, j:j + w] for i in range(3) for j in range(3)])
-        co_min = np.minimum.reduce([co[i:i + h, j:j + w] for i in range(3) for j in range(3)])
-        co_max = np.maximum.reduce([co[i:i + h, j:j + w] for i in range(3) for j in range(3)])
-        cg_min = np.minimum.reduce([cg[i:i + h, j:j + w] for i in range(3) for j in range(3)])
-        cg_max = np.maximum.reduce([cg[i:i + h, j:j + w] for i in range(3) for j in range(3)])
+        tiles_y  = [y[i:i + h, j:j + w] for i in range(3) for j in range(3)]
+        tiles_co = [co[i:i + h, j:j + w] for i in range(3) for j in range(3)]
+        tiles_cg = [cg[i:i + h, j:j + w] for i in range(3) for j in range(3)]
+        y_min  = np.minimum.reduce(tiles_y)
+        y_max  = np.maximum.reduce(tiles_y)
+        co_min = np.minimum.reduce(tiles_co)
+        co_max = np.maximum.reduce(tiles_co)
+        cg_min = np.minimum.reduce(tiles_cg)
+        cg_max = np.maximum.reduce(tiles_cg)
+
+        # Round 4: optional variance-based AABB tightening (Salvi 2016).
+        # When enabled, the AABB shrinks to ``mean ± gamma * stddev``
+        # which excludes single-pixel outliers from the neighbourhood
+        # envelope — the canonical fix for thin-geometry shimmer.
+        if self.tight_variance_clip:
+            ty  = np.stack(tiles_y,  axis=0)
+            tco = np.stack(tiles_co, axis=0)
+            tcg = np.stack(tiles_cg, axis=0)
+            mu_y,  mu_co,  mu_cg  = ty.mean(0),  tco.mean(0),  tcg.mean(0)
+            # Population variance (n=9) — matches the shader's inv_n = 1/9.
+            sy  = np.sqrt(np.maximum((ty  ** 2).mean(0) - mu_y  ** 2, 0.0))
+            sco = np.sqrt(np.maximum((tco ** 2).mean(0) - mu_co ** 2, 0.0))
+            scg = np.sqrt(np.maximum((tcg ** 2).mean(0) - mu_cg ** 2, 0.0))
+            g = float(self.variance_clip_gamma)
+            # Intersect with the legacy min/max envelope so the AABB
+            # never *widens* beyond the safe legacy bounds.
+            y_min  = np.maximum(y_min,  mu_y  - g * sy)
+            y_max  = np.minimum(y_max,  mu_y  + g * sy)
+            co_min = np.maximum(co_min, mu_co - g * sco)
+            co_max = np.minimum(co_max, mu_co + g * sco)
+            cg_min = np.maximum(cg_min, mu_cg - g * scg)
+            cg_max = np.minimum(cg_max, mu_cg + g * scg)
 
         hr = hist_reproj[..., 0]
         hg = hist_reproj[..., 1]

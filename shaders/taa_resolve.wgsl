@@ -10,12 +10,14 @@
 //   group(0) binding(4) — taa_output       texture_storage_2d<rgba16float, write>
 
 struct TaaParams {
-    blend_factor: f32,   // fraction of current frame blended in (0.1 = 10% current)
-    sharpening:   f32,   // post-sharpen strength (0.0 = none, 0.2 = mild)
-    width:        u32,
-    height:       u32,
-    karis_weight: u32,   // round 3: 0 = legacy linear blend, 1 = luminance-inverse weighting (Karis 2014)
-    _pad:         u32,   // alignment padding
+    blend_factor:        f32,  // fraction of current frame blended in (0.1 = 10% current)
+    sharpening:          f32,  // post-sharpen strength (0.0 = none, 0.2 = mild)
+    width:               u32,
+    height:              u32,
+    karis_weight:        u32,  // round 3: 0 = legacy linear blend, 1 = luminance-inverse weighting (Karis 2014)
+    tight_variance_clip: u32,  // round 4: 0 = legacy min/max AABB, 1 = mean ± gamma*sigma AABB (Salvi 2016)
+    variance_clip_gamma: f32,  // round 4: AABB tightness in stddev units (typical 1.0 .. 1.5)
+    _pad:                u32,  // alignment padding (keeps struct at 32 bytes, std140-friendly)
 }
 
 @group(0) @binding(0) var<uniform> taa_params    : TaaParams;
@@ -105,16 +107,54 @@ fn taa_resolve_main(@builtin(global_invocation_id) gid: vec3u) {
     let current_color = textureLoad(current_frame, px, 0).rgb;
 
     // ── 2. Build 3×3 YCoCg neighbourhood AABB for variance clipping ───────────
+    //
+    // Round 4 (Salvi 2016 "An Excursion in Temporal Supersampling"):
+    // The legacy AABB is the strict 3x3 min/max envelope.  On a thin
+    // bright feature surrounded by dark pixels the envelope spans the
+    // full luminance range and the clip becomes a no-op — the stale
+    // history value sits inside the AABB and continues to drag the
+    // resolved frame frame-to-frame, producing the classic single-pixel
+    // shimmer / "thin-line crawl".  The variance-based AABB instead
+    // computes the neighbourhood mean and standard deviation and clamps
+    // the history to mean ± gamma*sigma.  At gamma == 1 this is roughly
+    // the 1-sigma confidence interval, which excludes the lone bright
+    // pixel and lets the temporal filter converge.  At gamma == 1.5 the
+    // AABB is more permissive (more ghost tolerance, less flicker
+    // suppression) — useful for fast-motion scenes.
     var ycocg_min = vec3f( 1e9,  1e9,  1e9);
     var ycocg_max = vec3f(-1e9, -1e9, -1e9);
+    var ycocg_sum  = vec3f(0.0);
+    var ycocg_sum2 = vec3f(0.0);
 
     for (var dy: i32 = -1; dy <= 1; dy++) {
         for (var dx: i32 = -1; dx <= 1; dx++) {
             let s = load_current_clamped(vec2i(px.x + dx, px.y + dy), w, h).rgb;
             let yc = rgb_to_ycocg(s);
-            ycocg_min = min(ycocg_min, yc);
-            ycocg_max = max(ycocg_max, yc);
+            ycocg_min  = min(ycocg_min, yc);
+            ycocg_max  = max(ycocg_max, yc);
+            ycocg_sum  = ycocg_sum  + yc;
+            ycocg_sum2 = ycocg_sum2 + yc * yc;
         }
+    }
+
+    if taa_params.tight_variance_clip != 0u {
+        // 9 samples in a 3x3 window.  Population variance is fine — we
+        // are not estimating a wider distribution, just summarising the
+        // sample set we already have.
+        let inv_n = 1.0 / 9.0;
+        let mu    = ycocg_sum * inv_n;
+        // max(0) guards against tiny negative values from float round-off
+        // on uniform neighbourhoods.
+        let var_  = max(ycocg_sum2 * inv_n - mu * mu, vec3f(0.0));
+        let sigma = sqrt(var_);
+        let gamma = max(taa_params.variance_clip_gamma, 0.0);
+        let lo    = mu - gamma * sigma;
+        let hi    = mu + gamma * sigma;
+        // Intersect with the min/max envelope so we never *widen* the
+        // AABB beyond the legacy behaviour (safety against pathological
+        // sigma estimates on quantised inputs).
+        ycocg_min = max(ycocg_min, lo);
+        ycocg_max = min(ycocg_max, hi);
     }
 
     // ── 3. Reproject: read motion vector and compute history UV ───────────────

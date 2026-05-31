@@ -72,23 +72,46 @@ def _disk_mask(centre_x: int, *, height: int = 64, width: int = 64,
 
 
 def test_taa_uniform_layout_default_disables_karis():
-    """Legacy callers (no flag) must see karis_weight = 0 in the uniform."""
+    """Legacy callers (no flag) must see karis_weight = 0 in the uniform.
+
+    Round 4 grew the uniform to 32 bytes (adds tight_variance_clip flag
+    and variance_clip_gamma) — both new fields must default off so the
+    blend stays bit-for-bit identical to round 3.
+    """
     pass_ = TAAPass(alpha=0.1)
     pp = pass_.make_pass(frame_tex="frame", history_tex="history", motion_tex="motion")
     assert pp.raw_params_bytes is not None
-    assert len(pp.raw_params_bytes) == 24, "TaaParams must be 24 bytes (round 3)"
-    alpha, sharp, w, h, karis, _pad = struct.unpack("<ffIIII", pp.raw_params_bytes)
+    assert len(pp.raw_params_bytes) == 32, "TaaParams must be 32 bytes (round 4)"
+    alpha, sharp, w, h, karis, tight, gamma, _pad = struct.unpack(
+        "<ffIIIIfI", pp.raw_params_bytes
+    )
     assert alpha == pytest.approx(0.1)
     assert sharp == pytest.approx(0.0)
     assert w == 0 and h == 0  # executor splices these at runtime
     assert karis == 0, "default must keep the legacy blend"
+    assert tight == 0, "default must keep the legacy min/max AABB"
+    assert gamma == pytest.approx(1.0)
 
 
 def test_taa_uniform_layout_enables_karis_flag():
     pass_ = TAAPass(alpha=0.2, karis_weight=True)
     pp = pass_.make_pass(frame_tex="frame", history_tex="history", motion_tex="motion")
-    _, _, _, _, karis, _ = struct.unpack("<ffIIII", pp.raw_params_bytes)
+    _, _, _, _, karis, _tight, _gamma, _pad = struct.unpack(
+        "<ffIIIIfI", pp.raw_params_bytes
+    )
     assert karis == 1
+
+
+def test_taa_uniform_layout_enables_tight_variance_clip_flag():
+    """Round 4: opting into the variance-tightened AABB must propagate
+    both the flag and the gamma value into the uniform buffer."""
+    pass_ = TAAPass(alpha=0.1, tight_variance_clip=True, variance_clip_gamma=1.25)
+    pp = pass_.make_pass(frame_tex="frame", history_tex="history", motion_tex="motion")
+    _, _, _, _, _karis, tight, gamma, _pad = struct.unpack(
+        "<ffIIIIfI", pp.raw_params_bytes
+    )
+    assert tight == 1
+    assert gamma == pytest.approx(1.25)
 
 
 # ---------------------------------------------------------------------------
