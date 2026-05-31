@@ -47,6 +47,7 @@ def bake_settled_particles(
     terrain_rgba: np.ndarray,
     bake_radius_override: int | None = None,
     per_particle_bake_radius: np.ndarray | None = None,
+    jagged: bool = False,
 ) -> int:
     """Write every settled-but-not-yet-baked particle into ``terrain_rgba``.
 
@@ -94,15 +95,38 @@ def bake_settled_particles(
             if r < 1:
                 r = 1
         rgb = colour[i]
-        # Stamp (2r+1)² square. r=0 → single pixel.
-        for dy in range(-r, r + 1):
-            for dx in range(-r, r + 1):
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < W and 0 <= ny < H:
-                    terrain_rgba[ny, nx, 0] = rgb[0]
-                    terrain_rgba[ny, nx, 1] = rgb[1]
-                    terrain_rgba[ny, nx, 2] = rgb[2]
-                    terrain_rgba[ny, nx, 3] = 255
+        # Always stamp the centre pixel — both for r=0 and as a
+        # guarantee against the jagged-edge dither eating the visible
+        # heart of the chunk.
+        if 0 <= x < W and 0 <= y < H:
+            terrain_rgba[y, x, 0] = rgb[0]
+            terrain_rgba[y, x, 1] = rgb[1]
+            terrain_rgba[y, x, 2] = rgb[2]
+            terrain_rgba[y, x, 3] = 255
+        if r > 0:
+            # Stable per-particle RNG so re-bakes give the same shape.
+            local_rng = (np.random.default_rng(int(i) * 13 + 7)
+                         if jagged else None)
+            for dy in range(-r, r + 1):
+                for dx in range(-r, r + 1):
+                    if dx == 0 and dy == 0:
+                        continue  # centre already stamped
+                    if jagged:
+                        d2 = dx * dx + dy * dy
+                        r2 = (r + 0.5) * (r + 0.5)
+                        if d2 > r2:
+                            continue
+                        # Edge pixels drop with 30% chance for a
+                        # jagged silhouette (rough fragment look).
+                        if d2 > (r - 0.5) * (r - 0.5):
+                            if local_rng.random() < 0.30:
+                                continue
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < W and 0 <= ny < H:
+                        terrain_rgba[ny, nx, 0] = rgb[0]
+                        terrain_rgba[ny, nx, 1] = rgb[1]
+                        terrain_rgba[ny, nx, 2] = rgb[2]
+                        terrain_rgba[ny, nx, 3] = 255
         bake_flag[i] = True
         n_baked += 1
     return n_baked

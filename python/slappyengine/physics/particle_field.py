@@ -146,6 +146,11 @@ class Material:
     # Mud / clay: high stickiness; sand: medium; snow: low. Water
     # ignores this (binding_force=0 makes it permanently fluid).
     impact_stickiness: float = 0.6
+    # Tumble kick — non-circular fragments don't roll smoothly; they
+    # kick and bounce. This adds a random vertical impulse per slide
+    # step proportional to horizontal velocity. 0 = smooth roll (sand
+    # on flat); higher = jagged tumble (rock fragments / boulders).
+    tumble_kick: float = 0.0
 
     # Rendering.
     color: _RGB = (200, 200, 200)
@@ -190,6 +195,7 @@ SAND_MAT = Material(
     rigidify_frames_max=10,
     impact_stickiness=0.6,        # medium grip
     kinetic_fluidity=0.4,
+    tumble_kick=0.0,              # sand rolls smoothly
 )
 
 MUD_MAT = Material(
@@ -507,6 +513,7 @@ class ParticleField:
             landed=self.landed, settled=self.settled,
             bake_flag=self.bake_flag, terrain_rgba=self.mask,
             per_particle_bake_radius=self.bake_radius,
+            jagged=True,  # rough fragment look — non-circular silhouettes
         )
         # ── Push fluids out of newly-baked solid ────────────────────
         # Without this, mud chunks baking on top of water created a
@@ -1005,6 +1012,16 @@ class ParticleField:
                 else:
                     self.pos[i, 1] = float(y)
             mat = self.materials[int(self.material_id[i])]
+            # Tumble kick for non-circular fragments — random vertical
+            # impulse proportional to horizontal speed. Makes rolling
+            # rock fragments visibly bounce instead of sliding smooth.
+            if mat.tumble_kick > 0.0 and abs(self.vel[i, 0]) > 5.0:
+                kick = mat.tumble_kick * abs(self.vel[i, 0]) * \
+                    float(self._rng.uniform(0.3, 1.0))
+                self.vel[i, 1] = -kick  # negative = upward
+                # Once kicked, particle re-enters airborne (vy < 0 → no
+                # collide until falling), so unset landed for one frame.
+                self.landed[i] = False
             jitter = mat.settle_jitter
             base = mat.settle_speed_threshold
             threshold = base * (1.0 + float(self._rng.uniform(-jitter, jitter))) \
