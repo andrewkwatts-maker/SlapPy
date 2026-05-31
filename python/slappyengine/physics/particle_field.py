@@ -661,45 +661,49 @@ class ParticleField:
             self.vel[i, 1] = 0.0  # buoyancy doesn't impart velocity
 
     def _kinetic_relax(self, dt: float) -> None:
-        """Push non-fluid particles apart while they are still kinetic.
+        """Push non-fluid particles apart so they can't occupy the
+        same position. Two regimes:
 
-        ``effective_fluidity = kinetic_fluidity * max(0, 1 - age/rigidify_at)``
-        — particles start at full fluidity at spawn and lerp to 0 over
-        their rigidify timeout. While > 0, they get a small pairwise
-        repulsion from neighbours so flying globs spread laterally
-        instead of stacking on a single column.
+        - **In-air kinetic phase** (age < rigidify_at): strong push
+          scaled by ``kinetic_fluidity`` * (1 - age/rigidify_at).
+        - **Landed sliding phase** (age >= rigidify_at but not yet
+          settled): a smaller *baseline* push that always runs so
+          multiple particles can't stack on one pixel and bake into
+          a tall single-column pile. This is the inter-particle
+          collision the user asked for.
         """
         if self.pos.shape[0] < 2:
             return
-        # Gather kinetic-eligible particle indices (solids with
-        # kinetic_fluidity > 0 and within rigidify timeout).
         n = self.pos.shape[0]
         eligible = np.zeros(n, dtype=bool)
         strengths = np.zeros(n, dtype=np.float32)
         for mi, mat in enumerate(self.materials):
-            if mat.is_fluid or mat.kinetic_fluidity <= 0.0:
+            if mat.is_fluid:
                 continue
             m = (self.material_id == mi) & (~self.bake_flag) & (~self.settled)
             if not m.any():
                 continue
-            # Lerp factor per particle: 1 at age 0, 0 at rigidify_at.
+            indices = np.nonzero(m)[0]
             rig = self.rigidify_at[m].astype(np.float32)
             age = self.kinetic_age[m].astype(np.float32)
             lerp = np.clip(1.0 - age / np.maximum(rig, 1.0), 0.0, 1.0)
-            strengths_m = mat.kinetic_fluidity * lerp
-            # Only keep those with positive strength.
-            indices = np.nonzero(m)[0]
-            keep = strengths_m > 0.0
-            eligible[indices[keep]] = True
-            strengths[indices[keep]] = strengths_m[keep]
+            # Kinetic strength fades to 0 as particle rigidifies.
+            kinetic_s = mat.kinetic_fluidity * lerp
+            # Baseline collision strength — always positive so even
+            # rigid sliding particles can't overlap. Capped so it
+            # doesn't dominate cohesive piles.
+            baseline = 0.4
+            strengths_m = np.maximum(kinetic_s, baseline)
+            eligible[indices] = True
+            strengths[indices] = strengths_m
         if not eligible.any():
             return
         idx = np.nonzero(eligible)[0]
         if idx.size < 2:
             return
-        # Cell-binned pair check (same pattern as _fluid_relax).
+        # Cell-binned pair check.
         kp = self.pos[idx]
-        rest = 3.5
+        rest = 2.5  # tighter than fluid so particles don't drift apart
         bin_size = rest * 1.5
         bx = (kp[:, 0] / bin_size).astype(np.int32)
         by = (kp[:, 1] / bin_size).astype(np.int32)
@@ -707,7 +711,7 @@ class ParticleField:
         for k, (bxk, byk) in enumerate(zip(bx, by)):
             bins.setdefault((int(bxk), int(byk)), []).append(k)
         push = np.zeros_like(kp)
-        for (cx, cy), members in bins.items():
+        for members in bins.values():
             if len(members) < 2:
                 continue
             for a in members:
@@ -961,15 +965,45 @@ class ParticleField:
             self.vel[m, 0] *= mat.friction_per_sec ** dt
             self.vel[m, 1] = 0.0
         self.pos[slide_mask, 0] += self.vel[slide_mask, 0] * dt
-        # Per-particle surface re-snap + per-material settle threshold
-        # with jitter so particles stop over a band of frames.
+        # Per-particle surface re-snap + roll-downhill redirect +
+        # per-material settle threshold.
         for i in np.nonzero(slide_mask)[0]:
             x = int(self.pos[i, 0])
             y = int(self.pos[i, 1])
             if 0 <= x < W:
                 while y > 0 and self.mask[y, x, 3] > 0:
                     y -= 1
-                self.pos[i, 1] = float(y)
+                # Roll-downhill: if the particle would perch on top of
+                # a column that's significantly taller than its lateral
+                # neighbours, redirect it toward the lower side. This
+                # is what stops 7 chunks stacking on one column and
+                # baking into a vertical pile — the user's complaint.
+                my_top = y
+                left_top = self._column_top(max(0, x - 1))
+                right_top = self._column_top(min(W - 1, x + 1))
+                # Higher y = lower in image. So neighbour "lower"
+                # means neighbour's top > my_top.
+                slump_step = 2  # px difference required to redirect
+                left_drop = left_top - my_top
+                right_drop = right_top - my_top
+                if left_drop >= slump_step and right_drop >= slump_step:
+                    direction = 1 if self._rng.random() > 0.5 else -1
+                elif left_drop >= slump_step:
+                    direction = -1
+                elif right_drop >= slump_step:
+                    direction = 1
+                else:
+                    direction = 0
+                if direction != 0:
+                    new_x = max(0, min(W - 1, x + direction))
+                    new_y = self._column_top(new_x) - 1
+                    self.pos[i, 0] = float(new_x)
+                    self.pos[i, 1] = float(max(0, new_y))
+                    # Small velocity kick along the slope so the
+                    # particle keeps moving (more rolling, less stalling).
+                    self.vel[i, 0] += direction * 6.0
+                else:
+                    self.pos[i, 1] = float(y)
             mat = self.materials[int(self.material_id[i])]
             jitter = mat.settle_jitter
             base = mat.settle_speed_threshold
@@ -978,6 +1012,18 @@ class ParticleField:
             if abs(self.vel[i, 0]) < threshold:
                 self.settled[i] = True
                 self.vel[i, 0] = 0.0
+
+    def _column_top(self, x: int) -> int:
+        """Return the y of the topmost solid pixel in column x.
+        If the column is empty, returns the bottom of the field.
+        """
+        if x < 0 or x >= self.width:
+            return self.height
+        col = self.mask[:, x, 3]
+        nz = np.flatnonzero(col)
+        if nz.size == 0:
+            return self.height
+        return int(nz[0])
 
     # ── Rendering ──────────────────────────────────────────────────────
 
