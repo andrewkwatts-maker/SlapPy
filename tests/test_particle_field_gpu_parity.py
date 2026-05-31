@@ -366,9 +366,12 @@ def test_kinetic_relax_cpu_gpu_parity():
     # dev log) — but over 20 frames the divergence amplifies non-
     # linearly because particles right on a cell boundary can flip
     # which side they bin to after a sub-pixel push, and from then
-    # on both paths take different bifurcations. The 1 px atol
-    # catches genuine regressions while tolerating that branching.
-    np.testing.assert_allclose(cpu.pos, gpu.pos, rtol=1e-2, atol=1.0,
+    # on both paths take different bifurcations. The atol catches
+    # genuine regressions while tolerating that branching; bumped to
+    # 4 px after the CPU step() switched to 3 PBF-style sub-iterations
+    # (Macklin 2013), which amplifies boundary bifurcation across the
+    # extra passes. The GPU wrapper mirrors the 3 sub-iters for parity.
+    np.testing.assert_allclose(cpu.pos, gpu.pos, rtol=1e-2, atol=4.0,
                                err_msg="kinetic_relax pos divergence")
 
 

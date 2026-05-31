@@ -720,17 +720,24 @@ def _gpu_kinetic_relax(field: "ParticleField", dt: float) -> None:
 
 
 def gpu_kinetic_relax(field: "ParticleField", dt: float) -> None:
-    """Drop-in replacement for ``ParticleField._kinetic_relax(dt)``.
+    """Drop-in replacement for the CPU kinetic-relax block in ``step()``.
 
     Uses a WGSL compute shader when wgpu is available; otherwise falls
     back to the existing vectorised CPU path.
     """
     if field.pos.shape[0] < 2:
         return
-    if _probe_gpu():
-        _gpu_kinetic_relax(field, dt)
-    else:
-        _numpy_kinetic_relax(field, dt)
+    # 3 PBF-style sub-iterations (Macklin 2013) — matches CPU for parity.
+    # The CPU ``step()`` loop runs ``_kinetic_relax(dt/3)`` three times so
+    # the push-apart constraint can propagate through dense clusters;
+    # mirror that here (both the WGSL and numpy fallback paths) so the
+    # GPU branch produces the same trajectory as the CPU reference.
+    sub_dt = dt / 3.0
+    for _ in range(3):
+        if _probe_gpu():
+            _gpu_kinetic_relax(field, sub_dt)
+        else:
+            _numpy_kinetic_relax(field, sub_dt)
 
 
 # ──────────────────────────────────────────────────────────────────────
