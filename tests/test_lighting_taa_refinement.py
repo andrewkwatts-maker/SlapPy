@@ -27,6 +27,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from slappyengine.post_process.executor import _splice_runtime_params
 from slappyengine.post_process.taa import TAAPass
 
 
@@ -100,6 +101,60 @@ def test_taa_uniform_layout_enables_karis_flag():
         "<ffIIIIfI", pp.raw_params_bytes
     )
     assert karis == 1
+
+
+def test_taa_executor_splices_width_height_at_dispatch():
+    """Regression: the GPU executor MUST patch ``TaaParams.width`` and
+    ``.height`` into the pre-packed UBO at dispatch time.
+
+    ``TAAPass.make_pass`` writes width=height=0 into the raw bytes because
+    the target resolution is only known after the executor is handed the
+    render target.  The shader's first lines are
+    ``if x >= taa_params.width || y >= taa_params.height { return; }``,
+    so an unpatched UBO turns the entire TAA pass into a silent no-op —
+    history never updates, output equals the copy-in of the current frame.
+
+    This test exercises the executor's splice helper directly (no GPU
+    required) and asserts the spliced bytes carry the real 320x180
+    target resolution, while leaving every other field byte-identical.
+    """
+    pass_ = TAAPass(alpha=0.1, karis_weight=True, sharpening=0.25)
+    pp = pass_.make_pass(frame_tex="frame", history_tex="history", motion_tex="motion")
+
+    # Sanity: as packed, width/height start at zero.
+    _, _, w0, h0, _, _, _, _ = struct.unpack("<ffIIIIfI", pp.raw_params_bytes)
+    assert w0 == 0 and h0 == 0, "TAAPass.make_pass must leave w/h zero"
+
+    spliced = _splice_runtime_params(
+        pp.shader_path, pp.raw_params_bytes, 320, 180,
+    )
+    assert len(spliced) == 32, "splice must preserve uniform size"
+    alpha, sharp, w, h, karis, tight, gamma, _pad = struct.unpack(
+        "<ffIIIIfI", spliced
+    )
+    # Width/height non-zero and exactly the target resolution.
+    assert w == 320, f"width must be patched to 320, got {w}"
+    assert h == 180, f"height must be patched to 180, got {h}"
+    # Every other slot is preserved byte-for-byte.
+    assert alpha == pytest.approx(0.1)
+    assert sharp == pytest.approx(0.25)
+    assert karis == 1
+    assert tight == 0
+    assert gamma == pytest.approx(1.0)
+
+
+def test_taa_executor_splice_is_noop_for_unrelated_shaders():
+    """The runtime splice must not touch passes that don't opt in.
+
+    Bloom, outline, vignette, etc. either don't use ``raw_params_bytes``
+    or build the full layout in the executor's per-shader branch.  The
+    splice helper must therefore pass-through unknown shader paths
+    byte-identical, otherwise it would corrupt other passes that happen
+    to share the ``raw_params_bytes`` mechanism in the future.
+    """
+    payload = b"\x01\x02\x03\x04\x05\x06\x07\x08" * 4
+    assert _splice_runtime_params("bloom.wgsl", payload, 320, 180) == payload
+    assert _splice_runtime_params("some_future.wgsl", payload, 1, 1) == payload
 
 
 def test_taa_uniform_layout_enables_tight_variance_clip_flag():

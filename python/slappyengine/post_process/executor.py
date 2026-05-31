@@ -11,6 +11,27 @@ if TYPE_CHECKING:
 _SHADER_DIR = Path(__file__).parent.parent.parent.parent / "shaders"
 
 
+def _splice_runtime_params(
+    shader_path: str, raw: bytes, w: int, h: int,
+) -> bytes:
+    """Patch dispatch-time fields into a pre-packed uniform blob.
+
+    Some passes (currently ``taa_resolve.wgsl``) pre-pack the entire UBO
+    in ``TAAPass.make_pass()`` so the layout stays single-sourced — but
+    width and height are only known at dispatch time, after the executor
+    has been handed the target texture size.  This helper splices those
+    runtime values into the right byte offsets before upload.
+
+    Exposed as a module-level function so the CPU regression suite can
+    verify the splice without a live GPU.
+    """
+    if shader_path == "taa_resolve.wgsl":
+        # TaaParams layout (see taa.py): width @ offset 8, height @ offset 12,
+        # both u32.  Packing string ``<ffIIIIfI``.
+        return raw[:8] + struct.pack("<II", int(w), int(h)) + raw[16:]
+    return raw
+
+
 class PostProcessExecutor:
 
     def __init__(self, ctx: "GPUContext"):
@@ -70,8 +91,14 @@ class PostProcessExecutor:
         params = pass_.params or {}
 
         if pass_.raw_params_bytes is not None:
-            # Caller pre-packed everything; just upload as-is.
-            data = pass_.raw_params_bytes
+            # Caller pre-packed the UBO; splice runtime-only fields
+            # (currently width/height for taa_resolve.wgsl) then upload.
+            # Without this splice the TAA shader's early-exit
+            # ``if x >= width || y >= height { return; }`` makes the whole
+            # pass a silent no-op because make_pass writes width=height=0.
+            data = _splice_runtime_params(
+                pass_.shader_path, pass_.raw_params_bytes, w, h,
+            )
         elif pass_.shader_path == "nv_grain.wgsl":
             # Params struct layout (32 bytes):
             #   gain(f32), grain_strength(f32), vignette_strength(f32), time(f32),
