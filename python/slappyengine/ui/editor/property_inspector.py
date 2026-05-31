@@ -28,6 +28,19 @@ def _is_list_of_str(value: Any) -> bool:
     return isinstance(value, list) and all(isinstance(v, str) for v in value)
 
 
+def _is_list_of_int(value: Any) -> bool:
+    """Return True if *value* is a non-empty list of plain ints (not bool).
+
+    Used to render ``IKChainSpec.node_indices`` and similar index lists with
+    a single comma-separated text widget rather than a popup-only ref row.
+    """
+    return (
+        isinstance(value, list)
+        and len(value) > 0
+        and all(isinstance(v, int) and not isinstance(v, bool) for v in value)
+    )
+
+
 def _is_primitive(value: Any) -> bool:
     """Return True for values that map to a simple DPG input widget."""
     if isinstance(value, (bool, int, float, str)):
@@ -36,7 +49,22 @@ def _is_primitive(value: Any) -> bool:
         return True
     if _is_list_of_str(value):
         return True
+    if _is_list_of_int(value):
+        return True
     return False
+
+
+def _is_simple_value_dict(value: Any) -> bool:
+    """Return True for a dict whose values are all primitive-ish.
+
+    Used to inline-render the ``JointSpec.params`` / ``MotorSpec.params`` /
+    similar "kind-specific extras" bags as key/value rows instead of an
+    opaque ``[?]`` popup.  Empty dicts also qualify so the inspector renders
+    a "(empty)" placeholder under the field name.
+    """
+    if not isinstance(value, dict):
+        return False
+    return all(_is_primitive(v) for v in value.values())
 
 
 def _is_engine_object(value: Any) -> bool:
@@ -45,6 +73,12 @@ def _is_engine_object(value: Any) -> bool:
     An engine object is anything whose type lives in a ``SlapPyEngine.*``
     module and is *not* a dataclass (dataclasses are considered plain data).
     A list containing at least one non-primitive item is also treated as complex.
+
+    Dataclasses from :mod:`slappyengine.dynamics` (``Body``, ``Material``,
+    ``JointSpec``, ``MotorSpec``, ``SpringSpec``, ``RopeSpec``,
+    ``IKChainSpec``, ``RagdollSpec``, ``BoneSpec``) all hit the
+    ``is_dataclass`` short-circuit and are therefore reflected through the
+    standard primitive-widget path rather than treated as opaque refs.
     """
     if isinstance(value, list):
         return any(not _is_primitive(item) for item in value)
@@ -273,6 +307,35 @@ class PropertyInspector:
                 num_items=min(len(value), 4),
             )
 
+        elif _is_list_of_int(value):
+            # Edit as comma-separated text — writeback parses back to list[int]
+            # so dynamics.IKChainSpec.node_indices round-trips.
+            text = ", ".join(str(int(v)) for v in value)
+
+            def _list_int_cb(_sender, app_data, _user_data, _attr=name):
+                if self._obj is None:
+                    return
+                try:
+                    parsed = [
+                        int(part)
+                        for part in str(app_data).replace(";", ",").split(",")
+                        if part.strip() != ""
+                    ]
+                except ValueError:
+                    return
+                try:
+                    setattr(self._obj, _attr, parsed)
+                except (AttributeError, TypeError):
+                    pass
+
+            dpg.add_input_text(
+                label=name,
+                default_value=text,
+                callback=_list_int_cb,
+                parent=parent,
+                tag=tag,
+            )
+
         else:
             # Primitive-looking value with unexpected type → read-only text
             dpg.add_text(
@@ -287,8 +350,18 @@ class PropertyInspector:
         The ``[?]`` button opens a modal popup with the full repr string.
         This keeps the inspector uncluttered while still providing access to
         the raw value for debugging.
+
+        Special case: ``dict`` fields (e.g. the ``params`` bag on
+        :class:`slappyengine.dynamics.JointSpec` / ``MotorSpec`` /
+        ``SpringSpec`` / ``RopeSpec`` / ``IKChainSpec``) render as an
+        inline key/value table so authors can tweak primitive entries
+        without losing the dict.
         """
         import dearpygui.dearpygui as dpg
+
+        if isinstance(value, dict):
+            self._render_dict_field(parent, name, value)
+            return
 
         type_name = type(value).__name__
         row_tag = self._unique_tag(f"{name}_row")
@@ -310,6 +383,118 @@ class PropertyInspector:
         # Build the popup once; toggle visibility on button click.
         with dpg.popup(parent=btn_tag, tag=popup_tag, mousebutton=-1):
             dpg.add_text(repr_str, wrap=400)
+
+    def _render_dict_field(self, parent, name: str, value: dict) -> None:
+        """Inline-render a dict-of-primitives bag as labelled key/value rows.
+
+        Used for the kind-specific ``params`` dict shared by the dynamics
+        spec dataclasses (``JointSpec.params``, ``MotorSpec.params``,
+        ``SpringSpec.params``, ``RopeSpec.params``, ``IKChainSpec.params``).
+        Empty dicts render a "(params bag, empty)" placeholder so the field
+        still appears in the inspector.
+
+        Each primitive entry gets its own DPG widget; mutations write back
+        through ``self._obj.<name>[<key>] = app_data``.  Non-primitive values
+        inside the dict fall through to a read-only ``key: repr`` row.
+        """
+        import dearpygui.dearpygui as dpg
+
+        header_tag = self._unique_tag(f"{name}_header")
+        section_tag = self._unique_tag(f"{name}_section")
+        self._widget_map[name] = section_tag
+
+        with dpg.group(parent=parent, tag=section_tag):
+            entries = list(value.items())
+            label = f"{name} (dict, {len(entries)} keys)"
+            dpg.add_text(label, tag=header_tag)
+            if not entries:
+                dpg.add_text(
+                    "  (params bag, empty)",
+                    parent=section_tag,
+                    tag=self._unique_tag(f"{name}_empty"),
+                )
+                return
+            for key, val in entries:
+                row_tag = self._unique_tag(f"{name}__{key}")
+                if isinstance(val, bool):
+                    dpg.add_checkbox(
+                        label=f"{name}.{key}",
+                        default_value=val,
+                        callback=self._make_dict_callback(name, key),
+                        parent=section_tag,
+                        tag=row_tag,
+                    )
+                elif isinstance(val, int):
+                    dpg.add_input_int(
+                        label=f"{name}.{key}",
+                        default_value=val,
+                        callback=self._make_dict_callback(name, key),
+                        parent=section_tag,
+                        tag=row_tag,
+                    )
+                elif isinstance(val, float):
+                    dpg.add_input_float(
+                        label=f"{name}.{key}",
+                        default_value=val,
+                        callback=self._make_dict_callback(name, key),
+                        parent=section_tag,
+                        tag=row_tag,
+                    )
+                elif isinstance(val, str):
+                    dpg.add_input_text(
+                        label=f"{name}.{key}",
+                        default_value=val,
+                        callback=self._make_dict_callback(name, key),
+                        parent=section_tag,
+                        tag=row_tag,
+                    )
+                elif _is_float_tuple(val) and len(val) == self._FLOAT2_LEN:
+                    dpg.add_input_floatx(
+                        label=f"{name}.{key}",
+                        default_value=list(val),
+                        size=self._FLOAT2_LEN,
+                        callback=self._make_dict_callback(name, key, as_tuple=True),
+                        parent=section_tag,
+                        tag=row_tag,
+                    )
+                elif _is_float_tuple(val) and len(val) == self._FLOAT3_LEN:
+                    dpg.add_input_floatx(
+                        label=f"{name}.{key}",
+                        default_value=list(val),
+                        size=self._FLOAT3_LEN,
+                        callback=self._make_dict_callback(name, key, as_tuple=True),
+                        parent=section_tag,
+                        tag=row_tag,
+                    )
+                else:
+                    # Unknown value type — read-only repr row.
+                    dpg.add_text(
+                        f"  {key}: {val!r}",
+                        parent=section_tag,
+                        tag=row_tag,
+                    )
+
+    def _make_dict_callback(self, attr_name: str, key: Any, as_tuple: bool = False):
+        """Return a DPG callback that writes back into ``self._obj.<attr>[key]``.
+
+        ``as_tuple=True`` coerces list-valued widget output (e.g. floatx)
+        into a tuple before storing so the dict round-trips byte-for-byte.
+        """
+        def _cb(_sender, app_data, _user_data):  # noqa: ANN001
+            if self._obj is None:
+                return
+            bag = getattr(self._obj, attr_name, None)
+            if not isinstance(bag, dict):
+                return
+            try:
+                if as_tuple and isinstance(app_data, (list, tuple)):
+                    bag[key] = tuple(app_data)
+                else:
+                    bag[key] = app_data
+            except (TypeError, AttributeError):
+                pass
+
+        return _cb
 
     # ------------------------------------------------------------------
     # Callback factory
