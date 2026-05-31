@@ -37,35 +37,54 @@ FRAMES = 130
 
 def main() -> Path:
     rng = np.random.default_rng(2026)
-    field = ParticleField(width=W, height=H, gravity=0.0)
+    # Gravity now applied so bullets drop visibly (~720 px/s² as the
+    # rest of the engine).
+    field = ParticleField(width=W, height=H, gravity=720.0)
 
-    # Bullet material — high drill, low binding (gets through easy),
-    # lots of ejecta (mass conservation).
-    bullet = Material(
+    # Bullet material — moderate drill, falling under gravity. Low
+    # binding so it gets through stone walls, but reduced drill depth
+    # so a wall doesn't evaporate from one shot.
+    bullet = field.register_material(Material(
         name="bullet",
         binding_force=2.0e3,
-        drill_max_px=20,
-        drill_velocity_loss=0.93,   # bullet keeps most velocity per px
-        drill_eject_gain=2.0,        # 20 drilled → ~40 ejecta particles
+        drill_max_px=6,              # was 20 — wall doesn't evaporate
+        drill_velocity_loss=0.85,
+        drill_eject_gain=0.8,         # was 2.0 — far less ejecta cascade
         mass_conservation=1.0,
-        gravity_scale=0.0,
-        air_drag_per_sec=1.0,
+        gravity_scale=0.5,            # was 0 — bullets drop in flight
+        air_drag_per_sec=0.95,
         radius_min=1,
         radius_max=1,
         color=(255, 220, 100),
-    )
-    field.materials.append(bullet)
-    field._name_to_id["bullet"] = len(field.materials) - 1
-
-    # Build a stone wall in the middle.
+    ))
+    # Stone material the wall is made of. Ejecta inherit THIS via the
+    # mask sampling now built into _drill_through (no more bullets-as-
+    # debris drilling their own walls).
+    stone = field.register_material(Material(
+        name="stone",
+        binding_force=8.0e4,
+        cohesion=0.4,
+        friction_per_sec=0.1,
+        radius_min=1,
+        radius_max=1,
+        color=(110, 102, 96),
+        kinetic_fluidity=0.3,         # debris can collide mid-flight
+        rigidify_frames_min=4,
+        rigidify_frames_max=10,
+        impact_stickiness=0.6,
+    ))
+    # Build the stone wall — set BOTH mask and material_grid so the
+    # drill mechanic samples stone material id for ejecta.
     for x in range(WALL_X0, WALL_X1):
         for y in range(WALL_Y0, WALL_Y1):
-            # Subtle colour variation so the eject debris reads as stone.
             field.mask[y, x, 0] = 110 + int(rng.integers(-15, 15))
             field.mask[y, x, 1] = 102 + int(rng.integers(-15, 15))
             field.mask[y, x, 2] = 96 + int(rng.integers(-15, 15))
             field.mask[y, x, 3] = 255
+            field.material_grid[y, x] = stone
     field._fixed_mask[WALL_Y0:WALL_Y1, WALL_X0:WALL_X1] = True
+    # Floor so ejecta have something to pile on.
+    field.fill_ground(top_y=H - 8, color=(60, 50, 40), material="stone")
 
     frames_out: list[Image.Image] = []
     bullets_fired = 0

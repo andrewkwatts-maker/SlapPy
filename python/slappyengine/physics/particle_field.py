@@ -1299,9 +1299,14 @@ class ParticleField:
         py = float(hit_y) + 0.5
         drilled = 0
         gain = mat.drill_eject_gain * mat.mass_conservation
-        # Capture some colours along the drill line so any ejecta we
-        # spawn carries the terrain's hue.
+        # Capture colours AND material ids along the drill line so any
+        # ejecta we spawn inherits the WALL's material (not the bullet's,
+        # which would make ejecta drill recursively → exponential
+        # explosion). The wall's material id is what the user sees as
+        # fragments of stone, brick, etc.
         line_colours: list[tuple[int, int, int]] = []
+        line_mids: list[int] = []
+        bullet_mid = int(self.material_id[i])
         while drilled < mat.drill_max_px:
             xi = int(px)
             yi = int(py)
@@ -1314,6 +1319,8 @@ class ParticleField:
                 int(self.mask[yi, xi, 1]),
                 int(self.mask[yi, xi, 2]),
             ))
+            wall_mid = int(self.material_grid[yi, xi])
+            line_mids.append(wall_mid if wall_mid >= 0 else bullet_mid)
             self.mask[yi, xi, 3] = 0
             self.loose[yi, xi] = False
             drilled += 1
@@ -1335,23 +1342,37 @@ class ParticleField:
             self.pos[i, 0] = px
             self.pos[i, 1] = py
             self._set_phase(i, Phase.AIRBORNE)
-        # Spawn ejecta proportional to drilled pixels.
+        # Spawn ejecta proportional to drilled pixels. Direction is
+        # BACK along the impact ray (the cone "around" -velocity) so
+        # depressions visibly throw debris back the way the bullet
+        # came in — user feedback: "depressions should be in the
+        # direction of impact".
         n_eject = int(round(drilled * gain))
         if n_eject > 0 and line_colours:
             ej_pos = np.tile([float(x), float(hit_y)], (n_eject, 1)).astype(np.float32)
-            angles = self._rng.uniform(-math.pi / 2, math.pi / 2, n_eject)
+            # Base direction = unit vector opposite the bullet's
+            # velocity (i.e. back out of the hole). Spread is ±60° cone
+            # around that direction.
+            base_angle = math.atan2(-vy, -vx)
+            cone = math.pi / 3.0  # ±60° spread
+            angles = base_angle + self._rng.uniform(-cone, cone, n_eject)
             speeds = self._rng.uniform(80.0, 220.0, n_eject)
             ej_vel = np.column_stack([
+                np.cos(angles) * speeds,
                 np.sin(angles) * speeds,
-                -np.cos(angles) * speeds,
             ]).astype(np.float32)
-            ej_mids = np.full(n_eject, int(self.material_id[i]), dtype=np.int32)
             ej_radii = np.zeros(n_eject, dtype=np.float32)
-            # Sample a colour from the drilled line per ejecta.
+            # Sample a colour AND material id from the same drilled
+            # pixel per ejecta. Using the WALL's material kills the
+            # exponential-drill cascade (bullets-as-ejecta were drilling
+            # their own walls).
             ej_colours = np.zeros((n_eject, 3), dtype=np.uint8)
+            ej_mids = np.zeros(n_eject, dtype=np.int32)
             pick = self._rng.integers(0, len(line_colours), n_eject)
             for k in range(n_eject):
-                ej_colours[k] = line_colours[int(pick[k])]
+                p = int(pick[k])
+                ej_colours[k] = line_colours[p]
+                ej_mids[k] = line_mids[p]
             self.spawn_batch(
                 pos=ej_pos, vel=ej_vel,
                 material_ids=ej_mids, radii=ej_radii,
