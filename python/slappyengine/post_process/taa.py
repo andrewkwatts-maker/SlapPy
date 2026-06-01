@@ -37,7 +37,7 @@ class TAAPass:
         variance_clip_gamma: float = 1.0,
         motion_weight: float = 1.0,
         karis_weight: bool = False,
-        tight_variance_clip: bool = False,
+        tight_variance_clip: bool = True,
         sharpening: float = 0.0,
     ) -> None:
         """Construct a temporal anti-aliasing pass.
@@ -58,11 +58,14 @@ class TAAPass:
         karis_weight
             Karis 2014 luminance-inverse temporal blend (round 3).
         tight_variance_clip
-            Round 4: when ``True`` the 3x3 YCoCg AABB is tightened to
-            ``mean ± variance_clip_gamma * stddev`` instead of the legacy
-            ``min/max`` envelope.  Massively reduces thin-geometry
-            shimmer (single-pixel features) by ejecting stale history
-            samples that the lax envelope would otherwise accept.
+            Round 4: when ``True`` (default since v0.3.1) the 3x3 YCoCg
+            AABB is tightened to ``mean ± variance_clip_gamma * stddev``
+            instead of the legacy ``min/max`` envelope.  Massively
+            reduces thin-geometry shimmer (single-pixel features) by
+            ejecting stale history samples that the lax envelope would
+            otherwise accept; the Sprint 3D measurement showed a 19.5%
+            ghost reduction and +1 dB PSNR on disocclusion bands.  Pass
+            ``False`` to restore the round-3 min/max envelope.
         sharpening
             Strength of the post-resolve unsharp pass.  Backward-compat
             default ``0.0`` matches rounds 1-3 (no sharpening).
@@ -99,7 +102,7 @@ class TAAPass:
             variance_clip_gamma=taa.variance_clip_gamma,
             motion_weight=taa.motion_weight,
             karis_weight=getattr(taa, "karis_weight", False),
-            tight_variance_clip=getattr(taa, "tight_variance_clip", False),
+            tight_variance_clip=getattr(taa, "tight_variance_clip", True),
             sharpening=getattr(taa, "sharpening", 0.0),
         )
 

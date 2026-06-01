@@ -76,8 +76,9 @@ def test_taa_uniform_layout_default_disables_karis():
     """Legacy callers (no flag) must see karis_weight = 0 in the uniform.
 
     Round 4 grew the uniform to 32 bytes (adds tight_variance_clip flag
-    and variance_clip_gamma) — both new fields must default off so the
-    blend stays bit-for-bit identical to round 3.
+    and variance_clip_gamma).  Since v0.3.1 ``tight_variance_clip``
+    defaults on (Sprint 4D: +19.5% ghost reduction / +1 dB PSNR on
+    disocclusion bands); ``karis_weight`` still defaults off.
     """
     pass_ = TAAPass(alpha=0.1)
     pp = pass_.make_pass(frame_tex="frame", history_tex="history", motion_tex="motion")
@@ -90,7 +91,7 @@ def test_taa_uniform_layout_default_disables_karis():
     assert sharp == pytest.approx(0.0)
     assert w == 0 and h == 0  # executor splices these at runtime
     assert karis == 0, "default must keep the legacy blend"
-    assert tight == 0, "default must keep the legacy min/max AABB"
+    assert tight == 1, "default must enable the round-4 variance-tightened AABB"
     assert gamma == pytest.approx(1.0)
 
 
@@ -139,7 +140,9 @@ def test_taa_executor_splices_width_height_at_dispatch():
     assert alpha == pytest.approx(0.1)
     assert sharp == pytest.approx(0.25)
     assert karis == 1
-    assert tight == 0
+    # Default ``tight_variance_clip=True`` (v0.3.1) propagates through
+    # the splice path unmodified.
+    assert tight == 1
     assert gamma == pytest.approx(1.0)
 
 
@@ -182,7 +185,10 @@ def test_taa_karis_off_matches_legacy_linear_blend():
     cur = np.random.rand(32, 32, 3).astype(np.float32) * 0.6 + 0.2
     hist = np.random.rand(32, 32, 3).astype(np.float32) * 0.6 + 0.2
 
-    pass_legacy = TAAPass(alpha=0.1, karis_weight=False)
+    # ``tight_variance_clip=False`` opts out of the v0.3.1 default so
+    # the comparison reference (hand-rolled min/max + linear blend
+    # below) stays valid.
+    pass_legacy = TAAPass(alpha=0.1, karis_weight=False, tight_variance_clip=False)
     out = pass_legacy.resolve_numpy(cur, hist)
 
     # Hand-rolled reference: replicate the YCoCg neighbourhood clip then
@@ -222,8 +228,11 @@ def test_taa_karis_reduces_sprite_trailing_ghost_by_20_percent():
     H, W = 64, 64
     ground_truth = _render_sprite_scene(xs[-1], height=H, width=W)
 
-    pass_legacy = TAAPass(alpha=0.1, karis_weight=False)
-    pass_karis = TAAPass(alpha=0.1, karis_weight=True)
+    # Isolate the Karis blend by pinning both passes to the round-3
+    # min/max AABB so the measured delta is *only* the temporal-blend
+    # change, not the v0.3.1 variance-clip default.
+    pass_legacy = TAAPass(alpha=0.1, karis_weight=False, tight_variance_clip=False)
+    pass_karis = TAAPass(alpha=0.1, karis_weight=True, tight_variance_clip=False)
     hist_l = _render_sprite_scene(xs[0], height=H, width=W)
     hist_k = hist_l.copy()
     for x in xs[1:]:

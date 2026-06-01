@@ -129,6 +129,13 @@ symbols across 19 declared subpackages.
 - Round 4 (Vignette) — smoothstep falloff with `inner_radius` + `feather`
   (-23% banding vs legacy quadratic).
 - Round 4 (TAA) — variance-based AABB tightening (Salvi 2016).
+- Round 4 (TAA) — `tight_variance_clip` now defaults to `True`
+  (`variance_clip_gamma=1.0`, Salvi's canonical 1-sigma envelope) after
+  Sprint 4D confirmed off-path baselines stay bit-identical. The new
+  default delivers Sprint 3D's headline win on disocclusion bands:
+  -19.5% ghost residual and +1 dB PSNR vs the legacy min/max envelope,
+  with no measurable cost on converged frames. Pass
+  `tight_variance_clip=False` to restore the round-3 behaviour.
 - Round 5 (Outline) — Sobel + smoothstep edge detection (-84% temporal
   flicker, 13/13 green).
 - Round 6 (Chromatic aberration) — Lottes 2014 polynomial falloff (+47%

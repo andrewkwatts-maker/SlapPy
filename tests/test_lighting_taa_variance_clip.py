@@ -64,17 +64,19 @@ def _render_thin_feature_scene(
 
 
 def test_taa_round3_unchanged_when_tight_variance_clip_off() -> None:
-    """The new flag must default off; round-3 resolve must be byte-identical.
+    """Opting out via ``tight_variance_clip=False`` reproduces round-3
+    behaviour bit-for-bit.
 
-    Compares the default (no flag) resolve against a hand-rolled legacy
-    min/max + linear-blend reference.  Round-3 callers see no change.
+    Since v0.3.1 the variance-clip is opt-OUT (default ``True``); this
+    test pins the opt-out path so existing callers that explicitly
+    disable it still get the legacy ``min/max`` + linear-blend math.
     """
     np.random.seed(7)
     cur = np.random.rand(24, 24, 3).astype(np.float32) * 0.5 + 0.2
     hist = np.random.rand(24, 24, 3).astype(np.float32) * 0.5 + 0.2
 
-    # Default = legacy min/max + linear blend.
-    out_default = TAAPass(alpha=0.1).resolve_numpy(cur, hist)
+    # Explicit opt-out = legacy min/max + linear blend.
+    out_default = TAAPass(alpha=0.1, tight_variance_clip=False).resolve_numpy(cur, hist)
     # Reference: build YCoCg min/max manually and run the linear blend.
     padded = np.pad(cur, ((1, 1), (1, 1), (0, 0)), mode="edge")
     y = 0.25 * padded[..., 0] + 0.5 * padded[..., 1] + 0.25 * padded[..., 2]
@@ -186,7 +188,7 @@ def test_variance_clip_reduces_disocclusion_ghost() -> None:
     hist = cur.copy()
     hist[:, 15, :] = 6.0   # stale ghost one pixel left of the new stripe
 
-    out_legacy = TAAPass(alpha=0.05).resolve_numpy(cur, hist)
+    out_legacy = TAAPass(alpha=0.05, tight_variance_clip=False).resolve_numpy(cur, hist)
     out_tight  = TAAPass(
         alpha=0.05, tight_variance_clip=True, variance_clip_gamma=1.0,
     ).resolve_numpy(cur, hist)
@@ -244,7 +246,7 @@ def test_taa_variance_clip_improves_disocclusion_psnr() -> None:
     )
     # Subsequent frames: stripe moved to column 12 — column 11 is the
     # disocclusion zone and must converge to dark.
-    legacy = TAAPass(alpha=0.1)
+    legacy = TAAPass(alpha=0.1, tight_variance_clip=False)
     tight  = TAAPass(alpha=0.1, tight_variance_clip=True, variance_clip_gamma=1.0)
 
     hist_l = hist_seed.copy()
