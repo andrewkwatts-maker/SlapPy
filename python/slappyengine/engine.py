@@ -364,7 +364,11 @@ class Engine:
             output_format=str(self._gpu.surface_format),
         )
 
-    def run(self, max_frames: int | None = None) -> None:
+    def run(
+        self,
+        max_frames: int | None = None,
+        target_fps: float | None = None,
+    ) -> None:
         """Open the engine window and enter the main loop.
 
         Parameters
@@ -376,7 +380,30 @@ class Engine:
             (no event loop, no window blocking) and return.  This is the
             CI-driveable smoke path that examples calling ``engine.run()``
             with no arguments rely on for headless testing.
+
+            The ``SLAPPYENGINE_MAX_FRAMES`` environment variable provides a
+            CI-friendly fallback: when ``max_frames`` is ``None`` and the env
+            var is set to a non-negative integer, it is used instead.  The
+            explicit kwarg always wins.
+        target_fps:
+            Optional frame-pacing target for the headless (``max_frames``)
+            path.  When set, the draw loop sleeps between frames so the
+            in-process tick rate is bounded.  ``None`` (default) runs frames
+            as fast as possible.  Ignored in the live event-loop path.
         """
+        # --- max_frames: kwarg wins; SLAPPYENGINE_MAX_FRAMES is the fallback --
+        if max_frames is None:
+            import os
+            _env_val = os.environ.get("SLAPPYENGINE_MAX_FRAMES")
+            if _env_val is not None and _env_val != "":
+                try:
+                    max_frames = int(_env_val)
+                except ValueError:
+                    raise ValueError(
+                        "SLAPPYENGINE_MAX_FRAMES must be a non-negative integer, "
+                        f"got {_env_val!r}"
+                    )
+
         canvas = WgpuCanvas(
             title=self._cfg.window.title,
             size=(self._cfg.window.width, self._cfg.window.height),
@@ -654,7 +681,11 @@ class Engine:
             # Live mode — register the draw callback and hand control to the
             # platform event loop until the window is closed.
             canvas.request_draw(_draw)
-            run()
+            try:
+                run()
+            finally:
+                self._shutdown_gpu_resources()
+                self._config_manager.stop()
         else:
             # Headless / CI smoke mode — drive the draw callback ``max_frames``
             # times in-process and return.  No event loop, no window blocking.
@@ -662,9 +693,45 @@ class Engine:
                 raise ValueError(
                     f"max_frames must be >= 0, got {max_frames}"
                 )
-            for _ in range(max_frames):
-                _draw()
-        self._config_manager.stop()
+            _frame_budget = (
+                1.0 / target_fps if (target_fps is not None and target_fps > 0.0)
+                else 0.0
+            )
+            try:
+                for _ in range(max_frames):
+                    _tick_start = time.perf_counter()
+                    _draw()
+                    if _frame_budget > 0.0:
+                        _elapsed = time.perf_counter() - _tick_start
+                        _sleep = _frame_budget - _elapsed
+                        if _sleep > 0.0:
+                            time.sleep(_sleep)
+            finally:
+                self._shutdown_gpu_resources()
+                self._config_manager.stop()
+
+    def _shutdown_gpu_resources(self) -> None:
+        """Release GPU buffers/textures and clear cached pipelines on exit.
+
+        Idempotent and exception-safe — each step is guarded so partial
+        initialisation (e.g. a stub GPU stack in tests) still cleans up
+        cleanly.  Called from both the live event-loop and headless paths
+        when ``run()`` returns or propagates an exception.
+        """
+        try:
+            if self._buf_mgr is not None:
+                self._buf_mgr.destroy_all()
+        except Exception:
+            pass
+        try:
+            if self._tex_mgr is not None:
+                self._tex_mgr.destroy_all()
+        except Exception:
+            pass
+        # Drop cached 3D-layer renderers / pipeline so a subsequent run() can
+        # rebuild them against a fresh GPU context.
+        self._mesh_renderers.clear()
+        self._mesh_pipeline = None
 
     # -----------------------------------------------------------------------
     # Project detection helpers

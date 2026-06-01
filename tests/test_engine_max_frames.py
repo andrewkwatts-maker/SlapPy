@@ -142,3 +142,199 @@ def test_run_max_frames_negative_raises(monkeypatch):
     engine = se.Engine()
     with pytest.raises(ValueError):
         engine.run(max_frames=-1)
+
+
+# ---------------------------------------------------------------------------
+# Frame-pacing + shutdown coverage (2026-06-01)
+# ---------------------------------------------------------------------------
+
+
+def test_engine_run_calls_update_max_frames_times(monkeypatch):
+    """run(max_frames=N) invokes the scene tick (update) exactly N times.
+
+    The frame counter is the engine-side proxy for ``_draw`` invocations,
+    but a separate observable signal is the scene ``_tick`` callback which
+    runs inside ``_draw``.  Attaching a stub scene with a counting
+    ``_tick`` proves the draw closure ran end-to-end on every iteration —
+    not just the loop wrapper around it.
+    """
+    _install_stubs(monkeypatch)
+
+    import slappyengine as se
+
+    class _CountingScene:
+        landscape = None
+        post_process = None
+        pixel_physics_enabled = False
+        collision = None
+        entities: list = []
+        camera = None
+        compute = None
+        decals = None
+
+        def __init__(self):
+            self.tick_count = 0
+
+        def _tick(self, dt):
+            self.tick_count += 1
+
+    engine = se.Engine()
+    scene = _CountingScene()
+    # Avoid invoking the production load_scene path (it triggers compute
+    # wiring on an Asset-free scene which is fine, but we want a clean
+    # observable surface).
+    engine._scene = scene
+
+    engine.run(max_frames=7)
+
+    assert engine._frame_index == 7
+    assert scene.tick_count == 7, (
+        f"expected scene._tick called 7 times, got {scene.tick_count}"
+    )
+
+
+def test_engine_run_with_max_frames_returns_within_2x_expected_duration(monkeypatch):
+    """run(max_frames=10, target_fps=60) returns inside a forgiving CI budget.
+
+    Expected ≈ 10 / 60 = 0.167 s.  We assert ≤ 0.5 s to absorb stub-GPU
+    overhead, Windows timer granularity, and CI scheduling jitter.
+    """
+    _install_stubs(monkeypatch)
+
+    import slappyengine as se
+
+    engine = se.Engine()
+
+    t0 = time.perf_counter()
+    engine.run(max_frames=10, target_fps=60.0)
+    elapsed = time.perf_counter() - t0
+
+    assert engine._frame_index == 10
+    assert elapsed <= 0.5, (
+        f"run(max_frames=10, target_fps=60) took {elapsed:.3f}s — "
+        "expected <= 0.5s (≈0.167s nominal)"
+    )
+
+
+def test_engine_run_clean_shutdown_releases_gpu_resources(monkeypatch):
+    """run(max_frames=N) destroys cached GPU buffers and textures on return.
+
+    ``BufferManager.destroy_all`` / ``TextureManager.destroy_all`` are the
+    documented teardown hooks; ``Engine.run`` must invoke them as part of
+    its normal exit so callers that loop ``run()`` (e.g. CI smoke harnesses
+    that recreate an Engine per example) don't leak GPU handles.
+    """
+    _install_stubs(monkeypatch)
+
+    from slappyengine import engine as engine_mod
+
+    destroyed = {"buf": 0, "tex": 0}
+
+    class _StubBufMgr:
+        def destroy_all(self):
+            destroyed["buf"] += 1
+
+    class _StubTexMgr:
+        def destroy_all(self):
+            destroyed["tex"] += 1
+
+    # Extend the stubbed _setup_gpu so the two managers exist for teardown.
+    real_setup = engine_mod.Engine._setup_gpu
+
+    def _stub_setup_with_managers(self, canvas):
+        real_setup(self, canvas)
+        self._buf_mgr = _StubBufMgr()
+        self._tex_mgr = _StubTexMgr()
+
+    monkeypatch.setattr(engine_mod.Engine, "_setup_gpu", _stub_setup_with_managers)
+
+    import slappyengine as se
+
+    engine = se.Engine()
+    engine.run(max_frames=3)
+
+    assert destroyed["buf"] == 1, "BufferManager.destroy_all not called on shutdown"
+    assert destroyed["tex"] == 1, "TextureManager.destroy_all not called on shutdown"
+    assert engine._mesh_pipeline is None
+    assert engine._mesh_renderers == {}
+
+
+def test_engine_run_handles_exception_in_update(monkeypatch):
+    """Exceptions raised inside the per-frame draw propagate out of run().
+
+    The headless path must NOT swallow user errors — if scene logic raises,
+    the test harness needs to see the traceback, not a silent 0-frame
+    completion.  Teardown still runs (verified by checking the config
+    manager state) so a propagated exception leaves no leaked watcher.
+    """
+    _install_stubs(monkeypatch)
+
+    import slappyengine as se
+
+    class _ExplodingScene:
+        landscape = None
+        post_process = None
+        pixel_physics_enabled = False
+        collision = None
+        entities: list = []
+        camera = None
+        compute = None
+        decals = None
+
+        def _tick(self, dt):
+            raise RuntimeError("boom from user update")
+
+    engine = se.Engine()
+    engine._scene = _ExplodingScene()
+
+    with pytest.raises(RuntimeError, match="boom from user update"):
+        engine.run(max_frames=5)
+
+    # The exception must surface on the very first frame — no partial loop.
+    assert engine._frame_index == 1
+    # Teardown still happened — mesh caches were reset by _shutdown_gpu_resources.
+    assert engine._mesh_pipeline is None
+    assert engine._mesh_renderers == {}
+
+
+# ---------------------------------------------------------------------------
+# SLAPPYENGINE_MAX_FRAMES environment-variable fallback
+# ---------------------------------------------------------------------------
+
+
+def test_env_var_sets_max_frames_when_kwarg_omitted(monkeypatch):
+    """SLAPPYENGINE_MAX_FRAMES=N drives the headless path when no kwarg is given."""
+    _install_stubs(monkeypatch)
+    monkeypatch.setenv("SLAPPYENGINE_MAX_FRAMES", "4")
+
+    import slappyengine as se
+
+    engine = se.Engine()
+    engine.run()  # no kwarg — env var must take over
+
+    assert engine._frame_index == 4
+
+
+def test_kwarg_wins_over_env_var(monkeypatch):
+    """Explicit max_frames kwarg overrides the environment fallback."""
+    _install_stubs(monkeypatch)
+    monkeypatch.setenv("SLAPPYENGINE_MAX_FRAMES", "99")
+
+    import slappyengine as se
+
+    engine = se.Engine()
+    engine.run(max_frames=2)
+
+    assert engine._frame_index == 2, "kwarg must take precedence over env var"
+
+
+def test_env_var_invalid_value_raises(monkeypatch):
+    """A non-integer SLAPPYENGINE_MAX_FRAMES is a configuration error."""
+    _install_stubs(monkeypatch)
+    monkeypatch.setenv("SLAPPYENGINE_MAX_FRAMES", "not-a-number")
+
+    import slappyengine as se
+
+    engine = se.Engine()
+    with pytest.raises(ValueError, match="SLAPPYENGINE_MAX_FRAMES"):
+        engine.run()
