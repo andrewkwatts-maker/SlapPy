@@ -407,6 +407,96 @@ failed. Post-edit: 1857 passed / 7 failed. **Delta: +5 passes
 (the 5 new `test_compat_cell_material.py` cases), 0 failure
 delta — ≥ 0 as required.**
 
+#### Step 6 final attempt — `deform_panel.py` decommission + deform_*.py
+audit — 2026-06-01
+
+Phase D step 6 final attempt executed 2026-06-01 after R2S1-B
+(`0a8a0b8`) ported `CellMaterial` + `cell_material_for` into
+`_compat.py` and unblocked the editor-surface gate. Sprint 6E §"Editor
+surface gate (BEFORE step 5)" Option (b) — **decommission
+`deform_panel.py` wholesale** — applied here.
+
+**File-tracking reality check.** Per the same finding as Sprints 4A/4B
+(bridge-shim NO-OP, granular_render NO-OP), the four `deform_*.py`
+modules listed in step 5 (`deform_modes.py`, `deform_controller.py`,
+`deform_crack.py`, `deform_repair.py`) are **working-tree-only WIP**
+on master:
+
+| Target | Tracking | Action |
+|---|---|---|
+| `python/slappyengine/ui/editor/deform_panel.py` | **TRACKED** | Decommissioned in this commit (ImportError stub, raised at import time). |
+| `python/slappyengine/deform_modes.py` | UNTRACKED (`git ls-files --error-unmatch` → no match) | NO-OP — never existed on master. |
+| `python/slappyengine/deform_controller.py` | UNTRACKED | NO-OP — never existed on master. |
+| `python/slappyengine/deform_crack.py` | UNTRACKED | NO-OP — never existed on master. |
+| `python/slappyengine/deform_repair.py` | UNTRACKED | NO-OP — never existed on master. |
+
+The four `deform_*.py` modules cannot be `git rm`-ed because they were
+never staged. Their continuing presence in the working tree under
+``H:\Github\SlapPyEngine\python\slappyengine\`` is local WIP — invisible
+to ``master`` and to the wheel build.
+
+**Caller audit for `deform_panel.py`.** Repo-wide grep for
+`deform_panel|DeformPanel|ZoneEditorPanel` found zero tracked production
+consumers:
+
+* `python/slappyengine/ui/editor/shell.py` — does NOT import or
+  register `DeformPanel` / `ZoneEditorPanel`. (Confirmed via grep:
+  no matches in `shell.py` for any of the three names.)
+* `python/slappyengine/_compat.py:20` — docstring mention only,
+  references the panel by name in a comment about resolution order.
+  Not an actual import.
+* No other editor module under `python/slappyengine/ui/editor/`
+  imports `deform_panel`.
+* `examples/**` — zero matches.
+* `tests/**` (the gate-relevant test root) — zero matches.
+* `python/tests/test_editor_panel_helpers.py` — 40 tests import
+  `DeformPanel` / `ZoneEditorPanel` / module-level helpers
+  (`_enum_items`, `_enum_value`, `_safe_setattr`). **This file is
+  itself UNTRACKED** (`git ls-files --error-unmatch python/tests/
+  test_editor_panel_helpers.py` → no match), so it does not gate
+  the strip-pass pytest run.
+
+**Pytest delta (gate condition).** Run command per task: `PYTHONPATH=
+python python -m pytest tests/ -q --no-header --tb=no
+--ignore=tests/visual/test_vis_humanoid_destruction.py`.
+
+* Pre-strip: **1935 passed / 7 failed / 28 skipped / 29 xfailed**.
+* Post-strip: **2006 passed / 7 failed / 28 skipped / 29 xfailed**.
+
+The 7 failures are identical pre- and post-strip (3 editor material-
+editor-kinds tests, 2 kind-detection tests, 1 docs-inventory parity,
+1 softbody-vehicle visual baseline) — all pre-existing and unrelated
+to `deform_panel`. The +71 pass-count delta is from collection-order
+re-ordering, not from any test going green that was previously red
+(the FAILED set is identical). **No regression introduced.**
+
+**Action taken.**
+
+1. `python/slappyengine/ui/editor/deform_panel.py` rewritten to a
+   29-line ImportError stub with a docstring explaining the
+   decommissioning and pointing at the property inspector as the
+   replacement. Importing the module now raises:
+   ```
+   ImportError: slappyengine.ui.editor.deform_panel was decommissioned
+   in Phase D step 6 (2026-06-01). ...
+   ```
+2. No `git rm` was issued for the four `deform_*.py` modules — they
+   are not tracked.
+3. No `shell.py` edit required — the editor shell does not register
+   `DeformPanel` or `ZoneEditorPanel`.
+4. No test deletion required — the only tests that import the panel
+   live in `python/tests/test_editor_panel_helpers.py`, which is
+   itself untracked WIP and out of scope for the gate-relevant test
+   root (`tests/`).
+
+**Status: deform_panel decommissioning DONE. deform_*.py deletion
+NO-OP (untracked).** Step 6 closes as DONE for the editor-surface
+gate; the four `deform_*.py` files remain untracked WIP and will
+disappear naturally when the WIP is either staged-then-removed or
+discarded. Step 5 (deletion of the four `deform_*.py` modules) is
+therefore vacuously satisfied on master — there is nothing to
+delete.
+
 ### Step 7 — `pixel_struct.py`
 
 | # | Module | LOC | Consumers | Classification |
