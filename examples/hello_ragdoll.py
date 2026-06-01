@@ -1,8 +1,9 @@
 """SlapPyEngine - Hello Ragdoll
 
 A 6-bone humanoid ragdoll drops onto a flat floor, lands, settles, then
-breathes. The demo records the run as an animated GIF using the same
-``slappyengine.media`` backbone the :mod:`slappyengine.studio` helpers use.
+breathes. The demo can record the run as an animated GIF using the same
+``slappyengine.media`` backbone the :mod:`slappyengine.studio` helpers use,
+or rasterise a single final-frame PNG for the smoke-test harness.
 
 The skeleton is six bones (torso, head, two arms, two legs) wired by the
 authoritative :func:`slappyengine.dynamics.build_ragdoll` builder. After
@@ -19,6 +20,7 @@ Run::
     PYTHONPATH=python python examples/hello_ragdoll.py
     PYTHONPATH=python python examples/hello_ragdoll.py --frames 60
     PYTHONPATH=python python examples/hello_ragdoll.py --no-gif
+    PYTHONPATH=python python examples/hello_ragdoll.py --render --out out/hello_ragdoll.png
 """
 from __future__ import annotations
 
@@ -167,6 +169,61 @@ def _joint_angle(world: World, joint) -> float:
     ))
 
 
+def step_world(
+    world: World,
+    frames: int,
+    dt: float = DEFAULT_DT,
+    *,
+    body=None,
+    audit_limits: bool = False,
+    capture_pil_frames: bool = False,
+) -> dict:
+    """Integrate the world for ``frames`` ticks with the demo's ground clamp.
+
+    Args:
+        world: the world produced by :func:`build_world`.
+        frames: number of fixed-dt steps to run.
+        dt: integration step (default :data:`DEFAULT_DT`).
+        body: optional ragdoll body returned by :func:`build_world`; required
+            for breathing/GIF capture, harmless to omit for short smoke runs.
+        audit_limits: if True, sample every hinge angle each frame and clear
+            the returned ``limits_respected`` flag on the first breach.
+        capture_pil_frames: if True, accumulate a PIL image per frame for
+            downstream GIF writing.
+
+    Returns:
+        A trace dict with keys ``limits_respected`` (bool — always present;
+        defaults to ``True`` when ``audit_limits`` is False) and
+        ``pil_frames`` (list — empty unless ``capture_pil_frames`` is True).
+    """
+    hinges = _hinge_joints(world) if audit_limits else []
+    limits_respected = True
+    pil_frames: list = []
+
+    for f in range(frames):
+        if body is not None:
+            _apply_breathing(world, body, f)
+        world.step(dt)
+        _ground_clamp(world)
+
+        if audit_limits and limits_respected:
+            for j in hinges:
+                ang = _joint_angle(world, j)
+                lo = float(j.params.get("min_angle", -math.pi))
+                hi = float(j.params.get("max_angle", math.pi))
+                if ang < lo - 1e-3 or ang > hi + 1e-3:
+                    limits_respected = False
+                    break
+
+        if capture_pil_frames and body is not None:
+            pil_frames.append(_render_frame_pil(world, body))
+
+    return {
+        "limits_respected": bool(limits_respected),
+        "pil_frames": pil_frames,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Pure-PIL renderer (no GPU dependency)
 # ---------------------------------------------------------------------------
@@ -181,16 +238,16 @@ def _world_to_pixel(p: np.ndarray) -> tuple[int, int]:
     return px, py
 
 
-def _render_frame(world: World, body):
+def _render_frame_pil(world: World, body):
     """Rasterise the skeleton onto a PIL Image: floor line + bones + joints."""
     from PIL import Image, ImageDraw
 
-    img = Image.new("RGB", (RENDER_W, RENDER_H), (12, 14, 22))
+    img = Image.new("RGBA", (RENDER_W, RENDER_H), (12, 14, 22, 255))
     draw = ImageDraw.Draw(img)
 
     # Floor line.
     fy0 = _world_to_pixel(np.asarray([VIEW_MIN[0], GROUND_Y]))[1]
-    draw.line([(0, fy0), (RENDER_W - 1, fy0)], fill=(70, 80, 60), width=2)
+    draw.line([(0, fy0), (RENDER_W - 1, fy0)], fill=(70, 80, 60, 255), width=2)
 
     root_node = int(body.parameters["root_node"])
     child_nodes: list[int] = list(body.parameters["child_nodes"])
@@ -202,7 +259,7 @@ def _render_frame(world: World, body):
         child = child_nodes[bi]
         a = _world_to_pixel(world.positions[parent_node])
         b = _world_to_pixel(world.positions[child])
-        draw.line([a, b], fill=(230, 230, 240), width=3)
+        draw.line([a, b], fill=(230, 230, 240, 255), width=3)
 
     # Joints.
     node_r = 4
@@ -214,49 +271,60 @@ def _render_frame(world: World, body):
         x, y = _world_to_pixel(world.positions[idx])
         draw.ellipse(
             [(x - node_r, y - node_r), (x + node_r, y + node_r)],
-            fill=(255, 200, 120), outline=(255, 220, 160),
+            fill=(255, 200, 120, 255), outline=(255, 220, 160, 255),
         )
     return img
 
 
-# ---------------------------------------------------------------------------
-# Run loop + GIF capture (uses slappyengine.media.save_frames, same backbone
-# the slappyengine.studio.record() helper sits on top of)
-# ---------------------------------------------------------------------------
+def _render_frame(world: World, body) -> np.ndarray:
+    """Return the skeleton frame as an ``(H, W, 4)`` uint8 RGBA array.
 
-def run(frames: int, capture_gif: bool):
-    """Step the world ``frames`` times and optionally capture each frame."""
-    world, body, spec = build_world()
-    pil_frames: list = []
-    hinges = _hinge_joints(world)
-    limits_respected = True
+    Tests reach for this directly and feed it to the visual harness via
+    ``SimpleNamespace(_image_data=...)``.
+    """
+    return np.asarray(_render_frame_pil(world, body), dtype=np.uint8)
 
-    for f in range(frames):
-        _apply_breathing(world, body, f)
-        world.step(DEFAULT_DT)
-        _ground_clamp(world)
 
-        if limits_respected:
-            for j in hinges:
-                ang = _joint_angle(world, j)
-                lo = float(j.params.get("min_angle", -math.pi))
-                hi = float(j.params.get("max_angle", math.pi))
-                if ang < lo - 1e-3 or ang > hi + 1e-3:
-                    limits_respected = False
-                    break
+def save_render(world: World, body, out_path: Path) -> Path:
+    """Write a single rendered frame to ``out_path`` (PNG). Creates parents."""
+    from PIL import Image
 
-        if capture_gif:
-            pil_frames.append(_render_frame(world, body))
-
-    return world, body, spec, pil_frames, limits_respected
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    arr = _render_frame(world, body)
+    Image.fromarray(arr, mode="RGBA").save(out_path)
+    return out_path
 
 
 # ---------------------------------------------------------------------------
 # Diagnostics
 # ---------------------------------------------------------------------------
 
-def summarise(world: World, body, spec: RagdollSpec, frames: int,
-              limits_respected: bool) -> dict:
+def summarise(
+    world: World,
+    body,
+    spec: RagdollSpec,
+    trace_or_frames,
+    frames_or_limits=None,
+) -> dict:
+    """Build the summary dict.
+
+    Supports two call shapes:
+
+    * New (test-facing): ``summarise(world, body, spec, trace_dict, frames)``
+      where ``trace_dict`` is the return value of :func:`step_world` and
+      ``frames`` is the integer frame count.
+    * Legacy (kept for the CLI ``run()`` glue):
+      ``summarise(world, body, spec, frames, limits_respected)``.
+    """
+    if isinstance(trace_or_frames, dict):
+        trace = trace_or_frames
+        frames = int(frames_or_limits) if frames_or_limits is not None else 0
+        limits_respected = bool(trace.get("limits_respected", True))
+    else:
+        frames = int(trace_or_frames)
+        limits_respected = bool(frames_or_limits) if frames_or_limits is not None else True
+
     node_ys = world.positions[list(body.node_indices), 1]
     final_speed = float(np.linalg.norm(world.velocities, axis=1).max())
     return {
@@ -300,26 +368,65 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="skip GIF capture (smoke-test mode; pairs well with --frames 60)",
     )
     parser.add_argument(
+        "--render", action="store_true",
+        help="rasterise output: PNG single frame when --out ends in .png, "
+             "GIF otherwise. Equivalent to dropping --no-gif.",
+    )
+    parser.add_argument(
         "--out", type=Path, default=None,
-        help="GIF output path (default: examples/output/ragdoll/hello_ragdoll.gif)",
+        help="output path (default: examples/output/ragdoll/hello_ragdoll.gif "
+             "for GIFs). Use a .png suffix to write a single rendered frame.",
     )
     return parser.parse_args(argv)
 
 
 def main(
     frames: int = DEFAULT_FRAMES,
-    capture_gif: bool = True,
+    render: bool = True,
     out: Path | str | None = None,
+    *,
+    capture_gif: bool | None = None,
 ) -> dict:
-    """Run the demo end-to-end. Returns the summary dict for tests."""
-    world, body, spec, pil_frames, limits_respected = run(frames, capture_gif)
-    summary = summarise(world, body, spec, frames, limits_respected)
+    """Run the demo end-to-end. Returns the summary dict for tests.
+
+    Args:
+        frames: number of fixed-dt steps to integrate.
+        render: when False, skip all visual output (smoke-test fast path).
+            Maps directly to the legacy ``capture_gif`` semantics.
+        out: where to write the artefact. ``.png`` suffix saves a single
+            final-frame PNG; anything else writes a GIF. Default is the
+            committed ``examples/output/ragdoll/hello_ragdoll.gif`` path.
+        capture_gif: alias for ``render`` (back-compat for code that still
+            passes the original kwarg). If both are supplied, ``capture_gif``
+            wins.
+    """
+    if capture_gif is not None:
+        render = bool(capture_gif)
+
+    out_path = Path(out) if out is not None else None
+    want_png = render and out_path is not None and out_path.suffix.lower() == ".png"
+    want_gif = render and not want_png
+
+    world, body, spec = build_world()
+    trace = step_world(
+        world,
+        frames,
+        DEFAULT_DT,
+        body=body,
+        audit_limits=True,
+        capture_pil_frames=want_gif,
+    )
+    summary = summarise(world, body, spec, trace, frames)
     print_summary(summary)
 
-    if capture_gif and pil_frames:
-        out_path = Path(out) if out is not None else _default_gif_path()
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        written = save_frames(pil_frames, out_path, fps=GIF_FPS)
+    if want_png:
+        written = save_render(world, body, out_path)
+        summary["png_path"] = str(written)
+        print(f"  png written to       : {written}")
+    elif want_gif:
+        gif_out = out_path if out_path is not None else _default_gif_path()
+        gif_out.parent.mkdir(parents=True, exist_ok=True)
+        written = save_frames(trace["pil_frames"], gif_out, fps=GIF_FPS)
         summary["gif_path"] = str(written)
         print(f"  gif written to       : {written}")
     return summary
@@ -327,8 +434,13 @@ def main(
 
 def _cli(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
+    # --render overrides --no-gif; otherwise --no-gif disables output.
+    if args.render:
+        render = True
+    else:
+        render = not args.no_gif
     try:
-        main(frames=args.frames, capture_gif=not args.no_gif, out=args.out)
+        main(frames=args.frames, render=render, out=args.out)
     except Exception as exc:  # pragma: no cover - defensive CLI guard
         print(f"hello_ragdoll: error: {exc}", file=sys.stderr)
         return 1
