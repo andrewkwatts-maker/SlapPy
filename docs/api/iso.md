@@ -1,172 +1,183 @@
 # slappyengine.iso — API Reference
 
-> Auto-generated. Re-run `python scripts/gen_subpackage_api_docs.py`.
-> Do not hand-edit — every entry below comes from runtime introspection
-> (`inspect.signature`, `inspect.getdoc`, `dataclasses.fields`).
+> Hand-curated reference. Format mirrors the auto-generated subpackage
+> dumps but extends them with the `combat` surface added by Sprint 1C
+> (Phase C3 of *"editor polish + repackage proven subsystems"*). Stone
+> Keep, the engine's iso flagship game, consumes these helpers for
+> tower-defence wave + attack resolution.
 
 
 SlapPyEngine.iso — Isometric 2D-grid-with-Z rendering subsystem.
 
-## Classes
+## Rendering surface (summary)
 
-### `IsoCamera`
+The grid / camera / entity / scene types are stable and documented by
+the auto-generated dump; the short version:
 
-_class — defined in `slappyengine.iso.iso_camera`_
+- `IsoViewpoint` — `IntEnum` of the four cardinal angles (`NE`, `NW`,
+  `SW`, `SE`).
+- `IsoTileDef(name, sprite_path, sprite_paths=…, z_height=0.0, passable=True, color=(128,128,128))`
+  — visual definition for a tile type, with per-viewpoint sprite
+  overrides and a `sprite_for(vp)` lookup.
+- `IsoCell(gx, gy, gz, tile_def=None, entity=None, z_offset=0.0)` —
+  one cell in the sparse grid.
+- `IsoGrid(width, height, depth=8, tile_w=64, tile_h=32, z_scale=16.0)`
+  — `set_tile`, `get_cell`, `remove_tile`, `top_z`, `all_cells`,
+  `world_to_screen`, and `sorted_cells(vp, …)` for painter's-order
+  rendering with viewport culling.
+- `IsoEntity(grid_x=0, grid_y=0, grid_z=0, local_z=0, facing_angle=0, receives_fluid_forces=False)`
+  — `move_to`, `move_by`, `face_toward`, `distance_to`, plus
+  `total_z = grid_z + local_z` for the engine's Z-height lighting.
+- `IsoCamera(viewpoint=NE, tile_w=64, tile_h=32)` — `pan`, `reset_pan`,
+  `rotate_cw`, `rotate_ccw`, `set_viewpoint`, `screen_to_grid`, and
+  `update_entity_viewpoints` so the engine's `AngleSpriteMap` picks the
+  right per-viewpoint sprite when the camera rotates.
+- `IsoScene(grid_w=20, grid_h=20, grid_d=4, …)` — drop-in `Scene`
+  replacement; `add_iso_entity`, `remove_iso_entity`, `add_z_layer`,
+  `remove_z_layer`, `sorted_render_list`, `update(dt)`.
 
-Camera for isometric scenes.
+Projection helpers in `slappyengine.iso.projection`:
 
-#### Constructor signature
+- `world_to_screen(gx, gy, gz, vp, tile_w=64, tile_h=32, z_scale=16.0, cam_x=0, cam_y=0) -> (sx, sy)`
+- `screen_to_world(sx, sy, vp, tile_w=64, tile_h=32, cam_x=0, cam_y=0) -> (gx, gy)`
+  — Cramer's rule on the 2×2 viewpoint matrix, picks the ground plane.
+- `depth_key(gx, gy, gz, vp) -> float` — painter's sort key; `gz` as
+  fractional tie-breaker.
 
-```python
-IsoCamera(viewpoint: 'IsoViewpoint' = <IsoViewpoint.NE: 0>, tile_w: 'int' = 64, tile_h: 'int' = 32) -> 'None'
-```
+## Combat surface (`slappyengine.iso.combat`)
 
-#### Methods
+Pure-logic combat primitives for iso games. No rendering imports, no
+RNG, no game-side dependencies. Determinism is a contract — same
+`(WaveSpec list, dt sequence)` inputs always produce identical
+`Defender` outputs (same positions, same hp, same order).
 
-- `pan(self, dx: 'float', dy: 'float') -> 'None'` — Shift the camera by (dx, dy) pixels.
-- `reset_pan(self) -> 'None'` — Return the camera to the grid origin.
-- `rotate_ccw(self) -> 'IsoViewpoint'` — Rotate the viewpoint 90° counter-clockwise and return the new viewpoint.
-- `rotate_cw(self) -> 'IsoViewpoint'` — Rotate the viewpoint 90° clockwise and return the new viewpoint.
-- `screen_to_grid(self, sx: 'float', sy: 'float', screen_w: 'int' = 1280, screen_h: 'int' = 720) -> 'tuple[int, int]'` — Convert a mouse/screen pixel position to grid (gx, gy) at gz=0.
-- `set_viewpoint(self, vp: 'IsoViewpoint') -> 'None'` — Directly set the active viewpoint.
-- `update_entity_viewpoints(self, entities: 'list') -> 'None'` — Sync all entity rotations to the current camera viewpoint.
+### Classes
 
-### `IsoCell`
+#### `Attacker`
 
-_dataclass — defined in `slappyengine.iso.iso_grid`_
+_dataclass — `slappyengine.iso.combat`_
 
-One cell in the 3D isometric grid.
-
-#### Constructor signature
-
-```python
-IsoCell(gx: 'int', gy: 'int', gz: 'int', tile_def: 'IsoTileDef | None' = None, entity: 'Any' = None, z_offset: 'float' = 0.0) -> None
-```
-
-#### Fields
-
-- `entity: Any` — default `None`
-- `gx: int`
-- `gy: int`
-- `gz: int`
-- `tile_def: IsoTileDef | None` — default `None`
-- `z_offset: float` — default `0.0`
-
-### `IsoEntity`
-
-_dataclass — defined in `slappyengine.iso.iso_entity`_
-
-An entity positioned in the isometric grid.
-
-#### Constructor signature
+An entity that can deal damage in iso world space.
 
 ```python
-IsoEntity(grid_x: 'float' = 0.0, grid_y: 'float' = 0.0, grid_z: 'float' = 0.0, local_z: 'float' = 0.0, facing_angle: 'float' = 0.0, receives_fluid_forces: 'bool' = False) -> None
+Attacker(pos: tuple[float, float], damage: float, reach: float, team: str = 'player') -> None
 ```
 
-#### Fields
+- `pos` — iso world coordinates.
+- `damage` — applied to a defender within `reach`; may be `0`.
+- `reach` — max Euclidean hit distance in iso world units.
+- `team` — free-form id; **not** consulted by `resolve_attack`.
 
-- `facing_angle: float` — default `0.0`
-- `grid_x: float` — default `0.0`
-- `grid_y: float` — default `0.0`
-- `grid_z: float` — default `0.0`
-- `local_z: float` — default `0.0`
-- `receives_fluid_forces: bool` — default `False`
+#### `Defender`
 
-#### Methods
+_dataclass — `slappyengine.iso.combat`_
 
-- `distance_to(self, other: "'IsoEntity'") -> 'float'` — Return the Euclidean grid distance to *other* (ignoring Z).
-- `face_toward(self, target_gx: 'float', target_gy: 'float') -> 'None'` — Set :attr:`facing_angle` toward a target grid position.
-- `move_by(self, dgx: 'float', dgy: 'float', dgz: 'float' = 0.0) -> 'None'` — Displace the entity by (dgx, dgy, dgz) grid units.
-- `move_to(self, gx: 'float', gy: 'float', gz: 'float' = 0.0) -> 'None'` — Teleport the entity to grid position (gx, gy, gz).
-
-### `IsoGrid`
-
-_class — defined in `slappyengine.iso.iso_grid`_
-
-3D grid of :class:`IsoCell` objects with depth sorting.
-
-#### Constructor signature
+An entity that can receive damage in iso world space.
 
 ```python
-IsoGrid(width: 'int', height: 'int', depth: 'int' = 8, tile_w: 'int' = 64, tile_h: 'int' = 32, z_scale: 'float' = 16.0) -> 'None'
+Defender(pos: tuple[float, float], hp: float, team: str = 'enemy') -> None
 ```
 
-#### Methods
+- `pos` — iso world coordinates.
+- `hp` — current hit points; mutated in place by `resolve_attack`.
+- `team` — free-form id.
 
-- `all_cells(self) -> 'list[IsoCell]'` — Return all non-empty cells in arbitrary order.
-- `get_cell(self, gx: 'int', gy: 'int', gz: 'int') -> 'IsoCell | None'` — Return the cell at (gx, gy, gz), or ``None`` if empty.
-- `remove_tile(self, gx: 'int', gy: 'int', gz: 'int') -> 'None'` — Remove the cell at (gx, gy, gz) if it exists.
-- `set_tile(self, gx: 'int', gy: 'int', gz: 'int', tile_def: 'IsoTileDef') -> 'IsoCell'` — Place *tile_def* at grid position (gx, gy, gz).
-- `sorted_cells(self, vp: 'IsoViewpoint', cam_x: 'float' = 0.0, cam_y: 'float' = 0.0, screen_w: 'int' = 1280, screen_h: 'int' = 720) -> 'list[tuple[IsoCell, float, float]]'` — Return cells sorted back-to-front for painter's-algorithm rendering.
-- `top_z(self, gx: 'int', gy: 'int') -> 'int'` — Return the highest occupied gz at column (gx, gy), or 0 if empty.
-- `world_to_screen(self, gx: 'float', gy: 'float', gz: 'float', vp: 'IsoViewpoint', cam_x: 'float' = 0.0, cam_y: 'float' = 0.0) -> 'tuple[float, float]'` — Project grid coordinates to screen space.
+#### `WaveSpec`
 
-### `IsoScene`
+_dataclass — `slappyengine.iso.combat`_
 
-_class — defined in `slappyengine.iso.iso_scene`_
-
-An isometric scene that integrates with the SlapPyEngine scene system.
-
-#### Constructor signature
+Describes a single wave of defenders to be spawned over time.
 
 ```python
-IsoScene(grid_w: 'int' = 20, grid_h: 'int' = 20, grid_d: 'int' = 4, tile_w: 'int' = 64, tile_h: 'int' = 32, z_scale: 'float' = 16.0, viewpoint: 'IsoViewpoint' = <IsoViewpoint.NE: 0>) -> 'None'
+WaveSpec(count: int, spawn_points: list[tuple[float, float]], hp_each: float, interval: float, delay: float = 0.0) -> None
 ```
 
-#### Methods
+- `count` — total defenders to spawn; must be ≥ 1.
+- `spawn_points` — iso world coordinates, cycled round-robin
+  (`spawn_points[i % len(spawn_points)]` for defender `i`); non-empty.
+- `hp_each` — initial `hp` for every spawned defender; must be > 0.
+- `interval` — seconds between successive spawns within this wave; ≥ 0.
+- `delay` — seconds to wait, from the moment this wave becomes active,
+  before the first spawn fires.
 
-- `add_iso_entity(self, entity: 'IsoEntity') -> 'None'` — Register an :class:`IsoEntity` with this scene.
-- `add_z_layer(self, layer: 'Any') -> 'None'`
-- `remove_iso_entity(self, entity: 'IsoEntity') -> 'None'` — Remove an :class:`IsoEntity` from this scene.
-- `remove_z_layer(self, layer: 'Any') -> 'None'`
-- `sorted_render_list(self, screen_w: 'int' = 1280, screen_h: 'int' = 720) -> 'list[dict[str, Any]]'` — Return tiles and entities interleaved in painter's-algorithm order.
-- `update(self, dt: 'float') -> 'None'` — Tick the scene.
+Raises `TypeError` for wrong types; `ValueError` for `count < 1`,
+empty `spawn_points`, `hp_each <= 0`, or negative / non-finite
+`interval` / `delay`.
 
-### `IsoTileDef`
+#### `WaveSchedule`
 
-_dataclass — defined in `slappyengine.iso.iso_grid`_
+_class — `slappyengine.iso.combat`_
 
-Visual definition for a tile type.
-
-#### Constructor signature
+Deterministic sequential scheduler for a list of `WaveSpec`. Each wave
+runs to completion (all `count` defenders spawned) before the next
+becomes active. Leftover `dt` is carried across wave boundaries so
+total-`dt` determinism holds regardless of how the frame budget is
+sliced. No RNG anywhere.
 
 ```python
-IsoTileDef(name: 'str', sprite_path: 'str', sprite_paths: 'dict[IsoViewpoint, str]' = <factory>, z_height: 'float' = 0.0, passable: 'bool' = True, color: 'tuple[int, int, int]' = (128, 128, 128)) -> None
+WaveSchedule(waves: list[WaveSpec]) -> None
 ```
 
-#### Fields
+Methods:
 
-- `color: tuple[int, int, int]` — default `(128, 128, 128)`
-- `name: str`
-- `passable: bool` — default `True`
-- `sprite_path: str`
-- `sprite_paths: dict[IsoViewpoint, str]` — default factory
-- `z_height: float` — default `0.0`
+- `tick(self, dt: float) -> list[Defender]` — advance the schedule by
+  `dt` seconds and return newly-spawned defenders in spawn order (empty
+  when no spawns are due). Multiple spawns can fire on one tick when
+  `dt` is large vs `interval`; a zero-`dt` tick still fires spawns
+  whose `next_spawn_at` was reached on a prior tick. Raises `TypeError`
+  if `dt` is not a real number; `ValueError` if `dt` is non-finite or
+  negative.
+- `finished` (property) — `True` iff every wave has emitted all of its
+  defenders.
 
-#### Methods
+### Functions
 
-- `sprite_for(self, vp: 'IsoViewpoint') -> 'str'` — Return the best sprite path for the given viewpoint.
+#### `resolve_attack(attacker: Attacker, defender: Defender) -> tuple[float, bool]`
 
-### `IsoViewpoint`
+Resolve a single attack. Returns `(damage_dealt, defender_alive)`:
 
-_class — defined in `slappyengine.iso.projection`_
+- `damage_dealt` — hp removed; `0.0` if the defender is out of reach.
+- `defender_alive` — `True` iff `defender.hp > 0` after the exchange.
 
-Enum where members are also (and must be) ints
+Pure: no globals, no RNG. The only side effect is mutating
+`defender.hp` when a hit lands. Gameplay code that needs team filtering
+must do so **before** calling `resolve_attack` — the function itself
+does not consult `attacker.team` / `defender.team`.
 
-#### Constructor signature
+Raises:
+
+- `TypeError` — if `attacker` lacks `pos` / `damage` / `reach`, or
+  `defender` lacks `pos` / `hp`.
+- `ValueError` — if `attacker.damage`, `attacker.reach`, or
+  `defender.hp` are negative or non-finite.
+
+### Wave-event surface
+
+`WaveSchedule.tick` is the entire event surface. Each call returns a
+fresh list of `Defender` instances spawned on that tick. Game code
+typically threads this into its iso scene:
 
 ```python
-IsoViewpoint(*values)
+from slappyengine.iso import IsoEntity
+from slappyengine.iso.combat import WaveSpec, WaveSchedule
+
+schedule = WaveSchedule([
+    WaveSpec(count=5, spawn_points=[(0.0, 0.0), (10.0, 0.0)],
+             hp_each=20.0, interval=0.5, delay=1.0),
+    WaveSpec(count=3, spawn_points=[(5.0, 5.0)],
+             hp_each=50.0, interval=1.0),
+])
+
+for defender in schedule.tick(dt):
+    scene.add_iso_entity(IsoEntity(grid_x=defender.pos[0],
+                                    grid_y=defender.pos[1]))
+    game.register_defender(defender)
 ```
 
-## Functions
-
-_(none)_
-
-## Constants
-
-_(none)_
+No `on_spawn` callback, no event-bus hook, no outside mutation of the
+schedule — just the return value of `tick`. This keeps it trivially
+testable: assert spawn order and timing against a hard-coded `dt`
+sequence.
 
 ## Inner modules
 

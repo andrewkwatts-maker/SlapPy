@@ -27,7 +27,9 @@ def _splice_runtime_params(
     """
     if shader_path == "taa_resolve.wgsl":
         # TaaParams layout (see taa.py): width @ offset 8, height @ offset 12,
-        # both u32.  Packing string ``<ffIIIIfI``.
+        # both u32.  The struct grew across rounds (24 → 32 → 48 bytes) but
+        # width/height stay at offsets 8/12, so this splice is layout-stable
+        # for any future field additions appended after offset 16.
         return raw[:8] + struct.pack("<II", int(w), int(h)) + raw[16:]
     return raw
 

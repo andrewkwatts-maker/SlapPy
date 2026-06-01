@@ -11,15 +11,21 @@ from ._validation import (
 _SHADER = "taa_resolve.wgsl"
 _ENTRY  = "taa_resolve_main"
 
-# TaaParams layout (32 bytes — round 4):
-#   blend_factor        : f32   offset  0
-#   sharpening          : f32   offset  4
-#   width               : u32   offset  8  — executor splices actual resolution at runtime
-#   height              : u32   offset 12
-#   karis_weight        : u32   offset 16  — 0 = legacy linear blend, 1 = Karis luminance-inverse weighting
-#   tight_variance_clip : u32   offset 20  — 0 = legacy min/max AABB, 1 = mean ± gamma*sigma (Salvi 2016)
-#   variance_clip_gamma : f32   offset 24  — AABB tightness in stddev units (typical 1.0 .. 1.5)
-#   _pad                : u32   offset 28  — keeps 16-byte uniform alignment
+# TaaParams layout (48 bytes — round 5):
+#   blend_factor                  : f32   offset  0
+#   sharpening                    : f32   offset  4
+#   width                         : u32   offset  8  — executor splices actual resolution at runtime
+#   height                        : u32   offset 12
+#   karis_weight                  : u32   offset 16  — 0 = legacy linear blend, 1 = Karis luminance-inverse weighting
+#   tight_variance_clip           : u32   offset 20  — 0 = legacy min/max AABB, 1 = mean ± gamma*sigma (Salvi 2016)
+#   variance_clip_gamma           : f32   offset 24  — AABB tightness in stddev units (typical 1.0 .. 1.5)
+#   reject_on_depth_disocclusion  : u32   offset 28  — round 5: enable depth-break rejection (Andersson 2015)
+#   depth_disocclusion_threshold  : f32   offset 32  — NDC |Δdepth| above which history is dropped
+#   reject_on_normal_disocclusion : u32   offset 36  — round 5: enable normal-flip rejection (Karis 2014)
+#   normal_disocclusion_threshold : f32   offset 40  — cos(angle) below which history is dropped
+#   _pad                          : u32   offset 44  — keeps 16-byte uniform alignment (48 bytes total)
+_TAA_PARAMS_FMT = "<ffIIIIfIfIfI"
+_TAA_PARAMS_SIZE = 48
 
 # Luminance coefficients (Rec. 709) used for the Karis weighting.
 # Pre-computed at module level so the hot numpy path doesn't allocate a list.
@@ -39,6 +45,10 @@ class TAAPass:
         karis_weight: bool = False,
         tight_variance_clip: bool = True,
         sharpening: float = 0.0,
+        reject_on_depth_disocclusion: bool = True,
+        depth_disocclusion_threshold: float = 0.1,
+        reject_on_normal_disocclusion: bool = True,
+        normal_disocclusion_threshold: float = 0.9,
     ) -> None:
         """Construct a temporal anti-aliasing pass.
 
@@ -69,12 +79,38 @@ class TAAPass:
         sharpening
             Strength of the post-resolve unsharp pass.  Backward-compat
             default ``0.0`` matches rounds 1-3 (no sharpening).
+        reject_on_depth_disocclusion
+            Round 5 (Andersson INSIDE 2015): when ``True`` (default) the
+            reprojected history sample is dropped if the depth read at
+            the previous-frame location differs from the current depth
+            by more than ``depth_disocclusion_threshold``.  The colour
+            AABB cannot catch a stale sample whose colour happens to
+            sit inside the current neighbourhood envelope — depth is
+            the canonical secondary signal.
+        depth_disocclusion_threshold
+            NDC depth break above which the history sample is rejected.
+            Default ``0.1`` is the Andersson 2015 recommendation for a
+            ``[0, 1]`` NDC depth range; tighten to ``0.05`` for scenes
+            with large depth complexity at close range.
+        reject_on_normal_disocclusion
+            Round 5 (Karis Siggraph 2014): when ``True`` (default) the
+            history sample is dropped if the surface normal at the
+            previous-frame location has flipped relative to the current
+            normal.  Catches disocclusions on objects of similar depth
+            (e.g. silhouette of a thin pole crossing a wall behind it).
+        normal_disocclusion_threshold
+            ``dot(prev_normal, current_normal)`` below this value
+            triggers rejection.  Default ``0.9`` ≈ 26° tolerance, which
+            is tight enough to catch genuine surface flips while
+            forgiving smooth shading interpolation.
 
         Raises
         ------
         TypeError
             If any float param is not numeric, or ``karis_weight`` /
-            ``tight_variance_clip`` is not a ``bool``.
+            ``tight_variance_clip`` /
+            ``reject_on_depth_disocclusion`` /
+            ``reject_on_normal_disocclusion`` is not a ``bool``.
         ValueError
             If ``alpha`` is outside ``[0, 1]``, or any non-negative float
             is negative / NaN / inf.
@@ -93,6 +129,26 @@ class TAAPass:
         self.karis_weight = bool(karis_weight)
         validate_bool("tight_variance_clip", "TAAPass", tight_variance_clip)
         self.tight_variance_clip = bool(tight_variance_clip)
+        validate_bool(
+            "reject_on_depth_disocclusion", "TAAPass",
+            reject_on_depth_disocclusion,
+        )
+        self.reject_on_depth_disocclusion = bool(reject_on_depth_disocclusion)
+        self.depth_disocclusion_threshold = validate_non_negative_float(
+            "depth_disocclusion_threshold", "TAAPass",
+            depth_disocclusion_threshold,
+        )
+        validate_bool(
+            "reject_on_normal_disocclusion", "TAAPass",
+            reject_on_normal_disocclusion,
+        )
+        self.reject_on_normal_disocclusion = bool(reject_on_normal_disocclusion)
+        # Normal threshold is a cosine in [-1, 1]; non-negative is the
+        # only meaningful range (a negative threshold would never reject).
+        self.normal_disocclusion_threshold = validate_non_negative_float(
+            "normal_disocclusion_threshold", "TAAPass",
+            normal_disocclusion_threshold,
+        )
 
     @classmethod
     def from_config(cls, cfg) -> "TAAPass":
@@ -104,11 +160,23 @@ class TAAPass:
             karis_weight=getattr(taa, "karis_weight", False),
             tight_variance_clip=getattr(taa, "tight_variance_clip", True),
             sharpening=getattr(taa, "sharpening", 0.0),
+            reject_on_depth_disocclusion=getattr(
+                taa, "reject_on_depth_disocclusion", True,
+            ),
+            depth_disocclusion_threshold=getattr(
+                taa, "depth_disocclusion_threshold", 0.1,
+            ),
+            reject_on_normal_disocclusion=getattr(
+                taa, "reject_on_normal_disocclusion", True,
+            ),
+            normal_disocclusion_threshold=getattr(
+                taa, "normal_disocclusion_threshold", 0.9,
+            ),
         )
 
     def make_pass(self, frame_tex, history_tex, motion_tex) -> PostProcessPass:
         raw = struct.pack(
-            "<ffIIIIfI",
+            _TAA_PARAMS_FMT,
             self.alpha,
             self.sharpening,
             0,                       # width  — executor fills these in
@@ -116,6 +184,10 @@ class TAAPass:
             1 if self.karis_weight else 0,
             1 if self.tight_variance_clip else 0,
             self.variance_clip_gamma,
+            1 if self.reject_on_depth_disocclusion else 0,
+            self.depth_disocclusion_threshold,
+            1 if self.reject_on_normal_disocclusion else 0,
+            self.normal_disocclusion_threshold,
             0,                       # _pad — keeps uniform 16-byte aligned
         )
         return PostProcessPass(
@@ -145,12 +217,21 @@ class TAAPass:
         current: "object",          # numpy.ndarray (H, W, 3) float32 in [0, 1]
         history: "object",          # numpy.ndarray (H, W, 3) float32 in [0, 1]
         motion_uv: Optional["object"] = None,  # (H, W, 2) float32 NDC offsets
+        current_depth: Optional["object"] = None,    # (H, W) float32 NDC depth
+        history_depth: Optional["object"] = None,    # (H, W) float32 NDC depth
+        current_normal: Optional["object"] = None,   # (H, W, 3) float32 unit normals
+        history_normal: Optional["object"] = None,   # (H, W, 3) float32 unit normals
+        return_rejection_mask: bool = False,
     ) -> "object":
         """Pure-numpy reference of the temporal resolve step.
 
         Mirrors the WGSL shader except sharpening (which only affects the
         spatial pass and is orthogonal to the temporal blend under test).
-        Returns an `(H, W, 3)` float32 array.
+        Returns an `(H, W, 3)` float32 array.  When
+        ``return_rejection_mask`` is ``True`` returns ``(blended, mask)``
+        where ``mask`` is an ``(H, W)`` bool array — ``True`` at pixels
+        where the motion-vector-aware disocclusion test dropped the
+        history sample.
         """
         import numpy as np
 
@@ -172,12 +253,14 @@ class TAAPass:
                     f"motion_uv must be ({h}, {w}, 2); got {mv.shape}"
                 )
             ys, xs = np.indices((h, w), dtype=np.float32)
-            src_x = xs + 0.5 - mv[..., 0] * w
-            src_y = ys + 0.5 - mv[..., 1] * h
-            src_x = np.clip(src_x.astype(np.int32), 0, w - 1)
-            src_y = np.clip(src_y.astype(np.int32), 0, h - 1)
+            src_x_f = xs + 0.5 - mv[..., 0] * w
+            src_y_f = ys + 0.5 - mv[..., 1] * h
+            src_x = np.clip(src_x_f.astype(np.int32), 0, w - 1)
+            src_y = np.clip(src_y_f.astype(np.int32), 0, h - 1)
             hist_reproj = hist[src_y, src_x]
         else:
+            src_x = None
+            src_y = None
             hist_reproj = hist
 
         # ── 2. YCoCg neighbourhood AABB clip (matches shader) ────────────
@@ -235,6 +318,56 @@ class TAAPass:
             axis=-1,
         )
 
+        # ── 2b. Round 5: motion-vector-aware disocclusion rejection ──────
+        # Compare the current pixel's depth/normal to the values at the
+        # reprojected previous-frame location.  When either gate trips
+        # we drop the history entirely and fall back to ``cur`` — the
+        # canonical first-frame recovery.
+        rejection_mask = np.zeros((h, w), dtype=bool)
+        if self.reject_on_depth_disocclusion and current_depth is not None and history_depth is not None:
+            cd = np.asarray(current_depth, dtype=np.float32)
+            hd = np.asarray(history_depth, dtype=np.float32)
+            if cd.shape != (h, w) or hd.shape != (h, w):
+                raise ValueError(
+                    f"current_depth / history_depth must be ({h}, {w}); "
+                    f"got {cd.shape} and {hd.shape}"
+                )
+            if src_x is not None:
+                hd_reproj = hd[src_y, src_x]
+            else:
+                hd_reproj = hd
+            depth_break = np.abs(hd_reproj - cd) > float(
+                self.depth_disocclusion_threshold
+            )
+            rejection_mask |= depth_break
+        if (
+            self.reject_on_normal_disocclusion
+            and current_normal is not None
+            and history_normal is not None
+        ):
+            cn = np.asarray(current_normal, dtype=np.float32)
+            hn = np.asarray(history_normal, dtype=np.float32)
+            if cn.shape != (h, w, 3) or hn.shape != (h, w, 3):
+                raise ValueError(
+                    f"current_normal / history_normal must be ({h}, {w}, 3); "
+                    f"got {cn.shape} and {hn.shape}"
+                )
+            if src_x is not None:
+                hn_reproj = hn[src_y, src_x]
+            else:
+                hn_reproj = hn
+            dot = np.sum(cn * hn_reproj, axis=-1)
+            normal_break = dot < float(self.normal_disocclusion_threshold)
+            rejection_mask |= normal_break
+        if rejection_mask.any():
+            # Replace rejected history pixels with the current frame, so
+            # the downstream blend collapses to ``current_color`` at those
+            # pixels (matches the shader's ``history_clipped = current_color``
+            # branch).
+            hist_clipped = np.where(
+                rejection_mask[..., None], cur, hist_clipped,
+            ).astype(np.float32)
+
         # ── 3. Temporal blend ────────────────────────────────────────────
         alpha = float(np.clip(self.alpha, 0.0, 1.0))
         if self.karis_weight:
@@ -262,4 +395,7 @@ class TAAPass:
         else:
             blended = (1.0 - alpha) * hist_clipped + alpha * cur
 
-        return np.maximum(blended, 0.0).astype(np.float32)
+        out = np.maximum(blended, 0.0).astype(np.float32)
+        if return_rejection_mask:
+            return out, rejection_mask
+        return out

@@ -346,8 +346,9 @@ def test_taa_make_pass_packs_sharpening_independently_of_gamma() -> None:
         sharpening=0.25,
     )
     pp = p.make_pass(frame_tex="f", history_tex="h", motion_tex="m")
-    alpha, sharp, _w, _h, _karis, tight, gamma, _pad = struct.unpack(
-        "<ffIIIIfI", pp.raw_params_bytes
+    (alpha, sharp, _w, _h, _karis, tight, gamma,
+     _rd, _dt, _rn, _nt, _pad) = struct.unpack(
+        "<ffIIIIfIfIfI", pp.raw_params_bytes
     )
     assert alpha == pytest.approx(0.1)
     assert sharp == pytest.approx(0.25)

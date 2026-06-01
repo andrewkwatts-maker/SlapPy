@@ -2,29 +2,51 @@
 // Blends the current rendered frame with a reprojected history buffer using
 // YCoCg variance clipping to eliminate ghosting.
 //
+// Round 5 (Karis Siggraph 2014 + Andersson INSIDE 2015) adds
+// motion-vector-aware history rejection: when the reprojected sample lands
+// on geometry that wasn't present in the previous frame (disocclusion),
+// the colour-clamp envelope alone can't catch the bad sample because the
+// stale colour can sit inside the AABB while still being wrong.  We
+// detect this by comparing depth and normals between the current pixel
+// and the reprojected previous-frame location: a sharp depth break or
+// normal flip is the hallmark of disocclusion.  When detected we drop
+// the history entirely and fall back to the current frame.
+//
 // Bindings:
 //   group(0) binding(0) — TaaParams        (uniform)
 //   group(0) binding(1) — current_frame    texture_2d<f32>   (rgba8unorm)
 //   group(0) binding(2) — history_frame    texture_2d<f32>   (rgba16float)
 //   group(0) binding(3) — motion_vectors   texture_2d<f32>   (rg16float, NDC UV-space)
 //   group(0) binding(4) — taa_output       texture_storage_2d<rgba16float, write>
+//   group(0) binding(5) — current_depth    texture_2d<f32>   (r32float, NDC depth)  — round 5
+//   group(0) binding(6) — history_depth    texture_2d<f32>   (r32float, NDC depth)  — round 5
+//   group(0) binding(7) — current_normal   texture_2d<f32>   (rgba16float, world)   — round 5
+//   group(0) binding(8) — history_normal   texture_2d<f32>   (rgba16float, world)   — round 5
 
 struct TaaParams {
-    blend_factor:        f32,  // fraction of current frame blended in (0.1 = 10% current)
-    sharpening:          f32,  // post-sharpen strength (0.0 = none, 0.2 = mild)
-    width:               u32,
-    height:              u32,
-    karis_weight:        u32,  // round 3: 0 = legacy linear blend, 1 = luminance-inverse weighting (Karis 2014)
-    tight_variance_clip: u32,  // round 4: 0 = legacy min/max AABB, 1 = mean ± gamma*sigma AABB (Salvi 2016)
-    variance_clip_gamma: f32,  // round 4: AABB tightness in stddev units (typical 1.0 .. 1.5)
-    _pad:                u32,  // alignment padding (keeps struct at 32 bytes, std140-friendly)
+    blend_factor:                 f32,  // fraction of current frame blended in (0.1 = 10% current)
+    sharpening:                   f32,  // post-sharpen strength (0.0 = none, 0.2 = mild)
+    width:                        u32,
+    height:                       u32,
+    karis_weight:                 u32,  // round 3: 0 = legacy linear blend, 1 = luminance-inverse weighting (Karis 2014)
+    tight_variance_clip:          u32,  // round 4: 0 = legacy min/max AABB, 1 = mean ± gamma*sigma AABB (Salvi 2016)
+    variance_clip_gamma:          f32,  // round 4: AABB tightness in stddev units (typical 1.0 .. 1.5)
+    reject_on_depth_disocclusion: u32,  // round 5: 1 = reject history on |Δdepth| > threshold (Andersson 2015)
+    depth_disocclusion_threshold: f32,  // round 5: NDC depth break above which the history sample is dropped
+    reject_on_normal_disocclusion:u32,  // round 5: 1 = reject history when surface normal flipped
+    normal_disocclusion_threshold:f32,  // round 5: cos(angle) below which the history sample is dropped
+    _pad:                         u32,  // alignment padding (keeps struct at 48 bytes, std140-friendly)
 }
 
-@group(0) @binding(0) var<uniform> taa_params    : TaaParams;
+@group(0) @binding(0) var<uniform> taa_params     : TaaParams;
 @group(0) @binding(1) var          current_frame  : texture_2d<f32>;
 @group(0) @binding(2) var          history_frame  : texture_2d<f32>;
 @group(0) @binding(3) var          motion_vectors : texture_2d<f32>;
 @group(0) @binding(4) var          taa_output     : texture_storage_2d<rgba16float, write>;
+@group(0) @binding(5) var          current_depth  : texture_2d<f32>;
+@group(0) @binding(6) var          history_depth  : texture_2d<f32>;
+@group(0) @binding(7) var          current_normal : texture_2d<f32>;
+@group(0) @binding(8) var          history_normal : texture_2d<f32>;
 
 // ── YCoCg helpers ─────────────────────────────────────────────────────────────
 
@@ -71,6 +93,20 @@ fn sample_bilinear_history(uv: vec2f, w: i32, h: i32) -> vec4f {
     let c11 = textureLoad(history_frame, vec2i(i1.x, i1.y), 0);
 
     return mix(mix(c00, c10, f.x), mix(c01, c11, f.x), f.y);
+}
+
+// Nearest-neighbour fetch from history_depth (round 5 disocclusion test).
+fn load_history_depth_clamped(uv: vec2f, w: i32, h: i32) -> f32 {
+    let tc = uv * vec2f(f32(w), f32(h));
+    let i  = vec2i(clamp(i32(tc.x), 0, w - 1), clamp(i32(tc.y), 0, h - 1));
+    return textureLoad(history_depth, i, 0).r;
+}
+
+// Nearest-neighbour fetch from history_normal (round 5 disocclusion test).
+fn load_history_normal_clamped(uv: vec2f, w: i32, h: i32) -> vec3f {
+    let tc = uv * vec2f(f32(w), f32(h));
+    let i  = vec2i(clamp(i32(tc.x), 0, w - 1), clamp(i32(tc.y), 0, h - 1));
+    return textureLoad(history_normal, i, 0).rgb;
 }
 
 // Load a single texel from current_frame, clamping coords to valid range.
@@ -169,7 +205,37 @@ fn taa_resolve_main(@builtin(global_invocation_id) gid: vec3u) {
     // ── 5. Clip history to neighbourhood AABB in YCoCg space (anti-ghost) ─────
     let history_ycocg  = rgb_to_ycocg(history_color);
     let clipped_ycocg  = clip_to_aabb(history_ycocg, ycocg_min, ycocg_max);
-    let history_clipped = ycocg_to_rgb(clipped_ycocg);
+    var history_clipped = ycocg_to_rgb(clipped_ycocg);
+
+    // ── 5b. Round 5: motion-vector-aware disocclusion rejection ───────────────
+    //
+    // Andersson 2015 (INSIDE) + Karis 2014: the YCoCg AABB cannot catch
+    // a disocclusion when the stale colour happens to lie inside the
+    // current neighbourhood envelope.  We therefore consult the depth
+    // and normal G-buffers at the reprojected location and reject the
+    // history sample when geometry has changed.
+    //
+    // A rejected sample falls back to ``current_color`` — equivalent to
+    // re-seeding the history at this pixel — which is the canonical
+    // recovery for first-frame visibility.
+    var reject = false;
+    if taa_params.reject_on_depth_disocclusion != 0u {
+        let cur_depth  = textureLoad(current_depth, px, 0).r;
+        let prev_depth = load_history_depth_clamped(history_uv, w, h);
+        if abs(prev_depth - cur_depth) > taa_params.depth_disocclusion_threshold {
+            reject = true;
+        }
+    }
+    if taa_params.reject_on_normal_disocclusion != 0u {
+        let cur_n  = textureLoad(current_normal, px, 0).rgb;
+        let prev_n = load_history_normal_clamped(history_uv, w, h);
+        if dot(cur_n, prev_n) < taa_params.normal_disocclusion_threshold {
+            reject = true;
+        }
+    }
+    if reject {
+        history_clipped = current_color;
+    }
 
     // ── 6. Temporal blend: small blend_factor = slower convergence, less noise ─
     let blend = clamp(taa_params.blend_factor, 0.0, 1.0);

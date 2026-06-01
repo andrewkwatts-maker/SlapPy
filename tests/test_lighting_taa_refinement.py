@@ -76,16 +76,19 @@ def test_taa_uniform_layout_default_disables_karis():
     """Legacy callers (no flag) must see karis_weight = 0 in the uniform.
 
     Round 4 grew the uniform to 32 bytes (adds tight_variance_clip flag
-    and variance_clip_gamma).  Since v0.3.1 ``tight_variance_clip``
-    defaults on (Sprint 4D: +19.5% ghost reduction / +1 dB PSNR on
-    disocclusion bands); ``karis_weight`` still defaults off.
+    and variance_clip_gamma).  Round 5 grew it again to 48 bytes (adds
+    the motion-vector-aware disocclusion rejection toggles + thresholds).
+    Since v0.3.1 ``tight_variance_clip`` defaults on (Sprint 4D: +19.5%
+    ghost reduction / +1 dB PSNR on disocclusion bands); ``karis_weight``
+    still defaults off; round 5 rejection toggles default on.
     """
     pass_ = TAAPass(alpha=0.1)
     pp = pass_.make_pass(frame_tex="frame", history_tex="history", motion_tex="motion")
     assert pp.raw_params_bytes is not None
-    assert len(pp.raw_params_bytes) == 32, "TaaParams must be 32 bytes (round 4)"
-    alpha, sharp, w, h, karis, tight, gamma, _pad = struct.unpack(
-        "<ffIIIIfI", pp.raw_params_bytes
+    assert len(pp.raw_params_bytes) == 48, "TaaParams must be 48 bytes (round 5)"
+    (alpha, sharp, w, h, karis, tight, gamma,
+     reject_d, depth_thr, reject_n, normal_thr, _pad) = struct.unpack(
+        "<ffIIIIfIfIfI", pp.raw_params_bytes
     )
     assert alpha == pytest.approx(0.1)
     assert sharp == pytest.approx(0.0)
@@ -93,13 +96,18 @@ def test_taa_uniform_layout_default_disables_karis():
     assert karis == 0, "default must keep the legacy blend"
     assert tight == 1, "default must enable the round-4 variance-tightened AABB"
     assert gamma == pytest.approx(1.0)
+    assert reject_d == 1, "round 5 depth-disocclusion rejection defaults on"
+    assert depth_thr == pytest.approx(0.1)
+    assert reject_n == 1, "round 5 normal-disocclusion rejection defaults on"
+    assert normal_thr == pytest.approx(0.9)
 
 
 def test_taa_uniform_layout_enables_karis_flag():
     pass_ = TAAPass(alpha=0.2, karis_weight=True)
     pp = pass_.make_pass(frame_tex="frame", history_tex="history", motion_tex="motion")
-    _, _, _, _, karis, _tight, _gamma, _pad = struct.unpack(
-        "<ffIIIIfI", pp.raw_params_bytes
+    (_, _, _, _, karis, _tight, _gamma,
+     _rd, _dt, _rn, _nt, _pad) = struct.unpack(
+        "<ffIIIIfIfIfI", pp.raw_params_bytes
     )
     assert karis == 1
 
@@ -123,15 +131,18 @@ def test_taa_executor_splices_width_height_at_dispatch():
     pp = pass_.make_pass(frame_tex="frame", history_tex="history", motion_tex="motion")
 
     # Sanity: as packed, width/height start at zero.
-    _, _, w0, h0, _, _, _, _ = struct.unpack("<ffIIIIfI", pp.raw_params_bytes)
+    (_, _, w0, h0, _, _, _, _, _, _, _, _) = struct.unpack(
+        "<ffIIIIfIfIfI", pp.raw_params_bytes
+    )
     assert w0 == 0 and h0 == 0, "TAAPass.make_pass must leave w/h zero"
 
     spliced = _splice_runtime_params(
         pp.shader_path, pp.raw_params_bytes, 320, 180,
     )
-    assert len(spliced) == 32, "splice must preserve uniform size"
-    alpha, sharp, w, h, karis, tight, gamma, _pad = struct.unpack(
-        "<ffIIIIfI", spliced
+    assert len(spliced) == 48, "splice must preserve uniform size"
+    (alpha, sharp, w, h, karis, tight, gamma,
+     _rd, _dt, _rn, _nt, _pad) = struct.unpack(
+        "<ffIIIIfIfIfI", spliced
     )
     # Width/height non-zero and exactly the target resolution.
     assert w == 320, f"width must be patched to 320, got {w}"
@@ -165,8 +176,9 @@ def test_taa_uniform_layout_enables_tight_variance_clip_flag():
     both the flag and the gamma value into the uniform buffer."""
     pass_ = TAAPass(alpha=0.1, tight_variance_clip=True, variance_clip_gamma=1.25)
     pp = pass_.make_pass(frame_tex="frame", history_tex="history", motion_tex="motion")
-    _, _, _, _, _karis, tight, gamma, _pad = struct.unpack(
-        "<ffIIIIfI", pp.raw_params_bytes
+    (_, _, _, _, _karis, tight, gamma,
+     _rd, _dt, _rn, _nt, _pad) = struct.unpack(
+        "<ffIIIIfIfIfI", pp.raw_params_bytes
     )
     assert tight == 1
     assert gamma == pytest.approx(1.25)
