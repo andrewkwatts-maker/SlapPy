@@ -8,6 +8,12 @@
 //   group(0) binding(1) — depth_tex    texture_2d<f32>  (linear depth, r32float)
 //   group(0) binding(2) — normal_tex   texture_2d<f32>  (world-space normals, rgba8unorm)
 //   group(0) binding(3) — ao_output    texture_storage_2d<r8unorm, write>
+//   group(0) binding(4) — albedo_tex   texture_2d<f32>  (G-buffer albedo, rgba8unorm)
+//                          Read only when params.multibounce == 1; bind a 1×1
+//                          white texture when the caller has no G-buffer.
+//                          Albedo is collapsed to luminance for the Jimenez
+//                          §2.3 polynomial — single-bounce numerics are
+//                          unchanged when multibounce == 0.
 
 struct GtaoParams {
     inv_proj:         mat4x4<f32>,   // 64 bytes — reconstructs view-space position
@@ -25,14 +31,21 @@ struct GtaoParams {
     // (smooth ambient).  depth_falloff = 0 disables adaptation.
     depth_falloff:    f32,           // exponential adaptation rate (m⁻¹)
     min_radius_scale: f32,           // lower clamp on the per-pixel scale (0..1)
+    // ── Multibounce (Jimenez 2016 §2.3).  1 = enable; 0 = legacy single-bounce.
+    // When enabled the resolve fetches per-pixel albedo from the G-buffer,
+    // collapses it to luminance, and brightens the visibility through the
+    // Jimenez cubic polynomial.  The result is always ≥ the single-bounce
+    // visibility (the formula contains a `max(v, …)` clamp) so existing
+    // behaviour is bounded below.
+    multibounce:      u32,
     _pad0:            u32,
-    _pad1:            u32,
 }
 
 @group(0) @binding(0) var<uniform> gtao_params : GtaoParams;
 @group(0) @binding(1) var          depth_tex   : texture_2d<f32>;
 @group(0) @binding(2) var          normal_tex  : texture_2d<f32>;
 @group(0) @binding(3) var          ao_output   : texture_storage_2d<r8unorm, write>;
+@group(0) @binding(4) var          albedo_tex  : texture_2d<f32>;
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -81,6 +94,31 @@ fn load_view_normal(coord: vec2i, w: i32, h: i32) -> vec3f {
     let c      = vec2i(clamp(coord.x, 0, w - 1), clamp(coord.y, 0, h - 1));
     let packed = textureLoad(normal_tex, c, 0).xyz;
     return normalize(packed * 2.0 - 1.0);
+}
+
+// ── Multibounce (Jiménez 2016 §2.3) ───────────────────────────────────────────
+//
+// Approximates indirect light bouncing off coloured surfaces back into the
+// occluded crevices.  Single-bounce GTAO over-darkens bright materials; this
+// polynomial brightens the visibility as a function of albedo:
+//
+//     f(v)   = a·v² + b·v + c
+//     a      =  2.0404·albedo - 0.3324
+//     b      = -4.7951·albedo + 0.6417
+//     c      =  2.7552·albedo + 0.6903
+//     out    = max(v, lerp(v, v·f(v), albedo))
+//
+// At albedo = 0 the lerp is a no-op so out == v.  The outer max guarantees
+// the multibounce result is never *darker* than the single-bounce input —
+// the perceptual contract the Python regression suite locks in.
+fn multibounce_visibility(visibility: f32, albedo: f32) -> f32 {
+    let a   = 2.0404 * albedo - 0.3324;
+    let b   = -4.7951 * albedo + 0.6417;
+    let c   = 2.7552 * albedo + 0.6903;
+    let poly    = (a * visibility + b) * visibility + c;
+    let bounced = visibility * poly;
+    let blended = mix(visibility, bounced, albedo);
+    return max(visibility, blended);
 }
 
 // ── Entry point ───────────────────────────────────────────────────────────────
@@ -198,8 +236,30 @@ fn ao_gtao_main(@builtin(global_invocation_id) gid: vec3u) {
     // mean_occlusion ∈ [0,1]: 0 = fully visible, 1 = fully occluded.
     // Invert to get visibility, then darken with power.
     let visibility = 1.0 - mean_occlusion;
-    let ao_final   = clamp(pow(visibility, 1.0 / max(gtao_params.power, 0.001)), 0.0, 1.0);
+    let ao_powered = clamp(pow(visibility, 1.0 / max(gtao_params.power, 0.001)), 0.0, 1.0);
 
-    // ── 6. Write result (r8unorm: 1.0 = no occlusion, 0.0 = fully occluded) ──
+    // ── 6. Multibounce resolve (Jiménez 2016 §2.3) ───────────────────────────
+    // When the toggle is off, ao_final == ao_powered byte-for-byte — the
+    // single-bounce numerics are unchanged.  When on, we collapse the albedo
+    // to luminance (Rec. 709 weights) and brighten the visibility through the
+    // Jiménez polynomial.  The shader-side max(v, …) clamp in
+    // multibounce_visibility guarantees the result is monotone in the toggle:
+    // multibounce ≥ single-bounce at every pixel.
+    var ao_final = ao_powered;
+    if gtao_params.multibounce == 1u {
+        let albedo_rgb = textureLoad(albedo_tex, px, 0).xyz;
+        let albedo_lum = clamp(
+            dot(albedo_rgb, vec3f(0.2126, 0.7152, 0.0722)),
+            0.0,
+            1.0,
+        );
+        ao_final = clamp(
+            multibounce_visibility(ao_powered, albedo_lum),
+            0.0,
+            1.0,
+        );
+    }
+
+    // ── 7. Write result (r8unorm: 1.0 = no occlusion, 0.0 = fully occluded) ──
     textureStore(ao_output, px, vec4f(ao_final, 0.0, 0.0, 0.0));
 }

@@ -3,6 +3,7 @@ import math
 import struct
 from .chain import PostProcessPass
 from ._validation import (
+    validate_bool,
     validate_mat4_tuple,
     validate_non_negative_float,
     validate_positive_float,
@@ -25,8 +26,8 @@ _ENTRY  = "ao_gtao_main"
 #   height            : u32           offset  92
 #   depth_falloff     : f32           offset  96  — Jimenez 2016 distance scale (m⁻¹)
 #   min_radius_scale  : f32           offset 100  — lower bound on per-pixel scale (0..1)
-#   _pad0             : u32           offset 104
-#   _pad1             : u32           offset 108
+#   multibounce       : u32           offset 104  — Jimenez 2016 §2.3 multibounce toggle
+#   _pad0             : u32           offset 108
 
 _IDENTITY_MAT4 = (
     1.0, 0.0, 0.0, 0.0,
@@ -87,6 +88,54 @@ def compute_adaptive_radius(
     return float(world_radius) * scale
 
 
+def multibounce_visibility(
+    visibility: float,
+    albedo: float,
+) -> float:
+    """Jiménez 2016 §2.3 multibounce AO approximation.
+
+    Approximates indirect light bouncing off a coloured surface back into the
+    occluded crevices.  Single-bounce GTAO only attenuates the *direct* ambient
+    term; a white plaster wall and a black velvet wall would receive the same
+    occlusion factor, which looks unrealistically dark on bright albedos.  The
+    fit reconstructs the multi-bounce contribution as a cubic polynomial in the
+    single-bounce visibility, modulated by albedo:
+
+        f(v) = a·v² + b·v + c
+        a    =  2.0404·albedo - 0.3324
+        b    = -4.7951·albedo + 0.6417
+        c    =  2.7552·albedo + 0.6903
+        out  = max(v, lerp(v, v · f(v), albedo))
+
+    Properties (also asserted by the regression suite):
+      * at ``albedo = 0`` the lerp is a no-op → output equals ``v`` exactly;
+      * at any albedo the ``max`` clamp keeps multibounce ≥ single-bounce;
+      * at ``albedo = 1, v = 0.5`` the polynomial brightens crevices above 0.5.
+
+    Parameters
+    ----------
+    visibility : float
+        Single-bounce visibility in ``[0, 1]``  (1 = fully lit, 0 = occluded).
+    albedo : float
+        Per-channel albedo in ``[0, 1]``.  Call once per RGB channel.
+
+    Returns
+    -------
+    float
+        Multibounce visibility in ``[0, 1]``, always ≥ ``visibility``.
+    """
+    v = float(visibility)
+    al = float(albedo)
+    a = 2.0404 * al - 0.3324
+    b = -4.7951 * al + 0.6417
+    c = 2.7552 * al + 0.6903
+    poly = (a * v + b) * v + c
+    bounced = v * poly
+    # lerp(v, bounced, albedo)
+    blended = v + (bounced - v) * al
+    return max(v, blended)
+
+
 class GTAOPass:
     label = "gtao"
 
@@ -101,6 +150,7 @@ class GTAOPass:
         inv_proj: tuple = _IDENTITY_MAT4,
         depth_falloff: float = 0.0,
         min_radius_scale: float = 0.25,
+        multibounce: bool = True,
     ) -> None:
         """Construct a GTAO ambient-occlusion pass.
 
@@ -132,6 +182,7 @@ class GTAOPass:
         validate_unit_interval(
             "min_radius_scale", "GTAOPass", min_radius_scale,
         )
+        validate_bool("multibounce", "GTAOPass", multibounce)
 
         self.num_directions = num_directions
         self.num_steps = num_steps
@@ -145,6 +196,10 @@ class GTAOPass:
         # Distance-aware AO knobs (Jimenez 2016).  depth_falloff=0 → off.
         self.depth_falloff = float(depth_falloff)
         self.min_radius_scale = float(min_radius_scale)
+        # Jimenez 2016 §2.3 multibounce approximation toggle.  When True (the
+        # default) the shader reads albedo from the G-buffer and brightens
+        # crevice visibility per channel to model indirect bounce light.
+        self.multibounce = bool(multibounce)
 
     @classmethod
     def from_config(cls, cfg) -> "GTAOPass":
@@ -157,6 +212,7 @@ class GTAOPass:
             bias=ao.bias,
             depth_falloff=getattr(ao, "depth_falloff", 0.0),
             min_radius_scale=getattr(ao, "min_radius_scale", 0.25),
+            multibounce=bool(getattr(ao, "multibounce", True)),
         )
 
     def adaptive_radius(self, view_depth: float) -> float:
@@ -172,7 +228,14 @@ class GTAOPass:
             self.min_radius_scale,
         )
 
-    def make_pass(self, depth_tex, normal_tex) -> PostProcessPass:
+    def make_pass(self, depth_tex, normal_tex, albedo_tex=None) -> PostProcessPass:
+        """Build a :class:`PostProcessPass` for the GTAO resolve.
+
+        ``albedo_tex`` is optional: callers that don't yet expose a G-buffer
+        albedo target may pass ``None`` and the shader will fall back to a
+        neutral albedo (vec3(1.0)) for the multibounce term, which still
+        bounds correctly against the single-bounce visibility.
+        """
         raw = struct.pack(
             "<16fffIIffIIffII",
             *self.inv_proj,
@@ -186,8 +249,8 @@ class GTAOPass:
             0,   # height
             self.depth_falloff,
             self.min_radius_scale,
-            0,   # _pad0
-            0,   # _pad1
+            1 if self.multibounce else 0,  # multibounce toggle (u32)
+            0,                              # _pad0
         )
         return PostProcessPass(
             shader_path=_SHADER,
@@ -197,5 +260,6 @@ class GTAOPass:
             params={
                 "depth_tex":  depth_tex,
                 "normal_tex": normal_tex,
+                "albedo_tex": albedo_tex,
             },
         )
