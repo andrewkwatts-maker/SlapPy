@@ -167,17 +167,24 @@ _LAZY_MAP: dict[str, str] = {
     "RadianceCascadeConfig": ".lighting",
     "LightingContext":       ".lighting",
     # sim frequency / deform controller (per-frame physics budget)
-    "SimFrequencyBudget": ".deform_controller",
-    "SimState":           ".deform_controller",
-    "DeformController":   ".deform_controller",
+    # Phase D step 4 (2026-06-01): repointed from `.deform_controller` /
+    # `.deform_modes` / `.deform_zones` to `._compat` so the lazy-map
+    # never imports the doomed legacy modules. See
+    # docs/phase_d_strip_plan_2026_05_31.md §(b) for the migration
+    # matrix. `ZoneMap` is a thin alias for `zones.ZoneManager`; the
+    # other five symbols are retired-feature stubs preserved for the
+    # multi-game compat tripwire.
+    "SimFrequencyBudget": "._compat",
+    "SimState":           "._compat",
+    "DeformController":   "._compat",
     # Bullet Strata surface (per project_bullet_strata.md)
     "TriggerSystem":      ".trigger",
     "TriggerVolume":      ".trigger",
     "StrataWorld":        ".strata",
     "StrataLayer":        ".strata",
-    "ZoneMap":            ".deform_zones",
-    "MaterialPreset":     ".deform_modes",
-    "CrackMode":          ".deform_modes",
+    "ZoneMap":            "._compat",
+    "MaterialPreset":     "._compat",
+    "CrackMode":          "._compat",
     "GpuParticleSystem":  ".particles",
     "ParticleEmitter":    ".particles",
     "PixelMaterialMap":   ".pixel_material",

@@ -188,6 +188,74 @@ expected pass-count delta = 0 (vacuously satisfied).
 |---|---|---|---|
 | 9 | Remove `"MaterialPreset"` and `"CrackMode"` entries from `_LAZY_MAP` in `python/slappyengine/__init__.py` (lines 179-180) | top-level package | See §(b) below for the per-symbol replacement matrix. Must land **before** step 5 — `slappyengine/__init__.py` imports `deform_modes` lazily, but every `MaterialPreset` lookup re-imports it, and step 5 deletes the file. |
 
+#### Step 4 execution result — 2026-06-01
+
+**DONE.** Decoupling landed via new `python/slappyengine/_compat.py`
+holding the five retired-feature symbols (`MaterialPreset`,
+`CrackMode`, `SimFrequencyBudget`, `SimState`, `DeformController`).
+`ZoneMap` repoints to `slappyengine.zones.ZoneManager` (one-line module-
+level `__getattr__` in `_compat.py`). The six `_LAZY_MAP` entries
+(lines 170-172, 178-180) now route through `._compat`; lookup of any
+of them no longer touches `slappyengine.deform_modes`,
+`slappyengine.deform_controller`, or `slappyengine.deform_zones`.
+
+Regression test `tests/test_init_lazy_map.py` (9 cases) pins the
+decoupling:
+
+* `test_import_slappyengine_does_not_load_deform_modules` — `import
+  slappyengine` + `dir()` leaves the three doomed modules absent from
+  `sys.modules`.
+* `test_doomed_symbols_still_resolve[*]` — 6 parametrised cases; each
+  of the six symbols stays resolvable on the public surface.
+* `test_resolved_symbols_route_through_compat_not_legacy` — after
+  every symbol is accessed, the three doomed modules are STILL
+  absent from `sys.modules`.
+* `test_zone_map_aliases_zone_manager` — `slappyengine.ZoneMap is
+  slappyengine.zones.ZoneManager`.
+
+**Caller audit (per task §2).** Direct `from slappyengine.deform_modes
+import …` sites in `ui/editor/deform_panel.py` (16 lines) are
+unaffected — they import from the doomed module by path, not via the
+top-level lazy-map, so they keep working until `deform_panel.py` is
+decommissioned in step 5. No production caller imports the six
+symbols from `slappyengine` at the package root by name — the only
+hard surface consumers are `tests/test_game_compat_tripwire.py` and
+`tests/test_game_smoke_instantiation.py`, both of which probe via
+`hasattr(slappyengine, name)` and now resolve through `_compat`.
+
+**Pytest delta (gate condition).** Pre-edit: 44 failed / 1618 passed
+(of which 5 are `test_init_lazy_map.py` cases for the symbols that
+do not yet route through `_compat`). Post-edit: 39 failed / 1623
+passed (the 5 lazy-map tests flip green). Delta: **+5 passed,
+-5 failed, ≥ 0** as required.
+
+The remaining 39 failures are all pre-existing and unrelated to this
+step (hardening_layer test surface from a parallel agent's WIP,
+softbody vehicle visual baseline, editor material-editor kinds,
+hello_ragdoll demo numerics, doc inventory checks). None of them
+touch the lazy-map or the six decoupled symbols.
+
+**Files changed in this step:**
+
+* `python/slappyengine/__init__.py` — six `_LAZY_MAP` entries
+  repointed from `.deform_controller` / `.deform_modes` /
+  `.deform_zones` to `._compat`.
+* `python/slappyengine/_compat.py` — new file holding the five
+  retired-feature stubs + the `ZoneMap` → `ZoneManager` alias.
+* `tests/test_init_lazy_map.py` — new regression test pinning the
+  decoupling (9 cases).
+
+The lazy-map gate from §(d) is now satisfied:
+
+```
+python -c "import slappyengine; assert 'MaterialPreset' in slappyengine._LAZY_MAP and slappyengine._LAZY_MAP['MaterialPreset'] == '._compat'"
+```
+
+Step 5 (`deform_modes.py` + `deform_controller.py` deletion) is now
+unblocked from the lazy-map angle; the remaining blocker is the
+`ui/editor/deform_panel.py` decommissioning called out in §(d)
+"Editor surface gate".
+
 ### Step 5 — `deform_modes.py` and its dependents
 
 | # | Module | LOC | Consumers (non-test) | Classification |
