@@ -66,15 +66,25 @@ if str(_PY_SRC) not in sys.path:
 #: they meet the "stable enough to pin" bar called out in the refresh
 #: sprint. The pair use the looser :data:`TOLERANCE_LOOSE` band because
 #: scenario B's particle count drifts as the splatter presets get tuned.
+#:
+#: v3 refresh (2026-06-01 evening) re-baselined ``pbf_bridge_step_b``
+#: from 40.80 ms → 34.41 ms after Sprint 5A's YAML-cache fix (commit
+#: 6e310c3) held across 3 fresh runs. The new
+#: ``eventbus_publish_inline_nosub_ns`` tripwire guards the
+#: hardening-round-9 inline fast-path on ``EventBus.publish``
+#: (see ``event_bus.py`` lines 130-133); 3-run stdev was 4.8% on the
+#: capture host so it gets the tight :data:`TOLERANCE` band.
 BASELINE_NS: dict[str, float] = {
     "thermal_step_32x32":          24_400.0,        # ~24 us / step
     "topology_cc_200n":            366_000.0,       # ~0.37 ms / call
     "numerics_vcycle_32x32":       345_000.0,       # ~0.35 ms / call
     "dynamics_rope20_step":        712_000.0,       # ~0.71 ms / frame (steady)
     "eventbus_publish_nosub":      140.0,           # ~140 ns / emit
-    # Added 2026-06-01:
-    "pbf_bridge_step_b":           40_800_000.0,    # ~40.80 ms / (snow+mud).step
+    # Added 2026-06-01 (v2 refresh):
+    "pbf_bridge_step_b":           34_410_000.0,    # ~34.41 ms / (snow+mud).step — v3 re-baseline after Sprint 5A YAML cache
     "softbody_world_step_20n":     709_000.0,       # ~0.71 ms / step (matches dynamics_rope20_step within 0.4%)
+    # Added 2026-06-01 (v3 refresh):
+    "eventbus_publish_inline_nosub_ns":  152.0,     # ~152 ns / emit — guards round-9 inline fast-path on EventBus.publish
 }
 
 #: +/-50% band -- see module docstring rationale.
@@ -243,6 +253,34 @@ def test_pbf_bridge_step_scenario_b_within_band() -> None:
     measured = _median_ns(_pair, n=5, warmup=0)
     _assert_within_band("pbf_bridge_step_b", measured,
                         tolerance=TOLERANCE_LOOSE)
+
+
+def test_eventbus_publish_inline_fast_path_within_band() -> None:
+    """``EventBus.publish`` with no subscribers — guards the inline fast-path.
+
+    Hardening round 9 inlined the ``type(event_type) is str`` and empty
+    check on ``EventBus.publish`` so the validator call frame doesn't
+    dominate the no-subscriber dispatch. The v3 perf refresh
+    (``benchmarks/baseline_report.md`` "2026-06-01 v3 refresh" section)
+    pinned this at 152 ns on the capture host with 4.8% 3-run stdev.
+
+    The existing :func:`test_eventbus_publish_no_subscriber_within_band`
+    holds a 140 ns baseline against the v2 capture; this companion test
+    pins the v3 number so a future refactor that re-introduces a
+    function-call frame on the fast path will fail one of the two
+    tripwires even if the other's wider band would have swallowed the
+    drift.
+    """
+    from slappyengine.event_bus import EventBus
+
+    bus = EventBus()
+
+    def _burst() -> None:
+        for _ in range(100):
+            bus.publish("tick", value=1)
+
+    measured_ns = _median_ns(_burst, n=30) / 100.0
+    _assert_within_band("eventbus_publish_inline_nosub_ns", measured_ns)
 
 
 def test_softbody_world_step_20n_within_band() -> None:

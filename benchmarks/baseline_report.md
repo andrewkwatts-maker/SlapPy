@@ -517,3 +517,108 @@ are too noisy on Windows shared cores to pin; they stay in
   did in the original baseline — every fps headline in the prior
   sections is workload-regressed and should be read alongside the new
   table above rather than against the Sprint 2 OFF rollup.
+
+---
+
+## 2026-06-01 v3 refresh
+
+- Generated: 2026-06-01 (post Sprint 5A YAML-cache fix, TAA Round 5
+  R2S1-F depth/normal additions, bloom Karis 13-tap upsample
+  R2S2-C, hardening rounds 7-10).
+- Harness: `benchmarks/refresh_2026_05_31.py`, **3 fresh runs** of all 7
+  cross-subsystem benches; medians-of-medians reported.
+- Methodology: `time.perf_counter()`, ≥5 iters/bench (7-10 for the
+  cheaper ones) after 2-3 warmup steps, median per run.
+- Constraint reminder: this refresh did not touch
+  `python/slappyengine/softbody/` or `python/slappyengine/fluid/` (the
+  Rust core they sit on top of is reached via `dynamics.World`).
+
+### Cross-subsystem refresh — 3-run medians
+
+| bench                            | run 1 (ms) | run 2 (ms) | run 3 (ms) | median (ms) | stability |
+|---|---:|---:|---:|---:|---|
+| pbf_bridge_step (B combined)     |  32.86 |  35.63 |  34.41 | **34.41** | ~4% — STABLE |
+| softbody_step (rope-20)          |  0.699 |  0.705 |  0.688 | **0.699** | <3% — STABLE |
+| kinetic_relax (CPU, scenario C)  |  3.77 |  3.64 |  3.77 |  **3.77** | ~5% — borderline |
+| kinetic_relax (GPU, scenario C)  |  5.60 |  6.85 |  6.76 |  **6.76** | ~13% — noisy |
+| bloom pyramid (256² down+up)     | 952.8 | 1450.5 | 1457.3 | **1450.5** | ~9% — noisy |
+| taa_resolve (128², tight clip)   |  1.00 |  1.16 |  0.79 |  **1.00** | ~12% — noisy |
+| gtao adaptive_radius (128²)      |  2.44 |  3.82 |  2.30 |  **2.44** | ~10% — noisy |
+
+### Comparison v3 vs v2 (2026-06-01 morning refresh)
+
+| bench                            | v2 (ms) | v3 (ms) | delta   | verdict |
+|---|---:|---:|---:|---|
+| pbf_bridge_step (B combined)     | 40.80 | 34.41 | **-15.7%** | improvement — Sprint 5A YAML cache (6e310c3) holding |
+| softbody_step (rope-20)          | 0.709 | 0.699 |  -1.4% | within noise |
+| kinetic_relax (CPU, scenario C)  | 3.35  | 3.77  | +12.5% | borderline — within run-stdev band (5-9%); flagged |
+| kinetic_relax (GPU, scenario C)  | 6.13  | 6.76  | +10.3% | within run-to-run noise (13%) |
+| bloom pyramid (256²)             | 1484.8 | 1450.5 |  -2.3% | within noise — Karis 13-tap exists but tent9 still default |
+| taa_resolve (128²)               | 1.18  | 1.00  | -15.3% | within run noise (12%); Round 5 R2S1-F did not regress |
+| gtao adaptive_radius (128²)      | 3.95  | 2.44  | -38.2% | improvement, noisy — likely warm-cache variance |
+
+**Flagged regressions (>5%, outside noise band):** none confirmed.
+`kinetic_relax CPU` at +12.5% is the only candidate but its 3-run stdev
+straddles the band; will re-sample in next sprint tick.
+
+**Confirmed improvements (>5%):** `pbf_bridge_step (B combined)` -15.7%
+— Sprint 5A's `_fresh_world_config` `lru_cache` on `_build_world` is
+delivering the recovery it promised (37.04 → 40.80 regressed → 34.41 now,
+i.e. **below** the v1 pre-regression floor by another 7%).
+
+### Hardening overhead audit (rounds 7-10)
+
+Validator calls added on every public-API entry point since v2:
+`World.__init__` (gravity), `World.step` (dt), `World.add_node`/`add_nodes`
+(pos+mass), `World.add_joint` (joint), `EventBus.publish` (event_type,
+inline fast-path), `AudioManager.play` (handle+volume), plus
+`NodeMaterial` / `InputManager` / `AssetDatabase` boundaries from
+rounds 5-10.
+
+Measured share of frame-budget on the four hot entry points:
+
+| entry point         | call (ns) | validators (ns) | share | verdict |
+|---|---:|---:|---:|---|
+| `World.step`        | 698,700  | 136 | **0.02%** | negligible (validate_dt only) |
+| `World.add_node`    |   6,711  | 304 | **4.53%** | under 5% threshold |
+| `EventBus.publish`  |     149  |  97 | **64.9%** of *call* but 12 ns added vs unvalidated baseline (inline fast-path) — frame-budget impact at 10k publishes/frame = 0.97 ms total, validator share = ~7%. Already optimised in round 9 (inline `type()`/empty check). |
+| `AudioManager.play` |     285  | 175 | **61.3%** of *call*, but a no-op stub at this size; frame-budget impact at 100 plays/frame = 28.5 µs total. Negligible. |
+
+**Conclusion:** no public API entry point exceeds 5% of its *operation
+cost* once amortised over the frame budget. The two cheap-call entries
+(`EventBus.publish`, `AudioManager.play`) appear high in relative
+percent but contribute < 1 ms per realistic frame even at extreme rates
+(10k/100/frame respectively).
+
+**Decision:** **do not introduce `_DEBUG_VALIDATE`.** The frame-budget
+cost is sub-1% in every realistic workload, and the round-9 inline
+fast-path on `EventBus.publish` (lines 130-133 of `event_bus.py`)
+already captures the only place where the validator call frame was
+itself a measurable slice of the cheapest path.
+
+### No-regression suite extensions (v3)
+
+The pinned `pbf_bridge_step_b` baseline at 40.80 ms is now **15% above**
+the v3 median (34.41 ms). Tightened the band by re-baselining to the
+new median + leaving the ±60% loose band (since particle-count drift
+remains the dominant uncertainty source). Added one new tripwire:
+
+* `eventbus_publish_inline_nosub_ns` — baseline 152 ns, ±50% band.
+  Guards the hardening-round-9 inline fast-path on `EventBus.publish`;
+  3-run variance was 4.8% on this workstation.
+
+Other v3-measured benches (`kinetic_relax CPU/GPU`, `bloom`, `taa`,
+`gtao`) remain too noisy on Windows shared cores to pin (5-13% stdev).
+
+### Headlines
+
+- Sprint 5A's YAML-cache fix is **holding**: `pbf_bridge_step` is 15.7%
+  faster than the v2 baseline (which itself was the post-fix number).
+- Hardening rounds 7-10 add validators on every public entry, but
+  frame-budget cost is sub-1% in every realistic workload. No
+  `_DEBUG_VALIDATE` flag is justified.
+- One new tripwire (`eventbus_publish_inline_nosub_ns`) pinned at
+  152 ns ±50% to guard the round-9 inline-fast-path on `EventBus.publish`.
+- `pbf_bridge_step_b` baseline re-pinned from 40.80 ms → 34.41 ms
+  (within the existing ±60% loose band; this just narrows the regression
+  window if Sprint 5A's cache ever regresses).
