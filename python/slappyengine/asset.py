@@ -1,8 +1,19 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 from typing import TYPE_CHECKING
 from slappyengine.render_target import RenderTarget
 from slappyengine.layer import Layer
 from slappyengine.compute.asset_compute import AssetComputeAPI, PixelAPI
+from slappyengine._asset_validation import (
+    validate_blend,
+    validate_existing_file_path,
+    validate_finite_2tuple,
+    validate_layer_arg,
+    validate_name,
+    validate_node_material,
+    validate_optional_name,
+    validate_optional_output_path,
+    validate_positive_size_2tuple,
+)
 
 if TYPE_CHECKING:
     from slappyengine.material import MaterialMap
@@ -11,6 +22,13 @@ if TYPE_CHECKING:
 
 class Asset(RenderTarget):
     def __init__(self, name: str = "", position=(0.0, 0.0), size=(64, 64)):
+        name = validate_name("name", "Asset.__init__", name)
+        position = validate_finite_2tuple(
+            "position", "Asset.__init__", position,
+        )
+        size = validate_positive_size_2tuple(
+            "size", "Asset.__init__", size,
+        )
         super().__init__(name=name, position=position, size=size)
         self.material_map: "MaterialMap | None" = None
         self.pixels: "PixelAPI | None" = None   # set after GPU init
@@ -19,19 +37,24 @@ class Asset(RenderTarget):
         self._residency_mgr = None
 
     def add_effect(self, mat: "NodeMaterial", blend: str = "normal") -> None:
+        mat = validate_node_material("mat", "Asset.add_effect", mat)
+        blend = validate_blend("blend", "Asset.add_effect", blend)
         mat.blend = blend
         if mat.wgsl is None:
             mat.compile()
         self.effects.append(mat)
 
     def add_layer(self, layer: Layer) -> Layer:
+        layer = validate_layer_arg("layer", "Asset.add_layer", layer)
         return super().add_layer(layer)
 
     @classmethod
     def from_image(cls, path: str, name: str | None = None) -> "Asset":
         from pathlib import Path
-        inst = cls(name=name or Path(path).stem)
-        layer = Layer.from_image(path)
+        p = validate_existing_file_path("path", "Asset.from_image", path)
+        name = validate_optional_name("name", "Asset.from_image", name)
+        inst = cls(name=name or Path(p).stem)
+        layer = Layer.from_image(p)
         inst.size = layer.size or (64, 64)
         inst.add_layer(layer)
         return inst
@@ -68,5 +91,8 @@ class Asset(RenderTarget):
         from pathlib import Path
         from slappyengine.residency.slap_format import write_asset_to_slap
 
-        path = Path(output_path) if output_path else Path(f"{self.id}_baked.slap")
+        validated = validate_optional_output_path(
+            "output_path", "Asset.bake_data_layer", output_path,
+        )
+        path = validated if validated is not None else Path(f"{self.id}_baked.slap")
         write_asset_to_slap(path, self)
