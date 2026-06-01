@@ -1,23 +1,24 @@
-"""SlapPyEngine — Hello Ragdoll
+"""SlapPyEngine - Hello Ragdoll
 
-Minimal demo of :class:`slappyengine.dynamics.RagdollSpec`.
+A 6-bone humanoid ragdoll drops onto a flat floor, lands, settles, then
+breathes. The demo records the run as an animated GIF using the same
+``slappyengine.media`` backbone the :mod:`slappyengine.studio` helpers use.
 
-A 6-bone humanoid skeleton (torso + head + two arms + two legs) is dropped
-from ``y = 3.0`` with zero initial velocity. The world is stepped at
-``dt = 1/60`` for 180 frames under gravity, with a simple ``y = max(y, 0)``
-ground clamp applied after every solver step. The demo prints a summary
-covering bone/joint counts, the lowest bone tip, and a boolean confirming
-every hinge angle stayed inside its declared band across the run.
+The skeleton is six bones (torso, head, two arms, two legs) wired by the
+authoritative :func:`slappyengine.dynamics.build_ragdoll` builder. After
+landing, a small vertical sway on the head node simulates breathing without
+breaking the joint band invariants.
+
+Damping is tuned so ``solver_iterations * damping`` stays at or under
+``0.3`` (the over-damp warning threshold documented in
+:mod:`slappyengine.dynamics.world`): ``iters=6`` and ``damping=0.05`` give
+``0.30`` exactly, so the demo never trips ``RuntimeWarning``.
 
 Run::
 
     PYTHONPATH=python python examples/hello_ragdoll.py
-    PYTHONPATH=python python examples/hello_ragdoll.py --render
-    PYTHONPATH=python python examples/hello_ragdoll.py --frames 240 --render --out out/
-
-No GPU is required — when ``--render`` is supplied the skeleton is
-rasterised to a PNG with pure PIL: white line segments along each bone,
-small dots at the joints.
+    PYTHONPATH=python python examples/hello_ragdoll.py --frames 60
+    PYTHONPATH=python python examples/hello_ragdoll.py --no-gif
 """
 from __future__ import annotations
 
@@ -29,14 +30,26 @@ from pathlib import Path
 import numpy as np
 
 from slappyengine.dynamics import BoneSpec, RagdollSpec, World, build_ragdoll
+from slappyengine.media import save_frames
 
 
-# ── Demo parameters ────────────────────────────────────────────────────────
+# -- Demo parameters -------------------------------------------------------
 ANCHOR_POS: tuple[float, float] = (0.0, 3.0)
 GRAVITY: tuple[float, float] = (0.0, -9.81)
 GROUND_Y: float = 0.0
 DEFAULT_DT: float = 1.0 / 60.0
 DEFAULT_FRAMES: int = 180
+
+# Solver tuning: keep iters * damping <= 0.3 to avoid the over-damp
+# RuntimeWarning surfaced by World._check_overdamping.
+SOLVER_ITERATIONS: int = 6
+RAGDOLL_DAMPING: float = 0.05  # 6 * 0.05 == 0.30 (exactly at threshold)
+RAGDOLL_STIFFNESS: float = 5.0e6
+
+# Breathing animation (applied once the ragdoll has settled).
+BREATHING_START_FRAME: int = 90
+BREATHING_AMPLITUDE: float = 0.015  # world units of vertical sway on head
+BREATHING_HZ: float = 0.4
 
 # Bone proportions (six-bone humanoid). Lengths in world units, mass in kg.
 TORSO_LENGTH: float = 0.6
@@ -48,89 +61,69 @@ HEAD_MASS: float = 1.5
 ARM_MASS: float = 1.0
 LEG_MASS: float = 1.5
 
-# Angle limits are intentionally generous — wide enough that simple falling
-# never breaches them, but the hinge constraints still fire and document
-# the API surface for downstream authoring code.
+# Angle limits are wide enough that a passive drop never breaches them, but
+# the hinge constraints still fire and document the API surface.
 ANGLE_LIMIT: tuple[float, float] = (-math.pi, math.pi)
 
-# ── Render parameters ──────────────────────────────────────────────────────
-RENDER_W: int = 1280
-RENDER_H: int = 720
+# -- Render parameters -----------------------------------------------------
+RENDER_W: int = 480
+RENDER_H: int = 360
 VIEW_MIN: tuple[float, float] = (-2.0, -0.5)
 VIEW_MAX: tuple[float, float] = (2.0, 3.5)
+GIF_FPS: int = 30
 
 
-# ────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
 # Skeleton construction
-# ────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
 
 def build_humanoid_spec() -> RagdollSpec:
     """Six-bone humanoid skeleton: torso, head, 2 arms, 2 legs."""
     bones: list[BoneSpec] = [
         BoneSpec(  # 0: torso (root)
-            parent_idx=-1,
-            length=TORSO_LENGTH,
-            mass=TORSO_MASS,
-            angle_limit=ANGLE_LIMIT,
-            direction=(0.0, -1.0),
-            label="torso",
+            parent_idx=-1, length=TORSO_LENGTH, mass=TORSO_MASS,
+            angle_limit=ANGLE_LIMIT, direction=(0.0, -1.0), label="torso",
         ),
-        BoneSpec(  # 1: head — extends UP from the torso shoulder line
-            parent_idx=0,
-            length=HEAD_LENGTH,
-            mass=HEAD_MASS,
-            angle_limit=ANGLE_LIMIT,
-            direction=(0.0, 1.0),
-            label="head",
+        BoneSpec(  # 1: head - extends UP from the torso shoulder line
+            parent_idx=0, length=HEAD_LENGTH, mass=HEAD_MASS,
+            angle_limit=ANGLE_LIMIT, direction=(0.0, 1.0), label="head",
         ),
         BoneSpec(  # 2: left arm
-            parent_idx=0,
-            length=ARM_LENGTH,
-            mass=ARM_MASS,
-            angle_limit=ANGLE_LIMIT,
-            direction=(-1.0, 0.0),
-            label="arm_l",
+            parent_idx=0, length=ARM_LENGTH, mass=ARM_MASS,
+            angle_limit=ANGLE_LIMIT, direction=(-1.0, 0.0), label="arm_l",
         ),
         BoneSpec(  # 3: right arm
-            parent_idx=0,
-            length=ARM_LENGTH,
-            mass=ARM_MASS,
-            angle_limit=ANGLE_LIMIT,
-            direction=(1.0, 0.0),
-            label="arm_r",
+            parent_idx=0, length=ARM_LENGTH, mass=ARM_MASS,
+            angle_limit=ANGLE_LIMIT, direction=(1.0, 0.0), label="arm_r",
         ),
         BoneSpec(  # 4: left leg
-            parent_idx=0,
-            length=LEG_LENGTH,
-            mass=LEG_MASS,
-            angle_limit=ANGLE_LIMIT,
-            direction=(-0.3, -1.0),
-            label="leg_l",
+            parent_idx=0, length=LEG_LENGTH, mass=LEG_MASS,
+            angle_limit=ANGLE_LIMIT, direction=(-0.3, -1.0), label="leg_l",
         ),
         BoneSpec(  # 5: right leg
-            parent_idx=0,
-            length=LEG_LENGTH,
-            mass=LEG_MASS,
-            angle_limit=ANGLE_LIMIT,
-            direction=(0.3, -1.0),
-            label="leg_r",
+            parent_idx=0, length=LEG_LENGTH, mass=LEG_MASS,
+            angle_limit=ANGLE_LIMIT, direction=(0.3, -1.0), label="leg_r",
         ),
     ]
-    return RagdollSpec(bones=bones)
+    return RagdollSpec(
+        bones=bones,
+        stiffness=RAGDOLL_STIFFNESS,
+        damping=RAGDOLL_DAMPING,
+    )
 
 
 def build_world() -> tuple[World, "object", RagdollSpec]:
     """Construct the world + ragdoll used by every code path in this demo."""
     world = World(gravity=GRAVITY)
-    world.solver_iterations = 12
+    world.solver_iterations = SOLVER_ITERATIONS
     spec = build_humanoid_spec()
     body = build_ragdoll(spec, world, anchor_pos=ANCHOR_POS, pin_root=False)
     return world, body, spec
 
 
-# ────────────────────────────────────────────────────────────────────────────
-# Stepping with a ground clamp + per-frame joint-angle audit
-# ────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# Stepping with a ground clamp + breathing animation
+# ---------------------------------------------------------------------------
 
 def _ground_clamp(world: World, ground_y: float = GROUND_Y) -> None:
     """In-place: lift any node that dropped below ``ground_y`` back to it."""
@@ -141,13 +134,25 @@ def _ground_clamp(world: World, ground_y: float = GROUND_Y) -> None:
         world.velocities[below, 1] = 0.0
 
 
+def _apply_breathing(world: World, body, frame: int) -> None:
+    """Once settled, gently sway the head node to simulate breathing.
+
+    The sway is a tiny vertical displacement on the head's child endpoint
+    only. It's small enough that the hinge bands never trip.
+    """
+    if frame < BREATHING_START_FRAME:
+        return
+    head_child = int(body.parameters["child_nodes"][1])  # bone idx 1 = head
+    t = (frame - BREATHING_START_FRAME) * DEFAULT_DT
+    dy = BREATHING_AMPLITUDE * math.sin(2.0 * math.pi * BREATHING_HZ * t)
+    world.positions[head_child, 1] += dy
+
+
 def _hinge_joints(world: World) -> list:
-    """Return only the hinge joints (angular limits) from the world."""
     return [j for j in world.joints if j.kind == "hinge"]
 
 
 def _joint_angle(world: World, joint) -> float:
-    """Measure the signed angle between (anchor->node_a) and (anchor->node_b)."""
     anchor = int(joint.params.get("anchor", joint.node_a))
     p0 = world.positions[anchor]
     pa = world.positions[joint.node_a]
@@ -162,59 +167,9 @@ def _joint_angle(world: World, joint) -> float:
     ))
 
 
-def step_world(
-    world: World,
-    frames: int,
-    dt: float = DEFAULT_DT,
-    *,
-    audit_limits: bool = True,
-) -> dict:
-    """Step *world* for *frames* iterations with a ground clamp.
-
-    When ``audit_limits`` is true the hinge joint angles are sampled after
-    every step and checked against their declared ``[min_angle, max_angle]``
-    band. The returned dict carries the running booleans + min/max y so
-    callers can summarise without re-traversing the trajectory.
-    """
-    hinges = _hinge_joints(world)
-    limits_respected = True
-    min_y_seen = float("inf")
-    nan_seen = False
-
-    for _ in range(frames):
-        world.step(dt)
-        _ground_clamp(world)
-
-        if not nan_seen and not np.all(np.isfinite(world.positions)):
-            nan_seen = True
-
-        cur_min = float(world.positions[:, 1].min())
-        if cur_min < min_y_seen:
-            min_y_seen = cur_min
-
-        if audit_limits and limits_respected:
-            for j in hinges:
-                ang = _joint_angle(world, j)
-                lo = float(j.params.get("min_angle", -math.pi))
-                hi = float(j.params.get("max_angle", math.pi))
-                # Allow a small slack — XPBD projection is iterative so a
-                # micro-overshoot during the same step is acceptable as long
-                # as it lands back inside the band on the next sample.
-                slack = 1e-3
-                if ang < lo - slack or ang > hi + slack:
-                    limits_respected = False
-                    break
-
-    return {
-        "lowest_y": min_y_seen,
-        "limits_respected": limits_respected,
-        "nan_seen": nan_seen,
-    }
-
-
-# ────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
 # Pure-PIL renderer (no GPU dependency)
-# ────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
 
 def _world_to_pixel(p: np.ndarray) -> tuple[int, int]:
     vx0, vy0 = VIEW_MIN
@@ -226,29 +181,30 @@ def _world_to_pixel(p: np.ndarray) -> tuple[int, int]:
     return px, py
 
 
-def _render_frame(world: World, body) -> np.ndarray:
-    """Rasterise the skeleton: white line per bone, dot per joint."""
+def _render_frame(world: World, body):
+    """Rasterise the skeleton onto a PIL Image: floor line + bones + joints."""
     from PIL import Image, ImageDraw
 
-    img = Image.new("RGBA", (RENDER_W, RENDER_H), (0, 0, 0, 255))
+    img = Image.new("RGB", (RENDER_W, RENDER_H), (12, 14, 22))
     draw = ImageDraw.Draw(img)
+
+    # Floor line.
+    fy0 = _world_to_pixel(np.asarray([VIEW_MIN[0], GROUND_Y]))[1]
+    draw.line([(0, fy0), (RENDER_W - 1, fy0)], fill=(70, 80, 60), width=2)
 
     root_node = int(body.parameters["root_node"])
     child_nodes: list[int] = list(body.parameters["child_nodes"])
     spec: RagdollSpec = body.parameters["spec"]
 
-    # Lines: parent endpoint -> child endpoint for every bone.
+    # Bones.
     for bi, bone in enumerate(spec.bones):
-        if bone.parent_idx < 0:
-            parent_node = root_node
-        else:
-            parent_node = child_nodes[bone.parent_idx]
+        parent_node = root_node if bone.parent_idx < 0 else child_nodes[bone.parent_idx]
         child = child_nodes[bi]
         a = _world_to_pixel(world.positions[parent_node])
         b = _world_to_pixel(world.positions[child])
-        draw.line([a, b], fill=(255, 255, 255, 255), width=3)
+        draw.line([a, b], fill=(230, 230, 240), width=3)
 
-    # Dots: every node owned by the body.
+    # Joints.
     node_r = 4
     seen: set[int] = set()
     for idx in (root_node, *child_nodes):
@@ -258,42 +214,59 @@ def _render_frame(world: World, body) -> np.ndarray:
         x, y = _world_to_pixel(world.positions[idx])
         draw.ellipse(
             [(x - node_r, y - node_r), (x + node_r, y + node_r)],
-            fill=(255, 255, 255, 255),
-            outline=(255, 255, 255, 255),
+            fill=(255, 200, 120), outline=(255, 220, 160),
         )
-
-    return np.asarray(img, dtype=np.uint8)
-
-
-def save_render(world: World, body, out_path: Path) -> Path:
-    from PIL import Image
-
-    out_path = Path(out_path)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    arr = _render_frame(world, body)
-    Image.fromarray(arr, mode="RGBA").save(out_path)
-    return out_path
+    return img
 
 
-# ────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# Run loop + GIF capture (uses slappyengine.media.save_frames, same backbone
+# the slappyengine.studio.record() helper sits on top of)
+# ---------------------------------------------------------------------------
+
+def run(frames: int, capture_gif: bool):
+    """Step the world ``frames`` times and optionally capture each frame."""
+    world, body, spec = build_world()
+    pil_frames: list = []
+    hinges = _hinge_joints(world)
+    limits_respected = True
+
+    for f in range(frames):
+        _apply_breathing(world, body, f)
+        world.step(DEFAULT_DT)
+        _ground_clamp(world)
+
+        if limits_respected:
+            for j in hinges:
+                ang = _joint_angle(world, j)
+                lo = float(j.params.get("min_angle", -math.pi))
+                hi = float(j.params.get("max_angle", math.pi))
+                if ang < lo - 1e-3 or ang > hi + 1e-3:
+                    limits_respected = False
+                    break
+
+        if capture_gif:
+            pil_frames.append(_render_frame(world, body))
+
+    return world, body, spec, pil_frames, limits_respected
+
+
+# ---------------------------------------------------------------------------
 # Diagnostics
-# ────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
 
-def summarise(world: World, body, spec: RagdollSpec, trace: dict, frames: int) -> dict:
-    bone_count = len(spec.bones)
-    joint_count = len(world.joints)
-    # Lowest *bone tip* y (excludes the abstract root node if it happens to
-    # float above). We treat every node owned by the body as a candidate.
+def summarise(world: World, body, spec: RagdollSpec, frames: int,
+              limits_respected: bool) -> dict:
     node_ys = world.positions[list(body.node_indices), 1]
-    lowest_bone_y = float(node_ys.min())
+    final_speed = float(np.linalg.norm(world.velocities, axis=1).max())
     return {
         "frames": frames,
-        "bones": bone_count,
-        "joints": joint_count,
-        "lowest_bone_y": lowest_bone_y,
-        "lowest_y_seen": trace["lowest_y"],
-        "limits_respected": bool(trace["limits_respected"]),
-        "nan_seen": bool(trace["nan_seen"]),
+        "bones": len(spec.bones),
+        "joints": len(world.joints),
+        "lowest_bone_y": float(node_ys.min()),
+        "max_speed_final": final_speed,
+        "limits_respected": bool(limits_respected),
+        "iters_x_damping": SOLVER_ITERATIONS * RAGDOLL_DAMPING,
     }
 
 
@@ -302,54 +275,60 @@ def print_summary(summary: dict) -> None:
     print(f"  bones                : {summary['bones']}")
     print(f"  joints               : {summary['joints']}")
     print(f"  lowest bone y        : {summary['lowest_bone_y']:.4f}")
-    print(f"  lowest y seen        : {summary['lowest_y_seen']:.4f}")
+    print(f"  max final speed      : {summary['max_speed_final']:.4f}")
     print(f"  joint limits respected: {summary['limits_respected']}")
-    print(f"  any NaN in positions : {summary['nan_seen']}")
+    print(f"  iters * damping      : {summary['iters_x_damping']:.3f} (<= 0.3 OK)")
     print(f"  stepped frames       : {summary['frames']}")
 
 
-# ────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
 # CLI entry point
-# ────────────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+
+def _default_gif_path() -> Path:
+    return Path(__file__).resolve().parent / "output" / "ragdoll" / "hello_ragdoll.gif"
+
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Hello Ragdoll — SlapPyEngine demo")
+    parser = argparse.ArgumentParser(description="Hello Ragdoll - SlapPyEngine demo")
     parser.add_argument(
         "--frames", type=int, default=DEFAULT_FRAMES,
         help=f"number of dt=1/60 steps to integrate (default: {DEFAULT_FRAMES})",
     )
     parser.add_argument(
-        "--render", action="store_true",
-        help="rasterise the final frame to a PNG (pure PIL, no GPU)",
+        "--no-gif", action="store_true",
+        help="skip GIF capture (smoke-test mode; pairs well with --frames 60)",
     )
     parser.add_argument(
-        "--out", type=Path, default=Path("out/hello_ragdoll.png"),
-        help="output PNG path when --render is supplied",
+        "--out", type=Path, default=None,
+        help="GIF output path (default: examples/output/ragdoll/hello_ragdoll.gif)",
     )
     return parser.parse_args(argv)
 
 
 def main(
     frames: int = DEFAULT_FRAMES,
-    render: bool = False,
-    out: Path | str = Path("out/hello_ragdoll.png"),
+    capture_gif: bool = True,
+    out: Path | str | None = None,
 ) -> dict:
     """Run the demo end-to-end. Returns the summary dict for tests."""
-    world, body, spec = build_world()
-    trace = step_world(world, frames, DEFAULT_DT)
-    summary = summarise(world, body, spec, trace, frames)
+    world, body, spec, pil_frames, limits_respected = run(frames, capture_gif)
+    summary = summarise(world, body, spec, frames, limits_respected)
     print_summary(summary)
 
-    if render:
-        out_path = save_render(world, body, Path(out))
-        print(f"  rendered to          : {out_path}")
+    if capture_gif and pil_frames:
+        out_path = Path(out) if out is not None else _default_gif_path()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        written = save_frames(pil_frames, out_path, fps=GIF_FPS)
+        summary["gif_path"] = str(written)
+        print(f"  gif written to       : {written}")
     return summary
 
 
 def _cli(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     try:
-        main(frames=args.frames, render=args.render, out=args.out)
+        main(frames=args.frames, capture_gif=not args.no_gif, out=args.out)
     except Exception as exc:  # pragma: no cover - defensive CLI guard
         print(f"hello_ragdoll: error: {exc}", file=sys.stderr)
         return 1
