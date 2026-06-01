@@ -1,3 +1,4 @@
+<!-- handauthored: do not regenerate -->
 # slappyengine.studio — API Reference
 
 > Hand-curated reference for the studio subpackage.

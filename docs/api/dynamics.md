@@ -258,10 +258,10 @@ SoftBodyWorld(gravity: 'tuple[float, float]' = (0.0, -9.81)) -> 'None'
 
 #### Methods
 
-- `add_joint(self, joint: 'Any') -> 'Any'`
+- `add_joint(self, joint: 'Any') -> 'Any'` — Append a :class:`JointSpec` to the world's constraint list.
 - `add_node(self, pos: 'tuple[float, float]', mass: 'float' = 1.0) -> 'int'` — Append a node, returning its absolute index. ``mass == 0`` pins it.
 - `add_nodes(self, positions: 'np.ndarray', masses: 'np.ndarray | float' = 1.0) -> 'tuple[int, int]'` — Bulk-append nodes. Returns ``(offset, count)``.
-- `register_body(self, body: 'Any') -> 'Any'`
+- `register_body(self, body: 'Any') -> 'Any'` — Register a :class:`Body` with the world.
 - `step(self, dt: 'float') -> 'None'` — Integrate one frame using XPBD-style position projection.
 
 ### `SpringSpec`
@@ -299,10 +299,10 @@ World(gravity: 'tuple[float, float]' = (0.0, -9.81)) -> 'None'
 
 #### Methods
 
-- `add_joint(self, joint: 'Any') -> 'Any'`
+- `add_joint(self, joint: 'Any') -> 'Any'` — Append a :class:`JointSpec` to the world's constraint list.
 - `add_node(self, pos: 'tuple[float, float]', mass: 'float' = 1.0) -> 'int'` — Append a node, returning its absolute index. ``mass == 0`` pins it.
 - `add_nodes(self, positions: 'np.ndarray', masses: 'np.ndarray | float' = 1.0) -> 'tuple[int, int]'` — Bulk-append nodes. Returns ``(offset, count)``.
-- `register_body(self, body: 'Any') -> 'Any'`
+- `register_body(self, body: 'Any') -> 'Any'` — Register a :class:`Body` with the world.
 - `step(self, dt: 'float') -> 'None'` — Integrate one frame using XPBD-style position projection.
 
 ## Functions
@@ -346,6 +346,17 @@ Read a JSON world file and deserialise it.
 - `ValueError` — If ``path`` does not end in ``.json``, the file is not valid JSON, or the contents do not describe a well-formed world.
 - `FileNotFoundError` — If ``path`` does not exist.
 
+### `make_distance(node_a: 'int', node_b: 'int', rest_length: 'float', stiffness: 'float' = 1000000000.0, damping: 'float' = 0.02) -> 'JointSpec'`
+
+_defined in `slappyengine.dynamics.joint`_
+
+Build a rigid distance constraint between two nodes.
+
+#### Raises
+
+- `TypeError` — If ``node_a`` or ``node_b`` is not int-coercible.
+- `ValueError` — If indices are negative or equal, ``rest_length < 0``, ``stiffness <= 0``, or ``damping`` is outside ``[0, 1]``.
+
 ### `make_humanoid(world, root_position: 'tuple[float, float]' = (0.0, 1.0), *, proportions: 'dict[str, float] | None' = None, bone_mass: 'float' = 1.0, head_mass: 'float' = 1.5, bone_stiffness: 'float' = 5000000.0, bone_damping: 'float' = 0.05, bone_break_strain: 'float' = 0.25) -> 'Humanoid'`
 
 _defined in `slappyengine.dynamics.humanoid`_
@@ -385,6 +396,16 @@ Adjust pelvis + legs so both ankles plant on the terrain surface.
 _defined in `slappyengine.dynamics.joint`_
 
 Dispatch a joint to its XPBD projection. Returns correction magnitude.
+
+### `resolve_joint_specs(world: 'Any', specs: 'list[JointSpec]') -> 'list[int]'`
+
+_defined in `slappyengine.dynamics.joint`_
+
+Install a batch of :class:`JointSpec` records into ``world``.
+
+#### Raises
+
+- `TypeError` — If ``specs`` is not a list of :class:`JointSpec`, or ``world`` cannot host them.
 
 ### `save_world(world: 'World', path: 'Path | str') -> 'None'`
 

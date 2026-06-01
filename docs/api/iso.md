@@ -1,3 +1,4 @@
+<!-- handauthored: do not regenerate -->
 # slappyengine.iso — API Reference
 
 > Hand-curated reference. Format mirrors the auto-generated subpackage

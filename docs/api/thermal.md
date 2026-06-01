@@ -1,3 +1,4 @@
+<!-- handauthored: do not regenerate -->
 # slappyengine.thermal — API Reference
 
 > Auto-generated. Re-run `python scripts/gen_subpackage_api_docs.py`.

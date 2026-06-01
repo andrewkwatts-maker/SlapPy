@@ -1,3 +1,4 @@
+<!-- handauthored: do not regenerate -->
 # slappyengine.post_process — API Reference
 
 > Hand-written reference for the post-process subpackage.

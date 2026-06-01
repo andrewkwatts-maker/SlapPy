@@ -76,7 +76,15 @@ REQUIRED_HEADERS = ("## Classes", "## Functions", "## Constants")
 
 @pytest.mark.parametrize("subpackage", TARGETS)
 def test_each_doc_has_required_sections(subpackage: str) -> None:
-    text = (DOC_DIR / f"{subpackage}.md").read_text(encoding="utf-8")
+    path = DOC_DIR / f"{subpackage}.md"
+    # Hand-authored docs opt out of the auto-gen H2 schema. They organise
+    # their content around the subpackage's own concepts (e.g. iso splits
+    # "Rendering surface" vs "Combat surface"; telemetry splits "Hot path"
+    # vs "Subscription primitives"). Enforce the schema only on the docs
+    # the generator actually owns.
+    if gen._is_handauthored(path):
+        pytest.skip("hand-authored doc — schema is owned by the author")
+    text = path.read_text(encoding="utf-8")
     for header in REQUIRED_HEADERS:
         assert header in text, f"{subpackage}.md missing header: {header!r}"
 

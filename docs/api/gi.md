@@ -1,3 +1,4 @@
+<!-- handauthored: do not regenerate -->
 # slappyengine.gi — API Reference
 
 > Hand-written reference for the GI (Global Illumination) subpackage.

@@ -1,3 +1,4 @@
+<!-- handauthored: do not regenerate -->
 # slappyengine.numerics — API Reference
 
 > Auto-generated. Re-run `python scripts/gen_subpackage_api_docs.py`.

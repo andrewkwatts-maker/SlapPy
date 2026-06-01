@@ -56,6 +56,30 @@ TARGET_SUBPACKAGES: tuple[str, ...] = (
 SKIP_NAMES: frozenset[str] = frozenset({"annotations"})
 SKIP_MODULE_SUFFIXES: tuple[str, ...] = ("_validation",)
 
+# Hand-authored docs opt out of regeneration by including this marker
+# anywhere in the file (we check the first ~10 lines so it must live at
+# the top). The generator preserves the on-disk file byte-for-byte when
+# the marker is present.
+HANDAUTHORED_MARKER: str = "<!-- handauthored: do not regenerate -->"
+HANDAUTHORED_HEAD_LINES: int = 10
+
+
+def _is_handauthored(path: Path) -> bool:
+    """Return ``True`` if ``path`` carries the hand-authored opt-out marker.
+
+    Only the first ``HANDAUTHORED_HEAD_LINES`` lines are inspected so the
+    marker cannot be smuggled in by, e.g., a stale comment buried inside
+    a code block deep in the doc.
+    """
+    if not path.exists():
+        return False
+    try:
+        with path.open("r", encoding="utf-8") as fh:
+            head = "".join(next(fh, "") for _ in range(HANDAUTHORED_HEAD_LINES))
+    except OSError:
+        return False
+    return HANDAUTHORED_MARKER in head
+
 
 # ---------------------------------------------------------------------------
 # Introspection helpers
@@ -597,12 +621,23 @@ def _update_index() -> None:
 
 
 def write_all() -> list[Path]:
-    """Generate every target subpackage doc. Returns the list of paths written."""
+    """Generate every target subpackage doc. Returns the list of paths written.
+
+    Files carrying the :data:`HANDAUTHORED_MARKER` in their first
+    :data:`HANDAUTHORED_HEAD_LINES` lines are left untouched — the path is
+    still returned so callers can see what was considered, but the
+    on-disk bytes are not modified. This is how the per-subpackage hand-
+    written references under ``docs/api/`` survive across regenerations.
+    """
     DOC_DIR.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
     for sub in TARGET_SUBPACKAGES:
-        body = _render_subpackage(sub)
         path = DOC_DIR / f"{sub}.md"
+        # Hand-authored opt-out: never touch the file.
+        if _is_handauthored(path):
+            written.append(path)
+            continue
+        body = _render_subpackage(sub)
         # Only rewrite if content changed — keeps mtimes stable for caches.
         if path.exists() and path.read_text(encoding="utf-8") == body:
             written.append(path)
