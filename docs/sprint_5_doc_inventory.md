@@ -19,6 +19,7 @@ Regenerate after adding or removing any doc.
 | [`engine_surface_v030.md`](engine_surface_v030.md) | Auto-generated v0.3 engine-surface reference — 75 top-level symbols across 19 declared subpackages (regenerate via `scripts/gen_engine_surface_doc.py`). |
 | [`examples_smoke_2026_05_31.md`](examples_smoke_2026_05_31.md) | Read-only smoke audit of every `examples/*.py` (Sprint 1E, 2026-05-31). |
 | [`examples_smoke_2026_06_01.md`](examples_smoke_2026_06_01.md) | Examples smoke audit v2 — refresh of the 2026-05-31 audit (2026-06-01). |
+| [`examples_smoke_2026_06_01_v3.md`](examples_smoke_2026_06_01_v3.md) | Examples smoke audit v3 — 47/47 GREEN (first clean sweep, 2026-06-01). |
 | [`fluid_design.md`](fluid_design.md) | Design reference for the Position-Based Fluids (PBF) 2D particle simulator (`slappyengine.fluid`). |
 | [`getting_started.md`](getting_started.md) | Game-dev tutorial; build a runnable mini-game in 15 minutes with 8 verified-runnable snippets (5/5 tripwire tests green, 298 lines). |
 | [`hardening_audit_2026_05_29.md`](hardening_audit_2026_05_29.md) | Phase-B/C subpackage input-validation hardening audit (2026-05-29). |
