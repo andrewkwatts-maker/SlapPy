@@ -102,20 +102,38 @@ class BloomPass:
 
     label = "bloom"
 
+    # Valid string values for ``upsample_mode``.  Kept module-side to make
+    # the regression tests' allow-list explicit.
+    UPSAMPLE_MODES = ("tent9", "karis13")
+
     def __init__(
         self,
         threshold: float = 1.0,
         knee: float = 0.2,
         intensity: float = 1.0,
+        upsample_mode: str = "tent9",
     ) -> None:
         """Construct a bloom extraction pass.
+
+        Parameters
+        ----------
+        threshold, knee, intensity
+            Standard Lottes smooth-threshold parameters (see class docstring).
+        upsample_mode
+            Pyramid upsample kernel selection.  ``"tent9"`` (default) uses
+            the 9-tap 3×3 progressive tent (back-compat with existing
+            chains).  ``"karis13"`` uses the wider 13-tap Karis upsample,
+            matching the partial-Karis 13-tap downsample for higher-quality
+            progressive blur.
 
         Raises
         ------
         TypeError
-            If ``threshold`` / ``knee`` / ``intensity`` are not real numbers.
+            If ``threshold`` / ``knee`` / ``intensity`` are not real numbers,
+            or ``upsample_mode`` is not a ``str``.
         ValueError
-            If any of them is NaN/inf or negative.
+            If any numeric kwarg is NaN/inf or negative, or
+            ``upsample_mode`` is not one of ``UPSAMPLE_MODES``.
         """
         self.threshold = validate_non_negative_float(
             "threshold", "BloomPass", threshold,
@@ -126,6 +144,17 @@ class BloomPass:
         self.intensity = validate_non_negative_float(
             "intensity", "BloomPass", intensity,
         )
+        if not isinstance(upsample_mode, str):
+            raise TypeError(
+                f"BloomPass: upsample_mode must be a str; "
+                f"got {type(upsample_mode).__name__}"
+            )
+        if upsample_mode not in self.UPSAMPLE_MODES:
+            raise ValueError(
+                f"BloomPass: upsample_mode must be one of "
+                f"{self.UPSAMPLE_MODES!r}; got {upsample_mode!r}"
+            )
+        self.upsample_mode = upsample_mode
 
     # ----------------------------------------------------------- config glue
     @classmethod
@@ -143,6 +172,7 @@ class BloomPass:
             threshold=getattr(b, "threshold", 1.0),
             knee=getattr(b, "knee", 0.2),
             intensity=getattr(b, "intensity", 1.0),
+            upsample_mode=getattr(b, "upsample_mode", "tent9"),
         )
 
     # ----------------------------------------------------------- GPU plumbing
@@ -318,6 +348,142 @@ def downsample_mn13(rgb: np.ndarray, karis_clamp: bool = False) -> np.ndarray:
                 # Pure linear low-pass — weights sum to exactly 1.0.
                 outer = (q_tl + q_tr + q_bl + q_br) * 0.125
                 out[dy, dx] = inner * 0.5 + outer
+
+    return out
+
+
+# ---------------------------------------------------------------------------
+# 13-tap Karis upsample weights — Karis SIGGRAPH 2013 / COD AW 2014 companion
+# to the 13-tap Mitchell-Netravali downsample.
+#
+# Layout (relative to the destination pixel mapped back into low-res):
+#
+#         . . O . . . O . .
+#         . . . . . . . . .
+#         O . D . C . D . O
+#         . . . . . . . . .
+#         . . C . X . C . .          X = centre tap     (1)
+#         . . . . . . . . .          C = inner cardinal (4)  at ±1 cardinal
+#         O . D . C . D . O          D = inner diagonal (4)  at ±1 diagonal
+#         . . . . . . . . .          O = outer cardinal (4)  at ±2 cardinal
+#         . . O . . . O . .
+#
+# This is a 13-tap separable-Gaussian-flavoured kernel: 1 central + 4 inner
+# cardinal + 4 inner diagonal + 4 outer cardinal.  Weights are sampled from
+# a Gaussian with σ = 1.0 at integer offsets and then normalised to sum to
+# exactly 1.0 so a constant input yields a constant output.  Per Karis 2013
+# the central tap is the highest-weighted (no ring tap exceeds it), giving
+# the progressive upsample its Gaussian-shaped lobe character — wider and
+# smoother than the 9-tap tent without ringing.
+#
+# The 4× bilinear arrangement for the outer ring is encoded by sampling the
+# outer ring at ±2 cardinal offsets (the bilinear-equivalent footprint of a
+# 2×2 quad at ±1.5 in higher-resolution terms, but our low-res input is
+# already at 0.5× resolution so ±2 cardinal in low-res = ±1 cardinal at the
+# half-res target).
+_KARIS13_SIGMA = 1.0
+def _gauss(r2: float, sigma: float = _KARIS13_SIGMA) -> float:
+    """Gaussian at squared-radius ``r2`` with stdev ``sigma``."""
+    return float(np.exp(-0.5 * r2 / (sigma * sigma)))
+
+
+# Raw (unnormalised) weights for the four tap classes.
+_KARIS13_RAW_CENTRE       = _gauss(0.0)                          # r = 0
+_KARIS13_RAW_INNER_CARD   = _gauss(1.0)                          # r = 1
+_KARIS13_RAW_INNER_DIAG   = _gauss(2.0)                          # r = sqrt(2)
+_KARIS13_RAW_OUTER_CARD   = _gauss(4.0)                          # r = 2
+
+# Normalisation factor so the 13 taps sum to exactly 1.0.
+_KARIS13_NORM = (
+    1.0 * _KARIS13_RAW_CENTRE
+    + 4.0 * _KARIS13_RAW_INNER_CARD
+    + 4.0 * _KARIS13_RAW_INNER_DIAG
+    + 4.0 * _KARIS13_RAW_OUTER_CARD
+)
+KARIS13_W_CENTRE       = _KARIS13_RAW_CENTRE     / _KARIS13_NORM
+KARIS13_W_INNER_CARD   = _KARIS13_RAW_INNER_CARD / _KARIS13_NORM
+KARIS13_W_INNER_DIAG   = _KARIS13_RAW_INNER_DIAG / _KARIS13_NORM
+KARIS13_W_OUTER_CARD   = _KARIS13_RAW_OUTER_CARD / _KARIS13_NORM
+
+
+# Tap offsets — (dy, dx, class).  Kept in module scope so the WGSL shader and
+# the CPU helper can both reference identical positions.
+_KARIS13_TAPS: tuple[tuple[int, int, str], ...] = (
+    ( 0,  0, "C"),  # centre
+    (-1,  0, "IC"), ( 1,  0, "IC"), ( 0, -1, "IC"), ( 0,  1, "IC"),  # inner cardinal
+    (-1, -1, "ID"), (-1,  1, "ID"), ( 1, -1, "ID"), ( 1,  1, "ID"),  # inner diagonal
+    (-2,  0, "OC"), ( 2,  0, "OC"), ( 0, -2, "OC"), ( 0,  2, "OC"),  # outer cardinal
+)
+_KARIS13_CLASS_WEIGHT: dict[str, float] = {
+    "C":  KARIS13_W_CENTRE,
+    "IC": KARIS13_W_INNER_CARD,
+    "ID": KARIS13_W_INNER_DIAG,
+    "OC": KARIS13_W_OUTER_CARD,
+}
+
+
+def upsample_karis13(
+    low: np.ndarray,
+    dst_shape: tuple[int, int],
+    alpha: float = 1.0,
+) -> np.ndarray:
+    """13-tap Karis bloom upsample (CPU reference).
+
+    Companion to :func:`downsample_mn13`.  Doubles the resolution of ``low``
+    to ``dst_shape`` using a 13-tap Gaussian-flavoured kernel — 1 central tap
+    + 4 inner cardinal + 4 inner diagonal + 4 outer cardinal — with weights
+    sampled from a Gaussian (σ = 1.0) and normalised to exactly 1.0.  This
+    is the high-quality progressive-upsample variant from Karis SIGGRAPH
+    2013 / COD AW 2014, matching the partial-Karis 13-tap downsample.
+
+    Parameters
+    ----------
+    low
+        ``(Hl, Wl, 3)`` float array — the low-res mip being upsampled.
+    dst_shape
+        ``(H, W)`` of the destination.  Typically ``(2*Hl, 2*Wl)``.
+    alpha
+        Optional intensity multiplier applied after the 13-tap blend.  The
+        default of ``1.0`` preserves the partition-of-unity so a constant
+        input yields a constant output.  Values < 1 dim the upsample;
+        values > 1 brighten it.  Negative ``alpha`` is rejected — that
+        would invert the bloom which is never the intent.
+
+    Returns
+    -------
+    np.ndarray
+        ``(H, W, 3)`` float array.
+
+    Notes
+    -----
+    Compared to the 9-tap tent upsample, the 13-tap Karis kernel has a
+    wider spatial support (radius 2 instead of 1) and a steeper centre
+    weight, so an isolated bright low-res tap is smeared into a softer,
+    rounder Gaussian-shaped lobe at the destination — fewer visible
+    pyramid steps when the bloom mip chain is composited progressively.
+    """
+    low = np.asarray(low, dtype=np.float32)
+    if low.ndim != 3 or low.shape[-1] != 3:
+        raise ValueError(
+            f"upsample_karis13 expects (H, W, 3) RGB, got shape {low.shape!r}"
+        )
+    if not np.isfinite(alpha):
+        raise ValueError(f"upsample_karis13: alpha must be finite; got {alpha!r}")
+    if alpha < 0.0:
+        raise ValueError(f"upsample_karis13: alpha must be >= 0; got {alpha!r}")
+    dh, dw = dst_shape
+    out = np.zeros((dh, dw, 3), dtype=np.float32)
+    a = float(alpha)
+
+    for y in range(dh):
+        for x in range(dw):
+            sy = y // 2
+            sx = x // 2
+            acc = np.zeros(3, dtype=np.float32)
+            for dy_, dx_, cls in _KARIS13_TAPS:
+                w = _KARIS13_CLASS_WEIGHT[cls]
+                acc += w * _clamp_edge(low, sy + dy_, sx + dx_)
+            out[y, x] = acc * a
 
     return out
 

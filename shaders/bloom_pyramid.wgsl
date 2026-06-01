@@ -138,6 +138,70 @@ fn downsample_main(@builtin(global_invocation_id) gid: vec3<u32>) {
                  vec4<f32>(result, 1.0));
 }
 
+// 13-tap Karis upsample weights — Karis SIGGRAPH 2013 / COD AW 2014.  These
+// are the WGSL companions to ``upsample_karis13`` in bloom.py.  Sampled from
+// a Gaussian (σ = 1.0) at integer radii and normalised so the 13 taps sum
+// to exactly 1.0.  The centre tap is the highest-weighted, then the inner
+// cardinal ring, then inner diagonals, then outer cardinals — a Gaussian-
+// shaped lobe with radius-2 support (wider/smoother than the 9-tap tent).
+//
+//   centre        r = 0
+//   inner card.   r = 1  (4 taps)
+//   inner diag.   r = √2 (4 taps)
+//   outer card.   r = 2  (4 taps)
+//
+// The numeric values below come from
+//   raw_c  = 1.0
+//   raw_ic = exp(-0.5)
+//   raw_id = exp(-1.0)
+//   raw_oc = exp(-2.0)
+//   norm   = raw_c + 4*(raw_ic + raw_id + raw_oc)
+// and the WGSL constants must match the Python module weights bit-for-bit
+// modulo single-precision rounding (regression-tested at the kernel level).
+const KARIS13_W_CENTRE     : f32 = 0.18385795;
+const KARIS13_W_INNER_CARD : f32 = 0.11151548;
+const KARIS13_W_INNER_DIAG : f32 = 0.06763756;
+const KARIS13_W_OUTER_CARD : f32 = 0.02488247;
+
+// 13-tap Karis upsample — companion to the 13-tap M-N downsample.  Wider
+// and smoother than ``upsample_main``; recommended when the bloom mip
+// chain is composited progressively across many levels.  Falls back to a
+// scalar alpha = 1 (the WGSL pass does not currently expose alpha).
+@compute @workgroup_size(8, 8)
+fn upsample_karis_main(@builtin(global_invocation_id) gid: vec3<u32>) {
+    if gid.x >= params.dst_w || gid.y >= params.dst_h { return; }
+
+    let sx = i32(gid.x) / 2;
+    let sy = i32(gid.y) / 2;
+
+    // Centre tap.
+    let c  = fetch(vec2<i32>(sx, sy));
+    // Inner cardinal ring (±1 cardinal).
+    let ic0 = fetch(vec2<i32>(sx - 1, sy));
+    let ic1 = fetch(vec2<i32>(sx + 1, sy));
+    let ic2 = fetch(vec2<i32>(sx,     sy - 1));
+    let ic3 = fetch(vec2<i32>(sx,     sy + 1));
+    // Inner diagonal ring (±1 diagonal).
+    let id0 = fetch(vec2<i32>(sx - 1, sy - 1));
+    let id1 = fetch(vec2<i32>(sx + 1, sy - 1));
+    let id2 = fetch(vec2<i32>(sx - 1, sy + 1));
+    let id3 = fetch(vec2<i32>(sx + 1, sy + 1));
+    // Outer cardinal ring (±2 cardinal — 4× bilinear arrangement).
+    let oc0 = fetch(vec2<i32>(sx - 2, sy));
+    let oc1 = fetch(vec2<i32>(sx + 2, sy));
+    let oc2 = fetch(vec2<i32>(sx,     sy - 2));
+    let oc3 = fetch(vec2<i32>(sx,     sy + 2));
+
+    let result =
+        c * KARIS13_W_CENTRE +
+        (ic0 + ic1 + ic2 + ic3) * KARIS13_W_INNER_CARD +
+        (id0 + id1 + id2 + id3) * KARIS13_W_INNER_DIAG +
+        (oc0 + oc1 + oc2 + oc3) * KARIS13_W_OUTER_CARD;
+
+    textureStore(dst_tex, vec2<i32>(i32(gid.x), i32(gid.y)),
+                 vec4<f32>(result, 1.0));
+}
+
 // 9-tap 3×3 tent upsample — replaces the legacy single-bilinear-tap upsample.
 // Weights (1,2,1; 2,4,2; 1,2,1) / 16 — sums to 1.0 exactly.  This is the
 // kernel COD calls the "progressive upsample tent" in Jimenez 2014.

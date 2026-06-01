@@ -23,8 +23,14 @@ import pytest
 
 from slappyengine.post_process.bloom import (
     _TENT_3X3,
+    KARIS13_W_CENTRE,
+    KARIS13_W_INNER_CARD,
+    KARIS13_W_INNER_DIAG,
+    KARIS13_W_OUTER_CARD,
+    BloomPass,
     downsample_box2,
     downsample_mn13,
+    upsample_karis13,
     upsample_tent9,
 )
 
@@ -347,3 +353,218 @@ def test_bloom_pyramid_smooths_isolated_bright_feature() -> None:
             f"upsampled lobe not monotone-decreasing right of peak: "
             f"row[{i}]={row[i]!r} < row[{i+1}]={row[i+1]!r}"
         )
+
+
+# ---------------------------------------------------------------------------
+# (d) 13-tap Karis upsample — companion to the 13-tap M-N downsample
+# ---------------------------------------------------------------------------
+
+
+def test_karis13_weights_sum_to_one() -> None:
+    """13 tap weights (1 centre + 4 inner card + 4 inner diag + 4 outer card)
+    must sum to exactly 1.0 ± 1e-5.
+
+    Partition-of-unity is what guarantees a constant input is passed through
+    unchanged — any drift here would dim or brighten the pyramid composite.
+    """
+    s = (
+        1.0 * KARIS13_W_CENTRE
+        + 4.0 * KARIS13_W_INNER_CARD
+        + 4.0 * KARIS13_W_INNER_DIAG
+        + 4.0 * KARIS13_W_OUTER_CARD
+    )
+    assert s == pytest.approx(1.0, abs=1e-5), (
+        f"Karis13 weights sum != 1.0: got {s!r}"
+    )
+
+
+def test_karis13_central_tap_is_highest() -> None:
+    """Centre weight must strictly exceed every ring tap weight.
+
+    A Gaussian-shaped kernel has its peak at r = 0 — if any ring tap were
+    higher, the kernel would have an annular response and the upsample
+    would ring on bright features.
+    """
+    assert KARIS13_W_CENTRE > KARIS13_W_INNER_CARD, (
+        f"centre ({KARIS13_W_CENTRE}) must exceed inner cardinal "
+        f"({KARIS13_W_INNER_CARD})"
+    )
+    assert KARIS13_W_CENTRE > KARIS13_W_INNER_DIAG, (
+        f"centre ({KARIS13_W_CENTRE}) must exceed inner diagonal "
+        f"({KARIS13_W_INNER_DIAG})"
+    )
+    assert KARIS13_W_CENTRE > KARIS13_W_OUTER_CARD, (
+        f"centre ({KARIS13_W_CENTRE}) must exceed outer cardinal "
+        f"({KARIS13_W_OUTER_CARD})"
+    )
+    # Ring weights must also be strictly monotone-decreasing with radius —
+    # this is the Gaussian-shape invariant the COD/Karis kernels guarantee.
+    assert KARIS13_W_INNER_CARD > KARIS13_W_INNER_DIAG > KARIS13_W_OUTER_CARD
+
+
+def test_karis13_preserves_constant() -> None:
+    """Constant input must yield constant output (proves weights sum to 1)."""
+    low = np.full((4, 4, 3), 0.37, dtype=np.float32)
+    up = upsample_karis13(low, (8, 8))
+    # Inner pixels (away from the radius-2 clamp border) must be exact.
+    inner = up[3:-3, 3:-3]
+    assert np.allclose(inner, 0.37, atol=1e-5), (
+        f"karis13 upsample failed constant test: inner range "
+        f"[{inner.min()!r}, {inner.max()!r}]"
+    )
+
+
+def test_karis13_no_nan_inf_with_extreme_input() -> None:
+    """A 1e6-amplitude bright tap in the low-res input must not blow up.
+
+    All 13 weights are finite and bounded, so a finite input — no matter
+    how extreme — must produce a finite output.  This guards against any
+    accidental divide / log introduced by future "improvements".
+    """
+    low = np.full((4, 4, 3), 0.1, dtype=np.float32)
+    low[2, 2, :] = 1.0e6  # extreme firefly
+    up = upsample_karis13(low, (8, 8))
+    assert np.all(np.isfinite(up)), (
+        f"karis13 upsample produced non-finite output for a 1e6 input; "
+        f"min={up.min()!r}, max={up.max()!r}"
+    )
+
+
+def test_karis13_alpha_scales_linearly() -> None:
+    """The optional ``alpha`` parameter must multiply the result linearly.
+
+    Identity check at alpha = 1, 2× brighter at alpha = 2, dimmer at
+    alpha = 0.5.  Negative alpha is rejected as a sanity guard.
+    """
+    rng = np.random.default_rng(0xCAFE)
+    low = rng.uniform(0.0, 1.0, (4, 4, 3)).astype(np.float32)
+
+    base = upsample_karis13(low, (8, 8), alpha=1.0)
+    bright = upsample_karis13(low, (8, 8), alpha=2.0)
+    dim = upsample_karis13(low, (8, 8), alpha=0.5)
+
+    assert np.allclose(bright, base * 2.0, atol=1e-6)
+    assert np.allclose(dim, base * 0.5, atol=1e-6)
+
+    with pytest.raises(ValueError, match="alpha"):
+        upsample_karis13(low, (8, 8), alpha=-0.1)
+
+
+def test_karis13_psnr_delta_vs_tent9() -> None:
+    """PSNR delta vs tent9 must be measurable but bounded.
+
+    The 13-tap Karis kernel has a wider support than the 9-tap tent so
+    the two outputs must *differ* (otherwise the new code is dead) but
+    must remain perceptually close (otherwise the new code is doing
+    something other than progressive Gaussian blur).  We frame this as
+    a PSNR window: between 25 dB (clearly different) and 70 dB (still in
+    the same visual ball-park).
+    """
+    rng = np.random.default_rng(0xBEEF)
+    low = rng.uniform(0.0, 1.5, (8, 8, 3)).astype(np.float32)
+    # Stamp a couple of bright sub-pixel features so the kernel difference
+    # actually manifests — a uniformly random texture differs only at the
+    # noise floor.
+    low[3, 3] = 4.0
+    low[5, 6] = 3.0
+
+    tent = upsample_tent9(low, (16, 16))
+    karis = upsample_karis13(low, (16, 16))
+
+    assert np.all(np.isfinite(tent))
+    assert np.all(np.isfinite(karis))
+
+    mse = float(np.mean((tent - karis) ** 2))
+    assert mse > 0.0, "Karis13 must differ from tent9 on bright features"
+    peak = float(max(1.0, tent.max(), karis.max()))
+    psnr = 10.0 * float(np.log10(peak * peak / mse))
+    assert 25.0 < psnr < 70.0, (
+        f"karis13 vs tent9 PSNR out of expected window: got {psnr!r} dB "
+        f"(too low = kernels wildly different, too high = identical)"
+    )
+
+
+def test_karis13_spreads_wider_than_tent9() -> None:
+    """An isolated bright tap must be smeared across more dst pixels.
+
+    The 13-tap Karis kernel has radius-2 support so an impulse at the
+    centre of a low-res buffer must produce a non-zero response further
+    from the source than the radius-1 tent kernel can reach.
+    """
+    low = np.zeros((8, 8, 3), dtype=np.float32)
+    low[4, 4, :] = 8.0
+
+    tent = upsample_tent9(low, (16, 16))
+    karis = upsample_karis13(low, (16, 16))
+
+    nz_tent = int(((tent ** 2).sum(axis=-1) > 1e-8).sum())
+    nz_karis = int(((karis ** 2).sum(axis=-1) > 1e-8).sum())
+    assert nz_karis > nz_tent, (
+        f"karis13 should spread the impulse to more dst taps than tent9; "
+        f"got nz_karis={nz_karis}, nz_tent={nz_tent}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# (e) BloomPass.upsample_mode wiring — default is back-compat tent9
+# ---------------------------------------------------------------------------
+
+
+def test_bloom_pass_upsample_mode_default_is_tent9() -> None:
+    """Back-compat: the default constructor must still select tent9."""
+    bp = BloomPass()
+    assert bp.upsample_mode == "tent9", (
+        f"BloomPass default upsample_mode regressed: got {bp.upsample_mode!r}"
+    )
+
+
+def test_bloom_pass_accepts_karis13_mode() -> None:
+    """``upsample_mode='karis13'`` must be accepted and round-tripped."""
+    bp = BloomPass(upsample_mode="karis13")
+    assert bp.upsample_mode == "karis13"
+
+
+def test_bloom_pass_rejects_unknown_upsample_mode() -> None:
+    """Unknown mode strings must be rejected at construction time."""
+    with pytest.raises(ValueError, match="upsample_mode"):
+        BloomPass(upsample_mode="lanczos25")
+    with pytest.raises(TypeError, match="upsample_mode"):
+        BloomPass(upsample_mode=42)  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# WGSL kernel-level sanity — the shader constants must match the CPU helper
+# ---------------------------------------------------------------------------
+
+
+def test_wgsl_karis13_constants_match_cpu_helper() -> None:
+    """The four WGSL constants in ``bloom_pyramid.wgsl`` must agree with the
+    Python module values to within f32 rounding.  Drift here would mean
+    the GPU and CPU paths disagree on the visible bloom output.
+    """
+    shader = Path(__file__).parents[1] / "shaders" / "bloom_pyramid.wgsl"
+    text = shader.read_text(encoding="utf-8")
+
+    # Extract the four ``const KARIS13_W_*: f32 = X.YYYYYYY;`` declarations.
+    import re
+
+    def _grab(name: str) -> float:
+        m = re.search(
+            rf"const\s+{name}\s*:\s*f32\s*=\s*([0-9.eE+\-]+)\s*;",
+            text,
+        )
+        assert m is not None, f"{name} missing from bloom_pyramid.wgsl"
+        return float(m.group(1))
+
+    assert _grab("KARIS13_W_CENTRE") == pytest.approx(
+        KARIS13_W_CENTRE, abs=1e-6,
+    )
+    assert _grab("KARIS13_W_INNER_CARD") == pytest.approx(
+        KARIS13_W_INNER_CARD, abs=1e-6,
+    )
+    assert _grab("KARIS13_W_INNER_DIAG") == pytest.approx(
+        KARIS13_W_INNER_DIAG, abs=1e-6,
+    )
+    assert _grab("KARIS13_W_OUTER_CARD") == pytest.approx(
+        KARIS13_W_OUTER_CARD, abs=1e-6,
+    )
