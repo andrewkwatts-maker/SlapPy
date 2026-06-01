@@ -28,9 +28,13 @@ symbols across 19 declared subpackages.
   `make_spring`, `make_motor`, `solve_ik`, `resolve_joint`. JSON round-trip
   via `save_world` / `load_world` (byte-identical 0.0 step error, 20/20
   green). Reference: [`docs/dynamics_design.md`](docs/dynamics_design.md).
-- `slappyengine.dynamics.humanoid` — humanoid skeleton (`make_humanoid`),
-  flesh-wrap (`wrap_in_flesh`, layer constants), and foot-IK terrain
-  placement (`place_feet_on_terrain`).
+- `slappyengine.dynamics.humanoid` — humanoid skeleton (`make_humanoid`,
+  `Humanoid` dataclass), flesh-wrap (`wrap_in_flesh`, layer constants
+  `LAYER_BONE` / `LAYER_MUSCLE` / `LAYER_SKIN`), and foot-IK terrain
+  placement (`place_feet_on_terrain`). Sprint 2A.
+- `slappyengine.dynamics` joint authoring — `make_distance` factory for
+  distance constraints and `resolve_joint_specs` batch resolver round
+  out the Sprint 7A joint surface alongside `resolve_joint`.
 - `slappyengine.zones` — generic zone primitives (`RectZone`,
   `ThresholdZone`, `ZoneManager`, enter/exit + threshold callbacks).
   Optional spatial-hash backend for 10.9x speedup at 1000 entities.
@@ -72,16 +76,35 @@ symbols across 19 declared subpackages.
 - `WaveSchedule` round-trip fix (uses `_waves` attribute, not `specs`).
 - `SetVersion.bat` helper for version-string consistency.
 
+**Studio / demo authoring (Sprint 7G):**
+
+- `slappyengine.studio.dynamics_stage` — turn-key Stage wrapper around a
+  `dynamics.World` with a default PIL renderer, joining the existing
+  `softbody_stage` / `fluid_stage` / `humanoid_stage` set so demos can
+  record dynamics scenes with the same 3-line recipe.
+
+**Game-compat shims (Sprint 5B + R2S1-B):**
+
+- `slappyengine._compat` surfaces back-compat names lifted from retired
+  Ochema / Bullet Strata subsystems so downstream games keep importing
+  cleanly: `MaterialPreset` and `CrackMode` enums, `SimState` and
+  `SimFrequencyBudget` minimal stubs, `DeformController` no-op shim,
+  `ZoneMap` alias of `zones.ZoneManager`, `CellMaterial` dataclass +
+  `cell_material_for` lookup ported verbatim from the legacy
+  `deform_modes` module.
+
 **Engine + tooling:**
 
-- `Engine.run(max_frames=N)` — CI-driveable bounded run for demo smoke.
+- `Engine.run(max_frames=N)` — CI-driveable bounded run for demo smoke
+  (Sprint 2C).
 - Perf dashboard (`tools/perf_dashboard`) — 6 subsystems, regression
   tripwire on Sprint 6 baselines.
 - All-demos integration smoke harness (29 demos discovered, 13 hello_*
   demos in the gallery grid).
 - Auto-generated subpackage API reference (9 docs, 30/30 green).
-- Editor `spawn_menu` gains rope / ragdoll / IK chain actions; property
-  inspector reflects dynamics dataclasses; material editor extended via
+- Editor `spawn_menu` gains rope / ragdoll / IK chain / humanoid
+  (Sprint 2F) actions; property inspector reflects dynamics dataclasses
+  via runtime introspection (Sprint 3G); material editor extended via
   reflection.
 
 **Demos & docs:**
@@ -121,9 +144,13 @@ symbols across 19 declared subpackages.
 
 **Lighting / post-process rounds 2–9:**
 
-- Round 2 (GTAO) — depth-adaptive sample radius (Jimenez 2016).
+- Round 2 (GTAO) — depth-adaptive sample radius (Jimenez 2016) plus
+  Sprint 4C `multibounce` toggle on `GTAOPass` (Jimenez 2016 §2.3
+  multibounce-visibility approximation, default on).
 - Round 3 (Bloom) — Lottes 2017 smooth threshold replaces the binary
-  cutoff (14/14 green).
+  cutoff (14/14 green); Sprint 3D adds 13-tap Mitchell-Netravali
+  downsample + 9-tap tent upsample (`upsample_tent9`) for a smoother
+  Gaussian-shaped bloom lobe with no extra ringing.
 - Round 3 (TAA) — Karis luminance-inverse weighted blend cuts ghosting
   on motion-heavy scenes by 41.3%.
 - Round 4 (Vignette) — smoothstep falloff with `inner_radius` + `feather`
@@ -136,6 +163,10 @@ symbols across 19 declared subpackages.
   -19.5% ghost residual and +1 dB PSNR vs the legacy min/max envelope,
   with no measurable cost on converged frames. Pass
   `tight_variance_clip=False` to restore the round-3 behaviour.
+- Round 5 (TAA, Sprint 5C + R2S1-F) — motion-vector-aware disocclusion
+  rejection adds `reject_on_depth_disocclusion` (Andersson INSIDE 2015)
+  and `reject_on_normal_disocclusion` (Karis Siggraph 2014) fields on
+  `TAAPass`; defaults on, opt out per field to restore Round 4 behaviour.
 - Round 5 (Outline) — Sobel + smoothstep edge detection (-84% temporal
   flicker, 13/13 green).
 - Round 6 (Chromatic aberration) — Lottes 2014 polynomial falloff (+47%
@@ -215,7 +246,8 @@ baselines.
 
 - `TAA` executor — splice width / height into pre-packed `TaaParams` UBO
   (previously stale).
-- `SVGFDenoiser` — restored CPU path + `reset_history()` API.
+- `SVGFDenoiser` — restored CPU `denoise_numpy` path + `reset_history()`
+  API (Sprint 2B).
 - `Layer3D.lighting_mode` + `gbuffer_target` setter — wires through to
   `defer_2d` (4 tests recovered).
 - `IKChainSpec.node_indices` validator — rejects non-int (float was
