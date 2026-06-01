@@ -19,6 +19,16 @@ import threading
 from typing import Any
 
 from . import audio_runtime
+from ._audio_validation import (
+    validate_bool,
+    validate_finite_2tuple,
+    validate_master_volume,
+    validate_path,
+    validate_positive_finite_float,
+    validate_positive_int,
+    validate_sound_handle_or_none,
+    validate_volume,
+)
 
 
 class SoundHandle:
@@ -59,6 +69,7 @@ class AudioManager:
         return self._available
 
     def load(self, path: str) -> SoundHandle | None:
+        path = validate_path("path", "AudioManager.load", path)
         if self._sf is None:
             return None
         if path in self._cache:
@@ -78,6 +89,9 @@ class AudioManager:
         volume: float = 1.0,
         loop: bool = False,
     ) -> None:
+        handle = validate_sound_handle_or_none("handle", "AudioManager.play", handle)
+        volume = validate_volume("volume", "AudioManager.play", volume)
+        loop = validate_bool("loop", "AudioManager.play", loop)
         if handle is None:
             return
         vol = volume * self._master_volume
@@ -111,6 +125,19 @@ class AudioManager:
         max_dist: float = 500.0,
         loop: bool = False,
     ) -> None:
+        handle = validate_sound_handle_or_none(
+            "handle", "AudioManager.play_spatial", handle
+        )
+        source_pos = validate_finite_2tuple(
+            "source_pos", "AudioManager.play_spatial", source_pos
+        )
+        listener_pos = validate_finite_2tuple(
+            "listener_pos", "AudioManager.play_spatial", listener_pos
+        )
+        max_dist = validate_positive_finite_float(
+            "max_dist", "AudioManager.play_spatial", max_dist
+        )
+        loop = validate_bool("loop", "AudioManager.play_spatial", loop)
         if handle is None:
             return
         dx = source_pos[0] - listener_pos[0]
@@ -146,6 +173,7 @@ class AudioManager:
 
     @master_volume.setter
     def master_volume(self, v: float) -> None:
+        v = validate_master_volume("master_volume", "AudioManager", v)
         self._master_volume = max(0.0, min(1.0, v))
 
 
@@ -156,6 +184,11 @@ def play_sound(handle: SoundHandle | None, sample_rate: int | None = None) -> No
     (and downstream callers) can submit a raw buffer without instantiating
     an `AudioManager`. Returns silently when `handle` is None.
     """
+    handle = validate_sound_handle_or_none("handle", "play_sound", handle)
+    if sample_rate is not None:
+        sample_rate = validate_positive_int(
+            "sample_rate", "play_sound", sample_rate
+        )
     if handle is None:
         return
     sr = sample_rate if sample_rate is not None else getattr(handle, "samplerate", 44100)
