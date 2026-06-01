@@ -1,6 +1,19 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
+
+from ._node_validation import (
+    validate_finite_2tuple,
+    validate_finite_float,
+    validate_unit_float,
+    validate_positive_int,
+    validate_non_empty_str,
+    validate_str,
+    validate_enum,
+    validate_name,
+    validate_connect,
+    _ENUM_PARAMS,
+)
 
 
 def _gen_id() -> str:
@@ -23,6 +36,7 @@ def PixelColorNode() -> NodeDef:
 
 
 def PixelChannelNode(channel: str) -> NodeDef:
+    channel = validate_non_empty_str("channel", "PixelChannelNode", channel)
     return NodeDef(node_type="PixelChannel", params={"channel": channel})
 
 
@@ -39,10 +53,20 @@ def LerpNode() -> NodeDef:
 
 
 def ClampNode(min_val: float = 0.0, max_val: float = 1.0) -> NodeDef:
+    min_val = validate_finite_float("min_val", "ClampNode", min_val)
+    max_val = validate_finite_float("max_val", "ClampNode", max_val)
+    if min_val > max_val:
+        raise ValueError(
+            f"ClampNode: min_val ({min_val}) must be <= max_val ({max_val})"
+        )
     return NodeDef(node_type="Clamp", params={"min": min_val, "max": max_val})
 
 
 def GravityWarpNode(strength: float = 2.0, radius: float = 0.3) -> NodeDef:
+    strength = validate_finite_float("strength", "GravityWarpNode", strength)
+    radius = validate_finite_float("radius", "GravityWarpNode", radius)
+    if radius <= 0.0:
+        raise ValueError(f"GravityWarpNode: radius must be > 0; got {radius}")
     return NodeDef(node_type="GravityWarp", params={"strength": strength, "radius": radius})
 
 
@@ -66,14 +90,18 @@ def DiscardNode() -> NodeDef:
 
 
 def ReadFieldNode(field: str) -> NodeDef:
+    field = validate_non_empty_str("field", "ReadFieldNode", field)
     return NodeDef(node_type="read_field", params={"field": field})
 
 
 def WriteFieldNode(field: str) -> NodeDef:
+    field = validate_non_empty_str("field", "WriteFieldNode", field)
     return NodeDef(node_type="write_field", params={"field": field})
 
 
 def SampleSimFieldNode(field_ref: str = "", channel: str = "") -> NodeDef:
+    field_ref = validate_str("field_ref", "SampleSimFieldNode", field_ref)
+    channel = validate_str("channel", "SampleSimFieldNode", channel)
     return NodeDef(
         node_type="sample_sim_field",
         params={"field_ref": field_ref, "channel": channel},
@@ -89,11 +117,21 @@ def CosNode() -> NodeDef:
 
 
 def PowNode(exponent: float = 2.0) -> NodeDef:
+    exponent = validate_finite_float("exponent", "PowNode", exponent)
     return NodeDef(node_type="pow", params={"exponent": exponent})
 
 
 def RemapNode(in_min: float = 0.0, in_max: float = 1.0,
               out_min: float = 0.0, out_max: float = 1.0) -> NodeDef:
+    in_min = validate_finite_float("in_min", "RemapNode", in_min)
+    in_max = validate_finite_float("in_max", "RemapNode", in_max)
+    out_min = validate_finite_float("out_min", "RemapNode", out_min)
+    out_max = validate_finite_float("out_max", "RemapNode", out_max)
+    if in_min == in_max:
+        raise ValueError(
+            f"RemapNode: in_min ({in_min}) must differ from in_max "
+            f"({in_max}) — degenerate input range yields div-by-zero"
+        )
     return NodeDef(
         node_type="remap",
         params={"in_min": in_min, "in_max": in_max,
@@ -114,6 +152,8 @@ def DotNode() -> NodeDef:
 
 
 def NoiseNode(mode: str = "fbm", octaves: int = 4) -> NodeDef:
+    mode = validate_enum("mode", "NoiseNode", mode, _ENUM_PARAMS["noise"]["mode"])
+    octaves = validate_positive_int("octaves", "NoiseNode", octaves)
     return NodeDef(node_type="noise", params={"mode": mode, "octaves": octaves})
 
 
@@ -134,10 +174,13 @@ def ReflectUVNode() -> NodeDef:
 
 
 def AccumulateNode(decay: float = 0.9) -> NodeDef:
+    decay = validate_unit_float("decay", "AccumulateNode", decay)
     return NodeDef(node_type="accumulate", params={"decay": decay})
 
 
 def RayMarchNode(steps: int = 16, direction: tuple[float, float] = (0.0, 1.0)) -> NodeDef:
+    steps = validate_positive_int("steps", "RayMarchNode", steps)
+    direction = validate_finite_2tuple("direction", "RayMarchNode", direction)
     return NodeDef(
         node_type="ray_march",
         params={"steps": steps, "direction": list(direction)},
@@ -149,6 +192,8 @@ def ForceOutputNode() -> NodeDef:
 
 
 def ReduceOutputNode(field: str = "", op: str = "sum") -> NodeDef:
+    field = validate_str("field", "ReduceOutputNode", field)
+    op = validate_enum("op", "ReduceOutputNode", op, _ENUM_PARAMS["reduce_output"]["op"])
     return NodeDef(node_type="reduce_output", params={"field": field, "op": op})
 
 
@@ -165,18 +210,32 @@ _TERMINAL_MODES: dict[str, str] = {
 
 class NodeMaterial:
     def __init__(self, name: str):
-        self.name = name
+        self.name = validate_name("name", "NodeMaterial.__init__", name)
         self._nodes: list[NodeDef] = []
         self._edges: list[dict] = []
         self._compiled_wgsl: str | None = None
         self.blend: str = "normal"
 
     def node(self, node_def: NodeDef) -> NodeDef:
+        # validate_node_def lives in _node_validation; importing here keeps
+        # the module-level import list small and avoids a circular hit on
+        # the dataclass declaration above.
+        from ._node_validation import validate_node_def
+        validate_node_def("node_def", "NodeMaterial.node", node_def)
         self._nodes.append(node_def)
         return node_def
 
     def connect(self, from_node: NodeDef, from_port: str,
                 to_node: NodeDef, to_port: str) -> "NodeMaterial":
+        from_port, to_port = validate_connect(
+            "NodeMaterial.connect",
+            self._nodes,
+            self._edges,
+            from_node,
+            from_port,
+            to_node,
+            to_port,
+        )
         self._edges.append({
             "from_node": from_node.id, "from_port": from_port,
             "to_node": to_node.id, "to_port": to_port,
