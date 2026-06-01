@@ -357,6 +357,56 @@ read-only audit is the deliverable; the deletions land next sprint.
 |---|---|---:|---|---|
 | 14 | `python/slappyengine/deform_zones.py` | 180 | `slappyengine/__init__.py` (`ZoneMap` lazy entry, line 178), `physics/deform_adapter.py:41` (dies in step 2), `event_bus.py:153` (comment only), `ui/editor/deform_panel.py:1005` (comment + Phase B uses `slappyengine.zones`), `test_deform_adapter.py`, `test_deform_modules.py`, `test_tags_zheight_deform_extras.py`, `slappyengine/tests/test_deform_zones.py` | `ZoneMap` lazy entry retargets to `slappyengine.zones.ZoneManager` OR dies (Bullet Strata's `ZoneMap` already migrated to `zones.ZoneManager` per `project_bullet_strata.md`). Dead-with-module tests. |
 
+#### Step 6 unblock progress — `CellMaterial` port — 2026-06-01
+
+Sprint 7C halted Phase D step 6 because the five legacy
+`physics/*` consumers (`body.py`, `boundary_exchange.py`,
+`pressure_multigrid.py`, `scene_loader.py`, `world.py`) still
+imported `CellMaterial` and `cell_material_for` from
+`slappyengine.deform_modes`. `_compat.py` only shimmed 6 top-level
+symbols, not these.
+
+**Status: unblocked from CellMaterial angle — `_compat.py` now
+hosts `CellMaterial` + `cell_material_for`, repointing 5 physics
+consumers.**
+
+Changes landed:
+
+* `python/slappyengine/_compat.py` — verbatim port of the
+  ``CellMaterial`` dataclass (44 fields, every default and type
+  preserved exactly so the WGSL `_pack_params` uploader keeps
+  reading the same shape) plus the ``cell_material_for(name)``
+  convenience function. ``E_effective`` and ``bond_strength``
+  properties carried over. ``cell_material_for`` delegates to
+  ``deform_modes.get_material`` while the legacy module is still
+  present, but rebuilds the result as a ``_compat.CellMaterial``
+  instance so the returned type matches the surviving class;
+  falls back to ``None`` once ``deform_modes`` is removed, which
+  every consumer already handles as "material unknown".
+* Five physics consumers repointed from `slappyengine.deform_modes`
+  to `slappyengine._compat`:
+  * `physics/body.py:14`
+  * `physics/boundary_exchange.py:51`
+  * `physics/pressure_multigrid.py:47` (TYPE_CHECKING-gated)
+  * `physics/scene_loader.py:53`
+  * `physics/world.py:29-32`
+* Regression test `tests/test_compat_cell_material.py` (5 cases):
+  no-arg construction matches verbatim defaults, field set is
+  complete, field types preserved, `cell_material_for("sand")`
+  returns a `_compat.CellMaterial`, `bond_strength` alias proxies
+  `restitution`.
+
+The `deform_modes.py` source is left in place (still WIP-only on
+master); future deletion of the four `deform_*` modules no longer
+breaks the five physics consumers. The remaining Step 6 work
+(deleting `deform_zones.py` itself) is independent of this
+sub-step and proceeds when the editor surface gate clears.
+
+**Pytest delta (gate condition).** Pre-edit: 1852 passed / 7
+failed. Post-edit: 1857 passed / 7 failed. **Delta: +5 passes
+(the 5 new `test_compat_cell_material.py` cases), 0 failure
+delta — ≥ 0 as required.**
+
 ### Step 7 — `pixel_struct.py`
 
 | # | Module | LOC | Consumers | Classification |

@@ -42,9 +42,26 @@ Scope (per ``docs/phase_d_strip_plan_2026_05_31.md`` §(b)):
   rebuild already canonicalises on ``ZoneManager``. The alias keeps
   game code (Bullet Strata's drone head/torso/legs zones) importing
   ``slappyengine.ZoneMap`` without changes.
+* ``CellMaterial`` — dataclass, ported verbatim from
+  ``deform_modes`` (Phase D step 6 unblock). The five legacy
+  ``physics/*`` consumers (``body.py``, ``boundary_exchange.py``,
+  ``pressure_multigrid.py``, ``scene_loader.py``, ``world.py``) read
+  every field by name through the per-pixel-sim shader uploader, so
+  the field set, defaults, and types are reproduced exactly. The
+  ``E_effective`` property uses a function-local import of
+  ``CELL_GRID_SIZE`` to avoid creating a circular dependency on the
+  ``physics`` subpackage from import time of ``_compat``.
+* ``cell_material_for`` — convenience function, ported verbatim from
+  ``deform_modes``. Looks up a built-in material preset by name and
+  returns its attached :class:`CellMaterial` (or ``None`` if the
+  material has no v2 cell params). Hosting it here means
+  ``physics/scene_loader.py`` no longer needs to import from
+  ``deform_modes`` to translate YAML ``material:`` strings into the
+  per-cell parameter bundle.
 """
 from __future__ import annotations
 
+import dataclasses
 import enum
 
 
@@ -55,6 +72,8 @@ __all__ = [
     "SimState",
     "DeformController",
     "ZoneMap",
+    "CellMaterial",
+    "cell_material_for",
 ]
 
 
@@ -227,6 +246,137 @@ class DeformController:
     def deactivate(self) -> None:
         """No-op in the rebuild solver."""
         self.state = SimState.STATIC
+
+
+# ---------------------------------------------------------------------------
+# CellMaterial — Phase D step 6 unblock port (verbatim from deform_modes)
+# ---------------------------------------------------------------------------
+
+
+@dataclasses.dataclass
+class CellMaterial:
+    """Per-material physical parameters driving the hierarchical-hull solver.
+
+    Architectural invariant: **material drives system evolution, not the
+    reverse**.  Every coefficient that the per-pixel kernel multiplies into
+    its stress/strain/heat/fracture equations lives here, on the material
+    — not in a global config block.
+
+    Phase D step 6: hosted here in ``_compat`` so the five legacy
+    ``physics/*`` consumers (``body.py``, ``boundary_exchange.py``,
+    ``pressure_multigrid.py``, ``scene_loader.py``, ``world.py``) survive
+    the eventual deletion of ``deform_modes.py``.  The field set is a
+    verbatim port: every name, default, and type is preserved exactly,
+    because ``physics/world.py:_pack_params`` reads them by name to fill
+    the WGSL ``PixelMaterialParams`` struct uploaded to the GPU kernel.
+    """
+    # Mechanical -----------------------------------------------------------
+    E: float = 80.0
+    # Phase D: per-material wave-crossing target (frames at 60 Hz for an
+    # elastic wave to traverse a 32-cell body grid).  Drives ``E_effective``.
+    wave_crossing_frames: float = 8.0
+    Y: float = 0.20
+    brittle_modulus: float = 999.0
+    viscosity: float = 0.95
+    torn_damping: float = 0.999
+    density_rho: float = 1.0
+    restitution: float = 0.30
+    # Per-material closing-speed threshold below which the rigid contact
+    # restitution kick is forced to zero (plastic).  Granular materials
+    # (sand, snow) opt in to a high threshold (~8.0); every other material
+    # defaults to ``0.0`` (gate disabled).
+    restitution_velocity_threshold: float = 0.0
+    # Friction (Coulomb stiction model) ----------------------------------
+    static_friction_coefficient: float = 0.4
+    kinetic_friction_coefficient: float = 0.3
+    # Bonding / fracture --------------------------------------------------
+    bond_intact_threshold: float = 0.7
+    bond_intact_slope: float = 3.0
+    brittle_damage_rate: float = 18.0
+    brittle_tear_rate: float = 15.0
+    brittle_bond_loss_rate: float = 12.0
+    brittle_stretch_amplification: float = 3.0
+    ductile_plastic_strain_rate: float = 0.4
+    ductile_poisson_ratio: float = 0.5
+    ductile_damage_rate: float = 3.0
+    tear_strength: float = 999.0
+    tear_growth_rate: float = 8.0
+    remold_rate: float = 0.0
+    # Thermal -------------------------------------------------------------
+    melt_point: float = 9.0
+    melt_anneal_rate: float = 0.98
+    melt_viscous_damping: float = 0.85
+    thermal_k: float = 4.0
+    emissivity: float = 0.002
+    thermal_softening_coefficient: float = 0.08
+    damage_weakening_coefficient: float = 0.6
+    heat_strain_energy_factor: float = 2.0
+    initial_heat: float = 0.0
+    # Fluid ---------------------------------------------------------------
+    is_fluid: bool = False
+    fluid_pressure_coupling: float = 0.5
+    fluid_pressure_smoothing: float = 0.20
+    fluid_pressure_decay: float = 0.99
+    fluid_projection_iters: int = 10
+    use_multigrid: bool = False
+    # Rendering -----------------------------------------------------------
+    radiance: float = 0.0
+    noise_overlay_amplitude: float = 0.0
+    noise_overlay_color: tuple[int, int, int] = (255, 255, 255)
+    foam_amplitude: float = 0.0
+    ripple_amplitude: float = 0.0
+
+    @property
+    def E_effective(self) -> float:
+        """Derived effective elastic modulus driving the kernel Laplacian.
+
+        ``E_effective = rho * (CELL_GRID_SIZE * 60 / wave_crossing_frames)^2``
+
+        Function-local import of ``CELL_GRID_SIZE`` avoids importing the
+        ``physics`` subpackage from ``_compat`` at module load time.
+        """
+        from slappyengine.physics.cell import CELL_GRID_SIZE  # local import
+        target = max(float(self.wave_crossing_frames), 1e-3)
+        c_grid = (float(CELL_GRID_SIZE) * 60.0) / target
+        return max(float(self.density_rho), 1e-6) * c_grid * c_grid
+
+    @property
+    def bond_strength(self) -> float:
+        """Back-compat alias for ``restitution`` (old field name)."""
+        return self.restitution
+
+
+def cell_material_for(name: str) -> "CellMaterial | None":
+    """Look up the per-cell physical params for a material by name.
+
+    Phase D step 6: hosted here in ``_compat`` so ``physics/scene_loader.py``
+    can resolve YAML ``material:`` strings without importing
+    ``deform_modes`` (which is slated for deletion).  Delegates to
+    :func:`slappyengine.deform_modes.get_material` while the legacy
+    registry is still present, rebuilding the result as a
+    :class:`_compat.CellMaterial` instance so callers receive the
+    Phase-D-survivor type — not the legacy one.  Returns ``None`` once
+    ``deform_modes`` is removed, which the consumer call sites already
+    handle (every consumer treats ``None`` as "material unknown, skip
+    per-pixel sim wiring").
+    """
+    try:
+        from slappyengine.deform_modes import get_material
+    except ImportError:
+        return None
+    mc = get_material(name)
+    if mc is None or mc.cell is None:
+        return None
+    src = mc.cell
+    # Rebuild as a _compat.CellMaterial by copying every dataclass field
+    # by name; if the legacy class ever sprouts a field that _compat
+    # doesn't know about we silently drop it (the WGSL uploader reads
+    # only the names that ``_compat.CellMaterial`` exposes).
+    kwargs = {}
+    for f in dataclasses.fields(CellMaterial):
+        if hasattr(src, f.name):
+            kwargs[f.name] = getattr(src, f.name)
+    return CellMaterial(**kwargs)
 
 
 # ---------------------------------------------------------------------------
