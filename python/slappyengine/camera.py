@@ -3,7 +3,10 @@ import math
 
 from slappyengine._camera_validation import (
     validate_finite_2tuple,
+    validate_follow_target,
+    validate_lerp,
     validate_positive_finite_float,
+    validate_positive_finite_or_none,
 )
 
 
@@ -111,10 +114,25 @@ class Camera:
             screen_w: Override viewport width in pixels.  Defaults to the
                 value stored in ``_viewport_size``.
             screen_h: Override viewport height in pixels.
+
+        Raises:
+            TypeError: if ``entity`` lacks ``.position``, or ``lerp`` /
+                ``screen_w`` / ``screen_h`` are not real numbers.
+            ValueError: if ``lerp`` is not in ``(0, 1]``, ``screen_w`` /
+                ``screen_h`` are NaN/inf/≤0, or ``entity.position`` contains
+                NaN/inf.
         """
+        validate_follow_target("entity", "Camera.follow", entity)
+        lerp = validate_lerp("lerp", "Camera.follow", lerp)
+        sw_v = validate_positive_finite_or_none(
+            "screen_w", "Camera.follow", screen_w,
+        )
+        sh_v = validate_positive_finite_or_none(
+            "screen_h", "Camera.follow", screen_h,
+        )
         vw, vh = self._viewport_size
-        sw = screen_w if screen_w is not None else vw
-        sh = screen_h if screen_h is not None else vh
+        sw = sw_v if sw_v is not None else vw
+        sh = sh_v if sh_v is not None else vh
 
         ex, ey = entity.position[0], entity.position[1]
         # target position: entity centred on screen
