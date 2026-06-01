@@ -130,9 +130,49 @@ touching anything games can see.
 
 | # | Module | LOC | Consumers | Classification |
 |---|---|---:|---|---|
-| 3 | `python/slappyengine/physics/crack_repair_adapter.py` | 258 | `physics/__init__.py` (re-export), `test_crack_repair_adapter.py` | Dead-with-module test. Adapter wraps the legacy `deform_crack` / `deform_repair` Layer2D path — both die in step 5. |
-| 4 | `python/slappyengine/physics/deform_adapter.py` | 216 | `physics/__init__.py` (re-export), `test_deform_adapter.py` | Dead-with-module test. Wraps `DeformController` (dies in step 5) and `deform_zones.ZoneMap` (dies in step 6). |
-| 5 | `python/slappyengine/physics/engine_bridge.py` | 335 | `physics/__init__.py` (re-export), `test_engine_bridge.py` | Dead-with-module test. Pure bridge to `PhysicsWorld` lifecycle hooks. |
+| 3 | `python/slappyengine/physics/crack_repair_adapter.py` | 258 | `physics/__init__.py` (re-export), `test_crack_repair_adapter.py` | Dead-with-module test. Adapter wraps the legacy `deform_crack` / `deform_repair` Layer2D path — both die in step 5. **NO-OP 2026-06-01 — file does not exist in repo.** |
+| 4 | `python/slappyengine/physics/deform_adapter.py` | 216 | `physics/__init__.py` (re-export), `test_deform_adapter.py` | Dead-with-module test. Wraps `DeformController` (dies in step 5) and `deform_zones.ZoneMap` (dies in step 6). **NO-OP 2026-06-01 — file does not exist in repo.** |
+| 5 | `python/slappyengine/physics/engine_bridge.py` | 335 | `physics/__init__.py` (re-export), `test_engine_bridge.py` | Dead-with-module test. Pure bridge to `PhysicsWorld` lifecycle hooks. **NO-OP 2026-06-01 — file does not exist in repo.** |
+
+#### Step 2 execution finding — 2026-06-01
+
+A retry of Phase D step 2 (bridge-shim deletion) was attempted on
+2026-06-01. The pre-strip audit found that none of the three target
+modules (`crack_repair_adapter.py`, `deform_adapter.py`,
+`engine_bridge.py`) exist in the repository:
+
+* `git ls-tree HEAD python/slappyengine/physics/` does not include any
+  of the three filenames.
+* `Glob("**/crack_repair_adapter.py")`, `Glob("**/deform_adapter.py")`,
+  and `Glob("**/engine_bridge.py")` return zero matches across the full
+  repo (main repo + worktrees).
+* `git log --all -S "crack_repair_adapter"` and the same for the other
+  two strings return only docs (`phase_d_strip_plan_2026_05_31.md`,
+  `strip_pass_v2_audit.md`) and the `tests/test_strip_audit_doc.py`
+  inventory list — never an actual source file commit.
+* `python/slappyengine/physics/__init__.py` does not import or
+  re-export any of the three names (last import is `frontier`).
+* No test files `test_crack_repair_adapter.py`, `test_deform_adapter.py`,
+  or `test_engine_bridge.py` exist anywhere.
+* `grep -rn` for `from slappyengine.physics.{crack_repair_adapter,deform_adapter,engine_bridge}`
+  finds zero matches in `python/`, `tests/`, `examples/`, `docs/`
+  (excluding the dry-run plan/audit docs themselves).
+
+**Cut result.** Per-module:
+* `crack_repair_adapter.py` — NO-OP (file absent, no consumers, no test).
+* `deform_adapter.py` — NO-OP (file absent, no consumers, no test).
+* `engine_bridge.py` — NO-OP (file absent, no consumers, no test).
+
+The Step 2 row classifications in the table above were written from the
+plan-time inventory snapshot; the actual repository at HEAD never
+contained these files. Step 2 is therefore complete as a no-op. The
+pre-strip baseline (`pytest tests/ --ignore=tests/visual/test_vis_humanoid_destruction.py`)
+recorded **1541 passed / 18 failed / 22 skipped / 29 xfailed** on
+2026-06-01; the 18 reds are pre-existing (ragdoll dynamics, docs link
+parity, editor material kinds, perf bands, softbody vehicle visual) and
+unrelated to bridge-shim presence. No post-strip pytest re-run is
+required because no files were modified. Deleted-test-count delta = 0;
+expected pass-count delta = 0 (vacuously satisfied).
 
 ### Step 3 — Repackaged-core legacy wrappers (numerical core survives elsewhere)
 
