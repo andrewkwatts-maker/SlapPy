@@ -162,7 +162,7 @@ class MeshRenderer:
         self._pipeline.ensure_depth_texture(width, height)
 
         encoder = device.create_command_encoder(label="mesh_render_to_texture_enc")
-        with encoder.begin_render_pass(
+        rp = encoder.begin_render_pass(
             color_attachments=[
                 {
                     "view": color_view,
@@ -180,8 +180,11 @@ class MeshRenderer:
                 "stencil_load_op": "load",
                 "stencil_store_op": "discard",
             },
-        ) as rp:
+        )
+        try:
             self.draw(rp)
+        finally:
+            rp.end()
 
         self._gpu.queue.submit([encoder.finish()])
         return color_tex

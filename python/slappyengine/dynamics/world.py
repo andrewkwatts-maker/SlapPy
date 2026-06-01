@@ -10,10 +10,21 @@ treated as a kinematic anchor.
 """
 from __future__ import annotations
 
+import math
 import warnings
 from typing import Any
 
 import numpy as np
+
+from ._validation import (
+    validate_body,
+    validate_dt,
+    validate_gravity,
+    validate_joint,
+    validate_mass,
+    validate_position,
+    validate_solver_iterations,
+)
 
 
 def estimate_effective_damping(damping: float, iters: int) -> float:
@@ -89,6 +100,7 @@ class World:
     warn_overdamping: bool = True
 
     def __init__(self, gravity: tuple[float, float] = (0.0, -9.81)) -> None:
+        gx, gy = validate_gravity("gravity", "World.__init__", gravity)
         # Geometry / mass
         self.positions: np.ndarray = np.zeros((0, 2), dtype=np.float64)
         self.prev_positions: np.ndarray = np.zeros((0, 2), dtype=np.float64)
@@ -98,8 +110,12 @@ class World:
         self.bodies: list[Any] = []
         self.joints: list[Any] = []
         # Tuning
-        self.gravity = np.asarray(gravity, dtype=np.float64)
-        self.solver_iterations: int = 8
+        self.gravity = np.asarray((gx, gy), dtype=np.float64)
+        # ``_solver_iterations`` is the backing field for the validated
+        # property below. Set the private attr directly here so the
+        # property setter doesn't run before the instance is finished
+        # initialising.
+        self._solver_iterations: int = 8
         # Time tracking
         self.frame: int = 0
         # Overdamping diagnostics: cache (joint_id, iters, damping) tuples we
@@ -107,31 +123,112 @@ class World:
         self.warn_overdamping: bool = True
         self._overdamp_warned: set[tuple[int, int, float]] = set()
 
+    # --------------------------------------------------------- solver_iterations
+    @property
+    def solver_iterations(self) -> int:
+        """Number of XPBD passes per :meth:`step`.
+
+        Validated at assignment so a typo like ``world.solver_iterations
+        = 1e6`` fails loudly at the authoring site instead of grinding
+        the solver to a halt several frames later.
+        """
+        return self._solver_iterations
+
+    @solver_iterations.setter
+    def solver_iterations(self, value: Any) -> None:
+        self._solver_iterations = validate_solver_iterations(
+            "solver_iterations", "World.solver_iterations", value
+        )
+
     # ------------------------------------------------------------------ nodes
     def add_node(self, pos: tuple[float, float], mass: float = 1.0) -> int:
-        """Append a node, returning its absolute index. ``mass == 0`` pins it."""
+        """Append a node, returning its absolute index. ``mass == 0`` pins it.
+
+        Raises
+        ------
+        TypeError
+            If ``pos`` is not a 2-sequence of floats or ``mass`` is not a
+            real number.
+        ValueError
+            If ``pos`` contains NaN/inf or ``mass`` is NaN/inf/negative.
+        """
+        x, y = validate_position("pos", "World.add_node", pos)
+        m = validate_mass("mass", "World.add_node", mass)
         idx = self.positions.shape[0]
-        p = np.asarray(pos, dtype=np.float64).reshape(1, 2)
+        p = np.asarray((x, y), dtype=np.float64).reshape(1, 2)
         self.positions = np.vstack([self.positions, p])
         self.prev_positions = np.vstack([self.prev_positions, p])
         self.velocities = np.vstack(
             [self.velocities, np.zeros((1, 2), dtype=np.float64)]
         )
-        inv_m = 0.0 if mass <= 0.0 else 1.0 / mass
+        inv_m = 0.0 if m <= 0.0 else 1.0 / m
         self.inv_masses = np.append(self.inv_masses, inv_m)
         return idx
 
     def add_nodes(
         self, positions: np.ndarray, masses: np.ndarray | float = 1.0
     ) -> tuple[int, int]:
-        """Bulk-append nodes. Returns ``(offset, count)``."""
-        positions = np.asarray(positions, dtype=np.float64).reshape(-1, 2)
+        """Bulk-append nodes. Returns ``(offset, count)``.
+
+        Raises
+        ------
+        TypeError
+            If ``positions`` is not array-coercible to ``(N, 2)`` floats
+            or ``masses`` is neither a scalar nor a length-``N`` array.
+        ValueError
+            If any entry of ``positions`` is non-finite, ``masses`` is
+            negative / NaN / inf, or ``masses`` is an array whose length
+            does not match ``positions``.
+        """
+        if positions is None:
+            raise TypeError(
+                "World.add_nodes: positions must be array-like; got None"
+            )
+        try:
+            positions = np.asarray(positions, dtype=np.float64).reshape(-1, 2)
+        except (TypeError, ValueError) as exc:
+            raise TypeError(
+                f"World.add_nodes: positions must be array-coercible to "
+                f"(N, 2) floats; got {type(positions).__name__}"
+            ) from exc
+        if not np.isfinite(positions).all():
+            raise ValueError(
+                "World.add_nodes: positions must be finite "
+                "(no NaN or inf entries)"
+            )
         n = positions.shape[0]
         offset = self.positions.shape[0]
+        if isinstance(masses, bool):
+            raise TypeError(
+                "World.add_nodes: masses must be a real number or array; "
+                "got bool"
+            )
         if np.isscalar(masses):
-            mass_arr = np.full((n,), float(masses), dtype=np.float64)
+            m_scalar = validate_mass("masses", "World.add_nodes", masses)
+            mass_arr = np.full((n,), m_scalar, dtype=np.float64)
         else:
-            mass_arr = np.asarray(masses, dtype=np.float64).reshape(-1)
+            try:
+                mass_arr = np.asarray(masses, dtype=np.float64).reshape(-1)
+            except (TypeError, ValueError) as exc:
+                raise TypeError(
+                    f"World.add_nodes: masses must be array-coercible to "
+                    f"floats; got {type(masses).__name__}"
+                ) from exc
+            if mass_arr.shape[0] != n:
+                raise ValueError(
+                    f"World.add_nodes: masses length {mass_arr.shape[0]} "
+                    f"does not match positions length {n}"
+                )
+            if not np.isfinite(mass_arr).all():
+                raise ValueError(
+                    "World.add_nodes: masses must be finite "
+                    "(no NaN or inf entries)"
+                )
+            if (mass_arr < 0.0).any():
+                raise ValueError(
+                    "World.add_nodes: masses must be >= 0; "
+                    "got at least one negative entry"
+                )
         inv_m = np.where(mass_arr <= 0.0, 0.0, 1.0 / np.where(mass_arr > 0, mass_arr, 1.0))
         self.positions = np.vstack([self.positions, positions])
         self.prev_positions = np.vstack([self.prev_positions, positions.copy()])
@@ -143,11 +240,72 @@ class World:
 
     # ----------------------------------------------------------------- bodies
     def register_body(self, body: Any) -> Any:
+        """Register a :class:`Body` with the world.
+
+        Raises
+        ------
+        TypeError
+            If ``body`` is not a :class:`Body` instance.
+        ValueError
+            If ``body`` is already registered (same ``id``), or if its
+            node slice (``node_offset``..``node_offset + node_count``)
+            extends past the world's current node count.
+        """
+        validate_body("body", "World.register_body", body)
+        for existing in self.bodies:
+            if existing is body:
+                raise ValueError(
+                    f"World.register_body: body id={id(body)} "
+                    f"(label={body.label!r}) is already registered"
+                )
+        n_nodes = self.positions.shape[0]
+        node_offset = int(body.node_offset)
+        node_count = int(body.node_count)
+        if node_offset < 0:
+            raise ValueError(
+                f"World.register_body: body.node_offset must be >= 0; "
+                f"got {node_offset}"
+            )
+        if node_count < 0:
+            raise ValueError(
+                f"World.register_body: body.node_count must be >= 0; "
+                f"got {node_count}"
+            )
+        if node_count > 0 and node_offset + node_count > n_nodes:
+            raise ValueError(
+                f"World.register_body: body node slice "
+                f"[{node_offset}, {node_offset + node_count}) extends "
+                f"past world node count {n_nodes}; add the nodes first"
+            )
         self.bodies.append(body)
         return body
 
     # ----------------------------------------------------------------- joints
     def add_joint(self, joint: Any) -> Any:
+        """Append a :class:`JointSpec` to the world's constraint list.
+
+        Raises
+        ------
+        TypeError
+            If ``joint`` is not a :class:`JointSpec` instance.
+        ValueError
+            If ``joint.node_a`` or ``joint.node_b`` index a node that has
+            not yet been added to the world (>= ``len(positions)``).
+        """
+        validate_joint("joint", "World.add_joint", joint)
+        n_nodes = self.positions.shape[0]
+        if joint.node_a >= n_nodes:
+            raise ValueError(
+                f"World.add_joint: joint.node_a={joint.node_a} references "
+                f"a node that does not exist (world has {n_nodes} nodes); "
+                f"add the node first"
+            )
+        if joint.node_b >= n_nodes:
+            raise ValueError(
+                f"World.add_joint: joint.node_b={joint.node_b} references "
+                f"a node that does not exist (world has {n_nodes} nodes); "
+                f"add the node first"
+            )
         self.joints.append(joint)
         return joint
 
@@ -216,7 +374,15 @@ class World:
            :func:`slappyengine.dynamics.joint.resolve` to project each
            constraint.
         3. Recover velocity from the position delta.
+
+        Raises
+        ------
+        TypeError
+            If ``dt`` is not a real number (bool refused).
+        ValueError
+            If ``dt`` is NaN/inf, ≤ 0, or > 1.0 second.
         """
+        dt = validate_dt("dt", "World.step", dt)
         self._check_overdamping()
         if self.positions.shape[0] == 0:
             self.frame += 1

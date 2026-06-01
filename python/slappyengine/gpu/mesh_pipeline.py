@@ -23,7 +23,13 @@ class MeshPipeline:
     Bind-group layout:
         group(0) binding(0) — MeshUniforms (model + view + proj + normal_matrix,
                                4 × mat4x4<f32> = 256 bytes)
-        group(1) binding(0) — PBR material uniform (48 bytes, see PbrMaterial.to_gpu_bytes)
+        group(1) binding(0) — PBR material uniform (64 bytes, see PbrMaterial.to_gpu_bytes)
+
+    Fragment shader: ``mesh_frag_pbr_simple.wgsl``.  This is a stripped-down
+    PBR shader whose declared bindings exactly match the layout above —
+    intentionally without textures, dynamic lights, or IBL.  The full
+    ``mesh_frag_pbr.wgsl`` is reserved for the clustered/IBL pipelines that
+    bind the extra resources required by those bindings.
     """
 
     def __init__(self, device: wgpu.GPUDevice, output_format: str) -> None:
@@ -47,10 +53,14 @@ class MeshPipeline:
         device = self._device
 
         vert_src = (SHADER_DIR / "mesh_vert_3d.wgsl").read_text(encoding="utf-8")
-        frag_src = (SHADER_DIR / "mesh_frag_pbr.wgsl").read_text(encoding="utf-8")
+        # NOTE: use the *simple* PBR fragment shader whose declared bindings
+        # match the pipeline layout below (group(0).0 mesh, group(1).0 material).
+        # `mesh_frag_pbr.wgsl` additionally declares textures + lights + IBL on
+        # group(1)/group(2); those are wired by the clustered/IBL pipelines.
+        frag_src = (SHADER_DIR / "mesh_frag_pbr_simple.wgsl").read_text(encoding="utf-8")
 
         vert_mod = device.create_shader_module(code=vert_src, label="mesh_vert_3d")
-        frag_mod = device.create_shader_module(code=frag_src, label="mesh_frag_pbr")
+        frag_mod = device.create_shader_module(code=frag_src, label="mesh_frag_pbr_simple")
 
         # --- Bind group layout 0: MeshUniforms uniform ---------------------------
         # model + view + proj + normal_matrix = 4 × mat4x4<f32> = 256 bytes
