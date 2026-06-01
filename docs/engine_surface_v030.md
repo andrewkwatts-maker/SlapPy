@@ -9,7 +9,7 @@ v0.3 is the first "Rust engine, Python wrapper" release. Hot paths are
 native; Python is glue, ergonomics, and config. Ships on PyPI as
 `slappy-engine`.
 
-* Engine version (runtime): `0.1.0`
+* Engine version (runtime): `0.3.0b0`
 * Native `_core` available: `True`
 * Top-level names in `__all__`: **75**
 * Declared subpackages: **21**
@@ -243,9 +243,9 @@ Compute subpackage — lazy-loaded to avoid eager wgpu/numpy imports.
 
 Unified dynamics primitives layered on top of the XPBD substrate.
 
-**Public attributes:** `Body`, `BoneSpec`, `IKChainSpec`, `JointSpec`, `KIND_PARAM_KEYS`, `Material`, `MotorSpec`, `OVERDAMPING_THRESHOLD`, `RagdollSpec`, `RopeSpec`, `SCHEMA_VERSION`, `SoftBodyWorld`, `SpringSpec`, `World`, `body`, `build_ragdoll`, `build_rope`, `estimate_effective_damping`, `ik`, `joint`, `load_world`, `make_motor`, `make_spring`, `material`, `motor`, `ragdoll`, `resolve_joint`, `rope`, `save_world`, `serialize`, `solve_ik`, `spring`, `world`, `world_from_dict`, `world_to_dict`
+**Public attributes:** `Body`, `BoneSpec`, `Humanoid`, `IKChainSpec`, `JointSpec`, `KIND_PARAM_KEYS`, `LAYER_BONE`, `LAYER_MUSCLE`, `LAYER_SKIN`, `Material`, `MotorSpec`, `OVERDAMPING_THRESHOLD`, `RagdollSpec`, `RopeSpec`, `SCHEMA_VERSION`, `SoftBodyWorld`, `SpringSpec`, `World`, `body`, `build_ragdoll`, `build_rope`, `estimate_effective_damping`, `humanoid`, `ik`, `joint`, `load_world`, `make_humanoid`, `make_motor`, `make_spring`, `material`, `motor`, `place_feet_on_terrain`, `ragdoll`, `resolve_joint`, `rope`, `save_world`, `serialize`, `solve_ik`, `spring`, `world`, `world_from_dict`, `world_to_dict`, `wrap_in_flesh`
 
-**Inner modules:** `_validation`, `body`, `ik`, `joint`, `material`, `motor`, `ragdoll`, `rope`, `serialize`, `spring`, `world`
+**Inner modules:** `_validation`, `body`, `humanoid`, `ik`, `joint`, `material`, `motor`, `ragdoll`, `rope`, `serialize`, `spring`, `world`
 
 ### `slappyengine.ext`
 

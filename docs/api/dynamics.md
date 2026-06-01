@@ -54,6 +54,42 @@ BoneSpec(parent_idx: 'int' = -1, length: 'float' = 1.0, mass: 'float' = 1.0, ang
 
 - `ValueError` — If ``length <= 0``, ``mass <= 0``, ``angle_limit`` is mis-shaped or has ``min > max``, or ``direction`` is mis-shaped.
 
+### `Humanoid`
+
+_dataclass — defined in `slappyengine.dynamics.humanoid`_
+
+Named handle returned by :func:`make_humanoid`.
+
+#### Constructor signature
+
+```python
+Humanoid(pelvis: 'int' = -1, neck: 'int' = -1, head: 'int' = -1, shoulder_l: 'int' = -1, elbow_l: 'int' = -1, wrist_l: 'int' = -1, shoulder_r: 'int' = -1, elbow_r: 'int' = -1, wrist_r: 'int' = -1, hip_l: 'int' = -1, knee_l: 'int' = -1, ankle_l: 'int' = -1, hip_r: 'int' = -1, knee_r: 'int' = -1, ankle_r: 'int' = -1, node_slice: 'tuple[int, int]' = (0, 0), beam_slice: 'tuple[int, int]' = (0, 0), body_id: 'int' = 0, bone_lengths: 'dict[str, float]' = <factory>, flesh_node_slices: 'dict[str, tuple[int, int]]' = <factory>, flesh_beam_slices: 'dict[str, tuple[int, int]]' = <factory>) -> None
+```
+
+#### Fields
+
+- `ankle_l: int` — default `-1`
+- `ankle_r: int` — default `-1`
+- `beam_slice: tuple[int, int]` — default `(0, 0)`
+- `body_id: int` — default `0`
+- `bone_lengths: dict[str, float]` — default factory
+- `elbow_l: int` — default `-1`
+- `elbow_r: int` — default `-1`
+- `flesh_beam_slices: dict[str, tuple[int, int]]` — default factory
+- `flesh_node_slices: dict[str, tuple[int, int]]` — default factory
+- `head: int` — default `-1`
+- `hip_l: int` — default `-1`
+- `hip_r: int` — default `-1`
+- `knee_l: int` — default `-1`
+- `knee_r: int` — default `-1`
+- `neck: int` — default `-1`
+- `node_slice: tuple[int, int]` — default `(0, 0)`
+- `pelvis: int` — default `-1`
+- `shoulder_l: int` — default `-1`
+- `shoulder_r: int` — default `-1`
+- `wrist_l: int` — default `-1`
+- `wrist_r: int` — default `-1`
+
 ### `IKChainSpec`
 
 _dataclass — defined in `slappyengine.dynamics.ik`_
@@ -310,6 +346,12 @@ Read a JSON world file and deserialise it.
 - `ValueError` — If ``path`` does not end in ``.json``, the file is not valid JSON, or the contents do not describe a well-formed world.
 - `FileNotFoundError` — If ``path`` does not exist.
 
+### `make_humanoid(world, root_position: 'tuple[float, float]' = (0.0, 1.0), *, proportions: 'dict[str, float] | None' = None, bone_mass: 'float' = 1.0, head_mass: 'float' = 1.5, bone_stiffness: 'float' = 5000000.0, bone_damping: 'float' = 0.05, bone_break_strain: 'float' = 0.25) -> 'Humanoid'`
+
+_defined in `slappyengine.dynamics.humanoid`_
+
+Spawn a 13-node humanoid skeleton in ``world``.
+
 ### `make_motor(hub: 'int', rim_a: 'int', rim_b: 'int', target_omega: 'float', max_torque: 'float', radius: 'float' = 0.0, axis: 'tuple[float, float]' = (1.0, 0.0), stiffness: 'float' = 100000000.0, damping: 'float' = 0.02) -> 'JointSpec'`
 
 _defined in `slappyengine.dynamics.motor`_
@@ -331,6 +373,12 @@ Build a spring constraint between two nodes.
 
 - `TypeError` — If ``node_a`` or ``node_b`` is not int-coercible.
 - `ValueError` — If indices are negative or equal, ``rest_length < 0``, ``stiffness <= 0``, or ``damping`` is outside ``[0, 1]``.
+
+### `place_feet_on_terrain(world, humanoid: 'Humanoid', terrain_height_fn: 'Callable[[float], float]', *, pelvis_height_above_terrain: 'float' = 0.9, max_iterations: 'int' = 4, tolerance: 'float' = 0.005) -> 'bool'`
+
+_defined in `slappyengine.dynamics.humanoid`_
+
+Adjust pelvis + legs so both ankles plant on the terrain surface.
 
 ### `resolve_joint(joint: 'JointSpec', world: "'World'", dt: 'float') -> 'float'`
 
@@ -380,6 +428,12 @@ Serialise ``world`` into a JSON-compatible dict.
 
 - `TypeError` — If ``world`` is not a :class:`World`.
 
+### `wrap_in_flesh(world, humanoid: 'Humanoid', *, muscle_offset: 'float' = 0.1, skin_offset: 'float' = 0.18, muscle_stiffness: 'float' = 1000000.0, skin_stiffness: 'float' = 250000.0, muscle_damping: 'float' = 0.05, skin_damping: 'float' = 0.05, flesh_break_strain: 'float' = 0.18) -> 'Humanoid'`
+
+_defined in `slappyengine.dynamics.humanoid`_
+
+Wrap a humanoid skeleton in muscle (layer 1) + skin (layer 2) shells.
+
 ## Constants
 
 ### `KIND_PARAM_KEYS`
@@ -387,6 +441,24 @@ Serialise ``world`` into a JSON-compatible dict.
 _dict — defined in `slappyengine.dynamics`_
 
 Value: `{'distance': set(), 'spring': set(), 'weld': {'rest_offset'}, 'ball': set(), ...`
+
+### `LAYER_BONE`
+
+_int — defined in `slappyengine.dynamics`_
+
+Value: `0`
+
+### `LAYER_MUSCLE`
+
+_int — defined in `slappyengine.dynamics`_
+
+Value: `1`
+
+### `LAYER_SKIN`
+
+_int — defined in `slappyengine.dynamics`_
+
+Value: `2`
 
 ### `OVERDAMPING_THRESHOLD`
 
@@ -403,6 +475,7 @@ Value: `1`
 ## Inner modules
 
 - `slappyengine.dynamics.body`
+- `slappyengine.dynamics.humanoid`
 - `slappyengine.dynamics.ik`
 - `slappyengine.dynamics.joint`
 - `slappyengine.dynamics.material`
