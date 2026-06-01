@@ -41,7 +41,42 @@ green** (see §d for the exact pytest gate).
 | # | Module | LOC | Consumers (main repo, non-worktree) | Classification |
 |---|---|---:|---|---|
 | 1 | `python/slappyengine/physics/frontier.py` | 361 | `physics/__init__.py` (re-export), `physics/world.py` (lines 43, 194, 326-373, 490, 718-731, 825-844) + 4 tests (`test_frontier.py`, `test_phase_a_activation.py`, `test_nan_guards.py`, `test_phase_b_residency.py`) | `world.py` keeps a `frontier.enabled` flag for tests; once `world.py` itself dies (Phase D step 9) the flag dies with it. `test_frontier.py` is dead-with-module. The other three tests only touch `world.config.frontier.enabled = False` — purely defensive flag flips that come out with `world.py`. **BLOCKED 2026-05-31 — see "Step 1 blocker found" callout below.** |
-| 2 | `python/slappyengine/physics/granular_render.py` | 344 | `physics/__init__.py` (re-export) only | Superseded by `fluid.render.FluidRenderer`. Zero non-physics callers. |
+| 2 | `python/slappyengine/physics/granular_render.py` | 344 | `physics/__init__.py` (re-export) only | Superseded by `fluid.render.FluidRenderer`. Zero non-physics callers. **NO-OP 2026-06-01 — file was never tracked on master.** Audit confirmed: `git log --all --full-history -- "**/granular_render.py"` returns empty; `physics/__init__.py` already has no re-export (lines 4-42); `tests/visual/test_vis_granular.py` and `tests/visual/output/granular/` do not exist. The 344/134 LOC figures from the plan refer to a worktree-local artefact that never landed on master. Step 2 is closed as **NOTHING TO DELETE** rather than DONE — no commit hash. See "Step 2 no-op audit" subsection below for evidence. |
+
+#### Step 2 no-op audit — 2026-06-01
+
+Step 2 execution attempted on 2026-06-01 found the target files absent
+from the worktree, the main repo HEAD, and all of git history:
+
+| Target | Status | Evidence |
+|---|---|---|
+| `python/slappyengine/physics/granular_render.py` | absent | `ls` fails; `git log --all --full-history -- "**/granular_render.py"` empty |
+| `tests/visual/test_vis_granular.py` | absent | `ls` fails; `git log --all --full-history -- "**/test_vis_granular.py"` empty |
+| `tests/visual/output/granular/` | absent | dir not in `tests/visual/output/` listing |
+| `physics/__init__.py` re-export | absent | no `granular_render` import in lines 4-42 of `physics/__init__.py` |
+| Any production consumer | none | `grep -rn "granular_render" python/slappyengine/` → 0 hits |
+
+The only surviving references to the string `granular_render` are:
+
+- `docs/strip_pass_v2_audit.md` (the audit doc that flagged it)
+- `docs/phase_d_strip_plan_2026_05_31.md` (this plan)
+- `tests/test_strip_audit_doc.py:52` (audit-tracking constant — meta, not a consumer)
+- four `.claude/worktrees/agent-*` stale mirrors (out of scope per
+  rollback policy in §(d))
+
+**Pre-strip pytest baseline (2026-06-01):** 8 failed, 1552 passed, 21
+skipped, 29 xfailed, 2 warnings in 55.42s (with
+`--ignore=tests/visual/test_vis_humanoid_destruction.py`). The 8
+failures are unrelated to `granular_render` (editor material editor
+kinds, vcycle perf, softbody vehicle visual, etc.); they pre-date this
+step.
+
+**Post-strip pytest:** skipped — there are no source edits to verify.
+Pass-count delta is exactly 0, matching the deleted-test count of 0.
+
+**Action taken:** documentation-only update to this plan (replacing the
+incorrect "DONE — commit `<pending>`" entry with the no-op finding).
+No engine code touched. No tests touched.
 
 #### Step 1 blocker found — 2026-05-31
 
