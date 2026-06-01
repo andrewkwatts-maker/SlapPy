@@ -65,6 +65,9 @@ and are skipped by the generator.
 
 | Path | Description |
 |---|---|
+| [`api/animation.md`](api/animation.md) | Hand-authored API reference for `slappyengine.animation` (AnimationGraph state machine + AnimState/AnimTransition/AnimUpdate, ProceduralRig dot-rigging + ControlPoint, video-frame import via `[video]` extra). |
+| [`api/audio_runtime.md`](api/audio_runtime.md) | Hand-authored API reference for `slappyengine.audio_runtime` (sounddevice soft-import shim — AudioBackend protocol, real / stub backend selection, single-warning fallback, sample-rate forwarding). |
+| [`api/compute.md`](api/compute.md) | Hand-authored API reference for `slappyengine.compute` (ComputePass/ComputePipeline dispatch, ReadbackBuffer staging, StatsCompute + SpatialCompute reductions, PixelMutator bulk mutation, AssetComputeAPI / PixelAPI per-asset facade). |
 | [`api/dynamics.md`](api/dynamics.md) | Auto-generated API reference for `slappyengine.dynamics` (Body, Material, JointSpec, RopeSpec, RagdollSpec, IKChainSpec, World, SoftBodyWorld, build_*, make_*, solve_ik, resolve_joint, save_world, load_world). |
 | [`api/gi.md`](api/gi.md) | Hand-authored API reference for `slappyengine.gi` (radiance cascades, ReSTIR reservoir reuse, SVGF denoiser — GPU + CPU paths). |
 | [`api/iso.md`](api/iso.md) | Hand-authored API reference for `slappyengine.iso` (IsoCamera, IsoCell, IsoEntity, IsoGrid, IsoScene, IsoTileDef, IsoViewpoint, plus the `iso.combat` Stone Keep module). |
