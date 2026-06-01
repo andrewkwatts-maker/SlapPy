@@ -35,6 +35,41 @@ import sys
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _restore_slappyengine_modules():
+    """Snapshot ``sys.modules`` for ``slappyengine.*`` and restore on teardown.
+
+    Every test in this file calls :func:`_purge_modules` to force a clean
+    re-import of ``slappyengine``. Without restoring the originals,
+    downstream tests that captured class identities at module-import time
+    (e.g. ``from slappyengine.dynamics import JointSpec``) end up holding
+    pre-purge classes while the engine's internal validators look up the
+    *new* post-purge classes via lazy import — producing confusing
+    ``isinstance`` failures like ``"must be a JointSpec; got JointSpec"``.
+
+    The known victims that captured this regression were
+    ``tests/test_studio_dynamics_stage.py`` (4 tests) and
+    ``tests/visual/test_vis_ragdoll.py`` (1 test).
+    """
+    saved = {
+        name: mod
+        for name, mod in sys.modules.items()
+        if name == "slappyengine" or name.startswith("slappyengine.")
+    }
+    try:
+        yield
+    finally:
+        # Drop anything we created during the test, then restore the
+        # originals so class identities survive across the test boundary.
+        current = [
+            name for name in sys.modules
+            if name == "slappyengine" or name.startswith("slappyengine.")
+        ]
+        for name in current:
+            del sys.modules[name]
+        sys.modules.update(saved)
+
+
 # Names of the legacy modules that MUST NOT be auto-imported by
 # ``import slappyengine`` or by ``dir(slappyengine)``. Phase D step 5+
 # deletes these modules outright; once that lands, leaving them in
