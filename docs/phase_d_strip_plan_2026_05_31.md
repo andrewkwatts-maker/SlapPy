@@ -256,6 +256,92 @@ unblocked from the lazy-map angle; the remaining blocker is the
 `ui/editor/deform_panel.py` decommissioning called out in §(d)
 "Editor surface gate".
 
+#### Step 5 prerequisite audit — `deform_panel.py` consumer surface — 2026-06-01
+
+Read-only audit of every `from slappyengine.deform_modes import` site in
+`python/slappyengine/ui/editor/deform_panel.py`. Outcome: **the panel is
+the *only* non-test, non-`physics/` consumer left** for the
+deform-modes / deform-controller / deform-crack / deform-repair family
+on master HEAD. The `examples/legacy/physics_materials_gallery_demo.py`
+import (`from slappyengine.deform_modes import list_materials`) is in
+the `examples/legacy/` directory, which is already marked for retirement
+in the v0.3 cleanup pass and will be co-deleted with `deform_modes.py`.
+
+**Caller audit beyond `deform_panel.py`** (per task §4):
+
+| Site | Status |
+|---|---|
+| `physics/body.py:14`, `physics/boundary_exchange.py:51`, `physics/pressure_multigrid.py:47`, `physics/scene_loader.py:53`, `physics/world.py:29` | Dies in Step 9 (`physics/` core sweep). NOT a Step 5 blocker. |
+| `examples/legacy/physics_materials_gallery_demo.py:38` | `examples/legacy/` is retired surface; co-delete with Step 5. |
+| `python/slappyengine/tests/test_deform_modes.py`, `tests/test_deform_controller.py` | Dead-with-module tests. Co-delete with Step 5. |
+| `tests/test_game_smoke_instantiation.py:42-47` | Probes legacy module paths by name — already resolved through `_compat` via the `slappyengine` top-level surface (Step 4 lazy-map gate). After Step 5 the assertions in `IMPORT_TABLE` need their module string flipped to `"slappyengine._compat"`. One-line per-symbol edit. |
+| `tests/test_init_lazy_map.py` | Already pins the decoupling; survives Step 5 unchanged. |
+| `tests/test_strip_audit_doc.py:53-56` | Audit-tracking inventory list; co-edit with Step 5 to mark the four files removed. |
+| `docs/per_pixel_sim_audit_2026_05_31.md:27,53`, `docs/physics_module.md:108`, `docs/strip_pass_v2_audit.md` | Docs only; update on Step 5 commit. |
+| `python/slappyengine/ui/editor/deform_panel.py` | **The sole remaining production consumer.** 16 imports — see per-import table below. |
+
+**Per-import migration table for `deform_panel.py`** (every
+`from slappyengine.deform_modes import …` line):
+
+| Line | Imports | Used in | Migration target |
+|---|---|---|---|
+| 146 | `MaterialPreset`, `list_materials` | `_build_material_section` — combo of all material names | `MaterialPreset` → `slappyengine._compat.MaterialPreset` (name-only). `list_materials` is the only call site outside `deform_modes`; replace with `sorted(softbody.material.MATERIALS.keys())` (and optionally union `fluid.material.MATERIALS`). |
+| 172 | `DeformSimMode`, `DecayMode` | `_build_simulation_section` combos | Retired enums — no replacement (sim-mode/decay-mode state machine is gone in the rebuild solver). Whole section dies with the panel. |
+| 349 | `CrackMode` | `_build_cracks_section` combo | `slappyengine._compat.CrackMode` (name-only stub). Crack-mode feature itself is retired; the section UI dies with the panel. |
+| 367 | `MATERIAL_CONFIGS`, `MaterialPreset` | Fallback to read `crack_mode` from preset config | No replacement — `MATERIAL_CONFIGS` is `deform_modes`-internal; the fallback path dies with the panel. |
+| 419 | `DestroyMode` | `_build_destruction_section` combo | Retired enum. Section dies with the panel. |
+| 443 | `PhysicsCoupling` | `_build_physics_section` combo | Retired enum. Section dies with the panel. |
+| 467 | `RepairMode` | `_build_repair_section` combo | Retired enum (`AUTO`/`AUTO_CURVE` rates are gone). Section dies with the panel. |
+| 513 | `get_material`, `MaterialPreset` | `_on_material_preset_change` callback | `get_material` lives only in `deform_modes`; rebuild equivalent is `softbody.material.MATERIALS.get(name)`. Callback dies with the panel. |
+| 550 | `DeformSimMode` | `_on_sim_mode_change` callback | Retired enum. Callback dies with the panel. |
+| 559 | `DecayMode` | `_on_decay_mode_change` callback | Retired enum. Callback dies with the panel. |
+| 599 | `CrackMode` | `_on_crack_mode_change` callback | `_compat.CrackMode`. Callback dies with the panel. |
+| 627 | `DestroyMode` | `_on_destroy_mode_change` callback | Retired enum. Callback dies with the panel. |
+| 636 | `PhysicsCoupling` | `_on_physics_coupling_change` callback | Retired enum. Callback dies with the panel. |
+| 645 | `RepairMode` | `_on_repair_mode_change` callback | Retired enum. Callback dies with the panel. |
+| 815 | `list_materials` | `_build_zone_section` material dropdown (`ZoneEditorPanel`) | `sorted(softbody.material.MATERIALS.keys())`. The Zone editor is the only sub-panel with a real survivor path — see proposal. |
+| 978 | `MaterialPreset` | `_make_zone_material_cb` callback | `_compat.MaterialPreset(app_data)` (name-only resolution). Sub-panel survivor path. |
+
+**Decision.** 14 of 16 imports map to retired features whose **UI dies
+with the panel**; the only ones with a real replacement are
+`list_materials` (146, 815) and `MaterialPreset`/`get_material` (146,
+513, 978). All three legacy callers are already shimmed via
+`slappyengine._compat`, so a partial port of `deform_panel.py` would
+duplicate `_compat` surface inside the panel without unblocking
+deletion of any other file.
+
+**Proposal — next sprint:**
+
+1. **Decommission `python/slappyengine/ui/editor/deform_panel.py`**
+   wholesale. Both classes (`DeformPanel`, `ZoneEditorPanel`) are
+   retired-feature inspectors; their replacement is the property
+   inspector wired against `softbody.Body` and `slappyengine.zones`,
+   tracked under the editor sprint (`project_editor_sprint.md`).
+2. Audit/migrate the editor wiring that *constructs* `DeformPanel` /
+   `ZoneEditorPanel` (search: `from slappyengine.ui.editor.deform_panel
+   import` and `DeformPanel(` / `ZoneEditorPanel(` — held for the next
+   sprint to keep this sprint read-only on engine code).
+3. Co-delete `python/tests/test_editor_deform_panel.py` if present
+   (verify exact name during the deletion sprint).
+4. **Then** delete `deform_modes.py`, `deform_controller.py`,
+   `deform_crack.py`, `deform_repair.py` plus their tests as the Step 5
+   commit, flipping `tests/test_game_smoke_instantiation.py:42-47`'s
+   `IMPORT_TABLE` to point at `slappyengine._compat` in the same
+   commit.
+5. Update `tests/test_strip_audit_doc.py` `EXPECTED_DELETED_PATHS` to
+   mark the four files as removed.
+
+The `deform_panel.py` decommissioning is the gate; Step 5 follows in
+the same sprint immediately afterwards. No other production code
+depends on the four deform_* modules.
+
+**Small win taken in this sprint.** None applicable — every
+`deform_panel.py` import either dies wholesale with the panel or
+already has a `_compat` replacement that is moot until the panel is
+decommissioned. Repointing a single import to `_compat` would add a
+line of indirection in a file that is itself slated for deletion. The
+read-only audit is the deliverable; the deletions land next sprint.
+
 ### Step 5 — `deform_modes.py` and its dependents
 
 | # | Module | LOC | Consumers (non-test) | Classification |
