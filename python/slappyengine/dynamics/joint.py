@@ -421,4 +421,197 @@ def resolve(joint: JointSpec, world: "World", dt: float) -> float:
     return corr
 
 
-__all__ = ["JointSpec", "KIND_PARAM_KEYS", "resolve"]
+# ---------------------------------------------------------------------------
+# Public builders for the distance-flavoured constraint + a batch installer.
+# These are siblings of :func:`make_spring` and :func:`make_motor`; together
+# they let demo and tooling code spell rigid links without instantiating
+# :class:`JointSpec` directly.
+# ---------------------------------------------------------------------------
+
+
+def _check_node_index(fn: str, name: str, value: Any) -> int:
+    try:
+        v = int(value)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(
+            f"{fn}: {name} must be int-coercible; got {value!r}"
+        ) from exc
+    if v < 0:
+        raise ValueError(
+            f"{fn}: {name} must be non-negative; got {value!r}"
+        )
+    return v
+
+
+def make_distance(
+    node_a: int,
+    node_b: int,
+    rest_length: float,
+    stiffness: float = 1.0e9,
+    damping: float = 0.02,
+) -> JointSpec:
+    """Build a rigid distance constraint between two nodes.
+
+    The distance-flavoured sibling of :func:`make_spring` and
+    :func:`make_motor`. Same projection backend as :class:`JointSpec`
+    ``kind='distance'`` — see the module docstring for the schema.
+
+    Raises
+    ------
+    TypeError
+        If ``node_a`` or ``node_b`` is not int-coercible.
+    ValueError
+        If indices are negative or equal, ``rest_length < 0``,
+        ``stiffness <= 0``, or ``damping`` is outside ``[0, 1]``.
+    """
+    a = _check_node_index("make_distance", "node_a", node_a)
+    b = _check_node_index("make_distance", "node_b", node_b)
+    if a == b:
+        raise ValueError(
+            f"make_distance: node_a and node_b must differ; both are {a}"
+        )
+    rl = float(rest_length)
+    if not math.isfinite(rl) or rl < 0.0:
+        raise ValueError(
+            f"make_distance: rest_length must be finite and >= 0; "
+            f"got {rest_length!r}"
+        )
+    k = float(stiffness)
+    if not math.isfinite(k) or k <= 0.0:
+        raise ValueError(
+            f"make_distance: stiffness must be finite and > 0; "
+            f"got {stiffness!r}"
+        )
+    d = float(damping)
+    if math.isnan(d) or not (0.0 <= d <= 1.0):
+        raise ValueError(
+            f"make_distance: damping must be in [0, 1]; got {damping!r}"
+        )
+    return JointSpec(
+        kind="distance",
+        node_a=a,
+        node_b=b,
+        rest_length=rl,
+        stiffness=k,
+        damping=d,
+        params={},
+    )
+
+
+def resolve_joint_specs(world: Any, specs: list[JointSpec]) -> list[int]:
+    """Install a batch of :class:`JointSpec` records into ``world``.
+
+    Dispatch behaviour:
+
+    * If ``world`` is a :class:`~.world.World` (the XPBD dynamics substrate),
+      each spec is forwarded to :meth:`World.add_joint` and the returned
+      list holds the freshly-assigned joint indices inside ``world.joints``.
+    * If ``world`` exposes a softbody-style ``beams`` SoA (the
+      ``slappyengine.softbody.SoftBodyWorld`` duck), distance-flavoured
+      specs (``kind in {"distance", "spring", "weld"}``) are batch-appended
+      as beams so the softbody XPBD step honours them. The returned list
+      holds the beam indices of the appended segments. Non-distance kinds
+      are forwarded to ``world.add_joint`` if present, otherwise a
+      :class:`TypeError` is raised because they cannot be expressed as a
+      beam.
+
+    Returns
+    -------
+    list[int]
+        One handle per input spec, in input order.
+
+    Raises
+    ------
+    TypeError
+        If ``specs`` is not a list of :class:`JointSpec`, or ``world``
+        cannot host them.
+    """
+    if not isinstance(specs, (list, tuple)):
+        raise TypeError(
+            f"resolve_joint_specs: specs must be a list/tuple of JointSpec; "
+            f"got {type(specs).__name__}"
+        )
+    for k, s in enumerate(specs):
+        if not isinstance(s, JointSpec):
+            raise TypeError(
+                f"resolve_joint_specs: specs[{k}] must be a JointSpec; "
+                f"got {type(s).__name__}"
+            )
+
+    # Path A: dynamics.World — the substrate the rest of this package targets.
+    from .world import World as _World  # local import dodges init-time cycle
+
+    if isinstance(world, _World):
+        handles: list[int] = []
+        for s in specs:
+            start = len(world.joints)
+            world.add_joint(s)
+            handles.append(start)
+        return handles
+
+    # Path B: softbody.SoftBodyWorld duck — has ``beams`` + ``register_body``
+    # but not :meth:`add_joint`. Distance-flavoured specs map onto a beam
+    # batch-append; other kinds need ``add_joint`` and raise if absent.
+    if hasattr(world, "beams") and hasattr(world.beams, "append"):
+        import numpy as np  # local import — keeps top-of-module narrow
+
+        distance_kinds = {"distance", "spring", "weld"}
+        non_distance: list[tuple[int, JointSpec]] = []
+        a_list: list[int] = []
+        b_list: list[int] = []
+        rest_list: list[float] = []
+        stiff_list: list[float] = []
+        damp_list: list[float] = []
+        # Track input position so the returned handles align with ``specs``.
+        beam_positions: list[int] = []
+        for i, s in enumerate(specs):
+            if s.kind in distance_kinds:
+                a_list.append(int(s.node_a))
+                b_list.append(int(s.node_b))
+                rest_list.append(float(s.rest_length))
+                stiff_list.append(float(s.stiffness))
+                damp_list.append(float(s.damping))
+                beam_positions.append(i)
+            else:
+                non_distance.append((i, s))
+        handles_by_pos: dict[int, int] = {}
+        if a_list:
+            beam_start = world.beams.append(
+                np.asarray(a_list, dtype=np.uint32),
+                np.asarray(b_list, dtype=np.uint32),
+                np.asarray(rest_list, dtype=np.float32),
+                np.asarray(stiff_list, dtype=np.float32),
+                np.asarray(damp_list, dtype=np.float32),
+                np.full(len(a_list), np.inf, dtype=np.float32),
+                body_id=0,
+            )
+            for offset, src_pos in enumerate(beam_positions):
+                handles_by_pos[src_pos] = beam_start + offset
+        if non_distance:
+            if not hasattr(world, "add_joint"):
+                kinds = sorted({s.kind for _, s in non_distance})
+                raise TypeError(
+                    f"resolve_joint_specs: world {type(world).__name__} "
+                    f"has no add_joint method, cannot host non-distance "
+                    f"specs {kinds}"
+                )
+            for src_pos, s in non_distance:
+                start = len(getattr(world, "joints", []))
+                world.add_joint(s)
+                handles_by_pos[src_pos] = start
+        return [handles_by_pos[i] for i in range(len(specs))]
+
+    raise TypeError(
+        f"resolve_joint_specs: world must be a slappyengine.dynamics.World "
+        f"or a softbody-style world exposing a `beams` SoA; got "
+        f"{type(world).__name__}"
+    )
+
+
+__all__ = [
+    "JointSpec",
+    "KIND_PARAM_KEYS",
+    "resolve",
+    "make_distance",
+    "resolve_joint_specs",
+]

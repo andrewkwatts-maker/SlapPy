@@ -30,7 +30,13 @@ from .humanoid import (
     wrap_in_flesh,
 )
 from .ik import IKChainSpec, solve_ik
-from .joint import JointSpec, KIND_PARAM_KEYS, resolve as resolve_joint
+from .joint import (
+    JointSpec,
+    KIND_PARAM_KEYS,
+    make_distance,
+    resolve as resolve_joint,
+    resolve_joint_specs,
+)
 from .material import Material
 from .motor import MotorSpec, make_motor
 from .ragdoll import BoneSpec, RagdollSpec, build_ragdoll
@@ -55,7 +61,9 @@ __all__ = [
     "Material",
     "JointSpec",
     "KIND_PARAM_KEYS",
+    "make_distance",
     "resolve_joint",
+    "resolve_joint_specs",
     "SpringSpec",
     "make_spring",
     "MotorSpec",

@@ -16,6 +16,23 @@ import numpy as np
 from ._validation import validate_anchor, validate_world
 
 
+def _positions_view(world):
+    """Return the ``(N, 2)`` positions array of either a dynamics ``World``
+    or a softbody ``SoftBodyWorld`` (``world.nodes.pos``). The IK solver
+    only needs random-access read/write to this array; the rest of the
+    world's API is unused.
+    """
+    if hasattr(world, "positions"):
+        return world.positions
+    nodes = getattr(world, "nodes", None)
+    if nodes is not None and hasattr(nodes, "pos"):
+        return nodes.pos
+    raise AttributeError(
+        f"solve_ik: world {type(world).__name__} has no .positions array "
+        f"or .nodes.pos SoA"
+    )
+
+
 @dataclass
 class IKChainSpec:
     """Description of a kinematic chain + target point.
@@ -102,7 +119,14 @@ def solve_ik(
             f"solve_ik: spec must be an IKChainSpec; "
             f"got {type(spec).__name__}"
         )
-    validate_world("solve_ik", world)
+    # Accept either a dynamics ``World`` (the XPBD substrate) or a softbody
+    # ``SoftBodyWorld`` duck — the solver only needs index access to the
+    # node positions array.
+    if not (
+        hasattr(world, "positions")
+        or (hasattr(world, "nodes") and hasattr(world.nodes, "pos"))
+    ):
+        validate_world("solve_ik", world)
     try:
         iters = int(iterations)
     except (TypeError, ValueError) as exc:
@@ -126,16 +150,17 @@ def solve_ik(
     target = np.asarray(spec.target, dtype=np.float64)
     tip_idx = nodes[-1]
 
+    positions = _positions_view(world)
     start = 1 if spec.fixed_root else 0
     for _ in range(int(max(1, iterations))):
-        tip = world.positions[tip_idx]
+        tip = positions[tip_idx]
         if float(np.linalg.norm(tip - target)) < tolerance:
             return True
         # Walk from second-to-last back toward the root.
         for k in range(len(nodes) - 2, start - 1, -1):
             pivot_idx = nodes[k]
-            pivot = world.positions[pivot_idx].copy()
-            tip = world.positions[tip_idx]
+            pivot = positions[pivot_idx].copy()
+            tip = positions[tip_idx]
             to_tip = tip - pivot
             to_target = target - pivot
             n1 = float(np.linalg.norm(to_tip))
@@ -150,9 +175,9 @@ def solve_ik(
             # Rotate every downstream node about the pivot.
             for j in range(k + 1, len(nodes)):
                 idx = nodes[j]
-                world.positions[idx] = _rotate_about(world.positions[idx], pivot, angle)
+                positions[idx] = _rotate_about(positions[idx], pivot, angle)
 
-    tip = world.positions[tip_idx]
+    tip = positions[tip_idx]
     return float(np.linalg.norm(tip - target)) < tolerance
 
 
