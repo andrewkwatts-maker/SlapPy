@@ -32,7 +32,7 @@
 //   pcss_enabled : u32                     offset 304  (  4 bytes) — 0 = PCF only, 1 = PCSS
 //   light_size   : f32                     offset 308  (  4 bytes) — PCSS light angular size (world units)
 //   near         : f32                     offset 312  (  4 bytes) — shadow camera near plane
-//   _pad         : u32                     offset 316  (  4 bytes) — alignment to 16
+//   pcf_samples  : u32                     offset 316  (  4 bytes) — Vogel-disk tap count (0 = legacy 3×3 grid)
 struct CsmParams {
     cascade_vp:   array<mat4x4<f32>, 4>,
     split_dists:  vec4<f32>,
@@ -45,7 +45,7 @@ struct CsmParams {
     pcss_enabled: u32,
     light_size:   f32,
     near:         f32,
-    _pad:         u32,
+    pcf_samples:  u32,
 }
 
 // Thin wrapper so inv_proj occupies its own 64-byte uniform slot.
@@ -107,6 +107,60 @@ fn pcf_shadow(
         }
     }
     return lit / 9.0;
+}
+
+// ── Vogel-disk PCF (Persson 2012) ──────────────────────────────────────────
+// Vogel/golden-angle spiral gives a low-discrepancy disk distribution that
+// looks smoother than a 3×3 grid for the same tap budget.  The per-pixel
+// rotation derived from a hashed UV breaks up banding by varying the spiral
+// orientation across screen space.
+//
+// Formula (Persson 2012, "Low-Level Thinking in High-Level Shading Languages"):
+//   r     = sqrt((n + 0.5) / N) * radius
+//   theta = n * GOLDEN_ANGLE + per_pixel_rotation
+//   offset_uv = (r * cos(theta), r * sin(theta)) * texel_size
+//
+// GOLDEN_ANGLE = π * (3 − √5) ≈ 2.39996323 radians.
+const VOGEL_GOLDEN_ANGLE: f32 = 2.3999632;
+
+// Hash a vec2 into a scalar in [0, 2π) for per-pixel spiral rotation.
+// Avoids visible spiral banding by giving every screen pixel a unique phase.
+fn vogel_rotation(uv: vec2<f32>) -> f32 {
+    let h = fract(sin(dot(uv, vec2<f32>(12.9898, 78.233))) * 43758.5453);
+    return h * 6.2831853;  // 2π
+}
+
+// Vogel-disk PCF — N taps spiraling outward on a unit disk.  Each tap is
+// scaled by `pcf_radius` (in texels) and rotated by a per-pixel phase to
+// hide spiral structure.  Returns 1.0 if fully lit, 0.0 if fully occluded.
+fn vogel_pcf_shadow(
+    light_pos_ndc: vec3f,
+    cascade_idx:   i32,
+    depth_bias:    f32,
+    pcf_radius:    f32,
+    num_taps:      u32,
+) -> f32 {
+    let uv_center = light_pos_ndc.xy * vec2f(0.5, -0.5) + vec2f(0.5);
+    let ref_depth = light_pos_ndc.z - depth_bias;
+
+    let shadow_dims = vec2f(textureDimensions(shadow_maps, 0));
+    let texel_size  = pcf_radius / shadow_dims;
+    let phase       = vogel_rotation(uv_center);
+    let inv_n       = 1.0 / f32(num_taps);
+
+    var lit = 0.0;
+    for (var i = 0u; i < num_taps; i++) {
+        let n     = f32(i);
+        let r     = sqrt((n + 0.5) * inv_n);
+        let theta = n * VOGEL_GOLDEN_ANGLE + phase;
+        let offset_uv = vec2f(r * cos(theta), r * sin(theta)) * texel_size;
+        let sample_uv = clamp(uv_center + offset_uv, vec2f(0.0), vec2f(1.0));
+        let texel_coord = vec2i(shadow_dims * sample_uv);
+
+        let shadow_depth = textureLoad(shadow_maps, texel_coord, cascade_idx, 0).r;
+        lit += select(0.0, 1.0, ref_depth <= shadow_depth);
+    }
+    return lit * inv_n;
 }
 
 // ── PCSS: Poisson disk samples (32 samples) ───────────────────────────────
@@ -275,7 +329,11 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         return;
     }
 
-    // ── 6. Shadow sampling — PCF or PCSS depending on params.pcss_enabled ──
+    // ── 6. Shadow sampling — PCSS / Vogel PCF / legacy 3×3 grid ────────────
+    // Selection precedence:
+    //   1. pcss_enabled == 1 → PCSS (penumbra-scaled Poisson PCF)
+    //   2. pcf_samples  >  0 → Vogel-disk PCF with N taps (Persson 2012)
+    //   3. otherwise         → legacy fixed 3×3 grid (9 taps, back-compat)
     var shadow_factor: f32;
     if params.pcss_enabled != 0u {
         shadow_factor = pcss_shadow(
@@ -284,6 +342,14 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
             params.depth_bias,
             params.light_size,
             params.near,
+        );
+    } else if params.pcf_samples > 0u {
+        shadow_factor = vogel_pcf_shadow(
+            light_ndc,
+            cascade_idx,
+            params.depth_bias,
+            params.pcf_radius,
+            params.pcf_samples,
         );
     } else {
         shadow_factor = pcf_shadow(

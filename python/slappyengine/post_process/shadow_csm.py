@@ -17,7 +17,7 @@ _ENTRY  = "main"
 #   pcss_enabled : u32                     offset 304  (  4 bytes)
 #   light_size   : f32                     offset 308  (  4 bytes)
 #   near         : f32                     offset 312  (  4 bytes)
-#   _pad         : u32                     offset 316  (  4 bytes)
+#   pcf_samples  : u32                     offset 316  (  4 bytes)  — Vogel disk N (0 = legacy 3×3 grid)
 
 _IDENTITY_MAT4 = (
     1.0, 0.0, 0.0, 0.0,
@@ -41,16 +41,30 @@ class ShadowCSM:
         near: float = 0.1,
         depth_bias: float = 0.005,
         pcf_radius: float = 1.5,
+        pcf_samples: int = 16,
         split_dists: tuple = _DEFAULT_SPLIT_DISTS,
         light_dir: tuple = _DEFAULT_LIGHT_DIR,
         cascade_vps: tuple = _DEFAULT_CASCADE_VPS,
     ) -> None:
+        # Validation — keep config errors loud and early.
+        if not isinstance(pcf_samples, int) or isinstance(pcf_samples, bool):
+            raise TypeError(
+                f"pcf_samples must be an int (Vogel-disk tap count), got "
+                f"{type(pcf_samples).__name__}"
+            )
+        if pcf_samples < 0:
+            raise ValueError(
+                f"pcf_samples must be >= 0 (0 = legacy 3×3 grid), got "
+                f"{pcf_samples}"
+            )
+
         self.num_cascades = num_cascades
         self.pcss_enabled = pcss_enabled
         self.light_size = light_size
         self.near = near
         self.depth_bias = depth_bias
         self.pcf_radius = pcf_radius
+        self.pcf_samples = pcf_samples
         self.split_dists = split_dists
         self.light_dir = light_dir
         self.cascade_vps = cascade_vps
@@ -65,6 +79,7 @@ class ShadowCSM:
             near=lighting.shadow_near,
             depth_bias=lighting.shadow_depth_bias,
             pcf_radius=lighting.pcf_radius,
+            pcf_samples=getattr(lighting, "pcf_samples", 16),
         )
 
     def make_pass(self) -> PostProcessPass:
@@ -97,7 +112,7 @@ class ShadowCSM:
             int(self.pcss_enabled),  # pcss_enabled u32
             self.light_size,         # f32
             self.near,               # f32
-            0,              # _pad         u32
+            int(self.pcf_samples),   # pcf_samples  u32 (Vogel-disk N; 0 = legacy 3×3 grid)
         )
         return PostProcessPass(
             shader_path=_SHADER,
