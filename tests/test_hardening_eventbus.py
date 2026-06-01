@@ -14,7 +14,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "python"))
 
-from slappyengine.event_bus import EventBus  # noqa: E402
+from slappyengine.event_bus import EventBus, Observable  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -104,6 +104,120 @@ def test_unsubscribe_rejects_bytes_event_type():
 
 
 # ---------------------------------------------------------------------------
+# clear — event_type (round 9 extension)
+# ---------------------------------------------------------------------------
+
+def test_clear_rejects_empty_event_type():
+    # Empty would map to the sentinel bucket that publish() also refuses
+    # — refuse here so the typo surfaces.
+    bus = EventBus()
+    with pytest.raises(ValueError, match="event_type must be non-empty"):
+        bus.clear("")
+
+
+def test_clear_rejects_int_event_type():
+    # Silently no-op'd before via dict.pop(int, None).
+    bus = EventBus()
+    with pytest.raises(TypeError, match="event_type must be a str"):
+        bus.clear(42)
+
+
+def test_clear_rejects_bytes_event_type():
+    bus = EventBus()
+    with pytest.raises(TypeError, match="event_type must be a str"):
+        bus.clear(b"entity:spawn")
+
+
+def test_clear_none_still_drops_all_listeners():
+    # None remains the sentinel for "clear all".
+    bus = EventBus()
+    bus.subscribe("a", lambda p: None)
+    bus.subscribe("b", lambda p: None)
+    bus.clear(None)
+    assert bus.listener_count("a") == 0
+    assert bus.listener_count("b") == 0
+
+
+# ---------------------------------------------------------------------------
+# listener_count — event_type (round 9 extension)
+# ---------------------------------------------------------------------------
+
+def test_listener_count_rejects_empty_event_type():
+    bus = EventBus()
+    with pytest.raises(ValueError, match="event_type must be non-empty"):
+        bus.listener_count("")
+
+
+def test_listener_count_rejects_int_event_type():
+    bus = EventBus()
+    with pytest.raises(TypeError, match="event_type must be a str"):
+        bus.listener_count(42)
+
+
+def test_listener_count_rejects_none_event_type():
+    bus = EventBus()
+    with pytest.raises(TypeError, match="event_type must be a str"):
+        bus.listener_count(None)
+
+
+# ---------------------------------------------------------------------------
+# Observable.__init__ — bus / topic (round 9 extension)
+# ---------------------------------------------------------------------------
+
+class _FakeBus:
+    """Duck-types a publish/subscribe interface but isn't an EventBus."""
+
+    def publish(self, *a, **kw):
+        pass
+
+    def subscribe(self, *a, **kw):
+        pass
+
+
+def test_observable_rejects_fake_bus():
+    # A duck-typed fake bus would silently route events into the void.
+    with pytest.raises(TypeError, match="bus must be an EventBus or None"):
+        Observable(bus=_FakeBus())
+
+
+def test_observable_rejects_string_bus():
+    with pytest.raises(TypeError, match="bus must be an EventBus or None"):
+        Observable(bus="not_a_bus")
+
+
+def test_observable_rejects_int_bus():
+    with pytest.raises(TypeError, match="bus must be an EventBus or None"):
+        Observable(bus=0)
+
+
+def test_observable_rejects_empty_topic():
+    bus = EventBus()
+    with pytest.raises(ValueError, match="topic must be non-empty"):
+        Observable(bus=bus, topic="")
+
+
+def test_observable_rejects_bytes_topic():
+    bus = EventBus()
+    with pytest.raises(TypeError, match="topic must be a str"):
+        Observable(bus=bus, topic=b"changed")
+
+
+def test_observable_rejects_int_topic():
+    bus = EventBus()
+    with pytest.raises(TypeError, match="topic must be a str"):
+        Observable(bus=bus, topic=42)
+
+
+def test_observable_default_construction_still_works():
+    # None bus + default "changed" topic must round-trip.
+    obs = Observable()
+    captured = []
+    obs.subscribe(lambda payload: captured.append(payload))
+    obs.notify(value=1)
+    assert captured == [{"value": 1}]
+
+
+# ---------------------------------------------------------------------------
 # Positive sanity — round-trip still works after hardening
 # ---------------------------------------------------------------------------
 
@@ -113,3 +227,11 @@ def test_subscribe_publish_round_trip_still_works():
     bus.subscribe("entity:spawn", lambda payload: captured.append(payload))
     bus.publish("entity:spawn", entity_id=7, position=(1, 2))
     assert captured == [{"entity_id": 7, "position": (1, 2)}]
+
+
+def test_listener_count_works_after_subscribe():
+    bus = EventBus()
+    bus.subscribe("scene:loaded", lambda p: None)
+    bus.subscribe("scene:loaded", lambda p: None)
+    assert bus.listener_count("scene:loaded") == 2
+    assert bus.listener_count("scene:unloaded") == 0

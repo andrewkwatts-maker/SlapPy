@@ -3,7 +3,9 @@ from typing import Callable, Any
 
 from slappyengine._event_bus_validation import (
     validate_event_type,
+    validate_event_type_or_none,
     validate_callback,
+    validate_bus_or_none,
 )
 
 
@@ -136,12 +138,32 @@ class EventBus:
                 pass
 
     def clear(self, event_type: str | None = None) -> None:
+        """Drop all listeners for ``event_type`` (or every type when ``None``).
+
+        Raises
+        ------
+        TypeError
+            If ``event_type`` is not ``None`` and not a ``str``.
+        ValueError
+            If ``event_type`` is the empty string.
+        """
+        validate_event_type_or_none("event_type", "EventBus.clear", event_type)
         if event_type is None:
             self._listeners.clear()
         else:
             self._listeners.pop(event_type, None)
 
     def listener_count(self, event_type: str) -> int:
+        """Return the number of listeners registered for ``event_type``.
+
+        Raises
+        ------
+        TypeError
+            If ``event_type`` is not a ``str``.
+        ValueError
+            If ``event_type`` is the empty string.
+        """
+        validate_event_type("event_type", "EventBus.listener_count", event_type)
         return len(self._listeners.get(event_type, []))
 
     def __repr__(self) -> str:
@@ -187,6 +209,8 @@ class Observable:
     __slots__ = ("_bus", "_observable_topic")
 
     def __init__(self, bus: "EventBus | None" = None, topic: str = "changed") -> None:
+        validate_bus_or_none("bus", "Observable.__init__", bus)
+        validate_event_type("topic", "Observable.__init__", topic)
         self._bus = bus if bus is not None else EventBus()
         self._observable_topic = topic
 

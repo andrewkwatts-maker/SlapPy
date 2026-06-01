@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from slappyengine.input._manager_validation import (
+    validate_key_name,
+    validate_nonneg_int,
+)
+
 
 class InputManager:
     """
@@ -77,17 +82,44 @@ class InputManager:
         self._mouse_just_released.clear()
 
     def key_held(self, key: str) -> bool:
-        """Return True while the key is held down."""
+        """Return True while the key is held down.
+
+        Raises
+        ------
+        TypeError
+            If ``key`` is not a ``str``.
+        ValueError
+            If ``key`` is the empty string.
+        """
+        validate_key_name("key", "InputManager.key_held", key)
         k = self._normalize(key)
         return k in self._held or k in self._mouse_buttons
 
     def key_just_pressed(self, key: str) -> bool:
-        """Return True only on the frame the key was first pressed."""
+        """Return True only on the frame the key was first pressed.
+
+        Raises
+        ------
+        TypeError
+            If ``key`` is not a ``str``.
+        ValueError
+            If ``key`` is the empty string.
+        """
+        validate_key_name("key", "InputManager.key_just_pressed", key)
         k = self._normalize(key)
         return k in self._just_pressed or k in self._mouse_just_pressed
 
     def key_just_released(self, key: str) -> bool:
-        """Return True only on the frame the key was released."""
+        """Return True only on the frame the key was released.
+
+        Raises
+        ------
+        TypeError
+            If ``key`` is not a ``str``.
+        ValueError
+            If ``key`` is the empty string.
+        """
+        validate_key_name("key", "InputManager.key_just_released", key)
         k = self._normalize(key)
         return k in self._just_released or k in self._mouse_just_released
 
@@ -97,7 +129,18 @@ class InputManager:
         return self._mouse_pos
 
     def axis(self, gamepad_id: int, axis_index: int) -> float:
-        """Gamepad axis value in the range -1.0 to 1.0. Returns 0.0 if unavailable."""
+        """Gamepad axis value in the range -1.0 to 1.0. Returns 0.0 if unavailable.
+
+        Raises
+        ------
+        TypeError
+            If ``gamepad_id`` or ``axis_index`` is not a plain ``int``
+            (``bool`` refused).
+        ValueError
+            If either argument is negative.
+        """
+        validate_nonneg_int("gamepad_id", "InputManager.axis", gamepad_id)
+        validate_nonneg_int("axis_index", "InputManager.axis", axis_index)
         try:
             import glfw
             axes = glfw.get_joystick_axes(gamepad_id)
@@ -108,7 +151,18 @@ class InputManager:
         return 0.0
 
     def button(self, gamepad_id: int, btn_index: int) -> bool:
-        """Gamepad button state. Returns False if unavailable."""
+        """Gamepad button state. Returns False if unavailable.
+
+        Raises
+        ------
+        TypeError
+            If ``gamepad_id`` or ``btn_index`` is not a plain ``int``
+            (``bool`` refused).
+        ValueError
+            If either argument is negative.
+        """
+        validate_nonneg_int("gamepad_id", "InputManager.button", gamepad_id)
+        validate_nonneg_int("btn_index", "InputManager.button", btn_index)
         try:
             import glfw
             buttons = glfw.get_joystick_buttons(gamepad_id)
