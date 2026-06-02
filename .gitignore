@@ -43,3 +43,24 @@ Thumbs.db
 
 # Visual test output (generated PNGs and videos, not committed)
 tests/visual/output/
+tests/output/
+
+# Audit / profiling artefacts (regenerated on demand)
+_audit_snapshots/
+_prof_*.py
+*.bak
+
+# Visual diff outputs from the harness
+docs/visual_diffs/
+
+# Generated example outputs (gallery artefacts re-included below)
+examples/output/**
+!examples/output/hello_gi/hello_gi.png
+!examples/output/humanoid/humanoid_ik_terrain.gif
+!examples/output/humanoid/humanoid_walking.gif
+!examples/output/ragdoll/hello_ragdoll.gif
+!examples/output/rope/hello_rope.png
+!examples/output/studio/hello_studio.gif
+
+# Legacy example regeneration target
+examples/legacy/output/
