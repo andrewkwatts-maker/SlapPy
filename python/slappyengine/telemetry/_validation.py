@@ -9,6 +9,7 @@ from slappyengine._validation import (
     validate_bool,
     validate_callable,
     validate_non_negative_int,
+    validate_positive_int,
     validate_str,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "validate_str",
     "validate_callable",
     "validate_non_negative_int",
+    "validate_positive_int",
     "validate_bool",
 ]

@@ -3,6 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import struct
 
+from slappyengine.gpu._validation import (
+    validate_matrix16,
+    validate_output_format,
+    validate_positive_int,
+)
+
 if TYPE_CHECKING:
     import wgpu
     from slappyengine.gpu.context import GPUContext
@@ -52,7 +58,14 @@ class MeshRenderer:
 
         Calls :meth:`GpuMesh.upload` which is idempotent — safe to call
         multiple times with the same mesh.
+
+        Raises
+        ------
+        TypeError
+            If ``mesh`` is ``None``.
         """
+        if mesh is None:
+            raise TypeError("MeshRenderer.set_mesh: mesh must not be None")
         self._mesh = mesh
         mesh.upload(self._gpu.device)
 
@@ -90,9 +103,22 @@ class MeshRenderer:
         (256 bytes) matching the ``MeshUniforms`` struct in the vertex shader.
 
         Allocates the GPU buffer on the first call.
+
+        Raises
+        ------
+        TypeError
+            If any matrix is not a sequence of finite floats.
+        ValueError
+            If any matrix length is not exactly 16.
         """
         import wgpu  # noqa: PLC0415
 
+        model = validate_matrix16("model", "MeshRenderer.update_camera", model)
+        view = validate_matrix16("view", "MeshRenderer.update_camera", view)
+        proj = validate_matrix16("proj", "MeshRenderer.update_camera", proj)
+        normal_matrix = validate_matrix16(
+            "normal_matrix", "MeshRenderer.update_camera", normal_matrix,
+        )
         data = struct.pack("64f", *model, *view, *proj, *normal_matrix)
 
         if self._camera_ub is None:
@@ -145,9 +171,24 @@ class MeshRenderer:
 
         :meth:`update_camera` and :meth:`set_mesh` / :meth:`set_material`
         must have been called before invoking this method.
+
+        Raises
+        ------
+        TypeError
+            If ``width`` / ``height`` are not plain ints or ``output_format``
+            is not a non-empty str.
+        ValueError
+            If ``width`` or ``height`` is < 1.
         """
         import wgpu  # noqa: PLC0415
 
+        width = validate_positive_int("width", "MeshRenderer.render_to_texture", width)
+        height = validate_positive_int(
+            "height", "MeshRenderer.render_to_texture", height,
+        )
+        output_format = validate_output_format(
+            "output_format", "MeshRenderer.render_to_texture", output_format,
+        )
         device = self._gpu.device
 
         color_tex = device.create_texture(

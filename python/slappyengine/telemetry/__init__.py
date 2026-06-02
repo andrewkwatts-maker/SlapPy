@@ -54,6 +54,7 @@ from ._validation import (
     validate_bool,
     validate_callable,
     validate_non_negative_int,
+    validate_positive_int,
     validate_str,
 )
 
@@ -297,7 +298,17 @@ def get_event_history(
         Glob pattern; defaults to ``"*"`` (everything).
     max_count : int
         Cap on the returned list length. Defaults to 1000.
+
+    Raises
+    ------
+    TypeError
+        If ``name_pattern`` is not a ``str`` or ``max_count`` is not a plain
+        ``int`` (floats/bools refused).
+    ValueError
+        If ``max_count`` is not >= 1.
     """
+    validate_str("name_pattern", "get_event_history", name_pattern, allow_empty=False)
+    validate_positive_int("max_count", "get_event_history", max_count)
     with _lock:
         snapshot = list(_history)
 

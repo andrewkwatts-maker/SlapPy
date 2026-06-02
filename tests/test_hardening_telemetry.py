@@ -115,3 +115,87 @@ def test_enable_pattern_index_rejects_none():
 def test_enable_pattern_index_rejects_string():
     with pytest.raises(TypeError, match="enabled"):
         telemetry.enable_pattern_index("yes")  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# Round 13 — get_event_history(name_pattern, max_count)
+#
+# Silent-acceptance bugs caught here:
+#   * ``max_count=-1`` silently returned an empty list (negative slicing in
+#     ``filtered[-max_count:]`` would yield ``filtered[1:]`` instead — and
+#     in tests, ``filtered[-(-1):]`` => ``filtered[1:]`` clipped the most
+#     recent event!). Caller almost certainly wanted "everything".
+#   * ``max_count=2.5`` silently passed (slicing accepts float in some
+#     paths and crashes deep elsewhere).
+#   * ``name_pattern=42`` reached ``fnmatchcase`` and crashed with a
+#     confusing ``TypeError: 'int' object has no len()``.
+# ---------------------------------------------------------------------------
+
+
+def test_get_event_history_rejects_negative_max_count():
+    """Silent-acceptance bug: -1 silently returned a wrong-sized slice."""
+    with pytest.raises(ValueError, match="max_count must be >= 1"):
+        telemetry.get_event_history("*", -1)
+
+
+def test_get_event_history_rejects_zero_max_count():
+    """``max_count=0`` is almost always a bug — refuse explicitly."""
+    with pytest.raises(ValueError, match="max_count must be >= 1"):
+        telemetry.get_event_history("*", 0)
+
+
+def test_get_event_history_rejects_float_max_count():
+    with pytest.raises(TypeError, match="max_count"):
+        telemetry.get_event_history("*", 2.5)  # type: ignore[arg-type]
+
+
+def test_get_event_history_rejects_bool_max_count():
+    """``max_count=True`` would mean "return at most 1" — refuse silent coercion."""
+    with pytest.raises(TypeError, match="max_count"):
+        telemetry.get_event_history("*", True)  # type: ignore[arg-type]
+
+
+def test_get_event_history_rejects_string_max_count():
+    with pytest.raises(TypeError, match="max_count"):
+        telemetry.get_event_history("*", "100")  # type: ignore[arg-type]
+
+
+def test_get_event_history_rejects_int_pattern():
+    """Silent-acceptance bug: int reached fnmatchcase and crashed obscurely."""
+    with pytest.raises(TypeError, match="name_pattern"):
+        telemetry.get_event_history(42, 10)  # type: ignore[arg-type]
+
+
+def test_get_event_history_rejects_none_pattern():
+    with pytest.raises(TypeError, match="name_pattern"):
+        telemetry.get_event_history(None, 10)  # type: ignore[arg-type]
+
+
+def test_get_event_history_rejects_bytes_pattern():
+    """Bytes look glob-ish but fnmatchcase wants str."""
+    with pytest.raises(TypeError, match="name_pattern"):
+        telemetry.get_event_history(b"physics.*", 10)  # type: ignore[arg-type]
+
+
+def test_get_event_history_rejects_empty_pattern():
+    """Empty string never matches any event — refuse at the boundary."""
+    with pytest.raises(ValueError, match="non-empty"):
+        telemetry.get_event_history("", 10)
+
+
+def test_get_event_history_accepts_valid_inputs():
+    """Positive sanity: tightened validation does not break the happy path."""
+    telemetry.subscribe("foo.*", lambda ev: None)
+    telemetry.emit("foo.bar", x=1)
+    telemetry.emit("foo.baz", y=2)
+    out = telemetry.get_event_history("foo.*", 10)
+    assert [e.name for e in out] == ["foo.bar", "foo.baz"]
+
+
+def test_get_event_history_respects_max_count_cap():
+    """Positive sanity: max_count slices to the most recent N."""
+    telemetry.emit("a")
+    telemetry.emit("b")
+    telemetry.emit("c")
+    out = telemetry.get_event_history("*", 2)
+    assert [e.name for e in out] == ["b", "c"]

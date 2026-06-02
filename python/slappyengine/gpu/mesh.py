@@ -5,6 +5,11 @@ from pathlib import Path
 import struct
 import numpy as np
 
+from slappyengine.gpu._validation import (
+    validate_index_list,
+    validate_vertex_list,
+)
+
 
 @dataclass
 class MeshVertex:
@@ -30,8 +35,18 @@ class GpuMesh:
     VERTEX_STRIDE = 48  # bytes: 3f+3f+2f+4f = 12 floats × 4 = 48
 
     def __init__(self, vertices: list[MeshVertex], indices: list[int]) -> None:
-        self._vertices = vertices
-        self._indices = indices
+        """Construct from a vertex list and triangle-list index buffer.
+
+        Raises
+        ------
+        TypeError
+            If ``vertices`` or ``indices`` is ``None`` / not a list-or-tuple.
+        ValueError
+            If ``indices`` length is not a multiple of 3 or contains a
+            negative integer.
+        """
+        self._vertices = validate_vertex_list("vertices", "GpuMesh", vertices)
+        self._indices = validate_index_list("indices", "GpuMesh", indices)
         self._vertex_buf = None   # wgpu.GPUBuffer, set by upload()
         self._index_buf = None
 

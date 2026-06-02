@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from slappyengine._validation import validate_path_like
 from slappyengine.residency.compression import compress_array, decompress_raw
 
 SLAP_MAGIC = b"SLAP"
@@ -139,7 +140,21 @@ def _decode_asset_block(f: io.BufferedReader) -> dict:
 
 
 def write_world_slap(path: str | Path, assets: list) -> None:
-    path = Path(path)
+    """Serialise a list of assets to ``path`` as a ``.slap`` file.
+
+    Raises
+    ------
+    TypeError
+        If ``path`` is not a str/Path or ``assets`` is not a list/tuple.
+    ValueError
+        If ``path`` is empty.
+    """
+    path = validate_path_like("path", "write_world_slap", path)
+    if isinstance(assets, (str, bytes, dict, set)) or not isinstance(assets, (list, tuple)):
+        raise TypeError(
+            f"write_world_slap: assets must be a list or tuple; "
+            f"got {type(assets).__name__}"
+        )
     count = len(assets)
 
     blocks = [_encode_asset_block(a) for a in assets]
@@ -171,7 +186,16 @@ def write_world_slap(path: str | Path, assets: list) -> None:
 
 
 def read_world_slap(path: str | Path) -> list[dict]:
-    path = Path(path)
+    """Read a ``.slap`` file and return a list of asset dicts.
+
+    Raises
+    ------
+    TypeError
+        If ``path`` is not a str/Path.
+    ValueError
+        If ``path`` is empty or the file's magic bytes are wrong.
+    """
+    path = validate_path_like("path", "read_world_slap", path)
     with open(path, "rb") as f:
         magic, version, count = struct.unpack(_HDR_FMT, f.read(_HDR_SIZE))
         if magic != SLAP_MAGIC:
@@ -196,10 +220,22 @@ def read_world_slap(path: str | Path) -> list[dict]:
 
 
 def write_asset_to_slap(path: str | Path, asset) -> None:
+    """Serialise a single asset to ``path``.
+
+    Raises
+    ------
+    TypeError
+        If ``path`` is not a str/Path or ``asset`` is None.
+    """
+    validate_path_like("path", "write_asset_to_slap", path)
+    if asset is None:
+        raise TypeError("write_asset_to_slap: asset must not be None")
     write_world_slap(path, [asset])
 
 
 def read_asset_from_slap(path: str | Path) -> dict:
+    """Read a single-asset ``.slap`` file and return its dict."""
+    validate_path_like("path", "read_asset_from_slap", path)
     results = read_world_slap(path)
     if not results:
         raise ValueError(f"No assets found in {path}")

@@ -3,6 +3,12 @@ import numpy as np
 import wgpu
 from typing import TYPE_CHECKING
 
+from slappyengine.gpu._validation import (
+    validate_filter_mode,
+    validate_positive_int,
+    validate_view_dimension,
+)
+
 if TYPE_CHECKING:
     from slappyengine.gpu.context import GPUContext
     from slappyengine.layer import Layer
@@ -45,7 +51,24 @@ class TextureManager:
 
     def upload_frame_array(self, layer: "Layer", frame_count: int,
                            frame_data: list[np.ndarray]) -> wgpu.GPUTexture:
-        """Upload an animation frame array as a Texture2DArray. array_layer_count = frame_count."""
+        """Upload an animation frame array as a Texture2DArray. array_layer_count = frame_count.
+
+        Raises
+        ------
+        TypeError
+            If ``frame_count`` is not a plain int or ``frame_data`` is not a
+            list/tuple.
+        ValueError
+            If ``frame_count`` < 1.
+        """
+        frame_count = validate_positive_int(
+            "frame_count", "TextureManager.upload_frame_array", frame_count,
+        )
+        if not isinstance(frame_data, (list, tuple)):
+            raise TypeError(
+                "TextureManager.upload_frame_array: frame_data must be a "
+                f"list or tuple; got {type(frame_data).__name__}"
+            )
         if not frame_data:
             return self.upload_layer(layer)
 
@@ -117,13 +140,37 @@ class TextureManager:
 
     def create_view(self, texture: wgpu.GPUTexture,
                     dimension: str = "2d") -> wgpu.GPUTextureView:
+        """Create a texture view of the given ``dimension``.
+
+        Raises
+        ------
+        TypeError
+            If ``dimension`` is not a non-empty str.
+        ValueError
+            If ``dimension`` is not one of ``"2d"`` / ``"2d-array"``.
+        """
+        validate_view_dimension(
+            "dimension", "TextureManager.create_view", dimension,
+        )
         dim_map = {
             "2d": wgpu.TextureViewDimension.d2,
             "2d-array": wgpu.TextureViewDimension.d2_array,
         }
-        return texture.create_view(dimension=dim_map.get(dimension, wgpu.TextureViewDimension.d2))
+        return texture.create_view(dimension=dim_map[dimension])
 
     def create_sampler(self, filter_mode: str = "nearest") -> wgpu.GPUSampler:
+        """Create a sampler with the given filter mode.
+
+        Raises
+        ------
+        TypeError
+            If ``filter_mode`` is not a str.
+        ValueError
+            If ``filter_mode`` is not one of ``"nearest"`` / ``"linear"``.
+        """
+        validate_filter_mode(
+            "filter_mode", "TextureManager.create_sampler", filter_mode,
+        )
         filt = wgpu.FilterMode.nearest if filter_mode == "nearest" else wgpu.FilterMode.linear
         return self._ctx.device.create_sampler(
             mag_filter=filt,
