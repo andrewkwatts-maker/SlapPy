@@ -1,0 +1,156 @@
+# Repo Cleanup Survey — 2026-06-02
+
+Survey produced after the 7-agent sprint batches landed ~50 commits on master in 24h.
+Working tree at start: **399** entries from `git status --short` (397 untracked, 2 modified, 4 deletions).
+
+This document is **survey + plan**. Only the `.gitignore` expansion is executed in this
+sprint; no files are deleted yet. Deletion + module reshuffling happens in a follow-up
+sprint with explicit approval.
+
+---
+
+## 1. Generated artefacts to add to `.gitignore`
+
+These directories/files are produced by tooling (profilers, audit scripts, smoke tests,
+backup writes) and should never have been tracked. Adding them to `.gitignore` shrinks the
+working-tree noise dramatically and prevents future accidental commits.
+
+| Pattern                                | Rationale                                                                                                                 |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `_audit_snapshots/`                    | Output directory of the demo/audit refresh scripts (18 PNGs, regenerated on demand).                                      |
+| `_prof_*.py`                           | One-shot profiling scripts at repo root (`_prof_fluid_render.py`, `_prof_softbody_collision.py`, `_prof_softbody_render.py`). They are throwaway; if any becomes permanent it should move to `benchmarks/`. |
+| `*.bak`                                | Editor / tool backups (`benchmarks/baseline_report.md.bak`).                                                              |
+| `docs/visual_diffs/`                   | Per-run image diffs produced by the visual harness (`hello_ragdoll_diff.png` etc.).                                       |
+| `examples/output/**`                   | Sweeping rule: all generated example outputs are ignored by default.                                                      |
+| Negated gallery artefacts              | Each PNG/GIF referenced by `docs/demo_gallery.md` is re-included via `!examples/output/<sub>/<file>` so the gallery still ships. |
+
+### Gallery artefacts to keep tracked (re-included via `!` rules)
+
+Extracted directly from `docs/demo_gallery.md`:
+
+- `examples/output/hello_gi/hello_gi.png`
+- `examples/output/humanoid/humanoid_ik_terrain.gif`
+- `examples/output/humanoid/humanoid_walking.gif`
+- `examples/output/ragdoll/hello_ragdoll.gif`
+- `examples/output/rope/hello_rope.png`
+- `examples/output/studio/hello_studio.gif`
+
+All six are already tracked in git; the negation rules preserve them while the new wildcard
+silences the 20+ untracked subdir entries (`buoyancy/`, `character/`, `fluid/`, `fracture/`,
+`particles/`, `softbody/`, plus the two ad-hoc `humanoid/humanoid_destruction.gif` and
+`humanoid/humanoid_standing.gif` files).
+
+### Other obvious noise (added in this pass)
+
+- `benchmarks/__pycache__/` (already caught by `__pycache__/`, but listed for clarity).
+- `examples/legacy/output/` (legacy demo regeneration target).
+- `tests/output/` (companion to `tests/visual/output/`, already ignored).
+
+---
+
+## 2. Working-tree-only WIP modules — classification
+
+Untracked files under `python/slappyengine/` and `python/tests/` fall into three buckets.
+Counts are approximate; full list is in `git status --short`.
+
+### (a) Should be committed — useful new code referenced by tests/docs/examples
+
+These are **finished, imported, and tested** modules from the recent sprints. They should
+be staged in a follow-up commit with their corresponding tests.
+
+- `python/slappyengine/asset_manifest.py`, `build_gen.py`, `content_encrypt.py`, `docs_gen.py`
+  — usability sprint deliverables (see `project_usability_sprint.md`).
+- `python/slappyengine/cylinder_sprite.py`, `vehicle_parts.py`, `drivetrain.py`,
+  `suspension.py` — vehicle sim sprint (covered by `test_vehicle_parts.py`,
+  `test_vehicle_physics_script.py`).
+- `python/slappyengine/deform_controller.py`, `deform_modes.py`, `deform_crack.py`,
+  `deform_repair.py`, `deform_zones.py` — Bullet Strata integration; **decision pending**
+  whether these stay (Phase D doomed-list candidates).
+- `python/slappyengine/collision_pixel.py`, `pixel_material.py`, `pixel_struct.py`,
+  `bvh_factory.py`, `spline.py`, `track.py`, `trigger.py`, `visibility.py`,
+  `input_provider.py`, `media.py` — covered by matching `test_*.py` files.
+- `python/slappyengine/compute/{hull,library,shader_cache,wgsl_chunks}.py` +
+  `compute/defaults/` — compute pipeline plumbing.
+- `python/slappyengine/post_process/{motion_blur,ssr}.py` — Q4 post-process passes.
+- `python/slappyengine/gpu/adaptive_quality.py` — covered by `test_adaptive_quality.py`.
+- `python/slappyengine/tools/{audio_tools,sprite_tools,texture_tools,track_tools,video}.py`
+  — tooling sprint deliverables (`test_sprite_tools.py`, `test_audio_tools.py`, etc.).
+- `python/slappyengine/ui/debug_overlay.py`,
+  `ui/editor/script_binding_panel.py`, `ui/widgets/` — editor sprint deliverables.
+- `python/tests/` — **entire directory** (200+ files). The tests are why we know (a) works.
+  These must land together with the modules they cover.
+- New shaders under `shaders/` (`bloom.wgsl`, `dof.wgsl`, `ssr.wgsl`, `motion_blur.wgsl`,
+  `film_grain.wgsl`, `deform_*.wgsl`, `mesh_frag_gbuffer.wgsl`, `chunks/`).
+- New Rust kernels under `src/` (`fluid_shader.rs`, `pbf_solver.rs`, `raster.rs`,
+  `softbody_solver.rs`) — referenced from the rust migration memory entries.
+- `.github/workflows/physics-coverage.yml`, `.github/workflows/physics-tests.yml` — CI.
+- `config/{fluid,physics,physics2,softbody}.yml` — YAML defaults.
+
+### (b) Should be deleted — superseded by the rebuild
+
+Survey only; no action this sprint.
+
+- `python/slappyengine/physics/cc_label.py` — superseded by `slappyengine.topology`
+  (MEMORY says topology subpackage took over connected-component labelling).
+- `python/slappyengine/physics2/material.py` — appears to be a half-started parallel
+  rewrite; mainline material lives in `slappyengine.material.*`. Confirm before delete.
+- `python/slappyengine/deform_{controller,crack,modes,repair,zones}.py` — listed in the
+  Phase D doomed file set per `phase_d_strip_plan_2026_05_31.md`. Cross-check whether the
+  Bullet Strata integration still imports them; if not, delete.
+- `python/slappyengine/physics/{ccd,constraints,debug_hud,frontier,hull,memory_budget,`
+  `pressure_multigrid,scene_loader,shadows,world,broadphase,cell,profiles,post_process,`
+  `render,particle_graph,particles,event_publisher,boundary_exchange,body,video,profile}.py`
+  — large block of `physics/` files dropped in untracked. Many duplicate functionality now
+  living in `physics/` (already-tracked) or `dynamics/` / `numerics/` / `zones/` /
+  `thermal/` subpackages. Each one needs an individual decision; this is the **largest
+  single cleanup win** identified.
+- `examples/legacy/physics_*_demo.py` — legacy demos kept for reference; move to
+  `examples/legacy/` if not already (they appear to be there already, so likely just
+  needs to be staged, not deleted).
+- Root-level `_prof_*.py` (already covered by gitignore expansion).
+
+### (c) WIP — leave alone (actively iterated)
+
+Per user constraint, do not touch:
+
+- `python/slappyengine/softbody/` (whole subpackage)
+- `python/slappyengine/fluid/` (whole subpackage)
+- `python/slappyengine/physics/particle_field.py` + `particle_gpu*.py` — active sprint work
+
+Other actively-iterated areas spotted during the survey, leave for the owning sprint:
+
+- `python/slappyengine/testing/baselines/*.png` — visual regression baselines
+  (`outline_round5_legacy.png`, `outline_round5_smooth.png`). Stage them in a baseline-only
+  commit once their owning test stabilises.
+- `tests/visual/scenes/` and `tests/visual/test_vis_*.py` — visual harness scenes are
+  evolving; stage with the harness owner.
+
+---
+
+## 3. Root-level files that should move or be deleted
+
+| File                                              | Status                                                                                                         | Recommendation                                                                                                                              |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `_prof_fluid_render.py`                           | Untracked at repo root.                                                                                         | Move to `benchmarks/` or delete; covered by `.gitignore` change so it stops appearing in `git status`.                                       |
+| `_prof_softbody_collision.py`                     | Untracked at repo root.                                                                                         | Same as above.                                                                                                                              |
+| `_prof_softbody_render.py`                        | Untracked at repo root.                                                                                         | Same as above.                                                                                                                              |
+| `ARCHITECTURE.md` (root)                          | **Deleted** in working tree (`D`); `docs/ARCHITECTURE.md` is the new copy (untracked).                          | Canonical location should be `docs/ARCHITECTURE.md` — `docs/architecture_overview.md` already cross-references `docs/ARCHITECTURE.md`. Commit the move (`git rm` root, `git add` docs/) in the follow-up sprint. |
+| `ONBOARDING.md` (root)                            | **Deleted** in working tree (`D`); `docs/ONBOARDING.md` is the new copy (untracked).                            | Same treatment as ARCHITECTURE.md — move under `docs/`.                                                                                     |
+| `benchmarks/baseline_report.md.bak`               | Editor backup of `baseline_report.md`.                                                                          | Delete; ignored going forward via `*.bak`.                                                                                                  |
+| `_audit_snapshots/` (root)                        | Untracked snapshot directory (18 PNGs).                                                                         | Delete or move under `benchmarks/`; ignored going forward.                                                                                  |
+
+---
+
+## 4. Biggest cleanup wins identified for the next sprint
+
+1. **Stage the (a) bucket in one large commit.** Hundreds of untracked python files that are
+   already imported and tested would drop the `git status` count from ~400 to under 50.
+2. **Cull the (b) bucket — physics/ duplicates.** ~25 untracked files in
+   `python/slappyengine/physics/` shadow the already-tracked subpackages. Single highest
+   cleanup win once individually triaged.
+3. **Move `ARCHITECTURE.md` and `ONBOARDING.md` under `docs/`.** They are already deleted at
+   root; the staged-in-working-tree copies under `docs/` are the same content. Just needs a
+   single `git rm` + `git add` commit.
+4. **Decide the deform_* fate.** Five `deform_*.py` modules + companion tests + shader
+   files: either keep (and stage) or delete per Phase D doomed list. Single decision unlocks
+   ~15 files.
