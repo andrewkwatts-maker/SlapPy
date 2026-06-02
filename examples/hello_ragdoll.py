@@ -358,24 +358,11 @@ def _default_gif_path() -> Path:
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Hello Ragdoll - SlapPyEngine demo")
-    parser.add_argument(
-        "--frames", type=int, default=DEFAULT_FRAMES,
-        help=f"number of dt=1/60 steps to integrate (default: {DEFAULT_FRAMES})",
-    )
-    parser.add_argument(
-        "--no-gif", action="store_true",
-        help="skip GIF capture (smoke-test mode; pairs well with --frames 60)",
-    )
-    parser.add_argument(
-        "--render", action="store_true",
-        help="rasterise output: PNG single frame when --out ends in .png, "
-             "GIF otherwise. Equivalent to dropping --no-gif.",
-    )
-    parser.add_argument(
-        "--out", type=Path, default=None,
-        help="output path (default: examples/output/ragdoll/hello_ragdoll.gif "
-             "for GIFs). Use a .png suffix to write a single rendered frame.",
+    from slappyengine.examples_common import build_demo_arg_parser
+
+    parser = build_demo_arg_parser(
+        "Hello Ragdoll - SlapPyEngine demo",
+        default_frames=DEFAULT_FRAMES,
     )
     return parser.parse_args(argv)
 

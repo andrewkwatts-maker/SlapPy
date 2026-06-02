@@ -187,18 +187,12 @@ def print_summary(summary: dict) -> None:
 # ────────────────────────────────────────────────────────────────────────────
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Hello Rope — SlapPyEngine demo")
-    parser.add_argument(
-        "--frames", type=int, default=DEFAULT_FRAMES,
-        help=f"number of dt=1/60 steps to integrate (default: {DEFAULT_FRAMES})",
-    )
-    parser.add_argument(
-        "--render", action="store_true",
-        help="rasterise the final frame to a PNG (pure PIL, no GPU)",
-    )
-    parser.add_argument(
-        "--out", type=Path, default=Path("out/hello_rope.png"),
-        help="output PNG path when --render is supplied",
+    from slappyengine.examples_common import build_demo_arg_parser
+
+    parser = build_demo_arg_parser(
+        "Hello Rope — SlapPyEngine demo",
+        default_frames=DEFAULT_FRAMES,
+        default_out=Path("out/hello_rope.png"),
     )
     return parser.parse_args(argv)
 

@@ -103,20 +103,11 @@ def main(frames: int = DEFAULT_FRAMES, capture_gif: bool = True,
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Humanoid IK-to-terrain — SlapPyEngine demo",
-    )
-    parser.add_argument(
-        "--frames", type=int, default=DEFAULT_FRAMES,
-        help=f"number of frames to walk across the terrain (default: {DEFAULT_FRAMES})",
-    )
-    parser.add_argument(
-        "--no-gif", action="store_true",
-        help="skip GIF capture (smoke-test mode; pairs well with --frames 60)",
-    )
-    parser.add_argument(
-        "--out", type=Path, default=None,
-        help="GIF output path (default: examples/output/humanoid/humanoid_ik_terrain.gif)",
+    from slappyengine.examples_common import build_demo_arg_parser
+
+    parser = build_demo_arg_parser(
+        "Humanoid IK-to-terrain — SlapPyEngine demo",
+        default_frames=DEFAULT_FRAMES,
     )
     return parser.parse_args(argv)
 

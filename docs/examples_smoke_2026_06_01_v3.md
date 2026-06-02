@@ -159,3 +159,42 @@ real frames (not no-op-ing through `run()`).
    `buoyancy_demo.py` if smoke-suite wall time becomes a CI bottleneck.
    No correctness motivation today — all three exit cleanly under their
    built-in scripted trajectories.
+
+## Addendum (2026-06-02) — shared CLI helper
+
+The repeated `--frames N --no-gif --out path` argparse boilerplate that
+21 `examples/*.py` demos had been duplicating is now factored into
+`python/slappyengine/examples_common.py`:
+
+- `build_demo_arg_parser(description, *, default_frames, default_seed,
+  default_out)` returns an `argparse.ArgumentParser` pre-loaded with the
+  five common flags (`--frames`, `--no-gif`, `--render`, `--out`,
+  `--seed`).
+- `record_or_smoke(stage, args, default_out, **kwargs)` forks between
+  `stage.record(...)` and a frame-by-frame smoke loop based on the
+  documented precedence: `--render` beats `--no-gif`, otherwise
+  `--no-gif` disables recording.
+- `resolve_out_path(args, default_out)` collapses the "honour `--out`
+  if set, otherwise fall back to the demo's default path" idiom and
+  `mkdir`s the parent dir.
+- `should_record(args)` is the public single-source-of-truth for the
+  fork condition.
+
+Four demos were refactored as proof-of-concept: `hello_studio.py` (now
+has a `--frames/--no-gif/--out` CLI; previously no argparse at all),
+`hello_ragdoll.py`, `hello_rope.py`, and `humanoid_ik_terrain_demo.py`.
+The CLI surface of each is byte-identical to before for every flag they
+previously accepted (smoke harness invocations continue to exit 0).
+
+Test coverage at `tests/test_examples_common.py` pins:
+
+1. The parser exposes `--frames`, `--no-gif`, `--out` (plus `--render`
+   and `--seed`) with sane defaults.
+2. `--render` overrides `--no-gif` (the documented precedence).
+3. The record branch calls `stage.record(...)` with the right frames /
+   path; the smoke branch steps the stage's dynamics world per frame
+   and invokes `post_step` each tick.
+4. `step_world=False` skips the world step in the smoke branch (the
+   pose-only path the IK demos use).
+
+13 helper tests + 115 downstream demo smoke tests stay GREEN.
