@@ -16,12 +16,29 @@
 //     5. If the ray's depth at this sample exceeds the depth-buffer hit
 //        by more than thickness_threshold the pixel is in contact shadow.
 //
-// Composition with the main CSM shadow term (Bouvier 2014 §4):
+// Composition with the main CSM shadow term — selected at runtime by
+// the round-14 ``params.compose_mode`` u32 (formerly _pad at offset 28):
 //
-//     final_shadow = min(main_shadow, 1.0 - contact_strength * blend)
+//   compose_mode == 0u  ("min", round-13 legacy multiplicative):
 //
-// so contact shadows *only* darken — they cannot brighten a pixel that
-// the main CSM has already decided is fully shadowed.
+//       final_shadow = min(main_shadow, 1.0 - contact_strength * blend)
+//
+//   compose_mode == 1u  ("max", round-14 preferred — never double-darkens):
+//
+//       contact      = 1.0 - contact_strength * blend
+//       final_shadow = max(main_shadow, contact)
+//
+//   compose_mode == 2u  ("penumbra_gated", contact only inside PCF penumbra):
+//
+//       if 0.1 < main_shadow && main_shadow < 0.9 {
+//           final_shadow = min(main_shadow, 1.0 - contact_strength * blend);
+//       } else {
+//           final_shadow = main_shadow;
+//       }
+//
+// Round 14 fixes the cluster-lighting double-shadow regression where
+// the round-12 Vogel PCF and round-13 contact-shadow term silently
+// multiplied together inside soft penumbras.
 //
 // Bind groups:
 //   group(0) binding(0) — params       (uniform, 32 bytes)
@@ -39,7 +56,7 @@ struct ContactShadowsParams {
     max_distance:  f32,        // world units
     thickness:     f32,        // world units; gap required to register occlusion
     blend:         f32,        // [0, 1]; composition strength
-    _pad:          u32,
+    compose_mode:  u32,        // round-14: 0=min, 1=max, 2=penumbra_gated
 }
 
 struct ProjBuf {
@@ -149,7 +166,24 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
     }
 
-    // Compose: contact shadow can only DARKEN the main shadow term.
-    let composed = min(main_shadow, 1.0 - occluded * params.blend);
+    // Round-14 composition selector — gate the contact term against
+    // the main PCF/PCSS shadow so we never double-darken.  See header
+    // for the per-mode formula.
+    let contact_term = 1.0 - occluded * params.blend;
+    var composed: f32;
+    if params.compose_mode == 1u {
+        // "max" — never double-darkens (round-14 preferred).
+        composed = max(main_shadow, contact_term);
+    } else if params.compose_mode == 2u {
+        // "penumbra_gated" — contact only fires on PCF soft edges.
+        if main_shadow > 0.1 && main_shadow < 0.9 {
+            composed = min(main_shadow, contact_term);
+        } else {
+            composed = main_shadow;
+        }
+    } else {
+        // 0u / default — "min" (round-13 legacy multiplicative).
+        composed = min(main_shadow, contact_term);
+    }
     textureStore(shadow_out, coord, vec4<f32>(composed, 0.0, 0.0, 1.0));
 }

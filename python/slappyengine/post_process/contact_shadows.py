@@ -16,15 +16,39 @@ Algorithm (Bouvier 2014, GDC 2014 *Contact Shadows in The Order: 1886*):
          depth-buffer reads — by more than ``thickness_threshold`` — the
          pixel is occluded by some nearby geometry.
 
-The output is composed with the main CSM/PCSS shadow term using
+The output is composed with the main CSM/PCSS shadow term using one of
+three modes selected by :attr:`ContactShadowsPass.compose_mode`:
 
-    final_shadow = min(main_shadow, 1.0 - contact_shadow_strength * blend)
+``"min"`` (round-13 default, legacy multiplicative)::
 
-so the contact term *only* darkens — it can never make a pixel brighter
-than the main shadow already says it should be.  This matches the
-Bouvier 2014 recommendation that contact shadows are an additive
-darkening, not a replacement, and keeps the round-12 Vogel-PCF
-penumbra response intact in regions where there is no nearby contact.
+    final_shadow = min(main_shadow, 1.0 - contact_strength * blend)
+
+This guarantees the contact term *only* darkens, matching the Bouvier
+2014 recommendation that contact shadows are an additive darkening, not
+a replacement.
+
+``"max"`` (round-14 preferred, never double-darkens)::
+
+    contact_shadow = 1.0 - contact_strength * blend
+    final_shadow   = max(main_shadow, contact_shadow)
+
+In ``"max"`` mode the two shadow terms compete rather than multiply, so
+a pixel already deep in PCF shadow is **not** darkened further by a
+near-occluder contact term.  This is the round-14 fix for
+double-shadowing in the cluster lighting path where PCF + contact were
+silently multiplied together.
+
+``"penumbra_gated"`` (round-14, contact only inside PCF penumbra)::
+
+    if 0.1 < main_shadow < 0.9:
+        final_shadow = min(main_shadow, 1.0 - contact_strength * blend)
+    else:
+        final_shadow = main_shadow
+
+Contact shadows only fire where PCF says the pixel is on a soft edge —
+fully-lit and fully-shadowed regions forward the PCF term unchanged.
+This is the safest mode for cinematic scenes where contact darkening of
+already-lit regions would look like a doubled drop shadow.
 
 The Python helper :func:`ray_march_contact_shadow` mirrors the WGSL
 arithmetic bit-for-bit so the algorithm can be regression-tested
@@ -52,8 +76,28 @@ _ENTRY  = "main"
 #   max_distance     : f32          offset 16   ( 4 bytes)
 #   thickness        : f32          offset 20   ( 4 bytes)
 #   blend            : f32          offset 24   ( 4 bytes)
-#   _pad             : u32          offset 28   ( 4 bytes)
+#   compose_mode     : u32          offset 28   ( 4 bytes)  # round-14
+#
+# Round 14 reuses the previously-padding u32 at offset 28 for the
+# composition-mode selector so the struct stays exactly 32 bytes — no
+# binding rebinds required.  Encoding:
+#     0 = "min"             (legacy multiplicative — round-13 default)
+#     1 = "max"             (round-14 preferred — never double-darkens)
+#     2 = "penumbra_gated"  (contact only where 0.1 < pcf < 0.9)
 _PARAMS_FMT = "<3fIfffI"
+
+_COMPOSE_MODES: dict[str, int] = {
+    "min": 0,
+    "max": 1,
+    "penumbra_gated": 2,
+}
+
+# Penumbra-gate band for ``compose_mode="penumbra_gated"``.  The contact
+# term only fires when the main PCF shadow is strictly inside this band
+# — i.e. on a soft edge where PCF could not resolve the near-occluder.
+# Fully-lit and fully-shadowed regions forward the PCF term unchanged.
+_PENUMBRA_LO: float = 0.1
+_PENUMBRA_HI: float = 0.9
 
 
 # ---------------------------------------------------------------------------
@@ -146,19 +190,67 @@ def compose_with_main_shadow(
     main_shadow: float,
     contact_strength: float,
     blend: float,
+    compose_mode: str = "min",
 ) -> float:
     """Compose the contact-shadow strength with the main CSM term.
 
-    The composition rule is::
+    Parameters
+    ----------
+    main_shadow
+        The round-12 Vogel-disk PCF (or PCSS) shadow term in ``[0, 1]``.
+        ``1.0 = fully lit``, ``0.0 = fully shadowed``.
+    contact_strength
+        The round-13 ray-march occlusion strength in ``[0, 1]``.
+    blend
+        Compose-time strength multiplier in ``[0, 1]``.
+    compose_mode
+        One of:
 
-        final = min(main_shadow, 1.0 - contact_strength * blend)
+        ``"min"`` (round-13 default, legacy)::
 
-    which guarantees the contact term *only* darkens — a pixel that the
-    main shadow says is fully lit can be partly darkened by contact, but
-    a pixel that the main shadow says is fully shadowed cannot be made
-    brighter.
+            final = min(main_shadow, 1.0 - contact_strength * blend)
+
+        Multiplicative.  A pixel that the main shadow says is fully
+        shadowed cannot be made brighter, but a pixel already in soft
+        PCF shadow *will* be darkened further by contact.  This is the
+        Round 14 double-shadow regression.
+
+        ``"max"`` (round-14 preferred — never double-darkens)::
+
+            contact = 1.0 - contact_strength * blend
+            final   = max(main_shadow, contact)
+
+        The two terms compete: whichever says the pixel is **brighter**
+        wins.  This eliminates double-shadowing.
+
+        ``"penumbra_gated"`` (contact only inside PCF penumbra)::
+
+            if 0.1 < main_shadow < 0.9:
+                final = min(main_shadow, 1.0 - contact_strength * blend)
+            else:
+                final = main_shadow
+
+        Contact only fires on soft PCF edges; fully-lit and
+        fully-shadowed regions forward PCF unchanged.
+
+    Returns
+    -------
+    float
+        Composed shadow term in ``[0, 1]``.
     """
-    return min(main_shadow, 1.0 - contact_strength * blend)
+    if compose_mode == "min":
+        return min(main_shadow, 1.0 - contact_strength * blend)
+    if compose_mode == "max":
+        contact = 1.0 - contact_strength * blend
+        return max(main_shadow, contact)
+    if compose_mode == "penumbra_gated":
+        if _PENUMBRA_LO < main_shadow < _PENUMBRA_HI:
+            return min(main_shadow, 1.0 - contact_strength * blend)
+        return main_shadow
+    raise ValueError(
+        f"compose_with_main_shadow: compose_mode must be one of "
+        f"{sorted(_COMPOSE_MODES)!r}; got {compose_mode!r}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -188,6 +280,22 @@ class ContactShadowsPass:
         Direction *toward* the dominant light, world space.  Stored
         normalised so the shader can skip the per-pixel normalize.
         Default points straight down (matches the shadow_csm default).
+    compose_mode
+        How the contact term composes with the main PCF/PCSS shadow:
+
+        * ``"min"`` — legacy multiplicative (Round 13 default; kept for
+          back-compat — can double-darken when PCF is in penumbra).
+        * ``"max"`` — Round 14 preferred — the two terms compete via
+          ``max``, so a pixel already in soft PCF shadow is **not**
+          darkened further.  This is the fix for the cluster-lighting
+          double-shadow regression.
+        * ``"penumbra_gated"`` — contact only fires when the PCF term
+          is strictly inside ``(0.1, 0.9)``.  Fully-lit and fully-
+          shadowed regions forward PCF unchanged.
+
+        Default ``"max"`` — the documented Round 14 fix.  Existing
+        scenes that need the Round 13 multiplicative behaviour can opt
+        in with ``compose_mode="min"``.
     """
 
     label = "contact_shadows"
@@ -199,6 +307,7 @@ class ContactShadowsPass:
         thickness_threshold: float = 0.1,
         blend: float = 0.7,
         light_dir: Tuple[float, float, float] = (0.0, -1.0, 0.0),
+        compose_mode: str = "max",
     ) -> None:
         # ── Validation — refuse silently-wrong configs at boundary. ───────
         if isinstance(samples, bool) or not isinstance(samples, int):
@@ -239,11 +348,24 @@ class ContactShadowsPass:
         if nrm > 0.0:
             ld = [c / nrm for c in ld]
 
+        if not isinstance(compose_mode, str):
+            raise TypeError(
+                "ContactShadowsPass: compose_mode must be a str (one of "
+                f"{sorted(_COMPOSE_MODES)!r}); "
+                f"got {type(compose_mode).__name__}"
+            )
+        if compose_mode not in _COMPOSE_MODES:
+            raise ValueError(
+                "ContactShadowsPass: compose_mode must be one of "
+                f"{sorted(_COMPOSE_MODES)!r}; got {compose_mode!r}"
+            )
+
         self.samples = int(samples)
         self.max_distance = float(max_distance)
         self.thickness_threshold = float(thickness_threshold)
         self.blend = float(blend)
         self.light_dir = (ld[0], ld[1], ld[2])
+        self.compose_mode = compose_mode
 
     @classmethod
     def from_config(cls, cfg) -> "ContactShadowsPass":
@@ -263,6 +385,7 @@ class ContactShadowsPass:
                 getattr(cs, "thickness_threshold", 0.1),
             ),
             blend=float(getattr(cs, "blend", 0.7)),
+            compose_mode=str(getattr(cs, "compose_mode", "max")),
         )
 
     def is_noop(self) -> bool:
@@ -285,7 +408,7 @@ class ContactShadowsPass:
             float(self.max_distance),
             float(self.thickness_threshold),
             float(self.blend),
-            0,  # _pad
+            _COMPOSE_MODES[self.compose_mode],  # round-14: compose_mode u32
         )
         return PostProcessPass(
             shader_path=_SHADER,
