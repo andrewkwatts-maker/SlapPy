@@ -4,6 +4,19 @@ from pathlib import Path
 from typing import Any, TYPE_CHECKING
 import numpy as np
 
+from slappyengine._validation import (
+    validate_str,
+    validate_positive_int,
+    validate_positive_size_2tuple,
+    validate_existing_file_path,
+    validate_finite_float,
+)
+from slappyengine._layer_validation import (
+    validate_layer_mode,
+    validate_struct_fields,
+    validate_layer_arg,
+)
+
 if TYPE_CHECKING:
     from slappyengine.entity import Entity
 
@@ -51,6 +64,8 @@ def _readback_texture(tex, w: int, h: int) -> "np.ndarray":
 
 class Layer:
     def __init__(self, name: str = "Layer", mode: str = "2D"):
+        validate_str("name", "Layer", name)
+        validate_layer_mode("mode", "Layer", mode)
         self.name: str = name
         self.mode: str = mode
         self.entity: Entity | None = None
@@ -104,6 +119,7 @@ class Layer:
 
     @classmethod
     def from_image(cls, path: str | Path, name: str | None = None) -> "Layer":
+        validate_existing_file_path("path", "Layer.from_image", path)
         from PIL import Image
         img = Image.open(path).convert("RGBA")
         arr = np.asarray(img, dtype=np.uint8)
@@ -113,6 +129,8 @@ class Layer:
 
     @classmethod
     def blank(cls, width: int, height: int, name: str = "Layer", **kwargs) -> "Layer":
+        validate_positive_int("width", "Layer.blank", width)
+        validate_positive_int("height", "Layer.blank", height)
         inst = cls(name=name, **kwargs)
         inst._image_data = np.zeros((height, width, 4), dtype=np.uint8)
         return inst
@@ -146,6 +164,7 @@ class Layer:
             size: (width, height) of the output texture.
             camera: optional camera override; defaults to orthographic front view.
         """
+        size = validate_positive_size_2tuple("size", "Layer.bake_to_2d", size)
         if self.mode != "3D":
             raise ValueError("bake_to_2d() requires a 3D-mode Layer")
 
@@ -177,6 +196,8 @@ class Layer:
             layer_2d: source 2D layer whose luminance drives displacement.
             scale: multiplier applied to the [0, 1] luminance before adding to Z.
         """
+        validate_layer_arg("layer_2d", "Layer.apply_heightmap", layer_2d)
+        validate_finite_float("scale", "Layer.apply_heightmap", scale)
         if self.mode != "3D":
             raise ValueError("apply_heightmap() requires a 3D-mode Layer")
         if self.mesh_geometry is None:
@@ -259,6 +280,8 @@ class Layer:
 class Layer2D(Layer):
     """Layer subclass for 2D pixel-art rendering. mode is always '2D'."""
     def __init__(self, name: str = "layer", width: int = 64, height: int = 64):
+        validate_positive_int("width", "Layer2D", width)
+        validate_positive_int("height", "Layer2D", height)
         super().__init__(name=name, mode="2D")
         # Pre-allocate image data
         self._image_data = np.zeros((height, width, 4), dtype=np.uint8)
@@ -321,6 +344,9 @@ class Layer3D(Layer):
 class LayerDataBuffer(Layer2D):
     """Layer2D that also carries per-pixel struct data for compute shaders."""
     def __init__(self, name: str, width: int, height: int, struct_fields: list[str]):
+        struct_fields = validate_struct_fields(
+            "struct_fields", "LayerDataBuffer", struct_fields
+        )
         super().__init__(name=name, width=width, height=height)
         self.struct_fields = struct_fields
         n = len(struct_fields)

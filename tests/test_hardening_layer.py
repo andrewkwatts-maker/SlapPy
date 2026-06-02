@@ -87,7 +87,7 @@ def test_layer_from_image_rejects_nonexistent_path():
 
 
 def test_layer_from_image_rejects_bytes_path():
-    with pytest.raises(TypeError, match="path must be a str or Path"):
+    with pytest.raises(TypeError, match="path must be str or pathlib.Path"):
         Layer.from_image(b"/some/path.png")
 
 
