@@ -1,11 +1,11 @@
 ﻿"""UI subpackage — lazy-loaded to avoid eager numpy/wgpu imports."""
 from __future__ import annotations
 
-__all__ = ["SceneUIEntity", "HtmlOverlay", "draw_stat_bar"]
+__all__ = ["HtmlOverlay", "SceneUIEntity", "draw_stat_bar"]
 
 _LAZY_MAP: dict[str, str] = {
-    "SceneUIEntity": ".scene_ui",
     "HtmlOverlay":   ".html_overlay",
+    "SceneUIEntity": ".scene_ui",
     "draw_stat_bar": ".hud_widgets",
 }
 

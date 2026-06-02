@@ -2,24 +2,29 @@
 from __future__ import annotations
 
 __all__ = [
-    "ComputePass", "ComputePipeline", "ReadbackBuffer",
-    "StatsCompute", "StatsResult",
-    "SpatialCompute", "AABB",
+    "AABB",
+    "AssetComputeAPI",
+    "ComputePass",
+    "ComputePipeline",
+    "PixelAPI",
     "PixelMutator",
-    "AssetComputeAPI", "PixelAPI",
+    "ReadbackBuffer",
+    "SpatialCompute",
+    "StatsCompute",
+    "StatsResult",
 ]
 
 _LAZY_MAP: dict[str, str] = {
+    "AABB":             ".spatial",
+    "AssetComputeAPI":  ".asset_compute",
     "ComputePass":      ".pipeline",
     "ComputePipeline":  ".pipeline",
+    "PixelAPI":         ".asset_compute",
+    "PixelMutator":     ".mutator",
     "ReadbackBuffer":   ".readback",
+    "SpatialCompute":   ".spatial",
     "StatsCompute":     ".stats",
     "StatsResult":      ".stats",
-    "SpatialCompute":   ".spatial",
-    "AABB":             ".spatial",
-    "PixelMutator":     ".mutator",
-    "AssetComputeAPI":  ".asset_compute",
-    "PixelAPI":         ".asset_compute",
 }
 
 

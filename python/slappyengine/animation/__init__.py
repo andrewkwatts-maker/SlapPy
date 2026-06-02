@@ -2,21 +2,21 @@
 from __future__ import annotations
 
 __all__ = [
-    "AnimationGraph",
     "AnimState",
     "AnimTransition",
     "AnimUpdate",
-    "ProceduralRig",
+    "AnimationGraph",
     "ControlPoint",
+    "ProceduralRig",
 ]
 
 _LAZY_MAP: dict[str, str] = {
-    "AnimationGraph":  ".graph",
     "AnimState":       ".graph",
     "AnimTransition":  ".graph",
     "AnimUpdate":      ".graph",
-    "ProceduralRig":   ".procedural",
+    "AnimationGraph":  ".graph",
     "ControlPoint":    ".procedural",
+    "ProceduralRig":   ".procedural",
 }
 
 

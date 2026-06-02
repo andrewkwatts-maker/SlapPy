@@ -24,6 +24,14 @@ Backward-compatible aliases are kept in the original locations
 """
 
 __all__ = [
-    "lighting", "fluid_sim", "angle_sprite", "split_screen",
-    "iso", "net", "ai", "animation", "input", "ui",
+    "ai",
+    "angle_sprite",
+    "animation",
+    "fluid_sim",
+    "input",
+    "iso",
+    "lighting",
+    "net",
+    "split_screen",
+    "ui",
 ]

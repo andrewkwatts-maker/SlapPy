@@ -59,14 +59,14 @@ from ._validation import (
 
 __all__ = [
     "TelemetryEvent",
+    "clear_history",
     "emit",
+    "enable_pattern_index",
+    "get_event_history",
+    "is_pattern_index_enabled",
+    "set_history_capacity",
     "subscribe",
     "unsubscribe",
-    "get_event_history",
-    "clear_history",
-    "set_history_capacity",
-    "enable_pattern_index",
-    "is_pattern_index_enabled",
 ]
 
 

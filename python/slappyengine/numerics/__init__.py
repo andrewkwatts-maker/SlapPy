@@ -78,7 +78,7 @@ from ._validation import (
 )
 
 
-__all__ = ["vcycle_poisson", "sor_smooth", "compute_residual"]
+__all__ = ["compute_residual", "sor_smooth", "vcycle_poisson"]
 
 
 # ---------------------------------------------------------------------------

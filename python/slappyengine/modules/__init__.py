@@ -1,12 +1,12 @@
 """Modules subpackage — lazy-loaded."""
 from __future__ import annotations
 
-__all__ = ["HealthModule", "PhysicsModule", "FluidParamsModule", "PixelPhysicsModule"]
+__all__ = ["FluidParamsModule", "HealthModule", "PhysicsModule", "PixelPhysicsModule"]
 
 _LAZY_MAP: dict[str, str] = {
+    "FluidParamsModule":  ".fluid_params",
     "HealthModule":       ".health",
     "PhysicsModule":      ".physics",
-    "FluidParamsModule":  ".fluid_params",
     "PixelPhysicsModule": ".pixel_physics",
 }
 

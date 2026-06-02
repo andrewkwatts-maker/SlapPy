@@ -3,30 +3,30 @@ from __future__ import annotations
 
 __all__ = [
     "ResidencyManager",
-    "compress_array",
-    "decompress_array",
-    "compress_raw",
-    "decompress_raw",
-    "write_asset_to_slap",
-    "read_asset_from_slap",
-    "write_world_slap",
-    "read_world_slap",
     "SLAP_MAGIC",
     "SLAP_VERSION",
+    "compress_array",
+    "compress_raw",
+    "decompress_array",
+    "decompress_raw",
+    "read_asset_from_slap",
+    "read_world_slap",
+    "write_asset_to_slap",
+    "write_world_slap",
 ]
 
 _LAZY_MAP: dict[str, str] = {
-    "ResidencyManager": ".manager",
-    "compress_array":   ".compression",
-    "decompress_array": ".compression",
-    "compress_raw":     ".compression",
-    "decompress_raw":   ".compression",
-    "write_asset_to_slap": ".slap_format",
+    "ResidencyManager":     ".manager",
+    "SLAP_MAGIC":           ".slap_format",
+    "SLAP_VERSION":         ".slap_format",
+    "compress_array":       ".compression",
+    "compress_raw":         ".compression",
+    "decompress_array":     ".compression",
+    "decompress_raw":       ".compression",
     "read_asset_from_slap": ".slap_format",
-    "write_world_slap": ".slap_format",
-    "read_world_slap":  ".slap_format",
-    "SLAP_MAGIC":       ".slap_format",
-    "SLAP_VERSION":     ".slap_format",
+    "read_world_slap":      ".slap_format",
+    "write_asset_to_slap":  ".slap_format",
+    "write_world_slap":     ".slap_format",
 }
 
 

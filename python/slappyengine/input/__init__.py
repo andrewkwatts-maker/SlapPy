@@ -14,4 +14,4 @@ from __future__ import annotations
 from slappyengine.input._manager import InputManager
 from slappyengine.input.action_map import ActionMap
 
-__all__ = ["InputManager", "ActionMap"]
+__all__ = ["ActionMap", "InputManager"]

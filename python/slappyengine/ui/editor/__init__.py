@@ -2,31 +2,31 @@
 from __future__ import annotations
 
 __all__ = [
-    "EditorShell",
-    "ViewportPanel",
-    "LayerPanel",
-    "PropertyInspector",
-    "MaterialEditor",
-    "NodeGraphPanel",
-    "TagPainter",
     "AnimGraphPanel",
     "BehaviorPanel",
-    "MeshInspector",
+    "EditorShell",
     "LayerLightingPanel",
+    "LayerPanel",
+    "MaterialEditor",
+    "MeshInspector",
+    "NodeGraphPanel",
+    "PropertyInspector",
+    "TagPainter",
+    "ViewportPanel",
 ]
 
 _LAZY_MAP: dict[str, str] = {
-    "EditorShell":        ".shell",
-    "ViewportPanel":      ".viewport_panel",
-    "LayerPanel":         ".layer_panel",
-    "PropertyInspector":  ".property_inspector",
-    "MaterialEditor":     ".material_editor",
-    "NodeGraphPanel":     ".node_graph_panel",
-    "TagPainter":         ".tag_painter",
     "AnimGraphPanel":     ".anim_graph_panel",
     "BehaviorPanel":      ".behavior_panel",
-    "MeshInspector":      ".mesh_inspector",
+    "EditorShell":        ".shell",
     "LayerLightingPanel": ".layer_lighting_panel",
+    "LayerPanel":         ".layer_panel",
+    "MaterialEditor":     ".material_editor",
+    "MeshInspector":      ".mesh_inspector",
+    "NodeGraphPanel":     ".node_graph_panel",
+    "PropertyInspector":  ".property_inspector",
+    "TagPainter":         ".tag_painter",
+    "ViewportPanel":      ".viewport_panel",
 }
 
 

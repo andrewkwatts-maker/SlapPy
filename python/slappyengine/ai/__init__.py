@@ -2,19 +2,19 @@
 from __future__ import annotations
 
 __all__ = [
+    "CodeSyncWatcher",
     "LLMClient",
     "ScriptGenerator",
-    "CodeSyncWatcher",
-    "prompt_to_code",
     "code_to_prompt",
+    "prompt_to_code",
 ]
 
 _LAZY_MAP: dict[str, str] = {
+    "CodeSyncWatcher": ".code_sync",
     "LLMClient":       ".llm_client",
     "ScriptGenerator": ".script_gen",
-    "CodeSyncWatcher": ".code_sync",
-    "prompt_to_code":  ".code_sync",
     "code_to_prompt":  ".code_sync",
+    "prompt_to_code":  ".code_sync",
 }
 
 

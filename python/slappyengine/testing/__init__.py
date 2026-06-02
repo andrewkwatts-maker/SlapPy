@@ -53,11 +53,11 @@ from ._validation import (
 )
 
 __all__ = [
-    "render_scene_to_png",
-    "diff_pngs",
-    "assert_scene_matches",
     "BASELINES_DIR",
     "DIFF_DIR",
+    "assert_scene_matches",
+    "diff_pngs",
+    "render_scene_to_png",
 ]
 
 _LOG = logging.getLogger("slappyengine.testing")
