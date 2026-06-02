@@ -64,14 +64,49 @@ features = ["pyo3/extension-module"]
 # Combined with [profile.release] strip = true in Cargo.toml, this drops the
 # wheel by ~30-50% on platforms where Cargo's strip doesn't fully apply.
 strip = true
-# Exclude development artifacts from the wheel
+# Exclude development artifacts from the wheel.
+#
+# Wheel-size audit 2026-06-02: maturin's `exclude` accepts glob patterns
+# relative to the project root. `**/tests` matches top-level `tests/` but
+# does not consistently match the inner `python/slappyengine/tests/`
+# subpackage, so we list that explicit path too. Same story for `.pdb`
+# debug symbols.
+#
+# We intentionally KEEP `python/slappyengine/testing/baselines/` — those
+# PNG/NPY files are runtime data for the public `slappyengine.testing`
+# golden-master API. Downstream test suites (Ochema Circuit, Bullet
+# Strata) call `assert_scene_matches(...)` and need the committed
+# baselines on disk; without them every first run silently bootstraps a
+# new baseline and asserts nothing.
 exclude = [
     "**/__pycache__",
     "**/*.pyc",
     "**/*.pyo",
+    "**/*.pdb",
     "**/tests",
     "**/examples",
     "**/.pytest_cache",
+    "**/.mypy_cache",
+    "**/.ruff_cache",
+    # Inner test subpackages — explicit paths because `**/tests` alone
+    # didn't catch them through maturin's globbing.
+    "python/slappyengine/tests",
+    "python/slappyengine/tests/**",
+    # Repo-root artefacts that should never ship.
+    "_audit_snapshots",
+    "_audit_snapshots/**",
+    "benchmarks",
+    "benchmarks/**",
+    "docs",
+    "docs/**",
+    "examples",
+    "examples/**",
+    "scripts",
+    "scripts/**",
+    "tools",
+    "tools/**",
+    "target",
+    "target/**",
 ]
 
 [tool.pytest.ini_options]
