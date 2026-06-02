@@ -14,6 +14,7 @@ Regenerate after adding or removing any doc.
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | SlapPyEngine architecture guide — repo layout, conventions, and key subsystems. |
 | [`ONBOARDING.md`](ONBOARDING.md) | Contributor onboarding — install variants, architecture tour, and first-change walk-through. |
 | [`architecture_overview.md`](architecture_overview.md) | 5-minute orientation for the rebuilt 2D physics layer (softbody / fluid / dynamics / studio) and dependency direction. |
+| [`core_engine_audit_2026_06_02.md`](core_engine_audit_2026_06_02.md) | Core engine audit — `_compat` symbol caller count, doc/__all__ drift report, top-level docstring expansion (2026-06-02). |
 | [`demo_gallery.md`](demo_gallery.md) | Hand-authored cinematic gallery of six flagship runnable demos (hello_ragdoll / hello_studio / humanoid_walking / humanoid_ik_terrain / hello_rope / hello_gi) with refreshed GIF/PNG artefacts under `examples/output/`. |
 | [`dynamics_design.md`](dynamics_design.md) | Design reference for `slappyengine.dynamics`: XPBD substrate, the seven `JointSpec` kinds, authoring helpers, and failure modes. |
 | [`dynamics_quickstart.md`](dynamics_quickstart.md) | 10-minute hands-on quick-start for the dynamics primitives, with six runnable snippets (4/4 tripwire tests green). |
@@ -34,6 +35,7 @@ Regenerate after adding or removing any doc.
 | [`perf_dashboard.md`](perf_dashboard.md) | One-page perf tripwire across the six v0.3 hot paths (dynamics, numerics, thermal, topology, telemetry, zones) with bound classifications. |
 | [`perf_dashboard_prev.md`](perf_dashboard_prev.md) | Prior perf dashboard snapshot (2026-05-29) preserved for trend comparison. |
 | [`phase_d_strip_plan_2026_05_31.md`](phase_d_strip_plan_2026_05_31.md) | Phase D strip-pass execution plan (Sprint F, 2026-05-31) — gated on Ochema CI greenness. |
+| [`repo_cleanup_2026_06_02.md`](repo_cleanup_2026_06_02.md) | Repo cleanup survey — generated-artefact `.gitignore` plan, (a)/(b)/(c) bucket categorisation of 400+ untracked files (2026-06-02). |
 | [`physics_module.md`](physics_module.md) | Entry point for the hierarchical-hull per-pixel physics module (`slappyengine.physics`). |
 | [`rust_migration_plan.md`](rust_migration_plan.md) | Rust migration plan — staged path to 1000 fps via Rust-backed hot-path migration. |
 | [`rust_port_plan_dynamics.md`](rust_port_plan_dynamics.md) | Phase 1 MVP Rust-port plan for `slappyengine.dynamics`: `_project_distance` first, 3-4x estimated speedup (4/4 green). |
