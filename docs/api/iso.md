@@ -8,6 +8,8 @@
 > tower-defence wave + attack resolution.
 
 
+## Overview
+
 SlapPyEngine.iso — Isometric 2D-grid-with-Z rendering subsystem.
 
 ## Rendering surface (summary)
@@ -188,3 +190,8 @@ sequence.
 - `slappyengine.iso.iso_grid`
 - `slappyengine.iso.iso_scene`
 - `slappyengine.iso.projection`
+
+## See also
+
+- [`ext.md`](ext.md) — `slappyengine.ext.iso` re-exports the same
+  surface for back-compat imports.

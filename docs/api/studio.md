@@ -23,6 +23,17 @@ from slappyengine.studio import (
 )
 ```
 
+## Overview
+
+`slappyengine.studio` is the demo-authoring sugar layer: every helper
+returns or operates on a [`Stage`](#stage) bundle, and the module-level
+[`record()`](#recordstage-frames180-output-none--fps30-step_worldtrue-pre_stepnone-post_stepnone-overlaynone---path)
+turns that bundle into a GIF. Each `*_stage` factory is opinionated
+about one physics substrate (softbody / fluid / dynamics) so a working
+scene fits in ~15 lines of code; the bundle stays mutable so callers
+mix in extras (overlays, custom renderers, pre/post-step hooks) without
+forking the helper.
+
 ## Stage
 
 The central handle: a `dataclass` bundle of world(s) + renderer + view
@@ -179,3 +190,10 @@ substrate, which has no GPU rasteriser of its own.
 - `slappyengine.studio.terrain_overlay` / `output_path` — helpers.
 - `slappyengine.studio.kick` / `anchor` / `centroid` / `translate` —
   node-slice ops.
+
+## See also
+
+- [`testing.md`](testing.md) — `record()` outputs feed the same visual
+  regression harness used by the engine suite.
+- [`animation.md`](animation.md) — `humanoid_stage` pairs with the
+  procedural rig + IK surface.

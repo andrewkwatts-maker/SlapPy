@@ -21,6 +21,8 @@ from slappyengine.telemetry import (
 )
 ```
 
+## Overview
+
 `slappyengine.telemetry` is the engine's instrumentation bus: a single
 process-wide event sink that games, editor panels, profilers, and
 save-state diffs all subscribe to. The pattern was promoted out of
@@ -249,3 +251,8 @@ subscriber list is explicitly copied into a local before iteration.
   `is_pattern_index_enabled` — opt-in O(matching) dispatch.
 - `slappyengine.telemetry._validation` — private input-validation
   helpers. Not part of the contract; reach into them at your own risk.
+
+## See also
+
+- [`audio_runtime.md`](audio_runtime.md) — companion soft-fail backend
+  shim that subscribers can hook for muted-audio diagnostics.

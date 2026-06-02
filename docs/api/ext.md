@@ -14,6 +14,8 @@ from slappyengine.ext.lighting import LightingSystem, PointLight
 from slappyengine.lighting     import LightingSystem, PointLight
 ```
 
+## Overview
+
 The shim layout exists for two reasons:
 
 1. It gives the engine a single namespace (`slappyengine.ext`) where

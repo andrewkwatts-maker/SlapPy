@@ -6,6 +6,8 @@
 > (`inspect.signature`, `inspect.getdoc`, `dataclasses.fields`).
 
 
+## Overview
+
 slappyengine.zones — Generic zone primitives.
 
 ## Classes
@@ -116,3 +118,8 @@ _(none)_
 ## Inner modules
 
 _(none)_
+
+## See also
+
+- [`thermal.md`](thermal.md) — heat fields plug into threshold zone
+  bookkeeping.

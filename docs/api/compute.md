@@ -18,6 +18,8 @@ from slappyengine.compute import (
 )
 ```
 
+## Overview
+
 All names are lazy-loaded via `__getattr__` — importing
 `slappyengine.compute` is cheap, the wgpu / numpy modules only land when
 you actually touch a symbol. This keeps headless CI fast.

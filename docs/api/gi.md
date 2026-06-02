@@ -8,6 +8,8 @@
 > pipeline see [`post_process.md`](post_process.md).
 
 
+## Overview
+
 GI primitives layered on top of the Nova3D WGSL compute kernels. Each
 system holds GPU resources but degrades gracefully when no `wgpu`
 adapter is available (`init_gpu` swallows the import failure and the

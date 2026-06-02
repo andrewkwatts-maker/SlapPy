@@ -18,6 +18,8 @@ from slappyengine.residency import (
 )
 ```
 
+## Overview
+
 All names are lazy-loaded via `__getattr__` (see
 `residency/__init__.py`). The lazy loader tolerates `ImportError` for
 optional Rust-backed siblings — anything but `ResidencyManager`
@@ -240,3 +242,10 @@ typically:
 The `.slap` directory is rooted at the `save_dir` argument; one
 manager per save slot avoids cross-contamination between
 parallel world loads.
+
+## See also
+
+- [`gpu.md`](gpu.md) — `BufferManager` / `TextureManager` are the
+  GPU-tier owners the residency manager hands eviction work to.
+- [`compute.md`](compute.md) — compute-side readbacks share the same
+  staging-buffer pattern.

@@ -15,6 +15,8 @@ from slappyengine.animation import (
 )
 ```
 
+## Overview
+
 All names are lazy-loaded via `__getattr__` — importing
 `slappyengine.animation` is cheap. Video-frame extraction lives in
 `slappyengine.animation.video_import` and is **not** in `__all__` (it
@@ -197,3 +199,10 @@ animation playback does not need it.
 - `slappyengine.animation.procedural` — `ProceduralRig`, `ControlPoint`.
 - `slappyengine.animation.video_import` — `extract_frames` (opt-in
   extra; not in `__all__`).
+
+## See also
+
+- [`studio.md`](studio.md) — `humanoid_stage` consumes the rig + IK
+  surface for demo capture.
+- [`ext.md`](ext.md) — `slappyengine.ext.animation` re-exports the
+  same surface for back-compat imports.

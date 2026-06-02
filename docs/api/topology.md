@@ -6,6 +6,8 @@
 > (`inspect.signature`, `inspect.getdoc`, `dataclasses.fields`).
 
 
+## Overview
+
 Generic graph topology primitives.
 
 ## Classes
@@ -42,3 +44,8 @@ Value: `-1`
 ## Inner modules
 
 _(none)_
+
+## See also
+
+- [`numerics.md`](numerics.md) — numerical primitives consumed by the
+  same physics stack.

@@ -15,6 +15,8 @@ from slappyengine.testing import (
 )
 ```
 
+## Overview
+
 `slappyengine.testing` is the engine's **visual regression harness**.
 Any engine change can be screenshot-verified with a single line of
 test code:
@@ -202,3 +204,8 @@ three conventions:
 - `slappyengine.testing._validation` — private input-validation
   helpers. Re-exported for introspection only; not part of the
   contract.
+
+## See also
+
+- [`studio.md`](studio.md) — the studio `record()` helper produces the
+  exact PNG / GIF outputs this harness scores against.

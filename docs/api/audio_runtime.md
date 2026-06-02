@@ -18,6 +18,8 @@ from slappyengine.audio_runtime import (
 )
 ```
 
+## Overview
+
 Public surface is intentionally tiny: a `Protocol`, a getter, and the
 two concrete backends that implement the protocol. The module is
 **internal plumbing** — none of the names are re-exported at the
@@ -140,3 +142,8 @@ exposing one would split the interface.
   test harnesses may rebind this for fake-backend injection.
 - `slappyengine.audio_runtime._STUB_WARNING` — the canonical warning
   string; pinned by `tests/test_audio_stub.py`.
+
+## See also
+
+- [`telemetry.md`](telemetry.md) — the same "soft-fail, log-once"
+  posture lives in the telemetry emit path.

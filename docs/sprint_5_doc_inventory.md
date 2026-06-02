@@ -67,6 +67,7 @@ and are skipped by the generator.
 
 | Path | Description |
 |---|---|
+| [`api/_template.md`](api/_template.md) | Meta-template documenting the canonical structure every hand-authored `docs/api/*.md` reference follows. Asserted by `tests/test_docs_api_template_conformance.py`. |
 | [`api/animation.md`](api/animation.md) | Hand-authored API reference for `slappyengine.animation` (AnimationGraph state machine + AnimState/AnimTransition/AnimUpdate, ProceduralRig dot-rigging + ControlPoint, video-frame import via `[video]` extra). |
 | [`api/audio_runtime.md`](api/audio_runtime.md) | Hand-authored API reference for `slappyengine.audio_runtime` (sounddevice soft-import shim — AudioBackend protocol, real / stub backend selection, single-warning fallback, sample-rate forwarding). |
 | [`api/compute.md`](api/compute.md) | Hand-authored API reference for `slappyengine.compute` (ComputePass/ComputePipeline dispatch, ReadbackBuffer staging, StatsCompute + SpatialCompute reductions, PixelMutator bulk mutation, AssetComputeAPI / PixelAPI per-asset facade). |

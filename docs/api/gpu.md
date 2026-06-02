@@ -19,6 +19,8 @@ from slappyengine.gpu import (
 )
 ```
 
+## Overview
+
 Every name is **lazy-loaded** via `__getattr__` (see `gpu/__init__.py`'s
 `_LAZY_MAP`), so importing `slappyengine.gpu` is cheap — wgpu does not
 land until you actually touch a class. Headless CI imports the engine

@@ -6,6 +6,8 @@
 > (`inspect.signature`, `inspect.getdoc`, `dataclasses.fields`).
 
 
+## Overview
+
 Generic numerical primitives.
 
 ## Classes
@@ -54,3 +56,8 @@ _(none)_
 ## Inner modules
 
 _(none)_
+
+## See also
+
+- [`gi.md`](gi.md) — the GI denoiser sits on top of these Laplacian /
+  multigrid helpers.

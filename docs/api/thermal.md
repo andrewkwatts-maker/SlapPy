@@ -6,6 +6,8 @@
 > (`inspect.signature`, `inspect.getdoc`, `dataclasses.fields`).
 
 
+## Overview
+
 Heat diffusion + pairwise heat exchange — Phase B public surface.
 
 ## Classes
@@ -48,3 +50,8 @@ _(none)_
 ## Inner modules
 
 _(none)_
+
+## See also
+
+- [`zones.md`](zones.md) — thermal zones plug into the rect / threshold
+  zone bookkeeping.
