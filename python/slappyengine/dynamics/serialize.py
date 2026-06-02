@@ -29,11 +29,24 @@ from typing import Any
 import numpy as np
 
 from .body import Body
+from .humanoid import Humanoid
+from .ik import IKChainSpec
 from .joint import KIND_PARAM_KEYS, JointSpec
+from .material import Material
+from .motor import MotorSpec
+from .ragdoll import BoneSpec, RagdollSpec
+from .rope import RopeSpec
+from .spring import SpringSpec
 from .world import World
 
 # Schema version — bump when the on-disk format breaks compatibility.
 SCHEMA_VERSION = 1
+
+# JSON-safe primitive types accepted inside ``JointSpec.params`` /
+# ``Body.parameters`` after numpy coercion. Anything outside this set is
+# rejected with a clear message at serialise time so a save file never
+# captures a half-encoded blob.
+_PARAMS_SCALAR_TYPES: tuple[type, ...] = (str, int, float, bool, type(None))
 
 # Keys we require at the top level of a world dict.
 _REQUIRED_WORLD_KEYS = {
@@ -160,6 +173,59 @@ def _to_json_safe(value: Any) -> Any:
     return repr(value)
 
 
+def _params_to_json_safe(value: Any, *, path: str) -> Any:
+    """Strict :func:`_to_json_safe` variant for ``JointSpec.params``.
+
+    The XPBD solver only ever stores JSON-trivial values (ints, floats,
+    bools, 2-tuples of floats, strings) inside ``params``. A save that
+    captured an opaque builder object would silently round-trip to a
+    ``repr(...)`` string and corrupt the next load. This helper coerces
+    numpy scalars to Python primitives and raises :class:`TypeError`
+    with a precise ``path`` for anything outside the supported set.
+    """
+    if isinstance(value, np.ndarray):
+        if value.size <= 16:
+            return [
+                _params_to_json_safe(v, path=f"{path}[{i}]")
+                for i, v in enumerate(value.tolist())
+            ]
+        return _encode_array(value)
+    if isinstance(value, np.floating):
+        f = float(value)
+        if math.isnan(f):
+            return "NaN"
+        if math.isinf(f):
+            return "Infinity" if f > 0 else "-Infinity"
+        return f
+    if isinstance(value, np.integer):
+        return int(value)
+    if isinstance(value, np.bool_):
+        return bool(value)
+    if isinstance(value, float):
+        if math.isnan(value):
+            return "NaN"
+        if math.isinf(value):
+            return "Infinity" if value > 0 else "-Infinity"
+        return value
+    if isinstance(value, dict):
+        return {
+            str(k): _params_to_json_safe(v, path=f"{path}.{k}")
+            for k, v in value.items()
+        }
+    if isinstance(value, (list, tuple)):
+        return [
+            _params_to_json_safe(v, path=f"{path}[{i}]")
+            for i, v in enumerate(value)
+        ]
+    if isinstance(value, _PARAMS_SCALAR_TYPES):
+        return value
+    raise TypeError(
+        f"JointSpec.params: cannot serialise value at {path!r} of type "
+        f"{type(value).__name__}; only str/int/float/bool/None plus nested "
+        f"list/tuple/dict and numpy scalars/arrays are supported."
+    )
+
+
 def _from_json_safe(value: Any) -> Any:
     """Inverse of :func:`_to_json_safe` for plain JSON values; leaves
     nested array-dicts as-is for caller-side rebuild if needed."""
@@ -200,7 +266,7 @@ def _encode_joint(j: JointSpec) -> dict[str, Any]:
         "rest_length": float(j.rest_length),
         "stiffness": float(j.stiffness),
         "damping": float(j.damping),
-        "params": _to_json_safe(j.params),
+        "params": _params_to_json_safe(j.params, path="params"),
         "break_force": bf_enc,
         "enabled": bool(j.enabled),
     }
@@ -474,10 +540,454 @@ def load_world(path: Path | str) -> World:
     return world_from_dict(payload)
 
 
+# ---------------------------------------------------------------------------
+# Per-spec dict encoders for Round 1 + Round 2 types.
+# Each helper mirrors the dataclass field-by-field so a payload can be
+# inspected, diffed, or rebuilt in isolation (handy for editor presets and
+# the unified ``slappyengine.serialize`` dispatch).
+# ---------------------------------------------------------------------------
+
+
+def _float_or_str(value: float) -> Any:
+    """Encode +/-inf and NaN as JSON-safe strings; finite floats pass through."""
+    f = float(value)
+    if math.isnan(f):
+        return "NaN"
+    if math.isinf(f):
+        return "Infinity" if f > 0 else "-Infinity"
+    return f
+
+
+def _decode_float(value: Any) -> float:
+    """Inverse of :func:`_float_or_str` — accepts the three string sentinels
+    or any int/float."""
+    if isinstance(value, str):
+        if value == "NaN":
+            return float("nan")
+        if value == "Infinity":
+            return float("inf")
+        if value == "-Infinity":
+            return float("-inf")
+        raise ValueError(
+            f"_decode_float: unrecognised string sentinel {value!r}; expected "
+            f"'NaN', 'Infinity', or '-Infinity'"
+        )
+    return float(value)
+
+
+def material_to_dict(mat: Material) -> dict[str, Any]:
+    """Encode a :class:`Material` as a JSON-compatible dict."""
+    if not isinstance(mat, Material):
+        raise TypeError(
+            f"material_to_dict: expected Material; got {type(mat).__name__}"
+        )
+    return {
+        "_kind": "Material",
+        "name": str(mat.name),
+        "density": float(mat.density),
+        "stiffness": float(mat.stiffness),
+        "damping": float(mat.damping),
+        "restitution": float(mat.restitution),
+        "friction": float(mat.friction),
+        "breaking_strain": _float_or_str(mat.breaking_strain),
+        "properties": _params_to_json_safe(mat.properties, path="properties"),
+    }
+
+
+def material_from_dict(d: dict[str, Any]) -> Material:
+    """Inverse of :func:`material_to_dict`."""
+    if not isinstance(d, dict):
+        raise ValueError(
+            f"material_from_dict: expected dict; got {type(d).__name__}"
+        )
+    return Material(
+        name=str(d.get("name", "default")),
+        density=float(d.get("density", 1000.0)),
+        stiffness=float(d.get("stiffness", 1.0e6)),
+        damping=float(d.get("damping", 0.05)),
+        restitution=float(d.get("restitution", 0.2)),
+        friction=float(d.get("friction", 0.5)),
+        breaking_strain=_decode_float(d.get("breaking_strain", "Infinity")),
+        properties={
+            k: _from_json_safe(v) for k, v in d.get("properties", {}).items()
+        },
+    )
+
+
+def body_to_dict(body: Body) -> dict[str, Any]:
+    """Encode a :class:`Body` as a JSON-compatible dict."""
+    if not isinstance(body, Body):
+        raise TypeError(
+            f"body_to_dict: expected Body; got {type(body).__name__}"
+        )
+    out = _encode_body(body)
+    out["_kind"] = "Body"
+    return out
+
+
+def body_from_dict(d: dict[str, Any]) -> Body:
+    """Inverse of :func:`body_to_dict`."""
+    return _decode_body(d, index=0)
+
+
+def joint_to_dict(joint: JointSpec) -> dict[str, Any]:
+    """Encode a :class:`JointSpec` as a JSON-compatible dict."""
+    if not isinstance(joint, JointSpec):
+        raise TypeError(
+            f"joint_to_dict: expected JointSpec; got {type(joint).__name__}"
+        )
+    out = _encode_joint(joint)
+    out["_kind"] = "JointSpec"
+    return out
+
+
+def joint_from_dict(d: dict[str, Any]) -> JointSpec:
+    """Inverse of :func:`joint_to_dict`."""
+    return _decode_joint(d, index=0)
+
+
+def spring_to_dict(spec: SpringSpec) -> dict[str, Any]:
+    """Encode a :class:`SpringSpec` preset."""
+    if not isinstance(spec, SpringSpec):
+        raise TypeError(
+            f"spring_to_dict: expected SpringSpec; got {type(spec).__name__}"
+        )
+    return {
+        "_kind": "SpringSpec",
+        "node_a": int(spec.node_a),
+        "node_b": int(spec.node_b),
+        "rest_length": float(spec.rest_length),
+        "stiffness": float(spec.stiffness),
+        "damping": float(spec.damping),
+        "params": _params_to_json_safe(spec.params, path="params"),
+    }
+
+
+def spring_from_dict(d: dict[str, Any]) -> SpringSpec:
+    """Inverse of :func:`spring_to_dict`."""
+    if not isinstance(d, dict):
+        raise ValueError(
+            f"spring_from_dict: expected dict; got {type(d).__name__}"
+        )
+    return SpringSpec(
+        node_a=int(d["node_a"]),
+        node_b=int(d["node_b"]),
+        rest_length=float(d["rest_length"]),
+        stiffness=float(d.get("stiffness", 1.0e6)),
+        damping=float(d.get("damping", 0.05)),
+        params={k: _from_json_safe(v) for k, v in d.get("params", {}).items()},
+    )
+
+
+def motor_to_dict(spec: MotorSpec) -> dict[str, Any]:
+    """Encode a :class:`MotorSpec` preset."""
+    if not isinstance(spec, MotorSpec):
+        raise TypeError(
+            f"motor_to_dict: expected MotorSpec; got {type(spec).__name__}"
+        )
+    return {
+        "_kind": "MotorSpec",
+        "hub": int(spec.hub),
+        "rim_a": int(spec.rim_a),
+        "rim_b": int(spec.rim_b),
+        "target_omega": float(spec.target_omega),
+        "max_torque": float(spec.max_torque),
+        "radius": float(spec.radius),
+        "axis": [float(spec.axis[0]), float(spec.axis[1])],
+        "stiffness": float(spec.stiffness),
+        "damping": float(spec.damping),
+        "params": _params_to_json_safe(spec.params, path="params"),
+    }
+
+
+def motor_from_dict(d: dict[str, Any]) -> MotorSpec:
+    """Inverse of :func:`motor_to_dict`."""
+    if not isinstance(d, dict):
+        raise ValueError(
+            f"motor_from_dict: expected dict; got {type(d).__name__}"
+        )
+    axis_raw = d.get("axis", (1.0, 0.0))
+    if not hasattr(axis_raw, "__len__") or len(axis_raw) != 2:
+        raise ValueError(
+            f"motor_from_dict: axis must be a 2-sequence; got {axis_raw!r}"
+        )
+    return MotorSpec(
+        hub=int(d["hub"]),
+        rim_a=int(d["rim_a"]),
+        rim_b=int(d["rim_b"]),
+        target_omega=float(d["target_omega"]),
+        max_torque=float(d["max_torque"]),
+        radius=float(d.get("radius", 0.0)),
+        axis=(float(axis_raw[0]), float(axis_raw[1])),
+        stiffness=float(d.get("stiffness", 1.0e8)),
+        damping=float(d.get("damping", 0.02)),
+        params={k: _from_json_safe(v) for k, v in d.get("params", {}).items()},
+    )
+
+
+def rope_spec_to_dict(spec: RopeSpec) -> dict[str, Any]:
+    """Encode a :class:`RopeSpec` preset."""
+    if not isinstance(spec, RopeSpec):
+        raise TypeError(
+            f"rope_spec_to_dict: expected RopeSpec; got {type(spec).__name__}"
+        )
+    return {
+        "_kind": "RopeSpec",
+        "node_count": int(spec.node_count),
+        "total_length": float(spec.total_length),
+        "mass_per_node": float(spec.mass_per_node),
+        "stiffness": float(spec.stiffness),
+        "damping": float(spec.damping),
+        "bend_stiffness": float(spec.bend_stiffness),
+        "anchor_a_pinned": bool(spec.anchor_a_pinned),
+        "anchor_b_pinned": bool(spec.anchor_b_pinned),
+        "params": _params_to_json_safe(spec.params, path="params"),
+    }
+
+
+def rope_spec_from_dict(d: dict[str, Any]) -> RopeSpec:
+    """Inverse of :func:`rope_spec_to_dict`."""
+    if not isinstance(d, dict):
+        raise ValueError(
+            f"rope_spec_from_dict: expected dict; got {type(d).__name__}"
+        )
+    return RopeSpec(
+        node_count=int(d["node_count"]),
+        total_length=float(d["total_length"]),
+        mass_per_node=float(d.get("mass_per_node", 0.1)),
+        stiffness=float(d.get("stiffness", 1.0e6)),
+        damping=float(d.get("damping", 0.05)),
+        bend_stiffness=float(d.get("bend_stiffness", 0.0)),
+        anchor_a_pinned=bool(d.get("anchor_a_pinned", True)),
+        anchor_b_pinned=bool(d.get("anchor_b_pinned", False)),
+        params={k: _from_json_safe(v) for k, v in d.get("params", {}).items()},
+    )
+
+
+def bone_spec_to_dict(bone: BoneSpec) -> dict[str, Any]:
+    """Encode a single :class:`BoneSpec`."""
+    if not isinstance(bone, BoneSpec):
+        raise TypeError(
+            f"bone_spec_to_dict: expected BoneSpec; got {type(bone).__name__}"
+        )
+    return {
+        "_kind": "BoneSpec",
+        "parent_idx": int(bone.parent_idx),
+        "length": float(bone.length),
+        "mass": float(bone.mass),
+        "angle_limit": [
+            float(bone.angle_limit[0]),
+            float(bone.angle_limit[1]),
+        ],
+        "direction": [
+            float(bone.direction[0]),
+            float(bone.direction[1]),
+        ],
+        "label": str(bone.label),
+    }
+
+
+def bone_spec_from_dict(d: dict[str, Any]) -> BoneSpec:
+    """Inverse of :func:`bone_spec_to_dict`."""
+    if not isinstance(d, dict):
+        raise ValueError(
+            f"bone_spec_from_dict: expected dict; got {type(d).__name__}"
+        )
+    al = d.get("angle_limit", (-math.pi, math.pi))
+    di = d.get("direction", (0.0, -1.0))
+    return BoneSpec(
+        parent_idx=int(d.get("parent_idx", -1)),
+        length=float(d.get("length", 1.0)),
+        mass=float(d.get("mass", 1.0)),
+        angle_limit=(float(al[0]), float(al[1])),
+        direction=(float(di[0]), float(di[1])),
+        label=str(d.get("label", "")),
+    )
+
+
+def ragdoll_spec_to_dict(spec: RagdollSpec) -> dict[str, Any]:
+    """Encode a :class:`RagdollSpec` preset (bones + extra joints)."""
+    if not isinstance(spec, RagdollSpec):
+        raise TypeError(
+            f"ragdoll_spec_to_dict: expected RagdollSpec; "
+            f"got {type(spec).__name__}"
+        )
+    return {
+        "_kind": "RagdollSpec",
+        "bones": [bone_spec_to_dict(b) for b in spec.bones],
+        "joints": [_encode_joint(j) for j in spec.joints],
+        "stiffness": float(spec.stiffness),
+        "damping": float(spec.damping),
+    }
+
+
+def ragdoll_spec_from_dict(d: dict[str, Any]) -> RagdollSpec:
+    """Inverse of :func:`ragdoll_spec_to_dict`."""
+    if not isinstance(d, dict):
+        raise ValueError(
+            f"ragdoll_spec_from_dict: expected dict; got {type(d).__name__}"
+        )
+    bones_raw = d.get("bones", [])
+    if not isinstance(bones_raw, list):
+        raise ValueError(
+            f"ragdoll_spec_from_dict: bones must be a list; "
+            f"got {type(bones_raw).__name__}"
+        )
+    joints_raw = d.get("joints", [])
+    if not isinstance(joints_raw, list):
+        raise ValueError(
+            f"ragdoll_spec_from_dict: joints must be a list; "
+            f"got {type(joints_raw).__name__}"
+        )
+    return RagdollSpec(
+        bones=[bone_spec_from_dict(b) for b in bones_raw],
+        joints=[_decode_joint(j, index=i) for i, j in enumerate(joints_raw)],
+        stiffness=float(d.get("stiffness", 5.0e6)),
+        damping=float(d.get("damping", 0.05)),
+    )
+
+
+def ik_chain_to_dict(spec: IKChainSpec) -> dict[str, Any]:
+    """Encode an :class:`IKChainSpec`."""
+    if not isinstance(spec, IKChainSpec):
+        raise TypeError(
+            f"ik_chain_to_dict: expected IKChainSpec; "
+            f"got {type(spec).__name__}"
+        )
+    return {
+        "_kind": "IKChainSpec",
+        "node_indices": [int(i) for i in spec.node_indices],
+        "target": [float(spec.target[0]), float(spec.target[1])],
+        "fixed_root": bool(spec.fixed_root),
+        "params": _params_to_json_safe(spec.params, path="params"),
+    }
+
+
+def ik_chain_from_dict(d: dict[str, Any]) -> IKChainSpec:
+    """Inverse of :func:`ik_chain_to_dict`."""
+    if not isinstance(d, dict):
+        raise ValueError(
+            f"ik_chain_from_dict: expected dict; got {type(d).__name__}"
+        )
+    tgt = d.get("target", (0.0, 0.0))
+    return IKChainSpec(
+        node_indices=[int(i) for i in d["node_indices"]],
+        target=(float(tgt[0]), float(tgt[1])),
+        fixed_root=bool(d.get("fixed_root", True)),
+        params={k: _from_json_safe(v) for k, v in d.get("params", {}).items()},
+    )
+
+
+def humanoid_to_dict(humanoid: Humanoid) -> dict[str, Any]:
+    """Encode a :class:`Humanoid` handle.
+
+    Captures every named bone node index, the bone/beam slices and body id,
+    the cached bone-length table, and the flesh-layer node/beam slices added
+    by :func:`wrap_in_flesh`. The host softbody world (the SoA arrays
+    themselves) is *not* serialised here — pair this with the host world's
+    own save format.
+    """
+    if not isinstance(humanoid, Humanoid):
+        raise TypeError(
+            f"humanoid_to_dict: expected Humanoid; got {type(humanoid).__name__}"
+        )
+    return {
+        "_kind": "Humanoid",
+        "pelvis": int(humanoid.pelvis),
+        "neck": int(humanoid.neck),
+        "head": int(humanoid.head),
+        "shoulder_l": int(humanoid.shoulder_l),
+        "elbow_l": int(humanoid.elbow_l),
+        "wrist_l": int(humanoid.wrist_l),
+        "shoulder_r": int(humanoid.shoulder_r),
+        "elbow_r": int(humanoid.elbow_r),
+        "wrist_r": int(humanoid.wrist_r),
+        "hip_l": int(humanoid.hip_l),
+        "knee_l": int(humanoid.knee_l),
+        "ankle_l": int(humanoid.ankle_l),
+        "hip_r": int(humanoid.hip_r),
+        "knee_r": int(humanoid.knee_r),
+        "ankle_r": int(humanoid.ankle_r),
+        "node_slice": [int(humanoid.node_slice[0]), int(humanoid.node_slice[1])],
+        "beam_slice": [int(humanoid.beam_slice[0]), int(humanoid.beam_slice[1])],
+        "body_id": int(humanoid.body_id),
+        "bone_lengths": {str(k): float(v) for k, v in humanoid.bone_lengths.items()},
+        "flesh_node_slices": {
+            str(k): [int(v[0]), int(v[1])]
+            for k, v in humanoid.flesh_node_slices.items()
+        },
+        "flesh_beam_slices": {
+            str(k): [int(v[0]), int(v[1])]
+            for k, v in humanoid.flesh_beam_slices.items()
+        },
+    }
+
+
+def humanoid_from_dict(d: dict[str, Any]) -> Humanoid:
+    """Inverse of :func:`humanoid_to_dict`."""
+    if not isinstance(d, dict):
+        raise ValueError(
+            f"humanoid_from_dict: expected dict; got {type(d).__name__}"
+        )
+    ns = d.get("node_slice", (0, 0))
+    bs = d.get("beam_slice", (0, 0))
+    return Humanoid(
+        pelvis=int(d.get("pelvis", -1)),
+        neck=int(d.get("neck", -1)),
+        head=int(d.get("head", -1)),
+        shoulder_l=int(d.get("shoulder_l", -1)),
+        elbow_l=int(d.get("elbow_l", -1)),
+        wrist_l=int(d.get("wrist_l", -1)),
+        shoulder_r=int(d.get("shoulder_r", -1)),
+        elbow_r=int(d.get("elbow_r", -1)),
+        wrist_r=int(d.get("wrist_r", -1)),
+        hip_l=int(d.get("hip_l", -1)),
+        knee_l=int(d.get("knee_l", -1)),
+        ankle_l=int(d.get("ankle_l", -1)),
+        hip_r=int(d.get("hip_r", -1)),
+        knee_r=int(d.get("knee_r", -1)),
+        ankle_r=int(d.get("ankle_r", -1)),
+        node_slice=(int(ns[0]), int(ns[1])),
+        beam_slice=(int(bs[0]), int(bs[1])),
+        body_id=int(d.get("body_id", 0)),
+        bone_lengths={
+            str(k): float(v) for k, v in d.get("bone_lengths", {}).items()
+        },
+        flesh_node_slices={
+            str(k): (int(v[0]), int(v[1]))
+            for k, v in d.get("flesh_node_slices", {}).items()
+        },
+        flesh_beam_slices={
+            str(k): (int(v[0]), int(v[1]))
+            for k, v in d.get("flesh_beam_slices", {}).items()
+        },
+    )
+
+
 __all__ = [
     "SCHEMA_VERSION",
     "world_to_dict",
     "world_from_dict",
     "save_world",
     "load_world",
+    "body_to_dict",
+    "body_from_dict",
+    "joint_to_dict",
+    "joint_from_dict",
+    "spring_to_dict",
+    "spring_from_dict",
+    "motor_to_dict",
+    "motor_from_dict",
+    "rope_spec_to_dict",
+    "rope_spec_from_dict",
+    "bone_spec_to_dict",
+    "bone_spec_from_dict",
+    "ragdoll_spec_to_dict",
+    "ragdoll_spec_from_dict",
+    "ik_chain_to_dict",
+    "ik_chain_from_dict",
+    "humanoid_to_dict",
+    "humanoid_from_dict",
+    "material_to_dict",
+    "material_from_dict",
 ]
