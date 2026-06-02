@@ -104,6 +104,27 @@ PYTHONPATH=python python tools/run_examples.py --out docs/screenshots/examples_g
 
 ---
 
+## Performance
+
+Headline numbers from the v0.3.0b0 perf bench ([full report](benchmarks/baseline_report.md)):
+
+| Subsystem | Throughput / cost | Notes |
+|---|---|---|
+| Fluid (PBF, end-to-end) | **1176 fps** | Post Rust migration Tiers 1-10; particle Scenario B reference. |
+| Softbody (XPBD rope-20, end-to-end) | **544 fps** | Same Rust-core baseline; `softbody_world_step_20n` pinned at 0.699 ms. |
+| `_pbf_bridge_step` (Scenario B combined) | **-16.1% vs prior baseline** | Sprint 5A YAML `_fresh_world_config` `lru_cache` win; 40.80 ms → 34.41 ms (v3 refresh). |
+| Hardening validators (rounds 7-10) | **< 5% frame-budget overhead** | Every public entry point (World.step / .add_node, EventBus.publish, AudioManager.play) audited; no `_DEBUG_VALIDATE` gate needed. |
+
+See [`docs/perf_dashboard.md`](docs/perf_dashboard.md) for the per-subsystem tripwire snapshot and [`benchmarks/baseline_report.md`](benchmarks/baseline_report.md) for the full Scenario A/B/C breakdown including the 3-run stability tables.
+
+---
+
+## Roadmap
+
+Near-term, mid-term, and v1.0 candidates — see [`docs/roadmap.md`](docs/roadmap.md).
+
+---
+
 ## Design docs
 
 The `docs/` tree carries the long-form references:
@@ -118,6 +139,8 @@ The `docs/` tree carries the long-form references:
 - [`docs/telemetry_design.md`](docs/telemetry_design.md) — telemetry module + bucket-index dispatch.
 - [`docs/perf_dashboard.md`](docs/perf_dashboard.md) — per-subsystem perf snapshot.
 - [`docs/tutorial_build_a_game.md`](docs/tutorial_build_a_game.md) — end-to-end game tutorial (10 sections, verified-runnable snippets).
+- [`docs/roadmap.md`](docs/roadmap.md) — what's next: near-term (v0.3.x), mid-term (v0.4), long-term (v1.0).
+- [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) — contributor conventions (hardening pattern, doc markers, naming, post-process pass authoring).
 - [`CHANGELOG.md`](CHANGELOG.md) — per-version changes.
 
 ---

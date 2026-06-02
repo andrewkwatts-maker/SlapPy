@@ -12,8 +12,10 @@ Regenerate after adding or removing any doc.
 | Path | Description |
 |---|---|
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | SlapPyEngine architecture guide — repo layout, conventions, and key subsystems. |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Contributor conventions — hardening pattern, doc markers, `make_*` vs `build_*` naming, post-process pass authoring, PR checklist. |
 | [`ONBOARDING.md`](ONBOARDING.md) | Contributor onboarding — install variants, architecture tour, and first-change walk-through. |
 | [`architecture_overview.md`](architecture_overview.md) | 5-minute orientation for the rebuilt 2D physics layer (softbody / fluid / dynamics / studio) and dependency direction. |
+| [`cargo_audit_2026_06_02.md`](cargo_audit_2026_06_02.md) | Cargo / Rust workspace audit — `_core` PyO3 extension surface, `Cargo.toml` review, wheel-size context (2026-06-02). |
 | [`core_engine_audit_2026_06_02.md`](core_engine_audit_2026_06_02.md) | Core engine audit — `_compat` symbol caller count, doc/__all__ drift report, top-level docstring expansion (2026-06-02). |
 | [`dead_code_audit_2026_06_02.md`](dead_code_audit_2026_06_02.md) | Dead-code + duplicate-symbol audit — humanoid-alias caller list, dead-export candidates per subpackage, validator twins (2026-06-02). |
 | [`demo_gallery.md`](demo_gallery.md) | Hand-authored cinematic gallery of six flagship runnable demos (hello_ragdoll / hello_studio / humanoid_walking / humanoid_ik_terrain / hello_rope / hello_gi) with refreshed GIF/PNG artefacts under `examples/output/`. |
@@ -38,7 +40,9 @@ Regenerate after adding or removing any doc.
 | [`phase_d_strip_plan_2026_05_31.md`](phase_d_strip_plan_2026_05_31.md) | Phase D strip-pass execution plan (Sprint F, 2026-05-31) — gated on Ochema CI greenness. |
 | [`repo_cleanup_2026_06_02.md`](repo_cleanup_2026_06_02.md) | Repo cleanup survey — generated-artefact `.gitignore` plan, (a)/(b)/(c) bucket categorisation of 400+ untracked files (2026-06-02). |
 | [`physics_module.md`](physics_module.md) | Entry point for the hierarchical-hull per-pixel physics module (`slappyengine.physics`). |
+| [`roadmap.md`](roadmap.md) | Living "what's next" roadmap — near-term (v0.3.x), mid-term (v0.4), long-term (v1.0) candidates with source citations per entry. |
 | [`rust_migration_plan.md`](rust_migration_plan.md) | Rust migration plan — staged path to 1000 fps via Rust-backed hot-path migration. |
+| [`rust_port_audit_2026_06_02.md`](rust_port_audit_2026_06_02.md) | Rust port audit — classification of every per-frame Python kernel by Rust-migration status, ROI-ranked (2026-06-02). |
 | [`rust_port_plan_dynamics.md`](rust_port_plan_dynamics.md) | Phase 1 MVP Rust-port plan for `slappyengine.dynamics`: `_project_distance` first, 3-4x estimated speedup (4/4 green). |
 | [`softbody_design.md`](softbody_design.md) | Design reference for the BeamNG-style soft-body lattice XPBD simulator (`slappyengine.softbody`). |
 | [`sprint_1_game_compat_2026_05_30.md`](sprint_1_game_compat_2026_05_30.md) | Sprint 1 game-integration verification — engine surface contract honoured for Ochema Circuit / Bullet Strata / Stone Keep. |
@@ -57,6 +61,7 @@ Regenerate after adding or removing any doc.
 | [`tier_11_gpu_compute_discussion.md`](tier_11_gpu_compute_discussion.md) | Tier 11 GPU compute (wgpu) discussion document — state-of-the-engine and trade-offs after Tiers 1-10 landed. |
 | [`tutorial_build_a_game.md`](tutorial_build_a_game.md) | End-to-end "build a top-down arcade game" walk-through; 10 sections with 10 verified-runnable snippets (13/13 tripwire tests green, 215 lines). |
 | [`video_output.md`](video_output.md) | Video output guide — MP4 default vs GIF fallback for SlapPyEngine's showcase and capture tools. |
+| [`wheel_size_audit_2026_06_02.md`](wheel_size_audit_2026_06_02.md) | Wheel size audit — `maturin build --release` measured at ~1.45 MB (well under PyPI 50 MB target); excluded `slappyengine/tests/` from shipped artefacts (2026-06-02). |
 | [`zones_design.md`](zones_design.md) | Design reference for `slappyengine.zones`: named axis-aligned rectangular regions with enter/exit callbacks, material tags, and scalar threshold events. |
 
 ## Per-subpackage API references (`docs/api/`)
