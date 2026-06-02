@@ -1,8 +1,12 @@
 # SlapPyEngine — Getting Started
 
-A friendly tour that takes you from `pip install slappy-engine` to a running
-mini-game in 15 minutes. For deeper docs see [engine_surface_v030.md](engine_surface_v030.md),
-[dynamics_design.md](dynamics_design.md), and [dynamics_quickstart.md](dynamics_quickstart.md).
+A friendly tour that takes you from `pip install slappy-engine` (v0.3.0b0
+at time of writing) to a running mini-game in 15 minutes. For deeper docs
+see [studio_quickstart.md](studio_quickstart.md) (5-min `studio` tour),
+[dynamics_quickstart.md](dynamics_quickstart.md) (10-min physics tour),
+[demo_gallery.md](demo_gallery.md) (curated showcase),
+[dynamics_design.md](dynamics_design.md), and
+[engine_surface_v030.md](engine_surface_v030.md).
 
 This guide walks the v0.3 public surface: a Rust-accelerated physics core, a
 Python wrapper for ergonomics, and a few opt-in GPU subsystems. Most snippets
@@ -273,14 +277,28 @@ that shrinks them further is in [rust_port_plan_dynamics.md](rust_port_plan_dyna
 
 ## 7. Next steps
 
-- [examples/](../examples/) — every `hello_*.py` demo: rope, ragdoll, IK,
-  joint, spring, motor, thermal, zone, telemetry, lighting, physics,
-  pixel-physics, iso, topology, audio, composite, and 3D layer.
-- [api/dynamics.md](api/dynamics.md), [api/zones.md](api/zones.md),
-  [api/telemetry.md](api/telemetry.md), [api/thermal.md](api/thermal.md),
-  [api/iso.md](api/iso.md), [api/numerics.md](api/numerics.md),
-  [api/testing.md](api/testing.md), [api/tools.md](api/tools.md),
-  [api/topology.md](api/topology.md) — per-subpackage signatures + Raises.
+- [dynamics_quickstart.md](dynamics_quickstart.md) — 10-minute hands-on tour
+  of every dynamics primitive (rope, ragdoll, spring, motor, IK chain) with
+  copy-paste snippets that produce GIFs.
+- [studio_quickstart.md](studio_quickstart.md) — 5-minute tour of
+  `slappyengine.studio` (`softbody_stage` / `fluid_stage` / `humanoid_stage`
+  / `dynamics_stage` / `record(...)`). The shortest path from `import` to
+  rendered GIF.
+- [demo_gallery.md](demo_gallery.md) — curated tour of flagship demos with
+  the exact `PYTHONPATH=python python examples/...` command for each. Every
+  artefact is checked in so the gallery renders on GitHub without a local
+  install.
+- [examples/](../examples/) — every `hello_*.py` demo wired through
+  `slappyengine.examples_common` (`--frames`, `--no-gif`, `--out`, `--seed`):
+  rope, ragdoll, IK, joint, spring, motor, thermal, zone, telemetry,
+  lighting, physics, pixel-physics, iso, topology, audio, composite, studio,
+  GI, and the humanoid walking / IK-terrain demos.
+- [api/dynamics.md](api/dynamics.md), [api/studio.md](api/studio.md),
+  [api/zones.md](api/zones.md), [api/telemetry.md](api/telemetry.md),
+  [api/thermal.md](api/thermal.md), [api/iso.md](api/iso.md),
+  [api/numerics.md](api/numerics.md), [api/testing.md](api/testing.md),
+  [api/tools.md](api/tools.md), [api/topology.md](api/topology.md) —
+  per-subpackage signatures + Raises.
 - [dynamics_design.md](dynamics_design.md) — when to pick which primitive,
   numerical stability notes, determinism contract.
 - [rust_port_plan_dynamics.md](rust_port_plan_dynamics.md) — what is already

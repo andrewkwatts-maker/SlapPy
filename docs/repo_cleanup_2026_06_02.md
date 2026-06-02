@@ -7,6 +7,13 @@ This document is **survey + plan**. Only the `.gitignore` expansion is executed 
 sprint; no files are deleted yet. Deletion + module reshuffling happens in a follow-up
 sprint with explicit approval.
 
+**Executed 2026-06-02 (SAFE pass):**
+- `ARCHITECTURE.md` and `ONBOARDING.md` moved from repo root to `docs/` (git rename detected, history preserved).
+- `benchmarks/baseline_report.md.bak` deleted.
+- `_prof_fluid_render.py`, `_prof_softbody_collision.py`, `_prof_softbody_render.py` deleted from repo root (confirmed not imported in `python/`, `tests/`, or `examples/`).
+- `.gitignore` tightened: added explicit `.ruff_cache/` entry.
+- Test suite unchanged: 2547 passed, 6 failed, 22 skipped, 29 xfailed (failures pre-existing in editor_material and residency tests, unrelated to cleanup).
+
 ---
 
 ## 1. Generated artefacts to add to `.gitignore`
@@ -131,13 +138,13 @@ Other actively-iterated areas spotted during the survey, leave for the owning sp
 
 | File                                              | Status                                                                                                         | Recommendation                                                                                                                              |
 | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `_prof_fluid_render.py`                           | Untracked at repo root.                                                                                         | Move to `benchmarks/` or delete; covered by `.gitignore` change so it stops appearing in `git status`.                                       |
-| `_prof_softbody_collision.py`                     | Untracked at repo root.                                                                                         | Same as above.                                                                                                                              |
-| `_prof_softbody_render.py`                        | Untracked at repo root.                                                                                         | Same as above.                                                                                                                              |
-| `ARCHITECTURE.md` (root)                          | **Deleted** in working tree (`D`); `docs/ARCHITECTURE.md` is the new copy (untracked).                          | Canonical location should be `docs/ARCHITECTURE.md` — `docs/architecture_overview.md` already cross-references `docs/ARCHITECTURE.md`. Commit the move (`git rm` root, `git add` docs/) in the follow-up sprint. |
-| `ONBOARDING.md` (root)                            | **Deleted** in working tree (`D`); `docs/ONBOARDING.md` is the new copy (untracked).                            | Same treatment as ARCHITECTURE.md — move under `docs/`.                                                                                     |
-| `benchmarks/baseline_report.md.bak`               | Editor backup of `baseline_report.md`.                                                                          | Delete; ignored going forward via `*.bak`.                                                                                                  |
-| `_audit_snapshots/` (root)                        | Untracked snapshot directory (18 PNGs).                                                                         | Delete or move under `benchmarks/`; ignored going forward.                                                                                  |
+| `_prof_fluid_render.py`                           | Untracked at repo root.                                                                                         | Move to `benchmarks/` or delete; covered by `.gitignore` change so it stops appearing in `git status`. **Executed 2026-06-02: deleted (confirmed not imported anywhere).** |
+| `_prof_softbody_collision.py`                     | Untracked at repo root.                                                                                         | Same as above. **Executed 2026-06-02: deleted (confirmed not imported anywhere).**                                                          |
+| `_prof_softbody_render.py`                        | Untracked at repo root.                                                                                         | Same as above. **Executed 2026-06-02: deleted (confirmed not imported anywhere).**                                                          |
+| `ARCHITECTURE.md` (root)                          | **Deleted** in working tree (`D`); `docs/ARCHITECTURE.md` is the new copy (untracked).                          | Canonical location should be `docs/ARCHITECTURE.md` — `docs/architecture_overview.md` already cross-references `docs/ARCHITECTURE.md`. Commit the move (`git rm` root, `git add` docs/) in the follow-up sprint. **Executed 2026-06-02: moved to `docs/ARCHITECTURE.md` (git detected as rename `R`, history preserved).** |
+| `ONBOARDING.md` (root)                            | **Deleted** in working tree (`D`); `docs/ONBOARDING.md` is the new copy (untracked).                            | Same treatment as ARCHITECTURE.md — move under `docs/`. **Executed 2026-06-02: moved to `docs/ONBOARDING.md` (git detected as rename `R`, history preserved).** |
+| `benchmarks/baseline_report.md.bak`               | Editor backup of `baseline_report.md`.                                                                          | Delete; ignored going forward via `*.bak`. **Executed 2026-06-02: deleted.**                                                                |
+| `_audit_snapshots/` (root)                        | Untracked snapshot directory (18 PNGs).                                                                         | Delete or move under `benchmarks/`; ignored going forward. (Not executed in 2026-06-02 SAFE pass — covered by gitignore only.)             |
 
 ---
 
