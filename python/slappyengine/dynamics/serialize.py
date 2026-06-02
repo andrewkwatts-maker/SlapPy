@@ -883,7 +883,7 @@ def humanoid_to_dict(humanoid: Humanoid) -> dict[str, Any]:
 
     Captures every named bone node index, the bone/beam slices and body id,
     the cached bone-length table, and the flesh-layer node/beam slices added
-    by :func:`wrap_in_flesh`. The host softbody world (the SoA arrays
+    by :func:`build_flesh_wrap`. The host softbody world (the SoA arrays
     themselves) is *not* serialised here — pair this with the host world's
     own save format.
     """

@@ -33,6 +33,7 @@ Three public entry points:
 from __future__ import annotations
 
 import math
+import warnings
 from dataclasses import dataclass, field
 from typing import Callable
 
@@ -156,7 +157,7 @@ def _append_beams(
     return int(start), world.beams.count
 
 
-def make_humanoid(
+def build_humanoid(
     world,
     root_position: tuple[float, float] = (0.0, 1.0),
     *,
@@ -173,7 +174,7 @@ def make_humanoid(
     elbow, wrist) + 2*(hip, knee, ankle)) connected by rigid distance
     beams. All nodes are written to layer 0 so layered-destruction tests
     can distinguish "bone cuts" from flesh cuts after
-    :func:`wrap_in_flesh`.
+    :func:`build_flesh_wrap`.
 
     ``proportions`` overrides the default anatomical bone lengths; pass a
     partial dict to tweak (e.g. ``{"head_length": 0.22}``) — keys not
@@ -182,10 +183,19 @@ def make_humanoid(
     The returned :class:`Humanoid` exposes one attribute per joint
     (``pelvis``, ``head``, ``ankle_l``, …) holding the absolute node
     index inside ``world.nodes``.
+
+    Notes
+    -----
+    This is the world-mutating ``build_*`` form. The legacy
+    :func:`make_humanoid` alias forwards here with a
+    :class:`DeprecationWarning` so games shipped against earlier engine
+    versions (Ochema Circuit, Bullet Strata) can migrate at their own
+    pace. ``make_*`` now denotes pure :class:`JointSpec` builders; the
+    rename aligns this factory with the package convention.
     """
     if not hasattr(world, "nodes") or not hasattr(world, "beams"):
         raise TypeError(
-            f"make_humanoid: world must expose .nodes / .beams SoA arrays; "
+            f"build_humanoid: world must expose .nodes / .beams SoA arrays; "
             f"got {type(world).__name__}"
         )
 
@@ -391,7 +401,7 @@ def _wrap_one_layer(
     return (flesh_start, flesh_end), (beam_start, beam_end)
 
 
-def wrap_in_flesh(
+def build_flesh_wrap(
     world,
     humanoid: Humanoid,
     *,
@@ -410,15 +420,21 @@ def wrap_in_flesh(
     within the shell. The humanoid handle is updated in place with the
     new flesh slices (``humanoid.flesh_node_slices``); the function also
     returns the humanoid for chaining.
+
+    Notes
+    -----
+    This is the world-mutating ``build_*`` form. The legacy
+    :func:`wrap_in_flesh` alias forwards here with a
+    :class:`DeprecationWarning`.
     """
     if not hasattr(world, "nodes") or not hasattr(world, "beams"):
         raise TypeError(
-            f"wrap_in_flesh: world must expose .nodes / .beams SoA arrays; "
+            f"build_flesh_wrap: world must expose .nodes / .beams SoA arrays; "
             f"got {type(world).__name__}"
         )
     if not isinstance(humanoid, Humanoid):
         raise TypeError(
-            f"wrap_in_flesh: humanoid must be a Humanoid; "
+            f"build_flesh_wrap: humanoid must be a Humanoid; "
             f"got {type(humanoid).__name__}"
         )
 
@@ -570,10 +586,96 @@ def place_feet_on_terrain(
     return converged
 
 
+# ---------------------------------------------------------------------------
+# Deprecated aliases.
+#
+# The package convention is ``make_*`` returns a pure ``JointSpec`` (no world
+# mutation) while ``build_*`` mutates a world. ``make_humanoid`` and
+# ``wrap_in_flesh`` predate that convention and mutate a ``SoftBodyWorld``;
+# they keep working but emit a ``DeprecationWarning`` so downstream games
+# (Ochema Circuit, Bullet Strata) can migrate at their own pace.
+# ---------------------------------------------------------------------------
+
+
+def make_humanoid(
+    world,
+    root_position: tuple[float, float] = (0.0, 1.0),
+    *,
+    proportions: dict[str, float] | None = None,
+    bone_mass: float = 1.0,
+    head_mass: float = 1.5,
+    bone_stiffness: float = 5.0e6,
+    bone_damping: float = 0.05,
+    bone_break_strain: float = 0.25,
+) -> Humanoid:
+    """Deprecated alias for :func:`build_humanoid`.
+
+    Emits a :class:`DeprecationWarning` and forwards every argument to
+    :func:`build_humanoid`. Kept for back-compat with games shipped against
+    earlier engine versions which use the old ``make_*`` spelling for the
+    world-mutating skeleton factory.
+    """
+    warnings.warn(
+        "make_humanoid is deprecated; use build_humanoid instead "
+        "(make_* now denotes pure JointSpec builders, build_* denotes "
+        "world-mutating builders).",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return build_humanoid(
+        world,
+        root_position,
+        proportions=proportions,
+        bone_mass=bone_mass,
+        head_mass=head_mass,
+        bone_stiffness=bone_stiffness,
+        bone_damping=bone_damping,
+        bone_break_strain=bone_break_strain,
+    )
+
+
+def wrap_in_flesh(
+    world,
+    humanoid: Humanoid,
+    *,
+    muscle_offset: float = 0.10,
+    skin_offset: float = 0.18,
+    muscle_stiffness: float = 1.0e6,
+    skin_stiffness: float = 2.5e5,
+    muscle_damping: float = 0.05,
+    skin_damping: float = 0.05,
+    flesh_break_strain: float = 0.18,
+) -> Humanoid:
+    """Deprecated alias for :func:`build_flesh_wrap`.
+
+    Emits a :class:`DeprecationWarning` and forwards every argument to
+    :func:`build_flesh_wrap`.
+    """
+    warnings.warn(
+        "wrap_in_flesh is deprecated; use build_flesh_wrap instead "
+        "(build_* denotes world-mutating builders in the dynamics surface).",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return build_flesh_wrap(
+        world,
+        humanoid,
+        muscle_offset=muscle_offset,
+        skin_offset=skin_offset,
+        muscle_stiffness=muscle_stiffness,
+        skin_stiffness=skin_stiffness,
+        muscle_damping=muscle_damping,
+        skin_damping=skin_damping,
+        flesh_break_strain=flesh_break_strain,
+    )
+
+
 __all__ = [
     "Humanoid",
-    "make_humanoid",
-    "wrap_in_flesh",
+    "build_humanoid",
+    "build_flesh_wrap",
+    "make_humanoid",   # deprecated alias of build_humanoid
+    "wrap_in_flesh",   # deprecated alias of build_flesh_wrap
     "place_feet_on_terrain",
     "LAYER_BONE",
     "LAYER_MUSCLE",

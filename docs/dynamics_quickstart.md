@@ -99,7 +99,7 @@ See [examples/hello_ragdoll.py](../examples/hello_ragdoll.py) for a
 6-bone humanoid drop. Note `parent_idx` must reference an earlier index
 in the `bones` list (the builder walks the list once). For the named
 13-node anatomical skeleton (pelvis / neck / head / shoulders / hips /
-ankles), use `make_humanoid` from section 5.
+ankles), use `build_humanoid` from section 5.
 
 ## 3. Tracking a target with IK
 
@@ -197,6 +197,52 @@ runs in `JointSpec.__post_init__`: unknown kinds, negative indices, equal
 nodes, NaN / infinite values, or out-of-range damping all raise at
 construction.
 
+## 4a. Builder conventions
+
+Every public builder in `slappyengine.dynamics` falls into one of three
+buckets. Learn the prefix and the contract follows.
+
+| Prefix     | Returns                  | Mutates a world? | Use when                                          |
+|------------|--------------------------|------------------|---------------------------------------------------|
+| `make_*`   | `JointSpec` or `*Spec`   | **No**           | Batch-construct specs (serialise, edit, install later). |
+| `build_*`  | A handle (`int`, `Body`, `Humanoid`) | **Yes**          | One-shot: spawn nodes / joints / beams now.       |
+| `solve_*`  | `bool` (or status)       | Yes (positions only) | Drive existing nodes toward a target; no new entities. |
+
+Concrete surface today:
+
+* `make_*` — `make_distance`, `make_spring`, `make_motor` all return a
+  pure `JointSpec`. They never touch a world; install the result with
+  `world.add_joint(spec)` or batch them through `resolve_joint_specs`.
+* `build_*` — `build_rope(spec, world, ...)`, `build_ragdoll(spec, world, ...)`,
+  `build_humanoid(world, ...)`, `build_flesh_wrap(world, humanoid, ...)`
+  all mutate the supplied world and return a handle covering the new
+  entities (a `Body` for rope / ragdoll, a `Humanoid` for the skeleton
+  factories).
+* `solve_*` — `solve_ik(spec, world, ...)` rotates existing chain nodes
+  toward `spec.target` and returns whether the tip converged. It does
+  not add nodes.
+
+The world is **always passed as a positional argument** (never via
+keyword) so the builder can dispatch on its type. Spec-driven builders
+(`build_rope`, `build_ragdoll`, `solve_ik`) take the spec at position 0
+and the world at position 1; free-form builders (`build_humanoid`,
+`build_flesh_wrap`) take the world at position 0.
+
+`make_humanoid` and `wrap_in_flesh` are **deprecated aliases** for
+`build_humanoid` and `build_flesh_wrap` respectively — they predate the
+convention, mutate a `SoftBodyWorld`, and emit `DeprecationWarning` on
+call. The old names will keep working for the v0.x line so games like
+Ochema Circuit and Bullet Strata can migrate at their own pace.
+
+```python
+from slappyengine.dynamics import build_humanoid, build_flesh_wrap
+from slappyengine.softbody import SoftBodyWorld
+
+world = SoftBodyWorld()
+hum   = build_humanoid(world, root_position=(0.0, 1.0))   # build_*: mutates, returns Humanoid
+build_flesh_wrap(world, hum, muscle_offset=0.10)          # build_*: mutates, returns hum
+```
+
 ## 5. Combining primitives
 
 The dynamics surface composes — `build_rope`, `build_ragdoll`, and
@@ -226,30 +272,33 @@ for _ in range(120):
 See [examples/hello_rope.py](../examples/hello_rope.py) for a 50%-slack
 catenary that settles to a ~2.0-unit droop in 120 frames.
 
-### `make_humanoid` — 13-node anatomical skeleton
+### `build_humanoid` — 13-node anatomical skeleton
 
-`make_humanoid(world, root_position)` spawns a named skeleton (pelvis,
+`build_humanoid(world, root_position)` spawns a named skeleton (pelvis,
 neck, head, shoulders / elbows / wrists, hips / knees / ankles) on a
 **softbody** world that exposes `.nodes` / `.beams` SoA arrays. Pair with
-`wrap_in_flesh` for muscle / skin layers and `place_feet_on_terrain` for
-analytic 2-bone foot IK.
+`build_flesh_wrap` for muscle / skin layers and `place_feet_on_terrain`
+for analytic 2-bone foot IK.
 
 ```python
 from slappyengine.softbody import SoftBodyWorld
-from slappyengine.dynamics import make_humanoid, wrap_in_flesh
+from slappyengine.dynamics import build_humanoid, build_flesh_wrap
 
 world = SoftBodyWorld()
-hum   = make_humanoid(world, root_position=(0.0, 1.0))
-wrap_in_flesh(world, hum, muscle_offset=0.10, skin_offset=0.18)
+hum   = build_humanoid(world, root_position=(0.0, 1.0))
+build_flesh_wrap(world, hum, muscle_offset=0.10, skin_offset=0.18)
 for _ in range(60):
     world.step(1.0 / 60.0)
 print("head node index:", hum.head, "ankle_l:", hum.ankle_l)
 ```
 
 Unlike rope / ragdoll the humanoid factory requires the softbody world,
-not the slim XPBD `World` — `make_humanoid` raises `TypeError` immediately
+not the slim XPBD `World` — `build_humanoid` raises `TypeError` immediately
 if the world is the wrong type. Combining a humanoid with a rope held in
 its hand is one `add_joint(make_spring(hum.wrist_r, rope_end, ...))` call.
+
+The legacy spellings `make_humanoid` / `wrap_in_flesh` still work but
+emit `DeprecationWarning` — see section 4a for the rename rationale.
 
 ## 6. Rendering
 

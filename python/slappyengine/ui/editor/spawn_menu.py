@@ -162,7 +162,7 @@ class IKChainSpawnSpec:
 class HumanoidSpawnSpec:
     """Parameters for ``_spawn_humanoid``.
 
-    Mirrors the keyword arguments of :func:`make_humanoid` as primitives
+    Mirrors the keyword arguments of :func:`build_humanoid` as primitives
     so the property inspector can reflect each one as a plain widget. The
     resulting skeleton has 15 nodes (pelvis + neck + head + 2*(shoulder,
     elbow, wrist) + 2*(hip, knee, ankle)) — same anatomy described in
@@ -232,7 +232,7 @@ def _spawn_ragdoll(world: Any, **kwargs: Any) -> Any:
 
 
 def _spawn_humanoid(world: Any, **kwargs: Any) -> Any:
-    """Build a 15-node humanoid skeleton via :func:`make_humanoid`.
+    """Build a 15-node humanoid skeleton via :func:`build_humanoid`.
 
     Unlike rope / ragdoll which target the slim XPBD :class:`World`, the
     humanoid factory in :mod:`slappyengine.dynamics.humanoid` expects a
@@ -240,13 +240,13 @@ def _spawn_humanoid(world: Any, **kwargs: Any) -> Any:
     typically :class:`slappyengine.softbody.world.SoftBodyWorld`. The
     adapter passes ``world`` through unchanged so authors can hand the
     editor either world type and get a clear ``TypeError`` if the world
-    doesn't match (the make_humanoid guard fires immediately).
+    doesn't match (the build_humanoid guard fires immediately).
     """
-    from slappyengine.dynamics.humanoid import make_humanoid
+    from slappyengine.dynamics.humanoid import build_humanoid
 
     kwargs.pop("name", None)
     root_position = kwargs.pop("root_position", (0.0, 1.0))
-    return make_humanoid(world, root_position=root_position, **kwargs)
+    return build_humanoid(world, root_position=root_position, **kwargs)
 
 
 def _spawn_ik_chain(world: Any, **kwargs: Any) -> bool:

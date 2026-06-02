@@ -1,6 +1,6 @@
 """Humanoid factory smoke + invariants.
 
-Covers ``make_humanoid``, ``wrap_in_flesh``, ``place_feet_on_terrain``
+Covers ``build_humanoid``, ``build_flesh_wrap``, ``place_feet_on_terrain``
 against ``slappyengine.softbody.SoftBodyWorld`` — the same world type
 the four humanoid examples and ``test_vis_humanoid_destruction.py`` use.
 """
@@ -15,9 +15,9 @@ from slappyengine.dynamics import (
     LAYER_BONE,
     LAYER_MUSCLE,
     LAYER_SKIN,
-    make_humanoid,
+    build_humanoid,
     place_feet_on_terrain,
-    wrap_in_flesh,
+    build_flesh_wrap,
 )
 from slappyengine.softbody import SoftBodyWorld, step
 
@@ -32,9 +32,9 @@ def _bare_world() -> SoftBodyWorld:
     return world
 
 
-def test_make_humanoid_returns_handle_with_13_bone_nodes():
+def test_build_humanoid_returns_handle_with_13_bone_nodes():
     world = _bare_world()
-    skel = make_humanoid(world, root_position=(0.0, 1.0))
+    skel = build_humanoid(world, root_position=(0.0, 1.0))
 
     assert isinstance(skel, Humanoid)
     ns, ne = skel.node_slice
@@ -59,26 +59,26 @@ def test_make_humanoid_returns_handle_with_13_bone_nodes():
 
 def test_humanoid_one_step_does_not_nan():
     world = _bare_world()
-    make_humanoid(world, root_position=(0.0, 1.0))
+    build_humanoid(world, root_position=(0.0, 1.0))
     step(world)
     assert not np.isnan(world.nodes.pos).any()
     assert not np.isnan(world.nodes.vel).any()
 
 
-def test_wrap_in_flesh_adds_muscle_and_skin_layers():
+def test_build_flesh_wrap_adds_muscle_and_skin_layers():
     world = _bare_world()
-    skel = make_humanoid(world, root_position=(0.0, 1.0))
+    skel = build_humanoid(world, root_position=(0.0, 1.0))
     bone_node_count = skel.node_slice[1] - skel.node_slice[0]
     beam_count_before = world.beams.count
 
-    returned = wrap_in_flesh(
+    returned = build_flesh_wrap(
         world, skel,
         muscle_offset=0.10, skin_offset=0.18,
         muscle_stiffness=1.0e6, skin_stiffness=2.5e5,
         flesh_break_strain=0.18,
     )
 
-    # wrap_in_flesh returns the same handle for chaining.
+    # build_flesh_wrap returns the same handle for chaining.
     assert returned is skel
     # Two flesh slices were recorded.
     assert set(skel.flesh_node_slices.keys()) == {"muscle", "skin"}
@@ -97,10 +97,10 @@ def test_wrap_in_flesh_adds_muscle_and_skin_layers():
     assert world.beams.count > beam_count_before
 
 
-def test_wrap_in_flesh_then_step_stays_finite():
+def test_build_flesh_wrap_then_step_stays_finite():
     world = _bare_world()
-    skel = make_humanoid(world, root_position=(0.0, 1.0))
-    wrap_in_flesh(world, skel)
+    skel = build_humanoid(world, root_position=(0.0, 1.0))
+    build_flesh_wrap(world, skel)
     for _ in range(5):
         step(world)
     assert not np.isnan(world.nodes.pos).any()
@@ -108,7 +108,7 @@ def test_wrap_in_flesh_then_step_stays_finite():
 
 def test_place_feet_on_terrain_flat_floor_converges():
     world = _bare_world()
-    skel = make_humanoid(world, root_position=(0.0, 1.5))
+    skel = build_humanoid(world, root_position=(0.0, 1.5))
 
     floor_y = 3.5
     converged = place_feet_on_terrain(
@@ -127,7 +127,7 @@ def test_place_feet_on_terrain_flat_floor_converges():
 
 def test_place_feet_on_terrain_sinusoid_lands_both_feet():
     world = _bare_world()
-    skel = make_humanoid(world, root_position=(-1.0, 1.5))
+    skel = build_humanoid(world, root_position=(-1.0, 1.5))
 
     def terrain(x: float) -> float:
         return 3.5 + 0.25 * math.sin(x * 1.2)
