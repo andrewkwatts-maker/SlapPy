@@ -55,7 +55,7 @@ Confirmed-acceptable Python implementations that intentionally shadow a Rust ker
 
 | Module | Python symbol | Mirror in Rust | Rationale |
 |---|---|---|---|
-| `softbody/solver.py` | `_xpbd_step_numpy` | `_core.slappyengine_step` | golden reference for `tests/test_softbody_numerics_parity.py` |
+| `softbody/solver.py` | `_xpbd_step_numpy` | `_core.slappyengine_step` | golden reference for `SlapPyEngineTests/tests/test_softbody_numerics_parity.py` |
 | `physics/particle_field.py` | `_kinetic_relax_legacy` | (no Rust yet; vectorised `_kinetic_relax` is the live path) | kept for parity in commit `8b53890` |
 | `post_process/taa.py` | `TAA.resolve_numpy` | WGSL shader dispatch (not `_core`) | CPU fallback for headless test grids |
 | `numerics/__init__` | `vcycle_poisson`, `sor_smooth`, `compute_residual` | (no Rust yet — see ROI table) | pure-numpy V-cycle is the *only* path today |

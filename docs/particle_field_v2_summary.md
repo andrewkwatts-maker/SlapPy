@@ -132,7 +132,7 @@ test_fluid_bridge.py        4 pass
 
 ## Visual regression at end
 
-`examples/output/particles/visual_check.gif` — 1×5 grid, 60 frames,
+`SlapPyEngineExamples/examples/output/particles/visual_check.gif` — 1×5 grid, 60 frames,
 3 s render, ~1.2 MB. Compare against earlier commits' baselines to
 spot behaviour drift. Stats at final commit:
 

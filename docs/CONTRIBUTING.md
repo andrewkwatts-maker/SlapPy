@@ -67,10 +67,10 @@ class EventBus:
 
 ### Tests
 
-Every hardening round ships a `tests/test_hardening_<module>.py` file
+Every hardening round ships a `SlapPyEngineTests/tests/test_hardening_<module>.py` file
 with negative-path coverage only — the positive path is already
 exercised by the broader test suite. See
-`tests/test_hardening_eventbus.py` for the canonical shape.
+`SlapPyEngineTests/tests/test_hardening_eventbus.py` for the canonical shape.
 
 ```python
 def test_subscribe_rejects_bytes_event_type():
@@ -103,7 +103,7 @@ introduce a `_DEBUG_VALIDATE` skip flag.
   ```
 
   The generator skips files with that marker. The conformance test
-  `tests/test_docs_api_template_conformance.py` asserts every
+  `SlapPyEngineTests/tests/test_docs_api_template_conformance.py` asserts every
   hand-authored doc starts with the marker, carries an H1 of the form
   `# slappyengine.<X> — API Reference`, and includes at least one of
   `## Overview`, `## Public surface`, `## Usage`.
@@ -111,14 +111,14 @@ introduce a `_DEBUG_VALIDATE` skip flag.
 The full template lives at `docs/api/_template.md` and documents the
 canonical section ordering, the citation format for paper references,
 and the cross-link convention (`LBLK`name.md`RBLK(name.md)` relative form
-so `tests/test_docs_links_resolve_all.py` resolves them — replace `LBLK`
+so `SlapPyEngineTests/tests/test_docs_links_resolve_all.py` resolves them — replace `LBLK`
 / `RBLK` with literal `[` / `]` in real docs; `_template.md` uses the
 same disguise convention).
 
 ### Doc inventory
 
 Every file under `docs/**/*.md` must appear in
-`docs/sprint_5_doc_inventory.md`. `tests/test_docs_inventory.py`
+`docs/sprint_5_doc_inventory.md`. `SlapPyEngineTests/tests/test_docs_inventory.py`
 enforces three invariants:
 
 1. Every doc on disk is indexed.
@@ -138,7 +138,7 @@ Engine helper functions split into two categories per Sprint R-D:
 | `make_*`  | Pure spec / constructor — returns a dataclass or callable; no side effects. | `make_motor(...)`, `make_spring(...)`, `make_humanoid(...)` (deprecated alias of `build_humanoid`). |
 | `build_*` | Mutates the world / scene — adds bodies, joints, or attachments.           | `build_rope(spec, world, ...)`, `build_ragdoll(spec, world, ...)`, `build_flesh_wrap(...)`. |
 
-This is asserted by `tests/test_dynamics_builder_conventions.py`. If you
+This is asserted by `SlapPyEngineTests/tests/test_dynamics_builder_conventions.py`. If you
 add a new factory, pick the prefix based on whether it mutates an
 external object passed in.
 
@@ -148,11 +148,11 @@ external object passed in.
 
 - **No leading-underscore exports in `__all__`.** Public surface stays
   public; private helpers stay private. Asserted by the engine-surface
-  doc generator + `tests/test_docs_engine_surface_complete.py`.
+  doc generator + `SlapPyEngineTests/tests/test_docs_engine_surface_complete.py`.
 - **Alphabetise `__all__`** within each semantic group so diff churn
   stays minimal.
 - **Negative-path hardening tests** live in
-  `tests/test_hardening_<module>.py` — one file per module, never share
+  `SlapPyEngineTests/tests/test_hardening_<module>.py` — one file per module, never share
   files across subsystems.
 - **Skip / xfail discipline.** Every `skip` / `xfail` / `skipif`
   carries a one-line reason. `docs/sprint_6_test_audit.md` reviewed the
@@ -210,18 +210,18 @@ The base class supplies `from_config`, `make_pass`, and
 Drop the shader at `shaders/<pass_name>.wgsl` with a `main` entry point
 (or set `ENTRY` to a different name). Mirror the binary UBO layout your
 `PARAMS_LAYOUT` declares — byte-for-byte parity is asserted by
-`tests/test_post_process_base.py`.
+`SlapPyEngineTests/tests/test_post_process_base.py`.
 
 ### Tests
 
-Add a `tests/test_<pass_name>_pass.py` smoke test exercising:
+Add a `SlapPyEngineTests/tests/test_<pass_name>_pass.py` smoke test exercising:
 
 1. `from_config` with an empty config object (must fall back to defaults).
 2. `params_to_bytes()` round-trip against a known-good payload.
 3. `apply_cpu()` reference (when shipped) against a 1-pixel oracle.
 
 If the pass has a public `__init__` boundary with numeric params, also
-add a `tests/test_hardening_postprocess.py` entry for the negative
+add a `SlapPyEngineTests/tests/test_hardening_postprocess.py` entry for the negative
 path.
 
 ---

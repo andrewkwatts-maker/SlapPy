@@ -1,7 +1,7 @@
 # Sprint 5 — Documentation Inventory
 
 One-page index of every Markdown file under `docs/` with a one-line
-description. Locked by `tests/test_docs_inventory.py` — every file under
+description. Locked by `SlapPyEngineTests/tests/test_docs_inventory.py` — every file under
 `docs/**/*.md` must appear here, and every entry below must point at a file
 that exists on disk.
 
@@ -18,11 +18,11 @@ Regenerate after adding or removing any doc.
 | [`cargo_audit_2026_06_02.md`](cargo_audit_2026_06_02.md) | Cargo / Rust workspace audit — `_core` PyO3 extension surface, `Cargo.toml` review, wheel-size context (2026-06-02). |
 | [`core_engine_audit_2026_06_02.md`](core_engine_audit_2026_06_02.md) | Core engine audit — `_compat` symbol caller count, doc/__all__ drift report, top-level docstring expansion (2026-06-02). |
 | [`dead_code_audit_2026_06_02.md`](dead_code_audit_2026_06_02.md) | Dead-code + duplicate-symbol audit — humanoid-alias caller list, dead-export candidates per subpackage, validator twins (2026-06-02). |
-| [`demo_gallery.md`](demo_gallery.md) | Hand-authored cinematic gallery of six flagship runnable demos (hello_ragdoll / hello_studio / humanoid_walking / humanoid_ik_terrain / hello_rope / hello_gi) with refreshed GIF/PNG artefacts under `examples/output/`. |
+| [`demo_gallery.md`](demo_gallery.md) | Hand-authored cinematic gallery of six flagship runnable demos (hello_ragdoll / hello_studio / humanoid_walking / humanoid_ik_terrain / hello_rope / hello_gi) with refreshed GIF/PNG artefacts under `SlapPyEngineExamples/examples/output/`. |
 | [`dynamics_design.md`](dynamics_design.md) | Design reference for `slappyengine.dynamics`: XPBD substrate, the seven `JointSpec` kinds, authoring helpers, and failure modes. |
 | [`dynamics_quickstart.md`](dynamics_quickstart.md) | 10-minute hands-on quick-start for the dynamics primitives, with six runnable snippets (4/4 tripwire tests green). |
 | [`engine_surface_v030.md`](engine_surface_v030.md) | Auto-generated v0.3 engine-surface reference — 75 top-level symbols across 19 declared subpackages (regenerate via `scripts/gen_engine_surface_doc.py`). |
-| [`examples_smoke_2026_05_31.md`](examples_smoke_2026_05_31.md) | Read-only smoke audit of every `examples/*.py` (Sprint 1E, 2026-05-31). |
+| [`examples_smoke_2026_05_31.md`](examples_smoke_2026_05_31.md) | Read-only smoke audit of every `SlapPyEngineExamples/examples/*.py` (Sprint 1E, 2026-05-31). |
 | [`examples_smoke_2026_06_01.md`](examples_smoke_2026_06_01.md) | Examples smoke audit v2 — refresh of the 2026-05-31 audit (2026-06-01). |
 | [`examples_smoke_2026_06_01_v3.md`](examples_smoke_2026_06_01_v3.md) | Examples smoke audit v3 — 47/47 GREEN (first clean sweep, 2026-06-01). |
 | [`fluid_design.md`](fluid_design.md) | Design reference for the Position-Based Fluids (PBF) 2D particle simulator (`slappyengine.fluid`). |
@@ -39,6 +39,7 @@ Regenerate after adding or removing any doc.
 | [`perf_dashboard_prev.md`](perf_dashboard_prev.md) | Prior perf dashboard snapshot (2026-05-29) preserved for trend comparison. |
 | [`phase_d_strip_plan_2026_05_31.md`](phase_d_strip_plan_2026_05_31.md) | Phase D strip-pass execution plan (Sprint F, 2026-05-31) — gated on Ochema CI greenness. |
 | [`repo_cleanup_2026_06_02.md`](repo_cleanup_2026_06_02.md) | Repo cleanup survey — generated-artefact `.gitignore` plan, (a)/(b)/(c) bucket categorisation of 400+ untracked files (2026-06-02). |
+| [`restructure_2026_06_02.md`](restructure_2026_06_02.md) | Top-level restructure — `tests/` → `SlapPyEngineTests/tests/`, `examples/` → `SlapPyEngineExamples/examples/`, with path-translation table and verification log (2026-06-02). |
 | [`physics_module.md`](physics_module.md) | Entry point for the hierarchical-hull per-pixel physics module (`slappyengine.physics`). |
 | [`roadmap.md`](roadmap.md) | Living "what's next" roadmap — near-term (v0.3.x), mid-term (v0.4), long-term (v1.0) candidates with source citations per entry. |
 | [`rust_migration_plan.md`](rust_migration_plan.md) | Rust migration plan — staged path to 1000 fps via Rust-backed hot-path migration. |
@@ -75,7 +76,7 @@ and are skipped by the generator.
 
 | Path | Description |
 |---|---|
-| [`api/_template.md`](api/_template.md) | Meta-template documenting the canonical structure every hand-authored `docs/api/*.md` reference follows. Asserted by `tests/test_docs_api_template_conformance.py`. |
+| [`api/_template.md`](api/_template.md) | Meta-template documenting the canonical structure every hand-authored `docs/api/*.md` reference follows. Asserted by `SlapPyEngineTests/tests/test_docs_api_template_conformance.py`. |
 | [`api/animation.md`](api/animation.md) | Hand-authored API reference for `slappyengine.animation` (AnimationGraph state machine + AnimState/AnimTransition/AnimUpdate, ProceduralRig dot-rigging + ControlPoint, video-frame import via `[video]` extra). |
 | [`api/audio_runtime.md`](api/audio_runtime.md) | Hand-authored API reference for `slappyengine.audio_runtime` (sounddevice soft-import shim — AudioBackend protocol, real / stub backend selection, single-warning fallback, sample-rate forwarding). |
 | [`api/compute.md`](api/compute.md) | Hand-authored API reference for `slappyengine.compute` (ComputePass/ComputePipeline dispatch, ReadbackBuffer staging, StatsCompute + SpatialCompute reductions, PixelMutator bulk mutation, AssetComputeAPI / PixelAPI per-asset facade). |

@@ -113,7 +113,7 @@ breaking the preset's invariants.
 
 ## Tests
 
-Regression coverage lives at `tests/test_post_process_preset_chains.py`
+Regression coverage lives at `SlapPyEngineTests/tests/test_post_process_preset_chains.py`
 and runs CPU-only (no GPU required):
 
 1. `test_cinematic_has_dof_and_bloom`

@@ -73,7 +73,7 @@ delivered.
 - `ComputePipeline` exposes `bind_particle_field(field)` to allocate
   the mirrored storage buffers up front (we size to
   `max_particles=200000` by default; growable via reallocate).
-- Parity test infrastructure committed: `tests/gpu/parity_fixture.py`
+- Parity test infrastructure committed: `SlapPyEngineTests/tests/gpu/parity_fixture.py`
   with `assert_field_parity(cpu, gpu, channels=...)`.
 
 **Risk callouts.**
@@ -331,7 +331,7 @@ on the CPU path.
 - 100k particles at 30 fps end-to-end.
 - All parity tests still pass; no kernel regresses beyond
   `atol=1e-3`.
-- `examples/visual_check_demo.py` renders within 1% of CPU baseline
+- `SlapPyEngineExamples/examples/visual_check_demo.py` renders within 1% of CPU baseline
   pixel-similarity (LPIPS or simple per-channel L1).
 
 **Risk callouts.**
@@ -473,12 +473,12 @@ Sprint-by-sprint perf checkpoints:
 ## Testing strategy
 
 - **Parity tests.** Every kernel ships with a paired test in
-  `tests/gpu/parity/test_<kernel>_parity.py`. Each test runs the same
+  `SlapPyEngineTests/tests/gpu/parity/test_<kernel>_parity.py`. Each test runs the same
   scenario through both backends and asserts field-level equality on
   the affected channels. Tests are parametrised over 30 seeded
   scenarios (varied particle counts, materials, world sizes,
   collision densities).
-- **Visual regression.** `examples/visual_check_demo.py` runs at the
+- **Visual regression.** `SlapPyEngineExamples/examples/visual_check_demo.py` runs at the
   end of each sprint and the resulting GIF gets diffed against the
   sprint-N-1 baseline. We use simple per-pixel L1 with a 1% tolerance
   band; out-of-band frames fail the sprint sign-off.

@@ -141,7 +141,7 @@ exposing one would split the interface.
 - `slappyengine.audio_runtime._BACKEND` — module-level singleton;
   test harnesses may rebind this for fake-backend injection.
 - `slappyengine.audio_runtime._STUB_WARNING` — the canonical warning
-  string; pinned by `tests/test_audio_stub.py`.
+  string; pinned by `SlapPyEngineTests/tests/test_audio_stub.py`.
 
 ## See also
 

@@ -19,7 +19,7 @@ modified.
    them would push `import slappyengine` past a useful budget for CLI
    tooling (`slappy docs_gen`, etc.).
 2. The `_LAZY_MAP` is also the contract surface that
-   `tests/test_init_lazy_map.py` and `tests/test_game_compat_tripwire.py`
+   `SlapPyEngineTests/tests/test_init_lazy_map.py` and `SlapPyEngineTests/tests/test_game_compat_tripwire.py`
    walk to guarantee compat for Ochema Circuit / Bullet Strata / Stone Keep.
 
 There is no reason to flatten or eager-load it. It is doing the work it
@@ -44,18 +44,18 @@ symbols' own definition / `_compat` / `__init__.py` sites):
 
 **But every one of these symbols is exercised by**:
 
-- `tests/test_game_compat_tripwire.py` — the multi-game tripwire walks each
+- `SlapPyEngineTests/tests/test_game_compat_tripwire.py` — the multi-game tripwire walks each
   per-game contract and asserts the symbol resolves off `slappyengine`.
   The Bullet Strata contract explicitly requires `MaterialPreset`,
   `ZoneMap`, `DeformController`, `SimFrequencyBudget`, `CrackMode`; the
   Ochema contract explicitly requires `SimFrequencyBudget`, `SimState`,
   `DeformController`.
-- `tests/test_game_smoke_instantiation.py` — parametrised test
+- `SlapPyEngineTests/tests/test_game_smoke_instantiation.py` — parametrised test
   `test_missing_module_residual_gap` asserts each was historically a Phase C
   gap that "has been closed; removing it again would re-break game-team
   installs."
-- `tests/test_compat_cell_material.py` (CellMaterial / cell_material_for).
-- `tests/test_init_lazy_map.py` — pins the `ZoneMap is ZoneManager` alias.
+- `SlapPyEngineTests/tests/test_compat_cell_material.py` (CellMaterial / cell_material_for).
+- `SlapPyEngineTests/tests/test_init_lazy_map.py` — pins the `ZoneMap is ZoneManager` alias.
 
 **Conclusion**: zero deletions warranted today. The compat symbols are
 zero-callers on master but the tripwire test makes their continued export

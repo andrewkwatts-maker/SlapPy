@@ -116,7 +116,7 @@ Callers that resize zones at runtime should re-add the zone, or call
 `ZoneManager.enable_spatial_hash(False)` flips the manager onto the
 historical `O(zones x entities)` path. This exists for:
 
-* parity tests (`tests/test_zones_spatial_hash.py::test_spatial_hash_events_match_linear_scan`),
+* parity tests (`SlapPyEngineTests/tests/test_zones_spatial_hash.py::test_spatial_hash_events_match_linear_scan`),
 * debugging suspected acceleration bugs in user code, and
 * tiny-entity-count scenarios where the bucketing overhead might
   dominate.

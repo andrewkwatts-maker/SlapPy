@@ -6,7 +6,7 @@
 > and one or two cross-links to sibling references for things callers
 > tend to mix it up with. Cross-links use the markdown
 > `LBLK`name.md`RBLK(name.md)` form so they survive a `mkdocs` build
-> and `tests/test_docs_links_resolve_all.py` (replace `LBLK` / `RBLK`
+> and `SlapPyEngineTests/tests/test_docs_links_resolve_all.py` (replace `LBLK` / `RBLK`
 > with literal `[` / `]`).
 
 <!--
@@ -20,7 +20,7 @@ carry the `<!-- handauthored: do not regenerate -->` marker on line 1,
 so structural consistency lives here in the template rather than in the
 generator.
 
-The regression test `tests/test_docs_api_template_conformance.py`
+The regression test `SlapPyEngineTests/tests/test_docs_api_template_conformance.py`
 asserts the load-bearing pieces. Specifically it checks that every
 hand-authored doc:
 
@@ -83,7 +83,7 @@ STYLE CONVENTIONS
   - Cross-links. Always `LBLK`name.md`RBLK(name.md)` relative form
     (`LBLK` / `RBLK` stand in for literal `[` / `]` so the link
     checker does not parse this template entry) so
-    `tests/test_docs_links_resolve_all.py` resolves them; never an
+    `SlapPyEngineTests/tests/test_docs_links_resolve_all.py` resolves them; never an
     absolute URL or a bare `name.md` reference.
   - Tone. Reference docs, not tutorials — describe the surface, link
     to demos for worked examples. Past-tense sprint notes are fine

@@ -391,13 +391,13 @@ layer = engine.add_layer("world", sle.Layer2D(tile_size=16))
 engine.run()
 ```
 
-See the `examples/` directory for runnable scenes that exercise the surface above (hello world, lighting, physics, layered character, multiplayer, HUD, landscape, baking, 3D layers, editor).
+See the `SlapPyEngineExamples/examples/` directory for runnable scenes that exercise the surface above (hello world, lighting, physics, layered character, multiplayer, HUD, landscape, baking, 3D layers, editor).
 
 ## Game integration tripwires
 
 Downstream games (e.g. Ochema Circuit, Bullet Strata) pin the names they import from this engine. When a game ships against a new engine name, add a tripwire test that asserts the name remains importable — removing any locked name breaks that game.
 
-Today the locked names are simply everything in `slappyengine.__all__` plus the declared subpackages, both of which are exercised by `tests/test_docs_engine_surface_complete.py`.
+Today the locked names are simply everything in `slappyengine.__all__` plus the declared subpackages, both of which are exercised by `SlapPyEngineTests/tests/test_docs_engine_surface_complete.py`.
 
 <!-- BEGIN: AUTO-GENERATED SUBPACKAGE API LINKS -->
 

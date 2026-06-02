@@ -24,7 +24,7 @@ it on the same grounds v2 noted.
 
 ## Methodology
 
-Identical to v2. For every `examples/*.py` outside `legacy/` and
+Identical to v2. For every `SlapPyEngineExamples/examples/*.py` outside `legacy/` and
 `output/`, the audit script ran one of three probes with
 `PYTHONPATH=python` and a 90 s `subprocess` timeout:
 
@@ -43,8 +43,8 @@ Categories: **GREEN** / **RUNTIME_ERROR** / **IMPORT_MISSING_OTHER** /
 
 | Example | Status | Notes |
 |---|---|---|
-| bullet_holes_demo.py | GREEN | No-args; writes `examples/output/particles/bullet_holes.gif`; total particles=113. |
-| buoyancy_demo.py | GREEN | No-args; writes `examples/output/buoyancy/buoyancy.gif`; 2190 splash impulses; wall=5.8 s (one-shot GIF writer, no `--frames` exposed). |
+| bullet_holes_demo.py | GREEN | No-args; writes `SlapPyEngineExamples/examples/output/particles/bullet_holes.gif`; total particles=113. |
+| buoyancy_demo.py | GREEN | No-args; writes `SlapPyEngineExamples/examples/output/buoyancy/buoyancy.gif`; 2190 splash impulses; wall=5.8 s (one-shot GIF writer, no `--frames` exposed). |
 | character_damage_demo.py | GREEN | No-args; cumulative cuts bone=7 muscle=4 skin=2. |
 | detonate_gallery_demo.py | GREEN | `--frames 5`; argparse demo. |
 | editor_demo.py | GREEN | No-args; "No project found" notice is expected without a project on disk. |
@@ -66,10 +66,10 @@ Categories: **GREEN** / **RUNTIME_ERROR** / **IMPORT_MISSING_OTHER** /
 | hello_numerics.py | GREEN | Argparse, no `--frames`; default run no-NaN. |
 | hello_physics.py | GREEN | `Engine.run(max_frames=5)`; pixel-physics compute scene drew 5 frames. |
 | hello_pixel.py | GREEN | `Engine.run(max_frames=5)`; canvas + layer drew 5 frames. |
-| hello_ragdoll.py | GREEN | `--frames 5`; writes `examples/output/ragdoll/hello_ragdoll.gif`. |
+| hello_ragdoll.py | GREEN | `--frames 5`; writes `SlapPyEngineExamples/examples/output/ragdoll/hello_ragdoll.gif`. |
 | hello_rope.py | GREEN | `--frames 5`; stepped frames=5. |
 | hello_spring.py | GREEN | `--frames 5`; final y=0.6498. |
-| hello_studio.py | GREEN | No-args; writes `examples/output/studio/hello_studio.gif`. |
+| hello_studio.py | GREEN | No-args; writes `SlapPyEngineExamples/examples/output/studio/hello_studio.gif`. |
 | hello_telemetry.py | GREEN | `--frames 5`; emit bench 20273.26 ns/emit. |
 | hello_thermal.py | GREEN | `--frames 5`; hot/cold poles settle. |
 | hello_topology.py | GREEN | Argparse, no `--frames`; edges=112 components=1. |
@@ -77,15 +77,15 @@ Categories: **GREEN** / **RUNTIME_ERROR** / **IMPORT_MISSING_OTHER** /
 | hello_zone.py | GREEN | `--frames 5`; no NaN. |
 | hud_demo.py | GREEN | `Engine.run(max_frames=5)`; HUD wiring + script attach OK. |
 | humanoid_destruction_demo.py | GREEN | No-args; cumulative cuts bone(L0)=46 muscle(L1)=14 skin(L2)=14. |
-| humanoid_ik_terrain_demo.py | GREEN | `--frames 5`; writes `examples/output/humanoid/humanoid_ik_terrain.gif`. |
+| humanoid_ik_terrain_demo.py | GREEN | `--frames 5`; writes `SlapPyEngineExamples/examples/output/humanoid/humanoid_ik_terrain.gif`. |
 | humanoid_standing_demo.py | GREEN | No-args; pose head y=1.840 pelvis y=2.550 ankle_l y=3.500. |
-| humanoid_walking_demo.py | GREEN | No-args; writes `examples/output/humanoid/humanoid_walking.gif`. |
+| humanoid_walking_demo.py | GREEN | No-args; writes `SlapPyEngineExamples/examples/output/humanoid/humanoid_walking.gif`. |
 | ik_skeleton_demo.py | GREEN | NEWLY GREEN. `--frames 5`; Sprint 7A restored `make_distance` + `resolve_joint_specs`; demo realigned to current `IKChainSpec(node_indices=...)` / `solve_ik(spec, world, ...)` signature; reported 3/5 frames had IK tail >0.05 m from target (well within smoke tolerance). |
 | landscape_demo.py | GREEN | `Engine.run(max_frames=5)`; landscape streamer initialised. |
 | layered_character.py | GREEN | `Engine.run(max_frames=5)`; warrior tick wired. |
 | layered_creature_drop.py | GREEN | No-args; writes `creature_drop.gif`; centroid drift 1.173. |
 | multiplayer_demo.py | GREEN(\*) | `--frames 5` (matching v1 + v2 invocation) — argparse-style flag is rejected by the demo's `host`/`join` switch and the script exits 0 with "Unknown mode: '--frames'". Apples-to-apples GREEN. With no args it picks `host` and fails at DHT bind on Windows with `WinError 10048` (port-in-use), the same environment flake noted in v2. |
-| particles_sample.py | GREEN | No-args; writes `examples/particles_sample.png`; 448 live particles. |
+| particles_sample.py | GREEN | No-args; writes `SlapPyEngineExamples/examples/particles_sample.png`; 448 live particles. |
 | sand_crater_demo.py | GREEN | `--frames 5`; argparse demo. |
 | softbody_vehicle_demo.py | GREEN | No-args; writes `softbody/vehicle_demo.gif`; 0/263 beams broken; wall=8.2 s (one-shot GIF writer). |
 | vehicle_obstacle_course.py | GREEN | No-args; writes `softbody/vehicle_course.gif`; 0/907 beams broken; wall=27.8 s (one-shot GIF writer). |
@@ -147,7 +147,7 @@ real frames (not no-op-ing through `run()`).
 1. **Add `hello_3d_layer.py` + `hello_bake.py` to the visual regression
    suite** so the Sprint 7B shader-binding fix is locked in by a
    continuously-running visual test rather than only by
-   `tests/test_examples_3d_smoke.py`.
+   `SlapPyEngineTests/tests/test_examples_3d_smoke.py`.
 2. **Replace the `multiplayer_demo.py` "argparse" false positive with a
    real local-loopback smoke** — same recommendation v2 made. A
    `--selftest` mode that spawns two in-process sessions over a
@@ -163,7 +163,7 @@ real frames (not no-op-ing through `run()`).
 ## Addendum (2026-06-02) — shared CLI helper
 
 The repeated `--frames N --no-gif --out path` argparse boilerplate that
-21 `examples/*.py` demos had been duplicating is now factored into
+21 `SlapPyEngineExamples/examples/*.py` demos had been duplicating is now factored into
 `python/slappyengine/examples_common.py`:
 
 - `build_demo_arg_parser(description, *, default_frames, default_seed,
@@ -186,7 +186,7 @@ has a `--frames/--no-gif/--out` CLI; previously no argparse at all),
 The CLI surface of each is byte-identical to before for every flag they
 previously accepted (smoke harness invocations continue to exit 0).
 
-Test coverage at `tests/test_examples_common.py` pins:
+Test coverage at `SlapPyEngineTests/tests/test_examples_common.py` pins:
 
 1. The parser exposes `--frames`, `--no-gif`, `--out` (plus `--render`
    and `--seed`) with sane defaults.

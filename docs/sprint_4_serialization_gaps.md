@@ -1,8 +1,8 @@
 # Sprint 4 — Serialization gap analysis
 
 **Status:** authored 2026-05-30 during Sprint 4 (demo & integration sweep).
-**Companion test:** `tests/test_composite_serialize_roundtrip.py`.
-**Driver demo:** `examples/hello_composite.py`.
+**Companion test:** `SlapPyEngineTests/tests/test_composite_serialize_roundtrip.py`.
+**Driver demo:** `SlapPyEngineExamples/examples/hello_composite.py`.
 
 The composite-scene round-trip test surfaces a Phase-C-like
 disagreement between the engine's subsystems: some of them have a
@@ -80,7 +80,7 @@ corresponding probe and force this doc to be updated.
 * Composite-demo impact: the demo always reattaches its physics /
   combat / zone counters at the top of `step_scene`, so a save/load
   cycle naturally loses the running counts. Test coverage:
-  `tests/test_composite_serialize_roundtrip.py::test_composite_world_serialize_roundtrip`
+  `SlapPyEngineTests/tests/test_composite_serialize_roundtrip.py::test_composite_world_serialize_roundtrip`
   observes 180 `physics.step` events plus ≥1 `combat.hit` and ≥1
   `zone.enter` event from a fresh subscriber attached at run start.
 

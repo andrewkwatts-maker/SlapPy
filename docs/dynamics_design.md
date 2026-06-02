@@ -385,7 +385,7 @@ Concrete numbers from the test harness on the current machine
 | Single motor pair (3 nodes), 8 iterations    | 11 ms               | 5560      |
 
 (Measured with the `_build_toy_*` helpers in
-`tests/test_dynamics_unified_step.py` and a `time.perf_counter` wrapper.)
+`SlapPyEngineTests/tests/test_dynamics_unified_step.py` and a `time.perf_counter` wrapper.)
 
 The dynamics path is currently *pure Python + numpy*; no Rust port has
 landed for the joint solvers. The hot loop is `World.step` →
@@ -408,7 +408,7 @@ Two cheap wins exist short of porting:
 ## See also
 
 - `python/tests/test_dynamics_*.py` — usage examples and behavioural specs.
-- `examples/hello_rope.py`, `examples/hello_ragdoll.py` — minimal demos
+- `SlapPyEngineExamples/examples/hello_rope.py`, `SlapPyEngineExamples/examples/hello_ragdoll.py` — minimal demos
   (where present in the working tree).
 - `docs/softbody_design.md` — the legacy lattice/vehicle interface;
   `dynamics` is the unifying generalisation.

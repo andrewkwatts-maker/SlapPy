@@ -10,7 +10,7 @@ sprint with explicit approval.
 **Executed 2026-06-02 (SAFE pass):**
 - `ARCHITECTURE.md` and `ONBOARDING.md` moved from repo root to `docs/` (git rename detected, history preserved).
 - `benchmarks/baseline_report.md.bak` deleted.
-- `_prof_fluid_render.py`, `_prof_softbody_collision.py`, `_prof_softbody_render.py` deleted from repo root (confirmed not imported in `python/`, `tests/`, or `examples/`).
+- `_prof_fluid_render.py`, `_prof_softbody_collision.py`, `_prof_softbody_render.py` deleted from repo root (confirmed not imported in `python/`, `SlapPyEngineTests/tests/`, or `SlapPyEngineExamples/examples/`).
 - `.gitignore` tightened: added explicit `.ruff_cache/` entry.
 - Test suite unchanged: 2547 passed, 6 failed, 22 skipped, 29 xfailed (failures pre-existing in editor_material and residency tests, unrelated to cleanup).
 
@@ -28,19 +28,19 @@ working-tree noise dramatically and prevents future accidental commits.
 | `_prof_*.py`                           | One-shot profiling scripts at repo root (`_prof_fluid_render.py`, `_prof_softbody_collision.py`, `_prof_softbody_render.py`). They are throwaway; if any becomes permanent it should move to `benchmarks/`. |
 | `*.bak`                                | Editor / tool backups (`benchmarks/baseline_report.md.bak`).                                                              |
 | `docs/visual_diffs/`                   | Per-run image diffs produced by the visual harness (`hello_ragdoll_diff.png` etc.).                                       |
-| `examples/output/**`                   | Sweeping rule: all generated example outputs are ignored by default.                                                      |
+| `SlapPyEngineExamples/examples/output/**`                   | Sweeping rule: all generated example outputs are ignored by default.                                                      |
 | Negated gallery artefacts              | Each PNG/GIF referenced by `docs/demo_gallery.md` is re-included via `!examples/output/<sub>/<file>` so the gallery still ships. |
 
 ### Gallery artefacts to keep tracked (re-included via `!` rules)
 
 Extracted directly from `docs/demo_gallery.md`:
 
-- `examples/output/hello_gi/hello_gi.png`
-- `examples/output/humanoid/humanoid_ik_terrain.gif`
-- `examples/output/humanoid/humanoid_walking.gif`
-- `examples/output/ragdoll/hello_ragdoll.gif`
-- `examples/output/rope/hello_rope.png`
-- `examples/output/studio/hello_studio.gif`
+- `SlapPyEngineExamples/examples/output/hello_gi/hello_gi.png`
+- `SlapPyEngineExamples/examples/output/humanoid/humanoid_ik_terrain.gif`
+- `SlapPyEngineExamples/examples/output/humanoid/humanoid_walking.gif`
+- `SlapPyEngineExamples/examples/output/ragdoll/hello_ragdoll.gif`
+- `SlapPyEngineExamples/examples/output/rope/hello_rope.png`
+- `SlapPyEngineExamples/examples/output/studio/hello_studio.gif`
 
 All six are already tracked in git; the negation rules preserve them while the new wildcard
 silences the 20+ untracked subdir entries (`buoyancy/`, `character/`, `fluid/`, `fracture/`,
@@ -50,8 +50,8 @@ silences the 20+ untracked subdir entries (`buoyancy/`, `character/`, `fluid/`, 
 ### Other obvious noise (added in this pass)
 
 - `benchmarks/__pycache__/` (already caught by `__pycache__/`, but listed for clarity).
-- `examples/legacy/output/` (legacy demo regeneration target).
-- `tests/output/` (companion to `tests/visual/output/`, already ignored).
+- `SlapPyEngineExamples/examples/legacy/output/` (legacy demo regeneration target).
+- `SlapPyEngineTests/tests/output/` (companion to `SlapPyEngineTests/tests/visual/output/`, already ignored).
 
 ---
 
@@ -111,8 +111,8 @@ Survey only; no action this sprint.
   living in `physics/` (already-tracked) or `dynamics/` / `numerics/` / `zones/` /
   `thermal/` subpackages. Each one needs an individual decision; this is the **largest
   single cleanup win** identified.
-- `examples/legacy/physics_*_demo.py` — legacy demos kept for reference; move to
-  `examples/legacy/` if not already (they appear to be there already, so likely just
+- `SlapPyEngineExamples/examples/legacy/physics_*_demo.py` — legacy demos kept for reference; move to
+  `SlapPyEngineExamples/examples/legacy/` if not already (they appear to be there already, so likely just
   needs to be staged, not deleted).
 - Root-level `_prof_*.py` (already covered by gitignore expansion).
 
@@ -129,7 +129,7 @@ Other actively-iterated areas spotted during the survey, leave for the owning sp
 - `python/slappyengine/testing/baselines/*.png` — visual regression baselines
   (`outline_round5_legacy.png`, `outline_round5_smooth.png`). Stage them in a baseline-only
   commit once their owning test stabilises.
-- `tests/visual/scenes/` and `tests/visual/test_vis_*.py` — visual harness scenes are
+- `SlapPyEngineTests/tests/visual/scenes/` and `SlapPyEngineTests/tests/visual/test_vis_*.py` — visual harness scenes are
   evolving; stage with the harness owner.
 
 ---

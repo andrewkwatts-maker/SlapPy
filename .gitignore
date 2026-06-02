@@ -42,11 +42,11 @@ Thumbs.db
 
 # SlapPyEngine asset files (keep example ones)
 *.slap
-!examples/**/*.slap
+!SlapPyEngineExamples/examples/**/*.slap
 
 # Visual test output (generated PNGs and videos, not committed)
-tests/visual/output/
-tests/output/
+SlapPyEngineTests/tests/visual/output/
+SlapPyEngineTests/tests/output/
 
 # Audit / profiling artefacts (regenerated on demand)
 _audit_snapshots/
@@ -57,13 +57,13 @@ _prof_*.py
 docs/visual_diffs/
 
 # Generated example outputs (gallery artefacts re-included below)
-examples/output/**
-!examples/output/hello_gi/hello_gi.png
-!examples/output/humanoid/humanoid_ik_terrain.gif
-!examples/output/humanoid/humanoid_walking.gif
-!examples/output/ragdoll/hello_ragdoll.gif
-!examples/output/rope/hello_rope.png
-!examples/output/studio/hello_studio.gif
+SlapPyEngineExamples/examples/output/**
+!SlapPyEngineExamples/examples/output/hello_gi/hello_gi.png
+!SlapPyEngineExamples/examples/output/humanoid/humanoid_ik_terrain.gif
+!SlapPyEngineExamples/examples/output/humanoid/humanoid_walking.gif
+!SlapPyEngineExamples/examples/output/ragdoll/hello_ragdoll.gif
+!SlapPyEngineExamples/examples/output/rope/hello_rope.png
+!SlapPyEngineExamples/examples/output/studio/hello_studio.gif
 
 # Legacy example regeneration target
-examples/legacy/output/
+SlapPyEngineExamples/examples/legacy/output/

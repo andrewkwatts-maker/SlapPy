@@ -5,7 +5,7 @@ Branch: `sprint-6-perf-correctness`
 Author: Sprint 6 sweep
 
 Scope: every `pytest.mark.skip`, `pytest.mark.skipif`, `pytest.mark.xfail`,
-`pytest.skip(...)`, and `pytest.xfail(...)` in `tests/`. Each row lists the
+`pytest.skip(...)`, and `pytest.xfail(...)` in `SlapPyEngineTests/tests/`. Each row lists the
 location, the stated reason (or inferred reason where none is stated), and a
 **recommendation** of {`resolve`, `keep xfail`, `keep skip`, `delete`}.
 
@@ -22,7 +22,7 @@ by this sprint.**
 
 | File | Tests failing | Cause | Recommendation |
 |---|---:|---|---|
-| `tests/test_hardening_layer.py` | 23 | The hardening battery was authored against a hardened `Layer` / `Layer2D` / `LayerDataBuffer` API (name validation, mode validation, blank-size validation, heightmap NaN/Inf guards, struct-fields type checks). `python/slappyengine/layer.py` was never updated to add those boundary checks. Tests assert `pytest.raises(TypeError, ...)` against constructions that the current impl accepts silently. | **resolve** in a dedicated `hardening-layer` sprint — Sprint 6 is observation-only per scope, source untouched. Tracked here; do not silently `xfail` them, since they document real missing input validation. |
+| `SlapPyEngineTests/tests/test_hardening_layer.py` | 23 | The hardening battery was authored against a hardened `Layer` / `Layer2D` / `LayerDataBuffer` API (name validation, mode validation, blank-size validation, heightmap NaN/Inf guards, struct-fields type checks). `python/slappyengine/layer.py` was never updated to add those boundary checks. Tests assert `pytest.raises(TypeError, ...)` against constructions that the current impl accepts silently. | **resolve** in a dedicated `hardening-layer` sprint — Sprint 6 is observation-only per scope, source untouched. Tracked here; do not silently `xfail` them, since they document real missing input validation. |
 
 Other hardening suites are fully green:
 * `test_hardening_actionmap.py`, `test_hardening_animation.py`,
@@ -42,7 +42,7 @@ Roll-up: **355 passed, 23 failed** out of 378 hardening assertions.
 
 | File:line | Reason on the file | Recommendation | Justification |
 |---|---|---|---|
-| `test_all_demos_smoke.py:186` `test_demo_renders_against_baseline` | "Subprocess-rendered frames diverge from in-process baselines due to seed/timing non-determinism across the dynamics demos. Per-demo tests at `tests/test_demo_<name>.py` pin tighter, in-process baselines." | **keep xfail** | The per-demo tests at `tests/test_demo_*.py` (80 passing) are the correct tight baselines. The subprocess smoke is a coverage tripwire that demos *boot and render something non-black*; pixel-identical match across subprocess seeds is not the contract this test should enforce. |
+| `test_all_demos_smoke.py:186` `test_demo_renders_against_baseline` | "Subprocess-rendered frames diverge from in-process baselines due to seed/timing non-determinism across the dynamics demos. Per-demo tests at `SlapPyEngineTests/tests/test_demo_<name>.py` pin tighter, in-process baselines." | **keep xfail** | The per-demo tests at `SlapPyEngineTests/tests/test_demo_*.py` (80 passing) are the correct tight baselines. The subprocess smoke is a coverage tripwire that demos *boot and render something non-black*; pixel-identical match across subprocess seeds is not the contract this test should enforce. |
 | `test_game_compat_tripwire.py:233` (15 entries) `pt.xfail("known Phase C gap: ...")` | Names not yet resolvable from `slappyengine.<name>` after Phase C. | **keep xfail** — these are deliberate landing pads for the Phase C gap-closure sprint. Sprint 6 has no mandate to close them. |
 
 ---
@@ -77,7 +77,7 @@ These guard against missing optional dependencies / hardware. Keep as-is.
 
 ## E. Visual baseline harness skips
 
-`tests/visual/test_vis_*.py` (12 occurrences across 6 files) all use the
+`SlapPyEngineTests/tests/visual/test_vis_*.py` (12 occurrences across 6 files) all use the
 same idiom:
 
 ```python

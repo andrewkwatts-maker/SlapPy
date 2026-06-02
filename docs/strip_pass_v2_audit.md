@@ -131,7 +131,7 @@ test in the suite that touches the component layer.**
 - **Consumers in tests:**
   - `python/tests/test_spawn_fragment.py:23` — `from slappyengine.physics.cc_label import connected_components`
 - **Consumers in games:** none (Ochema/Strata/Keep all clean)
-- **Other call sites:** `examples/legacy/physics_projectile_demo.py:42` — legacy example, dies with the demo cleanup
+- **Other call sites:** `SlapPyEngineExamples/examples/legacy/physics_projectile_demo.py:42` — legacy example, dies with the demo cleanup
 - **Strip status:** safe-after-migrating-hull.py-import
 - **Action required before delete:** flip `physics/hull.py:799` to `from slappyengine.topology import connected_components` (signatures match — same `bond_bits` + `neighbour_indices` contract). Retarget `test_spawn_fragment.py` onto topology, or delete it once `hull.py` itself is deleted as part of the broader physics cut.
 
@@ -195,9 +195,9 @@ test in the suite that touches the component layer.**
   - `python/slappyengine/physics/__init__.py:46` — re-export of `GranularComposite`
 - **Consumers in tests:**
   - `python/tests/test_granular_render.py` — direct (dedicated unit suite, ~7 tests)
-  - `tests/visual/test_vis_granular.py` — visual regression
+  - `SlapPyEngineTests/tests/visual/test_vis_granular.py` — visual regression
 - **Consumers in games:** none
-- **Other call sites:** `examples/legacy/physics_sand_pile_demo.py:25` — legacy example
+- **Other call sites:** `SlapPyEngineExamples/examples/legacy/physics_sand_pile_demo.py:25` — legacy example
 - **Strip status:** safe-after-deleting-tests
 - **Action required before delete:** delete `test_granular_render.py` + `test_vis_granular.py`; drop the re-export. The fluid renderer already has full visual regression coverage; nothing is lost.
 
@@ -270,7 +270,7 @@ test in the suite that touches the component layer.**
   - `python/tests/test_deform_modules.py` — 11 in-method imports
   - `python/tests/test_ochema_extra2.py` — 3 in-method imports
 - **Consumers in games:**
-  - **Ochema Circuit** — `systems/repair_system.py:8` (top-level), `tests/test_repair_system.py` (5 in-method imports of `DeformRepairer`)
+  - **Ochema Circuit** — `systems/repair_system.py:8` (top-level), `SlapPyEngineTests/tests/test_repair_system.py` (5 in-method imports of `DeformRepairer`)
 - **Strip status:** **blocked-on-Ochema-migration**
 - **Action required before delete:** Ochema Circuit migrates `systems/repair_system.py` off `DeformRepairer`. No direct engine replacement is planned; the repair semantics likely become game-side logic over softbody beam-rebind events.
 
@@ -297,7 +297,7 @@ test in the suite that touches the component layer.**
   - `python/slappyengine/physics/cell.py:12` — top-level import (cell.py is implicitly on the cut list per plan)
   - `python/slappyengine/material/node_material.py:66` — docstring reference only ("Read a named PixelStruct field at the current texel position"); no code import
 - **Consumers in tests:**
-  - `tests/test_pixel_struct.py:3` — top-level import
+  - `SlapPyEngineTests/tests/test_pixel_struct.py:3` — top-level import
   - `python/tests/test_pixel_struct.py` — 22 in-method imports
   - `python/tests/test_pixel_struct_camera_anim.py` — 13 in-method imports
 - **Consumers in games:** none
@@ -426,7 +426,7 @@ two test files, drop the re-export. No engine wiring beyond
 `physics/__init__.py`.
 
 **Risks:**
-- `tests/visual/test_vis_granular.py` is a visual regression — verify
+- `SlapPyEngineTests/tests/visual/test_vis_granular.py` is a visual regression — verify
   there is fluid-renderer visual coverage of equivalent scenes before
   deleting.
 

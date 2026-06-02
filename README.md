@@ -61,7 +61,7 @@ if __name__ == "__main__":
     record_or_smoke(build_stage(), args, default_out=Path("rope.gif"))
 ```
 
-`record_or_smoke` runs `stage.record(...)` by default and falls back to a step-only smoke loop under `--no-gif`. For richer scenes see [`examples/hello_studio.py`](examples/hello_studio.py), [`examples/hello_composite.py`](examples/hello_composite.py) (iso combat + rope + zones + thermal in one scene), and [`docs/studio_quickstart.md`](docs/studio_quickstart.md).
+`record_or_smoke` runs `stage.record(...)` by default and falls back to a step-only smoke loop under `--no-gif`. For richer scenes see [`SlapPyEngineExamples/examples/hello_studio.py`](SlapPyEngineExamples/examples/hello_studio.py), [`SlapPyEngineExamples/examples/hello_composite.py`](SlapPyEngineExamples/examples/hello_composite.py) (iso combat + rope + zones + thermal in one scene), and [`docs/studio_quickstart.md`](docs/studio_quickstart.md).
 
 ---
 
@@ -94,7 +94,7 @@ Every entry below is a top-level lazy export — `import slappyengine as sle` an
 
 ## Demo gallery
 
-Every script under [`examples/`](examples/) is runnable headlessly via the shared `examples_common` CLI helper — pass `--no-gif` for a smoke test, `--render` (or no flag) for the GIF / PNG output. The curated tour with reproducible commands, refreshed artefacts, and one-line summaries lives at [`docs/demo_gallery.md`](docs/demo_gallery.md) (6 flagship demos: ragdoll, studio one-liner, humanoid walking, IK terrain, rope, GI).
+Every script under [`SlapPyEngineExamples/examples/`](SlapPyEngineExamples/examples/) is runnable headlessly via the shared `examples_common` CLI helper — pass `--no-gif` for a smoke test, `--render` (or no flag) for the GIF / PNG output. The curated tour with reproducible commands, refreshed artefacts, and one-line summaries lives at [`docs/demo_gallery.md`](docs/demo_gallery.md) (6 flagship demos: ragdoll, studio one-liner, humanoid walking, IK terrain, rope, GI).
 
 For the full 47/47 GREEN pass/fail audit see [`docs/examples_smoke_2026_06_01_v3.md`](docs/examples_smoke_2026_06_01_v3.md). The composite grid is regenerated with:
 
@@ -157,7 +157,7 @@ pip install maturin
 maturin develop --extras dev
 
 # Run tests
-pytest tests/
+pytest SlapPyEngineTests/tests/
 
 # Release wheel
 maturin build --release

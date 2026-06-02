@@ -78,7 +78,7 @@ beam-major iteration, write into node positions one beam at a time.
 
 **Acceptance**
 - `python/tests/test_softbody_*` all pass (41 tests)
-- `tests/visual/test_vis_softbody_vehicle.py` passes
+- `SlapPyEngineTests/tests/visual/test_vis_softbody_vehicle.py` passes
 - `test_block_on_block_stacks` penetration < 0.008
 - `step()` time on the 5×6×6 baseline scene drops by ≥ 25%
 

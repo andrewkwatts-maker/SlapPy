@@ -23,7 +23,7 @@ of 41/47.
 
 ## Methodology
 
-For every `examples/*.py` outside `legacy/` and `output/`, the audit
+For every `SlapPyEngineExamples/examples/*.py` outside `legacy/` and `output/`, the audit
 script ran one of three probes with `PYTHONPATH=python` and a 90 s
 `subprocess` timeout:
 
@@ -46,8 +46,8 @@ Categories: **GREEN** / **RUNTIME_ERROR** / **IMPORT_MISSING_OTHER** /
 
 | Example | Status | Notes |
 |---|---|---|
-| bullet_holes_demo.py | GREEN | No-args; writes `examples/output/particles/bullet_holes.gif`; total particles=113. |
-| buoyancy_demo.py | GREEN | No-args; writes `examples/output/buoyancy/buoyancy.gif`; 2190 splash impulses. |
+| bullet_holes_demo.py | GREEN | No-args; writes `SlapPyEngineExamples/examples/output/particles/bullet_holes.gif`; total particles=113. |
+| buoyancy_demo.py | GREEN | No-args; writes `SlapPyEngineExamples/examples/output/buoyancy/buoyancy.gif`; 2190 splash impulses. |
 | character_damage_demo.py | GREEN | No-args; cumulative cuts bone=7 muscle=4 skin=2. |
 | detonate_gallery_demo.py | GREEN | `--frames 5`; argparse demo. |
 | editor_demo.py | GREEN | No-args; "No project found" notice is expected without a project on disk. |
@@ -69,7 +69,7 @@ Categories: **GREEN** / **RUNTIME_ERROR** / **IMPORT_MISSING_OTHER** /
 | hello_numerics.py | GREEN | Argparse, no `--frames`; default run no-NaN. |
 | hello_physics.py | GREEN | `Engine.run(max_frames=5)`; pixel-physics compute scene drew 5 frames. |
 | hello_pixel.py | GREEN | `Engine.run(max_frames=5)`; canvas + layer drew 5 frames. |
-| hello_ragdoll.py | GREEN | `--frames 5`; writes `examples/output/ragdoll/hello_ragdoll.gif` (Sprint 4G). |
+| hello_ragdoll.py | GREEN | `--frames 5`; writes `SlapPyEngineExamples/examples/output/ragdoll/hello_ragdoll.gif` (Sprint 4G). |
 | hello_rope.py | GREEN | `--frames 5`; stepped frames=5. |
 | hello_spring.py | GREEN | `--frames 5`; final y=0.6498. |
 | hello_telemetry.py | GREEN | `--frames 5`; emit bench 20937.60 ns/emit. |
@@ -79,15 +79,15 @@ Categories: **GREEN** / **RUNTIME_ERROR** / **IMPORT_MISSING_OTHER** /
 | hello_zone.py | GREEN | `--frames 5`; no NaN. |
 | hud_demo.py | GREEN | `Engine.run(max_frames=5)`; HUD wiring + script attach OK. |
 | humanoid_destruction_demo.py | GREEN | NEWLY GREEN. No-args; cumulative cuts bone(L0)=46 muscle(L1)=14 skin(L2)=14. Fixed by Sprint 2A `make_humanoid` + `wrap_in_flesh`. |
-| humanoid_ik_terrain_demo.py | GREEN | NEWLY GREEN. `--frames 5`; writes `examples/output/humanoid/humanoid_ik_terrain.gif` (Sprint 5G polish). Fixed by Sprint 2A `place_feet_on_terrain`. |
+| humanoid_ik_terrain_demo.py | GREEN | NEWLY GREEN. `--frames 5`; writes `SlapPyEngineExamples/examples/output/humanoid/humanoid_ik_terrain.gif` (Sprint 5G polish). Fixed by Sprint 2A `place_feet_on_terrain`. |
 | humanoid_standing_demo.py | GREEN | NEWLY GREEN. No-args; pose head y=1.840 pelvis y=2.550 ankle_l y=3.500. Fixed by Sprint 2A `make_humanoid` + `place_feet_on_terrain`. |
-| humanoid_walking_demo.py | GREEN | NEWLY GREEN. No-args; writes `examples/output/humanoid/humanoid_walking.gif`. Fixed by Sprint 2A. |
+| humanoid_walking_demo.py | GREEN | NEWLY GREEN. No-args; writes `SlapPyEngineExamples/examples/output/humanoid/humanoid_walking.gif`. Fixed by Sprint 2A. |
 | ik_skeleton_demo.py | IMPORT_MISSING_OTHER | STILL BROKEN, NEW FAILURE MODE. `ImportError: cannot import name 'make_distance' from 'slappyengine.dynamics'` at `ik_skeleton_demo.py:23`. Also imports `resolve_joint_specs`, also absent. In v1 the demo got past import but died at runtime on `SoftBodyWorld.positions`; the public `slappyengine.dynamics` surface has since been narrowed (current public names: `Body, BoneSpec, Humanoid, IKChainSpec, JointSpec, Material, MotorSpec, RagdollSpec, RopeSpec, SoftBodyWorld, SpringSpec, World, build_ragdoll, build_rope, make_humanoid, make_motor, make_spring, place_feet_on_terrain, resolve_joint, save_world, load_world, solve_ik, wrap_in_flesh, world_from_dict, world_to_dict`). Re-export `make_distance` and `resolve_joint_specs` to land this demo. |
 | landscape_demo.py | GREEN | `Engine.run(max_frames=5)`; landscape streamer initialised. |
 | layered_character.py | GREEN | `Engine.run(max_frames=5)`; warrior tick wired. |
 | layered_creature_drop.py | GREEN | No-args; writes `creature_drop.gif`; centroid drift 1.173. |
 | multiplayer_demo.py | GREEN(\*) | `--frames 5` (matching v1 invocation) — argparse-style flag is rejected by the demo's `host`/`join` switch and the script exits 0 with "Unknown mode: '--frames'". This is the same false-positive shape that v1 recorded; the demo cannot actually be smoke-tested without two cooperating processes and a UDP bind. With no args it picks `host` and fails at DHT bind on Windows with `WinError 10048` (port-in-use), which is an environment flake rather than a code regression. |
-| particles_sample.py | GREEN | No-args; writes `examples/particles_sample.png`; 448 live particles. |
+| particles_sample.py | GREEN | No-args; writes `SlapPyEngineExamples/examples/particles_sample.png`; 448 live particles. |
 | sand_crater_demo.py | GREEN | `--frames 5`; argparse demo. |
 | softbody_vehicle_demo.py | GREEN | No-args; writes `softbody/vehicle_demo.gif`; 0/263 beams broken. |
 | vehicle_obstacle_course.py | GREEN | No-args; writes `softbody/vehicle_course.gif`; 0/907 beams broken. |

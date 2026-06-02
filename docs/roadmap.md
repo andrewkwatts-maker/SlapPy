@@ -51,7 +51,7 @@ core-engine / hardening audits flagged as "fix before tag".
   history), `slappyengine.material.MaterialMap`, the studio Stage
   builders (range checks on `view_box`, `floor_y`, etc.).
 - **Source:** `docs/hardening_audit_2026_05_29.md`; companion
-  `tests/test_hardening_*.py` (20 files at v0.3.0b0); memory note
+  `SlapPyEngineTests/tests/test_hardening_*.py` (20 files at v0.3.0b0); memory note
   `project_completion.md`.
 
 ### Rust migrations — remaining hot paths
@@ -71,12 +71,12 @@ core-engine / hardening audits flagged as "fix before tag".
 
 - **What:** keep `docs/sprint_5_doc_inventory.md` in lockstep with new
   files under `docs/**`. Three test files lock the invariant
-  (`tests/test_docs_inventory.py`, `tests/test_docs_links_resolve_all.py`,
-  `tests/test_docs_api_template_conformance.py`). Roll new hand-authored
+  (`SlapPyEngineTests/tests/test_docs_inventory.py`, `SlapPyEngineTests/tests/test_docs_links_resolve_all.py`,
+  `SlapPyEngineTests/tests/test_docs_api_template_conformance.py`). Roll new hand-authored
   API docs through the `<!-- handauthored: do not regenerate -->` marker
   at the top of each file (see `docs/api/_template.md`).
 - **Source:** `docs/sprint_5_doc_inventory.md`;
-  `tests/test_docs_inventory.py`; `docs/api/_template.md`.
+  `SlapPyEngineTests/tests/test_docs_inventory.py`; `docs/api/_template.md`.
 
 ### Ship-checklist closures
 
@@ -154,7 +154,7 @@ analysis (`docs/sprint_4_serialization_gaps.md`).
   v0.4 candidate: ship `to_dict` / `from_dict` on the remaining sim
   subsystems, framed in the same JSON envelope as `World`.
 - **Source:** `docs/sprint_4_serialization_gaps.md` § 1-N (each missing
-  subsystem); `tests/test_composite_serialize_roundtrip.py`.
+  subsystem); `SlapPyEngineTests/tests/test_composite_serialize_roundtrip.py`.
 
 ### Telemetry subscriber backpressure
 

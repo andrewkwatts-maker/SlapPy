@@ -280,7 +280,7 @@ tuples; override either in the YAML `materials:` section.
 
 The smoke tests at `python/tests/test_softbody_smoke.py` route their GIF
 emission through `SoftBodyRenderer`, so the artefacts in
-`tests/output/softbody/` look like real engine output (lit, shaded,
+`SlapPyEngineTests/tests/output/softbody/` look like real engine output (lit, shaded,
 material-coloured) rather than flat line plots.
 
 ## Vehicles

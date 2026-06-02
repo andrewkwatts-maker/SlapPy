@@ -585,12 +585,12 @@ pytest tests/ -k "not gpu_headless"
 ```
 
 Test files of interest for new contributors:
-- `tests/test_basic.py` — Entity, Scene, Asset smoke tests
-- `tests/test_material.py` — MaterialMap + ColorRange
-- `tests/test_animation.py` — AnimationGraph state machine
-- `tests/test_ik.py` — ProceduralRig + Rust IK solver
-- `tests/test_residency.py` — .slap round-trip
-- `tests/test_mixed_2d_3d.py` — 2D/3D layer coexistence
+- `SlapPyEngineTests/tests/test_basic.py` — Entity, Scene, Asset smoke tests
+- `SlapPyEngineTests/tests/test_material.py` — MaterialMap + ColorRange
+- `SlapPyEngineTests/tests/test_animation.py` — AnimationGraph state machine
+- `SlapPyEngineTests/tests/test_ik.py` — ProceduralRig + Rust IK solver
+- `SlapPyEngineTests/tests/test_residency.py` — .slap round-trip
+- `SlapPyEngineTests/tests/test_mixed_2d_3d.py` — 2D/3D layer coexistence
 
 ---
 

@@ -13,7 +13,7 @@ safe fixes have already landed in the companion commit.
    first (semantic group is correct for Ochema Circuit's race scene
    chain-import order), removed the duplicate, left a one-line comment
    pointer.
-2. **`tests/test_game_compat_tripwire.py::_KNOWN_BROKEN` zeroed.** All 18
+2. **`SlapPyEngineTests/tests/test_game_compat_tripwire.py::_KNOWN_BROKEN` zeroed.** All 18
    entries (Ochema Circuit: `build_vehicle`, `VehicleSpec`, `WheelSpec`,
    `apply_drivetrain_torque`, `CatmullRomSpline`, `SplineTrack`,
    `PlayerInputProvider`, `PixelCollisionPass`, `MotionBlurPass`,
@@ -37,17 +37,17 @@ aliases of `build_humanoid` / `build_flesh_wrap`. Internal callers still
 exist; migration is **deferred** (would touch 4 examples + 4 tests in a
 single sweep):
 
-- `examples/humanoid_walking_demo.py`
-- `examples/humanoid_standing_demo.py`
-- `examples/humanoid_ik_terrain_demo.py`
-- `examples/humanoid_destruction_demo.py`
-- `tests/visual/test_vis_humanoid_ik_terrain.py`
-- `tests/visual/test_vis_humanoid_destruction.py`
+- `SlapPyEngineExamples/examples/humanoid_walking_demo.py`
+- `SlapPyEngineExamples/examples/humanoid_standing_demo.py`
+- `SlapPyEngineExamples/examples/humanoid_ik_terrain_demo.py`
+- `SlapPyEngineExamples/examples/humanoid_destruction_demo.py`
+- `SlapPyEngineTests/tests/visual/test_vis_humanoid_ik_terrain.py`
+- `SlapPyEngineTests/tests/visual/test_vis_humanoid_destruction.py`
 - `python/tests/test_humanoid_flesh_layers.py`
 - `python/tests/test_toplevel_rebuild_surface.py`
-- `tests/test_editor_dynamics_spawn.py` (comment-only)
+- `SlapPyEngineTests/tests/test_editor_dynamics_spawn.py` (comment-only)
 
-`tests/test_dynamics_builder_conventions.py` deliberately calls the
+`SlapPyEngineTests/tests/test_dynamics_builder_conventions.py` deliberately calls the
 deprecated names to assert the `DeprecationWarning` — keep as-is.
 
 The IK terrain visual test currently emits a `DeprecationWarning` in
@@ -58,7 +58,7 @@ warning disappears from CI.
 ## Task 3 — dead `__all__` exports (deferred — no removal yet)
 
 Subpackage `__all__` entries with **zero** observed callers in
-`python/`, `tests/`, `examples/` (after excluding the subpackage's own
+`python/`, `SlapPyEngineTests/tests/`, `SlapPyEngineExamples/examples/` (after excluding the subpackage's own
 `__init__.py` *and* top-level `slappyengine` re-exports). These are
 candidates only — downstream games (Ochema Circuit, Bullet Strata,
 Stone Keep, periodica-app) may still import them, so removal must wait

@@ -23,7 +23,7 @@ top-level `slappyengine/__init__.py` lazy map. Phase D removes them after
 that consumer surface has been re-pointed.
 
 The figures below count only `H:/Github/SlapPyEngine/python/**` plus
-`examples/**` source. Worktree mirrors under `.claude/worktrees/**` and
+`SlapPyEngineExamples/examples/**` source. Worktree mirrors under `.claude/worktrees/**` and
 the existing `docs/strip_pass_v2_audit.md` are excluded — they are
 either ephemeral or themselves slated for replacement by this plan.
 
@@ -41,7 +41,7 @@ green** (see §d for the exact pytest gate).
 | # | Module | LOC | Consumers (main repo, non-worktree) | Classification |
 |---|---|---:|---|---|
 | 1 | `python/slappyengine/physics/frontier.py` | 361 | `physics/__init__.py` (re-export), `physics/world.py` (lines 43, 194, 326-373, 490, 718-731, 825-844) + 4 tests (`test_frontier.py`, `test_phase_a_activation.py`, `test_nan_guards.py`, `test_phase_b_residency.py`) | `world.py` keeps a `frontier.enabled` flag for tests; once `world.py` itself dies (Phase D step 9) the flag dies with it. `test_frontier.py` is dead-with-module. The other three tests only touch `world.config.frontier.enabled = False` — purely defensive flag flips that come out with `world.py`. **BLOCKED 2026-05-31 — see "Step 1 blocker found" callout below.** |
-| 2 | `python/slappyengine/physics/granular_render.py` | 344 | `physics/__init__.py` (re-export) only | Superseded by `fluid.render.FluidRenderer`. Zero non-physics callers. **NO-OP 2026-06-01 — file was never tracked on master.** Audit confirmed: `git log --all --full-history -- "**/granular_render.py"` returns empty; `physics/__init__.py` already has no re-export (lines 4-42); `tests/visual/test_vis_granular.py` and `tests/visual/output/granular/` do not exist. The 344/134 LOC figures from the plan refer to a worktree-local artefact that never landed on master. Step 2 is closed as **NOTHING TO DELETE** rather than DONE — no commit hash. See "Step 2 no-op audit" subsection below for evidence. |
+| 2 | `python/slappyengine/physics/granular_render.py` | 344 | `physics/__init__.py` (re-export) only | Superseded by `fluid.render.FluidRenderer`. Zero non-physics callers. **NO-OP 2026-06-01 — file was never tracked on master.** Audit confirmed: `git log --all --full-history -- "**/granular_render.py"` returns empty; `physics/__init__.py` already has no re-export (lines 4-42); `SlapPyEngineTests/tests/visual/test_vis_granular.py` and `SlapPyEngineTests/tests/visual/output/granular/` do not exist. The 344/134 LOC figures from the plan refer to a worktree-local artefact that never landed on master. Step 2 is closed as **NOTHING TO DELETE** rather than DONE — no commit hash. See "Step 2 no-op audit" subsection below for evidence. |
 
 #### Step 2 no-op audit — 2026-06-01
 
@@ -51,8 +51,8 @@ from the worktree, the main repo HEAD, and all of git history:
 | Target | Status | Evidence |
 |---|---|---|
 | `python/slappyengine/physics/granular_render.py` | absent | `ls` fails; `git log --all --full-history -- "**/granular_render.py"` empty |
-| `tests/visual/test_vis_granular.py` | absent | `ls` fails; `git log --all --full-history -- "**/test_vis_granular.py"` empty |
-| `tests/visual/output/granular/` | absent | dir not in `tests/visual/output/` listing |
+| `SlapPyEngineTests/tests/visual/test_vis_granular.py` | absent | `ls` fails; `git log --all --full-history -- "**/test_vis_granular.py"` empty |
+| `SlapPyEngineTests/tests/visual/output/granular/` | absent | dir not in `SlapPyEngineTests/tests/visual/output/` listing |
 | `physics/__init__.py` re-export | absent | no `granular_render` import in lines 4-42 of `physics/__init__.py` |
 | Any production consumer | none | `grep -rn "granular_render" python/slappyengine/` → 0 hits |
 
@@ -60,7 +60,7 @@ The only surviving references to the string `granular_render` are:
 
 - `docs/strip_pass_v2_audit.md` (the audit doc that flagged it)
 - `docs/phase_d_strip_plan_2026_05_31.md` (this plan)
-- `tests/test_strip_audit_doc.py:52` (audit-tracking constant — meta, not a consumer)
+- `SlapPyEngineTests/tests/test_strip_audit_doc.py:52` (audit-tracking constant — meta, not a consumer)
 - four `.claude/worktrees/agent-*` stale mirrors (out of scope per
   rollback policy in §(d))
 
@@ -148,14 +148,14 @@ modules (`crack_repair_adapter.py`, `deform_adapter.py`,
   repo (main repo + worktrees).
 * `git log --all -S "crack_repair_adapter"` and the same for the other
   two strings return only docs (`phase_d_strip_plan_2026_05_31.md`,
-  `strip_pass_v2_audit.md`) and the `tests/test_strip_audit_doc.py`
+  `strip_pass_v2_audit.md`) and the `SlapPyEngineTests/tests/test_strip_audit_doc.py`
   inventory list — never an actual source file commit.
 * `python/slappyengine/physics/__init__.py` does not import or
   re-export any of the three names (last import is `frontier`).
 * No test files `test_crack_repair_adapter.py`, `test_deform_adapter.py`,
   or `test_engine_bridge.py` exist anywhere.
 * `grep -rn` for `from slappyengine.physics.{crack_repair_adapter,deform_adapter,engine_bridge}`
-  finds zero matches in `python/`, `tests/`, `examples/`, `docs/`
+  finds zero matches in `python/`, `SlapPyEngineTests/tests/`, `SlapPyEngineExamples/examples/`, `docs/`
   (excluding the dry-run plan/audit docs themselves).
 
 **Cut result.** Per-module:
@@ -199,7 +199,7 @@ level `__getattr__` in `_compat.py`). The six `_LAZY_MAP` entries
 of them no longer touches `slappyengine.deform_modes`,
 `slappyengine.deform_controller`, or `slappyengine.deform_zones`.
 
-Regression test `tests/test_init_lazy_map.py` (9 cases) pins the
+Regression test `SlapPyEngineTests/tests/test_init_lazy_map.py` (9 cases) pins the
 decoupling:
 
 * `test_import_slappyengine_does_not_load_deform_modules` — `import
@@ -219,8 +219,8 @@ unaffected — they import from the doomed module by path, not via the
 top-level lazy-map, so they keep working until `deform_panel.py` is
 decommissioned in step 5. No production caller imports the six
 symbols from `slappyengine` at the package root by name — the only
-hard surface consumers are `tests/test_game_compat_tripwire.py` and
-`tests/test_game_smoke_instantiation.py`, both of which probe via
+hard surface consumers are `SlapPyEngineTests/tests/test_game_compat_tripwire.py` and
+`SlapPyEngineTests/tests/test_game_smoke_instantiation.py`, both of which probe via
 `hasattr(slappyengine, name)` and now resolve through `_compat`.
 
 **Pytest delta (gate condition).** Pre-edit: 44 failed / 1618 passed
@@ -242,7 +242,7 @@ touch the lazy-map or the six decoupled symbols.
   `.deform_zones` to `._compat`.
 * `python/slappyengine/_compat.py` — new file holding the five
   retired-feature stubs + the `ZoneMap` → `ZoneManager` alias.
-* `tests/test_init_lazy_map.py` — new regression test pinning the
+* `SlapPyEngineTests/tests/test_init_lazy_map.py` — new regression test pinning the
   decoupling (9 cases).
 
 The lazy-map gate from §(d) is now satisfied:
@@ -262,9 +262,9 @@ Read-only audit of every `from slappyengine.deform_modes import` site in
 `python/slappyengine/ui/editor/deform_panel.py`. Outcome: **the panel is
 the *only* non-test, non-`physics/` consumer left** for the
 deform-modes / deform-controller / deform-crack / deform-repair family
-on master HEAD. The `examples/legacy/physics_materials_gallery_demo.py`
+on master HEAD. The `SlapPyEngineExamples/examples/legacy/physics_materials_gallery_demo.py`
 import (`from slappyengine.deform_modes import list_materials`) is in
-the `examples/legacy/` directory, which is already marked for retirement
+the `SlapPyEngineExamples/examples/legacy/` directory, which is already marked for retirement
 in the v0.3 cleanup pass and will be co-deleted with `deform_modes.py`.
 
 **Caller audit beyond `deform_panel.py`** (per task §4):
@@ -272,11 +272,11 @@ in the v0.3 cleanup pass and will be co-deleted with `deform_modes.py`.
 | Site | Status |
 |---|---|
 | `physics/body.py:14`, `physics/boundary_exchange.py:51`, `physics/pressure_multigrid.py:47`, `physics/scene_loader.py:53`, `physics/world.py:29` | Dies in Step 9 (`physics/` core sweep). NOT a Step 5 blocker. |
-| `examples/legacy/physics_materials_gallery_demo.py:38` | `examples/legacy/` is retired surface; co-delete with Step 5. |
-| `python/slappyengine/tests/test_deform_modes.py`, `tests/test_deform_controller.py` | Dead-with-module tests. Co-delete with Step 5. |
-| `tests/test_game_smoke_instantiation.py:42-47` | Probes legacy module paths by name — already resolved through `_compat` via the `slappyengine` top-level surface (Step 4 lazy-map gate). After Step 5 the assertions in `IMPORT_TABLE` need their module string flipped to `"slappyengine._compat"`. One-line per-symbol edit. |
-| `tests/test_init_lazy_map.py` | Already pins the decoupling; survives Step 5 unchanged. |
-| `tests/test_strip_audit_doc.py:53-56` | Audit-tracking inventory list; co-edit with Step 5 to mark the four files removed. |
+| `SlapPyEngineExamples/examples/legacy/physics_materials_gallery_demo.py:38` | `SlapPyEngineExamples/examples/legacy/` is retired surface; co-delete with Step 5. |
+| `python/slappyengine/tests/test_deform_modes.py`, `SlapPyEngineTests/tests/test_deform_controller.py` | Dead-with-module tests. Co-delete with Step 5. |
+| `SlapPyEngineTests/tests/test_game_smoke_instantiation.py:42-47` | Probes legacy module paths by name — already resolved through `_compat` via the `slappyengine` top-level surface (Step 4 lazy-map gate). After Step 5 the assertions in `IMPORT_TABLE` need their module string flipped to `"slappyengine._compat"`. One-line per-symbol edit. |
+| `SlapPyEngineTests/tests/test_init_lazy_map.py` | Already pins the decoupling; survives Step 5 unchanged. |
+| `SlapPyEngineTests/tests/test_strip_audit_doc.py:53-56` | Audit-tracking inventory list; co-edit with Step 5 to mark the four files removed. |
 | `docs/per_pixel_sim_audit_2026_05_31.md:27,53`, `docs/physics_module.md:108`, `docs/strip_pass_v2_audit.md` | Docs only; update on Step 5 commit. |
 | `python/slappyengine/ui/editor/deform_panel.py` | **The sole remaining production consumer.** 16 imports — see per-import table below. |
 
@@ -325,10 +325,10 @@ deletion of any other file.
    (verify exact name during the deletion sprint).
 4. **Then** delete `deform_modes.py`, `deform_controller.py`,
    `deform_crack.py`, `deform_repair.py` plus their tests as the Step 5
-   commit, flipping `tests/test_game_smoke_instantiation.py:42-47`'s
+   commit, flipping `SlapPyEngineTests/tests/test_game_smoke_instantiation.py:42-47`'s
    `IMPORT_TABLE` to point at `slappyengine._compat` in the same
    commit.
-5. Update `tests/test_strip_audit_doc.py` `EXPECTED_DELETED_PATHS` to
+5. Update `SlapPyEngineTests/tests/test_strip_audit_doc.py` `EXPECTED_DELETED_PATHS` to
    mark the four files as removed.
 
 The `deform_panel.py` decommissioning is the gate; Step 5 follows in
@@ -390,7 +390,7 @@ Changes landed:
   * `physics/pressure_multigrid.py:47` (TYPE_CHECKING-gated)
   * `physics/scene_loader.py:53`
   * `physics/world.py:29-32`
-* Regression test `tests/test_compat_cell_material.py` (5 cases):
+* Regression test `SlapPyEngineTests/tests/test_compat_cell_material.py` (5 cases):
   no-arg construction matches verbatim defaults, field set is
   complete, field types preserved, `cell_material_for("sand")`
   returns a `_compat.CellMaterial`, `bond_strength` alias proxies
@@ -447,8 +447,8 @@ consumers:
   Not an actual import.
 * No other editor module under `python/slappyengine/ui/editor/`
   imports `deform_panel`.
-* `examples/**` — zero matches.
-* `tests/**` (the gate-relevant test root) — zero matches.
+* `SlapPyEngineExamples/examples/**` — zero matches.
+* `SlapPyEngineTests/tests/**` (the gate-relevant test root) — zero matches.
 * `python/tests/test_editor_panel_helpers.py` — 40 tests import
   `DeformPanel` / `ZoneEditorPanel` / module-level helpers
   (`_enum_items`, `_enum_value`, `_safe_setattr`). **This file is
@@ -487,7 +487,7 @@ re-ordering, not from any test going green that was previously red
 4. No test deletion required — the only tests that import the panel
    live in `python/tests/test_editor_panel_helpers.py`, which is
    itself untracked WIP and out of scope for the gate-relevant test
-   root (`tests/`).
+   root (`SlapPyEngineTests/tests/`).
 
 **Status: deform_panel decommissioning DONE. deform_*.py deletion
 NO-OP (untracked).** Step 6 closes as DONE for the editor-surface
@@ -771,3 +771,123 @@ cut. Phase D remains gated on external Ochema CI greenness and on
 mechanical, reversible per commit, and trims roughly 4.8k LOC of legacy
 engine surface without touching `softbody/`, `fluid/`, or any other
 rebuild-era code.
+
+---
+
+## Sprint tick 2026-06-02 — untracked `physics/` shadow-module triage
+
+Working-tree-only audit of the ~25 untracked modules under
+`python/slappyengine/physics/` (see `docs/repo_cleanup_2026_06_02.md`
+§2(b)). Pre-strip pytest baseline: **2688 passed / 1 failed (pre-
+existing `test_docs_inventory::test_every_doc_is_indexed` — flags
+untracked `docs/roadmap.md` and `docs/cargo_audit_2026_06_02.md`,
+unrelated to physics) / 28 skipped / 10 xfailed**, run via
+`PYTHONPATH=python python -m pytest tests/ -q
+--ignore=tests/visual/test_vis_humanoid_destruction.py`.
+
+### Finding — all 25 modules classify as (b) keep alive
+
+The untracked `python/slappyengine/physics/__init__.py` re-exports
+**every** sibling module at import time (lines 4-42: `body`,
+`boundary_exchange`, `ccd`, `cell`, `post_process`, `shadows`,
+`particles`, `particle_graph`, `hull`, `world`, `debug_hud`, `video`,
+`scene_loader`, `event_publisher`, `profile`, `profiles`,
+`memory_budget`, `constraints`, `frontier`). The tracked test
+`SlapPyEngineTests/tests/visual/test_vis_constraints.py` imports
+``from slappyengine.physics import ConstraintSolver,
+DistanceConstraint, PhysicsWorld, ...`` (line 29) and the tracked
+``SlapPyEngineTests/tests/visual/scenes/lighting_scene.py`` imports
+``from slappyengine.physics.render import PointLight, RenderConfig``
+(line 15). Both currently pass.
+
+Empirical verification: temporarily removing `physics/frontier.py`
+and running
+``from slappyengine.physics import ConstraintSolver, ...`` reproduces:
+
+```
+File "physics/__init__.py", line 18, in <module>
+    from slappyengine.physics.shadows import AOPass, ShadowPass
+File "physics/shadows.py", line 37, in <module>
+    from slappyengine.physics.world import PhysicsWorld
+File "physics/world.py", line 43, in <module>
+    from slappyengine.physics.frontier import FrontierConfig, FrontierSolver
+ModuleNotFoundError: No module named 'slappyengine.physics.frontier'
+```
+
+The same cascade applies to **every** module reached from
+`physics/__init__.py` or its transitive imports. Therefore each of the
+25 candidates has a live consumer (the tracked visual test) once the
+`__init__.py` chain is followed. None qualify as (a) delete under the
+"zero non-test callers" rule.
+
+### Per-module decisions
+
+| Module | Direct tracked caller | Untracked physics-internal caller | Decision |
+|---|---|---|---|
+| `__init__.py` | `SlapPyEngineTests/tests/visual/test_vis_constraints.py:29` | n/a (is the chain) | (b) keep |
+| `body.py` | (none direct) | `__init__.py:4`, `constraints.py:36`, `profile.py:33`, `render.py:26`, `scene_loader.py:54`, `world.py:33` | (b) keep |
+| `boundary_exchange.py` | (none direct) | `__init__.py:10`, `world.py:37` | (b) keep |
+| `broadphase.py` | (none direct) | `world.py:38` | (b) keep |
+| `ccd.py` | (none direct) | `__init__.py:11` | (b) keep |
+| `cell.py` | (none direct) | `__init__.py:12`, `body.py:15`, `boundary_exchange.py:52`, `hull.py` (8 lazy sites), `render.py:25`, `shadows.py:36`, `world.py:39`, `_compat.py:338` | (b) keep |
+| `cc_label.py` | `SlapPyEngineExamples/examples/legacy/physics_projectile_demo.py:42` | `hull.py:799` (lazy) | (b) keep |
+| `constraints.py` | `SlapPyEngineTests/tests/visual/test_vis_constraints.py` (via `__init__.py` re-export), tracked `SlapPyEngineExamples/examples/legacy/physics_vehicle_jointed_demo.py:32`, `SlapPyEngineExamples/examples/legacy/physics_complex_scene_demo.py:51` | `__init__.py:41` | (b) keep |
+| `debug_hud.py` | (none direct) | `__init__.py:35` | (b) keep |
+| `event_publisher.py` | (none direct) | `__init__.py:37` | (b) keep |
+| `frontier.py` | (none direct) | `__init__.py:42`, `world.py:43` | (b) keep |
+| `hull.py` | (none direct) | `__init__.py:21`, `boundary_exchange.py:53`, `broadphase.py:33`, `frontier.py:60`, `scene_loader.py:58`, `world.py:44` | (b) keep |
+| `memory_budget.py` | (none direct) | `__init__.py:40`, `world.py:470` (lazy) | (b) keep |
+| `particles.py` | tracked `SlapPyEngineExamples/examples/particles_sample.py:14` + 6 tracked `SlapPyEngineExamples/examples/legacy/physics_*_demo.py` | `__init__.py:19`, `particle_graph.py:50` | (b) keep |
+| `particle_graph.py` | tracked `SlapPyEngineExamples/examples/legacy/physics_projectile_demo.py:44`, `physics_complex_scene_demo.py:52`, `physics_destructible_wall_demo.py:31` | `__init__.py:20` | (b) keep |
+| `post_process.py` | tracked `SlapPyEngineExamples/examples/legacy/physics_*_demo.py` (6 sites) | `__init__.py:17` | (b) keep |
+| `pressure_multigrid.py` | (none direct in `SlapPyEngineTests/tests/` or `SlapPyEngineExamples/examples/`) | `world.py:2315` (lazy) | (b) keep |
+| `profile.py` | (none direct) | `__init__.py:38` | (b) keep |
+| `profiles.py` | (none direct) | `__init__.py:39` | (b) keep |
+| `render.py` | `SlapPyEngineTests/tests/visual/test_vis_constraints.py:36`, `SlapPyEngineTests/tests/visual/scenes/lighting_scene.py:15`, tracked `SlapPyEngineExamples/examples/legacy/physics_*_demo.py` (8 sites) | (none) | (b) keep |
+| `scene_loader.py` | (none direct) | `__init__.py:36` | (b) keep |
+| `shadows.py` | tracked `SlapPyEngineExamples/examples/legacy/physics_vehicle_demo.py:27` | `__init__.py:18` | (b) keep |
+| `video.py` | (none direct) | `__init__.py:35` | (b) keep |
+| `world.py` | tracked `SlapPyEngineExamples/examples/legacy/physics_complex_scene_demo.py:163`, `physics_lava_flow_demo.py:45` (`WorldConfig`) | `__init__.py:29`, `body.py:18`, `constraints.py:37`, `profile.py:37`, `profiles.py:32`, `render.py:27`, `scene_loader.py:59`, `shadows.py:37` | (b) keep |
+| `shaders/` | (referenced by `world.py` runtime) | `world.py`, `pressure_multigrid.py` (WGSL comment) | (b) keep |
+
+### Actions taken
+
+* **Deletions (a):** none.
+* **Stagings (c):** none. The tracked example files in
+  `SlapPyEngineExamples/examples/legacy/` and the tracked visual tests prove the
+  modules are still consumed, but staging them now would
+  pre-commit the Phase D legacy surface that step 9 of the cut
+  list is explicitly meant to delete in one final commit. Staging
+  must wait until either (i) the legacy demos are migrated to
+  the canonical APIs (`slappyengine.topology` /
+  `slappyengine.numerics` / `slappyengine.thermal` /
+  `softbody.material` / `fluid.material`) or (ii) the legacy
+  demos and visual scenes are co-deleted with `physics/`.
+* **Holds (b):** all 25 modules left in place. Pass count delta
+  **0** (2688 → 2688). No commit needed.
+
+### Why no leaf can be cut yet
+
+The Phase D Step 1 blocker callout above (lines 82-128 of this
+document) already established that even `frontier.py` — the
+declared leaf — cannot be deleted without trimming `world.py`
+first. The same logic generalises: every module in this set
+participates in either the eager `__init__.py` chain or the
+lazy `world.py` import sites, so each deletion would require a
+matching consumer-trim refactor. That refactor is the body of
+Phase D steps 1, 3, 7, and 9 — not in scope for this sprint
+tick.
+
+The minimum viable next action is to repackage
+`physics/__init__.py` to gate its re-exports behind
+`try/except ImportError` and remove the `SlapPyEngineTests/tests/visual/test_vis_constraints.py`
++ `SlapPyEngineTests/tests/visual/scenes/lighting_scene.py` dependencies on
+`slappyengine.physics.render`. That is the same gate condition
+flagged in §(d) "Editor surface gate" for Step 5, applied to the
+visual harness; tracked separately.
+
+### Post-tick pytest
+
+Skipped — no source edits, only documentation. Pass-count delta
+exactly **0**, satisfying the "must not drop" constraint
+vacuously.

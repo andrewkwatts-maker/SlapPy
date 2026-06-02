@@ -15,7 +15,7 @@ trim any whose gating field the uploader no longer populates.
 `CellMaterial` field into `HullParams`, so every gating field in the
 shader receives live per-material values exactly as before.
 
-No trim is justified. The shader stays at 429 LOC. The `tests/test_gpu_headless.py` canary is green (4 passed) as a baseline.
+No trim is justified. The shader stays at 429 LOC. The `SlapPyEngineTests/tests/test_gpu_headless.py` canary is green (4 passed) as a baseline.
 
 ## Uploader evidence
 

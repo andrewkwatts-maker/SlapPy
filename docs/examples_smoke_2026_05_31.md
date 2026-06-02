@@ -1,7 +1,7 @@
 # Examples Smoke Audit — 2026-05-31
 
-Read-only audit of every `examples/*.py` (excluding `examples/legacy/` and
-`examples/output/`) in the committed worktree at
+Read-only audit of every `SlapPyEngineExamples/examples/*.py` (excluding `SlapPyEngineExamples/examples/legacy/` and
+`SlapPyEngineExamples/examples/output/`) in the committed worktree at
 `H:\Github\SlapPyEngine`.
 
 ## Methodology
@@ -11,7 +11,7 @@ For each example, two probes were performed with `PYTHONPATH=python` and a
 
 1. **Probe A — `<example> --help`.** Examples wired with `argparse` print
    usage and exit 0. Examples without `argparse` ignore the flag and run the
-   whole demo (these typically write a GIF to `examples/output/` and exit 0
+   whole demo (these typically write a GIF to `SlapPyEngineExamples/examples/output/` and exit 0
    when complete, or call `engine.run()` and enter an interactive event loop
    that the harness aborts with a timeout signal).
 2. **Probe B — short headless run.** For `argparse` examples, retry with
@@ -36,21 +36,21 @@ For each example, two probes were performed with `PYTHONPATH=python` and a
 
 | Example | Status | Notes |
 |---|---|---|
-| bullet_holes_demo.py | GREEN | Writes `examples/output/particles/bullet_holes.gif`; 14 bullets, 352 wall pixels drilled. |
-| buoyancy_demo.py | GREEN | Writes `examples/output/buoyancy/buoyancy.gif`; wood/steel stratify correctly, 2190 splash impulses. |
-| character_damage_demo.py | GREEN | Writes `examples/output/character/character_damage.gif`; cumulative cuts bone=7 muscle=4 skin=2. |
+| bullet_holes_demo.py | GREEN | Writes `SlapPyEngineExamples/examples/output/particles/bullet_holes.gif`; 14 bullets, 352 wall pixels drilled. |
+| buoyancy_demo.py | GREEN | Writes `SlapPyEngineExamples/examples/output/buoyancy/buoyancy.gif`; wood/steel stratify correctly, 2190 splash impulses. |
+| character_damage_demo.py | GREEN | Writes `SlapPyEngineExamples/examples/output/character/character_damage.gif`; cumulative cuts bone=7 muscle=4 skin=2. |
 | detonate_gallery_demo.py | GREEN | `--frames 5` passes; argparse demo. |
 | editor_demo.py | GREEN | Launches editor shell; "No project found" notice expected without a project on disk. |
-| fluid_demo.py | GREEN | Writes `examples/output/fluid/water_basin.gif`; 140 particles, mean surface ms=7.94. |
+| fluid_demo.py | GREEN | Writes `SlapPyEngineExamples/examples/output/fluid/water_basin.gif`; 140 particles, mean surface ms=7.94. |
 | fluid_sandbox.py | GREEN | Calls `engine.run()`; returns cleanly in headless mode. Scene/material wiring imports OK. |
-| fluid_surface_demo.py | GREEN | Splat+surface stitched; perf log `examples/output/fluid/surface_overlay_perf.txt` written. |
-| glass_fracture_demo.py | GREEN | Writes `examples/output/fracture/glass_fracture.gif`; 87/110 beams broken, 13 components. |
+| fluid_surface_demo.py | GREEN | Splat+surface stitched; perf log `SlapPyEngineExamples/examples/output/fluid/surface_overlay_perf.txt` written. |
+| glass_fracture_demo.py | GREEN | Writes `SlapPyEngineExamples/examples/output/fracture/glass_fracture.gif`; 87/110 beams broken, 13 components. |
 | hello_3d_layer.py | GREEN | Interactive `engine.run()` event-loop demo; module-load + scene-build verified. |
 | hello_audio.py | GREEN | Argparse; default no-args run passes. |
 | hello_bake.py | GREEN | Interactive `engine.run()`; baked layer + heightmap mesh apply correctly under no-op patch. |
 | hello_composite.py | GREEN | `--frames 5` passes. |
 | hello_dynamics_serialize.py | GREEN | `--frames 5` passes; tests dynamics save/load roundtrip. |
-| hello_gi.py | RUNTIME_ERROR | `AttributeError: 'SVGFDenoiser' object has no attribute 'reset_history'` at `examples/hello_gi.py:86`. SVGFDenoiser API drifted from the demo. |
+| hello_gi.py | RUNTIME_ERROR | `AttributeError: 'SVGFDenoiser' object has no attribute 'reset_history'` at `SlapPyEngineExamples/examples/hello_gi.py:86`. SVGFDenoiser API drifted from the demo. |
 | hello_ik_chain.py | GREEN | `--frames 5` passes. |
 | hello_iso.py | GREEN | `--frames 5` passes. |
 | hello_joint.py | GREEN | `--frames 5` passes. |
@@ -75,14 +75,14 @@ For each example, two probes were performed with `PYTHONPATH=python` and a
 | ik_skeleton_demo.py | RUNTIME_ERROR | `AttributeError: 'SoftBodyWorld' object has no attribute 'positions'` raised from `dynamics/joint.py:177` during distance-joint projection. Solver field drift. |
 | landscape_demo.py | GREEN | Interactive `engine.run()`; landscape streaming dir created, 0 tiles initially visible. |
 | layered_character.py | GREEN | Interactive `engine.run()`; warrior tick wired. |
-| layered_creature_drop.py | GREEN | Writes `examples/output/softbody/creature_drop.gif`; 1/279 beams broken; centroid drift ~1.17. |
+| layered_creature_drop.py | GREEN | Writes `SlapPyEngineExamples/examples/output/softbody/creature_drop.gif`; 1/279 beams broken; centroid drift ~1.17. |
 | multiplayer_demo.py | GREEN | `--frames 5` passes; argparse demo. |
-| particles_sample.py | GREEN | Writes `examples/particles_sample.png`; 448 live particles. |
+| particles_sample.py | GREEN | Writes `SlapPyEngineExamples/examples/particles_sample.png`; 448 live particles. |
 | sand_crater_demo.py | GREEN | `--frames 5` passes. |
-| softbody_vehicle_demo.py | GREEN | Writes `examples/output/softbody/vehicle_demo.gif`; chassis settled at [-0.95, 4.55], 0/263 beams broken. |
-| vehicle_obstacle_course.py | GREEN | Writes `examples/output/softbody/vehicle_course.gif`; final chassis x=-1.58, 0/907 beams broken. |
+| softbody_vehicle_demo.py | GREEN | Writes `SlapPyEngineExamples/examples/output/softbody/vehicle_demo.gif`; chassis settled at [-0.95, 4.55], 0/263 beams broken. |
+| vehicle_obstacle_course.py | GREEN | Writes `SlapPyEngineExamples/examples/output/softbody/vehicle_course.gif`; final chassis x=-1.58, 0/907 beams broken. |
 | visual_check_demo.py | GREEN | Material sandbox: sand 461 settled / pile_max 81, rock 461 / 87, snow 329 / pile_max 8. |
-| water_dam_break.py | GREEN | Writes `examples/output/fluid/dam_break.gif`; 240 particles, peak |v|=0.326. |
+| water_dam_break.py | GREEN | Writes `SlapPyEngineExamples/examples/output/fluid/dam_break.gif`; 240 particles, peak |v|=0.326. |
 
 ## Rollups
 
@@ -115,7 +115,7 @@ moved during the Phase D strip). All four demos die at import time.
 
 ### `SVGFDenoiser.reset_history` missing
 
-`examples/hello_gi.py` constructs `SVGFDenoiser(W, H)` and calls
+`SlapPyEngineExamples/examples/hello_gi.py` constructs `SVGFDenoiser(W, H)` and calls
 `reset_history()` immediately. The attribute is absent on the current
 implementation — either it was renamed (e.g. `reset()`) or removed when SVGF
 moved into `slappyengine.gi.svgf`. Demo crashes at line 86 before any frame
@@ -123,7 +123,7 @@ is produced.
 
 ### `SoftBodyWorld.positions` missing
 
-`examples/ik_skeleton_demo.py` reaches
+`SlapPyEngineExamples/examples/ik_skeleton_demo.py` reaches
 `dynamics/joint.py:177 _project_distance` which dereferences
 `world.positions[a]`. The current `SoftBodyWorld` SoA likely exposes node
 positions through `nodes.x` / `node_pos` / similar, but not `positions`.
@@ -148,4 +148,4 @@ demos can be exercised end-to-end in CI without window manipulation.
 given the engine drives the per-frame draw callback exactly `N` times
 in-process and returns without entering the platform event loop, so all 11
 demos above can now be smoke-tested end-to-end in CI without window
-manipulation.  Regression test: `tests/test_engine_max_frames.py`.
+manipulation.  Regression test: `SlapPyEngineTests/tests/test_engine_max_frames.py`.

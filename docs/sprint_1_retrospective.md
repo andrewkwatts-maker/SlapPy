@@ -27,7 +27,7 @@ The six commits, in landing order:
    live_count, dirty bitmask packable to `uint32`. ~24 KB total at 4K×4K map,
    `cell_size=64`. 7 tests green. Coexists with existing `baked_terrain.RegionGrid`.
 4. **`d55ebab` — Sprint 1: CPU↔GPU parity test framework + first kernel test passing.**
-   New `tests/test_particle_field_gpu_parity.py`. `assert_soa_close`,
+   New `SlapPyEngineTests/tests/test_particle_field_gpu_parity.py`. `assert_soa_close`,
    `make_paired_fields`, `step_both` helpers. Integrate parity test passing;
    collide / drill / slump / kinetic_relax / fluid_relax / thermal_step / bake
    tests skipped as placeholders for sprints 2-3.
@@ -151,7 +151,7 @@ to start clean, the following sprint 1 byproducts must be in place
   port follows in sprint 5.
 - `use_gpu_<X>` flag pattern — sprint 2 will add `use_gpu_collide`. The
   pattern is established.
-- Parity test scaffold (`tests/test_particle_field_gpu_parity.py`) — the
+- Parity test scaffold (`SlapPyEngineTests/tests/test_particle_field_gpu_parity.py`) — the
   `test_collide_cpu_gpu_parity` placeholder is already skipped-pending.
   Sprint 2 will fill it in.
 

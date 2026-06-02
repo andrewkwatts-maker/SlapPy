@@ -159,5 +159,5 @@ hardening wins — they would have been silent corruptors at runtime:
 - `python/tests/test_hardening_numerics.py`
 - `python/tests/test_hardening_zones.py`
 - `python/tests/test_hardening_thermal.py`
-- `tests/test_hardening_iso_combat.py`
-- `tests/test_hardening_dynamics.py`
+- `SlapPyEngineTests/tests/test_hardening_iso_combat.py`
+- `SlapPyEngineTests/tests/test_hardening_dynamics.py`

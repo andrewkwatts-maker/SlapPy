@@ -285,11 +285,11 @@ and `baseline_scenarios()`.
 
 ## 8. Examples
 
-Runnable demo lives in [`../examples/`](../examples/):
+Runnable demo lives in [`../SlapPyEngineExamples/examples/`](../SlapPyEngineExamples/examples/):
 
 | File                                                       | Demonstrates                                  |
 |------------------------------------------------------------|-----------------------------------------------|
-| [`hello_physics.py`](../examples/hello_physics.py)         | Minimal physics scene drop                    |
+| [`hello_physics.py`](../SlapPyEngineExamples/examples/hello_physics.py)         | Minimal physics scene drop                    |
 
 ---
 

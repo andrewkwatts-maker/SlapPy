@@ -179,7 +179,7 @@ after a failed CI tick.
 
 ## Fixture conventions
 
-The engine's own regression suite (`tests/test_visual_*`) follows
+The engine's own regression suite (`SlapPyEngineTests/tests/test_visual_*`) follows
 three conventions:
 
 1. **One baseline per scene.** Name = filename stem of the example

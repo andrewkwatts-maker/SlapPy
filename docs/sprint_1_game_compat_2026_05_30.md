@@ -24,7 +24,7 @@ Strata, and Stone Keep is honoured on master HEAD after the Phase C closure
 - Net: the tripwire is **34 pass / 20 fail / 0 xfail** (NOT the
   "54 pass + 0 xfail" the sprint plan expected).
 - New smoke-instantiation test file
-  `tests/test_game_smoke_instantiation.py` lands **13 hard-pass +
+  `SlapPyEngineTests/tests/test_game_smoke_instantiation.py` lands **13 hard-pass +
   18 xfail** behavioural checks — one xfail per residual-gap symbol so each
   gap auto-flips to xpass the moment the underlying module is committed.
 
@@ -32,7 +32,7 @@ Strata, and Stone Keep is honoured on master HEAD after the Phase C closure
 
 ## Test results
 
-### `tests/test_game_compat_tripwire.py`
+### `SlapPyEngineTests/tests/test_game_compat_tripwire.py`
 
 ```
 34 passed, 20 failed, 0 xfailed
@@ -81,7 +81,7 @@ Distinct missing modules (5 net): `slappyengine.trigger`,
 `slappyengine.post_process.motion_blur` — i.e. 11 module paths covering
 20 lazy-map entries.
 
-### `tests/test_game_smoke_instantiation.py` (NEW)
+### `SlapPyEngineTests/tests/test_game_smoke_instantiation.py` (NEW)
 
 ```
 13 passed, 18 xfailed, 0 failed
@@ -146,7 +146,7 @@ but ctor blows up" pathology this test file was written to catch.
    - `python/slappyengine/collision_pixel.py` (`PixelCollisionPass`)
    - `python/slappyengine/post_process/motion_blur.py` (`MotionBlurPass`)
 2. **As each module lands**, the corresponding `test_missing_module_residual_gap`
-   xfail in `tests/test_game_smoke_instantiation.py` will xpass — and the
+   xfail in `SlapPyEngineTests/tests/test_game_smoke_instantiation.py` will xpass — and the
    sibling tripwire failure will flip to pass — without any test edit.
 
 ---
@@ -155,11 +155,11 @@ but ctor blows up" pathology this test file was written to catch.
 
 - Branch: `sprint-1-game-compat-verify`
 - Files touched:
-  - `tests/test_game_smoke_instantiation.py` (NEW — 31 tests, 13 pass + 18 xfail)
+  - `SlapPyEngineTests/tests/test_game_smoke_instantiation.py` (NEW — 31 tests, 13 pass + 18 xfail)
   - `docs/sprint_1_game_compat_2026_05_30.md` (this file)
 - Files explicitly NOT touched:
   - `python/slappyengine/__init__.py` (per sprint rules)
   - `python/slappyengine/softbody/`, `fluid/`, `sim_field.py`
-  - `tests/test_game_compat_tripwire.py` (the failing test is reporting a
+  - `SlapPyEngineTests/tests/test_game_compat_tripwire.py` (the failing test is reporting a
     real, accurate gap — converting failures to xfail here would mask the
     residual Phase C work)

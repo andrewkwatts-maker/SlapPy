@@ -332,7 +332,7 @@ otherwise the legacy params-dict route stays intact bit-for-bit.
 
 **Byte-for-byte parity**: the UBO bytes emitted by the base-class
 walker are identical to the pre-refactor inline `struct.pack` calls;
-this is enforced by `tests/test_post_process_base.py`
+this is enforced by `SlapPyEngineTests/tests/test_post_process_base.py`
 (`test_bloom_params_to_bytes_matches_legacy_struct_pack`). The
 executor's runtime splice still patches `width`/`height` by absolute
 offset, so any drift would silently corrupt UBO contents — hence the

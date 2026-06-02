@@ -9,7 +9,7 @@ maintainer cuts a tag and pushes wheels to PyPI.
 
 ## Gate criteria
 
-- [ ] **Game compat tripwire 54/54** — `tests/test_game_compat_tripwire.py`
+- [ ] **Game compat tripwire 54/54** — `SlapPyEngineTests/tests/test_game_compat_tripwire.py`
   must report 54 passing parametrised cases plus the
   `test_known_broken_set_stays_empty` guard. **Current status: 35 pass /
   20 fail** (see *Known gaps* below). The guard test itself **does
@@ -20,13 +20,13 @@ maintainer cuts a tag and pushes wheels to PyPI.
   `.spline`, `.track`, `.input_provider`, `.collision_pixel`). This is
   the single biggest ship blocker.
 
-- [ ] **All-demos smoke 14/14 exit-zero** — `tests/test_all_demos_smoke.py`
+- [ ] **All-demos smoke 14/14 exit-zero** — `SlapPyEngineTests/tests/test_all_demos_smoke.py`
   spawns each of the 14 dynamics-era demos as a subprocess with
   `--render --frames 60 --out <tmp>`, requires exit code 0 within the
   30 s timeout, and verifies the rendered PNG against the committed
   baseline at tolerance 0.05.
 
-- [ ] **Hardening green** — all `tests/test_hardening_*.py` files pass.
+- [ ] **Hardening green** — all `SlapPyEngineTests/tests/test_hardening_*.py` files pass.
   Sprint 7 closed boundary validation across animation graph, action
   map, asset DB, camera, dynamics, event bus, iso, layer, numerics,
   post-process.
@@ -36,14 +36,14 @@ maintainer cuts a tag and pushes wheels to PyPI.
   `docs/perf_dashboard.md`) stay within the ±10% band per subsystem.
   Slowest at v0.3.0 was dynamics 100-node lattice at 12 ms/frame.
 
-- [ ] **All docs link targets resolve** — `tests/test_docs_*.py` family
+- [ ] **All docs link targets resolve** — `SlapPyEngineTests/tests/test_docs_*.py` family
   (10 files) verifies every cross-link in `docs/` and the README
   resolves to an in-tree path. Includes `engine_surface_v030.md`,
   `dynamics_design.md`, `getting_started.md`, `tutorial_build_a_game.md`,
   `rust_port_plan_dynamics.md`, etc.
 
 - [ ] **Versions consistent across 3 files** —
-  `tests/test_version_consistency.py::test_versions_match_across_three_files`
+  `SlapPyEngineTests/tests/test_version_consistency.py::test_versions_match_across_three_files`
   must pass. **Current status: FAILING.** Drift:
   - `pyproject.toml` → `0.2.0a0`
   - `Cargo.toml`     → `0.2.0-alpha.0`  (equivalent to `0.2.0a0` after
@@ -107,12 +107,12 @@ tags an unreviewed commit by mistake. Marked as a nice-to-have, not a
 blocker.
 
 No workflow-level changes were required for the new
-`tests/test_version_consistency.py` — the existing `pytest tests/ -v` in
+`SlapPyEngineTests/tests/test_version_consistency.py` — the existing `pytest tests/ -v` in
 `ci.yml` picks it up by glob.
 
 ## Candidate tag string
 
-Computed by `tests/test_version_consistency.py::test_candidate_tag_string`
+Computed by `SlapPyEngineTests/tests/test_version_consistency.py::test_candidate_tag_string`
 (prints `CANDIDATE_TAG=<tag>` to stdout). With `pyproject.toml` at
 `0.2.0a0` (a pre-release marker), the tag is:
 

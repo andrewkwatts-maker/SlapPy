@@ -138,7 +138,7 @@ re-solves the pose each frame.
 For walking across terrain, combine `terrain_overlay` (paints the ground
 line) with a `post_step` callback that slides the skeleton's x and re-runs
 `place_feet_on_terrain` each frame — see
-`examples/humanoid_ik_terrain_demo.py` for the full recipe.
+`SlapPyEngineExamples/examples/humanoid_ik_terrain_demo.py` for the full recipe.
 
 ### BodyMeta chainable methods
 

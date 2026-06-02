@@ -288,7 +288,7 @@ that shrinks them further is in [rust_port_plan_dynamics.md](rust_port_plan_dyna
   the exact `PYTHONPATH=python python examples/...` command for each. Every
   artefact is checked in so the gallery renders on GitHub without a local
   install.
-- [examples/](../examples/) — every `hello_*.py` demo wired through
+- [examples/](../SlapPyEngineExamples/examples/) — every `hello_*.py` demo wired through
   `slappyengine.examples_common` (`--frames`, `--no-gif`, `--out`, `--seed`):
   rope, ragdoll, IK, joint, spring, motor, thermal, zone, telemetry,
   lighting, physics, pixel-physics, iso, topology, audio, composite, studio,
@@ -313,4 +313,4 @@ that shrinks them further is in [rust_port_plan_dynamics.md](rust_port_plan_dyna
 If something here drifts from `master` HEAD — wrong kwarg, missing symbol,
 broken link — please open an issue on the GitHub repo so we can patch the
 tripwire test that should have caught it. Patches welcome; the doc lives
-at `docs/getting_started.md` and is gated by `tests/test_docs_getting_started.py`.
+at `docs/getting_started.md` and is gated by `SlapPyEngineTests/tests/test_docs_getting_started.py`.

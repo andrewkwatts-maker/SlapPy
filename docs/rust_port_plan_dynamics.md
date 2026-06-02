@@ -525,7 +525,7 @@ is already validated.
 
 The plan is sized so each phase is independently revertable and
 independently shippable. Every phase ends with the dynamics test suite
-(`tests/test_dynamics_*.py`) green and a fresh bench run posted to the
+(`SlapPyEngineTests/tests/test_dynamics_*.py`) green and a fresh bench run posted to the
 PR description.
 
 ### Phase 1 — MVP: port `_project_distance` only
@@ -538,11 +538,11 @@ or env var `SLAPPYENGINE_NATIVE_DYNAMICS=1`.
 
 **Acceptance criteria.**
 
-* `tests/test_dynamics_unified_step.py` passes against both paths (a
+* `SlapPyEngineTests/tests/test_dynamics_unified_step.py` passes against both paths (a
   new `parametrize` switches `use_native_solver`).
-* `tests/test_dynamics_rope.py` passes against both paths (rope is
+* `SlapPyEngineTests/tests/test_dynamics_rope.py` passes against both paths (rope is
   pure distance joints — the most direct exercise).
-* New `tests/test_dynamics_native_parity.py`: for the rope scenario at
+* New `SlapPyEngineTests/tests/test_dynamics_native_parity.py`: for the rope scenario at
   240 frames, every node's final position differs by <= 1e-6 from the
   Python reference (within f64 round-off).
 * Re-run `_bench_dynamics.py`: Scenario A measurable speedup or no
@@ -562,7 +562,7 @@ output array returned to Python and applied in `World.step`.
 
 **Acceptance criteria.**
 
-* `tests/test_dynamics_ragdoll.py`, `test_dynamics_motor.py`,
+* `SlapPyEngineTests/tests/test_dynamics_ragdoll.py`, `test_dynamics_motor.py`,
   `test_dynamics_joint_spec.py`, `test_dynamics_overdamping_warning.py`
   all pass against the native path.
 * Native-path golden-frame comparison against `hello_ragdoll.py`,
@@ -609,14 +609,14 @@ path for direct imports.
 
 **Acceptance criteria.**
 
-* `tests/test_dynamics_native_parity.py` is upgraded to drive the
+* `SlapPyEngineTests/tests/test_dynamics_native_parity.py` is upgraded to drive the
   legacy path explicitly from `_legacy.py` and compare both directions.
 * CHANGELOG, deprecation timeline doc, and an `ARCHITECTURE.md` note
   matching the existing "Python = wrapper, Rust = engine" memory
   entry.
 
 **Estimated effort.** ~1 day. This is the last phase and is gated on
-zero regressions across all of `examples/hello_*.py`.
+zero regressions across all of `SlapPyEngineExamples/examples/hello_*.py`.
 
 ---
 

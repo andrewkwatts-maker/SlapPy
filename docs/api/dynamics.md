@@ -54,6 +54,22 @@ BoneSpec(parent_idx: 'int' = -1, length: 'float' = 1.0, mass: 'float' = 1.0, ang
 
 - `ValueError` — If ``length <= 0``, ``mass <= 0``, ``angle_limit`` is mis-shaped or has ``min > max``, or ``direction`` is mis-shaped.
 
+### `DynamicsWorldLike`
+
+_class — defined in `slappyengine.dynamics.world`_
+
+Tighter Protocol — a :class:`World`-shaped object.
+
+#### Constructor signature
+
+```python
+DynamicsWorldLike(*args, **kwargs)
+```
+
+#### Methods
+
+- `step(self, dt: 'float') -> 'None'`
+
 ### `Humanoid`
 
 _dataclass — defined in `slappyengine.dynamics.humanoid`_
@@ -305,7 +321,55 @@ World(gravity: 'tuple[float, float]' = (0.0, -9.81)) -> 'None'
 - `register_body(self, body: 'Any') -> 'Any'` — Register a :class:`Body` with the world.
 - `step(self, dt: 'float') -> 'None'` — Integrate one frame using XPBD-style position projection.
 
+### `WorldLike`
+
+_class — defined in `slappyengine.dynamics.world`_
+
+Structural type accepted by dynamics solvers, IK, and studio helpers.
+
+#### Constructor signature
+
+```python
+WorldLike(*args, **kwargs)
+```
+
 ## Functions
+
+### `body_from_dict(d: 'dict[str, Any]') -> 'Body'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Inverse of :func:`body_to_dict`.
+
+### `body_to_dict(body: 'Body') -> 'dict[str, Any]'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Encode a :class:`Body` as a JSON-compatible dict.
+
+### `bone_spec_from_dict(d: 'dict[str, Any]') -> 'BoneSpec'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Inverse of :func:`bone_spec_to_dict`.
+
+### `bone_spec_to_dict(bone: 'BoneSpec') -> 'dict[str, Any]'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Encode a single :class:`BoneSpec`.
+
+### `build_flesh_wrap(world, humanoid: 'Humanoid', *, muscle_offset: 'float' = 0.1, skin_offset: 'float' = 0.18, muscle_stiffness: 'float' = 1000000.0, skin_stiffness: 'float' = 250000.0, muscle_damping: 'float' = 0.05, skin_damping: 'float' = 0.05, flesh_break_strain: 'float' = 0.18) -> 'Humanoid'`
+
+_defined in `slappyengine.dynamics.humanoid`_
+
+Wrap a humanoid skeleton in muscle (layer 1) + skin (layer 2) shells.
+
+### `build_humanoid(world, root_position: 'tuple[float, float]' = (0.0, 1.0), *, proportions: 'dict[str, float] | None' = None, bone_mass: 'float' = 1.0, head_mass: 'float' = 1.5, bone_stiffness: 'float' = 5000000.0, bone_damping: 'float' = 0.05, bone_break_strain: 'float' = 0.25) -> 'Humanoid'`
+
+_defined in `slappyengine.dynamics.humanoid`_
+
+Spawn a 13-node humanoid skeleton in ``world``.
 
 ### `build_ragdoll(spec: 'RagdollSpec', world, anchor_pos: 'tuple[float, float]', pin_root: 'bool' = False) -> 'Body'`
 
@@ -335,6 +399,42 @@ _defined in `slappyengine.dynamics.world`_
 
 Effective per-step damping ratio after N iterations of multiplicative per-iter damping.
 
+### `humanoid_from_dict(d: 'dict[str, Any]') -> 'Humanoid'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Inverse of :func:`humanoid_to_dict`.
+
+### `humanoid_to_dict(humanoid: 'Humanoid') -> 'dict[str, Any]'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Encode a :class:`Humanoid` handle.
+
+### `ik_chain_from_dict(d: 'dict[str, Any]') -> 'IKChainSpec'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Inverse of :func:`ik_chain_to_dict`.
+
+### `ik_chain_to_dict(spec: 'IKChainSpec') -> 'dict[str, Any]'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Encode an :class:`IKChainSpec`.
+
+### `joint_from_dict(d: 'dict[str, Any]') -> 'JointSpec'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Inverse of :func:`joint_to_dict`.
+
+### `joint_to_dict(joint: 'JointSpec') -> 'dict[str, Any]'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Encode a :class:`JointSpec` as a JSON-compatible dict.
+
 ### `load_world(path: 'Path | str') -> 'World'`
 
 _defined in `slappyengine.dynamics.serialize`_
@@ -361,7 +461,7 @@ Build a rigid distance constraint between two nodes.
 
 _defined in `slappyengine.dynamics.humanoid`_
 
-Spawn a 13-node humanoid skeleton in ``world``.
+Deprecated alias for :func:`build_humanoid`.
 
 ### `make_motor(hub: 'int', rim_a: 'int', rim_b: 'int', target_omega: 'float', max_torque: 'float', radius: 'float' = 0.0, axis: 'tuple[float, float]' = (1.0, 0.0), stiffness: 'float' = 100000000.0, damping: 'float' = 0.02) -> 'JointSpec'`
 
@@ -385,11 +485,47 @@ Build a spring constraint between two nodes.
 - `TypeError` — If ``node_a`` or ``node_b`` is not int-coercible.
 - `ValueError` — If indices are negative or equal, ``rest_length < 0``, ``stiffness <= 0``, or ``damping`` is outside ``[0, 1]``.
 
+### `material_from_dict(d: 'dict[str, Any]') -> 'Material'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Inverse of :func:`material_to_dict`.
+
+### `material_to_dict(mat: 'Material') -> 'dict[str, Any]'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Encode a :class:`Material` as a JSON-compatible dict.
+
+### `motor_from_dict(d: 'dict[str, Any]') -> 'MotorSpec'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Inverse of :func:`motor_to_dict`.
+
+### `motor_to_dict(spec: 'MotorSpec') -> 'dict[str, Any]'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Encode a :class:`MotorSpec` preset.
+
 ### `place_feet_on_terrain(world, humanoid: 'Humanoid', terrain_height_fn: 'Callable[[float], float]', *, pelvis_height_above_terrain: 'float' = 0.9, max_iterations: 'int' = 4, tolerance: 'float' = 0.005) -> 'bool'`
 
 _defined in `slappyengine.dynamics.humanoid`_
 
 Adjust pelvis + legs so both ankles plant on the terrain surface.
+
+### `ragdoll_spec_from_dict(d: 'dict[str, Any]') -> 'RagdollSpec'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Inverse of :func:`ragdoll_spec_to_dict`.
+
+### `ragdoll_spec_to_dict(spec: 'RagdollSpec') -> 'dict[str, Any]'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Encode a :class:`RagdollSpec` preset (bones + extra joints).
 
 ### `resolve_joint(joint: 'JointSpec', world: "'World'", dt: 'float') -> 'float'`
 
@@ -397,7 +533,7 @@ _defined in `slappyengine.dynamics.joint`_
 
 Dispatch a joint to its XPBD projection. Returns correction magnitude.
 
-### `resolve_joint_specs(world: 'Any', specs: 'list[JointSpec]') -> 'list[int]'`
+### `resolve_joint_specs(world: 'WorldLike', specs: 'list[JointSpec]') -> 'list[int]'`
 
 _defined in `slappyengine.dynamics.joint`_
 
@@ -406,6 +542,18 @@ Install a batch of :class:`JointSpec` records into ``world``.
 #### Raises
 
 - `TypeError` — If ``specs`` is not a list of :class:`JointSpec`, or ``world`` cannot host them.
+
+### `rope_spec_from_dict(d: 'dict[str, Any]') -> 'RopeSpec'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Inverse of :func:`rope_spec_to_dict`.
+
+### `rope_spec_to_dict(spec: 'RopeSpec') -> 'dict[str, Any]'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Encode a :class:`RopeSpec` preset.
 
 ### `save_world(world: 'World', path: 'Path | str') -> 'None'`
 
@@ -418,7 +566,7 @@ JSON-encode ``world`` and write it to ``path``.
 - `TypeError` — If ``world`` is not a :class:`World`.
 - `ValueError` — If ``path`` does not end in ``.json``.
 
-### `solve_ik(spec: 'IKChainSpec', world, iterations: 'int' = 10, tolerance: 'float' = 0.01) -> 'bool'`
+### `solve_ik(spec: 'IKChainSpec', world: 'WorldLike', iterations: 'int' = 10, tolerance: 'float' = 0.01) -> 'bool'`
 
 _defined in `slappyengine.dynamics.ik`_
 
@@ -428,6 +576,18 @@ Solve the chain toward the target using CCD.
 
 - `TypeError` — If ``spec`` is not an :class:`IKChainSpec` or ``world`` is not a compatible world object.
 - `ValueError` — If ``iterations <= 0`` or ``tolerance <= 0``.
+
+### `spring_from_dict(d: 'dict[str, Any]') -> 'SpringSpec'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Inverse of :func:`spring_to_dict`.
+
+### `spring_to_dict(spec: 'SpringSpec') -> 'dict[str, Any]'`
+
+_defined in `slappyengine.dynamics.serialize`_
+
+Encode a :class:`SpringSpec` preset.
 
 ### `world_from_dict(d: 'dict') -> 'World'`
 
@@ -453,7 +613,7 @@ Serialise ``world`` into a JSON-compatible dict.
 
 _defined in `slappyengine.dynamics.humanoid`_
 
-Wrap a humanoid skeleton in muscle (layer 1) + skin (layer 2) shells.
+Deprecated alias for :func:`build_flesh_wrap`.
 
 ## Constants
 

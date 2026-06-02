@@ -99,8 +99,12 @@ exclude = [
     "benchmarks/**",
     "docs",
     "docs/**",
-    "examples",
-    "examples/**",
+    # Tests / examples now live under SlapPyEngineTests/ and
+    # SlapPyEngineExamples/ at the repo root (2026-06-02 restructure).
+    "SlapPyEngineTests",
+    "SlapPyEngineTests/**",
+    "SlapPyEngineExamples",
+    "SlapPyEngineExamples/**",
     "scripts",
     "scripts/**",
     "tools",
@@ -111,7 +115,7 @@ exclude = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["tests"]
+testpaths = ["SlapPyEngineTests/tests"]
 
 [tool.ruff]
 line-length = 120
