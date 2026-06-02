@@ -1,0 +1,69 @@
+name: Physics Test Suite
+
+on:
+  push:
+    paths:
+      - 'python/slappyengine/physics/**'
+      - 'python/tests/test_*.py'
+      - 'config/physics.yml'
+      - '.github/workflows/physics-tests.yml'
+  pull_request:
+    paths:
+      - 'python/slappyengine/physics/**'
+
+jobs:
+  physics-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest numpy pyyaml Pillow scipy wgpu
+      - name: Run physics tests
+        run: |
+          export PYTHONPATH=python
+          pytest -v --tb=short \
+            python/tests/test_conservation.py \
+            python/tests/test_drop_scenarios.py \
+            python/tests/test_visual_drops.py \
+            python/tests/test_gpu_kernel.py \
+            python/tests/test_hull_subdivide.py \
+            python/tests/test_boundary_exchange.py \
+            python/tests/test_ccd.py \
+            python/tests/test_extended_materials.py \
+            python/tests/test_oriented_aabb.py \
+            python/tests/test_spawn_fragment.py \
+            python/tests/test_wall_contacts.py \
+            python/tests/test_boundary_exchange_integration.py \
+            python/tests/test_stiction.py \
+            python/tests/test_renderer_lighting.py \
+            python/tests/test_post_process.py \
+            python/tests/test_shadows.py \
+            python/tests/test_particles.py \
+            python/tests/test_video.py \
+            python/tests/test_debug_hud.py \
+            python/tests/test_deform_adapter.py \
+            python/tests/test_crack_repair_adapter.py \
+            python/tests/test_engine_bridge.py \
+            python/tests/test_physics_scene_loader.py \
+            python/tests/test_physics_events.py \
+            python/tests/test_demo_vehicle.py \
+            python/tests/test_demo_projectile.py \
+            python/tests/test_demo_sand_pile.py \
+            python/tests/test_demo_lava_flow.py \
+            python/tests/test_demo_materials_gallery.py \
+            python/tests/test_benchmarks.py \
+            python/tests/test_memory_budget.py \
+            python/tests/test_physics_profiles.py
+      - name: Run benchmarks (smoke)
+        run: |
+          export PYTHONPATH=python
+          python benchmarks/run_benchmarks.py --md benchmarks/ci_report.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmarks
+          path: benchmarks/ci_report.md
