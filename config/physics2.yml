@@ -1,0 +1,49 @@
+# physics2 — clean unified-cell physics
+# All numeric defaults live here. No magic numbers in code.
+
+world:
+  dt: 0.016667                 # 1/60 render-frame step (s)
+  substeps: 4                  # solver substeps per frame
+  gravity: [0.0, 196.0]        # px/s^2, +y = down
+  ambient_temperature: 0.0     # normalized; cell.temperature drifts toward this
+  thermal_relaxation: 0.05     # exp-decay rate per substep toward ambient
+  heat_diffusion: 0.10         # symmetric Laplacian coefficient per substep
+  damage_softening: 1.0        # multiplier on stiffness drop when damage = 1
+
+grid:
+  size: [128, 96]              # global cell grid (W, H)
+  cell_size: 4.0               # world-space pixels per cell
+  rho_threshold: 0.01          # mass below this = vacuum (no pressure projection)
+
+pressure:
+  iters: 2                     # V-cycles per substep
+  omega: 1.5                   # SOR relaxation
+  smooth_pre: 2
+  smooth_post: 2
+  coarse_iters: 8
+
+particles:
+  capacity: 8192               # ring buffer; oldest evicted
+  spawn_per_fracture: 4        # debris particles per cell that crosses damage=1
+  lifetime: 1.5                # seconds
+
+# Material catalog — 5 params per material:
+#   density          kg/cell (mass per cell when fully occupied)
+#   stiffness        stress per unit strain rate (Young's-modulus-like)
+#   viscosity        velocity damping rate per substep (0..1; fraction lost)
+#   plasticity_rate  damage gained per (sigma - fracture_strain) * dt
+#   fracture_strain  stress threshold above which damage accumulates
+# Plus:
+#   melt_temperature  temperature at which stiffness scales to 0 (>= 1.0 = inert)
+materials:
+  STEEL:   {density: 7.85, stiffness: 200.0, viscosity: 0.001, plasticity_rate: 0.02, fracture_strain: 4.0, melt_temperature: 1.0}
+  GLASS:   {density: 2.50, stiffness: 70.0,  viscosity: 0.002, plasticity_rate: 1.50, fracture_strain: 0.6, melt_temperature: 0.9}
+  STONE:   {density: 2.70, stiffness: 50.0,  viscosity: 0.003, plasticity_rate: 0.30, fracture_strain: 1.2, melt_temperature: 1.0}
+  WOOD:    {density: 0.70, stiffness: 11.0,  viscosity: 0.005, plasticity_rate: 0.40, fracture_strain: 0.8, melt_temperature: 0.5}
+  ICE:     {density: 0.92, stiffness: 9.0,   viscosity: 0.004, plasticity_rate: 0.60, fracture_strain: 0.4, melt_temperature: 0.10}
+  WATER:   {density: 1.00, stiffness: 0.0,   viscosity: 0.020, plasticity_rate: 0.00, fracture_strain: 0.0, melt_temperature: 1.0}
+  OIL:     {density: 0.85, stiffness: 0.0,   viscosity: 0.080, plasticity_rate: 0.00, fracture_strain: 0.0, melt_temperature: 1.0}
+  LAVA:    {density: 3.10, stiffness: 0.5,   viscosity: 0.050, plasticity_rate: 0.05, fracture_strain: 0.2, melt_temperature: 0.05}
+  MUD:     {density: 1.40, stiffness: 0.4,   viscosity: 0.150, plasticity_rate: 0.10, fracture_strain: 0.1, melt_temperature: 1.0}
+  SAND:    {density: 1.60, stiffness: 0.8,   viscosity: 0.100, plasticity_rate: 0.20, fracture_strain: 0.2, melt_temperature: 1.0}
+  SNOW:    {density: 0.30, stiffness: 0.6,   viscosity: 0.120, plasticity_rate: 0.50, fracture_strain: 0.15, melt_temperature: 0.05}

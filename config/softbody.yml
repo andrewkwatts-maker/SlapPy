@@ -1,0 +1,255 @@
+# Soft-body lattice physics — BeamNG-style node + beam simulator.
+# All numeric defaults for the XPBD solver live here.
+
+world:
+  gravity: [0.0, 9.81]            # m/s^2, positive y = downward
+  default_dt: 0.016667            # 1/60 — render-frame step
+  substeps: 8                     # XPBD substeps per render frame
+  iters: 4                        # constraint projection iterations per substep
+  floor_y: 5.0                    # ground plane (positions clamped to <= floor_y)
+  velocity_epsilon: 1.0e-9        # divide-by-zero guard for beam direction
+  rest_velocity_threshold: 0.01   # m/s — used by tests to detect "at rest"
+  floor_friction: 0.4             # tangential velocity damping on ground contact (0..1 per contact)
+  plasticity_subcycle: false      # if true, plastic flow runs inside the iteration loop (smoother crumple, ~25% slower)
+
+# Body-body contact constraints (resolve_contacts; runs inside the XPBD iteration loop).
+# Single-body simulations skip contact entirely because all candidate pairs are
+# filtered by ``body_id[node] != body_id[beam]``.
+contact:
+  enabled: true                   # master toggle for body-body contact
+  default_thickness: 0.04         # capsule half-thickness in metres (matches steel/stone smoke cell_size/2)
+  default_stiffness: 1.0e9        # XPBD compliance; larger -> stiffer contact
+  broadphase_cell_factor: 1.5     # uniform-grid cell size = max(beam.rest_length) * factor
+
+# Material catalog. THIS is the source of truth for all material defaults —
+# material.py only defines the dataclass and the load function. To add a new
+# material, drop a new key here and reference it by name.
+#
+# Units:
+#   density:          kg/m^2 (2D — node mass = density * area_around_node)
+#   stiffness:        XPBD compliance proxy (Pa); larger -> stiffer beam
+#   damping:          0..1 per-substep velocity multiplier
+#   break_strain:     |L - L0| / L0 above which a beam permanently breaks
+#   yield_strain:     fraction below which the beam is purely elastic
+#   plasticity_rate:  1/s — exponential decay rate; blend = 1 - exp(-rate*dt_sub).
+#                     0 = brittle clean snap (use with yield == break).
+#                     ~20 = wood-like slow creep.
+#                     ~200 = steel-like ductile yield.
+#                     ~1000+ = rubber-like rapid flow (still gated by yield_strain).
+#   contact_thickness:  capsule half-thickness for body-body contact (m)
+#   contact_stiffness:  XPBD compliance for body-body contact (Pa)
+#
+# Stiffness values are scaled down from physical SI (e.g. real steel ~2e11 Pa)
+# because XPBD compliance is unitless under the chosen mass scale; the relative
+# ordering steel > stone > wood > rubber is what governs gameplay behaviour.
+materials:
+  steel:
+    # Ductile steel. The old combo (plasticity_rate=10000 + yield_strain=0.002)
+    # was silly-putty under any sustained load — wheel torque alone would flow
+    # the chassis. Tuned for two goals at once:
+    #   1. Under sustained load (wheel torque + gravity, strain ~0.5%), no
+    #      plastic flow occurs because we sit comfortably below yield_strain.
+    #   2. Under impulsive impact (e.g. 15 m/s drop), plastic flow runs fast
+    #      enough to absorb the strain spike without immediately breaking
+    #      every beam.
+    # plasticity_rate=2000 is higher than a pure-creep "ductile yield" value
+    # (~100-500) because XPBD substeps deliver impulses in discrete chunks;
+    # the per-substep blend at 2000/s is ~0.98, fast enough to relax a
+    # 2x-over-yield strain spike inside the same substep. Below yield, the
+    # rate is irrelevant — no flow happens.
+    # (A separate `chassis_steel` material previously existed as a workaround
+    # — folded back into base steel since these are simply the correct values.)
+    density: 7800.0
+    stiffness: 2.0e9
+    damping: 0.06
+    break_strain: 0.080
+    yield_strain: 0.010
+    plasticity_rate: 2000.0
+    render_color: [170, 175, 190]
+    damage_color: [60, 30, 25]
+  stone:
+    # Brittle: yield_strain == break_strain and plasticity_rate == 0. As soon
+    # as a beam exceeds yield, it breaks cleanly — no plastic flow lets the
+    # rest_length migrate (which would produce visually-nonsense over-stretched
+    # "ghost" beams in fracture demos). Also serves as the "glass" stand-in
+    # for glass_fracture_demo.
+    density: 2700.0
+    stiffness: 5.0e8
+    damping: 0.05
+    break_strain: 0.003
+    yield_strain: 0.003
+    plasticity_rate: 0.0
+    render_color: [110, 105, 100]
+    damage_color: [35, 25, 22]
+  glass:
+    # Glass: brittle like stone but tougher (10x break_strain) so impact
+    # shatters into chunks instead of atomising every beam — wood block
+    # tests confirmed the prior 0.003 threshold produces a flat line of
+    # disconnected nodes (every beam exceeds yield in one frame). Glass
+    # at 0.03 break_strain preserves 30-60% of the lattice intact,
+    # producing visible cracking lines between surviving shards.
+    density: 2500.0
+    stiffness: 5.0e8
+    damping: 0.05
+    break_strain: 0.03
+    yield_strain: 0.03
+    plasticity_rate: 0.0
+    render_color: [180, 200, 215]
+    damage_color: [80, 100, 120]
+  wood:
+    # Light, fibrous, slow plastic creep.
+    density: 600.0
+    stiffness: 1.0e8
+    damping: 0.10
+    break_strain: 0.010
+    yield_strain: 0.003
+    plasticity_rate: 20.0
+    render_color: [140, 95, 55]
+    damage_color: [50, 25, 12]
+  rubber:
+    # Hyperelastic — large elastic range (15%) before plastic flow kicks in.
+    # plasticity_rate is high (1000) so that *past* yield it flows rapidly,
+    # but yield_strain=0.150 means it almost never crosses that threshold in
+    # normal gameplay. Net effect: feels springy and bouncy, only crumples
+    # under extreme strain.
+    density: 1100.0
+    stiffness: 5.0e5
+    damping: 0.30
+    break_strain: 0.300
+    yield_strain: 0.150
+    plasticity_rate: 1000.0
+    render_color: [50, 50, 55]
+    damage_color: [20, 10, 10]
+  bone:
+    density: 1800.0
+    stiffness: 4.0e8
+    damping: 0.05
+    break_strain: 0.008
+    yield_strain: 0.005
+    plasticity_rate: 3.0
+    render_color: [230, 220, 195]
+    damage_color: [120, 40, 30]
+  muscle:
+    density: 1050.0
+    stiffness: 1.0e6
+    damping: 0.25
+    break_strain: 0.150
+    yield_strain: 0.080
+    plasticity_rate: 30.0
+    render_color: [170, 50, 55]
+    damage_color: [80, 10, 12]
+  skin:
+    density: 1100.0
+    stiffness: 3.0e5
+    damping: 0.20
+    break_strain: 0.250
+    yield_strain: 0.150
+    plasticity_rate: 20.0
+    render_color: [210, 165, 130]
+    damage_color: [120, 30, 25]
+  tire_rubber:
+    # Stiffer than plain rubber (tires are reinforced), large elastic range.
+    density: 1500.0
+    stiffness: 8.0e6
+    damping: 0.40
+    break_strain: 2.000
+    yield_strain: 0.350
+    plasticity_rate: 0.2
+    render_color: [35, 35, 38]
+    damage_color: [15, 8, 8]
+  suspension:
+    # Spring-like: small yield, near-zero plastic flow rate — effectively
+    # purely elastic in normal use. break_strain large so suspension never
+    # snaps from compression alone.
+    density: 2500.0
+    stiffness: 6.0e7
+    damping: 0.65
+    break_strain: 1.500
+    yield_strain: 0.001
+    plasticity_rate: 0.05
+    render_color: [120, 130, 145]
+    damage_color: [60, 35, 30]
+
+# Forward-splat renderer (softbody.render.SoftBodyRenderer).
+render:
+  width: 320                       # output image width in pixels
+  height: 240                      # output image height in pixels
+  bg_top: [8, 8, 22]               # gradient sky top RGB
+  bg_bottom: [24, 28, 52]          # gradient sky bottom RGB
+  floor_color: [80, 80, 90]        # floor line colour
+  beam_thickness: 1.6              # capsule half-thickness in world pixels
+  node_radius: 1.4                 # node dot radius in world pixels
+  broken_beam_dim: 0.25            # broken beams drawn at this fraction of base brightness; <=0 omits
+  draw_broken: true                # render broken beams (faintly) at all
+  draw_nodes: false                # render node dots (debug overlay; alias for debug_show_nodes)
+  draw_skin_fill: true             # fill outer-ring polygon for layered creatures
+  debug_show_beams: false          # render beam wireframe (debug-only; flip ON to see lattice)
+  debug_show_nodes: false          # render node dots (debug-only; new canonical name)
+  texture_deform: false            # warp source PNG to follow body mesh (skin override)
+  texture_image_path: null         # path to PNG sampled for texture_deform; null = checkerboard default
+  damage_break_count_max: 6        # node fully damage-tinted when this many incident beams broke
+  damage_skin_strain_max: 0.25     # skin polygon brightness modulated by mean broken fraction
+  light_dir: [-0.6, -0.8]          # 2D directional light (unit vector points TOWARD light source)
+  light_ambient: 0.45              # ambient term applied even on unlit beams
+  light_diffuse: 0.55              # diffuse coefficient against beam normal
+  bloom_threshold: 0.85            # luminance above this contributes to bloom (0..1)
+  bloom_radius: 2                  # box-blur radius for bloom pass; 0 disables
+  bloom_strength: 0.55             # additive bloom gain
+  tonemap_exposure: 1.05           # Reinhard exposure multiplier
+  tonemap_gamma: 2.2               # gamma for output
+
+# Topology builder defaults.
+builders:
+  lattice:
+    diagonal_stiffness_scale: 0.7    # diagonals slightly softer than axial beams
+  creature:
+    cross_layer_stiffness_scale: 0.6 # radial beams softer than tangential ring beams
+
+# Vehicle builder (softbody.vehicle.build_vehicle).
+vehicle:
+  chassis_width: 6                  # lattice cells along x
+  chassis_height: 3                 # lattice cells along y
+  chassis_cell_size: 0.40           # metres per chassis cell
+  chassis_material: steel           # base `steel` is now tuned for vehicle
+                                    # use (yield=0.008, plasticity=200) — the
+                                    # old `chassis_steel` workaround has been
+                                    # folded into the base material.
+  chassis_density_scale: 0.55       # chassis is partially hollow (scales node mass).
+                                    # 0.10 was too light: wheel torque flexed the chassis
+                                    # more than the suspension compressed, so the body
+                                    # folded onto the wheels and dragged on the ground.
+                                    # Bumped 0.35 -> 0.55 to lower the CoG ratio against
+                                    # the wheels (chassis sits heavier on suspension)
+                                    # so the vehicle no longer tips upside down on
+                                    # uneven terrain.
+  chassis_corner_brace_scale: 6.0   # extra full-corner-to-corner diagonals across the
+                                    # whole chassis at this stiffness multiplier.
+                                    # Provides global structural rigidity beyond the
+                                    # per-cell diagonals (which only locally triangulate).
+                                    # Bumped from 1.5 -> 4.0 -> 6.0 because the chassis
+                                    # was still bending under wheel torque + impacts,
+                                    # which let the body rotate around the wheel hubs
+                                    # and end up inverted.
+  rim_count: 12                     # nodes around each wheel rim
+  wheel_radius: 0.35                # default wheel radius in metres
+  hub_mass_scale: 4.0               # hub node mass = scale * (tire_rubber density * cell_area)
+  rim_mass_scale: 1.0               # rim node mass = scale * (tire_rubber density * (2*pi*r/rim_count)^2)
+  use_cross_spokes: true            # adds rim_i <-> rim_(i+rim_count/2) torsional beams
+  cross_spoke_stiffness_scale: 0.5  # cross spokes softer than radial spokes
+  spring_stiffness_scale: 1.0       # multiplier on suspension material stiffness for spring beams
+  arm_stiffness_scale: 8.0          # multiplier for upper control-arm beams (lateral stiffness)
+                                    # — must be high so the wheel only moves along the
+                                    # near-vertical spring axis, not floppy sideways.
+  suspension_damping_boost: 1.0     # adds to material damping for suspension beams
+  tire_material: tire_rubber
+  suspension_material: suspension
+  drivetrain_max_torque: 480.0      # N*m at full throttle (per drive wheel)
+  drivetrain_mode: rwd              # rwd, fwd, awd (rwd = last wheel, fwd = first wheel)
+  rim_radial_stiffness_scale: 1.0   # spoke stiffness multiplier
+  rim_circumferential_stiffness_scale: 1.0  # tread stiffness multiplier
+  gravity: [0.0, 12.0]              # vehicle scene gravity override (used by demo only).
+                                    # 9.81 left the chassis under-pressed on bumpy
+                                    # terrain — wheel impulses could pop the body up
+                                    # higher than its weight resisted, so it ended
+                                    # inverted. 12.0 keeps the wheels planted while
+                                    # only marginally affecting drop-test ms numbers.

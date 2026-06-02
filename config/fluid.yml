@@ -1,0 +1,194 @@
+# Position-Based Fluids — XPBD-style particle simulator (2D).
+# All numeric defaults for the fluid solver live here. Math + 2D kernel
+# normalisation are documented in docs/fluid_design.md.
+
+world:
+  gravity: [0.0, 9.81]            # m/s^2, positive y = downward
+  default_dt: 0.016667            # 1/60 — render-frame step
+  substeps: 4                     # PBF substeps per render frame
+  iters: 4                        # density-constraint iterations per substep
+  floor_y: 5.0                    # ground plane (positions clamped to <= floor_y)
+  wall_x_min: -10.0               # left wall (positions clamped to >= wall_x_min); set to -inf to disable
+  wall_x_max:  10.0               # right wall
+  ceiling_y:  -1000.0             # ceiling (positions clamped to >= ceiling_y).
+                                  # was -10: launched particles pinned there and took
+                                  # >4s to fall back under gravity, appearing stranded
+                                  # mid-air in short demos. Effectively-disabled by
+                                  # placing it far above any reasonable scene.
+  velocity_epsilon: 1.0e-9        # divide-by-zero guard
+  max_velocity: 20.0              # clamp on |v| after re-derivation to prevent runaway.
+                                  # was 40: a hard impact launched particles at 40 m/s,
+                                  # reaching y=-10 (old ceiling) in ~0.5s and then
+                                  # taking >4s to fall back. 20 m/s caps the launch
+                                  # height to ~20 m which falls back in ~2s.
+  water_density: 1000.0           # kg/m^3 — Archimedes upthrust constant used by
+                                  # apply_fluid_buoyancy(). Read by buoyancy.py
+                                  # when caller doesn't pass an explicit override.
+
+# Solver knobs.
+solver:
+  particle_spacing: 0.075         # initial inter-particle distance (m); kernel_radius is set to 2x this by builders
+  s_corr_dq_scale: 0.3            # delta-q for surface-tension cohesion = scale * kernel_radius
+  vorticity_eps: 0.0              # confinement vorticity strength (0 disables)
+  xsph_enabled: true              # XSPH velocity smoothing pass
+  density_floor_factor: 0.0       # density-constraint is C = max(rho/rho0 - 1, density_floor_factor)
+                                  # 0 = clamp-to-zero (only repulsive); negative = also pull (less stable)
+
+# Granular materials (sand / gravel / dust) — Coulomb friction at particle contacts.
+# Friction is applied as a position correction (PBD form) AFTER the density-projection
+# iterations, using the same neighbour table. tan(repose_angle) = friction_coef.
+granular:
+  enabled: true                   # master toggle for the friction pass
+  contact_radius_factor: 0.55     # contact radius = factor * kernel_radius (overlap threshold)
+  friction_dt_scale: 1.0          # multiplies the PBD friction position correction magnitude
+  tangential_velocity_eps: 1.0e-6 # divide-by-zero guard for the tangential direction
+  normal_proxy_floor_factor: 0.15 # cap = mu * (pen + factor*contact_radius); raises friction
+                                  # in near-equilibrium where pen->0. 0.0 = pure Coulomb form.
+  friction_defaults:
+    sand: 0.6
+    gravel: 0.8
+    dust: 0.35
+
+# Thermal pass — heat diffusion + ambient relaxation + phase change.
+# Only acts on particles whose material has thermal_conductivity > 0.
+# Phase change is per-particle: when temperature crosses melt/freeze
+# threshold from the material catalog, material_id flips to the new
+# material (e.g. lava → stone, ice → water).
+thermal:
+  enabled: true
+  diffusion_rate: 5.0             # multiplier on harmonic-mean conductivity per substep
+  ambient_rate: 0.2               # Newton's-law cooling rate toward material ambient T (1/s)
+
+# Particle ↔ softbody contact — uses the existing softbody spatial hash form.
+contact:
+  enabled: true                   # master toggle for fluid-softbody contact
+  thickness: 0.05                 # capsule half-thickness in metres
+  stiffness: 1.0e6                # XPBD contact compliance against softbody beams
+  broadphase_cell_factor: 1.5     # uniform-grid cell size = max(kernel_radius, max_beam_rest) * factor
+
+# Material catalog. THIS is the source of truth for fluid material defaults —
+# material.py only defines the dataclass and the load function.
+#
+# Phase change: if a material has melt_temperature/melt_to or
+# freeze_temperature/freeze_to set, a particle whose temperature crosses
+# the threshold flips to the named material (e.g. lava -> stone at 600 C,
+# ice -> water at 0 C).
+materials:
+  water:
+    rest_density: 1000.0
+    kernel_radius: 0.15
+    relaxation_eps: 600.0
+    viscosity: 0.01
+    surface_tension: 0.0001
+    surface_tension_n: 4.0
+    particle_mass: 1.0
+    friction_coef: 0.0
+    is_granular: false
+    render_color: [60, 140, 220]
+    halo_color: [180, 220, 255]
+    thermal_conductivity: 0.6
+    ambient_temperature: 20.0
+    freeze_temperature: 0.0
+    freeze_to: ice
+  lava:
+    rest_density: 2800.0
+    kernel_radius: 0.18
+    relaxation_eps: 1200.0
+    viscosity: 0.20
+    surface_tension: 0.0
+    surface_tension_n: 4.0
+    particle_mass: 1.0
+    friction_coef: 0.0
+    is_granular: false
+    # Lava colors are deliberately HDR-bright. The Reinhard tonemap
+    # (x / (1 + x)) crushes mid-range values, so pre-tonemap RGB
+    # (255, 50, 0) lands around (200, 95, 38) post-tonemap — still
+    # unmistakably hot orange. Sub-200 reds wash out to tan/beige.
+    render_color: [255, 50, 0]
+    halo_color: [255, 220, 80]
+    thermal_conductivity: 3.5
+    ambient_temperature: 20.0       # cools toward room temp
+    freeze_temperature: 600.0       # solidifies below 600 C
+    freeze_to: stone
+  ice:
+    rest_density: 920.0
+    kernel_radius: 0.14
+    relaxation_eps: 2200.0
+    viscosity: 0.0
+    surface_tension: 0.0
+    surface_tension_n: 4.0
+    particle_mass: 1.0
+    friction_coef: 0.4              # ice particles slide somewhat
+    is_granular: true               # treat as granular so it stacks rather than flows
+    render_color: [200, 230, 255]
+    halo_color: [230, 245, 255]
+    thermal_conductivity: 2.2
+    ambient_temperature: 20.0
+    melt_temperature: 0.0           # melts above 0 C
+    melt_to: water
+  stone:
+    rest_density: 2700.0
+    kernel_radius: 0.16
+    relaxation_eps: 3000.0
+    viscosity: 0.0
+    surface_tension: 0.0
+    surface_tension_n: 4.0
+    particle_mass: 1.0
+    friction_coef: 0.9
+    is_granular: true
+    render_color: [95, 90, 85]
+    halo_color: [130, 125, 115]
+    thermal_conductivity: 2.0
+    ambient_temperature: 20.0
+    melt_temperature: 1200.0        # melts back to lava if heated
+    melt_to: lava
+  sand:
+    rest_density: 1600.0
+    kernel_radius: 0.12
+    relaxation_eps: 2000.0
+    viscosity: 0.0
+    surface_tension: 0.0
+    surface_tension_n: 4.0
+    particle_mass: 1.0
+    friction_coef: 0.6
+    is_granular: true
+    render_color: [210, 180, 110]
+    halo_color: [240, 220, 170]
+  gravel:
+    rest_density: 2100.0
+    kernel_radius: 0.14
+    relaxation_eps: 2400.0
+    viscosity: 0.0
+    surface_tension: 0.0
+    surface_tension_n: 4.0
+    particle_mass: 1.0
+    friction_coef: 0.8
+    is_granular: true
+    render_color: [140, 130, 120]
+    halo_color: [180, 170, 160]
+  dust:
+    rest_density: 900.0
+    kernel_radius: 0.11
+    relaxation_eps: 1400.0
+    viscosity: 0.0
+    surface_tension: 0.0
+    surface_tension_n: 4.0
+    particle_mass: 1.0
+    friction_coef: 0.35
+    is_granular: true
+    render_color: [190, 175, 150]
+    halo_color: [220, 210, 195]
+
+# Renderer (fluid.render.FluidRenderer).
+render:
+  width: 320
+  height: 240
+  bg_top: [4, 8, 22]
+  bg_bottom: [12, 18, 40]
+  floor_color: [70, 70, 80]
+  wall_color: [50, 55, 70]
+  particle_radius_px: 2.4         # filled-circle radius in screen pixels
+  halo_radius_px: 4.0             # outer soft halo radius in screen pixels
+  halo_alpha: 0.45                # halo blend opacity
+  tonemap_exposure: 1.0
+  tonemap_gamma: 2.2

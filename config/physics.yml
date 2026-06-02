@@ -1,0 +1,214 @@
+# Physics v2 — Hierarchical Sparse Hulls (engine-side)
+# All tunable numeric defaults for the per-pixel + per-hull simulator live here.
+# Edit a value here and re-load the engine — no Python edits required.
+
+world:
+  default_dt: 0.016667                 # 1/60 — render-frame step
+  substeps: 4                          # solver substeps per render frame for CFL stability
+  gravity: [0.0, 196.0]                # px/s^2 (positive y = downward in our convention)
+
+hull:
+  # Tier thresholds — the disagreement metric is the variance/range of per-cell
+  # state inside a hull. Hulls promote to a higher tier when ANY metric exceeds
+  # its HIGH threshold; they demote when ALL metrics stay below LOW for K frames.
+  promote_velocity_std: 0.5            # std(v) crossing this promotes the hull
+  promote_damage_std: 0.05
+  promote_stress_max: 0.4
+  promote_density_var: 0.04            # variance of density inside the hull
+  promote_n_unique_materials: 1.5      # any value > 1 means mixed materials → subdivide
+  demote_velocity_std: 0.1             # lower hysteresis bound
+  demote_damage_std: 0.01
+  demote_stress_max: 0.05
+  demote_density_var: 0.005
+  demote_hysteresis_frames: 4          # K — frames a hull must stay quiet before coalescing
+  settle_frames: 30                    # frames after last activation that a hull stays warm
+
+  # √2 concentric-layer geometry
+  layer_radius_ratio: 1.41421356       # sqrt(2)
+  flower_of_life_neighbours: 6         # six ring children + one centre = 7 children per subdivide
+
+  # Initial capacity hints (pool grows on demand)
+  initial_hull_capacity: 256
+  initial_cell_grid_capacity: 64
+  growth_factor: 2.0
+
+cell:
+  # Pixel/cell tunables that used to be hardcoded in the WGSL kernel.
+  grid_size: 32                         # one T2 hull owns a 32x32 grid
+  workgroup_size: 8                     # WGSL workgroup_size(8, 8) → matches grid tile
+
+  # Yield + plasticity tuning (was hardcoded in the WGSL kernel)
+  damping_when_torn: 0.999              # near-1.0 damping when a pixel's bonds are all gone
+  bond_intact_threshold: 0.7            # tear value at which bond_intact starts dropping
+  bond_intact_slope: 3.0                # rate at which bond_intact drops past threshold
+
+  # Brittle path tuning
+  brittle_damage_rate: 18.0             # damage gain per (vm - brittle_eff) * dt
+  brittle_tear_rate: 15.0
+  brittle_bond_loss_rate: 12.0
+  brittle_stretch_amplification: 3.0    # bond loss multiplied by (1 + stretch * this)
+  # Catastrophic severance (WP-V): when vm exceeds brittle_eff * this ratio
+  # the cell's bonds on both axes are dropped to ``brittle_catastrophic_bond_floor``
+  # in a single substep.  Models real brittle materials where stress past the
+  # critical envelope shatters the bond outright — there is no gradual
+  # accumulation at that cell.  Without this gate, per-substep ``bond_loss``
+  # only weakens impact-zone bonds to ~0.6-0.8 over the contact duration,
+  # leaving the wall diffusely damaged but topologically connected, so
+  # ``cc_label`` finds a single cluster and fragmentation never fires.
+  brittle_catastrophic_excess_ratio: 3.0
+  brittle_catastrophic_bond_floor: 0.0
+  brittle_catastrophic_damage_gate: 0.4
+
+  # Ductile path tuning
+  ductile_plastic_strain_rate: 0.4      # multiplier on principal-strain increment
+  ductile_poisson_ratio: 0.5            # d_eps_2 = -d_eps_1 * this
+  ductile_damage_rate: 3.0
+
+  # Stretch/tear path
+  tear_growth_rate: 8.0
+
+  # Thermal
+  thermal_softening_rate: 0.08          # soft_factor = 1 / (1 + heat * this)
+  damage_weakening_rate: 0.6            # damage_factor = 1 - clamp(dmg * this, 0, this)
+  melt_heat: 9.0                        # heat threshold for solid→liquid transition
+  melt_anneal_rate: 0.98                # plastic strain decays toward zero per frame when melted
+  melt_viscous_damping: 0.85            # velocity multiplied by this per frame when melted
+
+  # Heat diffusion + cooling
+  heat_diffusion_rate: 4.0              # Laplacian smoothing rate * dt
+  heat_damping_to_heat_factor: 0.5      # fraction of damped KE that becomes heat
+  heat_radiation_decay: 0.998           # per-frame radiation cooling
+  heat_strain_energy_factor: 2.0        # plastic-work → heat scaling
+
+  # Fluid path
+  fluid_pressure_coupling: 0.5          # pressure update scale
+  fluid_pressure_smoothing: 0.20        # pressure averaging factor with neighbours
+  fluid_pressure_decay: 0.99            # pressure radiation decay per frame
+
+  # Initial density of a fresh cell inside the silhouette
+  initial_density: 1.0
+  silhouette_mask_threshold: 0.05       # mask alpha below this = outside the body
+
+frontier:
+  # CPU A* tuning
+  distance_falloff: 0.1                 # priority /= (1 + dist * this)
+  age_penalty: 0.01                     # priority -= age * this
+  low_priority_close_threshold: 0.05    # A* stops expanding when remaining priorities < this
+
+conservation:
+  projection_interval_frames: 30        # Lagrange projection cadence per active root
+  mass_drift_warn: 0.005                # warn (log) if mass drift exceeds this fraction
+  momentum_drift_warn: 0.005
+
+collision:
+  contact_pair_max: 2048                # safety cap on per-frame broadphase pair count
+  ghost_row_width_px: 1                 # boundary-exchange seam thickness
+  # Below this closing speed (world units / sec) at a contact, restitution
+  # is treated as zero.  Box2D/Bullet call this the "velocity threshold"
+  # and use it to prevent settled stacks from buzzing — without it,
+  # rest * v_gravity is re-injected as KE every frame on every stacked
+  # contact, accumulating into spurious energy growth (see
+  # test_demo_sand_pile::test_sand_kinetic_energy_decays).  Physically:
+  # a ball only bounces above a finite tap; below it the contact is plastic.
+  #
+  # WP-R: this is the global default + ceiling.  Per-material thresholds
+  # on ``CellMaterial.restitution_velocity_threshold`` combine via
+  # ``min(mat_a, mat_b, global)`` at each contact — sand keeps 8.0, but
+  # brittle materials (glass, stone, concrete, ice, coral, paper, snow)
+  # opt down to ~0.5 so fracture impacts still register their full elastic
+  # kick on the cell field (the von-Mises stress driver reads the
+  # rest-modulated cell inject — see WP-R fracture regression).  Setting
+  # this to 0.0 disables the global ceiling and lets the per-material
+  # thresholds run unconstrained — that's the current default (sand still
+  # gates at its 8.0 per-material setting; brittles still gate at 0.5).
+  restitution_velocity_threshold: 0.0
+
+constraints:
+  enabled: true                         # set false to disable joint/constraint solver globally
+  iterations: 4                         # projected Gauss-Seidel iteration count per solve()
+
+gpu:
+  enabled: true                         # run the per-pixel kernel on the GPU when an adapter is available
+  debug_force_cpu: false                # GPU per-pixel substep is verified equivalent to CPU canonical (see test_gpu_silent_zero_regression.py); flip to true to force CPU for debugging
+  indirect_dispatch: true               # default-on: 30-32% faster on dispatch-heavy scenes (fluid, fracture); see docs/indirect_dispatch_decision.md
+  persistent_residency: true            # default-on: 6-8× faster on fluid/fracture, never slower; only uploads cells the CPU has dirtied since the last GPU substep. Flip to false to revert to legacy full-pool uploads when debugging stale-slot suspects. See docs/persistent_residency_decision.md
+
+boundary_exchange:
+  enabled: true                         # per-frame heat conduction across contact seams
+  strip_depth: 3                        # cells deep on each side of the seam that participate per frame
+
+gi:
+  # SVGF (spatiotemporal variance-guided filter) denoiser tunables. Consumed by
+  # slappyengine.gi.svgf.SVGFDenoiser and the matching WGSL shaders. See
+  # docs/svgf.md for derivations.
+  svgf:
+    phi_color: 10.0                     # luminance edge-stopping numerator (paired with sigma_lum*sqrt(variance))
+    phi_normal: 128.0                   # exponent for n.n' cosine edge-stopping
+    phi_depth: 1.0                      # depth-gradient suppression scale
+    sigma_lum: 4.0                      # variance multiplier in luma edge-stopping
+    temporal_alpha: 0.1                 # EMA blend; 0.1 keeps 90% of history
+    max_history: 32                     # cap on hist_len before saturating
+    wavelet_iters: 5                    # à-trous passes (step widths 1,2,4,8,16)
+    history_reset_mv_threshold: 0.5     # reproject motion-vector divergence (px) above which history is dropped
+    depth_reject_threshold: 0.05        # relative depth delta for disocclusion
+    normal_reject_threshold: 0.9        # cos(angle) below which history is dropped
+
+events:
+  # Threshold used by PhysicsEngineBridge's auto-publisher: contacts whose
+  # estimated impulse exceeds this fire "Physics.Impact" on the engine bus.
+  # Raise in production to filter chatter from resting stacks; lower for
+  # event-density debugging.  See slappyengine.physics.event_publisher.
+  impact_impulse_threshold: 1.0
+
+profile:
+  # Hardware/performance preset to overlay on the values above. One of:
+  #   desktop | mobile | web | high_end | auto
+  # "auto" picks `mobile` on constrained devices (<=4 cores AND <=4 GiB RAM)
+  # and `desktop` everywhere else. Applied via slappyengine.physics.load_with_profile().
+  active: "desktop"
+
+memory:
+  # Hard caps to prevent unattended scenes from allocating gigabytes of
+  # cell-grid storage. Enforced via slappyengine.physics.MemoryBudget.
+  max_bodies: 4096                      # cap on PhysicsWorld.bodies count
+  max_cell_pool_slots: 4096             # each slot is 64 KB -> 256 MB ceiling
+                                         # bumped from 1024: multi_body_50
+                                         # residency-parity tests instantiate
+                                         # two worlds with 50 bodies each, hit
+                                         # 1024 after ~7 frames.
+  max_particle_count: 65536             # caller passes the live count each frame
+  warn_at_fraction: 0.80                # warn when usage crosses 80% of any cap
+
+media:
+  # Defaults consumed by slappyengine.media.save_frames(). Override per-call
+  # by passing the matching kwarg; this section sets the engine-wide fallback.
+  fps: 30                               # playback frames per second for both .mp4 and .gif
+  quality: 7                            # MP4 quality knob (0-10; higher = better, larger)
+  loop: 0                               # GIF loop count (0 = forever)
+  palette_colors: 128                   # GIF palette size (max 256)
+  prefer_mp4: true                      # informational; callers pick MP4 by file extension
+
+bench:
+  # Engine-wide end-to-end benchmark thresholds. Consumed by
+  # python/tests/test_engine_perf_report.py (Sprint 7 perf gate). The pytest
+  # gate is intentionally loose so CI noise does not cause flakes; the docs/
+  # report records the actual measured numbers per scene.
+  warmup_frames: 2                      # frames excluded from per-scene statistics
+  bench_frames: 30                      # frames timed per scene (matches existing pytest budget)
+  capture_frames: 10                    # frames written to the perf-reference GIF per scene
+  # Per-scene fail thresholds, median ms/frame (CPU path). GPU path inherits
+  # the CPU cap (cannot be slower than CPU once warmed); breaking the cap is
+  # a regression, not a target. Generous to survive slow CI VMs.
+  cpu_budget_ms:
+    idle_settled: 5.0                   # 20 settled bodies, zero gravity (observed ~0.14 ms)
+    fluid_pool: 200.0                   # water + steel impactor (observed ~90 ms; Phase C floor ~115 ms)
+    fracture: 150.0                     # brittle-glass shatter (observed ~7.5 ms)
+    multi_body_50: 10.0                 # mixed-material 50-ball stress test (observed ~0.3 ms)
+  # Memory ceiling (tracemalloc peak bytes) per scene. Includes the
+  # bodies' initial cell-grid allocation, so even idle scenes carry a
+  # few MB of arena pressure. Generous to survive CI VM noise.
+  mem_budget_bytes:
+    idle_settled: 20_000_000            # observed ~4.4 MB
+    fluid_pool: 50_000_000              # observed ~13 MB
+    fracture: 20_000_000                # observed ~4.4 MB
+    multi_body_50: 30_000_000           # observed ~4.4 MB (50 bodies × ~32K cells each)
