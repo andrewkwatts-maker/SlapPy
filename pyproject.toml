@@ -60,6 +60,10 @@ network = [
 python-source = "python"
 module-name = "slappyengine._core"
 features = ["pyo3/extension-module"]
+# Strip debug symbols from the compiled _core extension to shrink wheel size.
+# Combined with [profile.release] strip = true in Cargo.toml, this drops the
+# wheel by ~30-50% on platforms where Cargo's strip doesn't fully apply.
+strip = true
 # Exclude development artifacts from the wheel
 exclude = [
     "**/__pycache__",
