@@ -91,14 +91,17 @@ from .serialize import (
 from .spring import SpringSpec, make_spring
 from .world import (
     OVERDAMPING_THRESHOLD,
+    DynamicsWorldLike,
     SoftBodyWorld,
     World,
+    WorldLike,
     estimate_effective_damping,
 )
 
 __all__ = [
     "Body",
     "BoneSpec",
+    "DynamicsWorldLike",
     "Humanoid",
     "IKChainSpec",
     "JointSpec",
@@ -115,6 +118,7 @@ __all__ = [
     "SoftBodyWorld",
     "SpringSpec",
     "World",
+    "WorldLike",
     "body_from_dict",
     "body_to_dict",
     "bone_spec_from_dict",

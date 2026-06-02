@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 import warnings
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 import numpy as np
 
@@ -415,9 +415,83 @@ class World:
 SoftBodyWorld = World
 
 
+# ---------------------------------------------------------------------------
+# WorldLike protocol — structural type used by ``solve_ik``,
+# ``resolve_joint_specs``, ``studio.dynamics_stage`` and other callers that
+# accept *either* a :class:`World` (XPBD dynamics substrate) or a
+# softbody-style world (e.g. ``slappyengine.softbody.SoftBodyWorld``).
+#
+# The de-facto duck type historically had a sparse interface:
+#
+# * dynamics.World exposes ``positions`` + ``step(dt)`` + ``gravity``.
+# * softbody.SoftBodyWorld exposes ``nodes.pos`` + ``gravity`` (its step lives
+#   at module scope: ``slappyengine.softbody.step(world)``).
+#
+# Because :class:`typing.Protocol` cannot express "either A or B" naturally,
+# we declare ``WorldLike`` with the minimum stable surface — ``gravity`` —
+# plus the two optional accessors. Callers that need a richer surface
+# (``positions``, ``nodes``, ``step``) can spell that out as a stricter
+# Protocol; :func:`solve_ik` deliberately stays loose because it only
+# touches the position view.
+# ---------------------------------------------------------------------------
+
+
+@runtime_checkable
+class WorldLike(Protocol):
+    """Structural type accepted by dynamics solvers, IK, and studio helpers.
+
+    A *WorldLike* is any object that exposes a ``gravity`` vector. In
+    practice the engine's two world flavours match:
+
+    * :class:`slappyengine.dynamics.World` (this module) — the XPBD
+      substrate. Has ``positions: np.ndarray``, ``step(dt)``, ``gravity``.
+    * :class:`slappyengine.softbody.SoftBodyWorld` — has ``nodes.pos`` and
+      ``gravity``; stepping goes through the module-level
+      ``slappyengine.softbody.step(world)`` function.
+
+    The protocol is intentionally minimal so callers can opt in to the
+    parts they need:
+
+    * :func:`solve_ik` reads positions via ``getattr(world, 'positions',
+      None) or world.nodes.pos`` — no ``step`` required.
+    * :func:`resolve_joint_specs` dispatches by ``isinstance(world,
+      World)`` first, then falls back to a ``beams.append`` duck for the
+      softbody path.
+    * :func:`slappyengine.studio.dynamics_stage` only accepts
+      :class:`World` because it owns the step loop.
+
+    Marked ``@runtime_checkable`` so user code can call
+    ``isinstance(obj, WorldLike)`` for defensive duck-typing. Note that
+    runtime-check only verifies the attribute exists, not its
+    signature/type.
+    """
+
+    gravity: Any
+
+
+@runtime_checkable
+class DynamicsWorldLike(WorldLike, Protocol):
+    """Tighter Protocol — a :class:`World`-shaped object.
+
+    Adds the dynamics-style ``positions`` array + ``step(dt)`` method on
+    top of :class:`WorldLike`. This is the Protocol used by
+    :func:`slappyengine.studio.dynamics_stage`'s default PIL renderer
+    (``positions``, ``inv_masses``, ``joints``) and by callers that own
+    their own step loop (``world.step(dt)``).
+    """
+
+    positions: np.ndarray
+    inv_masses: np.ndarray
+    joints: list[Any]
+
+    def step(self, dt: float) -> None: ...  # pragma: no cover — Protocol stub
+
+
 __all__ = [
-    "World",
-    "SoftBodyWorld",
-    "estimate_effective_damping",
+    "DynamicsWorldLike",
     "OVERDAMPING_THRESHOLD",
+    "SoftBodyWorld",
+    "World",
+    "WorldLike",
+    "estimate_effective_damping",
 ]

@@ -202,37 +202,13 @@ def _has_dotted(mod, dotted: str) -> bool:
 # to this set converts a hard failure into an xfail so the suite stays green
 # while the gaps remain visible in the test report. Removing an entry here
 # without landing the underlying export is a regression.
-_KNOWN_BROKEN: set[tuple[str, str]] = {
-    # Phase C closure added `_LAZY_MAP` entries pointing at these modules,
-    # but the modules themselves live in long-running uncommitted WIP
-    # (softbody/, trigger.py, deform_*, etc.). Pin-tracked here so the
-    # tripwire reports honest committed-master state. Each closes when
-    # the underlying module lands on master.
-    ("ochema_circuit", "build_vehicle"),
-    ("ochema_circuit", "VehicleSpec"),
-    ("ochema_circuit", "WheelSpec"),
-    ("ochema_circuit", "apply_drivetrain_torque"),
-    ("ochema_circuit", "CatmullRomSpline"),
-    ("ochema_circuit", "SplineTrack"),
-    ("ochema_circuit", "PlayerInputProvider"),
-    ("ochema_circuit", "PixelCollisionPass"),
-    ("ochema_circuit", "MotionBlurPass"),
-    ("ochema_circuit", "SimFrequencyBudget"),
-    ("ochema_circuit", "SimState"),
-    ("ochema_circuit", "DeformController"),
-    ("bullet_strata", "TriggerSystem"),
-    ("bullet_strata", "TriggerVolume"),
-    ("bullet_strata", "MaterialPreset"),
-    ("bullet_strata", "ZoneMap"),
-    ("bullet_strata", "CrackMode"),
-    ("bullet_strata", "PixelMaterialMap"),
-    ("bullet_strata", "DeformController"),
-    ("bullet_strata", "SimFrequencyBudget"),
-}
+_KNOWN_BROKEN: set[tuple[str, str]] = set()
 
 # Ratchet — known-broken can shrink but never grow without bumping
 # this number. A new entry forces an explicit acknowledgement.
-_KNOWN_BROKEN_MAX = 20
+# 2026-06-02: all 18 prior Phase-C gaps closed by `_LAZY_MAP` repointing;
+# set zeroed and ceiling lowered. See docs/dead_code_audit_2026_06_02.md.
+_KNOWN_BROKEN_MAX = 0
 
 
 def test_known_broken_set_within_ratchet() -> None:

@@ -30,6 +30,8 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from .world import WorldLike
+
 if TYPE_CHECKING:  # pragma: no cover
     from .world import World
 
@@ -498,7 +500,7 @@ def make_distance(
     )
 
 
-def resolve_joint_specs(world: Any, specs: list[JointSpec]) -> list[int]:
+def resolve_joint_specs(world: WorldLike, specs: list[JointSpec]) -> list[int]:
     """Install a batch of :class:`JointSpec` records into ``world``.
 
     Dispatch behaviour:

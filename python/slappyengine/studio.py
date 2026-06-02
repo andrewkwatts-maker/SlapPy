@@ -39,15 +39,45 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, Protocol, Union, runtime_checkable
 
+import numpy as np
 from PIL import Image
 
 from .media import save_frames
 
+if TYPE_CHECKING:  # pragma: no cover — typing-only forward refs
+    from .dynamics.world import DynamicsWorldLike
+
 
 ViewBox = tuple[float, float, float, float]
 Overlay = Callable[[Image.Image, ViewBox], Image.Image]
+
+
+@runtime_checkable
+class Renderable(Protocol):
+    """Structural type for objects produceable into per-frame imagery by
+    :func:`record` (and :meth:`Stage.record`).
+
+    A *Renderable* exposes a single ``render(frame: int)`` method that
+    returns a PIL image or a numpy RGBA array. Implementations are free
+    to capture their own world / view-box references at construction
+    time — the protocol only contracts the per-frame call.
+
+    This is the canonical adapter shape for the ``Stage.render_fn`` slot
+    (and for any callable-based render fn the user passes to
+    :func:`record`'s ``render_fn`` parameter). The shipped fluid /
+    softbody renderers do *not* match this Protocol directly — they take
+    ``render(world, view_box=...)`` — but the studio module wraps them
+    in :func:`record` so end users only see the per-frame contract.
+
+    Marked ``@runtime_checkable`` so tests and tooling can assert
+    ``isinstance(obj, Renderable)`` without having to know the concrete
+    class.
+    """
+
+    def render(self, frame: int) -> Union[Image.Image, np.ndarray]:  # noqa: D401
+        ...  # pragma: no cover — Protocol stub
 
 
 def output_path(name: str, demo_file: str | None = None,
@@ -438,7 +468,7 @@ def _default_dynamics_render(stage: Stage) -> Image.Image:
     return img
 
 
-def dynamics_stage(world: Any | None = None, *,
+def dynamics_stage(world: "DynamicsWorldLike | None" = None, *,
                    gravity: tuple[float, float] = (0.0, -9.81),
                    solver_iterations: int | None = None,
                    view_box: ViewBox = (-3.0, -3.0, 3.0, 3.0),
@@ -591,6 +621,7 @@ def translate(world, node_slice: tuple[int, int],
 
 
 __all__ = [
+    "Renderable",
     "Stage",
     "anchor",
     "centroid",

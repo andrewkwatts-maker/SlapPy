@@ -14,9 +14,10 @@ from typing import Any
 import numpy as np
 
 from ._validation import validate_anchor, validate_world
+from .world import WorldLike
 
 
-def _positions_view(world):
+def _positions_view(world: WorldLike) -> np.ndarray:
     """Return the ``(N, 2)`` positions array of either a dynamics ``World``
     or a softbody ``SoftBodyWorld`` (``world.nodes.pos``). The IK solver
     only needs random-access read/write to this array; the rest of the
@@ -96,7 +97,7 @@ def _rotate_about(point: np.ndarray, pivot: np.ndarray, angle: float) -> np.ndar
 
 def solve_ik(
     spec: IKChainSpec,
-    world,
+    world: WorldLike,
     iterations: int = 10,
     tolerance: float = 0.01,
 ) -> bool:

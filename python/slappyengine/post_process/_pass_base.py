@@ -47,9 +47,40 @@ legacy params-dict route stays intact bit-for-bit.
 from __future__ import annotations
 
 import struct
-from typing import Any, ClassVar, Optional, Sequence
+from typing import Any, ClassVar, Optional, Protocol, Sequence, runtime_checkable
 
 from .chain import PostProcessPass
+from ._ubo import UboField, compute_offsets, pack_struct
+
+
+# ---------------------------------------------------------------------------
+# PostProcessParams protocol
+# ---------------------------------------------------------------------------
+
+
+@runtime_checkable
+class PostProcessParams(Protocol):
+    """Structural type for ``PARAMS_LAYOUT``-driven post-process passes.
+
+    Any object that produces a packed-UBO ``bytes`` payload via
+    ``pack_params()`` satisfies this protocol. The shipped
+    :class:`PostProcessPassBase` subclasses (BloomPass, TonemapPass,
+    OutlinePass, …) expose their packed UBO via :meth:`params_to_bytes`;
+    :meth:`PostProcessPassBase.pack_params` is an alias kept in sync
+    with that method so every concrete pass already conforms.
+
+    The executor's runtime splice helper depends on the byte layout of
+    these UBOs being stable; this Protocol formalises the contract so
+    third-party passes (extensions, mods, generated chains) can be type-
+    checked against it without inheriting from
+    :class:`PostProcessPassBase`.
+
+    Marked ``@runtime_checkable`` so tests and tooling can verify
+    conformance via ``isinstance(obj, PostProcessParams)``.
+    """
+
+    def pack_params(self) -> bytes:  # noqa: D401
+        ...  # pragma: no cover — Protocol stub
 
 
 # ---------------------------------------------------------------------------
@@ -86,15 +117,38 @@ class PostProcessPassBase:
       walks the path with ``getattr`` fallback; missing sections return
       ``cls()`` with defaults.  When unset, subclasses override
       :meth:`from_config` themselves.
-    * ``PARAMS_LAYOUT`` — ``(struct_fmt, fields)`` tuple where
-      ``struct_fmt`` is the ``struct.pack`` format string (e.g.
-      ``"<ffff"``) and ``fields`` is a sequence of attribute-name
-      strings whose values get packed in order.  When set,
-      :meth:`params_to_bytes` packs the per-pass UBO directly.  When
-      ``None`` (default), subclasses override :meth:`params_to_bytes`
-      themselves or rely on the executor packing the ``params`` dict.
-    * ``DEPENDS_ON``   — optional tuple of pass labels that must
-      precede this one (mirrors ``RenderPass.depends_on``).
+    * ``PARAMS_LAYOUT`` — either:
+
+      - the legacy ``(struct_fmt, fields)`` tuple where
+        ``struct_fmt`` is the ``struct.pack`` format string and
+        ``fields`` is a sequence of attribute-name strings whose
+        values get packed in order, **or**
+      - a list of :class:`~slappyengine.post_process._ubo.UboField`
+        objects describing the std140-aligned UBO schema.  In this
+        case :meth:`params_to_bytes` packs via the shared
+        :func:`~slappyengine.post_process._ubo.pack_struct` helper
+        and subclasses provide field values via :meth:`_field_values`
+        returning a ``dict`` (when overriding) or via attribute
+        lookup on ``self``.
+
+      When set, :meth:`params_to_bytes` packs the per-pass UBO
+      directly.  When ``None`` (default), subclasses override
+      :meth:`params_to_bytes` themselves or rely on the executor
+      packing the ``params`` dict.
+    * ``EXTRA_BINDINGS`` — optional tuple/list of binding-name strings
+      that are merged into the ``params`` sideband dict by
+      :meth:`make_pass` from the keyword arguments forwarded to it.
+      Used by passes (TAA, GTAO, …) whose shader reads extra texture
+      bindings beyond the standard ping/pong pair.
+    * ``DEPENDS_ON``   — optional tuple/list of pass labels that must
+      precede this one (mirrors ``RenderPass.depends_on``); forwarded
+      to ``PostProcessPass.depends_on``.
+    * ``BLOB_SIZE``    — optional explicit byte-length of the packed
+      UBO.  When set, :meth:`params_to_bytes` truncates or right-pads
+      the output of :func:`pack_struct` to exactly this many bytes.
+      Used for legacy layouts (e.g. VolumetricFog) whose total size
+      is not a multiple of 16 — the helper's std140 round-up would
+      otherwise over-pad them.
     """
 
     # ---- declarative schema (subclasses override) -----------------------
@@ -103,8 +157,10 @@ class PostProcessPassBase:
     SHADER: ClassVar[Any] = _REQUIRED
     ENTRY: ClassVar[str] = "main"
     CONFIG_KEY: ClassVar[Optional[str]] = None
-    PARAMS_LAYOUT: ClassVar[Optional[tuple[str, Sequence[str]]]] = None
-    DEPENDS_ON: ClassVar[tuple[str, ...]] = ()
+    PARAMS_LAYOUT: ClassVar[Any] = None
+    DEPENDS_ON: ClassVar[Sequence[str]] = ()
+    EXTRA_BINDINGS: ClassVar[Sequence[str]] = ()
+    BLOB_SIZE: ClassVar[Optional[int]] = None
 
     # ---- subclass-init enforcement --------------------------------------
 
@@ -177,25 +233,53 @@ class PostProcessPassBase:
         Subclasses with config keys that don't map 1:1 onto
         ``PARAMS_LAYOUT`` (e.g. colour tuples vs flat r/g/b/a fields)
         should override this to return the *constructor* kwarg names.
+
+        Handles both the legacy ``(fmt, fields)`` tuple form and the
+        new ``[UboField, ...]`` list form.
         """
-        if cls.PARAMS_LAYOUT is None:
+        layout = cls.PARAMS_LAYOUT
+        if layout is None:
             return ()
-        # Strip the trailing pad fields (conventionally named "_pad…").
+        if cls._is_ubo_field_layout(layout):
+            return tuple(
+                f.name for f in layout if not f.name.startswith("_")
+            )
+        # Legacy ``(fmt, fields)`` tuple.
         return tuple(
-            f for f in cls.PARAMS_LAYOUT[1] if not f.startswith("_")
+            f for f in layout[1] if not f.startswith("_")
         )
+
+    @staticmethod
+    def _is_ubo_field_layout(layout: Any) -> bool:
+        """Return True when ``layout`` is a list/tuple of :class:`UboField`."""
+        if not isinstance(layout, (list, tuple)):
+            return False
+        if not layout:
+            return False
+        if isinstance(layout, tuple) and len(layout) == 2 and isinstance(layout[0], str):
+            # Legacy ``(fmt, fields)`` tuple has a string format as the
+            # first element — distinguishes it from a 2-element UboField list.
+            return False
+        return all(isinstance(f, UboField) for f in layout)
 
     # ---- UBO packing ----------------------------------------------------
 
     def params_to_bytes(self) -> bytes:
         """Pack the per-pass UBO using the declarative ``PARAMS_LAYOUT``.
 
-        Each entry in ``PARAMS_LAYOUT[1]`` is read by ``getattr(self,
-        name)`` and packed in declaration order via the
-        ``PARAMS_LAYOUT[0]`` format string.  Subclasses with computed
-        or coerced fields (booleans → u32, tuples → 3×f32, etc.)
-        should override :meth:`_field_values` to return the ordered
-        ``struct.pack`` argument tuple.
+        Supports two layout styles:
+
+        * Legacy ``(struct_fmt, fields)`` tuple — each name is read via
+          ``getattr(self, name)`` (overridable through
+          :meth:`_field_values`) and packed positionally by
+          ``struct.pack``.
+        * New ``[UboField, ...]`` list — values come from
+          :meth:`_field_values` returning a ``dict``, which is then
+          fed to :func:`pack_struct` for std140-aligned packing.
+
+        When ``BLOB_SIZE`` is set the result is truncated or
+        right-padded to that exact size — preserves legacy layouts
+        whose total length is not a multiple of 16.
 
         Raises
         ------
@@ -203,27 +287,55 @@ class PostProcessPassBase:
             If the subclass declares no ``PARAMS_LAYOUT`` and does not
             override ``params_to_bytes``.
         """
-        if self.PARAMS_LAYOUT is None:
+        layout = self.PARAMS_LAYOUT
+        if layout is None:
             raise NotImplementedError(
                 f"{type(self).__name__}: declare `PARAMS_LAYOUT` or "
                 f"override `params_to_bytes`."
             )
-        fmt, _fields = self.PARAMS_LAYOUT
-        return struct.pack(fmt, *self._field_values())
+        if self._is_ubo_field_layout(layout):
+            values = self._field_values()
+            if not isinstance(values, dict):
+                # Default ``_field_values`` returns a tuple; for the
+                # UboField path subclasses must override to return a
+                # dict.  Auto-derive from attribute names so simple
+                # passes don't need any override.
+                values = {
+                    f.name: (0 if f.name.startswith("_") else getattr(self, f.name))
+                    for f in layout
+                }
+            raw = pack_struct(layout, values)
+        else:
+            fmt, _fields = layout
+            raw = struct.pack(fmt, *self._field_values())
+        size = self.BLOB_SIZE
+        if size is not None:
+            if len(raw) > size:
+                raw = raw[:size]
+            elif len(raw) < size:
+                raw = raw + b"\x00" * (size - len(raw))
+        return raw
 
-    def _field_values(self) -> tuple[Any, ...]:
-        """Return the ordered struct.pack argument tuple.
+    def _field_values(self) -> Any:
+        """Return the ordered ``struct.pack`` args tuple, or dict for UboField.
 
         Default implementation reads each declared field from ``self``
         with ``getattr``.  Pad fields (names starting with ``_``) are
-        emitted as ``0``.  Override when fields need coercion (bool →
-        u32, etc.) — but the override should still call
-        ``self.params_to_bytes`` (or pack manually) to honour the
-        layout contract.
+        emitted as ``0`` (legacy tuple form).  For the UboField-list
+        layout the default ``params_to_bytes`` builds the values dict
+        directly from attribute lookup, so subclasses only need to
+        override this when fields need coercion (bool → u32, tuples →
+        vec3, etc.) — return a dict in that case.
         """
-        if self.PARAMS_LAYOUT is None:
+        layout = self.PARAMS_LAYOUT
+        if layout is None:
             return ()
-        _fmt, fields = self.PARAMS_LAYOUT
+        if self._is_ubo_field_layout(layout):
+            return {
+                f.name: (0 if f.name.startswith("_") else getattr(self, f.name))
+                for f in layout
+            }
+        _fmt, fields = layout
         out: list[Any] = []
         for name in fields:
             if name.startswith("_"):
@@ -231,6 +343,18 @@ class PostProcessPassBase:
             else:
                 out.append(getattr(self, name))
         return tuple(out)
+
+    def pack_params(self) -> bytes:
+        """Alias for :meth:`params_to_bytes` matching the
+        :class:`PostProcessParams` protocol.
+
+        Third-party / extension passes that don't inherit from
+        :class:`PostProcessPassBase` only need to implement
+        ``pack_params`` to satisfy the structural type used by the
+        executor's UBO splice helper. The base class provides this alias
+        so every shipped pass conforms without code changes.
+        """
+        return self.params_to_bytes()
 
     # ---- params dict (executor-side packing route) ---------------------
 
@@ -248,7 +372,7 @@ class PostProcessPassBase:
 
     # ---- pass factory ---------------------------------------------------
 
-    def make_pass(self) -> PostProcessPass:
+    def make_pass(self, **bindings: Any) -> PostProcessPass:
         """Build the :class:`PostProcessPass` record for the executor.
 
         When ``PARAMS_LAYOUT`` is declared, the UBO is packed directly
@@ -261,11 +385,23 @@ class PostProcessPassBase:
         route), the ``params_dict()`` becomes the ``params`` field and
         the executor's ``_make_params_buffer`` handles layout.
 
-        Subclasses with non-trivial binding setup (extra texture
-        bindings, runtime arguments) should override this and call
-        ``super().make_pass()`` to get the base record, then mutate
-        ``params`` to inject the bindings.
+        Keyword args matching :attr:`EXTRA_BINDINGS` names are merged
+        into the params sideband dict.  Unknown kwargs raise
+        ``TypeError`` so a typo (e.g. ``albedo_text=`` instead of
+        ``albedo_tex=``) fails loudly at call time.
+
+        Subclasses with non-trivial binding setup (renamed kwargs,
+        defaults, etc.) should override this and call
+        ``super().make_pass(**bindings)`` to get the base record.
         """
+        extra = tuple(self.EXTRA_BINDINGS)
+        unknown = [k for k in bindings if k not in extra]
+        if unknown:
+            raise TypeError(
+                f"{type(self).__name__}.make_pass: unknown binding "
+                f"kwargs {unknown!r}; expected one of {list(extra)!r}"
+            )
+
         raw: Optional[bytes]
         if self.PARAMS_LAYOUT is not None:
             raw = self.params_to_bytes()
@@ -273,6 +409,13 @@ class PostProcessPassBase:
         else:
             raw = None
             params = self.params_dict()
+
+        if extra:
+            params = dict(params)
+            for name in extra:
+                if name in bindings:
+                    params[name] = bindings[name]
+
         return PostProcessPass(
             shader_path=self.SHADER,
             label=self.label,
@@ -283,4 +426,4 @@ class PostProcessPassBase:
         )
 
 
-__all__ = ["PostProcessPassBase"]
+__all__ = ["PostProcessParams", "PostProcessPassBase"]

@@ -283,8 +283,10 @@ _LAZY_MAP: dict[str, str] = {
     "ParticleEmitter":    ".particles",
     "PixelMaterialMap":   ".pixel_material",
     "Observable":         ".event_bus",
-    "CacheMode":          ".residency.manager",
     # residency
+    # ("CacheMode" already mapped above next to PixelCollisionPass — the
+    # duplicate key was a 2026-05 merge artefact; see
+    # docs/dead_code_audit_2026_06_02.md.)
     "ResidencyManager": ".residency.manager",
     # animation
     "AnimationGraph":   ".animation.graph",
