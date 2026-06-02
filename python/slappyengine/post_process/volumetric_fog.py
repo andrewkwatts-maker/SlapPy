@@ -1,25 +1,14 @@
+"""Volumetric fog post-process pass."""
 from __future__ import annotations
-import struct
-from .chain import PostProcessPass
+
+from typing import Any
+
+from ._pass_base import PostProcessPassBase
+from ._ubo import UboField
+
 
 _SHADER = "volumetric_fog.wgsl"
 _ENTRY  = "main"
-
-# VolumetricParams layout (132 bytes, std140):
-#   inv_proj      : mat4x4<f32>   offset   0  (64 bytes)
-#   fog_color     : vec3<f32>     offset  64  (12 bytes)
-#   fog_density   : f32           offset  76
-#   scatter_g     : f32           offset  80
-#   fog_start     : f32           offset  84
-#   fog_end       : f32           offset  88
-#   sun_intensity : f32           offset  92
-#   sun_dir       : vec3<f32>     offset  96  (12 bytes)
-#   ambient       : f32           offset 108
-#   num_steps     : u32           offset 112  — executor may override
-#   width         : u32           offset 116  — executor fills
-#   height        : u32           offset 120  — executor fills
-#   time          : f32           offset 124
-#   _pad          : f32           offset 128
 
 _IDENTITY_MAT4 = (
     1.0, 0.0, 0.0, 0.0,
@@ -31,8 +20,40 @@ _DEFAULT_FOG_COLOR = (0.8, 0.85, 0.9)
 _DEFAULT_SUN_DIR   = (0.0, -1.0, 0.0)
 
 
-class VolumetricFog:
+# VolumetricParams std140 layout — 132 bytes (matches the WGSL struct
+# byte-for-byte; the trailing _pad : f32 leaves the total at 132,
+# *not* rounded up to 144, to preserve legacy byte parity).
+_VFOG_UBO_FIELDS = [
+    UboField(name="inv_proj_r0",   dtype="vec4f", offset=0),
+    UboField(name="inv_proj_r1",   dtype="vec4f", offset=16),
+    UboField(name="inv_proj_r2",   dtype="vec4f", offset=32),
+    UboField(name="inv_proj_r3",   dtype="vec4f", offset=48),
+    UboField(name="fog_color",     dtype="vec3f", offset=64),
+    UboField(name="fog_density",   dtype="f32",   offset=76),
+    UboField(name="scatter_g",     dtype="f32",   offset=80),
+    UboField(name="fog_start",     dtype="f32",   offset=84),
+    UboField(name="fog_end",       dtype="f32",   offset=88),
+    UboField(name="sun_intensity", dtype="f32",   offset=92),
+    UboField(name="sun_dir",       dtype="vec3f", offset=96),
+    UboField(name="ambient",       dtype="f32",   offset=108),
+    UboField(name="num_steps",     dtype="u32",   offset=112),
+    UboField(name="width",         dtype="u32",   offset=116),
+    UboField(name="height",        dtype="u32",   offset=120),
+    UboField(name="time",          dtype="f32",   offset=124),
+    UboField(name="_pad",          dtype="f32",   offset=128),
+]
+
+
+class VolumetricFog(PostProcessPassBase):
     label = "volumetric_fog"
+
+    # ----- PostProcessPassBase declarative schema -----
+    SHADER = _SHADER
+    ENTRY = _ENTRY
+    PARAMS_LAYOUT = _VFOG_UBO_FIELDS
+    # 132-byte legacy layout — BLOB_SIZE trims the helper's std140
+    # round-up (which would otherwise push the buffer to 144 bytes).
+    BLOB_SIZE = 132
 
     def __init__(
         self,
@@ -76,34 +97,32 @@ class VolumetricFog:
             max_dist=fog.max_dist,
         )
 
-    def make_pass(self) -> PostProcessPass:
+    # ----- UBO field-value adapter -----
+    def _field_values(self) -> dict[str, Any]:
+        m = self.inv_proj
         fc = list(self.fog_color)[:3]
+        while len(fc) < 3:
+            fc.append(0.0)
         sd = list(self.sun_dir)[:3]
-
-        # Packs in exact field order from VolumetricParams (volumetric_fog.wgsl):
-        #   inv_proj(16f) fog_color(3f) fog_density scatter_g fog_start fog_end
-        #   sun_intensity sun_dir(3f) ambient(f) num_steps(I) width(I) height(I)
-        #   time(_pad positions handled by executor splicing width/height)
-        raw = struct.pack(
-            "<16f3ffffff3ffIIIff",
-            *self.inv_proj,     # inv_proj       offsets 0-63
-            *fc,                # fog_color       offsets 64-75
-            self.density,       # fog_density     offset 76
-            self.phase_g,       # scatter_g       offset 80
-            self.fog_start,     # fog_start       offset 84
-            self.max_dist,      # fog_end         offset 88
-            self.sun_intensity, # sun_intensity   offset 92
-            *sd,                # sun_dir         offsets 96-107
-            self.ambient,       # ambient         offset 108
-            self.num_steps,     # num_steps u32   offset 112
-            0,                  # width  u32      offset 116  — executor fills
-            0,                  # height u32      offset 120  — executor fills
-            self.time,          # time            offset 124
-            0.0,                # _pad            offset 128
-        )
-        return PostProcessPass(
-            shader_path=_SHADER,
-            label=self.label,
-            entry_point=_ENTRY,
-            raw_params_bytes=raw,
-        )
+        while len(sd) < 3:
+            sd.append(0.0)
+        return {
+            "inv_proj_r0":   (float(m[0]),  float(m[1]),  float(m[2]),  float(m[3])),
+            "inv_proj_r1":   (float(m[4]),  float(m[5]),  float(m[6]),  float(m[7])),
+            "inv_proj_r2":   (float(m[8]),  float(m[9]),  float(m[10]), float(m[11])),
+            "inv_proj_r3":   (float(m[12]), float(m[13]), float(m[14]), float(m[15])),
+            "fog_color":     (float(fc[0]), float(fc[1]), float(fc[2])),
+            "fog_density":   float(self.density),
+            "scatter_g":     float(self.phase_g),
+            "fog_start":     float(self.fog_start),
+            "fog_end":       float(self.max_dist),
+            "sun_intensity": float(self.sun_intensity),
+            "sun_dir":       (float(sd[0]), float(sd[1]), float(sd[2])),
+            "ambient":       float(self.ambient),
+            "num_steps":     int(self.num_steps),
+            # width/height filled by executor splice at dispatch time.
+            "width":         0,
+            "height":        0,
+            "time":          float(self.time),
+            "_pad":          0,
+        }

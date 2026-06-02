@@ -57,10 +57,10 @@ headlessly (no wgpu adapter required).
 from __future__ import annotations
 
 import math
-import struct
-from typing import Tuple
+from typing import Any, Tuple
 
-from .chain import PostProcessPass
+from ._pass_base import PostProcessPassBase
+from ._ubo import UboField
 from ._validation import (
     validate_non_negative_float,
     validate_unit_interval,
@@ -70,21 +70,22 @@ from ._validation import (
 _SHADER = "contact_shadows_depth.wgsl"
 _ENTRY  = "main"
 
-# ContactShadowsParams layout (32 bytes, std140-compatible):
-#   light_dir        : vec3<f32>    offset  0   (12 bytes)
-#   samples          : u32          offset 12   ( 4 bytes)
-#   max_distance     : f32          offset 16   ( 4 bytes)
-#   thickness        : f32          offset 20   ( 4 bytes)
-#   blend            : f32          offset 24   ( 4 bytes)
-#   compose_mode     : u32          offset 28   ( 4 bytes)  # round-14
+# ContactShadowsParams std140 layout (32 bytes).  ``samples`` packs into
+# the trailing 4-byte slot of ``light_dir`` (the WGSL vec3 / scalar
+# trick); compose_mode reuses the previously-padding u32 at offset 28.
 #
-# Round 14 reuses the previously-padding u32 at offset 28 for the
-# composition-mode selector so the struct stays exactly 32 bytes — no
-# binding rebinds required.  Encoding:
+# compose_mode encoding (u32):
 #     0 = "min"             (legacy multiplicative — round-13 default)
 #     1 = "max"             (round-14 preferred — never double-darkens)
 #     2 = "penumbra_gated"  (contact only where 0.1 < pcf < 0.9)
-_PARAMS_FMT = "<3fIfffI"
+_CONTACT_UBO_FIELDS = [
+    UboField(name="light_dir",    dtype="vec3f", offset=0),
+    UboField(name="samples",      dtype="u32",   offset=12),
+    UboField(name="max_distance", dtype="f32",   offset=16),
+    UboField(name="thickness",    dtype="f32",   offset=20),
+    UboField(name="blend",        dtype="f32",   offset=24),
+    UboField(name="compose_mode", dtype="u32",   offset=28),
+]
 
 _COMPOSE_MODES: dict[str, int] = {
     "min": 0,
@@ -258,7 +259,7 @@ def compose_with_main_shadow(
 # ---------------------------------------------------------------------------
 
 
-class ContactShadowsPass:
+class ContactShadowsPass(PostProcessPassBase):
     """Bouvier 2014 depth-buffer contact-shadow post-process pass.
 
     Parameters
@@ -299,6 +300,13 @@ class ContactShadowsPass:
     """
 
     label = "contact_shadows"
+
+    # ----- PostProcessPassBase declarative schema -----
+    SHADER = _SHADER
+    ENTRY = _ENTRY
+    PARAMS_LAYOUT = _CONTACT_UBO_FIELDS
+    DEPENDS_ON = ("shadow_csm",)
+    BLOB_SIZE = 32
 
     def __init__(
         self,
@@ -397,29 +405,22 @@ class ContactShadowsPass:
         """
         return self.samples == 0
 
-    def make_pass(self) -> PostProcessPass:
-        """Return a :class:`PostProcessPass` ready for the chain."""
-        raw = struct.pack(
-            _PARAMS_FMT,
-            self.light_dir[0],
-            self.light_dir[1],
-            self.light_dir[2],
-            int(self.samples),
-            float(self.max_distance),
-            float(self.thickness_threshold),
-            float(self.blend),
-            _COMPOSE_MODES[self.compose_mode],  # round-14: compose_mode u32
-        )
-        return PostProcessPass(
-            shader_path=_SHADER,
-            label=self.label,
-            entry_point=_ENTRY,
-            raw_params_bytes=raw,
-            # Contact shadows must run after the main CSM shadow pass
-            # so the composition step can read the up-to-date shadow
-            # mask.  The dependency name matches the ShadowCSM label.
-            depends_on=["shadow_csm"],
-        )
+    # ----- UBO field-value adapter -----
+    def _field_values(self) -> dict[str, Any]:
+        return {
+            "light_dir":    (self.light_dir[0], self.light_dir[1], self.light_dir[2]),
+            "samples":      int(self.samples),
+            "max_distance": float(self.max_distance),
+            "thickness":    float(self.thickness_threshold),
+            "blend":        float(self.blend),
+            "compose_mode": _COMPOSE_MODES[self.compose_mode],
+        }
+
+    # NOTE: ``make_pass`` is inherited from :class:`PostProcessPassBase`
+    # (no extra texture bindings beyond the standard ping/pong pair —
+    # the depth buffer is sourced from the executor's shared G-buffer).
+    # Contact shadows must run after the main CSM shadow pass; the
+    # dependency is declared via ``DEPENDS_ON`` above.
 
 
 __all__ = [

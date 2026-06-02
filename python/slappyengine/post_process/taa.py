@@ -1,31 +1,27 @@
+"""Temporal Anti-Aliasing (TAA) post-process pass.
+
+Round 5 of the TAA refinement work; the UBO grew to 48 bytes to make
+room for depth- and normal-disocclusion rejection (Andersson 2015,
+Karis 2014).  ``width`` and ``height`` stay pinned at offsets 8 and 12
+respectively so the executor's runtime-splice helper
+(``_splice_runtime_params``) can patch them at dispatch time without
+re-uploading the entire UBO.
+"""
 from __future__ import annotations
-import struct
-from typing import Optional
-from .chain import PostProcessPass
+
+from typing import Any, Optional
+
+from ._pass_base import PostProcessPassBase
+from ._ubo import UboField
 from ._validation import (
     validate_bool,
     validate_non_negative_float,
     validate_unit_interval,
 )
 
+
 _SHADER = "taa_resolve.wgsl"
 _ENTRY  = "taa_resolve_main"
-
-# TaaParams layout (48 bytes — round 5):
-#   blend_factor                  : f32   offset  0
-#   sharpening                    : f32   offset  4
-#   width                         : u32   offset  8  — executor splices actual resolution at runtime
-#   height                        : u32   offset 12
-#   karis_weight                  : u32   offset 16  — 0 = legacy linear blend, 1 = Karis luminance-inverse weighting
-#   tight_variance_clip           : u32   offset 20  — 0 = legacy min/max AABB, 1 = mean ± gamma*sigma (Salvi 2016)
-#   variance_clip_gamma           : f32   offset 24  — AABB tightness in stddev units (typical 1.0 .. 1.5)
-#   reject_on_depth_disocclusion  : u32   offset 28  — round 5: enable depth-break rejection (Andersson 2015)
-#   depth_disocclusion_threshold  : f32   offset 32  — NDC |Δdepth| above which history is dropped
-#   reject_on_normal_disocclusion : u32   offset 36  — round 5: enable normal-flip rejection (Karis 2014)
-#   normal_disocclusion_threshold : f32   offset 40  — cos(angle) below which history is dropped
-#   _pad                          : u32   offset 44  — keeps 16-byte uniform alignment (48 bytes total)
-_TAA_PARAMS_FMT = "<ffIIIIfIfIfI"
-_TAA_PARAMS_SIZE = 48
 
 # Luminance coefficients (Rec. 709) used for the Karis weighting.
 # Pre-computed at module level so the hot numpy path doesn't allocate a list.
@@ -34,8 +30,34 @@ _LUM_G = 0.7152
 _LUM_B = 0.0722
 
 
-class TAAPass:
+# TaaParams std140 layout — explicit offsets pin width/height at 8 and 12
+# so the executor's runtime splice helper can locate them by absolute
+# byte offset without having to re-pack the whole UBO each frame.
+_TAA_UBO_FIELDS = [
+    UboField(name="alpha",                         dtype="f32", offset=0),
+    UboField(name="sharpening",                    dtype="f32", offset=4),
+    UboField(name="width",                         dtype="u32", offset=8),
+    UboField(name="height",                        dtype="u32", offset=12),
+    UboField(name="karis_weight",                  dtype="u32", offset=16),
+    UboField(name="tight_variance_clip",           dtype="u32", offset=20),
+    UboField(name="variance_clip_gamma",           dtype="f32", offset=24),
+    UboField(name="reject_on_depth_disocclusion",  dtype="u32", offset=28),
+    UboField(name="depth_disocclusion_threshold",  dtype="f32", offset=32),
+    UboField(name="reject_on_normal_disocclusion", dtype="u32", offset=36),
+    UboField(name="normal_disocclusion_threshold", dtype="f32", offset=40),
+    UboField(name="_pad",                          dtype="u32", offset=44),
+]
+
+
+class TAAPass(PostProcessPassBase):
     label = "taa"
+
+    # ----- PostProcessPassBase declarative schema -----
+    SHADER = _SHADER
+    ENTRY = _ENTRY
+    PARAMS_LAYOUT = _TAA_UBO_FIELDS
+    EXTRA_BINDINGS = ("frame_tex", "history_tex", "motion_tex")
+    BLOB_SIZE = 48
 
     def __init__(
         self,
@@ -70,50 +92,33 @@ class TAAPass:
         tight_variance_clip
             Round 4: when ``True`` (default since v0.3.1) the 3x3 YCoCg
             AABB is tightened to ``mean ± variance_clip_gamma * stddev``
-            instead of the legacy ``min/max`` envelope.  Massively
-            reduces thin-geometry shimmer (single-pixel features) by
-            ejecting stale history samples that the lax envelope would
-            otherwise accept; the Sprint 3D measurement showed a 19.5%
-            ghost reduction and +1 dB PSNR on disocclusion bands.  Pass
-            ``False`` to restore the round-3 min/max envelope.
+            instead of the legacy ``min/max`` envelope.
         sharpening
-            Strength of the post-resolve unsharp pass.  Backward-compat
-            default ``0.0`` matches rounds 1-3 (no sharpening).
+            Strength of the post-resolve unsharp pass.  Default ``0.0``
+            matches rounds 1-3 (no sharpening).
         reject_on_depth_disocclusion
             Round 5 (Andersson INSIDE 2015): when ``True`` (default) the
             reprojected history sample is dropped if the depth read at
             the previous-frame location differs from the current depth
-            by more than ``depth_disocclusion_threshold``.  The colour
-            AABB cannot catch a stale sample whose colour happens to
-            sit inside the current neighbourhood envelope — depth is
-            the canonical secondary signal.
+            by more than ``depth_disocclusion_threshold``.
         depth_disocclusion_threshold
             NDC depth break above which the history sample is rejected.
-            Default ``0.1`` is the Andersson 2015 recommendation for a
-            ``[0, 1]`` NDC depth range; tighten to ``0.05`` for scenes
-            with large depth complexity at close range.
         reject_on_normal_disocclusion
-            Round 5 (Karis Siggraph 2014): when ``True`` (default) the
-            history sample is dropped if the surface normal at the
-            previous-frame location has flipped relative to the current
-            normal.  Catches disocclusions on objects of similar depth
-            (e.g. silhouette of a thin pole crossing a wall behind it).
+            Round 5 (Karis 2014): when ``True`` (default) the history
+            sample is dropped if the surface normal at the previous-frame
+            location has flipped relative to the current normal.
         normal_disocclusion_threshold
             ``dot(prev_normal, current_normal)`` below this value
-            triggers rejection.  Default ``0.9`` ≈ 26° tolerance, which
-            is tight enough to catch genuine surface flips while
-            forgiving smooth shading interpolation.
+            triggers rejection.
 
         Raises
         ------
         TypeError
-            If any float param is not numeric, or ``karis_weight`` /
-            ``tight_variance_clip`` /
-            ``reject_on_depth_disocclusion`` /
-            ``reject_on_normal_disocclusion`` is not a ``bool``.
+            If any float param is not numeric, or any boolean flag is
+            not a ``bool``.
         ValueError
-            If ``alpha`` is outside ``[0, 1]``, or any non-negative float
-            is negative / NaN / inf.
+            If ``alpha`` is outside ``[0, 1]``, or any non-negative
+            float is negative / NaN / inf.
         """
         self.alpha = validate_unit_interval("alpha", "TAAPass", alpha)
         self.variance_clip_gamma = validate_non_negative_float(
@@ -143,8 +148,6 @@ class TAAPass:
             reject_on_normal_disocclusion,
         )
         self.reject_on_normal_disocclusion = bool(reject_on_normal_disocclusion)
-        # Normal threshold is a cosine in [-1, 1]; non-negative is the
-        # only meaningful range (a negative threshold would never reject).
         self.normal_disocclusion_threshold = validate_non_negative_float(
             "normal_disocclusion_threshold", "TAAPass",
             normal_disocclusion_threshold,
@@ -174,33 +177,37 @@ class TAAPass:
             ),
         )
 
-    def make_pass(self, frame_tex, history_tex, motion_tex) -> PostProcessPass:
-        raw = struct.pack(
-            _TAA_PARAMS_FMT,
-            self.alpha,
-            self.sharpening,
-            0,                       # width  — executor fills these in
-            0,                       # height
-            1 if self.karis_weight else 0,
-            1 if self.tight_variance_clip else 0,
-            self.variance_clip_gamma,
-            1 if self.reject_on_depth_disocclusion else 0,
-            self.depth_disocclusion_threshold,
-            1 if self.reject_on_normal_disocclusion else 0,
-            self.normal_disocclusion_threshold,
-            0,                       # _pad — keeps uniform 16-byte aligned
+    def make_pass(self, frame_tex=None, history_tex=None, motion_tex=None):
+        """Build a :class:`PostProcessPass` wired to the TAA bindings.
+
+        Accepts the legacy positional ``frame_tex, history_tex, motion_tex``
+        triple so existing callers (and the ``test_postprocess_spline_sdf``
+        regression suite) keep working unchanged.
+        """
+        return super().make_pass(
+            frame_tex=frame_tex,
+            history_tex=history_tex,
+            motion_tex=motion_tex,
         )
-        return PostProcessPass(
-            shader_path=_SHADER,
-            label=self.label,
-            entry_point=_ENTRY,
-            raw_params_bytes=raw,
-            params={
-                "frame_tex":   frame_tex,
-                "history_tex": history_tex,
-                "motion_tex":  motion_tex,
-            },
-        )
+
+    # ----- UBO field-value adapter -----
+    def _field_values(self) -> dict[str, Any]:
+        """Coerce booleans to u32 + pin width/height at zero for splice."""
+        return {
+            "alpha":                          float(self.alpha),
+            "sharpening":                     float(self.sharpening),
+            # width/height are spliced at dispatch time; ship 0/0 in the blob.
+            "width":                          0,
+            "height":                         0,
+            "karis_weight":                   1 if self.karis_weight else 0,
+            "tight_variance_clip":            1 if self.tight_variance_clip else 0,
+            "variance_clip_gamma":            float(self.variance_clip_gamma),
+            "reject_on_depth_disocclusion":   1 if self.reject_on_depth_disocclusion else 0,
+            "depth_disocclusion_threshold":   float(self.depth_disocclusion_threshold),
+            "reject_on_normal_disocclusion":  1 if self.reject_on_normal_disocclusion else 0,
+            "normal_disocclusion_threshold":  float(self.normal_disocclusion_threshold),
+            "_pad":                           0,
+        }
 
     # ── Headless resolve (pure numpy, CPU only) ─────────────────────────────
     #
@@ -264,12 +271,10 @@ class TAAPass:
             hist_reproj = hist
 
         # ── 2. YCoCg neighbourhood AABB clip (matches shader) ────────────
-        # Pad with edge replication so the 3×3 window is well-defined.
         padded = np.pad(cur, ((1, 1), (1, 1), (0, 0)), mode="edge")
         y = 0.25 * padded[..., 0] + 0.5 * padded[..., 1] + 0.25 * padded[..., 2]
         co = 0.5 * padded[..., 0] - 0.5 * padded[..., 2]
         cg = -0.25 * padded[..., 0] + 0.5 * padded[..., 1] - 0.25 * padded[..., 2]
-        # 3×3 min/max via a small loop — vectorised over pixels.
         tiles_y  = [y[i:i + h, j:j + w] for i in range(3) for j in range(3)]
         tiles_co = [co[i:i + h, j:j + w] for i in range(3) for j in range(3)]
         tiles_cg = [cg[i:i + h, j:j + w] for i in range(3) for j in range(3)]
@@ -280,22 +285,15 @@ class TAAPass:
         cg_min = np.minimum.reduce(tiles_cg)
         cg_max = np.maximum.reduce(tiles_cg)
 
-        # Round 4: optional variance-based AABB tightening (Salvi 2016).
-        # When enabled, the AABB shrinks to ``mean ± gamma * stddev``
-        # which excludes single-pixel outliers from the neighbourhood
-        # envelope — the canonical fix for thin-geometry shimmer.
         if self.tight_variance_clip:
             ty  = np.stack(tiles_y,  axis=0)
             tco = np.stack(tiles_co, axis=0)
             tcg = np.stack(tiles_cg, axis=0)
             mu_y,  mu_co,  mu_cg  = ty.mean(0),  tco.mean(0),  tcg.mean(0)
-            # Population variance (n=9) — matches the shader's inv_n = 1/9.
             sy  = np.sqrt(np.maximum((ty  ** 2).mean(0) - mu_y  ** 2, 0.0))
             sco = np.sqrt(np.maximum((tco ** 2).mean(0) - mu_co ** 2, 0.0))
             scg = np.sqrt(np.maximum((tcg ** 2).mean(0) - mu_cg ** 2, 0.0))
             g = float(self.variance_clip_gamma)
-            # Intersect with the legacy min/max envelope so the AABB
-            # never *widens* beyond the safe legacy bounds.
             y_min  = np.maximum(y_min,  mu_y  - g * sy)
             y_max  = np.minimum(y_max,  mu_y  + g * sy)
             co_min = np.maximum(co_min, mu_co - g * sco)
@@ -319,10 +317,6 @@ class TAAPass:
         )
 
         # ── 2b. Round 5: motion-vector-aware disocclusion rejection ──────
-        # Compare the current pixel's depth/normal to the values at the
-        # reprojected previous-frame location.  When either gate trips
-        # we drop the history entirely and fall back to ``cur`` — the
-        # canonical first-frame recovery.
         rejection_mask = np.zeros((h, w), dtype=bool)
         if self.reject_on_depth_disocclusion and current_depth is not None and history_depth is not None:
             cd = np.asarray(current_depth, dtype=np.float32)
@@ -360,10 +354,6 @@ class TAAPass:
             normal_break = dot < float(self.normal_disocclusion_threshold)
             rejection_mask |= normal_break
         if rejection_mask.any():
-            # Replace rejected history pixels with the current frame, so
-            # the downstream blend collapses to ``current_color`` at those
-            # pixels (matches the shader's ``history_clipped = current_color``
-            # branch).
             hist_clipped = np.where(
                 rejection_mask[..., None], cur, hist_clipped,
             ).astype(np.float32)
@@ -371,11 +361,6 @@ class TAAPass:
         # ── 3. Temporal blend ────────────────────────────────────────────
         alpha = float(np.clip(self.alpha, 0.0, 1.0))
         if self.karis_weight:
-            # Karis 2014 luminance-inverse weighting.  Bright transient
-            # pixels (high luminance) get *smaller* weight in the running
-            # average, so a one-frame firefly cannot drag the history toward
-            # a stale brightness.  See "High Quality Temporal Supersampling"
-            # for the original presentation.
             lum_cur = (
                 _LUM_R * cur[..., 0]
                 + _LUM_G * cur[..., 1]
@@ -389,7 +374,6 @@ class TAAPass:
             w_cur = alpha / (1.0 + lum_cur)
             w_hist = (1.0 - alpha) / (1.0 + lum_hist)
             denom = w_cur + w_hist
-            # Broadcast (H, W) weights over the 3 colour channels.
             num = cur * w_cur[..., None] + hist_clipped * w_hist[..., None]
             blended = num / denom[..., None]
         else:

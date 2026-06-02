@@ -1,23 +1,14 @@
+"""Cascaded Shadow Maps (CSM) post-process pass."""
 from __future__ import annotations
-import struct
-from .chain import PostProcessPass
+
+from typing import Any
+
+from ._pass_base import PostProcessPassBase
+from ._ubo import UboField
+
 
 _SHADER = "shadow_csm.wgsl"
 _ENTRY  = "main"
-
-# CsmParams layout (320 bytes, std140):
-#   cascade_vp   : array<mat4x4<f32>, 4>   offset   0  (256 bytes)
-#   split_dists  : vec4<f32>               offset 256  ( 16 bytes)
-#   light_dir    : vec3<f32>               offset 272  ( 12 bytes)
-#   num_cascades : u32                     offset 284  (  4 bytes)
-#   depth_bias   : f32                     offset 288  (  4 bytes)
-#   pcf_radius   : f32                     offset 292  (  4 bytes)
-#   width        : u32                     offset 296  (  4 bytes)  — executor fills
-#   height       : u32                     offset 300  (  4 bytes)  — executor fills
-#   pcss_enabled : u32                     offset 304  (  4 bytes)
-#   light_size   : f32                     offset 308  (  4 bytes)
-#   near         : f32                     offset 312  (  4 bytes)
-#   pcf_samples  : u32                     offset 316  (  4 bytes)  — Vogel disk N (0 = legacy 3×3 grid)
 
 _IDENTITY_MAT4 = (
     1.0, 0.0, 0.0, 0.0,
@@ -30,8 +21,37 @@ _DEFAULT_SPLIT_DISTS = (10.0, 30.0, 90.0, 270.0)
 _DEFAULT_LIGHT_DIR   = (0.0, -1.0, 0.0)
 
 
-class ShadowCSM:
+# CsmParams std140 layout (320 bytes).  The four 4×4 cascade view-projection
+# matrices occupy the first 256 bytes; we encode each row as a vec4f so the
+# packer can place them on 16-byte boundaries without bespoke mat4 support.
+_CSM_UBO_FIELDS = [
+    # cascade_vp[4] — 4 mats × 4 rows = 16 vec4f entries (256 bytes).
+    *[
+        UboField(name=f"cascade_vp_{m}_r{r}", dtype="vec4f", offset=m * 64 + r * 16)
+        for m in range(4) for r in range(4)
+    ],
+    UboField(name="split_dists",  dtype="vec4f", offset=256),
+    UboField(name="light_dir",    dtype="vec3f", offset=272),
+    UboField(name="num_cascades", dtype="u32",   offset=284),
+    UboField(name="depth_bias",   dtype="f32",   offset=288),
+    UboField(name="pcf_radius",   dtype="f32",   offset=292),
+    UboField(name="width",        dtype="u32",   offset=296),
+    UboField(name="height",       dtype="u32",   offset=300),
+    UboField(name="pcss_enabled", dtype="u32",   offset=304),
+    UboField(name="light_size",   dtype="f32",   offset=308),
+    UboField(name="near",         dtype="f32",   offset=312),
+    UboField(name="pcf_samples",  dtype="u32",   offset=316),
+]
+
+
+class ShadowCSM(PostProcessPassBase):
     label = "shadow_csm"
+
+    # ----- PostProcessPassBase declarative schema -----
+    SHADER = _SHADER
+    ENTRY = _ENTRY
+    PARAMS_LAYOUT = _CSM_UBO_FIELDS
+    BLOB_SIZE = 320
 
     def __init__(
         self,
@@ -46,7 +66,6 @@ class ShadowCSM:
         light_dir: tuple = _DEFAULT_LIGHT_DIR,
         cascade_vps: tuple = _DEFAULT_CASCADE_VPS,
     ) -> None:
-        # Validation — keep config errors loud and early.
         if not isinstance(pcf_samples, int) or isinstance(pcf_samples, bool):
             raise TypeError(
                 f"pcf_samples must be an int (Vogel-disk tap count), got "
@@ -82,7 +101,8 @@ class ShadowCSM:
             pcf_samples=getattr(lighting, "pcf_samples", 16),
         )
 
-    def make_pass(self) -> PostProcessPass:
+    # ----- UBO field-value adapter -----
+    def _field_values(self) -> dict[str, Any]:
         # Pad cascade_vps to exactly 4 matrices (64 floats) regardless of num_cascades.
         vps = list(self.cascade_vps)
         while len(vps) < 64:
@@ -99,24 +119,28 @@ class ShadowCSM:
             ld.append(0.0)
         ld = ld[:3]
 
-        raw = struct.pack(
-            "<64f4f3fIffIIIffI",
-            *vps,           # cascade_vp   (256 bytes)
-            *sd,            # split_dists  ( 16 bytes)
-            *ld,            # light_dir    ( 12 bytes)
-            self.num_cascades,       # u32
-            self.depth_bias,         # f32
-            self.pcf_radius,         # f32
-            0,              # width        — executor fills
-            0,              # height       — executor fills
-            int(self.pcss_enabled),  # pcss_enabled u32
-            self.light_size,         # f32
-            self.near,               # f32
-            int(self.pcf_samples),   # pcf_samples  u32 (Vogel-disk N; 0 = legacy 3×3 grid)
-        )
-        return PostProcessPass(
-            shader_path=_SHADER,
-            label=self.label,
-            entry_point=_ENTRY,
-            raw_params_bytes=raw,
-        )
+        out: dict[str, Any] = {
+            "split_dists":  (float(sd[0]), float(sd[1]), float(sd[2]), float(sd[3])),
+            "light_dir":    (float(ld[0]), float(ld[1]), float(ld[2])),
+            "num_cascades": int(self.num_cascades),
+            "depth_bias":   float(self.depth_bias),
+            "pcf_radius":   float(self.pcf_radius),
+            # width/height filled by executor splice at dispatch time.
+            "width":        0,
+            "height":       0,
+            "pcss_enabled": int(bool(self.pcss_enabled)),
+            "light_size":   float(self.light_size),
+            "near":         float(self.near),
+            "pcf_samples":  int(self.pcf_samples),
+        }
+        # Four cascade view-projection matrices, each laid out as four rows.
+        for m in range(4):
+            base = m * 16
+            for r in range(4):
+                out[f"cascade_vp_{m}_r{r}"] = (
+                    float(vps[base + r * 4 + 0]),
+                    float(vps[base + r * 4 + 1]),
+                    float(vps[base + r * 4 + 2]),
+                    float(vps[base + r * 4 + 3]),
+                )
+        return out
