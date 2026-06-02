@@ -88,9 +88,14 @@ except Exception as _err:  # pragma: no cover
 # ---------------------------------------------------------------------------
 
 def _install_softbody_stub():
-    if "slappyengine.softbody" in sys.modules:
-        return sys.modules["slappyengine.softbody"]
-    mod = types.ModuleType("slappyengine.softbody")
+    # Always override the Material class in sys.modules — if the real
+    # slappyengine.softbody is already imported it carries a strict
+    # 7-positional-arg dataclass that breaks our default ctor. We force
+    # the stub onto the existing or new module entry.
+    mod = sys.modules.get("slappyengine.softbody")
+    if mod is None:
+        mod = types.ModuleType("slappyengine.softbody")
+        sys.modules["slappyengine.softbody"] = mod
 
     @dataclass
     class Material:
@@ -105,14 +110,14 @@ def _install_softbody_stub():
     # synthetic dataclass behaves like a real softbody.* member.
     Material.__module__ = "slappyengine.softbody"
     mod.Material = Material
-    sys.modules["slappyengine.softbody"] = mod
     return mod
 
 
 def _install_fluid_stub():
-    if "slappyengine.fluid" in sys.modules:
-        return sys.modules["slappyengine.fluid"]
-    mod = types.ModuleType("slappyengine.fluid")
+    mod = sys.modules.get("slappyengine.fluid")
+    if mod is None:
+        mod = types.ModuleType("slappyengine.fluid")
+        sys.modules["slappyengine.fluid"] = mod
 
     @dataclass
     class FluidMaterial:
@@ -124,7 +129,6 @@ def _install_fluid_stub():
 
     FluidMaterial.__module__ = "slappyengine.fluid"
     mod.FluidMaterial = FluidMaterial
-    sys.modules["slappyengine.fluid"] = mod
     return mod
 
 

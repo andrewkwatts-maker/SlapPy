@@ -15,6 +15,7 @@ Regenerate after adding or removing any doc.
 | [`ONBOARDING.md`](ONBOARDING.md) | Contributor onboarding — install variants, architecture tour, and first-change walk-through. |
 | [`architecture_overview.md`](architecture_overview.md) | 5-minute orientation for the rebuilt 2D physics layer (softbody / fluid / dynamics / studio) and dependency direction. |
 | [`core_engine_audit_2026_06_02.md`](core_engine_audit_2026_06_02.md) | Core engine audit — `_compat` symbol caller count, doc/__all__ drift report, top-level docstring expansion (2026-06-02). |
+| [`dead_code_audit_2026_06_02.md`](dead_code_audit_2026_06_02.md) | Dead-code + duplicate-symbol audit — humanoid-alias caller list, dead-export candidates per subpackage, validator twins (2026-06-02). |
 | [`demo_gallery.md`](demo_gallery.md) | Hand-authored cinematic gallery of six flagship runnable demos (hello_ragdoll / hello_studio / humanoid_walking / humanoid_ik_terrain / hello_rope / hello_gi) with refreshed GIF/PNG artefacts under `examples/output/`. |
 | [`dynamics_design.md`](dynamics_design.md) | Design reference for `slappyengine.dynamics`: XPBD substrate, the seven `JointSpec` kinds, authoring helpers, and failure modes. |
 | [`dynamics_quickstart.md`](dynamics_quickstart.md) | 10-minute hands-on quick-start for the dynamics primitives, with six runnable snippets (4/4 tripwire tests green). |
