@@ -1,4 +1,98 @@
-﻿"""SlapPyEngine — compute-shader-driven 2D game engine."""
+﻿"""SlapPyEngine — compute-shader-driven 2D game engine.
+
+A Python game engine where every hot path ports to Rust (via ``_core``) and
+every authoring surface stays in Python. Targets 60+ fps on the rebuild stack
+(softbody / fluid / GI) with full pixel-collision and reactive HUD wiring.
+
+Quickstart
+----------
+>>> from slappyengine import Engine, Scene, Entity, Camera
+>>> from slappyengine.studio import softbody_stage, record
+>>> stage = softbody_stage(view_box=(-2, -1, 2, 5))
+
+Top-level package
+~~~~~~~~~~~~~~~~~
+``Engine``, ``Scene``, ``Entity``, ``Camera``, ``Script``, ``Component``,
+``Asset``, ``Layer`` / ``Layer2D`` / ``Layer3D``, ``EventBus``,
+``DataComponent``, ``Observable``, ``ResidencyManager``, ``CacheMode``,
+``ActionMap``, ``StrataWorld`` / ``StrataLayer``, ``TriggerSystem`` /
+``TriggerVolume``, ``LightingSystem`` + lights, ``CollisionManager``,
+``GpuParticleSystem`` / ``ParticleEmitter``, ``SplitScreenManager``. See
+``__all__`` for the full top-level surface.
+
+Subpackages — engine-as-library tour
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Simulation:
+
+* :mod:`slappyengine.softbody` — XPBD lattice + beam softbody solver
+  (lattice / vehicle / humanoid body builders, ``World.step``).
+* :mod:`slappyengine.fluid`    — PBF fluid (``FluidWorld``,
+  ``apply_fluid_buoyancy``, surface extraction).
+* :mod:`slappyengine.dynamics` — unified ``Body`` / ``Material`` /
+  ``JointSpec`` / ``RagdollSpec`` / ``IKChainSpec`` over the XPBD substrate.
+* :mod:`slappyengine.physics`  — legacy per-pixel hierarchical-hull solver
+  (compat surface; new code prefers ``softbody`` / ``fluid``).
+* :mod:`slappyengine.thermal`  — ``HeatField`` Laplacian + two-region
+  exchange for cross-system heat transport.
+* :mod:`slappyengine.topology` — connected-components labelling for
+  fragmentation / fracture (``connected_components``, ``_grid``).
+* :mod:`slappyengine.numerics` — V-cycle Poisson solver
+  (``vcycle_poisson``, ``sor_smooth``, ``compute_residual``).
+* :mod:`slappyengine.zones`    — generic ``RectZone`` / ``ThresholdZone``
+  / ``ZoneManager`` (pickup, spawn pad, damage zone).
+
+Rendering + GPU:
+
+* :mod:`slappyengine.gpu`         — wgpu context, mesh / PBR / cluster
+  pipelines, SDF renderer.
+* :mod:`slappyengine.gi`          — radiance cascades, ReSTIR, SVGF.
+* :mod:`slappyengine.post_process` — TAA, GTAO, bloom, DoF, tonemap,
+  shadow CSM, volumetric fog, preset chains.
+* :mod:`slappyengine.material`    — node-graph material authoring
+  (``NodeMaterial`` + factory nodes, ``MaterialMap``).
+* :mod:`slappyengine.compute`     — ``ComputePass`` / ``ComputePipeline``,
+  stats / spatial / mutator helpers, ``AssetComputeAPI``.
+* :mod:`slappyengine.residency`   — three-tier (GPU/RAM/DISK) residency
+  + ``.slap`` binary format.
+
+Authoring + tooling:
+
+* :mod:`slappyengine.studio`     — ``softbody_stage`` / ``fluid_stage`` /
+  ``humanoid_stage`` + ``record()`` GIF capture (15-line demo helpers).
+* :mod:`slappyengine.iso`        — isometric grid + scene + combat
+  (Stone Keep tower-defence surface).
+* :mod:`slappyengine.animation`  — ``AnimationGraph`` state machine +
+  ``ProceduralRig`` / ``ControlPoint`` IK.
+* :mod:`slappyengine.ui` / ``ui.editor`` — DearPyGui editor shell, panels,
+  spawn menu, scene outliner.
+* :mod:`slappyengine.input`       — action-map / bindings layer.
+* :mod:`slappyengine.audio_runtime` — sounddevice backend (or no-op stub).
+* :mod:`slappyengine.testing`    — ``assert_scene_matches`` golden-frame
+  visual diff harness.
+* :mod:`slappyengine.telemetry`  — ``emit`` / ``subscribe`` pattern bus
+  with optional pattern index for hot paths.
+* :mod:`slappyengine.tools`      — CLI subcommands (``slappy`` entry).
+* :mod:`slappyengine.ext`        — back-compat aliases for the pre-0.3
+  flat layout (``ext.lighting`` → ``slappyengine.lighting`` etc.).
+
+Game-compat / misc:
+
+* :mod:`slappyengine.modules`    — game-side plugin discovery hook.
+* :mod:`slappyengine.ai`         — AI code tools (``slappy code`` agent).
+* :mod:`slappyengine.assets`     — ``AssetDatabase``.
+* :mod:`slappyengine.net`        — P2P networking.
+
+Lifecycle flags
+~~~~~~~~~~~~~~~
+* ``HAS_NATIVE`` — ``True`` iff the Rust ``_core`` extension imported.
+* ``engine_config`` — YAML-backed numeric defaults (single source of truth
+  for all tunable parameters per user directive).
+
+See ``docs/api/<subpackage>.md`` for the hand-authored API reference of each
+subpackage. ``docs/engine_surface_v030.md`` enumerates the locked top-level
+surface for the v0.3 ship.
+"""
 from __future__ import annotations
 
 __version__ = "0.3.0b0"
