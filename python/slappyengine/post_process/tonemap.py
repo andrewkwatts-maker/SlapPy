@@ -23,10 +23,11 @@ import numpy as np
 
 from .auto_exposure import AutoExposurePass
 from .chain import PostProcessPass
+from ._pass_base import PostProcessPassBase
 
 
 @dataclass
-class TonemapPass:
+class TonemapPass(PostProcessPassBase):
     """Tone-mapping + colour-grading pass with optional auto-EV.
 
     Parameters
@@ -57,6 +58,14 @@ class TonemapPass:
     gamma: float = 1.0
     auto_ev: Optional[AutoExposurePass] = None
     label: str = "tonemap"
+
+    # ----- PostProcessPassBase declarative schema -----
+    # Tonemap takes the executor-packing route (no PARAMS_LAYOUT) because
+    # the UBO is built by ``PostProcessExecutor._make_params_buffer`` from
+    # the params dict; pre-packing here would break that contract.
+    SHADER = "tonemap.wgsl"
+    ENTRY = "tonemap_main"
+    CONFIG_KEY = None  # No standard config section — caller wires fields directly.
 
     # The most recently derived EV (set by :meth:`derive_exposure_ev`).
     # ``None`` means "use the manual ``exposure_ev`` field". This is kept
@@ -114,11 +123,12 @@ class TonemapPass:
             "gamma": float(self.gamma),
         }
 
-    def make_pass(self) -> PostProcessPass:
-        """Build the :class:`PostProcessPass` the executor will run."""
-        return PostProcessPass(
-            shader_path="tonemap.wgsl",
-            params=self.params(),
-            label=self.label,
-            entry_point="tonemap_main",
-        )
+    # Base class hook — keep ``params()`` as the legacy public name and
+    # forward the base class's ``params_dict()`` template to it.
+    def params_dict(self) -> dict[str, Any]:
+        return self.params()
+
+    # NOTE: ``make_pass`` is inherited from :class:`PostProcessPassBase`.
+    # The base class builds the same record we used to construct here
+    # (no PARAMS_LAYOUT → no raw_params_bytes; executor packs the UBO
+    # from ``params_dict()``).

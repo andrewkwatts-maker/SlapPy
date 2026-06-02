@@ -23,12 +23,13 @@ which reproduces the original hard-cutoff behaviour exactly (backward-compat).
 """
 from __future__ import annotations
 
-import struct
 from typing import Iterable
 
 import numpy as np
 
 from .chain import PostProcessPass
+from ._pass_base import PostProcessPassBase
+from ._ubo import UboField, pack_struct
 from ._validation import validate_non_negative_float
 
 
@@ -85,7 +86,7 @@ def smooth_threshold(
     return rgb * weight[..., None]
 
 
-class BloomPass:
+class BloomPass(PostProcessPassBase):
     """Bloom extraction pass with Lottes 2017 smooth-knee threshold.
 
     Attributes
@@ -101,6 +102,28 @@ class BloomPass:
     """
 
     label = "bloom"
+    SHADER = _SHADER
+    ENTRY = _ENTRY
+    CONFIG_KEY = "rendering.bloom"
+
+    # 16-byte std140-compatible UBO: threshold/knee/intensity/_pad.
+    # Legacy ``PARAMS_LAYOUT`` retained for the base-class field walker
+    # (it discovers config field names from this tuple); the *bytes* now
+    # come from the shared :mod:`_ubo` helper via ``UBO_FIELDS``.
+    PARAMS_LAYOUT = (
+        "<ffff",
+        ("threshold", "knee", "intensity", "_pad"),
+    )
+
+    # Source-of-truth UBO schema for the shared packer.  Offsets are
+    # implicit (each f32 occupies 4 bytes, no padding) and the final
+    # total is rounded up to 16 bytes per std140 — matches the legacy
+    # ``"<ffff"`` layout byte-for-byte.
+    UBO_FIELDS = [
+        UboField(name="threshold", dtype="f32"),
+        UboField(name="knee",      dtype="f32"),
+        UboField(name="intensity", dtype="f32"),
+    ]
 
     # Valid string values for ``upsample_mode``.  Kept module-side to make
     # the regression tests' allow-list explicit.
@@ -162,7 +185,8 @@ class BloomPass:
         """Build a BloomPass from a global rendering config object.
 
         Tolerates the absence of a ``bloom`` section so legacy configs still
-        work — falls back to defaults.
+        work — falls back to defaults.  Includes the non-PARAMS_LAYOUT
+        ``upsample_mode`` field which the base-class walker does not see.
         """
         try:
             b = cfg.rendering.bloom
@@ -176,33 +200,39 @@ class BloomPass:
         )
 
     # ----------------------------------------------------------- GPU plumbing
-    def make_pass(self) -> PostProcessPass:
-        """Build a PostProcessPass record for the executor.
+    def params_to_bytes(self) -> bytes:
+        """Pack the bloom UBO via the shared :mod:`_ubo` helper.
 
-        Layout (16 bytes, std140-compatible):
-            threshold : f32   offset 0
-            knee      : f32   offset 4
-            intensity : f32   offset 8
-            _pad      : f32   offset 12  (kept for 16-byte alignment)
+        Overrides the base-class ``struct.pack``-based packer so the
+        format-string lives in exactly one place (``UBO_FIELDS``) and
+        cannot drift away from the WGSL declaration the way the inline
+        format strings did in Sprint 2D / Sprint 7B.
+
+        The resulting blob is byte-for-byte identical to the previous
+        ``struct.pack("<ffff", threshold, knee, intensity, 0.0)`` call.
         """
-        raw = struct.pack(
-            "<ffff",
-            self.threshold,
-            self.knee,
-            self.intensity,
-            0.0,
-        )
-        return PostProcessPass(
-            shader_path=_SHADER,
-            label=self.label,
-            entry_point=_ENTRY,
-            raw_params_bytes=raw,
-            params={
+        return pack_struct(
+            self.UBO_FIELDS,
+            {
                 "threshold": self.threshold,
-                "knee": self.knee,
+                "knee":      self.knee,
                 "intensity": self.intensity,
             },
         )
+
+    def params_dict(self) -> dict:
+        """Sideband data the executor reads for the pass dict.
+
+        Kept for the existing ``PostProcessPass.params`` contract — the
+        UBO bytes go through :meth:`params_to_bytes` /
+        ``raw_params_bytes``; this dict carries the same fields for
+        diagnostics + binding glue.
+        """
+        return {
+            "threshold": self.threshold,
+            "knee": self.knee,
+            "intensity": self.intensity,
+        }
 
     # ----------------------------------------------------------- CPU helper
     def apply_cpu(self, rgb: np.ndarray) -> np.ndarray:

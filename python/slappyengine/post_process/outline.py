@@ -45,6 +45,7 @@ from typing import Tuple
 import numpy as np
 
 from .chain import PostProcessPass
+from ._pass_base import PostProcessPassBase
 
 
 _SHADER = "outline.wgsl"
@@ -179,7 +180,7 @@ def edge_factor_sobel(
 # ---------------------------------------------------------------------------
 
 
-class OutlinePass:
+class OutlinePass(PostProcessPassBase):
     """Outline edge pass with Sobel-magnitude + smoothstep falloff.
 
     Parameters
@@ -203,6 +204,11 @@ class OutlinePass:
     """
 
     label = "outline"
+
+    # ----- PostProcessPassBase declarative schema -----
+    SHADER = _SHADER
+    ENTRY = _ENTRY
+    CONFIG_KEY = None  # overridden ``from_config`` handles colour tuple coercion
 
     def __init__(
         self,
@@ -242,8 +248,8 @@ class OutlinePass:
         )
 
     # ----------------------------------------------------------- GPU plumbing
-    def make_pass(self) -> PostProcessPass:
-        """Build a :class:`PostProcessPass` record for the executor.
+    def params_dict(self) -> dict:
+        """Per-pass params dict consumed by the executor's UBO packer.
 
         The uniform layout (48 bytes, std140-compatible)::
 
@@ -259,20 +265,17 @@ class OutlinePass:
             height      : u32   offset 36
             _pad1, _pad2: u32   offset 40, 44
         """
-        return PostProcessPass(
-            shader_path=_SHADER,
-            label=self.label,
-            entry_point=_ENTRY,
-            params={
-                "outline_r": self.color[0],
-                "outline_g": self.color[1],
-                "outline_b": self.color[2],
-                "outline_a": self.color[3],
-                "threshold": self.threshold,
-                "softness":  self.softness,
-                "use_sobel": int(self.use_sobel),
-            },
-        )
+        return {
+            "outline_r": self.color[0],
+            "outline_g": self.color[1],
+            "outline_b": self.color[2],
+            "outline_a": self.color[3],
+            "threshold": self.threshold,
+            "softness":  self.softness,
+            "use_sobel": int(self.use_sobel),
+        }
+
+    # NOTE: ``make_pass`` is inherited from :class:`PostProcessPassBase`.
 
     # ----------------------------------------------------------- CPU helper
     def apply_cpu(self, rgba: np.ndarray) -> np.ndarray:

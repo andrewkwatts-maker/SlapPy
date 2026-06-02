@@ -287,6 +287,65 @@ global state — opting out is as simple as building a bare chain.
 - `_validation` — internal type/range validators shared by every
   pass constructor.
 
+## Base class contract
+
+_class — defined in `slappyengine.post_process._pass_base`_
+
+`PostProcessPassBase` factors out the boilerplate that every pass
+wrapper (`BloomPass`, `TonemapPass`, `OutlinePass`, `VignettePass`,
+`ContactShadowsPass`, …) used to copy-paste: the `from_config` walker,
+the `struct.pack` UBO packer, and the `PostProcessPass` record
+factory. Subclasses declare the static schema once via class
+attributes; the base class produces the runtime artefacts.
+
+**Declarative schema** (all `ClassVar`):
+
+- `label: str` — chain label (`"bloom"`, `"outline"`, …). Required.
+- `SHADER: str` — WGSL filename under `shaders/`. Required.
+- `ENTRY: str = "main"` — WGSL entry point. Override when the shader
+  uses a custom name (`tonemap_main`, `taa_resolve_main`, …).
+- `CONFIG_KEY: str | None = None` — dotted attribute path on a config
+  object that `from_config` walks (`"rendering.bloom"`). When set,
+  the base-class template handles missing-section fallback; when
+  `None`, subclasses override `from_config` (needed for non-trivial
+  coercions like outline's RGBA tuple → 4 scalar fields).
+- `PARAMS_LAYOUT: (str, Sequence[str]) | None = None` — `struct.pack`
+  format string + ordered field names. When set, `params_to_bytes()`
+  packs the UBO directly and `make_pass()` hands it to
+  `raw_params_bytes`. When `None`, the subclass uses the
+  executor-packing route via `params_dict()`.
+- `DEPENDS_ON: tuple[str, ...] = ()` — labels that must precede this
+  pass (mirrors `RenderPass.depends_on`).
+
+**Enforcement**: `__init_subclass__` rejects subclasses that omit
+`SHADER` or `label` at class-creation time (early failure beats a
+downstream `AttributeError` at `make_pass()`). Intermediate abstract
+subclasses can opt out with `_abstract = True`.
+
+**Two UBO paths**: the base class intentionally supports both
+pre-packed (`raw_params_bytes`) and executor-packed (`params` dict)
+routes because the executor's Sprint 2D splice helper handles both —
+forcing every pass onto one path would have meant either rewriting
+the executor or rewriting every params-dict pass's WGSL bindings.
+Subclasses opt into direct packing by declaring `PARAMS_LAYOUT`;
+otherwise the legacy params-dict route stays intact bit-for-bit.
+
+**Byte-for-byte parity**: the UBO bytes emitted by the base-class
+walker are identical to the pre-refactor inline `struct.pack` calls;
+this is enforced by `tests/test_post_process_base.py`
+(`test_bloom_params_to_bytes_matches_legacy_struct_pack`). The
+executor's runtime splice still patches `width`/`height` by absolute
+offset, so any drift would silently corrupt UBO contents — hence the
+load-bearing assertion.
+
+**Refactored passes** (Sprint 2026-06): `BloomPass` (16-byte UBO,
+direct pack), `OutlinePass` (params dict), `TonemapPass` (params
+dict). The TAA / GTAO / ContactShadows / SSR passes will follow once
+the abstraction proves itself on the simpler trio — their
+runtime-splice UBOs (48-byte TAA, 112-byte GTAO) need the same
+declarative path plus optional explicit offsets for fields the
+executor writes at dispatch time.
+
 ## Conventions
 
 - **UBO single-source-of-truth.** Passes with non-trivial uniform

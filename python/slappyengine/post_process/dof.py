@@ -1,21 +1,33 @@
 from __future__ import annotations
-import struct
 
 import numpy as np
 
 from .chain import PostProcessPass
+from ._ubo import UboField, pack_struct
 
 _SHADER = "dof.wgsl"
 _ENTRY  = "main"
 
 # DofParams layout (32 bytes):
-#   width          : u32     offset  0  — executor fills
-#   height         : u32     offset  4  — executor fills
+#   width          : u32     offset  0  — executor fills via runtime splice
+#   height         : u32     offset  4  — executor fills via runtime splice
 #   focal_distance : f32     offset  8
 #   focal_range    : f32     offset 12
 #   max_coc_radius : f32     offset 16
 #   bokeh_samples  : u32     offset 20
-#   _pad           : vec2u   offset 24  (8 bytes)
+#   _pad           : vec2u   offset 24  (std140 round-up to 32 bytes)
+#
+# Source of truth: :data:`_DOF_FIELDS` below.  The shared
+# :func:`pack_struct` helper produces the exact same 32-byte blob the
+# legacy ``struct.pack("<IIfffIII", …)`` call did.
+_DOF_FIELDS = [
+    UboField(name="width",          dtype="u32"),
+    UboField(name="height",         dtype="u32"),
+    UboField(name="focal_distance", dtype="f32"),
+    UboField(name="focal_range",    dtype="f32"),
+    UboField(name="max_coc_radius", dtype="f32"),
+    UboField(name="bokeh_samples",  dtype="u32"),
+]
 
 
 class DofPass:
@@ -99,19 +111,20 @@ class DofPass:
         )
 
     def make_pass(self, scene_tex, depth_tex) -> PostProcessPass:
-        # Pack DofParams:
-        #   width(I) height(I) focal_distance(f) focal_range(f)
-        #   max_coc_radius(f) bokeh_samples(I) _pad0(I) _pad1(I)
-        raw = struct.pack(
-            "<IIfffIII",
-            0,                    # width          — executor fills
-            0,                    # height         — executor fills
-            self.focal_distance,
-            self.focal_range,
-            self.max_coc_radius,
-            self.bokeh_samples,
-            0,                    # _pad0
-            0,                    # _pad1
+        # Pack DofParams via the shared :mod:`_ubo` helper.  The width
+        # and height u32s are pre-zeroed; the executor splices the
+        # actual resolution at dispatch time via byte-offset patching
+        # (see :func:`executor._splice_runtime_params`).
+        raw = pack_struct(
+            _DOF_FIELDS,
+            {
+                "width":          0,
+                "height":         0,
+                "focal_distance": float(self.focal_distance),
+                "focal_range":    float(self.focal_range),
+                "max_coc_radius": float(self.max_coc_radius),
+                "bokeh_samples":  int(self.bokeh_samples),
+            },
         )
         return PostProcessPass(
             shader_path=_SHADER,

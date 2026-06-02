@@ -2,30 +2,30 @@
 from __future__ import annotations
 
 __all__ = [
-    "PostProcessChain",
-    "PostProcessPass",
-    "PostProcessExecutor",
-    "TAAPass",
-    "GTAOPass",
-    "ShadowCSM",
     "ContactShadowsPass",
+    "GTAOPass",
+    "PostProcessChain",
+    "PostProcessExecutor",
+    "PostProcessPass",
+    "ShadowCSM",
+    "TAAPass",
     "VolumetricFog",
-    "cinematic_chain",
     "arcade_chain",
+    "cinematic_chain",
     "iso_strategy_chain",
 ]
 
 _LAZY_MAP: dict[str, str] = {
-    "PostProcessChain":    ".chain",
-    "PostProcessPass":     ".chain",
-    "PostProcessExecutor": ".executor",
-    "TAAPass":             ".taa",
-    "GTAOPass":            ".gtao",
-    "ShadowCSM":           ".shadow_csm",
     "ContactShadowsPass":  ".contact_shadows",
+    "GTAOPass":            ".gtao",
+    "PostProcessChain":    ".chain",
+    "PostProcessExecutor": ".executor",
+    "PostProcessPass":     ".chain",
+    "ShadowCSM":           ".shadow_csm",
+    "TAAPass":             ".taa",
     "VolumetricFog":       ".volumetric_fog",
-    "cinematic_chain":     ".preset_chains",
     "arcade_chain":        ".preset_chains",
+    "cinematic_chain":     ".preset_chains",
     "iso_strategy_chain":  ".preset_chains",
 }
 
