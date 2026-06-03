@@ -67,3 +67,7 @@ SlapPyEngineExamples/examples/output/**
 
 # Legacy example regeneration target
 SlapPyEngineExamples/examples/legacy/output/
+
+# UI concept art — reference assets, always tracked
+!UIConceptArt/*.jfif
+!UIConceptArt/*.png

@@ -61,6 +61,7 @@ Regenerate after adding or removing any doc.
 | [`tier_11_future_instructions.md`](tier_11_future_instructions.md) | Tier 11 GPU compute migration — deferred 2026-05-26; self-contained "how to do it if we come back" reference. |
 | [`tier_11_gpu_compute_discussion.md`](tier_11_gpu_compute_discussion.md) | Tier 11 GPU compute (wgpu) discussion document — state-of-the-engine and trade-offs after Tiers 1-10 landed. |
 | [`tutorial_build_a_game.md`](tutorial_build_a_game.md) | End-to-end "build a top-down arcade game" walk-through; 10 sections with 10 verified-runnable snippets (13/13 tripwire tests green, 215 lines). |
+| [`ui_concept_art_2026_06_03.md`](ui_concept_art_2026_06_03.md) | TeenGirl Notebook theme — concept-art inventory + palette/sticker/layout extraction template; structural slots for user-side visual inspection of `UIConceptArt/*` (2026-06-03). |
 | [`video_output.md`](video_output.md) | Video output guide — MP4 default vs GIF fallback for SlapPyEngine's showcase and capture tools. |
 | [`wheel_size_audit_2026_06_02.md`](wheel_size_audit_2026_06_02.md) | Wheel size audit — `maturin build --release` measured at ~1.45 MB (well under PyPI 50 MB target); excluded `slappyengine/tests/` from shipped artefacts (2026-06-02). |
 | [`zones_design.md`](zones_design.md) | Design reference for `slappyengine.zones`: named axis-aligned rectangular regions with enter/exit callbacks, material tags, and scalar threshold events. |
