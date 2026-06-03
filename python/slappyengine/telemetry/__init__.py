@@ -50,6 +50,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 
+from ._protocol import EventEmitterProtocol, EventSubscriberProtocol
 from ._validation import (
     validate_bool,
     validate_callable,
@@ -59,6 +60,8 @@ from ._validation import (
 )
 
 __all__ = [
+    "EventEmitterProtocol",
+    "EventSubscriberProtocol",
     "TelemetryEvent",
     "clear_history",
     "emit",

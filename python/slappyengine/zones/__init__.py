@@ -43,6 +43,7 @@ from __future__ import annotations
 import dataclasses
 from typing import Any, Callable, Hashable, Iterable
 
+from ._protocol import ZoneProtocol
 from ._validation import (
     validate_finite_float,
     validate_non_negative_float,
@@ -54,6 +55,7 @@ __all__ = [
     "RectZone",
     "ThresholdZone",
     "ZoneManager",
+    "ZoneProtocol",
 ]
 
 

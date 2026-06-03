@@ -1,6 +1,8 @@
 """Post-process subpackage — lazy-loaded to avoid eager wgpu imports."""
 from __future__ import annotations
 
+from ._protocol import PostProcessPassProtocol
+
 __all__ = [
     "ContactShadowsPass",
     "GTAOPass",
@@ -9,6 +11,7 @@ __all__ = [
     "PostProcessParams",
     "PostProcessPass",
     "PostProcessPassBase",
+    "PostProcessPassProtocol",
     "ShadowCSM",
     "TAAPass",
     "VolumetricFog",

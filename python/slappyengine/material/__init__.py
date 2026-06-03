@@ -1,6 +1,8 @@
 """Material subpackage — lazy-loaded."""
 from __future__ import annotations
 
+from ._protocol import NodeProtocol
+
 __all__ = [
     "AddNode",
     "ClampNode",
@@ -16,6 +18,7 @@ __all__ = [
     "MultiplyNode",
     "NodeDef",
     "NodeMaterial",
+    "NodeProtocol",
     "PixelChannelNode",
     "PixelColorNode",
     "SampleTextureNode",

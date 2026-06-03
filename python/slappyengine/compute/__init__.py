@@ -1,9 +1,12 @@
 """Compute subpackage — lazy-loaded to avoid eager wgpu/numpy imports."""
 from __future__ import annotations
 
+from ._protocol import ComputeKernelProtocol
+
 __all__ = [
     "AABB",
     "AssetComputeAPI",
+    "ComputeKernelProtocol",
     "ComputePass",
     "ComputePipeline",
     "PixelAPI",

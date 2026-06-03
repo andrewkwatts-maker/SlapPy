@@ -37,6 +37,7 @@ from typing import Iterable, Tuple
 
 import numpy as np
 
+from ._protocol import HeatSourceProtocol
 from ._validation import (
     validate_diffusivity,
     validate_finite_float,
@@ -47,7 +48,7 @@ from ._validation import (
 )
 
 
-__all__ = ["HeatField", "exchange_two_regions"]
+__all__ = ["HeatField", "HeatSourceProtocol", "exchange_two_regions"]
 
 
 # ── Pairwise exchange (boundary_exchange.py heat path) ──────────────────────

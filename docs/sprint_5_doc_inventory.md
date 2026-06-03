@@ -29,6 +29,7 @@ Regenerate after adding or removing any doc.
 | [`getting_started.md`](getting_started.md) | Game-dev tutorial; build a runnable mini-game in 15 minutes with 8 verified-runnable snippets (5/5 tripwire tests green, 298 lines). |
 | [`hardening_audit_2026_05_29.md`](hardening_audit_2026_05_29.md) | Phase-B/C subpackage input-validation hardening audit (2026-05-29). |
 | [`idle_animation_system_2026_06_03.md`](idle_animation_system_2026_06_03.md) | Idle-animation subsystem spec — `slappyengine.ui.theme.creatures` module surface (Creature / CreatureScheduler / SlotPolicy), 19 event-to-creature bindings, performance contract (≤ 1 ms idle / ≤ 5 ms one-shot), accessibility settings, theme integration, test plan (2026-06-03). |
+| [`lifecycle_contract.md`](lifecycle_contract.md) | Lifecycle hook contract — start/step/shutdown phases, entity/script vs engine-level hooks, F6 per-subpackage Protocol cross-references, hot-reload semantics. |
 | [`lighting_presets.md`](lighting_presets.md) | Sprint-3 ready-to-use post-process chain presets composing the lighting-polish helpers into flagship game looks. |
 | [`material_catalog.md`](material_catalog.md) | Reference catalogue for every material shipped in `config/softbody.yml` and `config/fluid.yml`. |
 | [`particle_field_design.md`](particle_field_design.md) | ParticleField design notes — what worked, what didn't, Phase 1+2 foundation cleanup rationale. |
@@ -102,4 +103,5 @@ and are skipped by the generator.
 | [`api/tools.md`](api/tools.md) | Auto-generated API reference for `slappyengine.tools` (`sprite_audit` CPU-only utility surface). |
 | [`api/topology.md`](api/topology.md) | Hand-authored API reference for `slappyengine.topology` (connected-components / union-find primitives lifted from the bond solver). |
 | [`api/ui_editor.md`](api/ui_editor.md) | Hand-authored API reference for `slappyengine.ui.editor` (EditorShell, PropertyInspector, SpawnMenu, MaterialEditor, SceneOutliner — Phase A reuse-the-reflection-machinery surface). |
+| [`api/ui_theme.md`](api/ui_theme.md) | Hand-authored API reference for `slappyengine.ui.theme` PRIMITIVE infrastructure (nine-slice, SVG icon, procedural shader effects, ThemeSpec + registry — < 100 KB asset-size target). |
 | [`api/zones.md`](api/zones.md) | Hand-authored API reference for `slappyengine.zones` (RectZone, ThresholdZone, ZoneManager, enter/exit + threshold callbacks). |

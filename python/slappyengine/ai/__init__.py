@@ -1,8 +1,11 @@
 """AI subpackage — lazy-loaded (requires [ai] extra: httpx)."""
 from __future__ import annotations
 
+from ._protocol import LLMBackendProtocol
+
 __all__ = [
     "CodeSyncWatcher",
+    "LLMBackendProtocol",
     "LLMClient",
     "ScriptGenerator",
     "code_to_prompt",
