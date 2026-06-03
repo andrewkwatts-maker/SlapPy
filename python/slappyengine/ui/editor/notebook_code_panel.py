@@ -297,6 +297,16 @@ class NotebookCodePanel:
         """
         self.set_file(script_path)
 
+    def update(self) -> None:
+        """Per-frame tick from Engine.run_editor()'s main loop.
+
+        Compat shim for the legacy ``CodeModePanel.update`` contract.
+        The notebook code panel doesn't need per-frame work today
+        (file watchers will hook into CodeSyncWatcher later), so this
+        is currently a no-op that returns immediately.
+        """
+        return None
+
     def set_file(self, path: str | Path) -> None:
         """Switch the active file and load its .py + .prompt contents.
 
