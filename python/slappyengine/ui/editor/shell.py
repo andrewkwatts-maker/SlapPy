@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from slappyengine.ui.editor.toolbar import EditorToolbar
     from slappyengine.ui.editor.scene_outliner import SceneOutliner
     from slappyengine.ui.editor.content_browser import ContentBrowser
+    from slappyengine.ui.editor.settings import UISettings
 
 try:
     from slappyengine.ui.editor.gizmo_overlay import GizmoOverlay  # noqa: F401
@@ -54,6 +55,7 @@ class EditorShell:
         title: str = "SlapPyEngine Editor",
         width: int = 1400,
         height: int = 900,
+        ui_settings: "UISettings | None" = None,
     ) -> None:
         self._engine = engine
         self._title = title
@@ -68,6 +70,16 @@ class EditorShell:
         self._gizmo_overlay = None
         self._running = False
         self._play_mode: bool = False
+
+        # ── settings.ui — keep the dataclass off the engine Config ─────────
+        from slappyengine.ui.editor.settings import UISettings
+        self._ui_settings: UISettings = ui_settings or UISettings()
+
+        # ── Theme + creature subsystem wiring (filled by setup_theme_subsystem)
+        self._creature_scheduler = None
+        self._creature_bus_adapter = None
+        self._idle_emitter = None
+        self._theme_switcher_panel = None
 
         # Custom title-bar drag state
         self._dragging_window: bool = False
@@ -99,6 +111,79 @@ class EditorShell:
     # Lifecycle
     # ------------------------------------------------------------------
 
+    def setup_theme_subsystem(self) -> None:
+        """Register starter themes, build the creature subsystem, bind the bus.
+
+        Headless-safe — no Dear PyGui calls. ``setup`` calls this before
+        any DPG work so theming is ready when the layout starts emitting
+        widgets, and tests can drive it directly without stubbing DPG.
+
+        Sequence:
+
+        1. Register every diary-family starter theme.
+        2. Apply ``ui_settings.default_theme`` (falls back to the first
+           registered theme when the name is unknown).
+        3. Build a :class:`CreatureScheduler` and register the fox /
+           butterfly / sparkle built-ins on it.
+        4. Forward ``ui_settings.creature_animations`` and
+           ``reduced_motion`` to the scheduler.
+        5. Install a :class:`CreatureBusAdapter` on the global event bus.
+        6. Spawn an :class:`IdleEventEmitter` so the main loop can pulse
+           ``engine.idle_60s`` / ``engine.idle_120s`` to the bus.
+        7. Stash a :class:`ThemeSwitcherPanel` (bound to the scheduler)
+           ready for :meth:`register_panel` — happens here so callers can
+           reach ``self._theme_switcher_panel`` straight after construction.
+        """
+        # 1. Register every starter theme.
+        from slappyengine.ui.theme.themes import register_starter_themes
+        registered = register_starter_themes()
+
+        # 2. Apply the configured default theme (resilient fallback).
+        from slappyengine.ui.theme import (
+            apply_theme,
+            list_registered_themes,
+        )
+        target = self._ui_settings.default_theme
+        known = list_registered_themes()
+        if target not in known:
+            target = registered[0] if registered else (known[0] if known else "")
+        if target:
+            try:
+                apply_theme(target)
+            except LookupError:
+                pass
+
+        # 3. Build the scheduler + register built-in creatures.
+        from slappyengine.ui.theme.creatures import CreatureScheduler
+        from slappyengine.ui.theme.creatures.builtin import register_builtins
+
+        scheduler = CreatureScheduler()
+        register_builtins(scheduler)
+        self._creature_scheduler = scheduler
+
+        # 4. Apply the master + reduced-motion settings.
+        scheduler.set_enabled(self._ui_settings.creature_animations)
+        scheduler.set_reduced_motion(self._ui_settings.reduced_motion)
+
+        # 5. Install the bus adapter.
+        from slappyengine.ui.theme.creatures import CreatureBusAdapter
+        from slappyengine.event_bus import get_default_bus
+
+        bus = get_default_bus()
+        adapter = CreatureBusAdapter(scheduler, bus)
+        adapter.install()
+        self._creature_bus_adapter = adapter
+
+        # 6. Build the idle emitter.
+        from slappyengine.ui.theme.creatures import IdleEventEmitter
+        self._idle_emitter = IdleEventEmitter(bus)
+
+        # 7. Stage the theme switcher panel so callers can register it.
+        from slappyengine.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
+        panel = ThemeSwitcherPanel(scheduler=scheduler)
+        self._theme_switcher_panel = panel
+        self.register_panel(panel)
+
     def setup(self) -> None:  # noqa: C901 (complexity — UI layout)
         """Initialise the Dear PyGui context and build the window layout.
 
@@ -109,6 +194,10 @@ class EditorShell:
         ImportError
             If ``dearpygui`` is not installed.
         """
+        # Theme + creature wiring runs first so any panel that consults
+        # the active theme during ``build`` already has one.
+        self.setup_theme_subsystem()
+
         try:
             import dearpygui.dearpygui as dpg
         except ImportError as exc:
@@ -474,6 +563,44 @@ class EditorShell:
     # Run loop
     # ------------------------------------------------------------------
 
+    # ------------------------------------------------------------------
+    # Per-frame tick — drives the creature scheduler + idle emitter.
+    # ------------------------------------------------------------------
+
+    def tick_subsystems(self, dt: float, draw_list: object | None = None) -> None:
+        """Advance the per-frame creature + idle subsystems.
+
+        Called once per frame from :meth:`run` after the DPG render call,
+        and may be called directly from headless tests. ``dt`` is the
+        wall-clock delta in seconds; ``draw_list`` is the renderer
+        handle passed to :meth:`CreatureScheduler.render` (a DPG drawlist
+        in production, a recording mock in tests).
+        """
+        if self._creature_scheduler is not None:
+            try:
+                self._creature_scheduler.tick(dt)
+            except Exception:
+                pass
+            if draw_list is not None:
+                try:
+                    self._creature_scheduler.render(draw_list)
+                except Exception:
+                    pass
+        if self._idle_emitter is not None:
+            try:
+                self._idle_emitter.tick(dt)
+            except Exception:
+                pass
+
+    def notify_user_activity(self) -> None:
+        """Reset the idle emitter — call on any keyboard / mouse / drag input.
+
+        Safe before :meth:`setup_theme_subsystem` runs (no-op when the
+        emitter hasn't been built yet).
+        """
+        if self._idle_emitter is not None:
+            self._idle_emitter.reset_activity()
+
     def run(self) -> None:
         """Enter the Dear PyGui render loop.
 
@@ -494,27 +621,54 @@ class EditorShell:
             ) from exc
 
         self._running = True
+        import time as _time
+        last_t = _time.monotonic()
         while dpg.is_dearpygui_running():
             if self._gizmo_overlay is not None:
                 self._gizmo_overlay.update()
 
             # ── Keyboard shortcuts ─────────────────────────────────────────
+            any_input = False
             if dpg.is_key_down(dpg.mvKey_Control):
                 if dpg.is_key_pressed(dpg.mvKey_S):
                     self._save_project()
+                    any_input = True
                 elif dpg.is_key_pressed(dpg.mvKey_Z):
                     self._undo()
+                    any_input = True
 
             if dpg.is_key_pressed(dpg.mvKey_Delete):
                 self._delete_selected()
+                any_input = True
 
             if dpg.is_key_pressed(dpg.mvKey_F5):
                 self._toggle_play()
+                any_input = True
+
+            # Mouse-button activity (any of the standard 3 buttons).
+            try:
+                if (
+                    dpg.is_mouse_button_down(0)
+                    or dpg.is_mouse_button_down(1)
+                    or dpg.is_mouse_button_down(2)
+                ):
+                    any_input = True
+            except Exception:
+                pass
+
+            if any_input:
+                self.notify_user_activity()
 
             self._update_window_drag()
             dpg.render_dearpygui_frame()
             if self._code_mode_panel is not None:
                 self._code_mode_panel.update()
+
+            # Drive scheduler + idle emitter once per frame.
+            now = _time.monotonic()
+            dt = max(0.0, now - last_t)
+            last_t = now
+            self.tick_subsystems(dt)
         dpg.destroy_context()
         self._running = False
 
