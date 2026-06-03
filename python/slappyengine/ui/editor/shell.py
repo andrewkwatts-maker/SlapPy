@@ -145,6 +145,17 @@ class EditorShell:
         self._dirty: bool = False
         self._project_picker: "NotebookProjectPicker | None" = None
 
+        # ── Layout persistence ─────────────────────────────────────────────
+        # The persistence layer is constructed lazily — falls back to the
+        # user-wide ``~/.slappyengine/default_layout.yaml`` when no project
+        # is loaded so the editor still remembers the user's chrome
+        # before the project picker runs. ``_layout_state`` holds the
+        # most recently applied layout so tests can verify what was
+        # actually pushed without re-loading from disk.
+        from slappyengine.ui.editor.layout_persistence import LayoutPersistence
+        self._layout_persistence: LayoutPersistence = LayoutPersistence(None)
+        self._layout_state = None  # type: ignore[assignment]
+
     # ------------------------------------------------------------------
     # Ambient-feedback helpers (status bar + hotkeys)
     # ------------------------------------------------------------------
@@ -176,12 +187,32 @@ class EditorShell:
         with either flavour.
         """
         local = command.split(".", 1)[1] if command.startswith("editor.") else command
+        # Layout-preset commands route through apply_layout_preset.
+        if local.startswith("layout_preset_"):
+            preset_name = local[len("layout_preset_"):]
+            try:
+                self.apply_layout_preset(preset_name)
+            except Exception:
+                pass
+            return
+        # Panel-toggle commands route through toggle_panel.
+        if local.startswith("toggle_panel_"):
+            panel_id = local[len("toggle_panel_"):]
+            try:
+                self.toggle_panel(panel_id)
+            except Exception:
+                pass
+            return
         action = {
-            "save":             self._save_project,
-            "undo":             self._undo,
-            "delete":           self._delete_selected,
-            "play":             self._toggle_play,
-            "run":              self._toggle_play,
+            "save":                   self._save_project,
+            "undo":                   self._undo,
+            "delete":                 self._delete_selected,
+            "play":                   self._toggle_play,
+            "run":                    self._toggle_play,
+            "reset_layout":           self.reset_layout,
+            "toggle_theme_switcher":  self.toggle_theme_switcher,
+            "cycle_theme":            self.cycle_theme,
+            "toggle_fullscreen":      self.toggle_fullscreen,
         }.get(local)
         if action is not None:
             try:
@@ -204,6 +235,196 @@ class EditorShell:
                 )
             except Exception:
                 pass
+
+    # ------------------------------------------------------------------
+    # Layout preset + window-management helpers
+    # ------------------------------------------------------------------
+
+    # Canonical theme cycle order — matches the welcome-screen swatch row.
+    _THEME_CYCLE: tuple[str, ...] = (
+        "teengirl_notebook",
+        "cozy_diary",
+        "bullet_journal",
+        "scrapbook_summer",
+        "cottagecore_garden",
+        "kawaii_planner",
+    )
+
+    def apply_layout_preset(self, preset_name: str) -> None:
+        """View → Layout Presets → *preset_name*. Reshape every panel.
+
+        Routes through :func:`apply_preset` so the preset's panel-state
+        dict lands on ``self._panel_layout_state`` and any DPG windows
+        are reconfigured. Pushes a status toast naming the preset for
+        ambient feedback.
+        """
+        from slappyengine.ui.editor.layout_presets import apply_preset
+
+        try:
+            preset = apply_preset(self, preset_name)
+        except KeyError:
+            self._set_status(f"Unknown layout preset: {preset_name}")
+            return
+        if self._notebook_status_bar is not None:
+            try:
+                self._notebook_status_bar.set_message(
+                    f"Preset: {preset.name}", kind="info",
+                )
+            except Exception:
+                pass
+
+    def reset_layout(self) -> None:
+        """Ctrl+0 / View → Reset Layout — drop persisted state, re-apply Default.
+
+        Resets every persistence layer at once:
+
+        * the in-memory ``_panel_layout_state`` cache used by the
+          preset / toggle pipeline,
+        * the legacy ``<project>/layout.yaml`` file written by the older
+          preset implementation, and
+        * the new ``<project>/.slappy/layout.yaml`` snapshot produced by
+          :class:`LayoutPersistence` (or the user-wide fallback when no
+          project is loaded).
+
+        Then re-applies the canonical Default preset followed by the
+        notebook-family :data:`DEFAULT_LAYOUT` so both subsystems agree
+        on the chrome.
+        """
+        # Clear any cached panel state.
+        self._panel_layout_state: dict = {}
+        # Best-effort delete of the legacy ``project/layout.yaml`` path.
+        project = self._project
+        if project is not None:
+            try:
+                legacy = project.path / "layout.yaml"
+                if legacy.is_file():
+                    legacy.unlink()
+            except Exception:
+                pass
+        # Drop the new ``.slappy/layout.yaml`` snapshot.
+        persistence = getattr(self, "_layout_persistence", None)
+        if persistence is not None:
+            try:
+                persistence.reset()
+            except Exception:
+                pass
+        # Re-apply the legacy preset (drives layout_presets / DPG menus).
+        try:
+            self.apply_layout_preset("default")
+        except Exception:
+            pass
+        # Re-apply the new notebook-family default so panel state lands
+        # consistently on both subsystems.
+        if persistence is not None:
+            try:
+                from slappyengine.ui.editor.default_layouts import (
+                    DEFAULT_LAYOUT,
+                )
+
+                persistence.apply_to_shell(self, DEFAULT_LAYOUT)
+            except Exception:
+                pass
+        try:
+            self._set_status("Layout reset")
+        except Exception:
+            pass
+
+    def toggle_panel(self, panel_id: str) -> bool:
+        """Toggle the visibility of *panel_id* in the active layout state.
+
+        Updates ``self._panel_layout_state[panel_id].visible`` and best-
+        effort calls ``dpg.configure_item(tag, show=...)`` on the
+        matching DPG window tag. Returns the new ``visible`` value.
+        """
+        from slappyengine.ui.editor.layout_presets import PanelLayoutState
+
+        state_dict = getattr(self, "_panel_layout_state", None)
+        if not isinstance(state_dict, dict):
+            state_dict = {}
+            self._panel_layout_state = state_dict
+        current = state_dict.get(panel_id)
+        if current is None:
+            current = PanelLayoutState(panel_id=panel_id)
+            state_dict[panel_id] = current
+        current.visible = not current.visible
+        tag_map = {
+            "toolbar":         "toolbar_row",
+            "outliner":        "scene_tab_body",
+            "viewport":        "viewport_area",
+            "inspector":       "details_tab_body",
+            "content_browser": "bottom_panel",
+            "code":            "code_mode_area",
+            "status_bar":      "status_bar",
+        }
+        tag = tag_map.get(panel_id)
+        if tag is not None:
+            try:
+                import dearpygui.dearpygui as dpg
+                if dpg.does_item_exist(tag):
+                    dpg.configure_item(tag, show=current.visible)
+            except Exception:
+                pass
+        if self._notebook_status_bar is not None:
+            try:
+                state_str = "shown" if current.visible else "hidden"
+                self._notebook_status_bar.set_message(
+                    f"{panel_id}: {state_str}", kind="info",
+                )
+            except Exception:
+                pass
+        return current.visible
+
+    def toggle_theme_switcher(self) -> None:
+        """Ctrl+T — open / focus the theme switcher panel."""
+        self._open_theme_switcher()
+
+    def cycle_theme(self) -> str:
+        """Ctrl+Shift+T — rotate to the next diary theme. Returns its id."""
+        current = self._ui_settings.default_theme
+        cycle = self._THEME_CYCLE
+        try:
+            idx = cycle.index(current)
+        except ValueError:
+            idx = -1
+        next_theme = cycle[(idx + 1) % len(cycle)]
+        try:
+            from slappyengine.ui.theme import apply_theme
+
+            apply_theme(next_theme)
+        except Exception:
+            pass
+        self._ui_settings.default_theme = next_theme
+        if self._notebook_status_bar is not None:
+            try:
+                self._notebook_status_bar.set_active_theme_name(next_theme)
+                self._notebook_status_bar.set_message(
+                    f"Theme: {next_theme}", kind="info",
+                )
+            except Exception:
+                pass
+        return next_theme
+
+    def toggle_fullscreen(self) -> None:
+        """F11 — flip DPG viewport between maximised and windowed."""
+        if not hasattr(self, "_fullscreen"):
+            self._fullscreen = False
+        self._fullscreen = not self._fullscreen
+        try:
+            import dearpygui.dearpygui as dpg
+
+            try:
+                dpg.toggle_viewport_fullscreen()
+            except Exception:
+                # Older DPG builds — fall back to maximise/restore.
+                try:
+                    if self._fullscreen:
+                        dpg.maximize_viewport()
+                    else:
+                        dpg.minimize_viewport()
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------
     # Panel registration
@@ -467,8 +688,15 @@ class EditorShell:
                 dpg.add_menu_item(
                     label="Reset Layout",
                     tag="menu_reset_layout",
+                    shortcut="Ctrl+0",
                     callback=lambda *_: self.menu_reset_layout(),
                 )
+                # ── Layout Presets submenu ───────────────────────────
+                with dpg.menu(
+                    label="Layout Presets",
+                    tag="menu_layout_presets",
+                ):
+                    self._populate_layout_presets_menu()
             with dpg.menu(label="Help"):
                 dpg.add_menu_item(
                     label="Welcome",
@@ -1218,7 +1446,13 @@ class EditorShell:
             pass
 
     def mark_clean(self) -> None:
-        """Flag the current scene as freshly saved + repaint title."""
+        """Flag the current scene as freshly saved + repaint title.
+
+        Also persists the current panel layout so a save-driven clean
+        state (Ctrl+S, autosave, etc.) always lands the user's chrome on
+        disk — independent of whether ``save_scene`` actually wrote
+        anything (e.g. for engines without a ``save_scene`` hook).
+        """
         self._dirty = False
         self._scene_saved = True
         if self._notebook_status_bar is not None:
@@ -1228,6 +1462,10 @@ class EditorShell:
                 pass
         try:
             self._apply_window_title()
+        except Exception:
+            pass
+        try:
+            self._persist_layout()
         except Exception:
             pass
 
@@ -1315,6 +1553,21 @@ class EditorShell:
         except Exception:
             pass
 
+        # ── Layout persistence — re-root, then restore ─────────────────────
+        # Re-construct the persistence handle against the project root so
+        # subsequent save()/load() target ``<project>/.slappy/layout.yaml``.
+        # When a layout exists on disk, replay it through ``apply_to_shell``.
+        try:
+            from slappyengine.ui.editor.layout_persistence import (
+                LayoutPersistence,
+            )
+            self._layout_persistence = LayoutPersistence(project.path)
+            saved_layout = self._layout_persistence.load()
+            if saved_layout is not None:
+                self._layout_persistence.apply_to_shell(self, saved_layout)
+        except Exception:
+            pass
+
     def save_scene(self) -> None:
         """Save the current scene to ``_scene_path``.
 
@@ -1364,6 +1617,12 @@ class EditorShell:
 
         self.mark_clean()
         self._set_status("Saved")
+        # Persist the current panel layout alongside the scene so a crash
+        # right after a save still preserves the user's chrome.
+        try:
+            self._persist_layout()
+        except Exception:
+            pass
         try:
             from slappyengine.event_bus import get_default_bus
 
@@ -1538,6 +1797,30 @@ class EditorShell:
                 dpg.add_menu_item(
                     label=f"{index + 1}. {label}",
                     callback=lambda s, d, idx=index: self.load_recent_project(idx),
+                )
+            except Exception:
+                pass
+
+    def _populate_layout_presets_menu(self) -> None:
+        """Fill ``View → Layout Presets`` with one entry per preset.
+
+        Headless-safe — silently no-ops when ``dearpygui`` is missing.
+        """
+        try:
+            import dearpygui.dearpygui as dpg
+        except Exception:
+            return
+        from slappyengine.ui.editor.layout_presets import PRESETS
+
+        for preset_id, preset in PRESETS.items():
+            try:
+                shortcut = preset.shortcut.replace("ctrl+", "Ctrl+").upper().replace(
+                    "CTRL+", "Ctrl+",
+                ) if preset.shortcut else ""
+                dpg.add_menu_item(
+                    label=preset.name,
+                    shortcut=shortcut,
+                    callback=lambda s, d, pid=preset_id: self.apply_layout_preset(pid),
                 )
             except Exception:
                 pass
@@ -1891,5 +2174,36 @@ class EditorShell:
         this method sets the internal flag so callers can track state, but
         the actual loop termination is driven by Dear PyGui (e.g. the user
         closing the viewport).
+
+        Persists the current panel layout one last time so the next launch
+        starts in the same configuration the user just left.
         """
+        try:
+            self._persist_layout()
+        except Exception:
+            pass
         self._running = False
+
+    # ------------------------------------------------------------------
+    # Layout persistence
+    # ------------------------------------------------------------------
+
+    def _persist_layout(self) -> None:
+        """Snapshot the current panel state and write it to disk.
+
+        Best-effort: silently no-ops if persistence isn't wired up yet
+        (e.g. tests that construct an ``EditorShell`` then never call
+        :meth:`setup`). Subclasses that override panel construction can
+        rely on this being called from :meth:`save_scene`, :meth:`stop`,
+        and the autosave timer.
+
+        See :meth:`reset_layout` for the inverse operation.
+        """
+        persistence = getattr(self, "_layout_persistence", None)
+        if persistence is None:
+            return
+        try:
+            layout = persistence.snapshot_from_shell(self)
+            persistence.save(layout)
+        except Exception:
+            pass
