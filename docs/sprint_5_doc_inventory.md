@@ -28,6 +28,7 @@ Regenerate after adding or removing any doc.
 | [`fluid_design.md`](fluid_design.md) | Design reference for the Position-Based Fluids (PBF) 2D particle simulator (`slappyengine.fluid`). |
 | [`getting_started.md`](getting_started.md) | Game-dev tutorial; build a runnable mini-game in 15 minutes with 8 verified-runnable snippets (5/5 tripwire tests green, 298 lines). |
 | [`hardening_audit_2026_05_29.md`](hardening_audit_2026_05_29.md) | Phase-B/C subpackage input-validation hardening audit (2026-05-29). |
+| [`idle_animation_system_2026_06_03.md`](idle_animation_system_2026_06_03.md) | Idle-animation subsystem spec — `slappyengine.ui.theme.creatures` module surface (Creature / CreatureScheduler / SlotPolicy), 19 event-to-creature bindings, performance contract (≤ 1 ms idle / ≤ 5 ms one-shot), accessibility settings, theme integration, test plan (2026-06-03). |
 | [`lighting_presets.md`](lighting_presets.md) | Sprint-3 ready-to-use post-process chain presets composing the lighting-polish helpers into flagship game looks. |
 | [`material_catalog.md`](material_catalog.md) | Reference catalogue for every material shipped in `config/softbody.yml` and `config/fluid.yml`. |
 | [`particle_field_design.md`](particle_field_design.md) | ParticleField design notes — what worked, what didn't, Phase 1+2 foundation cleanup rationale. |
@@ -67,6 +68,7 @@ Regenerate after adding or removing any doc.
 | [`ui_pattern_audit_2026_06_03.md`](ui_pattern_audit_2026_06_03.md) | Formal contract audit of every panel under `python/slappyengine/ui/editor/` plus Nova3D → woodland/notebook theme translation map, animation timing budgets, DPG-primitive catalog, and keyboard shortcut map (2026-06-03). |
 | [`video_output.md`](video_output.md) | Video output guide — MP4 default vs GIF fallback for SlapPyEngine's showcase and capture tools. |
 | [`wheel_size_audit_2026_06_02.md`](wheel_size_audit_2026_06_02.md) | Wheel size audit — `maturin build --release` measured at ~1.45 MB (well under PyPI 50 MB target); excluded `slappyengine/tests/` from shipped artefacts (2026-06-02). |
+| [`woodland_creature_catalog_2026_06_03.md`](woodland_creature_catalog_2026_06_03.md) | Woodland creature catalog — 14 creature/plant/motif entries (fox, deer, owl, frog, rabbit, butterfly, bee, snail, mushroom, acorn, fern, leaf, daisy, pinecone) with render strategy, trigger events, idle behavior, theme alternates, performance budget; layer atop the TeenGirl Notebook theme (2026-06-03). |
 | [`zones_design.md`](zones_design.md) | Design reference for `slappyengine.zones`: named axis-aligned rectangular regions with enter/exit callbacks, material tags, and scalar threshold events. |
 
 ## Per-subpackage API references (`docs/api/`)
