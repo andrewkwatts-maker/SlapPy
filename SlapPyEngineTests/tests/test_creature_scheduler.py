@@ -503,8 +503,10 @@ def test_module_level_trigger_returns_bool():
 def test_scheduler_total_budget_aggregates_registered_creatures():
     s = CreatureScheduler()
     register_builtins(s)
-    # fox=0.3, butterfly=0.5, sparkle=0.1 -> 0.9 ms
-    assert s.total_budget_ms == pytest.approx(0.9)
+    # fox=0.3 + butterfly=0.5 + sparkle=0.1 + cat=0.3 + golden=0.4
+    # + red_panda=0.4 + raccoon=0.35 + panda=0.3 + porcupine=0.3
+    # + hedgehog=0.3 + butterfly_02=0.5 -> 3.75 ms
+    assert s.total_budget_ms == pytest.approx(3.75)
 
 
 # ===========================================================================
