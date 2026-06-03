@@ -402,17 +402,38 @@ class EditorShell:
         # ── Menu bar (handled by viewport — sits above everything) ─────────
         with dpg.viewport_menu_bar():
             with dpg.menu(label="File"):
-                dpg.add_menu_item(label="Open Scene", tag="menu_open_scene")
-                dpg.add_menu_item(label="Save Scene", tag="menu_save_scene")
+                dpg.add_menu_item(
+                    label="Open Scene",
+                    tag="menu_open_scene",
+                    callback=lambda *_: self.menu_open_scene(),
+                )
+                dpg.add_menu_item(
+                    label="Save Scene",
+                    tag="menu_save_scene",
+                    callback=lambda *_: self.menu_save_scene(),
+                )
             with dpg.menu(label="Edit"):
-                dpg.add_menu_item(label="Undo", tag="menu_undo")
+                dpg.add_menu_item(
+                    label="Undo",
+                    tag="menu_undo",
+                    callback=lambda *_: self.menu_undo(),
+                )
             with dpg.menu(label="View"):
-                dpg.add_menu_item(label="Reset Layout", tag="menu_reset_layout")
+                dpg.add_menu_item(
+                    label="Reset Layout",
+                    tag="menu_reset_layout",
+                    callback=lambda *_: self.menu_reset_layout(),
+                )
             with dpg.menu(label="Help"):
                 dpg.add_menu_item(
                     label="Welcome",
                     tag="menu_welcome",
                     callback=lambda *_: self.show_welcome(),
+                )
+                dpg.add_menu_item(
+                    label="About",
+                    tag="menu_about",
+                    callback=lambda *_: self.menu_about(),
                 )
 
         # ── Derived layout dimensions ──────────────────────────────────────
@@ -737,6 +758,11 @@ class EditorShell:
         :class:`NotebookGizmoOverlay` exposes mode via
         :meth:`render(..., mode=...)` rather than a setter, so we cache
         the value locally and the run loop reads it before each frame.
+
+        Also forwards to ``engine.set_active_tool()`` when present so
+        engine-side systems (input-routing, scripted tools) can observe
+        the change. The status bar's active tool is updated so users
+        get a visual confirmation in the marginalia row.
         """
         # Translate the toolbar's "move" id to the gizmo's "translate"
         # vocabulary — the legacy editor used "translate" and the
@@ -744,18 +770,66 @@ class EditorShell:
         if tool_id == "move":
             tool_id = "translate"
         self._active_tool = tool_id
+        # Status bar reflection — surface the tool name in the marginalia.
+        if self._notebook_status_bar is not None:
+            try:
+                self._notebook_status_bar.set_active_tool(tool_id)
+            except Exception:
+                pass
+        # Engine hook — only forward when the engine implements it.
+        engine_setter = getattr(self._engine, "set_active_tool", None)
+        if callable(engine_setter):
+            try:
+                engine_setter(tool_id)
+            except Exception:
+                pass
+        # Gizmo overlay — expose set_mode if the overlay carries one so
+        # the active manipulator is updated synchronously rather than
+        # waiting for the next frame's render() call.
+        if self._gizmo_overlay is not None:
+            setter = getattr(self._gizmo_overlay, "set_mode", None)
+            if callable(setter):
+                try:
+                    setter(tool_id)
+                except Exception:
+                    pass
 
     def _on_entity_selected(self, entity: object) -> None:
         """Receive a selection event from the notebook outliner.
 
-        Forwards the entity to the inspector so the field-journal page
-        refreshes for the new target. Tracked on the shell so the Delete
-        shortcut can act on it.
+        Forwards the entity through the three downstream channels:
+
+        1. :class:`NotebookInspector` — repaints the field-journal page
+           with the new target's fields (or the empty state when *entity*
+           is ``None``).
+        2. :class:`NotebookGizmoOverlay` — rebinds the pencil overlay so
+           the next ``render`` pass paints handles on the new entity.
+        3. :class:`NotebookStatusBar` — bumps the marginalia selection
+           segment so the user gets ambient feedback that the click
+           registered.
+
+        Tracked on the shell so the Delete shortcut can act on the
+        currently-selected entity.
         """
         self._selected_entity = entity
+        # 1. NotebookInspector picks up the entity
         if self._inspector is not None:
             try:
                 self._inspector.set_target(entity)
+            except Exception:
+                pass
+        # 2. Gizmo overlay binds
+        if self._gizmo_overlay is not None:
+            try:
+                self._gizmo_overlay.set_entity(entity)
+            except Exception:
+                pass
+        # 3. Status bar shows selection count
+        if self._notebook_status_bar is not None:
+            try:
+                self._notebook_status_bar.set_selection_count(
+                    1 if entity is not None else 0,
+                )
             except Exception:
                 pass
 
@@ -1000,6 +1074,228 @@ class EditorShell:
                 self._set_status(f"Undo failed: {exc}")
         else:
             self._set_status("Undo (not yet implemented)")
+
+    # ------------------------------------------------------------------
+    # Menu-bar actions (File / Edit / View / Help)
+    # ------------------------------------------------------------------
+
+    def menu_open_scene(self, path: str | None = None) -> bool:
+        """File → Open Scene. Opens a file picker, then loads the chosen scene.
+
+        When *path* is provided directly (tests / scripted use) the dialog
+        is skipped. Returns ``True`` on success, ``False`` otherwise.
+        """
+        if path is None:
+            path = self._prompt_open_scene_path()
+        if not path:
+            self._set_status("Open Scene cancelled")
+            return False
+        loader = getattr(self._engine, "load_scene", None)
+        if loader is None:
+            self._set_status("Engine has no load_scene()")
+            return False
+        try:
+            loader(path)
+        except Exception as exc:
+            self._set_status(f"Open Scene failed: {exc}")
+            return False
+        try:
+            from pathlib import Path as _P
+            self.set_scene_name(_P(path).stem, saved=True)
+        except Exception:
+            pass
+        self._set_status(f"Opened {path}")
+        return True
+
+    def menu_save_scene(self) -> bool:
+        """File → Save Scene. Calls ``engine.save_scene`` if present.
+
+        Falls back to the project-manager save path so the menu and Ctrl+S
+        share the same code-path. Also triggers a butterfly flutter via
+        the creature bus when available.
+        """
+        saver = getattr(self._engine, "save_scene", None)
+        ok = False
+        if callable(saver):
+            try:
+                saver()
+                ok = True
+            except Exception as exc:
+                self._set_status(f"Save Scene failed: {exc}")
+                return False
+        else:
+            # Fall back to the project-manager path.
+            project_manager = getattr(self._engine, "_project_manager", None)
+            if project_manager is not None:
+                try:
+                    project_manager.save()
+                    ok = True
+                except Exception as exc:
+                    self._set_status(f"Save failed: {exc}")
+                    return False
+        if not ok:
+            self._set_status("Save Scene: no project loaded")
+            return False
+        # Status toast + butterfly flutter (best effort).
+        if self._notebook_status_bar is not None:
+            try:
+                self._notebook_status_bar.set_message("Saved", kind="success")
+                self._notebook_status_bar.set_save_state(True)
+            except Exception:
+                pass
+        scheduler = self._creature_scheduler
+        if scheduler is not None:
+            try:
+                scheduler.trigger("butterfly_01", "flutter")
+            except Exception:
+                pass
+        self._scene_saved = True
+        try:
+            self._apply_window_title()
+        except Exception:
+            pass
+        return True
+
+    def menu_undo(self) -> bool:
+        """Edit → Undo. Same surface as Ctrl+Z but always emits a status."""
+        undo_manager = getattr(self._engine, "_undo_manager", None)
+        if undo_manager is None:
+            # Try engine.undo() shortcut as a secondary path.
+            engine_undo = getattr(self._engine, "undo", None)
+            if callable(engine_undo):
+                try:
+                    engine_undo()
+                    self._set_status("Undo")
+                    return True
+                except Exception as exc:
+                    self._set_status(f"Undo failed: {exc}")
+                    return False
+            self._set_status("Nothing to undo")
+            return False
+        try:
+            undo_manager.undo()
+            self._set_status("Undo")
+            return True
+        except Exception as exc:
+            self._set_status(f"Undo failed: {exc}")
+            return False
+
+    def menu_reset_layout(self) -> bool:
+        """View → Reset Layout. Restores the default panel docking.
+
+        Best-effort: walks every known DPG panel tag and reconfigures
+        its width/height to the constants defined at module scope. When
+        DPG is missing this still emits a status message so the user
+        knows the click registered.
+        """
+        try:
+            import dearpygui.dearpygui as dpg
+        except Exception:
+            self._set_status("Reset Layout (DPG unavailable)")
+            return False
+
+        height = self._height
+        width = self._width
+        TITLEBAR_H = 28
+        main_h = height - TITLEBAR_H - TOOLBAR_H - BOTTOM_H
+        center_w = width - LEFT_W - RIGHT_W - 6
+
+        # Reconfigure every known panel tag (best-effort; missing ones skip).
+        for tag, w, h in (
+            ("toolbar_row",   -1,       TOOLBAR_H),
+            ("left_panel",    LEFT_W,   main_h),
+            ("center_panel",  center_w, main_h),
+            ("right_panel",   -1,       main_h),
+            ("bottom_panel",  -1,       BOTTOM_H),
+        ):
+            try:
+                if dpg.does_item_exist(tag):
+                    dpg.configure_item(tag, width=w, height=h)
+            except Exception:
+                pass
+        self._set_status("Layout reset")
+        return True
+
+    def menu_about(self) -> dict:
+        """Help → About. Returns the about-info dict and shows a modal.
+
+        Returning the dict (rather than only opening a window) lets tests
+        verify the payload without driving DPG. The dict carries
+        ``version``, ``engine_surface_url``, and ``codename`` keys.
+        """
+        try:
+            from slappyengine import __version__ as _ver
+        except Exception:
+            _ver = "0.0.0"
+        info = {
+            "version": _ver,
+            "engine_surface_url": (
+                "https://github.com/andrewkwatts-maker/SlapPyEngine"
+                "/blob/master/docs/engine_surface.md"
+            ),
+            "codename": "Notebook",
+        }
+        try:
+            import dearpygui.dearpygui as dpg
+            modal_tag = "menu_about_modal"
+            if not dpg.does_item_exist(modal_tag):
+                with dpg.window(
+                    label="About SlapPy",
+                    modal=True,
+                    tag=modal_tag,
+                    width=320,
+                    height=160,
+                ):
+                    dpg.add_text(f"SlapPyEngine v{info['version']}")
+                    dpg.add_text(f"Codename: {info['codename']}")
+                    dpg.add_text("Engine surface:")
+                    dpg.add_text(info["engine_surface_url"], wrap=300)
+                    dpg.add_button(
+                        label="Close",
+                        callback=lambda *_: dpg.delete_item(modal_tag),
+                    )
+            else:
+                try:
+                    dpg.configure_item(modal_tag, show=True)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        self._set_status(f"SlapPyEngine v{info['version']}")
+        return info
+
+    @staticmethod
+    def _prompt_open_scene_path() -> str:
+        """Open a Tk file dialog and return the chosen scene path.
+
+        Returns an empty string when cancelled or when Tk is unavailable.
+        Tk is used as the universal fallback because DPG's file dialog
+        is opt-in and absent in many headless setups.
+        """
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+        except Exception:
+            return ""
+        try:
+            root = tk.Tk()
+            root.withdraw()
+            try:
+                path = filedialog.askopenfilename(
+                    title="Open Scene",
+                    filetypes=[
+                        ("Scene files", "*.scene *.json *.yaml *.yml"),
+                        ("All files", "*.*"),
+                    ],
+                )
+            finally:
+                try:
+                    root.destroy()
+                except Exception:
+                    pass
+            return path or ""
+        except Exception:
+            return ""
 
     def _delete_selected(self) -> None:
         """Delete — remove the currently selected entity from the scene."""
