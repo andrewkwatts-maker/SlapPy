@@ -252,9 +252,96 @@ pixels lit; lit pixels carry `color`; the rest is fully transparent.
   subpackage. Procedural helpers + SVG markup keep the on-disk theme
   footprint under 100 KB.
 
+## Event bindings
+
+The `slappyengine.ui.theme.creatures` subpackage wires engine events to
+woodland-creature animations. The integration is opt-in — instantiate
+:class:`CreatureBusAdapter` against a scheduler + bus, call
+:meth:`install`, and engine events start lighting up creatures.
+
+### Public surface
+
+```python
+from slappyengine.ui.theme.creatures import (
+    CreatureBusAdapter,
+    EVENT_TO_CREATURE_ANIMS,
+    IdleEventEmitter,
+)
+```
+
+### `EVENT_TO_CREATURE_ANIMS`
+
+Declarative `dict[str, list[tuple[str, str]]]` mapping each engine event
+type to a list of `(creature_id, anim_name)` pairs. Source-of-truth for
+the binding set — adding an entry here extends the roster without
+touching adapter code. Keys correspond 1:1 to
+[`idle_animation_system_2026_06_03.md`](../idle_animation_system_2026_06_03.md)
+§2. Highlights:
+
+| Event | Bindings |
+|---|---|
+| `engine.save` | `butterfly_01.flutter` |
+| `engine.build_success` | `bee_01.dive`, `acorn_01.confetti` |
+| `engine.build_failure` | `owl_01.hoot` |
+| `engine.error` | `owl_01.hoot`, `porcupine_01.ball_up` |
+| `engine.scene_loaded` / `engine.scene_closed` | `deer_01.peek_in` / `deer_01.peek_out` |
+| `engine.test_pass` | `acorn_01.drop` |
+| `engine.idle_60s` / `engine.idle_120s` | `fox_01.stretch` / `frog_01.hop` |
+| `engine.first_run` | `rabbit_01.spawn`, `butterfly_01.flutter` |
+| `engine.progress_start` / `engine.progress_end` | `rabbit_01.run` / `rabbit_01.sit` |
+| `engine.loading_start` / `engine.loading_cancel` | `snail_01.crawl` / `snail_01.hide` |
+| `ui.scene_outliner.select_root` | `flower_01.bloom` |
+| `ui.code_mode.bookmark_add` | `pinecone_01.drop` |
+| `ui.click_on_mushroom_decoration` | `mushroom_01.spore_puff` |
+
+### `CreatureBusAdapter`
+
+```python
+CreatureBusAdapter(scheduler, bus, *, debounce_ms=500.0)
+```
+
+Subscribes a `CreatureScheduler` (or any object exposing
+`trigger(creature_id, anim_name)`) to every key in
+`EVENT_TO_CREATURE_ANIMS`.
+
+- `install()` — subscribe to every event type (idempotent).
+- `uninstall()` — drop every subscription and reset debounce state.
+- `trigger_for_event(event_name) -> int` — manually fire the bindings
+  for *event_name*; returns the number of animations actually fired
+  (debounce filters are subtracted).
+- `installed` / `subscribed_events` — introspection accessors.
+
+Tolerant by design:
+
+- Missing creatures (`KeyError` / `LookupError` from `scheduler.trigger`)
+  log at `WARNING` and continue.
+- Same `(event, creature_id, anim)` binding cannot refire within
+  `debounce_ms` (default 500 ms).
+- The bus already swallows handler exceptions; the adapter additionally
+  logs at `ERROR` with the traceback for any non-lookup exception.
+
+### `IdleEventEmitter`
+
+```python
+IdleEventEmitter(bus, intervals=[("engine.idle_60s", 60.0),
+                                 ("engine.idle_120s", 120.0)])
+```
+
+Publishes synthetic idle-pulse events when the user has been inactive
+long enough. The editor host calls `tick(dt)` each frame and
+`reset_activity()` on any real user input. Each threshold publishes
+exactly once per idle window — calling `reset_activity()` reopens every
+window.
+
+Accessors: `idle_seconds` (current accumulator), `has_fired(event)`
+(per-window flag).
+
 ## See also
 
 - [`ui_editor.md`](ui_editor.md) — the optional Dear PyGui editor
   shell that ultimately consumes these primitives.
 - [`material.md`](material.md) — for material *graph* theming inside
   the editor; unrelated to UI chrome theming.
+- [`../idle_animation_system_2026_06_03.md`](../idle_animation_system_2026_06_03.md) —
+  full design spec for the woodland-creature subsystem (this section
+  documents only the event-bus seam).
