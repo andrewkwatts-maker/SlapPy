@@ -752,11 +752,103 @@ class Engine:
         return None
 
     def _show_project_wizard(self) -> None:
-        """Show the pywebview project wizard until a project is created or user cancels.
+        """Show the notebook project picker until a project is resolved.
 
-        Blocks until the pywebview window is closed.  If pywebview is not
-        installed, falls back to a plain CLI message so the engine never crashes.
+        The picker is a Dear PyGui modal hosted in a tiny dedicated DPG
+        viewport so the editor can stay headless until the user picks a
+        project. We block on ``dpg.start_dearpygui`` and tear the
+        viewport down once the picker fires its chosen / cancel
+        callback.
+
+        If ``dearpygui`` is not installed, falls back to the legacy
+        pywebview wizard so existing installs keep working. If that is
+        also missing, we print a CLI hint and return — the editor will
+        no-op after :meth:`run_editor` re-checks for a project.
         """
+        # First-choice path: Dear PyGui modal (matches the rest of the
+        # editor shell). The picker calls back when the user resolves.
+        try:
+            import dearpygui.dearpygui as dpg  # type: ignore[import-not-found]
+        except Exception:
+            self._show_project_wizard_legacy()
+            return
+
+        try:
+            from slappyengine.projects import get_default_registry
+            from slappyengine.ui.editor.notebook_project_picker import (
+                NotebookProjectPicker,
+            )
+        except Exception:
+            self._show_project_wizard_legacy()
+            return
+
+        chosen_holder: dict[str, str] = {}
+
+        def _on_chosen(project) -> None:
+            chosen_holder["path"] = str(project.path)
+            try:
+                dpg.stop_dearpygui()
+            except Exception:
+                pass
+
+        def _on_cancel() -> None:
+            try:
+                dpg.stop_dearpygui()
+            except Exception:
+                pass
+
+        picker = NotebookProjectPicker(
+            on_project_chosen=_on_chosen,
+            on_cancel=_on_cancel,
+            registry=get_default_registry(),
+        )
+
+        try:
+            dpg.create_context()
+            dpg.create_viewport(
+                title="SlapPyEngine — Pick a notebook",
+                width=560,
+                height=520,
+            )
+            with dpg.window(
+                tag="__project_picker_host",
+                label="SlapPyEngine",
+                no_title_bar=True,
+                no_resize=True,
+                no_move=True,
+                width=540,
+                height=500,
+            ):
+                picker.build("__project_picker_host")
+            dpg.setup_dearpygui()
+            dpg.show_viewport()
+            dpg.start_dearpygui()
+        except Exception:
+            self._show_project_wizard_legacy()
+            return
+        finally:
+            try:
+                dpg.destroy_context()
+            except Exception:
+                pass
+            try:
+                picker.destroy()
+            except Exception:
+                pass
+
+        # If the user picked a project we ``chdir`` into it so the
+        # existing :meth:`_find_project` re-check below succeeds. This
+        # keeps the rest of :meth:`run_editor` ignorant of how the
+        # project was resolved (cwd discovery or picker hand-off).
+        if "path" in chosen_holder:
+            import os
+            try:
+                os.chdir(chosen_holder["path"])
+            except Exception:
+                pass
+
+    def _show_project_wizard_legacy(self) -> None:
+        """Pre-picker fallback — pywebview-based project manager."""
         try:
             import webview
         except ImportError:

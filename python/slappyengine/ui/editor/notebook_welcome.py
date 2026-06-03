@@ -128,6 +128,7 @@ class NotebookWelcome:
         on_start_blank: Callable[[], None],
         on_open_demo: Callable[[str], None],
         on_dismiss: Callable[[], None],
+        on_open_picker: Callable[[], None] | None = None,
     ) -> None:
         self._settings = settings
         self._on_start_blank = validate_callable(
@@ -138,6 +139,17 @@ class NotebookWelcome:
         )
         self._on_dismiss = validate_callable(
             "on_dismiss", "NotebookWelcome", on_dismiss,
+        )
+        # ``on_open_picker`` opens the project picker modal — wired by the
+        # shell so the welcome screen has a dedicated "Open a notebook"
+        # button above the demo cards. Optional so existing callers that
+        # don't yet have a project subsystem keep working.
+        self._on_open_picker: Callable[[], None] | None = (
+            validate_callable(
+                "on_open_picker", "NotebookWelcome", on_open_picker,
+            )
+            if on_open_picker is not None
+            else None
         )
 
         # Theme snapshot — refreshed when the user picks a swatch.
@@ -308,6 +320,22 @@ class NotebookWelcome:
                     )
                 except Exception:
                     pass
+
+                # ── Open existing notebook (project picker) ───────
+                # Shown ABOVE the demo cards on first run so users with
+                # an existing project can jump straight to it without
+                # going through a demo first.
+                if self._on_open_picker is not None:
+                    try:
+                        dpg.add_button(
+                            label="Open a notebook...",
+                            width=-1,
+                            height=32,
+                            callback=self._on_open_picker_clicked,
+                            tag=f"{self._panel_tag}_open_picker_btn",
+                        )
+                    except Exception:
+                        pass
 
                 # ── Demo card row ─────────────────────────────────
                 try:
@@ -488,6 +516,19 @@ class NotebookWelcome:
             self._on_start_blank()
         except Exception:
             pass
+        self.mark_seen()
+        self.dismiss()
+
+    def _on_open_picker_clicked(self, *_: Any) -> None:
+        """"Open a notebook" button — hand off to the project picker."""
+        if self._on_open_picker is None:
+            return
+        try:
+            self._on_open_picker()
+        except Exception:
+            pass
+        # Mark seen + dismiss so the welcome screen doesn't pop on top
+        # of the picker once the picker resolves a project.
         self.mark_seen()
         self.dismiss()
 
