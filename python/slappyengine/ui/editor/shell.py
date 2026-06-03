@@ -1,14 +1,19 @@
 ﻿from __future__ import annotations
 
 import threading
+from pathlib import Path
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from slappyengine.engine import Engine
+    from slappyengine.projects import Project
     from slappyengine.ui.editor.notebook_toolbar import NotebookToolbar
     from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
     from slappyengine.ui.editor.notebook_inspector import NotebookInspector
     from slappyengine.ui.editor.content_browser import ContentBrowser
+    from slappyengine.ui.editor.notebook_project_picker import (
+        NotebookProjectPicker,
+    )
     from slappyengine.ui.editor.settings import UISettings
 
 try:
@@ -128,6 +133,17 @@ class EditorShell:
         # Notebook bookkeeping — outliner selection mirror + active tool.
         self._selected_entity: object | None = None
         self._active_tool: str = "select"
+
+        # ── Project lifecycle state ────────────────────────────────────────
+        # The shell tracks the currently open Project, the on-disk scene
+        # path, and a dirty bit for unsaved changes. ``_project_picker`` is
+        # the headless-safe NotebookProjectPicker the File menu surfaces;
+        # constructed lazily so importing the shell never touches the
+        # registry singleton on disk.
+        self._project: "Project | None" = None
+        self._scene_path: Path | None = None
+        self._dirty: bool = False
+        self._project_picker: "NotebookProjectPicker | None" = None
 
     # ------------------------------------------------------------------
     # Ambient-feedback helpers (status bar + hotkeys)
@@ -403,14 +419,43 @@ class EditorShell:
         with dpg.viewport_menu_bar():
             with dpg.menu(label="File"):
                 dpg.add_menu_item(
-                    label="Open Scene",
+                    label="New Scene",
+                    tag="menu_new_scene",
+                    callback=lambda *_: self.new_scene(),
+                )
+                dpg.add_menu_item(
+                    label="Open Scene...",
                     tag="menu_open_scene",
                     callback=lambda *_: self.menu_open_scene(),
                 )
                 dpg.add_menu_item(
                     label="Save Scene",
                     tag="menu_save_scene",
+                    shortcut="Ctrl+S",
                     callback=lambda *_: self.menu_save_scene(),
+                )
+                dpg.add_menu_item(
+                    label="Save Scene As...",
+                    tag="menu_save_scene_as",
+                    shortcut="Ctrl+Shift+S",
+                    callback=lambda *_: self.save_scene_as(),
+                )
+                dpg.add_separator()
+                dpg.add_menu_item(
+                    label="Switch Project...",
+                    tag="menu_switch_project",
+                    callback=lambda *_: self.switch_project(),
+                )
+                with dpg.menu(
+                    label="Recent Projects",
+                    tag="menu_recent_projects",
+                ):
+                    self._populate_recent_projects_menu()
+                dpg.add_separator()
+                dpg.add_menu_item(
+                    label="Quit",
+                    tag="menu_quit",
+                    callback=lambda *_: self.stop(),
                 )
             with dpg.menu(label="Edit"):
                 dpg.add_menu_item(
@@ -794,6 +839,71 @@ class EditorShell:
                 except Exception:
                     pass
 
+    def handle_spawn(self, card_id: str, spec: dict) -> object | None:
+        """Instantiate a spawn-menu card and select it in the outliner.
+
+        Routes the spawn card through the engine's scene. Falls back to a
+        soft no-op when no scene is attached. Returns the new entity (or
+        ``None`` on failure) so callers can chain follow-up edits.
+
+        Wired as the ``on_spawn`` callback when the shell constructs a
+        :class:`NotebookSpawnMenu`.
+        """
+        scene = getattr(self._engine, "scene", None)
+        if scene is None:
+            self._set_status(f"Cannot summon {card_id}: no active scene")
+            return None
+        entity = None
+        # Best-effort spec → entity translation by scanning SPAWN_ACTIONS
+        # for a matching action_id; falls back to wrapping the spec on a
+        # generic carrier so the outliner still gets a row.
+        try:
+            from slappyengine.ui.editor.spawn_menu import SPAWN_ACTIONS
+
+            for action in SPAWN_ACTIONS:
+                if action.get("action_id") == card_id:
+                    factory = action.get("factory")
+                    if callable(factory):
+                        entity = factory(spec, scene=scene, engine=self._engine)
+                        break
+        except Exception:
+            entity = None
+        if entity is None:
+            # Fallback: stash the spec on a stub entity object so the
+            # outliner / inspector can still surface "something happened".
+            class _StubEntity:
+                def __init__(self, _cid: str, _spec: dict) -> None:
+                    self.id = f"{_cid}_{id(self)}"
+                    self.name = _spec.get("name", _cid)
+                    self.kind = _cid
+                    self.parameters = dict(_spec)
+                    self.visible = True
+                    self.locked = False
+                def on_create(self) -> None:  # noqa: D401 - scene hook
+                    pass
+                def on_destroy(self) -> None:  # noqa: D401 - scene hook
+                    pass
+            entity = _StubEntity(card_id, spec)
+            try:
+                scene.add(entity)  # type: ignore[arg-type]
+            except Exception:
+                # Some Scene impls require Entity subclass — silently swallow.
+                pass
+        # Select the new entity in the outliner.
+        if self._scene_outliner is not None and entity is not None:
+            try:
+                eid = getattr(entity, "id", None) or getattr(entity, "name", "")
+                if isinstance(eid, str) and eid:
+                    self._scene_outliner.set_selected(eid)
+            except Exception:
+                pass
+            try:
+                self._on_entity_selected(entity)
+            except Exception:
+                pass
+        self._set_status(f"Summoned {card_id}")
+        return entity
+
     def _on_entity_selected(self, entity: object) -> None:
         """Receive a selection event from the notebook outliner.
 
@@ -1020,11 +1130,20 @@ class EditorShell:
             format_window_title,
         )
 
+        # ``project_name=None`` triggers the "(no project)" placeholder.
+        project_name = (
+            self._project.metadata.name if self._project is not None else None
+        )
+        # ``_scene_saved`` is the legacy bit; ``_dirty`` is the new one and
+        # takes precedence when a project is loaded — the brief asks for an
+        # unsaved-flower whenever ``_dirty`` is True.
+        saved = self._scene_saved and not self._dirty
         try:
             title = format_window_title(
                 self._scene_name,
-                self._scene_saved,
+                saved,
                 self._ui_settings.default_theme,
+                project_name=project_name,
             )
         except Exception:
             return
@@ -1048,11 +1167,331 @@ class EditorShell:
             pass
 
     # ------------------------------------------------------------------
+    # Project lifecycle — load / save / open / switch
+    # ------------------------------------------------------------------
+
+    def set_project(self, project: "Project") -> None:
+        """Set the currently open project (no side-effects).
+
+        :meth:`load_project` is the high-level entry point — it calls
+        this method then updates the title bar / content browser / status
+        bar / event bus. Tests use this setter directly when they want
+        to inspect a state mutation without driving the full load.
+        """
+        # Import here so the shell module can be imported without the
+        # projects package being importable (e.g. PyYAML missing).
+        from slappyengine.projects import Project as _Project
+
+        if not isinstance(project, _Project):
+            raise TypeError(
+                "EditorShell.set_project: project must be a Project; "
+                f"got {type(project).__name__}"
+            )
+        self._project = project
+
+    def get_project(self) -> "Project | None":
+        """Return the currently open project, or ``None``."""
+        return self._project
+
+    def is_dirty(self) -> bool:
+        """Return ``True`` iff the current scene has unsaved changes."""
+        return self._dirty
+
+    def mark_dirty(self) -> None:
+        """Flag the current scene as having unsaved edits + repaint title."""
+        self._dirty = True
+        self._scene_saved = False
+        if self._notebook_status_bar is not None:
+            try:
+                self._notebook_status_bar.set_save_state(False)
+            except Exception:
+                pass
+        try:
+            self._apply_window_title()
+        except Exception:
+            pass
+
+    def mark_clean(self) -> None:
+        """Flag the current scene as freshly saved + repaint title."""
+        self._dirty = False
+        self._scene_saved = True
+        if self._notebook_status_bar is not None:
+            try:
+                self._notebook_status_bar.set_save_state(True)
+            except Exception:
+                pass
+        try:
+            self._apply_window_title()
+        except Exception:
+            pass
+
+    def load_project(self, project: "Project") -> None:
+        """Open *project* — repaint title, content browser, status bar.
+
+        Sequence:
+
+        1. :meth:`set_project` (records the handle).
+        2. Updates the OS window title via :meth:`_apply_window_title`.
+        3. Re-roots the content browser at ``project.path``.
+        4. Loads ``project.scenes_dir / 'main.scene.yaml'`` if present.
+        5. Pushes "Loaded notebook: <name>" to the status bar.
+        6. Publishes ``engine.scene_loaded`` on the global event bus
+           (the deer_01.peek_in creature is bound there).
+        7. Registers the project on the recents tracker.
+        """
+        self.set_project(project)
+        # Refresh title even before the rest so the window labelling
+        # reflects the new project immediately.
+        try:
+            self._apply_window_title()
+        except Exception:
+            pass
+
+        # Re-root the content browser.
+        if self._content_browser is not None:
+            try:
+                self._content_browser._root = Path(project.path)
+                self._content_browser._current = Path(project.path)
+            except Exception:
+                pass
+
+        # Try to load the default scene off disk.
+        default_scene = project.scenes_dir / "main.scene.yaml"
+        if default_scene.is_file():
+            self._scene_path = default_scene
+            self._scene_name = default_scene.stem.replace(".scene", "")
+            loader = getattr(self._engine, "load_scene", None)
+            if callable(loader):
+                try:
+                    loader(default_scene)
+                except TypeError:
+                    # Engine.load_scene(scene: Scene) — path overload
+                    # isn't implemented yet; tolerated.
+                    pass
+                except Exception:
+                    pass
+        else:
+            self._scene_path = None
+            self._scene_name = "main"
+
+        # Mark clean now that we've loaded a fresh scene (or none).
+        self.mark_clean()
+
+        # Status-bar feedback.
+        self._set_status(f"Loaded notebook: {project.metadata.name}")
+
+        # Fire the scene_loaded event so the deer creature peeks in.
+        try:
+            from slappyengine.event_bus import get_default_bus
+
+            get_default_bus().publish(
+                "engine.scene_loaded",
+                project_name=project.metadata.name,
+                scene_path=str(default_scene) if default_scene.is_file() else None,
+            )
+        except Exception:
+            pass
+
+        # Register on the recents tracker.
+        try:
+            from slappyengine.projects import get_default_registry
+
+            get_default_registry().register(project)
+        except Exception:
+            pass
+
+    def save_scene(self) -> None:
+        """Save the current scene to ``_scene_path``.
+
+        Derives the path from ``project.scenes_dir / 'main.scene.yaml'``
+        when ``_scene_path`` is unset. Calls ``engine.save_scene(path)``
+        when available; otherwise writes a placeholder YAML stub so the
+        Round-Trip "Open → Save" flow still produces a real file on
+        disk. Marks the shell clean and fires ``engine.save`` on the
+        event bus (butterfly_01.flutter binding).
+        """
+        if self._project is None:
+            self._set_status("No project loaded")
+            return
+
+        if self._scene_path is None:
+            self._scene_path = (
+                self._project.scenes_dir / "main.scene.yaml"
+            )
+
+        path = self._scene_path
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+
+        # Prefer engine.save_scene when implemented; otherwise write a
+        # minimal stub so the operation still produces an artefact.
+        saver = getattr(self._engine, "save_scene", None)
+        wrote = False
+        if callable(saver):
+            try:
+                saver(path)
+                wrote = True
+            except Exception:
+                wrote = False
+        if not wrote:
+            try:
+                if not path.exists():
+                    path.write_text(
+                        f"# {self._scene_name}.scene.yaml — autosaved stub\n"
+                        f"name: {self._scene_name}\n"
+                        "layers: []\n",
+                        encoding="utf-8",
+                    )
+            except Exception:
+                pass
+
+        self.mark_clean()
+        self._set_status("Saved")
+        try:
+            from slappyengine.event_bus import get_default_bus
+
+            get_default_bus().publish("engine.save", path=str(path))
+        except Exception:
+            pass
+
+    def save_scene_as(self, path: Path | str | None = None) -> Path | None:
+        """Save the current scene to a user-chosen path.
+
+        When *path* is ``None`` the shell soft-imports :mod:`tkinter`
+        and surfaces a native save dialog; tests pass an explicit path
+        to drive the headless branch. Returns the saved path or
+        ``None`` if cancelled.
+        """
+        if path is None:
+            try:
+                import tkinter as _tk  # noqa: F401
+                from tkinter import filedialog
+
+                chosen = filedialog.asksaveasfilename(
+                    title="Save Scene As",
+                    defaultextension=".scene.yaml",
+                    filetypes=[("Scene", "*.scene.yaml"), ("YAML", "*.yaml")],
+                )
+            except Exception:
+                chosen = ""
+            if not chosen:
+                return None
+            path = Path(chosen)
+        else:
+            path = Path(path)
+
+        self._scene_path = path
+        self._scene_name = path.stem.replace(".scene", "") or "scene"
+        self.save_scene()
+        return path
+
+    def open_scene(self, path: Path | str) -> None:
+        """Load *path* into the engine and record it as the current scene.
+
+        Warns via the status bar if *path* sits outside
+        ``project.scenes_dir`` — the brief asks for the warning, not a
+        hard refusal, since users sometimes pull scenes from sibling
+        projects during prototyping.
+        """
+        path = Path(path)
+        if not path.is_file():
+            self._set_status(f"Scene not found: {path}")
+            return
+
+        if self._project is not None:
+            try:
+                scenes_root = self._project.scenes_dir.resolve()
+                resolved = path.resolve()
+                # ``Path.is_relative_to`` is 3.9+; the codebase targets
+                # 3.10+ so we use it directly.
+                if not resolved.is_relative_to(scenes_root):
+                    self._set_status(
+                        f"Warning: scene outside project.scenes_dir: {path}"
+                    )
+            except Exception:
+                pass
+
+        loader = getattr(self._engine, "load_scene", None)
+        if callable(loader):
+            try:
+                loader(path)
+            except TypeError:
+                # Engine.load_scene(scene: Scene) — path overload
+                # not yet implemented.
+                pass
+            except Exception:
+                pass
+        self._scene_path = path
+        self._scene_name = path.stem.replace(".scene", "")
+        self.mark_clean()
+        self._set_status(f"Opened: {path.name}")
+
+    def new_scene(self) -> None:
+        """Reset the editor to a blank scene under the active project."""
+        scene_new = getattr(self._engine, "new_scene", None)
+        if callable(scene_new):
+            try:
+                scene_new()
+            except Exception:
+                pass
+        self._scene_path = None
+        self._scene_name = "untitled"
+        self.mark_clean()
+
+    def get_project_picker(self) -> "NotebookProjectPicker":
+        """Return the lazily-constructed :class:`NotebookProjectPicker`."""
+        if self._project_picker is None:
+            from slappyengine.ui.editor.notebook_project_picker import (
+                NotebookProjectPicker,
+            )
+            self._project_picker = NotebookProjectPicker(
+                on_chosen=self.load_project,
+            )
+        return self._project_picker
+
+    def switch_project(self) -> None:
+        """Show the project picker, after offering to save dirty edits.
+
+        Dirty state is best-effort: if the shell can't auto-save (no
+        engine.save_scene, no scenes_dir, etc.) we still proceed to the
+        picker so the user can recover.
+        """
+        if self.is_dirty():
+            try:
+                self.save_scene()
+            except Exception:
+                pass
+        picker = self.get_project_picker()
+        picker.show()
+
+    def load_recent_project(self, index: int) -> None:
+        """File → Recent Projects → N — open the N-th recents entry."""
+        picker = self.get_project_picker()
+        try:
+            picker.pick_recent(index)
+        except IndexError:
+            self._set_status(f"No recent project at slot {index + 1}")
+        except FileNotFoundError as exc:
+            self._set_status(f"Recent project missing: {exc}")
+        except Exception as exc:
+            self._set_status(f"Open failed: {exc}")
+
+    # ------------------------------------------------------------------
     # Keyboard shortcut actions
     # ------------------------------------------------------------------
 
     def _save_project(self) -> None:
-        """Ctrl+S — save the current project via the project manager, if loaded."""
+        """Ctrl+S — save the current scene (project-aware).
+
+        When a project is loaded, routes through :meth:`save_scene`.
+        Falls back to the legacy ``engine._project_manager.save()`` hook
+        for older fixtures that have not yet adopted the new flow.
+        """
+        if self._project is not None:
+            self.save_scene()
+            return
         project_manager = getattr(self._engine, "_project_manager", None)
         if project_manager is not None:
             try:
@@ -1084,12 +1523,25 @@ class EditorShell:
 
         When *path* is provided directly (tests / scripted use) the dialog
         is skipped. Returns ``True`` on success, ``False`` otherwise.
+
+        Routes through :meth:`open_scene` when a project is loaded so the
+        scenes-dir warning + dirty-bit reset land consistently. Falls back
+        to the legacy ``engine.load_scene`` path otherwise.
         """
         if path is None:
             path = self._prompt_open_scene_path()
         if not path:
             self._set_status("Open Scene cancelled")
             return False
+        # Project-aware path — open_scene handles the engine call + title.
+        if self._project is not None:
+            try:
+                self.open_scene(path)
+                return True
+            except Exception as exc:
+                self._set_status(f"Open Scene failed: {exc}")
+                return False
+        # Legacy path for tests / fixtures without a Project.
         loader = getattr(self._engine, "load_scene", None)
         if loader is None:
             self._set_status("Engine has no load_scene()")

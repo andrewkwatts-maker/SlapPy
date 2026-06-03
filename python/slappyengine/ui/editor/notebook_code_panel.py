@@ -346,6 +346,29 @@ class NotebookCodePanel:
         self._rebuild_ribbon()
         self._set_status(f"Loaded: {p.name}")
 
+    def new_file(self) -> None:
+        """Ribbon ``+ New`` button — open an unsaved scratch buffer.
+
+        Adds a new ``untitled_<n>.py`` entry to the ribbon, clears the
+        prompt/code buffers, and switches focus to it. The file is
+        not written to disk until the user saves through the engine.
+        """
+        self.call_log.append(("new_file_clicked",))
+        n = 1
+        existing = {p.name for p in self._files}
+        while f"untitled_{n}.py" in existing:
+            n += 1
+        scratch = Path(f"untitled_{n}.py")
+        self._files.append(scratch)
+        self._active_file = scratch
+        self._prompt_text = ""
+        self._code_text = ""
+        self._prompt_mtime = 0.0
+        self._code_mtime = 0.0
+        self._sync_inputs_to_dpg()
+        self._rebuild_ribbon()
+        self._set_status(f"New scratch buffer: {scratch.name}")
+
     def regenerate(self) -> None:
         """AI prompt → code. Blocks briefly while the AI runs.
 
@@ -539,7 +562,7 @@ class NotebookCodePanel:
                 label="+ New",
                 parent=self._ribbon_tag,
                 tag=f"{self._ribbon_tag}_new_btn",
-                callback=lambda *_: self.call_log.append(("new_file_clicked",)),
+                callback=lambda *_: self.new_file(),
             )
         except Exception:
             pass
