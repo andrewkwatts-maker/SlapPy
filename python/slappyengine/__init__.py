@@ -431,6 +431,7 @@ def __getattr__(name: str):
         "modules",
         "numerics",
         "post_process",
+        "projects",
         "residency",
         "telemetry",
         "audio_runtime",

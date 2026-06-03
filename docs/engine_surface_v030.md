@@ -311,6 +311,14 @@ Post-process subpackage — lazy-loaded to avoid eager wgpu imports.
 
 **Inner modules:** `_validation`, `auto_exposure`, `bloom`, `chain`, `dof`, `executor`, `gtao`, `motion_blur`, `outline`, `preset_chains`, `shadow_csm`, `ssr`, `taa`, `tonemap`, `vignette`, `volumetric_fog`
 
+### `slappyengine.projects`
+
+slappyengine.projects — Nova3D-style multi-project management with persistent recents storage.
+
+**Public attributes:** `Project`, `ProjectMetadata`, `ProjectRegistry`, `get_default_registry`, `read_project`, `write_project`, `is_project_dir`, `find_project_root`, `ProjectFormatError`, `PROJECT_FILE_NAME`, `scaffold_project`
+
+**Inner modules:** `project`, `format`, `registry`, `scaffolding`
+
 ### `slappyengine.residency`
 
 Residency subpackage — lazy-loaded to avoid eager imports.
@@ -370,7 +378,7 @@ slappyengine.zones — Generic zone primitives.
 ### Stable (v0.3 — committed contract)
 
 - The 75 top-level lazy exports listed above.
-- The 21 declared subpackages: `ai`, `animation`, `assets`, `audio_runtime`, `compute`, `dynamics`, `ext`, `gpu`, `input`, `iso`, `material`, `modules`, `numerics`, `post_process`, `residency`, `telemetry`, `testing`, `thermal`, `tools`, `ui`, `zones`.
+- The 22 declared subpackages: `ai`, `animation`, `assets`, `audio_runtime`, `compute`, `dynamics`, `ext`, `gpu`, `input`, `iso`, `material`, `modules`, `numerics`, `post_process`, `projects`, `residency`, `telemetry`, `testing`, `thermal`, `tools`, `ui`, `zones`.
 
 ### Beta (may evolve)
 
@@ -436,6 +444,7 @@ in the API reference's "Design notes" section (linked from the
 | `slappyengine.studio` | [`api/studio.md`](api/studio.md) | [`studio_design.md`](studio_design.md) |
 | `slappyengine.material` | [`api/material.md`](api/material.md) | [`material_design.md`](material_design.md) |
 | `slappyengine.numerics` | [`api/numerics.md`](api/numerics.md) | [`numerics_design.md`](numerics_design.md) |
+| `slappyengine.projects` | [`api/projects.md`](api/projects.md) | no separate doc — see API ref §Overview |
 | `slappyengine.telemetry` | [`api/telemetry.md`](api/telemetry.md) | [`telemetry_design.md`](telemetry_design.md) |
 | `slappyengine.zones` | [`api/zones.md`](api/zones.md) | [`zones_design.md`](zones_design.md) |
 | `slappyengine.animation` | [`api/animation.md`](api/animation.md) | no separate doc — see API ref §Design notes |
