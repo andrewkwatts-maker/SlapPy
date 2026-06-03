@@ -411,7 +411,7 @@ class NotebookWelcome:
                         width=120,
                         height=36,
                         callback=(
-                            lambda s, a, u, d=demo_id: self._on_demo_card_clicked(d)
+                            lambda *_a, d=demo_id: self._on_demo_card_clicked(d)
                         ),
                         tag=f"{card_tag}_btn",
                     )
@@ -423,7 +423,7 @@ class NotebookWelcome:
                 dpg.add_button(
                     label=label,
                     callback=(
-                        lambda s, a, u, d=demo_id: self._on_demo_card_clicked(d)
+                        lambda *_a, d=demo_id: self._on_demo_card_clicked(d)
                     ),
                     tag=f"{card_tag}_btn",
                 )
@@ -439,7 +439,7 @@ class NotebookWelcome:
                 width=32,
                 height=32,
                 callback=(
-                    lambda s, a, u, t=theme_id: self._on_theme_swatch_clicked(t)
+                    lambda *_a, t=theme_id: self._on_theme_swatch_clicked(t)
                 ),
                 tag=swatch_tag,
             )

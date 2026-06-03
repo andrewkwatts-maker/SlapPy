@@ -219,7 +219,7 @@ class NotebookToolbar:
             self._buttons[spec.tool_id] = StickerButton(
                 label=spec.label,
                 sticker_icon=spec.tool_id,
-                callback=lambda s, a, u, tid=spec.tool_id: self.set_active(tid),
+                callback=lambda s, a, u, *_extra, tid=spec.tool_id: self.set_active(tid),
                 width=self._BTN_W,
                 height=self._BTN_H,
             )

@@ -833,7 +833,7 @@ class NotebookSpawnMenu:
                 label=f"<3 Summon! ({card.title})",
                 sticker_icon="heart",
                 callback=(
-                    lambda s, a, u, cid=card.card_id: self.summon(cid)
+                    lambda s, a, u, *_extra, cid=card.card_id: self.summon(cid)
                 ),
                 width=self.CARD_WIDTH - 8,
                 height=28,
@@ -849,7 +849,7 @@ class NotebookSpawnMenu:
                 dpg.add_button(
                     label="<3 Summon!",
                     callback=(
-                        lambda s, a, u, cid=card.card_id: self.summon(cid)
+                        lambda s, a, u, *_extra, cid=card.card_id: self.summon(cid)
                     ),
                     width=self.CARD_WIDTH - 8,
                     height=28,

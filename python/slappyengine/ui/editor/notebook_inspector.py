@@ -550,7 +550,7 @@ class NotebookInspector:
                     default_value=value,
                     parent=self._panel_tag,
                     tag=tag,
-                    callback=lambda s, a, u: self._write_back(name, bool(a)),
+                    callback=lambda s, a, u, *_extra: self._write_back(name, bool(a)),
                 )
                 self._widget_map[name] = tag
             except Exception:
@@ -569,7 +569,7 @@ class NotebookInspector:
                 default_value=value,
                 parent=self._panel_tag,
                 tag=tag,
-                callback=lambda s, a, u: self._write_back(name, int(a)),
+                callback=lambda s, a, u, *_extra: self._write_back(name, int(a)),
             )
             self._widget_map[name] = tag
         except Exception:
@@ -603,7 +603,7 @@ class NotebookInspector:
                     default_value=float(value),
                     parent=self._panel_tag,
                     tag=tag,
-                    callback=lambda s, a, u: self._write_back(name, float(a)),
+                    callback=lambda s, a, u, *_extra: self._write_back(name, float(a)),
                 )
                 self._widget_map[name] = tag
             except Exception:
@@ -622,7 +622,7 @@ class NotebookInspector:
                 default_value=value,
                 parent=self._panel_tag,
                 tag=tag,
-                callback=lambda s, a, u: self._write_back(name, str(a)),
+                callback=lambda s, a, u, *_extra: self._write_back(name, str(a)),
             )
             # The washi-tape "underline" is a 1px coloured strip the
             # theme paints under the input; we add the slot but the
@@ -652,13 +652,13 @@ class NotebookInspector:
                     label=name,
                     default_value=str(value),
                     tag=tag,
-                    callback=lambda s, a, u: self._write_back(name, Path(a)),
+                    callback=lambda s, a, u, *_extra: self._write_back(name, Path(a)),
                 )
                 # Paperclip glyph "file picker" stand-in — the real picker
                 # plugs in here in a later sprint.
                 dpg.add_button(
                     label="[clip]",
-                    callback=lambda s, a, u, _n=name: self.call_log.append(
+                    callback=lambda s, a, u, *_extra, _n=name: self.call_log.append(
                         ("path_picker", _n),
                     ),
                 )
@@ -679,7 +679,7 @@ class NotebookInspector:
                 default_value=list(value),
                 parent=self._panel_tag,
                 tag=tag,
-                callback=lambda s, a, u: self._write_back(name, tuple(a)),
+                callback=lambda s, a, u, *_extra: self._write_back(name, tuple(a)),
             )
             # Sticker preview — small coloured square the theme styles
             # as a wax-seal sticker.
@@ -710,7 +710,7 @@ class NotebookInspector:
                 size=len(value),
                 parent=self._panel_tag,
                 tag=tag,
-                callback=lambda s, a, u: self._write_back(name, tuple(a)),
+                callback=lambda s, a, u, *_extra: self._write_back(name, tuple(a)),
             )
             self._widget_map[name] = tag
         except Exception:
