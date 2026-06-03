@@ -38,7 +38,9 @@ from slappyengine.ui.theme import (
     # registry
     apply_theme, get_active_theme, list_registered_themes, register_theme,
     # procedural effects
-    highlighter_stroke, noise_glitter, paper_shadow, ruled_paper,
+    dot_grid, frosted_panel, glass_blur, highlighter_stroke,
+    noise_glitter, paper_shadow, parchment, ruled_paper,
+    watercolor_wash,
 )
 ```
 
@@ -224,6 +226,46 @@ Soft drop-shadow texture — a Gaussian alpha envelope around `color`.
 Sparse sparkle pattern. `density` ∈ `[0, 1]` controls the fraction of
 pixels lit; lit pixels carry `color`; the rest is fully transparent.
 
+### `glass_blur(source, blur_radius=10, opacity=0.1, tint=None)`
+
+Glassmorphism backdrop blur — mirrors EyesOfAzrael's `--glass-bg` /
+`--glass-blur` CSS contract. *source* is the underlying viewport region
+(an ``(H, W, 4)`` uint8 RGBA ndarray); a separable Gaussian blur of
+standard deviation `blur_radius` is applied, then a translucent white
+(or `tint`) overlay at `opacity` is alpha-composited on top. Returns
+the composited ndarray at the same dimensions as *source*. Pure numpy;
+no GPU dispatch.
+
+### `frosted_panel(width, height, blur_radius=10, opacity=0.1, border_color=None)`
+
+Standalone frosted-glass panel texture — no backdrop required. Builds
+the frosted look from blurred chroma noise under a translucent white
+overlay so a panel can sit anywhere without an underlying viewport
+sample. `border_color` optionally strokes a 1-pixel border around the
+panel for a window-chrome look.
+
+### `dot_grid(width, height, dot_color, dot_radius=1, spacing=8, bg_color=None)`
+
+Bullet-journal style dot pattern. Dots are placed on a regular
+``spacing`` × ``spacing`` lattice; for a canvas whose dimensions divide
+evenly by `spacing` the total dot count is exactly ``(width/spacing) *
+(height/spacing)``. `bg_color` defaults to fully transparent so the
+pattern overlays cleanly on top of `parchment` or `ruled_paper`.
+
+### `parchment(width, height, base_color, edge_dark=0.85, noise_amount=0.05)`
+
+Cozy-diary parchment background. Fills the canvas with `base_color`,
+darkens the four corners through a radial vignette by the multiplier
+`edge_dark`, and adds light per-pixel noise of strength `noise_amount`
+so the surface reads as paper rather than flat fill.
+
+### `watercolor_wash(width, height, color_palette, wash_count=3, opacity=0.3, seed=314159)`
+
+Scrapbook-summer style soft watercolor washes. Draws `wash_count`
+soft-edged elliptical splats sampled from `color_palette`, each at the
+given `opacity`, and blends them additively over a transparent canvas.
+`seed` makes the pattern reproducible across runs.
+
 ## Inner modules
 
 - `slappyengine.ui.theme.theme_spec` — `Color`, `Font`, `Palette`,
@@ -234,7 +276,8 @@ pixels lit; lit pixels carry `color`; the rest is fully transparent.
   DPG texture bridge, module-global rasterised-texture cache.
 - `slappyengine.ui.theme.shader_effects` — pure-numpy procedural
   texture helpers (`ruled_paper`, `highlighter_stroke`,
-  `paper_shadow`, `noise_glitter`).
+  `paper_shadow`, `noise_glitter`, `glass_blur`, `frosted_panel`,
+  `dot_grid`, `parchment`, `watercolor_wash`).
 
 ## Conventions
 

@@ -34,13 +34,30 @@ from __future__ import annotations
 
 from .nine_slice import NineSlice
 from .shader_effects import (
+    dot_grid,
+    frosted_panel,
+    glass_blur,
     highlighter_stroke,
     noise_glitter,
     paper_shadow,
+    parchment,
     ruled_paper,
+    watercolor_wash,
 )
 from .svg_icon import SVGIcon
-from .theme_spec import Color, Font, Palette, ShaderEffect, ThemeSpec
+from .theme_spec import (
+    Color,
+    Font,
+    Gradient,
+    Palette,
+    RadiusScale,
+    SemanticTokens,
+    ShaderEffect,
+    SpacingScale,
+    ThemeSpec,
+    TransitionScale,
+    ZIndexScale,
+)
 
 from slappyengine._validation import validate_non_empty_str
 
@@ -124,17 +141,28 @@ def _reset_registry_for_tests() -> None:
 __all__ = [
     "Color",
     "Font",
+    "Gradient",
     "NineSlice",
     "Palette",
+    "RadiusScale",
+    "SemanticTokens",
     "ShaderEffect",
+    "SpacingScale",
     "SVGIcon",
     "ThemeSpec",
+    "TransitionScale",
+    "ZIndexScale",
     "apply_theme",
+    "dot_grid",
+    "frosted_panel",
     "get_active_theme",
+    "glass_blur",
     "highlighter_stroke",
     "list_registered_themes",
     "noise_glitter",
     "paper_shadow",
+    "parchment",
     "register_theme",
     "ruled_paper",
+    "watercolor_wash",
 ]
