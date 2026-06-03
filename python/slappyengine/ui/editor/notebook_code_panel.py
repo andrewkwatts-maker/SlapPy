@@ -287,6 +287,16 @@ class NotebookCodePanel:
             self._rebuild_ribbon()
         return p
 
+    # Legacy CodeModePanel compat — Engine.run_editor() + content browser
+    # both call .load_script(path). Alias to set_file so the existing
+    # bookmark ribbon + buffer loader handle it.
+    def load_script(self, script_path: str | Path) -> None:
+        """Alias for :meth:`set_file`. Compat with the legacy
+        ``CodeModePanel.load_script`` contract that the editor shell + the
+        content browser call when the user double-clicks a ``.py`` file.
+        """
+        self.set_file(script_path)
+
     def set_file(self, path: str | Path) -> None:
         """Switch the active file and load its .py + .prompt contents.
 
