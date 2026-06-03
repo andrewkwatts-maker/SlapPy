@@ -1,23 +1,41 @@
 """Declarative theme specification dataclasses.
 
 A :class:`ThemeSpec` is a pure-data description of a UI theme: palette
-entries, font records, nine-slice borders, SVG icons, and an optional
-procedural background shader. It carries no rendering state of its own —
-themes are *registered* and *applied* through ``slappyengine.ui.theme``.
+entries, semantic design tokens, font records, nine-slice borders, SVG
+icons, design-system scales (spacing / radius / transitions / z-index),
+and an optional procedural background shader. It carries no rendering
+state of its own — themes are *registered* and *applied* through
+``slappyengine.ui.theme``.
 
 The dataclasses defined here are deliberately small so themes round-trip
 cleanly through YAML / JSON. Heavier rasterisation work lives in the
 sibling modules (:mod:`nine_slice`, :mod:`svg_icon`, :mod:`shader_effects`).
+
+Design provenance
+-----------------
+The semantic-token layer (:class:`SemanticTokens`) plus the four design
+scales (:class:`SpacingScale`, :class:`RadiusScale`,
+:class:`TransitionScale`, :class:`ZIndexScale`) draw their structure from
+the **EyesOfAzrael** Firebase-themes CSS architecture
+(``css/firebase-themes.css``). That stylesheet treats raw palette
+colours as *implementation* and a stable named token surface
+(``--theme-primary``, ``--glass-bg``, ``--radius-md`` …) as the
+*contract* every component renders against. SlapPyEngine adopts the
+same split: :attr:`ThemeSpec.palette` is the raw bag of authored
+colours; :attr:`ThemeSpec.semantic` is the named contract widget code
+binds to.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, ClassVar
 
 from slappyengine._validation import (
     validate_finite_float,
     validate_non_empty_str,
+    validate_non_negative_float,
     validate_non_negative_int,
+    validate_positive_float,
     validate_positive_int,
     validate_str,
     validate_unit_float,
@@ -138,6 +156,375 @@ class Font:
 
 
 # ---------------------------------------------------------------------------
+# Design-system scales (EyesOfAzrael CSS custom-property analogue)
+# ---------------------------------------------------------------------------
+#
+# EyesOfAzrael's ``firebase-themes.css`` exposes spacing / radius /
+# transition / z-index as CSS custom properties so every component reads
+# from one source of truth. SlapPyEngine mirrors that with four small
+# dataclasses below. Each is a *frozen* dataclass so themes can share
+# instances safely, and each validates its values in ``__post_init__``.
+
+
+@dataclass(frozen=True)
+class SpacingScale:
+    """Eight-step spacing scale, values in DPG pixels.
+
+    Defaults track the EyesOfAzrael CSS spacing scale (xs=0.25rem,
+    sm=0.5rem, …) translated to pixel values that read well in a
+    Dear PyGui editor at 1× DPI. Custom themes may override any field.
+
+    Every value must be a non-negative finite number; zero is permitted
+    (some layouts genuinely want a 0-pixel gap step).
+    """
+
+    xs: float = 4.0
+    sm: float = 8.0
+    md: float = 16.0
+    lg: float = 24.0
+    xl: float = 32.0
+    xxl: float = 48.0
+
+    def __post_init__(self) -> None:
+        fn = "SpacingScale"
+        for name in ("xs", "sm", "md", "lg", "xl", "xxl"):
+            v = validate_non_negative_float(name, fn, getattr(self, name))
+            object.__setattr__(self, name, float(v))
+
+
+@dataclass(frozen=True)
+class RadiusScale:
+    """Five-step border-radius scale, values in DPG pixels.
+
+    ``pill`` defaults to ``999`` so callers can use it interchangeably
+    with CSS-style ``border-radius: 9999px`` for fully-rounded pills.
+
+    Every value must be a non-negative finite number.
+    """
+
+    sm: float = 4.0
+    md: float = 8.0
+    lg: float = 12.0
+    xl: float = 16.0
+    pill: float = 999.0
+
+    def __post_init__(self) -> None:
+        fn = "RadiusScale"
+        for name in ("sm", "md", "lg", "xl", "pill"):
+            v = validate_non_negative_float(name, fn, getattr(self, name))
+            object.__setattr__(self, name, float(v))
+
+
+@dataclass(frozen=True)
+class TransitionScale:
+    """Three-step transition-duration scale, values in seconds.
+
+    Mirrors EyesOfAzrael's ``--transition-fast / --transition-normal /
+    --transition-slow``. Every value must be a *positive* finite number
+    (a zero-duration transition is a no-op and almost always a bug at
+    the boundary).
+    """
+
+    fast: float = 0.15
+    normal: float = 0.25
+    slow: float = 0.5
+
+    def __post_init__(self) -> None:
+        fn = "TransitionScale"
+        for name in ("fast", "normal", "slow"):
+            v = validate_positive_float(name, fn, getattr(self, name))
+            object.__setattr__(self, name, float(v))
+
+
+@dataclass(frozen=True)
+class ZIndexScale:
+    """Four-tier z-index scale.
+
+    The defaults match the EyesOfAzrael layering convention
+    (``--z-base / --z-dropdown / --z-modal / --z-toast``) and rise
+    monotonically — overlapping tiers are rejected at construction
+    time so a typo cannot silently shuffle a toast under a modal.
+    """
+
+    base: int = 1
+    dropdown: int = 100
+    modal: int = 1000
+    toast: int = 2000
+
+    def __post_init__(self) -> None:
+        fn = "ZIndexScale"
+        for name in ("base", "dropdown", "modal", "toast"):
+            v = validate_non_negative_int(name, fn, getattr(self, name))
+            object.__setattr__(self, name, int(v))
+        if not (self.base <= self.dropdown <= self.modal <= self.toast):
+            raise ValueError(
+                f"{fn}: tiers must rise monotonically "
+                f"(base <= dropdown <= modal <= toast); got "
+                f"({self.base}, {self.dropdown}, {self.modal}, {self.toast})"
+            )
+
+
+# ---------------------------------------------------------------------------
+# Gradient
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Gradient:
+    """A two-stop linear gradient with an angle.
+
+    Parameters
+    ----------
+    start, end:
+        Endpoint :class:`Color` instances.
+    angle_deg:
+        Gradient direction in degrees. ``135.0`` (top-left → bottom-right)
+        is the EyesOfAzrael convention for ``--theme-gradient``.
+    """
+
+    start: "Color"
+    end: "Color"
+    angle_deg: float = 135.0
+
+    def __post_init__(self) -> None:
+        fn = "Gradient"
+        if not isinstance(self.start, Color):
+            raise TypeError(
+                f"{fn}: start must be a Color; got {type(self.start).__name__}"
+            )
+        if not isinstance(self.end, Color):
+            raise TypeError(
+                f"{fn}: end must be a Color; got {type(self.end).__name__}"
+            )
+        angle = validate_finite_float("angle_deg", fn, self.angle_deg)
+        object.__setattr__(self, "angle_deg", float(angle))
+
+    def sample(self, t: float) -> "Color":
+        """Return the gradient colour at parameter *t* in ``[0, 1]``.
+
+        Interpolation is linear per-channel in sRGB space (matches the
+        EyesOfAzrael CSS ``linear-gradient`` behaviour). ``t=0`` returns
+        :attr:`start`, ``t=1`` returns :attr:`end`, ``t=0.5`` returns
+        the midpoint.
+        """
+        t_clamped = validate_unit_float("t", "Gradient.sample", t)
+        r = int(round(self.start.r + (self.end.r - self.start.r) * t_clamped))
+        g = int(round(self.start.g + (self.end.g - self.start.g) * t_clamped))
+        b = int(round(self.start.b + (self.end.b - self.start.b) * t_clamped))
+        a = self.start.a + (self.end.a - self.start.a) * t_clamped
+        return Color(r=r, g=g, b=b, a=a)
+
+
+# ---------------------------------------------------------------------------
+# SemanticTokens (the named contract widget code binds to)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class SemanticTokens:
+    """A named layer above the raw palette.
+
+    Widget code should read from this layer rather than from
+    :attr:`Palette.entries` directly — that way switching themes only
+    requires rebinding the token surface, not rewriting widgets.
+
+    Field names track the EyesOfAzrael ``--theme-*`` / ``--glass-*``
+    custom-property vocabulary so the cognitive load of moving between
+    the web and editor surfaces is minimised.
+
+    Attributes
+    ----------
+    primary, secondary, accent:
+        The three brand colours.
+    primary_gradient:
+        The hero gradient (typically a 135° sweep from ``primary`` into
+        a lighter or darker neighbour).
+    background, surface, surface_hover:
+        Page background, raised-card surface, and hover-state surface.
+    border:
+        Default 1 px component border.
+    text_primary, text_secondary, text_disabled:
+        Three text strengths.
+    success, warning, error, info:
+        Status colours.
+    focus_ring:
+        Keyboard-focus outline.
+    glass_bg, glass_blur_px:
+        Glassmorphism translucent panel colour + backdrop-blur sigma
+        in pixels (EyesOfAzrael ``--glass-bg`` / ``--glass-blur``).
+    """
+
+    primary: "Color"
+    primary_gradient: "Gradient"
+    secondary: "Color"
+    accent: "Color"
+    background: "Color"
+    surface: "Color"
+    surface_hover: "Color"
+    border: "Color"
+    text_primary: "Color"
+    text_secondary: "Color"
+    text_disabled: "Color"
+    success: "Color"
+    warning: "Color"
+    error: "Color"
+    info: "Color"
+    focus_ring: "Color"
+    glass_bg: "Color"
+    glass_blur_px: float
+
+    # ``ClassVar`` keeps this off the dataclass field list — purely a
+    # name index used by ``__post_init__`` / ``to_dict`` / ``from_dict``.
+    _COLOR_FIELDS: ClassVar[tuple[str, ...]] = (
+        "primary",
+        "secondary",
+        "accent",
+        "background",
+        "surface",
+        "surface_hover",
+        "border",
+        "text_primary",
+        "text_secondary",
+        "text_disabled",
+        "success",
+        "warning",
+        "error",
+        "info",
+        "focus_ring",
+        "glass_bg",
+    )
+
+    def __post_init__(self) -> None:
+        fn = "SemanticTokens"
+        for name in self._COLOR_FIELDS:
+            value = getattr(self, name)
+            if not isinstance(value, Color):
+                raise TypeError(
+                    f"{fn}: {name} must be a Color; "
+                    f"got {type(value).__name__}"
+                )
+        if not isinstance(self.primary_gradient, Gradient):
+            raise TypeError(
+                f"{fn}: primary_gradient must be a Gradient; "
+                f"got {type(self.primary_gradient).__name__}"
+            )
+        blur = validate_non_negative_float(
+            "glass_blur_px", fn, self.glass_blur_px
+        )
+        self.glass_blur_px = float(blur)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise to a YAML/JSON-safe dict."""
+        out: dict[str, Any] = {}
+        for name in self._COLOR_FIELDS:
+            c: Color = getattr(self, name)
+            out[name] = [c.r, c.g, c.b, c.a]
+        out["primary_gradient"] = {
+            "start": [
+                self.primary_gradient.start.r,
+                self.primary_gradient.start.g,
+                self.primary_gradient.start.b,
+                self.primary_gradient.start.a,
+            ],
+            "end": [
+                self.primary_gradient.end.r,
+                self.primary_gradient.end.g,
+                self.primary_gradient.end.b,
+                self.primary_gradient.end.a,
+            ],
+            "angle_deg": self.primary_gradient.angle_deg,
+        }
+        out["glass_blur_px"] = self.glass_blur_px
+        return out
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "SemanticTokens":
+        """Rebuild a :class:`SemanticTokens` from :meth:`to_dict` output."""
+        if not isinstance(data, dict):
+            raise TypeError(
+                f"SemanticTokens.from_dict: data must be a dict; "
+                f"got {type(data).__name__}"
+            )
+
+        def _color(key: str) -> Color:
+            raw = data.get(key)
+            if isinstance(raw, Color):
+                return raw
+            if isinstance(raw, (list, tuple)) and len(raw) == 4:
+                return Color(int(raw[0]), int(raw[1]), int(raw[2]), float(raw[3]))
+            raise TypeError(
+                f"SemanticTokens.from_dict: {key!r} must be Color or "
+                f"4-sequence; got {type(raw).__name__}"
+            )
+
+        grad_raw = data.get("primary_gradient")
+        if isinstance(grad_raw, Gradient):
+            gradient = grad_raw
+        elif isinstance(grad_raw, dict):
+            start_raw = grad_raw.get("start")
+            end_raw = grad_raw.get("end")
+            if isinstance(start_raw, (list, tuple)) and len(start_raw) == 4:
+                start = Color(
+                    int(start_raw[0]),
+                    int(start_raw[1]),
+                    int(start_raw[2]),
+                    float(start_raw[3]),
+                )
+            elif isinstance(start_raw, Color):
+                start = start_raw
+            else:
+                raise TypeError(
+                    "SemanticTokens.from_dict: primary_gradient.start "
+                    "must be Color or 4-sequence"
+                )
+            if isinstance(end_raw, (list, tuple)) and len(end_raw) == 4:
+                end = Color(
+                    int(end_raw[0]),
+                    int(end_raw[1]),
+                    int(end_raw[2]),
+                    float(end_raw[3]),
+                )
+            elif isinstance(end_raw, Color):
+                end = end_raw
+            else:
+                raise TypeError(
+                    "SemanticTokens.from_dict: primary_gradient.end "
+                    "must be Color or 4-sequence"
+                )
+            gradient = Gradient(
+                start=start,
+                end=end,
+                angle_deg=float(grad_raw.get("angle_deg", 135.0)),
+            )
+        else:
+            raise TypeError(
+                "SemanticTokens.from_dict: primary_gradient must be "
+                f"Gradient or dict; got {type(grad_raw).__name__}"
+            )
+
+        return cls(
+            primary=_color("primary"),
+            primary_gradient=gradient,
+            secondary=_color("secondary"),
+            accent=_color("accent"),
+            background=_color("background"),
+            surface=_color("surface"),
+            surface_hover=_color("surface_hover"),
+            border=_color("border"),
+            text_primary=_color("text_primary"),
+            text_secondary=_color("text_secondary"),
+            text_disabled=_color("text_disabled"),
+            success=_color("success"),
+            warning=_color("warning"),
+            error=_color("error"),
+            info=_color("info"),
+            focus_ring=_color("focus_ring"),
+            glass_bg=_color("glass_bg"),
+            glass_blur_px=float(data.get("glass_blur_px", 0.0)),
+        )
+
+
+# ---------------------------------------------------------------------------
 # Forward declarations — concrete classes live in sibling modules
 # ---------------------------------------------------------------------------
 #
@@ -190,10 +577,24 @@ class ThemeSpec:
     Themes are immutable in spirit (the registry hands back the same
     instance), but the dataclass itself is mutable so themes can be
     composed at authoring time before registration.
+
+    The ``semantic`` field is the **named contract** widget code binds
+    to — switching themes is therefore a question of rebinding the
+    semantic surface, not of teaching widgets which palette key to
+    look up. See :class:`SemanticTokens` for the field menu.
+
+    The four scale fields (``spacing`` / ``radius`` / ``transitions`` /
+    ``z_index``) carry sensible defaults; supply custom instances when
+    a theme genuinely wants a tighter or looser rhythm.
     """
 
     name: str
+    semantic: SemanticTokens
     palette: dict[str, "Color"] = field(default_factory=dict)
+    spacing: SpacingScale = field(default_factory=SpacingScale)
+    radius: RadiusScale = field(default_factory=RadiusScale)
+    transitions: TransitionScale = field(default_factory=TransitionScale)
+    z_index: ZIndexScale = field(default_factory=ZIndexScale)
     fonts: dict[str, Font] = field(default_factory=dict)
     nine_slices: dict[str, Any] = field(default_factory=dict)
     icons: dict[str, Any] = field(default_factory=dict)
@@ -203,6 +604,23 @@ class ThemeSpec:
     def __post_init__(self) -> None:
         fn = "ThemeSpec"
         self.name = validate_non_empty_str("name", fn, self.name)
+        if not isinstance(self.semantic, SemanticTokens):
+            raise TypeError(
+                f"{fn}: semantic must be a SemanticTokens; "
+                f"got {type(self.semantic).__name__}"
+            )
+        for scale_name, scale_type in (
+            ("spacing", SpacingScale),
+            ("radius", RadiusScale),
+            ("transitions", TransitionScale),
+            ("z_index", ZIndexScale),
+        ):
+            value = getattr(self, scale_name)
+            if not isinstance(value, scale_type):
+                raise TypeError(
+                    f"{fn}: {scale_name} must be a {scale_type.__name__}; "
+                    f"got {type(value).__name__}"
+                )
         for bag_name, bag in (
             ("palette", self.palette),
             ("fonts", self.fonts),
@@ -235,8 +653,30 @@ class ThemeSpec:
         """
         return {
             "name": self.name,
+            "semantic": self.semantic.to_dict(),
             "palette": {
                 k: [v.r, v.g, v.b, v.a] for k, v in self.palette.items()
+            },
+            "spacing": {
+                "xs": self.spacing.xs, "sm": self.spacing.sm,
+                "md": self.spacing.md, "lg": self.spacing.lg,
+                "xl": self.spacing.xl, "xxl": self.spacing.xxl,
+            },
+            "radius": {
+                "sm": self.radius.sm, "md": self.radius.md,
+                "lg": self.radius.lg, "xl": self.radius.xl,
+                "pill": self.radius.pill,
+            },
+            "transitions": {
+                "fast": self.transitions.fast,
+                "normal": self.transitions.normal,
+                "slow": self.transitions.slow,
+            },
+            "z_index": {
+                "base": self.z_index.base,
+                "dropdown": self.z_index.dropdown,
+                "modal": self.z_index.modal,
+                "toast": self.z_index.toast,
             },
             "fonts": {
                 k: {"family": v.family, "size": v.size, "weight": v.weight}
@@ -337,9 +777,48 @@ class ThemeSpec:
                 f"ThemeSpec.from_dict: background_shader must be dict "
                 f"or ShaderEffect; got {type(bg).__name__}"
             )
+
+        semantic_raw = data.get("semantic")
+        if semantic_raw is None:
+            raise TypeError(
+                "ThemeSpec.from_dict: semantic is required (missing key)"
+            )
+        if isinstance(semantic_raw, SemanticTokens):
+            semantic = semantic_raw
+        elif isinstance(semantic_raw, dict):
+            semantic = SemanticTokens.from_dict(semantic_raw)
+        else:
+            raise TypeError(
+                f"ThemeSpec.from_dict: semantic must be SemanticTokens or "
+                f"dict; got {type(semantic_raw).__name__}"
+            )
+
+        def _scale(key: str, scale_cls: type, default: Any) -> Any:
+            raw = data.get(key)
+            if raw is None:
+                return default
+            if isinstance(raw, scale_cls):
+                return raw
+            if isinstance(raw, dict):
+                return scale_cls(**raw)
+            raise TypeError(
+                f"ThemeSpec.from_dict: {key} must be {scale_cls.__name__} or "
+                f"dict; got {type(raw).__name__}"
+            )
+
+        spacing = _scale("spacing", SpacingScale, SpacingScale())
+        radius = _scale("radius", RadiusScale, RadiusScale())
+        transitions = _scale("transitions", TransitionScale, TransitionScale())
+        z_index = _scale("z_index", ZIndexScale, ZIndexScale())
+
         return cls(
             name=name,
+            semantic=semantic,
             palette=palette,
+            spacing=spacing,
+            radius=radius,
+            transitions=transitions,
+            z_index=z_index,
             fonts=fonts,
             nine_slices=nine_slices,
             icons=icons,
@@ -379,7 +858,13 @@ _ = validate_finite_float
 __all__ = [
     "Color",
     "Font",
+    "Gradient",
     "Palette",
+    "RadiusScale",
+    "SemanticTokens",
     "ShaderEffect",
+    "SpacingScale",
     "ThemeSpec",
+    "TransitionScale",
+    "ZIndexScale",
 ]

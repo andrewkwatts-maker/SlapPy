@@ -34,7 +34,9 @@ everything at runtime.
 ```python
 from slappyengine.ui.theme import (
     # data classes
-    Color, Font, NineSlice, Palette, ShaderEffect, SVGIcon, ThemeSpec,
+    Color, Font, Gradient, NineSlice, Palette, ShaderEffect, SVGIcon,
+    SemanticTokens, SpacingScale, RadiusScale, TransitionScale, ZIndexScale,
+    ThemeSpec,
     # registry
     apply_theme, get_active_theme, list_registered_themes, register_theme,
     # procedural effects
@@ -146,6 +148,84 @@ A *named* procedural-texture recipe: an effect name + a kwargs bag.
 Pure data — the registry-side dispatcher (typically one of the helpers
 in `shader_effects`) resolves the name to a generator.
 
+### `Gradient`
+
+_frozen dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+
+A two-stop linear gradient (`start: Color`, `end: Color`, `angle_deg:
+float = 135.0`). `135°` matches the EyesOfAzrael `--theme-gradient`
+convention (top-left to bottom-right sweep).
+
+- `sample(t: float) -> Color` — interpolate per-channel in sRGB. `t=0`
+  returns `start`, `t=1` returns `end`, `t=0.5` is the midpoint.
+  Raises `ValueError` if `t` is outside `[0, 1]`.
+
+### `SemanticTokens`
+
+_dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+
+A **named contract** above the raw palette. Widget code should read
+from this layer so swapping themes only requires rebinding the token
+surface, not editing widgets. Field names track the EyesOfAzrael
+`--theme-*` / `--glass-*` custom-property vocabulary.
+
+```python
+@dataclass
+class SemanticTokens:
+    primary: Color
+    primary_gradient: Gradient
+    secondary: Color
+    accent: Color
+    background: Color
+    surface: Color           # raised cards / panels
+    surface_hover: Color
+    border: Color
+    text_primary: Color
+    text_secondary: Color
+    text_disabled: Color
+    success: Color
+    warning: Color
+    error: Color
+    info: Color
+    focus_ring: Color
+    glass_bg: Color          # translucent panel base (glassmorphism)
+    glass_blur_px: float     # backdrop-blur sigma, px
+```
+
+`to_dict` / `from_dict` are YAML/JSON safe.
+
+### `SpacingScale`
+
+_frozen dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+
+Six-step spacing scale in DPG pixels: `xs=4`, `sm=8`, `md=16`, `lg=24`,
+`xl=32`, `xxl=48`. Each field must be a non-negative finite number.
+Tracks EyesOfAzrael's `--spacing-*` token family.
+
+### `RadiusScale`
+
+_frozen dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+
+Five-step border-radius scale in DPG pixels: `sm=4`, `md=8`, `lg=12`,
+`xl=16`, `pill=999`. `pill` is intentionally over-sized so it can be
+applied directly as `border-radius: 9999px`-style "fully rounded".
+
+### `TransitionScale`
+
+_frozen dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+
+Three-step transition-duration scale in seconds: `fast=0.15`,
+`normal=0.25`, `slow=0.5`. Each field must be a *positive* finite
+number (a zero-duration transition is rejected).
+
+### `ZIndexScale`
+
+_frozen dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+
+Four-tier z-index scale: `base=1`, `dropdown=100`, `modal=1000`,
+`toast=2000`. Tiers must rise monotonically; a typo that would push a
+toast under a modal raises `ValueError` at construction.
+
 ### `ThemeSpec`
 
 _dataclass — defined in `slappyengine.ui.theme.theme_spec`_
@@ -156,7 +236,12 @@ The top-level declarative theme:
 @dataclass
 class ThemeSpec:
     name: str
-    palette: dict[str, Color]
+    semantic: SemanticTokens             # REQUIRED — named contract
+    palette: dict[str, Color]            # raw colour bag (backwards compat)
+    spacing: SpacingScale = SpacingScale()
+    radius: RadiusScale = RadiusScale()
+    transitions: TransitionScale = TransitionScale()
+    z_index: ZIndexScale = ZIndexScale()
     fonts: dict[str, Font]
     nine_slices: dict[str, NineSlice]
     icons: dict[str, SVGIcon]
@@ -164,11 +249,17 @@ class ThemeSpec:
     metadata: dict[str, str]
 ```
 
+`semantic` is a **required** field — constructing a `ThemeSpec` without
+it raises `TypeError: missing 1 required positional argument: 'semantic'`.
+The `palette` dict remains for backwards compatibility — existing code
+that reads `theme.palette["primary"]` keeps working.
+
 Round-tripping methods:
 
 - `to_dict() -> dict` / `from_dict(data) -> ThemeSpec` — YAML/JSON-safe
   payload (`NineSlice` source bytes are intentionally dropped; icons
-  serialise their full SVG markup).
+  serialise their full SVG markup; semantic tokens + every scale
+  serialise via their own `to_dict`).
 - `to_yaml() -> str` / `from_yaml(text) -> ThemeSpec` — convenience
   wrappers over PyYAML; raise `ImportError` if PyYAML is not installed.
 
@@ -266,10 +357,61 @@ soft-edged elliptical splats sampled from `color_palette`, each at the
 given `opacity`, and blends them additively over a transparent canvas.
 `seed` makes the pattern reproducible across runs.
 
+## Starter themes
+
+The first concrete theme content built on the primitives ships in the
+`slappyengine.ui.theme.themes` subpackage. Three `ThemeSpec` constants
+demonstrate the diary-family contract documented under
+[`docs/theme_diary_family_2026_06_03.md`](../theme_diary_family_2026_06_03.md)
+and the base brief at
+[`docs/theme_teengirl_notebook_2026_06_03.md`](../theme_teengirl_notebook_2026_06_03.md).
+
+```python
+from slappyengine.ui.theme import apply_theme
+from slappyengine.ui.theme.themes import (
+    BULLET_JOURNAL, COZY_DIARY, TEENGIRL_NOTEBOOK,
+    register_starter_themes,
+)
+
+register_starter_themes()
+apply_theme("teengirl_notebook")
+```
+
+| Constant | Theme name | Source file | Vibe | Background shader | Roster |
+|---|---|---|---|---|---|
+| `TEENGIRL_NOTEBOOK` | `teengirl_notebook` | `python/slappyengine/ui/theme/themes/teengirl_notebook.py` | Lined-paper + washi tape, bubblegum-pink + lilac | `ruled_paper` (lilac rules, pink margin) | `fox_01`, `butterfly_01` |
+| `COZY_DIARY` | `cozy_diary` | `python/slappyengine/ui/theme/themes/cozy_diary.py` | Warm autumn / leather-journal, sepia ink | `ruled_paper` parametrised as parchment | `red_panda_01`, `fox_01`, `leaf_01` |
+| `BULLET_JOURNAL` | `bullet_journal` | `python/slappyengine/ui/theme/themes/bullet_journal.py` | Minimal grid + pastel highlights, no script | `dot_grid` (1 px every 8 px) | `hedgehog_01`, `porcupine_01` |
+
+Each constant carries a full `SemanticTokens` block plus a populated
+`palette`, `fonts`, `nine_slices` (procedural — no PNGs), `icons`
+(three inline SVGs ≤ 500 bytes each), `background_shader`, and a
+`metadata` bag that records the creature roster, seasonal flavour, tape
+colour, variant, and source-doc backlink. YAML round-trip works
+out-of-the-box.
+
+`register_starter_themes()` is a convenience helper that calls
+`register_theme()` for each constant in one shot; it returns the list
+of registered theme names so callers can chain a follow-up
+`apply_theme(name)`.
+
+YAML location: each theme serialises through `ThemeSpec.to_yaml()`
+without on-disk content. The source-of-truth Python files live under
+`python/slappyengine/ui/theme/themes/` per the table above; users who
+want YAML can dump on demand:
+
+```python
+from pathlib import Path
+from slappyengine.ui.theme.themes import TEENGIRL_NOTEBOOK
+Path("teengirl_notebook.yml").write_text(TEENGIRL_NOTEBOOK.to_yaml())
+```
+
 ## Inner modules
 
-- `slappyengine.ui.theme.theme_spec` — `Color`, `Font`, `Palette`,
-  `ShaderEffect`, `ThemeSpec` dataclasses + YAML round-trip.
+- `slappyengine.ui.theme.theme_spec` — `Color`, `Font`, `Gradient`,
+  `Palette`, `SemanticTokens`, `SpacingScale`, `RadiusScale`,
+  `TransitionScale`, `ZIndexScale`, `ShaderEffect`, `ThemeSpec`
+  dataclasses + YAML round-trip.
 - `slappyengine.ui.theme.nine_slice` — image-backed +
   procedural nine-slice renderer.
 - `slappyengine.ui.theme.svg_icon` — SVG parser, rasteriser,
@@ -278,6 +420,9 @@ given `opacity`, and blends them additively over a transparent canvas.
   texture helpers (`ruled_paper`, `highlighter_stroke`,
   `paper_shadow`, `noise_glitter`, `glass_blur`, `frosted_panel`,
   `dot_grid`, `parchment`, `watercolor_wash`).
+- `slappyengine.ui.theme.themes` — three starter `ThemeSpec` constants
+  (`TEENGIRL_NOTEBOOK`, `COZY_DIARY`, `BULLET_JOURNAL`) +
+  `register_starter_themes()`.
 
 ## Conventions
 
@@ -294,6 +439,147 @@ given `opacity`, and blends them additively over a transparent canvas.
 - **Asset-size budget.** No reference textures ship with this
   subpackage. Procedural helpers + SVG markup keep the on-disk theme
   footprint under 100 KB.
+
+## Creatures
+
+The optional `slappyengine.ui.theme.creatures` subpackage layers the
+**woodland-creature animation system** on top of the primitives above.
+A theme may register zero or more `Creature` records and the
+`CreatureScheduler` drives their per-frame state machine — idle
+animations cooled-down between firings, trigger animations played on
+explicit calls, a master `set_enabled(False)` switch that turns the
+whole layer off, and a reduced-motion mode that limits idle activity
+to `blink` curves only.
+
+The subsystem carries **no DPG hard dependency**. Render fns receive an
+opaque ``draw_list`` parameter; production wires it to a Dear PyGui
+drawlist handle, the test suite passes a recording mock.
+
+### Public surface
+
+```python
+from slappyengine.ui.theme.creatures import (
+    AnimationCurve, Keyframe,
+    Creature, DrawList, RenderFn,
+    CreatureScheduler,
+    SlotPolicy, SlotRegion,
+    # module-level singleton wrappers
+    register_creature, trigger, tick, set_enabled, set_reduced_motion,
+)
+from slappyengine.ui.theme.creatures.builtin import (
+    register_builtins,
+    fox_01, fox_01_slot,
+    butterfly_01, butterfly_01_slot,
+    sparkle, sparkle_slot,
+)
+```
+
+`__all__` is alphabetised.
+
+### `AnimationCurve` + `Keyframe`
+
+Keyframe-driven scalar curves over a fixed wall-clock duration.
+
+```python
+@dataclass(frozen=True)
+class Keyframe:
+    t: float       # normalised time in [0, 1]
+    value: float
+
+@dataclass
+class AnimationCurve:
+    keyframes: list[Keyframe]
+    duration_s: float
+    loop: bool = False
+
+    def sample(self, t: float) -> float    # linear interp; clamps at edges
+    def is_done(self, t: float) -> bool    # True once t >= duration_s
+```
+
+Keyframes are sorted on construction so callers may author in any
+order. `sample` runs in O(log n) via `bisect_right`. Looping curves
+wrap `t` modulo `duration_s` and `is_done` always returns `False`.
+
+### `SlotPolicy` + `SlotRegion`
+
+Where a creature lives and how often it may animate.
+
+```python
+@dataclass(frozen=True)
+class SlotRegion:
+    x: int; y: int        # top-left in DPG screen-space pixels
+    w: int; h: int        # size in pixels
+    parent_panel: str | None = None
+
+@dataclass
+class SlotPolicy:
+    region: SlotRegion
+    idle_cooldown_s: tuple[float, float] = (3.0, 7.0)  # (min, max)
+    max_concurrent: int = 1            # max overlapping trigger anims
+    reduced_motion_idle_ok: bool = True
+```
+
+`max_concurrent` enforces the §3.3 contract from the design spec: extra
+trigger calls **drop** (not queue) and increment
+`CreatureScheduler.dropped_trigger_count`.
+
+### `Creature`
+
+Declarative cast member — pure data, no rendering state.
+
+```python
+@dataclass
+class Creature:
+    id: str
+    render_fn: Callable[[DrawList, int, int, float], None]
+    idle_animations: dict[str, AnimationCurve]
+    trigger_animations: dict[str, AnimationCurve]
+    personality_color: Color
+    budget_ms: float = 1.0
+    metadata: dict[str, str] = field(default_factory=dict)
+```
+
+The render-fn signature is `(draw_list, x, y, anim_t) -> None` where
+`anim_t` is the normalised phase in `[0, 1]`.
+
+### `CreatureScheduler`
+
+Owns the active set, drives cooldowns, dispatches to render fns.
+
+| Method | Purpose |
+|---|---|
+| `register(creature, slot)` | Add a creature under its `id`. Raises if `id` is already registered. |
+| `unregister(creature_id)` | Remove a creature. Unknown ids are silently ignored. |
+| `tick(dt)` | Advance state by `dt` seconds. No-op when disabled. |
+| `trigger(creature_id, anim_name) -> bool` | Fire a one-shot. Returns `False` and drops on slot saturation. |
+| `render(draw_list)` | Call every registered creature's render fn. |
+| `set_enabled(enabled)` | Master switch — `False` makes `tick`/`trigger`/`render` no-ops. |
+| `set_reduced_motion(reduced)` | When `True`, only `blink` idle animations may fire; trigger anims play with phase pinned at `1.0`. |
+
+Diagnostic properties: `active_count`, `total_budget_ms`,
+`registered_ids`, `dropped_trigger_count`, `is_enabled`,
+`is_reduced_motion`.
+
+### Module-level wrappers
+
+`register_creature`, `trigger`, `tick`, `set_enabled`, and
+`set_reduced_motion` operate on a lazily-created module-level singleton
+— convenient for the editor host that owns exactly one scheduler.
+Tests use `CreatureScheduler` directly.
+
+### Built-in roster
+
+The `creatures.builtin` subpackage ships three first-class definitions:
+
+| Creature | Personality colour | Render strategy | Idle / trigger animations |
+|---|---|---|---|
+| `fox_01` | `#E5853B` warm orange | procedural ellipses + `noise_glitter` fur swatch | blink / stretch / yawn — wake_up |
+| `butterfly_01` | `#FF6FB5` bubblegum pink | inline SVG wings + body | wing_idle (looped) — flutter / land |
+| `sparkle` | `#FFF0C8` lemon-cream | 4-point star SVG + sparkle shader swatch | twinkle (looped) — _(decoration only)_ |
+
+`register_builtins(scheduler)` wires all three onto a scheduler in one
+call. Each `*_slot()` returns a default `SlotPolicy` matched to the
+catalog's slot-assignment table (toolbar / status bar / panel corner).
 
 ## Event bindings
 
@@ -378,6 +664,36 @@ window.
 
 Accessors: `idle_seconds` (current accumulator), `has_fired(event)`
 (per-window flag).
+
+## Design provenance
+
+The semantic-token layer (`SemanticTokens`) and the four design-system
+scales (`SpacingScale`, `RadiusScale`, `TransitionScale`, `ZIndexScale`)
+are direct ports of the architecture in the **EyesOfAzrael** project's
+`css/firebase-themes.css`. That stylesheet treats raw palette hex
+colours as *implementation* and a stable named token surface
+(`--theme-primary`, `--glass-bg`, `--radius-md`, `--transition-fast` …)
+as the *contract* every component renders against. Hot-swapping a
+theme is therefore a single rebind of the token surface rather than a
+search-and-replace through widget code.
+
+SlapPyEngine adopts the same split:
+
+| EyesOfAzrael CSS | SlapPyEngine equivalent |
+|---|---|
+| `--theme-primary`, `--theme-gradient` | `SemanticTokens.primary`, `SemanticTokens.primary_gradient` |
+| `--glass-bg`, `--glass-blur` | `SemanticTokens.glass_bg`, `SemanticTokens.glass_blur_px` |
+| `--spacing-{xs,sm,md,lg,xl,2xl}` | `SpacingScale.{xs,sm,md,lg,xl,xxl}` |
+| `--radius-{sm,md,lg,xl}` | `RadiusScale.{sm,md,lg,xl}` + `pill` |
+| `--transition-{fast,normal,slow}` | `TransitionScale.{fast,normal,slow}` |
+| `--z-{base,dropdown,modal,toast}` | `ZIndexScale.{base,dropdown,modal,toast}` |
+| `[data-theme="X"] { --theme-primary: … }` overrides | `register_theme(ThemeSpec(...))` + `apply_theme("X")` |
+
+The `Gradient` primitive maps to CSS `linear-gradient(135deg, …)` and
+its `sample(t)` helper produces the same per-channel sRGB
+interpolation a browser performs when shading the gradient. The
+`135°` default is deliberately the EyesOfAzrael convention so themes
+ported in either direction line up without manual angle conversion.
 
 ## See also
 
