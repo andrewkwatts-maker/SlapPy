@@ -150,25 +150,38 @@ class EditorShell:
     def _dispatch_editor_command(self, command: str) -> None:
         """Route a notebook-hotkey command name to a shell action.
 
-        Unknown commands are forwarded to any engine hook of the same
-        name so plugins can extend the table without modifying the shell.
+        The :class:`NotebookHotkeys` table emits namespaced ids such as
+        ``"editor.save"``; we strip the prefix when probing the local
+        action table and the engine hook table so callers can subscribe
+        with either flavour.
         """
+        local = command.split(".", 1)[1] if command.startswith("editor.") else command
         action = {
-            "save":   self._save_project,
-            "undo":   self._undo,
-            "delete": self._delete_selected,
-            "play":   self._toggle_play,
-        }.get(command)
+            "save":             self._save_project,
+            "undo":             self._undo,
+            "delete":           self._delete_selected,
+            "play":             self._toggle_play,
+            "run":              self._toggle_play,
+        }.get(local)
         if action is not None:
             try:
                 action()
             except Exception:
                 pass
             return
-        hook = getattr(self._engine, command, None)
+        hook = getattr(self._engine, local, None)
         if callable(hook):
             try:
                 hook()
+            except Exception:
+                pass
+            return
+        # Surface unknown commands so users can confirm the press registered.
+        if self._notebook_status_bar is not None:
+            try:
+                self._notebook_status_bar.set_message(
+                    f"cmd: {command}", kind="info",
+                )
             except Exception:
                 pass
 
@@ -961,49 +974,6 @@ class EditorShell:
                 pass
         except Exception:
             pass
-
-    def _dispatch_editor_command(self, command: str) -> None:
-        """Route a hotkey command id to the matching editor action.
-
-        Unknown commands are logged via the status bar but never raise
-        so a future binding addition can land without a shell rewrite.
-        """
-        actions: dict[str, Any] = {
-            "editor.save": self._save_project,
-            "editor.undo": self._undo,
-            "editor.run":  self._toggle_play,
-        }
-        action = actions.get(command)
-        if action is not None:
-            try:
-                action()
-            except Exception:
-                pass
-            return
-        # Surface unknown commands so users can confirm the press registered.
-        try:
-            if self._notebook_status_bar is not None:
-                self._notebook_status_bar.set_message(
-                    f"cmd: {command}", kind="info",
-                )
-        except Exception:
-            pass
-
-    def _open_theme_switcher(self) -> None:
-        """Status-bar theme-indicator click handler."""
-        panel = self._theme_switcher_panel
-        if panel is None:
-            return
-        # Best-effort show — the panel implements a no-op show() when
-        # already visible.
-        for method_name in ("show", "open", "focus"):
-            method = getattr(panel, method_name, None)
-            if callable(method):
-                try:
-                    method()
-                    return
-                except Exception:
-                    continue
 
     # ------------------------------------------------------------------
     # Keyboard shortcut actions

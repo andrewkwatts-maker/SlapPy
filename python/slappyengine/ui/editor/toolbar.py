@@ -1,4 +1,5 @@
-﻿from __future__ import annotations
+﻿"""Legacy Nova3D reference. The shipping editor uses notebook_* siblings — see docs/ui_pattern_audit_2026_06_03.md."""
+from __future__ import annotations
 
 from typing import Callable
 

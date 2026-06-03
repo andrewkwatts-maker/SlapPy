@@ -8,6 +8,23 @@
 > the top-level shell that wires them together. For the underlying
 > material data model see [`material.md`](material.md).
 
+## Canonical surface — the Notebook panel family
+
+As of 2026-06-03 the shipping editor wires the **Notebook** panel
+family exclusively. ``EditorShell.setup()`` constructs
+``NotebookToolbar`` / ``NotebookOutliner`` / ``NotebookInspector`` /
+``NotebookGizmoOverlay`` (via the headless-safe
+``setup_notebook_panels`` helper) and applies the active diary-family
+theme through the notebook theme registry — **not** the Nova3D
+``theme.apply_editor_theme`` dark glass path. The legacy Nova3D
+panel modules (``toolbar.py``, ``scene_outliner.py``,
+``property_inspector.py``, ``gizmo_overlay.py``, ``theme.py``) remain
+on disk as **reference only**; they are no longer imported by the
+shell and are kept solely as study material — Nova3D is a separate
+project worth learning from. See
+``docs/ui_pattern_audit_2026_06_03.md`` for the contract audit and
+the rationale behind the swap.
+
 
 The subpackage is **lazy-loaded** and **fully optional**. Every
 `dearpygui` import is deferred to runtime so the rest of
@@ -356,10 +373,13 @@ before the 3D panels have been built.
 
 #### Theme
 
-`apply_editor_theme()` and `apply_dwm_glass(title)` wire the Nova3D
-dark theme + Windows DWM blur-behind effect. The viewport child
-window gets an opaque override (`get_viewport_opaque_theme()`) so
-the scene render is not seen through the glass.
+The shell applies the active diary-family theme through
+``setup_theme_subsystem`` (which calls
+``slappyengine.ui.theme.apply_theme``) — the notebook theme registry
+owns the entire editor look. The Nova3D ``apply_editor_theme`` /
+``apply_dwm_glass`` / ``get_viewport_opaque_theme`` helpers in
+``slappyengine.ui.editor.theme`` are **reference only** and are not
+invoked by ``setup()``.
 
 ## Inner modules
 

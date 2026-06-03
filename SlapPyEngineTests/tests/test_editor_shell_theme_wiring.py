@@ -173,6 +173,107 @@ class TestPanelRegistration:
 
 
 # ---------------------------------------------------------------------------
+# Notebook panel family — Nova3D variants must not be wired
+# ---------------------------------------------------------------------------
+
+
+class TestNotebookPanelsAreExclusive:
+    """The shell must wire Notebook* panels and never the Nova3D siblings."""
+
+    def test_notebook_toolbar_registered(self, isolated_bus):
+        from slappyengine.ui.editor.notebook_toolbar import NotebookToolbar
+        from slappyengine.ui.editor.toolbar import EditorToolbar
+
+        shell = _make_shell()
+        shell.setup_theme_subsystem()
+        shell.setup_notebook_panels()
+
+        assert isinstance(shell._toolbar, NotebookToolbar)
+        assert not isinstance(shell._toolbar, EditorToolbar)
+
+    def test_notebook_outliner_registered(self, isolated_bus):
+        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from slappyengine.ui.editor.scene_outliner import SceneOutliner
+
+        shell = _make_shell()
+        shell.setup_theme_subsystem()
+        shell.setup_notebook_panels()
+
+        assert isinstance(shell._scene_outliner, NotebookOutliner)
+        assert not isinstance(shell._scene_outliner, SceneOutliner)
+
+    def test_notebook_inspector_registered(self, isolated_bus):
+        from slappyengine.ui.editor.notebook_inspector import NotebookInspector
+        from slappyengine.ui.editor.property_inspector import PropertyInspector
+
+        shell = _make_shell()
+        shell.setup_theme_subsystem()
+        shell.setup_notebook_panels()
+
+        assert isinstance(shell._inspector, NotebookInspector)
+        assert not isinstance(shell._inspector, PropertyInspector)
+        # The inspector must also be registered on the Details sidebar.
+        inspectors = [
+            p for p in shell._panels if isinstance(p, NotebookInspector)
+        ]
+        assert len(inspectors) == 1
+        assert inspectors[0] is shell._inspector
+
+    def test_notebook_gizmo_overlay_wired(self, isolated_bus):
+        from slappyengine.ui.editor.gizmo_overlay import GizmoOverlay
+        from slappyengine.ui.editor.notebook_gizmos import NotebookGizmoOverlay
+
+        shell = _make_shell()
+        shell.setup_theme_subsystem()
+        shell.setup_notebook_panels()
+
+        assert isinstance(shell._gizmo_overlay, NotebookGizmoOverlay)
+        assert not isinstance(shell._gizmo_overlay, GizmoOverlay)
+
+    def test_nova3d_apply_dark_theme_not_called_during_boot(
+        self, isolated_bus, monkeypatch
+    ):
+        """``slappyengine.ui.editor.theme.apply_editor_theme`` must not run."""
+        from slappyengine.ui.editor import theme as nova_theme
+
+        calls: list[str] = []
+
+        def _tripwire():
+            calls.append("apply_editor_theme")
+
+        monkeypatch.setattr(nova_theme, "apply_editor_theme", _tripwire)
+
+        shell = _make_shell()
+        shell.setup_theme_subsystem()
+        shell.setup_notebook_panels()
+
+        # Neither the theme nor the notebook-panel wiring may invoke the
+        # legacy Nova3D dark-theme entrypoint.
+        assert calls == []
+
+    def test_active_theme_is_a_diary_variant(self, isolated_bus):
+        from slappyengine.ui.theme import get_active_theme
+
+        shell = _make_shell()
+        shell.setup_theme_subsystem()
+
+        # Default UISettings.default_theme is "teengirl_notebook" — one
+        # of the diary family. The fallback branch must still land on a
+        # diary-family theme name.
+        diary_family = {
+            "teengirl_notebook",
+            "cozy_diary",
+            "bullet_journal",
+            "scrapbook_summer",
+            "cottagecore_garden",
+            "kawaii_planner",
+        }
+        active = get_active_theme()
+        assert active is not None
+        assert active.name in diary_family
+
+
+# ---------------------------------------------------------------------------
 # Creature scheduler + builtins
 # ---------------------------------------------------------------------------
 
