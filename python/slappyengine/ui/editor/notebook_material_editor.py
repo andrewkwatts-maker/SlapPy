@@ -300,6 +300,10 @@ class NotebookMaterialEditor:
 
     TITLE = "Material"
 
+    # Movable-window minimums — picked up by ``MovablePanelWindow``.
+    MIN_WIDTH: int = 280
+    MIN_HEIGHT: int = 400
+
     # The colour-story page width — used by the preview pane and the
     # swatch row.  Kept as a class constant so tests can pin it.
     SWATCH_PX = 48

@@ -160,6 +160,10 @@ class NotebookInspector:
 
     TITLE = "Inspector"
 
+    # Movable-window minimums — picked up by ``MovablePanelWindow``.
+    MIN_WIDTH: int = 280
+    MIN_HEIGHT: int = 400
+
     def __init__(self, target: Any | None = None) -> None:
         self._target: Any = target
         self._panel_tag: str = f"notebook_inspector_{id(self)}"

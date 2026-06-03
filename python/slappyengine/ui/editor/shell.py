@@ -947,7 +947,14 @@ class EditorShell:
         main_h   = height - TITLEBAR_H - TOOLBAR_H - BOTTOM_H
         center_w = width  - LEFT_W    - RIGHT_W - 6  # 6 px for borders/gaps
 
-        # ── Single primary window ──────────────────────────────────────────
+        # ── Background primary window ─────────────────────────────────────
+        # The legacy ``editor_root`` window now serves as a *background*
+        # container only — the panels themselves are individual
+        # :class:`MovablePanelWindow` instances and own their own
+        # dpg.window with no_move=False / no_resize=False. Keeping the
+        # background window around means downstream code that looks for
+        # the ``editor_root`` / ``custom_titlebar`` / ``status_bar``
+        # tags still works.
         with dpg.window(
             tag="editor_root",
             no_title_bar=True,
@@ -956,117 +963,32 @@ class EditorShell:
             no_scrollbar=True,
             no_scroll_with_mouse=True,
         ):
-
-            # Row 0: OS title bar now handles drag/minimize/close. Keeping an
-            # empty group with the legacy tag so downstream code that looks
-            # for "custom_titlebar" doesn't blow up.
             dpg.add_group(tag="custom_titlebar")
-
-            # ── Row 1: Toolbar (h=TOOLBAR_H) ───────────────────────────────
-            with dpg.child_window(
-                tag="toolbar_row",
-                width=-1,
-                height=TOOLBAR_H,
-                border=False,
-                no_scrollbar=True,
-            ):
-                # NotebookToolbar receives its tool-change callback at
-                # construction time (see ``setup``); no extra wiring here.
-                self._toolbar.build("toolbar_row")
-
-            # ── Row 2: Main content (horizontal group) ─────────────────────
-            with dpg.group(horizontal=True):
-
-                # Left panel — tools / scene settings / snapping
-                with dpg.child_window(
-                    tag="left_panel",
-                    width=LEFT_W,
-                    height=main_h,
-                    border=True,
-                ):
-                    self._build_left_panel("left_panel")
-
-                # Center panel — Viewport | Code Mode tabs
-                with dpg.child_window(
-                    tag="center_panel",
-                    width=center_w,
-                    height=main_h,
-                    border=False,
-                ):
-                    with dpg.tab_bar(tag="center_tabs"):
-                        with dpg.tab(label="Viewport", tag="tab_viewport"):
-                            with dpg.child_window(
-                                tag="viewport_area",
-                                width=-1,
-                                height=-1,
-                                border=True,
-                            ):
-                                if self._viewport_panel is not None:
-                                    self._viewport_panel.build("viewport_area")
-
-                        with dpg.tab(label="Code Mode", tag="tab_code_mode"):
-                            with dpg.child_window(
-                                tag="code_mode_area",
-                                width=-1,
-                                height=-1,
-                                border=False,
-                            ):
-                                if self._code_mode_panel is None:
-                                    from slappyengine.ui.editor.code_mode_panel import (
-                                        CodeModePanel,
-                                    )
-                                    self._code_mode_panel = CodeModePanel(self._engine)
-                                    # Late-wire to content browser
-                                    if self._content_browser is not None:
-                                        self._content_browser.set_on_open_script(
-                                            self._code_mode_panel.load_script
-                                        )
-                                self._code_mode_panel.build("code_mode_area")
-
-                # Right panel — Scene (outliner) | Details (properties)
-                with dpg.child_window(
-                    tag="right_panel",
-                    width=-1,
-                    height=main_h,
-                    border=True,
-                ):
-                    with dpg.tab_bar(tag="right_tabs"):
-                        with dpg.tab(label="Scene", tag="tab_scene"):
-                            with dpg.child_window(
-                                tag="scene_tab_body",
-                                width=-1,
-                                height=-1,
-                                border=False,
-                            ):
-                                if self._scene_outliner is not None:
-                                    self._scene_outliner.build("scene_tab_body")
-
-                        with dpg.tab(label="Details", tag="tab_details"):
-                            with dpg.child_window(
-                                tag="details_tab_body",
-                                width=-1,
-                                height=-1,
-                                border=False,
-                            ):
-                                for panel in self._panels:
-                                    panel.build("details_tab_body")
-
-            # ── Row 3: Content browser (h=BOTTOM_H) ────────────────────────
-            with dpg.child_window(
-                tag="bottom_panel",
-                width=-1,
-                height=BOTTOM_H,
-                border=True,
-            ):
-                if self._content_browser is not None:
-                    self._content_browser.build("bottom_panel")
-
-            # ── Row 4: Status bar ──────────────────────────────────────────
             dpg.add_text("Ready", tag="status_bar", color=(150, 150, 150))
 
-            # ── Row 5: Notebook ambient status bar (washi-tape marginalia)
+        # ── Lazy code-mode-panel construction (needs the engine handle).
+        if self._code_mode_panel is None:
             try:
-                self._notebook_status_bar.build("editor_root")
+                from slappyengine.ui.editor.code_mode_panel import (
+                    CodeModePanel,
+                )
+
+                self._code_mode_panel = CodeModePanel(self._engine)
+                if self._content_browser is not None:
+                    self._content_browser.set_on_open_script(
+                        self._code_mode_panel.load_script
+                    )
+            except Exception:
+                pass
+
+        # ── Movable panel windows — each panel becomes its own
+        # ── floating, themed, resizable dpg.window. Toolbar +
+        # ── status-bar windows pin ``no_resize=True``; sidebars
+        # ── + modals are fully movable + resizable.
+        self.compose_default_panel_layout()
+        for window in self._panel_windows.values():
+            try:
+                window.build()
             except Exception:
                 pass
 
@@ -1529,6 +1451,14 @@ class EditorShell:
             last_t = now
             self.tick_subsystems(dt)
         dpg.destroy_context()
+        # Reset the bridge so any post-loop theme work routes to the
+        # headless stub instead of crashing on the destroyed context.
+        try:
+            from slappyengine.ui.theme.dpg_bridge import mark_dpg_context_ready
+
+            mark_dpg_context_ready(False)
+        except Exception:
+            pass
         self._running = False
 
     # ------------------------------------------------------------------

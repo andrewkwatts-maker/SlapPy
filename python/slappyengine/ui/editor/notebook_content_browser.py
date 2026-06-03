@@ -229,6 +229,10 @@ class NotebookContentBrowser:
 
     TITLE = "Notebook"
 
+    # Movable-window minimums — picked up by ``MovablePanelWindow``.
+    MIN_WIDTH: int = 320
+    MIN_HEIGHT: int = 180
+
     _SEARCH_TAG = "notebook_cb_search"
     _ROWS_GROUP = "notebook_cb_rows"
     _EMPTY_TAG = "notebook_cb_empty"

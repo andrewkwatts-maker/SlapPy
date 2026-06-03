@@ -233,6 +233,10 @@ class NotebookOutliner:
 
     TITLE = "Scene"
 
+    # Movable-window minimums — picked up by ``MovablePanelWindow``.
+    MIN_WIDTH: int = 240
+    MIN_HEIGHT: int = 300
+
     _INDENT_PX = 16
     _ROW_HEIGHT = 24
     _SEARCH_TAG = "notebook_outliner_search"

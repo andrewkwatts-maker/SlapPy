@@ -389,6 +389,10 @@ class NotebookSpawnMenu:
 
     TITLE = "+ Add"
 
+    # Movable-window minimums — picked up by ``MovablePanelWindow``.
+    MIN_WIDTH: int = 600
+    MIN_HEIGHT: int = 400
+
     # Layout constants — 4 cards per row, 3 rows visible, card ~120x160.
     CARDS_PER_ROW: int = 4
     VISIBLE_ROWS: int = 3

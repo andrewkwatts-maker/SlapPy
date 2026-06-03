@@ -167,6 +167,11 @@ class NotebookStatusBar:
     _DIVIDER_H: int = 2
     _THEME_STICKER_SIZE: int = 16
 
+    # Movable-window minimums — picked up by ``MovablePanelWindow``.
+    # The status bar is fixed-height (24 px) and full-width.
+    MIN_WIDTH: int = 400
+    MIN_HEIGHT: int = 24
+
     def __init__(
         self,
         on_theme_indicator_click: Callable[[], None] | None = None,

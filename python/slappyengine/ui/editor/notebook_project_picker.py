@@ -184,6 +184,10 @@ class NotebookProjectPicker:
     HEIGHT = 460
     EMPTY_STATE_MESSAGE = "No recent notebooks yet — start a new one!"
 
+    # Movable-window minimums — picked up by ``MovablePanelWindow``.
+    MIN_WIDTH: int = 480
+    MIN_HEIGHT: int = 420
+
     def __init__(
         self,
         on_project_chosen: Callable[[Project], None] | None = None,

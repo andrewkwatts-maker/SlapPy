@@ -187,6 +187,10 @@ class NotebookToolbar:
     _CREATURE_SLOT_W: int = 32
     _CREATURE_SLOT_H: int = 32
 
+    # Movable-window minimums — picked up by ``MovablePanelWindow``.
+    MIN_WIDTH: int = 800
+    MIN_HEIGHT: int = 40
+
     def __init__(
         self,
         on_tool_changed: Callable[[str], None] | None = None,

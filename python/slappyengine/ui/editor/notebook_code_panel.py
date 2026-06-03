@@ -152,6 +152,10 @@ class NotebookCodePanel:
 
     TITLE = "Code"
 
+    # Movable-window minimums — picked up by ``MovablePanelWindow``.
+    MIN_WIDTH: int = 480
+    MIN_HEIGHT: int = 320
+
     def __init__(
         self,
         code_sync_watcher: Any | None = None,

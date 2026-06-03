@@ -176,6 +176,10 @@ class ThemeSwitcherPanel:
     TITLE = "Theme"
     DEFAULT_SIZE = (280, 360)
 
+    # Movable-window minimums — picked up by ``MovablePanelWindow``.
+    MIN_WIDTH: int = 280
+    MIN_HEIGHT: int = 360
+
     def __init__(
         self,
         scheduler: Any | None = None,
