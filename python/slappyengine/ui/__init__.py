@@ -32,4 +32,11 @@ def __getattr__(name: str):
         globals()["editor"] = mod
         return mod
 
+    # theme subpackage — PRIMITIVE infrastructure (always available)
+    if name == "theme":
+        import importlib
+        mod = importlib.import_module(".theme", package=__name__)
+        globals()["theme"] = mod
+        return mod
+
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
