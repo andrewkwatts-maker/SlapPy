@@ -11,24 +11,26 @@ __all__ = [
     "MeshInspector",
     "NodeGraphPanel",
     "NotebookInspector",
+    "NotebookMaterialEditor",
     "PropertyInspector",
     "TagPainter",
     "ViewportPanel",
 ]
 
 _LAZY_MAP: dict[str, str] = {
-    "AnimGraphPanel":     ".anim_graph_panel",
-    "BehaviorPanel":      ".behavior_panel",
-    "EditorShell":        ".shell",
-    "LayerLightingPanel": ".layer_lighting_panel",
-    "LayerPanel":         ".layer_panel",
-    "MaterialEditor":     ".material_editor",
-    "MeshInspector":      ".mesh_inspector",
-    "NodeGraphPanel":     ".node_graph_panel",
-    "NotebookInspector":  ".notebook_inspector",
-    "PropertyInspector":  ".property_inspector",
-    "TagPainter":         ".tag_painter",
-    "ViewportPanel":      ".viewport_panel",
+    "AnimGraphPanel":         ".anim_graph_panel",
+    "BehaviorPanel":          ".behavior_panel",
+    "EditorShell":            ".shell",
+    "LayerLightingPanel":     ".layer_lighting_panel",
+    "LayerPanel":             ".layer_panel",
+    "MaterialEditor":         ".material_editor",
+    "MeshInspector":          ".mesh_inspector",
+    "NodeGraphPanel":         ".node_graph_panel",
+    "NotebookInspector":      ".notebook_inspector",
+    "NotebookMaterialEditor": ".notebook_material_editor",
+    "PropertyInspector":      ".property_inspector",
+    "TagPainter":             ".tag_painter",
+    "ViewportPanel":          ".viewport_panel",
 }
 
 
