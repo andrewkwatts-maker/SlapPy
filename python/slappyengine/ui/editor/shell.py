@@ -105,6 +105,10 @@ class EditorShell:
         # Scene name + save state surfaced in the OS title bar.
         self._scene_name: str = "untitled"
         self._scene_saved: bool = True
+        # Latest composed window title — populated by :meth:`_apply_window_title`
+        # whether or not DPG is up so tests can inspect the formatter output
+        # without a live viewport.
+        self._last_window_title: str | None = None
 
         # Custom title-bar drag state
         self._dragging_window: bool = False
@@ -950,7 +954,13 @@ class EditorShell:
             pass
 
     def _apply_window_title(self) -> None:
-        """Push the notebook-themed title to the DPG viewport."""
+        """Push the notebook-themed title to the DPG viewport.
+
+        Only writes to DPG when ``setup`` has already run — calling
+        ``does_item_exist`` / ``set_viewport_title`` before a DPG context
+        exists segfaults hard on Windows, so we gate every DPG access on
+        ``self._running`` + a context check.
+        """
         from slappyengine.ui.editor.notebook_window_title import (
             format_window_title,
         )
@@ -963,7 +973,14 @@ class EditorShell:
             )
         except Exception:
             return
-        # Update the in-window custom titlebar text if it exists.
+        # Remember the latest title even when DPG isn't up yet — tests
+        # introspect ``self._last_window_title`` to verify the formatter
+        # ran without standing up a viewport.
+        self._last_window_title = title
+        # Only push to DPG once a context has been created — gated by
+        # ``self._running`` which ``run()`` sets True after setup.
+        if not self._running:
+            return
         try:
             import dearpygui.dearpygui as dpg
             if dpg.does_item_exist("tb_title_text"):
