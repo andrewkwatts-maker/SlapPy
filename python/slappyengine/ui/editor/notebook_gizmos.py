@@ -406,10 +406,50 @@ class NotebookGizmoOverlay:
         self._active_key: str | None = None
         self._theme_override: Any | None = None
         self._frame_index: int = 0
+        # Compat with the legacy GizmoOverlay surface that Engine.run_editor()
+        # calls during boot: it sets the camera / entity / tool / mode before
+        # the first render. These attributes are stash-only — the notebook
+        # render contract is target_world_pos + mode passed directly.
+        self._entity: Any | None = None
+        self._camera: Any | None = None
+        self._tool: str = "select"
+        self._mode_3d: bool = False
 
     # ------------------------------------------------------------------
     # State setters
     # ------------------------------------------------------------------
+
+    def set_entity(self, entity: Any) -> None:
+        """Bind the gizmo to *entity*. Pass ``None`` to deselect.
+
+        Compat shim for the legacy `GizmoOverlay.set_entity` contract that
+        `Engine.run_editor()` calls during boot. The notebook overlay tracks
+        its target via `render(target_world_pos, ...)`; this setter just
+        stashes the entity so callers can query `.entity` later.
+        """
+        self._entity = entity
+
+    def set_camera(self, camera: Any) -> None:
+        """Bind the camera used for world-to-screen conversion.
+
+        Compat shim for the legacy `GizmoOverlay.set_camera` contract.
+        """
+        self._camera = camera
+
+    def set_tool(self, tool: str) -> None:
+        """Set the active tool mode: 'select', 'translate', 'rotate', or 'scale'.
+
+        Compat shim for the legacy `GizmoOverlay.set_tool` contract.
+        """
+        self._tool = tool
+
+    def set_mode(self, mode: str) -> None:
+        """Switch between 2D and 3D gizmo rendering.
+
+        Compat shim for the legacy `GizmoOverlay.set_mode` contract. The
+        notebook overlay is 2D-only today; 3D mode is recorded but ignored.
+        """
+        self._mode_3d = (mode == "3D")
 
     def set_hover(self, key: str | None) -> None:
         """Mark *key* as hovered so the next render grows + shimmers it."""
@@ -429,6 +469,16 @@ class NotebookGizmoOverlay:
     def advance_frame(self) -> None:
         """Tick the internal frame index used by the heart-pulse animation."""
         self._frame_index += 1
+
+    def update(self) -> None:
+        """Per-frame update hook called by `Engine.run_editor()`.
+
+        Compat shim for the legacy `GizmoOverlay.update()` contract. The
+        notebook overlay's rendering happens through explicit `render()`
+        calls driven by the editor draw loop, so this method just advances
+        the heart-pulse frame counter. Safe to call without DPG context.
+        """
+        self.advance_frame()
 
     # ------------------------------------------------------------------
     # Theme resolution

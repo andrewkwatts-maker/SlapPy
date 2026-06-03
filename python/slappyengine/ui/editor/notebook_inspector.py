@@ -200,6 +200,13 @@ class NotebookInspector:
         self.call_log.append(("set_target", type(target).__name__ if target is not None else None))
         self.refresh()
 
+    # Legacy PropertyInspector compat — Engine.run_editor() calls set_object.
+    def set_object(self, target: Any) -> None:
+        """Compat alias for :meth:`set_target`. Mirrors the legacy
+        `PropertyInspector.set_object` contract that the engine driver
+        calls during boot."""
+        self.set_target(target)
+
     def build(self, parent_tag: int | str) -> None:
         """Materialise the inspector container under *parent_tag*.
 

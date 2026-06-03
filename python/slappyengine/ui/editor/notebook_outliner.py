@@ -257,9 +257,44 @@ class NotebookOutliner:
         self._built: bool = False
         self._parent_tag: str | int | None = None
         self._theme = resolve_theme()
+        self._scene: Any | None = None
         self._sticker_handles: list[str] = []
 
         register_theme_listener(self._on_theme_changed)
+
+    def set_scene(self, scene: Any) -> None:
+        """Bind the active scene whose entities populate the outliner.
+
+        Compat shim for the legacy `SceneOutliner.set_scene` contract that
+        `Engine.run_editor()` calls during boot. Replaces the world_getter
+        with one that returns `scene.world` (or the scene itself if it
+        already quacks like a world).
+        """
+        self._scene = scene
+        world = getattr(scene, "world", scene) if scene is not None else None
+        self._world_getter = lambda: world
+        self._selected_id = None
+        if self._built:
+            self.refresh()
+
+    def set_on_select(self, callback: Callable[[Any], None]) -> None:
+        """Replace the on-select callback. Compat shim for the legacy
+        `SceneOutliner.set_on_select` contract.
+
+        The original callback registered at `__init__` is replaced. If the
+        engine wires this multiple times (it does once via shell.setup and
+        once again later in `Engine.run_editor`), the LAST writer wins.
+        """
+        validated = validate_callable("callback", "set_on_select", callback)
+        previous = self._on_select
+        # Chain so both callbacks fire (the gizmo set_entity AND any panel
+        # that subscribed earlier via the constructor).
+        def _combined(entity: Any, _prev=previous, _new=validated) -> None:
+            try:
+                _prev(entity)
+            finally:
+                _new(entity)
+        self._on_select = _combined
 
     # ------------------------------------------------------------------
     # Theme handling
