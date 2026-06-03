@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from slappyengine._validation import validate_bool, validate_non_empty_str
+from slappyengine._validation import validate_bool, validate_non_empty_str, validate_str
 
 
 @dataclass
@@ -38,12 +38,23 @@ class UISettings:
         Forward to :meth:`CreatureScheduler.set_easter_eggs` (if the
         scheduler implements it). Persisted in :class:`ThemeSwitcherPanel`
         regardless so the toggle state survives a refresh.
+    welcome_shown:
+        Tracks whether the first-run :class:`NotebookWelcome` splash
+        has already been dismissed. The shell consults this flag during
+        :meth:`EditorShell.setup` to decide whether to surface the
+        welcome modal on launch.
+    last_opened_demo:
+        Last demo id the user opened from the welcome panel — surfaced
+        as a tiny "Resume…" hint when the welcome modal reappears via
+        the Help menu. Empty when no demo has been opened yet.
     """
 
     default_theme: str = "teengirl_notebook"
     creature_animations: bool = True
     reduced_motion: bool = False
     easter_eggs: bool = True
+    welcome_shown: bool = False
+    last_opened_demo: str = ""
 
     def __post_init__(self) -> None:
         fn = "UISettings"
@@ -51,6 +62,8 @@ class UISettings:
         validate_bool("creature_animations", fn, self.creature_animations)
         validate_bool("reduced_motion", fn, self.reduced_motion)
         validate_bool("easter_eggs", fn, self.easter_eggs)
+        validate_bool("welcome_shown", fn, self.welcome_shown)
+        validate_str("last_opened_demo", fn, self.last_opened_demo, allow_empty=True)
 
 
 __all__ = ["UISettings"]

@@ -1,19 +1,22 @@
 ﻿from __future__ import annotations
 
 import threading
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from slappyengine.engine import Engine
-    from slappyengine.ui.editor.toolbar import EditorToolbar
-    from slappyengine.ui.editor.scene_outliner import SceneOutliner
+    from slappyengine.ui.editor.notebook_toolbar import NotebookToolbar
+    from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+    from slappyengine.ui.editor.notebook_inspector import NotebookInspector
     from slappyengine.ui.editor.content_browser import ContentBrowser
     from slappyengine.ui.editor.settings import UISettings
 
 try:
-    from slappyengine.ui.editor.gizmo_overlay import GizmoOverlay  # noqa: F401
+    from slappyengine.ui.editor.notebook_gizmos import (
+        NotebookGizmoOverlay,  # noqa: F401
+    )
 except ImportError:
-    GizmoOverlay = None  # type: ignore[assignment,misc]
+    NotebookGizmoOverlay = None  # type: ignore[assignment,misc]
 
 # ── Layout constants ───────────────────────────────────────────────────────────
 TOOLBAR_H = 36
@@ -52,7 +55,7 @@ class EditorShell:
     def __init__(
         self,
         engine: "Engine",
-        title: str = "SlapPyEngine Editor",
+        title: str = "SlapPy Notebook",
         width: int = 1400,
         height: int = 900,
         ui_settings: "UISettings | None" = None,
@@ -64,8 +67,9 @@ class EditorShell:
         self._panels: list = []
         self._viewport_panel = None
         self._code_mode_panel = None
-        self._toolbar: "EditorToolbar | None" = None
-        self._scene_outliner: "SceneOutliner | None" = None
+        self._toolbar: "NotebookToolbar | None" = None
+        self._scene_outliner: "NotebookOutliner | None" = None
+        self._inspector: "NotebookInspector | None" = None
         self._content_browser: "ContentBrowser | None" = None
         self._gizmo_overlay = None
         self._running = False
@@ -81,6 +85,27 @@ class EditorShell:
         self._idle_emitter = None
         self._theme_switcher_panel = None
 
+        # ── Notebook ambient-feedback channels ─────────────────────────────
+        # Built during ``setup``; constructed here so callers can introspect
+        # the bar / hotkey table immediately after instantiation.
+        from slappyengine.ui.editor.notebook_status_bar import NotebookStatusBar
+        from slappyengine.ui.editor.notebook_hotkeys import NotebookHotkeys
+
+        self._notebook_status_bar = NotebookStatusBar(
+            on_theme_indicator_click=self._open_theme_switcher,
+        )
+        self._notebook_status_bar.set_active_theme_name(
+            self._ui_settings.default_theme,
+        )
+        self._notebook_hotkeys = NotebookHotkeys(
+            command_dispatcher=self._dispatch_editor_command,
+            easter_eggs=self._ui_settings.easter_eggs,
+        )
+
+        # Scene name + save state surfaced in the OS title bar.
+        self._scene_name: str = "untitled"
+        self._scene_saved: bool = True
+
         # Custom title-bar drag state
         self._dragging_window: bool = False
         self._drag_start_mouse: tuple[int, int] = (0, 0)
@@ -92,6 +117,60 @@ class EditorShell:
         # Tags for 3D-only panels (may not yet exist; always guarded with does_item_exist)
         self._mesh_inspector_tag: str = "mesh_inspector_panel"
         self._layer_lighting_tag: str = "layer_lighting_panel"
+
+        # First-run welcome panel — lazily constructed in :meth:`show_welcome`.
+        self._welcome_panel = None
+
+        # Notebook bookkeeping — outliner selection mirror + active tool.
+        self._selected_entity: object | None = None
+        self._active_tool: str = "select"
+
+    # ------------------------------------------------------------------
+    # Ambient-feedback helpers (status bar + hotkeys)
+    # ------------------------------------------------------------------
+
+    def _open_theme_switcher(self) -> None:
+        """Surface the theme-switcher panel — clicked from the status bar.
+
+        Best-effort: if Dear PyGui is running and the panel has a tag,
+        focus it; otherwise silently no-op.
+        """
+        panel = self._theme_switcher_panel
+        if panel is None:
+            return
+        try:
+            import dearpygui.dearpygui as dpg
+
+            tag = getattr(panel, "_panel_tag", None) or "theme_switcher_panel"
+            if dpg.does_item_exist(tag):
+                dpg.focus_item(tag)
+        except Exception:
+            pass
+
+    def _dispatch_editor_command(self, command: str) -> None:
+        """Route a notebook-hotkey command name to a shell action.
+
+        Unknown commands are forwarded to any engine hook of the same
+        name so plugins can extend the table without modifying the shell.
+        """
+        action = {
+            "save":   self._save_project,
+            "undo":   self._undo,
+            "delete": self._delete_selected,
+            "play":   self._toggle_play,
+        }.get(command)
+        if action is not None:
+            try:
+                action()
+            except Exception:
+                pass
+            return
+        hook = getattr(self._engine, command, None)
+        if callable(hook):
+            try:
+                hook()
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # Panel registration
@@ -184,10 +263,57 @@ class EditorShell:
         self._theme_switcher_panel = panel
         self.register_panel(panel)
 
+    def setup_notebook_panels(self) -> None:
+        """Auto-wire the notebook panel family on the shell.
+
+        Constructs :class:`NotebookToolbar`, :class:`NotebookOutliner`,
+        :class:`NotebookInspector`, and :class:`NotebookGizmoOverlay`,
+        and registers the inspector on the Details sidebar. Headless-safe
+        — no Dear PyGui calls — so tests can drive this directly without
+        a real GUI context.
+
+        Pre-existing values on ``self._toolbar`` / ``self._scene_outliner``
+        / ``self._inspector`` / ``self._gizmo_overlay`` are left alone so
+        a caller can inject a custom panel before :meth:`setup` runs.
+
+        The Nova3D panel siblings (``EditorToolbar``, ``SceneOutliner``,
+        ``PropertyInspector``, ``GizmoOverlay``) are reference-only and
+        deliberately never imported by this method.
+        """
+        if self._toolbar is None:
+            from slappyengine.ui.editor.notebook_toolbar import NotebookToolbar
+            self._toolbar = NotebookToolbar(
+                on_tool_changed=self._on_tool_changed,
+            )
+
+        if self._scene_outliner is None:
+            from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+            self._scene_outliner = NotebookOutliner(
+                world_getter=lambda: getattr(self._engine, "scene", None),
+                on_select=self._on_entity_selected,
+            )
+
+        if self._inspector is None:
+            from slappyengine.ui.editor.notebook_inspector import (
+                NotebookInspector,
+            )
+            self._inspector = NotebookInspector()
+            self.register_panel(self._inspector)
+
+        if NotebookGizmoOverlay is not None and self._gizmo_overlay is None:
+            self._gizmo_overlay = NotebookGizmoOverlay()
+
     def setup(self) -> None:  # noqa: C901 (complexity — UI layout)
         """Initialise the Dear PyGui context and build the window layout.
 
         Must be called before :meth:`run`.
+
+        Wires the Notebook panel family exclusively — :class:`NotebookToolbar`,
+        :class:`NotebookOutliner`, :class:`NotebookInspector`, and
+        :class:`NotebookGizmoOverlay`. The legacy Nova3D panel siblings
+        (``EditorToolbar`` / ``SceneOutliner`` / ``PropertyInspector`` /
+        ``GizmoOverlay``) ship as reference-only modules; this method
+        never imports them. See ``docs/ui_pattern_audit_2026_06_03.md``.
 
         Raises
         ------
@@ -195,7 +321,8 @@ class EditorShell:
             If ``dearpygui`` is not installed.
         """
         # Theme + creature wiring runs first so any panel that consults
-        # the active theme during ``build`` already has one.
+        # the active theme during ``build`` already has one — the notebook
+        # widgets read palette tokens during construction.
         self.setup_theme_subsystem()
 
         try:
@@ -209,14 +336,10 @@ class EditorShell:
         width  = self._width
         height = self._height
 
-        # ── Auto-wire sub-components if not pre-set ────────────────────────
-        if self._toolbar is None:
-            from slappyengine.ui.editor.toolbar import EditorToolbar
-            self._toolbar = EditorToolbar()
-
-        if self._scene_outliner is None:
-            from slappyengine.ui.editor.scene_outliner import SceneOutliner
-            self._scene_outliner = SceneOutliner()
+        # ── Auto-wire notebook sub-components if not pre-set ──────────────
+        # The Notebook panels are the *only* editor surface — Nova3D
+        # variants live on disk for reference but are never wired here.
+        self.setup_notebook_panels()
 
         # Register the spawn menu — the outliner reads
         # ``spawn_menu.SPAWN_ACTIONS`` from its ``+ Add`` popup.  We
@@ -236,23 +359,12 @@ class EditorShell:
                 self._code_mode_panel.load_script
             )
 
-        # ── DPG context + theme ────────────────────────────────────────────
+        # ── DPG context — the notebook theme is the only theme path ───────
+        # The Nova3D dark glass theme (``theme.apply_editor_theme``) is
+        # intentionally NOT applied. The notebook theme registry owns the
+        # entire editor look and was already applied by
+        # ``setup_theme_subsystem``.
         dpg.create_context()
-
-        # ── Gizmo overlay — build drawlist after context is created ───────
-        if GizmoOverlay is not None and self._gizmo_overlay is None:
-            self._gizmo_overlay = GizmoOverlay()
-        if self._gizmo_overlay is not None:
-            self._gizmo_overlay.build()
-            # Wire toolbar tool-change → gizmo mode
-            if self._toolbar is not None:
-                self._toolbar.set_on_tool_change(self._gizmo_overlay.set_tool)
-            # Wire scene outliner selection → gizmo entity
-            if self._scene_outliner is not None:
-                self._scene_outliner.set_on_select(self._gizmo_overlay.set_entity)
-
-        from slappyengine.ui.editor.theme import apply_editor_theme
-        apply_editor_theme()
 
         dpg.create_viewport(
             title=self._title,
@@ -272,6 +384,12 @@ class EditorShell:
                 dpg.add_menu_item(label="Undo", tag="menu_undo")
             with dpg.menu(label="View"):
                 dpg.add_menu_item(label="Reset Layout", tag="menu_reset_layout")
+            with dpg.menu(label="Help"):
+                dpg.add_menu_item(
+                    label="Welcome",
+                    tag="menu_welcome",
+                    callback=lambda *_: self.show_welcome(),
+                )
 
         # ── Derived layout dimensions ──────────────────────────────────────
         TITLEBAR_H = 28
@@ -291,8 +409,8 @@ class EditorShell:
             # ── Row 0: Custom drag bar (replaces OS title bar) ─────────────
             with dpg.group(tag="custom_titlebar", horizontal=True):
                 dpg.add_text(
-                    f"  ✦ {self._title}",
-                    color=(180, 180, 220),
+                    f"  ✿ {self._title}",
+                    color=(120, 80, 110),
                     tag="tb_title_text",
                 )
                 dpg.add_spacer(width=-90)  # push buttons to right
@@ -327,8 +445,9 @@ class EditorShell:
                 border=False,
                 no_scrollbar=True,
             ):
+                # NotebookToolbar receives its tool-change callback at
+                # construction time (see ``setup``); no extra wiring here.
                 self._toolbar.build("toolbar_row")
-                self._toolbar.set_on_mode_change(self._on_editor_mode_change)
 
             # ── Row 2: Main content (horizontal group) ─────────────────────
             with dpg.group(horizontal=True):
@@ -420,18 +539,103 @@ class EditorShell:
             # ── Row 4: Status bar ──────────────────────────────────────────
             dpg.add_text("Ready", tag="status_bar", color=(150, 150, 150))
 
-        # ── Bind opaque theme to viewport child window ─────────────────────
-        if self._viewport_panel is not None:
-            from slappyengine.ui.editor.theme import get_viewport_opaque_theme
-            dpg.bind_item_theme("viewport_area", get_viewport_opaque_theme())
+            # ── Row 5: Notebook ambient status bar (washi-tape marginalia)
+            try:
+                self._notebook_status_bar.build("editor_root")
+            except Exception:
+                pass
+
+        # ── Install global hotkeys after the root window exists ────────
+        try:
+            self._notebook_hotkeys.set_creature_scheduler(
+                self._creature_scheduler,
+            )
+        except Exception:
+            pass
+        try:
+            self._notebook_hotkeys.install()
+        except Exception:
+            pass
+
+        # ── Push notebook-themed window title to the viewport ──────────
+        try:
+            self._apply_window_title()
+        except Exception:
+            pass
 
         dpg.set_primary_window("editor_root", True)
         dpg.show_viewport()
         dpg.maximize_viewport()  # ensure always visible
+        # The Nova3D-era DWM blur-behind and viewport opaque theme are
+        # intentionally not applied — the notebook theme is paper, not
+        # glass.
 
-        # Apply DWM glass effect AFTER viewport is shown (so HWND exists)
-        from slappyengine.ui.editor.theme import apply_dwm_glass
-        apply_dwm_glass(self._title)
+        # First-run welcome panel — only the very first launch.
+        try:
+            self._maybe_show_first_run_welcome()
+        except Exception:
+            pass
+
+    # ------------------------------------------------------------------
+    # First-run welcome panel
+    # ------------------------------------------------------------------
+
+    def _maybe_show_first_run_welcome(self) -> None:
+        """Surface the welcome modal when ``ui.welcome_shown`` is ``False``."""
+        from slappyengine.ui.editor.notebook_welcome import NotebookWelcome
+
+        if self._welcome_panel is None:
+            self._welcome_panel = NotebookWelcome(
+                settings=self._ui_settings,
+                on_start_blank=self._welcome_start_blank,
+                on_open_demo=self._welcome_open_demo,
+                on_dismiss=self._welcome_dismissed,
+            )
+            if self._creature_scheduler is not None:
+                self._welcome_panel.bind_creature_scheduler(
+                    self._creature_scheduler,
+                )
+        if self._welcome_panel.is_first_run():
+            self._welcome_panel.build("editor_root")
+
+    def show_welcome(self) -> None:
+        """Re-open the welcome modal (Help → Welcome entry-point)."""
+        from slappyengine.ui.editor.notebook_welcome import NotebookWelcome
+
+        if self._welcome_panel is None:
+            self._welcome_panel = NotebookWelcome(
+                settings=self._ui_settings,
+                on_start_blank=self._welcome_start_blank,
+                on_open_demo=self._welcome_open_demo,
+                on_dismiss=self._welcome_dismissed,
+            )
+            if self._creature_scheduler is not None:
+                self._welcome_panel.bind_creature_scheduler(
+                    self._creature_scheduler,
+                )
+        self._welcome_panel.build("editor_root")
+
+    def _welcome_start_blank(self) -> None:
+        """Welcome → "Start drawing!" → load a blank scene."""
+        scene_new = getattr(self._engine, "new_scene", None)
+        if callable(scene_new):
+            try:
+                scene_new()
+            except Exception:
+                pass
+
+    def _welcome_open_demo(self, demo_id: str) -> None:
+        """Welcome → demo card click → forward to engine.open_example."""
+        opener = getattr(self._engine, "open_example", None)
+        if callable(opener):
+            try:
+                opener(f"hello_{demo_id}.py")
+            except Exception:
+                pass
+
+    def _welcome_dismissed(self) -> None:
+        """Welcome panel closed — nothing to forward by default."""
+        pass
 
     # ------------------------------------------------------------------
     # Left panel construction
@@ -508,9 +712,54 @@ class EditorShell:
         )
 
     def _select_tool(self, mode: str) -> None:
-        """Activate *mode* in the toolbar and update left-panel button highlights."""
-        if self._toolbar is not None:
-            self._toolbar._select_tool(mode)
+        """Activate *mode* on the notebook toolbar.
+
+        Used by the left-panel quick-select buttons. Routes through the
+        :class:`NotebookToolbar`'s public :meth:`set_active` so the
+        tool-changed callback (which forwards to the gizmo overlay) still
+        fires.
+        """
+        if self._toolbar is None:
+            return
+        # NotebookToolbar uses the engine canonical id "move" rather than
+        # the legacy "translate" — translate the left-panel label here so
+        # the rest of the editor sees the canonical name.
+        tool_id = "move" if mode == "translate" else mode
+        try:
+            self._toolbar.set_active(tool_id)
+        except (ValueError, AttributeError):
+            # Unknown tool — leave the toolbar state untouched.
+            pass
+
+    def _on_tool_changed(self, tool_id: str) -> None:
+        """Receive the active-tool name from the notebook toolbar.
+
+        Forwards the value to the notebook gizmo overlay so the next
+        :meth:`render` paints the right handle family. The
+        :class:`NotebookGizmoOverlay` exposes mode via
+        :meth:`render(..., mode=...)` rather than a setter, so we cache
+        the value locally and the run loop reads it before each frame.
+        """
+        # Translate the toolbar's "move" id to the gizmo's "translate"
+        # vocabulary — the legacy editor used "translate" and the
+        # NotebookGizmoOverlay kept that for compatibility.
+        if tool_id == "move":
+            tool_id = "translate"
+        self._active_tool = tool_id
+
+    def _on_entity_selected(self, entity: object) -> None:
+        """Receive a selection event from the notebook outliner.
+
+        Forwards the entity to the inspector so the field-journal page
+        refreshes for the new target. Tracked on the shell so the Delete
+        shortcut can act on it.
+        """
+        self._selected_entity = entity
+        if self._inspector is not None:
+            try:
+                self._inspector.set_target(entity)
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # 2D / 3D mode
@@ -520,44 +769,6 @@ class EditorShell:
     def editor_mode(self) -> str:
         """Return the current editor mode (``"2D"`` or ``"3D"``)."""
         return self._editor_mode
-
-    def _on_editor_mode_change(self, mode: str) -> None:
-        """Handle 2D/3D mode toggle fired by the toolbar.
-
-        Shows or hides tool panels appropriate to *mode*.  All panel tags are
-        checked with ``dpg.does_item_exist`` before touching them so the method
-        is safe to call even when 3D panels have not been built yet.
-        """
-        import dearpygui.dearpygui as dpg
-
-        self._editor_mode = mode
-
-        # Tags for panels that exist in both modes (standard left-panel body)
-        standard_2d_tags = ["left_panel"]
-
-        # 3D-only panel tags stored as instance variables
-        three_d_tags = [self._mesh_inspector_tag, self._layer_lighting_tag]
-
-        if mode == "2D":
-            for tag in standard_2d_tags:
-                if dpg.does_item_exist(tag):
-                    dpg.configure_item(tag, show=True)
-            for tag in three_d_tags:
-                if dpg.does_item_exist(tag):
-                    dpg.configure_item(tag, show=False)
-        else:  # "3D"
-            for tag in standard_2d_tags:
-                if dpg.does_item_exist(tag):
-                    dpg.configure_item(tag, show=True)
-            for tag in three_d_tags:
-                if dpg.does_item_exist(tag):
-                    dpg.configure_item(tag, show=True)
-
-        # Forward mode to viewport camera and gizmo overlay
-        if self._viewport_panel is not None and hasattr(self._viewport_panel, "set_mode"):
-            self._viewport_panel.set_mode(mode)
-        if self._gizmo_overlay is not None and hasattr(self._gizmo_overlay, "set_mode"):
-            self._gizmo_overlay.set_mode(mode)
 
     # ------------------------------------------------------------------
     # Run loop
@@ -624,8 +835,13 @@ class EditorShell:
         import time as _time
         last_t = _time.monotonic()
         while dpg.is_dearpygui_running():
+            # Notebook gizmo overlay advances its frame index for the
+            # heart-pulse animation; the actual render happens via the
+            # viewport drawlist hook (host-supplied), not here.
             if self._gizmo_overlay is not None:
-                self._gizmo_overlay.update()
+                advance = getattr(self._gizmo_overlay, "advance_frame", None)
+                if callable(advance):
+                    advance()
 
             # ── Keyboard shortcuts ─────────────────────────────────────────
             any_input = False
@@ -684,6 +900,110 @@ class EditorShell:
                 dpg.set_value("status_bar", message)
         except Exception:
             pass
+        # Mirror the message onto the notebook ambient status bar so
+        # users get the washi-tape feedback for the same event.
+        if self._notebook_status_bar is not None:
+            try:
+                self._notebook_status_bar.set_message(message, kind="info")
+            except Exception:
+                pass
+
+    # ------------------------------------------------------------------
+    # Notebook ambient channels
+    # ------------------------------------------------------------------
+
+    @property
+    def notebook_status_bar(self):
+        """Public accessor for the notebook ambient status bar."""
+        return self._notebook_status_bar
+
+    @property
+    def notebook_hotkeys(self):
+        """Public accessor for the global hotkey registry."""
+        return self._notebook_hotkeys
+
+    def set_scene_name(self, scene_name: str, saved: bool = True) -> None:
+        """Update the tracked scene name + save state + window title."""
+        self._scene_name = scene_name
+        self._scene_saved = saved
+        if self._notebook_status_bar is not None:
+            try:
+                self._notebook_status_bar.set_save_state(saved)
+            except Exception:
+                pass
+        try:
+            self._apply_window_title()
+        except Exception:
+            pass
+
+    def _apply_window_title(self) -> None:
+        """Push the notebook-themed title to the DPG viewport."""
+        from slappyengine.ui.editor.notebook_window_title import (
+            format_window_title,
+        )
+
+        try:
+            title = format_window_title(
+                self._scene_name,
+                self._scene_saved,
+                self._ui_settings.default_theme,
+            )
+        except Exception:
+            return
+        # Update the in-window custom titlebar text if it exists.
+        try:
+            import dearpygui.dearpygui as dpg
+            if dpg.does_item_exist("tb_title_text"):
+                dpg.set_value("tb_title_text", f"  ✦ {title}")
+            try:
+                dpg.set_viewport_title(title)
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+    def _dispatch_editor_command(self, command: str) -> None:
+        """Route a hotkey command id to the matching editor action.
+
+        Unknown commands are logged via the status bar but never raise
+        so a future binding addition can land without a shell rewrite.
+        """
+        actions: dict[str, Any] = {
+            "editor.save": self._save_project,
+            "editor.undo": self._undo,
+            "editor.run":  self._toggle_play,
+        }
+        action = actions.get(command)
+        if action is not None:
+            try:
+                action()
+            except Exception:
+                pass
+            return
+        # Surface unknown commands so users can confirm the press registered.
+        try:
+            if self._notebook_status_bar is not None:
+                self._notebook_status_bar.set_message(
+                    f"cmd: {command}", kind="info",
+                )
+        except Exception:
+            pass
+
+    def _open_theme_switcher(self) -> None:
+        """Status-bar theme-indicator click handler."""
+        panel = self._theme_switcher_panel
+        if panel is None:
+            return
+        # Best-effort show — the panel implements a no-op show() when
+        # already visible.
+        for method_name in ("show", "open", "focus"):
+            method = getattr(panel, method_name, None)
+            if callable(method):
+                try:
+                    method()
+                    return
+                except Exception:
+                    continue
 
     # ------------------------------------------------------------------
     # Keyboard shortcut actions
@@ -715,9 +1035,13 @@ class EditorShell:
 
     def _delete_selected(self) -> None:
         """Delete — remove the currently selected entity from the scene."""
-        if self._scene_outliner is None:
-            return
-        selected = getattr(self._scene_outliner, "selected_entity", None)
+        # NotebookOutliner pushes the selection through ``_on_entity_selected``,
+        # which mirrors the live entity onto ``self._selected_entity``.
+        selected = self._selected_entity
+        if selected is None and self._scene_outliner is not None:
+            # Legacy SceneOutliner exposes ``selected_entity`` directly —
+            # keep the fallback so a non-notebook outliner still works.
+            selected = getattr(self._scene_outliner, "selected_entity", None)
         if selected is None:
             return
         scene = getattr(self._engine, "scene", None)
