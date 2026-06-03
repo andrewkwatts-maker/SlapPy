@@ -34,6 +34,7 @@ Regenerate after adding or removing any doc.
 | [`lighting_presets.md`](lighting_presets.md) | Sprint-3 ready-to-use post-process chain presets composing the lighting-polish helpers into flagship game looks. |
 | [`material_catalog.md`](material_catalog.md) | Reference catalogue for every material shipped in `config/softbody.yml` and `config/fluid.yml`. |
 | [`material_design.md`](material_design.md) | Design reference for `slappyengine.material`: NodeMaterial graph runtime, the 12 + 19 factory split, validation layering, Rust-only compile rationale, and lazy-import contract. |
+| [`notebook_editor_manual_2026_06_03.md`](notebook_editor_manual_2026_06_03.md) | User-facing manual for the notebook editor — first-launch walkthrough, panel-by-panel tour (toolbar, outliner, inspector, gizmos, theme switcher, code mode, spawn menu, material editor, welcome, status bar), six diary themes, creature roster, full hotkey table, Easter eggs, customisation paths, accessibility (2026-06-03). |
 | [`numerics_design.md`](numerics_design.md) | Design reference for `slappyengine.numerics`: multigrid V-cycle architecture, Red-Black SOR smoother, the `p == p * mask` invariant, performance audit (2.4x speedup), and Rust-migration plan (Step 7). |
 | [`particle_field_design.md`](particle_field_design.md) | ParticleField design notes — what worked, what didn't, Phase 1+2 foundation cleanup rationale. |
 | [`particle_field_gpu_buffers.md`](particle_field_gpu_buffers.md) | ParticleField GPU buffer-layout design document (std430 storage buffers, textures, growth strategy). |

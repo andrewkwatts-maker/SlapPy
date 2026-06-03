@@ -119,6 +119,20 @@ See [`docs/perf_dashboard.md`](docs/perf_dashboard.md) for the per-subsystem tri
 
 ---
 
+## Editor (the notebook)
+
+SlapPyEngine ships a Dear PyGui editor reskinned as a **diary notebook** — a stationery-tray toolbar of rubber stamps, a bestiary-style scene outliner, a field-journal property inspector, coloured-pencil gizmos, and a small cast of woodland creatures that idle in the corners. Six diary themes ship in the box (`teengirl_notebook`, `cozy_diary`, `bullet_journal`, `scrapbook_summer`, `cottagecore_garden`, `kawaii_planner`) and hot-swap losslessly.
+
+![Notebook editor overview](docs/screenshots/notebook_overview.png)
+
+The full panel-by-panel tour, hotkey table, customisation walkthrough, and accessibility settings live in [`docs/notebook_editor_manual_2026_06_03.md`](docs/notebook_editor_manual_2026_06_03.md). Reference screenshots are regenerated with:
+
+```bash
+PYTHONPATH=python python scripts/capture_notebook_screenshots.py --all
+```
+
+---
+
 ## Roadmap
 
 Near-term, mid-term, and v1.0 candidates — see [`docs/roadmap.md`](docs/roadmap.md).
