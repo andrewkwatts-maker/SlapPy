@@ -25,6 +25,7 @@ Regenerate after adding or removing any doc.
 | [`examples_smoke_2026_05_31.md`](examples_smoke_2026_05_31.md) | Read-only smoke audit of every `SlapPyEngineExamples/examples/*.py` (Sprint 1E, 2026-05-31). |
 | [`examples_smoke_2026_06_01.md`](examples_smoke_2026_06_01.md) | Examples smoke audit v2 — refresh of the 2026-05-31 audit (2026-06-01). |
 | [`examples_smoke_2026_06_01_v3.md`](examples_smoke_2026_06_01_v3.md) | Examples smoke audit v3 — 47/47 GREEN (first clean sweep, 2026-06-01). |
+| [`feature_map_2026_06_03.md`](feature_map_2026_06_03.md) | Comprehensive feature map (2026-06-03) — per-subpackage status table (30 subpackages classified SHIPPED / WORKING / SKELETON / GAP), exhaustive notebook editor panel + button audit (~110 widgets across 11 panels with file+line citations), cross-system lifecycle flow walk-throughs (welcome → editor, outliner → inspector, toolbar → gizmo, save → butterfly), and a ranked gap analysis (dead buttons, silent lifecycle hooks, missing editor surfaces, top-10 holes to fill before v0.4). |
 | [`fluid_design.md`](fluid_design.md) | Design reference for the Position-Based Fluids (PBF) 2D particle simulator (`slappyengine.fluid`). |
 | [`getting_started.md`](getting_started.md) | Game-dev tutorial; build a runnable mini-game in 15 minutes with 8 verified-runnable snippets (5/5 tripwire tests green, 298 lines). |
 | [`gi_design.md`](gi_design.md) | Design reference for `slappyengine.gi`: radiance cascades + ReSTIR + SVGF pipeline shape, headless `init_gpu` lifecycle, paper citations, and Rust-migration story. |
