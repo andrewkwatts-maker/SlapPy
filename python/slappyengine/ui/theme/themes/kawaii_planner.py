@@ -17,7 +17,9 @@ from ..svg_icon import SVGIcon
 from ..theme_spec import (
     Color,
     Font,
+    FrameStyle,
     Gradient,
+    PanelFrameSet,
     SemanticTokens,
     ShaderEffect,
     ThemeSpec,
@@ -161,6 +163,39 @@ _SEMANTIC = SemanticTokens(
 )
 
 
+# Frame styles — 3 px pastel-pink border, rounding 16 px (very rounded
+# sticker-bubble silhouette), padding 12x10, fluffy mint drop shadow,
+# oversized 16 px grip handle to match the maximalist sticker vibe.
+_FRAMES = PanelFrameSet(
+    default=FrameStyle(
+        border_size=3.0,
+        border_color=Color(255, 192, 203, 1.0),     # pastel pink
+        rounding=16.0,
+        padding_x=12,
+        padding_y=10,
+        shadow_size=10.0,
+        shadow_color=Color(168, 230, 207, 0.4),     # fluffy mint
+        child_rounding=14.0,
+        child_border_size=1.0,
+        grip_size=16.0,
+        grip_rounding=10.0,
+        title_bar_height=28,
+    ),
+    modal=FrameStyle(
+        border_size=3.0,
+        border_color=Color(255, 128, 171, 1.0),      # neon rose
+        rounding=18.0,
+        padding_x=14,
+        padding_y=12,
+        shadow_size=12.0,
+        shadow_color=Color(168, 230, 207, 0.45),
+        child_rounding=14.0,
+        grip_size=16.0,
+        grip_rounding=10.0,
+    ),
+)
+
+
 # Metadata — string-only as ThemeSpec.metadata demands.
 _METADATA: dict[str, str] = {
     "tape_color": "#FFC0CB",
@@ -182,6 +217,7 @@ KAWAII_PLANNER: ThemeSpec = ThemeSpec(
     fonts=_FONTS,
     nine_slices=_NINE_SLICES,
     icons=_ICONS,
+    frames=_FRAMES,
     background_shader=_BACKGROUND,
     metadata=_METADATA,
 )

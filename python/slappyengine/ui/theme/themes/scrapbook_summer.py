@@ -18,7 +18,9 @@ from ..svg_icon import SVGIcon
 from ..theme_spec import (
     Color,
     Font,
+    FrameStyle,
     Gradient,
+    PanelFrameSet,
     SemanticTokens,
     ShaderEffect,
     ThemeSpec,
@@ -162,6 +164,36 @@ _SEMANTIC = SemanticTokens(
 )
 
 
+# Frame styles — 2 px sky-blue border, rounding 14 px (bubbly polaroid
+# feel), padding 10x8, watermelon-pink drop shadow.
+_FRAMES = PanelFrameSet(
+    default=FrameStyle(
+        border_size=2.0,
+        border_color=Color(127, 200, 232, 1.0),       # sky blue
+        rounding=14.0,
+        padding_x=10,
+        padding_y=8,
+        shadow_size=7.0,
+        shadow_color=Color(255, 111, 141, 0.3),       # watermelon pink
+        child_rounding=10.0,
+        child_border_size=1.0,
+        grip_size=12.0,
+        grip_rounding=8.0,
+        title_bar_height=26,
+    ),
+    viewport=FrameStyle(
+        border_size=2.0,
+        border_color=Color(127, 200, 232, 1.0),
+        rounding=14.0,
+        padding_x=10,
+        padding_y=8,
+        shadow_size=8.0,
+        shadow_color=Color(255, 111, 141, 0.3),
+        child_rounding=10.0,
+    ),
+)
+
+
 # Metadata — string-only as ThemeSpec.metadata demands.
 _METADATA: dict[str, str] = {
     "tape_color": "#FF6B9D",
@@ -182,6 +214,7 @@ SCRAPBOOK_SUMMER: ThemeSpec = ThemeSpec(
     fonts=_FONTS,
     nine_slices=_NINE_SLICES,
     icons=_ICONS,
+    frames=_FRAMES,
     background_shader=_BACKGROUND,
     metadata=_METADATA,
 )

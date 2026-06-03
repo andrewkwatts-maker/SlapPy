@@ -16,7 +16,9 @@ from ..svg_icon import SVGIcon
 from ..theme_spec import (
     Color,
     Font,
+    FrameStyle,
     Gradient,
+    PanelFrameSet,
     SemanticTokens,
     ShaderEffect,
     ThemeSpec,
@@ -145,6 +147,37 @@ _SEMANTIC = SemanticTokens(
 )
 
 
+# Frame styles — 2 px caramel leather border, rounding 6 px (compact
+# bookbinding feel), padding 12x10, larger sage drop shadow.
+_FRAMES = PanelFrameSet(
+    default=FrameStyle(
+        border_size=2.0,
+        border_color=Color(176, 122, 92, 1.0),       # caramel
+        rounding=6.0,
+        padding_x=12,
+        padding_y=10,
+        shadow_size=8.0,
+        shadow_color=Color(141, 167, 124, 0.35),     # sage shadow
+        child_rounding=4.0,
+        child_border_size=1.0,
+        grip_size=12.0,
+        grip_rounding=3.0,
+        title_bar_height=26,
+    ),
+    modal=FrameStyle(
+        border_size=2.5,
+        border_color=Color(124, 85, 50, 1.0),         # leather_edge
+        rounding=6.0,
+        padding_x=14,
+        padding_y=12,
+        shadow_size=10.0,
+        shadow_color=Color(141, 167, 124, 0.4),
+        child_rounding=4.0,
+        child_border_size=1.0,
+    ),
+)
+
+
 # Metadata — string-only as ThemeSpec.metadata demands.
 _METADATA: dict[str, str] = {
     "tape_color": "#7C5532",
@@ -165,6 +198,7 @@ COZY_DIARY: ThemeSpec = ThemeSpec(
     fonts=_FONTS,
     nine_slices=_NINE_SLICES,
     icons=_ICONS,
+    frames=_FRAMES,
     background_shader=_BACKGROUND,
     metadata=_METADATA,
 )

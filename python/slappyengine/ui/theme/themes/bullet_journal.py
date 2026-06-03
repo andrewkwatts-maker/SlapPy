@@ -14,7 +14,9 @@ from ..svg_icon import SVGIcon
 from ..theme_spec import (
     Color,
     Font,
+    FrameStyle,
     Gradient,
+    PanelFrameSet,
     SemanticTokens,
     ShaderEffect,
     ThemeSpec,
@@ -142,6 +144,27 @@ _SEMANTIC = SemanticTokens(
 )
 
 
+# Frame styles — 1 px crisp soft-black border, rounding 2 px (almost
+# rectangular), padding 8x6, minimal drop shadow. Restrained on every
+# axis to match the minimalist bullet-journal vibe.
+_FRAMES = PanelFrameSet(
+    default=FrameStyle(
+        border_size=1.0,
+        border_color=Color(42, 42, 42, 1.0),         # soft black
+        rounding=2.0,
+        padding_x=8,
+        padding_y=6,
+        shadow_size=1.0,
+        shadow_color=Color(42, 42, 42, 0.15),
+        child_rounding=2.0,
+        child_border_size=0.5,
+        grip_size=10.0,
+        grip_rounding=2.0,
+        title_bar_height=22,
+    ),
+)
+
+
 # Metadata — string-only as ThemeSpec.metadata demands.
 _METADATA: dict[str, str] = {
     "tape_color": "#B0AAA0",
@@ -162,6 +185,7 @@ BULLET_JOURNAL: ThemeSpec = ThemeSpec(
     fonts=_FONTS,
     nine_slices=_NINE_SLICES,
     icons=_ICONS,
+    frames=_FRAMES,
     background_shader=_BACKGROUND,
     metadata=_METADATA,
 )

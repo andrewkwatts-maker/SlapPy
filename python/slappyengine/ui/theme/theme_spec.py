@@ -566,6 +566,128 @@ class ShaderEffect:
 
 
 # ---------------------------------------------------------------------------
+# FrameStyle & PanelFrameSet — DPG panel frame tokens
+# ---------------------------------------------------------------------------
+#
+# DPG panels (windows, child windows, modals) are drawn as a stack of
+# coloured borders, rounded corners, drop shadows, and interior padding.
+# ``FrameStyle`` collects every numeric token that drives that stack into
+# one place so a theme can say "thick leather border, padding 12x10,
+# rounded 6 px" once and have it apply uniformly across every panel of
+# that kind. ``PanelFrameSet`` is the per-panel-kind bag — a theme can
+# give toolbars one frame style, modals another, etc., with a default
+# fallback.
+
+
+@dataclass
+class FrameStyle:
+    """Numeric tokens that drive a DPG panel's border / shadow / padding.
+
+    Every value is a non-negative finite number. ``border_color`` and
+    ``shadow_color`` may be ``None`` so the renderer can fall back to
+    ``semantic.border`` / a derived ink-at-30 %-alpha respectively.
+
+    Maps to DPG style vars via :func:`dpg_bridge.apply_theme_to_dpg`.
+    """
+
+    border_size: float = 1.0
+    border_color: "Color | None" = None
+    rounding: float = 8.0
+    padding_x: int = 8
+    padding_y: int = 6
+    shadow_size: float = 4.0
+    shadow_color: "Color | None" = None
+    child_rounding: float = 6.0
+    child_border_size: float = 0.5
+    grip_size: float = 12.0
+    grip_rounding: float = 4.0
+    title_bar_height: int = 24
+
+    def __post_init__(self) -> None:
+        fn = "FrameStyle"
+        for name in (
+            "border_size",
+            "rounding",
+            "shadow_size",
+            "child_rounding",
+            "child_border_size",
+            "grip_size",
+            "grip_rounding",
+        ):
+            v = validate_non_negative_float(name, fn, getattr(self, name))
+            object.__setattr__(self, name, float(v))
+        for name in ("padding_x", "padding_y", "title_bar_height"):
+            v = validate_non_negative_int(name, fn, getattr(self, name))
+            object.__setattr__(self, name, int(v))
+        for name in ("border_color", "shadow_color"):
+            value = getattr(self, name)
+            if value is not None and not isinstance(value, Color):
+                raise TypeError(
+                    f"{fn}: {name} must be a Color or None; "
+                    f"got {type(value).__name__}"
+                )
+
+
+@dataclass
+class PanelFrameSet:
+    """Per-panel-kind :class:`FrameStyle` bag with a default fallback.
+
+    Themes only have to populate the kinds they care about; every
+    unset kind falls through to :attr:`default`. ``for_panel("toolbar")``
+    is the canonical lookup — it returns the matching slot if set,
+    else :attr:`default`. Panel kinds the editor uses are: ``toolbar``,
+    ``sidebar`` (inspector, outliner, theme switcher), ``viewport``,
+    ``modal`` (welcome, project picker), ``code_pane``, ``status_bar``.
+    """
+
+    default: FrameStyle = field(default_factory=FrameStyle)
+    toolbar: FrameStyle | None = None
+    sidebar: FrameStyle | None = None
+    viewport: FrameStyle | None = None
+    modal: FrameStyle | None = None
+    code_pane: FrameStyle | None = None
+    status_bar: FrameStyle | None = None
+
+    _KINDS: ClassVar[tuple[str, ...]] = (
+        "toolbar",
+        "sidebar",
+        "viewport",
+        "modal",
+        "code_pane",
+        "status_bar",
+    )
+
+    def __post_init__(self) -> None:
+        fn = "PanelFrameSet"
+        if not isinstance(self.default, FrameStyle):
+            raise TypeError(
+                f"{fn}: default must be a FrameStyle; "
+                f"got {type(self.default).__name__}"
+            )
+        for name in self._KINDS:
+            value = getattr(self, name)
+            if value is not None and not isinstance(value, FrameStyle):
+                raise TypeError(
+                    f"{fn}: {name} must be a FrameStyle or None; "
+                    f"got {type(value).__name__}"
+                )
+
+    def for_panel(self, kind: str) -> FrameStyle:
+        """Return the :class:`FrameStyle` for *kind*, falling back to default.
+
+        Unknown kinds return :attr:`default` rather than raising — a panel
+        without a specific style entry is the most common case, not an
+        error.
+        """
+        validate_non_empty_str("kind", "PanelFrameSet.for_panel", kind)
+        if kind in self._KINDS:
+            value = getattr(self, kind)
+            if value is not None:
+                return value
+        return self.default
+
+
+# ---------------------------------------------------------------------------
 # ThemeSpec
 # ---------------------------------------------------------------------------
 
@@ -598,6 +720,7 @@ class ThemeSpec:
     fonts: dict[str, Font] = field(default_factory=dict)
     nine_slices: dict[str, Any] = field(default_factory=dict)
     icons: dict[str, Any] = field(default_factory=dict)
+    frames: PanelFrameSet = field(default_factory=PanelFrameSet)
     background_shader: ShaderEffect | None = None
     metadata: dict[str, str] = field(default_factory=dict)
 
@@ -640,6 +763,11 @@ class ThemeSpec:
             raise TypeError(
                 f"{fn}: background_shader must be a ShaderEffect or None; "
                 f"got {type(self.background_shader).__name__}"
+            )
+        if not isinstance(self.frames, PanelFrameSet):
+            raise TypeError(
+                f"{fn}: frames must be a PanelFrameSet; "
+                f"got {type(self.frames).__name__}"
             )
 
     # ---- YAML round-trip ---------------------------------------------------
@@ -858,8 +986,10 @@ _ = validate_finite_float
 __all__ = [
     "Color",
     "Font",
+    "FrameStyle",
     "Gradient",
     "Palette",
+    "PanelFrameSet",
     "RadiusScale",
     "SemanticTokens",
     "ShaderEffect",

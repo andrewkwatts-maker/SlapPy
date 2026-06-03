@@ -45,11 +45,14 @@ from .shader_effects import (
     watercolor_wash,
 )
 from .svg_icon import SVGIcon
+from .dpg_bridge import apply_theme_to_dpg
 from .theme_spec import (
     Color,
     Font,
+    FrameStyle,
     Gradient,
     Palette,
+    PanelFrameSet,
     RadiusScale,
     SemanticTokens,
     ShaderEffect,
@@ -123,6 +126,12 @@ def apply_theme(theme_name: str) -> ThemeSpec:
             f"(known: {sorted(_REGISTRY)})"
         )
     _ACTIVE = _REGISTRY[name]
+    # DPG bridge: rebuild the DPG theme handle whenever a theme is
+    # applied. Soft-fails when DPG isn't installed (headless tests).
+    try:
+        apply_theme_to_dpg(_ACTIVE)
+    except Exception:  # pragma: no cover - defensive: bridge soft-fails
+        pass
     return _ACTIVE
 
 
@@ -141,9 +150,11 @@ def _reset_registry_for_tests() -> None:
 __all__ = [
     "Color",
     "Font",
+    "FrameStyle",
     "Gradient",
     "NineSlice",
     "Palette",
+    "PanelFrameSet",
     "RadiusScale",
     "SemanticTokens",
     "ShaderEffect",
@@ -153,6 +164,7 @@ __all__ = [
     "TransitionScale",
     "ZIndexScale",
     "apply_theme",
+    "apply_theme_to_dpg",
     "dot_grid",
     "frosted_panel",
     "get_active_theme",

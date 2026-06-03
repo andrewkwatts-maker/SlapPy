@@ -18,7 +18,9 @@ from ..svg_icon import SVGIcon
 from ..theme_spec import (
     Color,
     Font,
+    FrameStyle,
     Gradient,
+    PanelFrameSet,
     SemanticTokens,
     ShaderEffect,
     ThemeSpec,
@@ -147,6 +149,38 @@ _SEMANTIC = SemanticTokens(
 )
 
 
+# Frame styles — 1 px lilac border, rounding 10 px, padding 10x8,
+# soft pink drop shadow; sidebar bumps rounding to 12 px for a softer
+# inspector silhouette.
+_FRAMES = PanelFrameSet(
+    default=FrameStyle(
+        border_size=1.0,
+        border_color=Color(231, 221, 241, 1.0),    # lilac
+        rounding=10.0,
+        padding_x=10,
+        padding_y=8,
+        shadow_size=6.0,
+        shadow_color=Color(255, 111, 181, 0.25),   # soft pink
+        child_rounding=8.0,
+        child_border_size=0.5,
+        grip_size=12.0,
+        grip_rounding=6.0,
+        title_bar_height=24,
+    ),
+    sidebar=FrameStyle(
+        border_size=1.0,
+        border_color=Color(231, 221, 241, 1.0),
+        rounding=12.0,
+        padding_x=10,
+        padding_y=8,
+        shadow_size=6.0,
+        shadow_color=Color(255, 111, 181, 0.25),
+        child_rounding=10.0,
+        grip_rounding=6.0,
+    ),
+)
+
+
 # Metadata — string-only as ThemeSpec.metadata demands.
 _METADATA: dict[str, str] = {
     "tape_color": "#FF6FB5",
@@ -167,6 +201,7 @@ TEENGIRL_NOTEBOOK: ThemeSpec = ThemeSpec(
     fonts=_FONTS,
     nine_slices=_NINE_SLICES,
     icons=_ICONS,
+    frames=_FRAMES,
     background_shader=_BACKGROUND,
     metadata=_METADATA,
 )

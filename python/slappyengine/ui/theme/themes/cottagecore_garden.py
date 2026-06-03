@@ -17,7 +17,9 @@ from ..svg_icon import SVGIcon
 from ..theme_spec import (
     Color,
     Font,
+    FrameStyle,
     Gradient,
+    PanelFrameSet,
     SemanticTokens,
     ShaderEffect,
     ThemeSpec,
@@ -161,6 +163,37 @@ _SEMANTIC = SemanticTokens(
 )
 
 
+# Frame styles — 2 px sage border, rounding 8 px, generous padding
+# 14x10 to give the embroidered border + herb-sprig content room to
+# breathe, lavender drop shadow.
+_FRAMES = PanelFrameSet(
+    default=FrameStyle(
+        border_size=2.0,
+        border_color=Color(141, 167, 124, 1.0),     # sage
+        rounding=8.0,
+        padding_x=14,
+        padding_y=10,
+        shadow_size=6.0,
+        shadow_color=Color(184, 168, 213, 0.3),     # lavender
+        child_rounding=6.0,
+        child_border_size=1.0,
+        grip_size=12.0,
+        grip_rounding=5.0,
+        title_bar_height=25,
+    ),
+    sidebar=FrameStyle(
+        border_size=2.0,
+        border_color=Color(107, 132, 86, 1.0),       # embroidered_moss
+        rounding=8.0,
+        padding_x=14,
+        padding_y=10,
+        shadow_size=6.0,
+        shadow_color=Color(184, 168, 213, 0.3),
+        child_rounding=6.0,
+    ),
+)
+
+
 # Metadata — string-only as ThemeSpec.metadata demands.
 _METADATA: dict[str, str] = {
     "tape_color": "#6B8456",
@@ -181,6 +214,7 @@ COTTAGECORE_GARDEN: ThemeSpec = ThemeSpec(
     fonts=_FONTS,
     nine_slices=_NINE_SLICES,
     icons=_ICONS,
+    frames=_FRAMES,
     background_shader=_BACKGROUND,
     metadata=_METADATA,
 )
