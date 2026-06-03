@@ -309,8 +309,15 @@ class NotebookProjectPicker:
         self._open = False
 
     def close(self) -> None:
-        """Hide the picker and tear down its DPG subtree (if any)."""
+        """Hide the picker and tear down its DPG subtree (if any).
+
+        Only touches DPG when :meth:`build` has run — calling
+        ``does_item_exist`` before a DPG context exists segfaults on
+        Windows, which surfaces during headless lifecycle tests.
+        """
         self._open = False
+        if not self._built:
+            return
         dpg = _safe_dpg()
         if dpg is not None:
             for tag in (self._panel_tag, self._sub_modal_tag):

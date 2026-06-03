@@ -1075,13 +1075,19 @@ class EditorShell:
     # ------------------------------------------------------------------
 
     def _set_status(self, message: str) -> None:
-        """Update the status bar text to *message*."""
-        try:
-            import dearpygui.dearpygui as dpg
-            if dpg.does_item_exist("status_bar"):
-                dpg.set_value("status_bar", message)
-        except Exception:
-            pass
+        """Update the status bar text to *message*.
+
+        Gated on ``self._running`` because Dear PyGui's ``does_item_exist``
+        segfaults hard on Windows when no context has been created yet —
+        the lifecycle tests drive this method headlessly.
+        """
+        if self._running:
+            try:
+                import dearpygui.dearpygui as dpg
+                if dpg.does_item_exist("status_bar"):
+                    dpg.set_value("status_bar", message)
+            except Exception:
+                pass
         # Mirror the message onto the notebook ambient status bar so
         # users get the washi-tape feedback for the same event.
         if self._notebook_status_bar is not None:
@@ -1246,6 +1252,15 @@ class EditorShell:
             self._apply_window_title()
         except Exception:
             pass
+
+        # Status bar — project segment + dirty marker.
+        if self._notebook_status_bar is not None:
+            try:
+                self._notebook_status_bar.set_project_name(
+                    project.metadata.name,
+                )
+            except Exception:
+                pass
 
         # Re-root the content browser.
         if self._content_browser is not None:
@@ -1477,6 +1492,55 @@ class EditorShell:
             self._set_status(f"Recent project missing: {exc}")
         except Exception as exc:
             self._set_status(f"Open failed: {exc}")
+
+    def list_recent_project_labels(self, limit: int = 5) -> list[str]:
+        """Return the labels rendered under ``File → Recent Projects``.
+
+        Each label is the project's display ``name`` (preferred) or its
+        on-disk ``path`` when the registry entry has no cached name. The
+        list is truncated to *limit* entries (default 5 — matches the
+        notebook-picker brief).
+        """
+        try:
+            from slappyengine.projects import get_default_registry
+
+            registry = get_default_registry()
+            recents = registry.list_recent(limit=limit)
+        except Exception:
+            return []
+        labels: list[str] = []
+        for entry in recents:
+            labels.append(entry.name or entry.path)
+        return labels
+
+    def _populate_recent_projects_menu(self) -> None:
+        """Fill ``File → Recent Projects`` with up to 5 recents.
+
+        Headless-safe — silently no-ops when ``dearpygui`` is missing
+        or the parent menu tag does not exist.
+        """
+        try:
+            import dearpygui.dearpygui as dpg
+        except Exception:
+            return
+        labels = self.list_recent_project_labels(limit=5)
+        if not labels:
+            try:
+                dpg.add_menu_item(
+                    label="(no recent projects)",
+                    enabled=False,
+                )
+            except Exception:
+                pass
+            return
+        for index, label in enumerate(labels):
+            try:
+                dpg.add_menu_item(
+                    label=f"{index + 1}. {label}",
+                    callback=lambda s, d, idx=index: self.load_recent_project(idx),
+                )
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # Keyboard shortcut actions

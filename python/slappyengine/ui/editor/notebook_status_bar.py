@@ -191,6 +191,9 @@ class NotebookStatusBar:
         self._fps: float = 0.0
         self._saved: bool = True
         self._theme_name: str = "teengirl_notebook"
+        # Project segment — populated by ``EditorShell.load_project``.
+        # ``None`` means "no project loaded" → renders as ``"project: -"``.
+        self._project_name: str | None = None
 
         # Transient message stack — only the newest is rendered; older
         # entries linger only long enough for tests to inspect the queue.
@@ -317,6 +320,22 @@ class NotebookStatusBar:
         )
         self._refresh_label()
 
+    def set_project_name(self, project_name: str | None) -> None:
+        """Update the project segment of the bar.
+
+        Pass ``None`` to indicate "no project loaded" — the bar renders
+        a dash placeholder in that state.
+        """
+        if project_name is None:
+            self._project_name = None
+        else:
+            self._project_name = validate_non_empty_str(
+                "project_name",
+                "NotebookStatusBar.set_project_name",
+                project_name,
+            )
+        self._refresh_label()
+
     def set_message(self, text: str, kind: str = "info") -> None:
         """Push a transient sticker + text overlay for ``transient_ttl_s`` seconds.
 
@@ -386,6 +405,10 @@ class NotebookStatusBar:
         return self._theme_name
 
     @property
+    def project_name(self) -> str | None:
+        return self._project_name
+
+    @property
     def transient(self) -> _TransientMessage | None:
         return self._transient
 
@@ -443,15 +466,23 @@ class NotebookStatusBar:
         if self._transient is not None:
             return self._transient.text
         x, y = self._world_cursor
-        save_marker = "saved" if self._saved else "unsaved*"
+        # Per the brief, dirty mode renders a "✿ unsaved" marker beside
+        # the project segment; saved renders the heart sticker.
+        save_marker = "saved" if self._saved else "✿ unsaved"
         # Coordinates rounded to 0.1 — the docs called out 1-decimal
         # precision so the bar doesn't shimmer on every mouse-move.
+        project_segment = (
+            f"project: {self._project_name}"
+            if self._project_name is not None
+            else "project: -"
+        )
         return (
             f"tool: {self._active_tool}   "
             f"{self._selection_count} selected   "
             f"world: ({x:.1f}, {y:.1f})   "
             f"{self._fps:.0f} fps   "
             f"{save_marker}   "
+            f"{project_segment}   "
             f"theme: {self._theme_name}"
         )
 
