@@ -252,6 +252,15 @@ subscriber list is explicitly copied into a local before iteration.
 - `slappyengine.telemetry._validation` — private input-validation
   helpers. Not part of the contract; reach into them at your own risk.
 
+## Protocols
+
+- `EventEmitterProtocol` — structural Protocol for anything that emits
+  telemetry events. Requires `emit(name: str, **payload) -> None`.
+  Runtime-checkable.
+- `EventSubscriberProtocol` — structural Protocol for subscribers.
+  Requires `__call__(event) -> None`. Runtime-checkable; any plain
+  function satisfies this implicitly.
+
 ## See also
 
 - [`audio_runtime.md`](audio_runtime.md) — companion soft-fail backend

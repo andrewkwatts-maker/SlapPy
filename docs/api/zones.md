@@ -119,6 +119,12 @@ _(none)_
 
 _(none)_
 
+## Protocols
+
+- `ZoneProtocol` — structural Protocol implemented by any zone-like
+  object. Requires `name: str` and `contains_point(px, py) -> bool`.
+  Runtime-checkable. Both `RectZone` and `ThresholdZone` satisfy it.
+
 ## See also
 
 - [`thermal.md`](thermal.md) — heat fields plug into threshold zone

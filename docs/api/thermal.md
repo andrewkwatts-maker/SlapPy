@@ -63,6 +63,12 @@ If a future sprint adds anisotropic conductivity, implicit time
 stepping, or 3-D fields, promote that material to a dedicated
 `thermal_design.md` and link both ways.
 
+## Protocols
+
+- `HeatSourceProtocol` — structural Protocol implemented by anything that
+  contributes heat into a `HeatField`. Requires a `temperature: float`
+  attribute and an `apply(field, dt) -> None` method. Runtime-checkable.
+
 ## See also
 
 - [`zones.md`](zones.md) — thermal zones plug into the rect / threshold
