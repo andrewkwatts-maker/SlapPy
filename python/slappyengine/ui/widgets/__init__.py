@@ -961,19 +961,63 @@ class LayoutBox:
                 c.draw(draw)
 
 
+# ---------------------------------------------------------------------------
+# Notebook-themed widget primitives (Dear PyGui layer).
+#
+# These widgets live in sibling modules; the heavy DPG imports are deferred
+# to ``build()`` time so importing this package on a headless / no-extras
+# install still succeeds.  Themes are registered via
+# ``slappyengine.ui.widgets.notebook_theme.set_active_theme``.
+# ---------------------------------------------------------------------------
+from slappyengine.ui.widgets.doodle_separator import DoodleSeparator
+from slappyengine.ui.widgets.heart_checkbox import HeartCheckbox
+from slappyengine.ui.widgets.highlighter_slider import HighlighterSlider
+from slappyengine.ui.widgets.notebook_tab import NotebookTab
+from slappyengine.ui.widgets.notebook_theme import (
+    NotebookTheme,
+    get_active_theme,
+    register_theme_listener,
+    resolve_theme,
+    set_active_theme,
+    unregister_theme_listener,
+)
+from slappyengine.ui.widgets.sticker_button import StickerButton
+from slappyengine.ui.widgets.sticker_corner import (
+    add_sticker_corner,
+    list_sticker_corners,
+    remove_sticker_corner,
+)
+from slappyengine.ui.widgets.washi_panel import WashiPanel
+
+
 __all__ = [
     "Button",
     "Checkbox",
     "Dial",
+    "DoodleSeparator",
     "Dropdown",
+    "HeartCheckbox",
+    "HighlighterSlider",
     "ImageWidget",
     "Label",
     "LayoutBox",
+    "NotebookTab",
+    "NotebookTheme",
     "Panel",
     "ProgressBar",
     "ScrollView",
     "Slider",
     "StatBar",
+    "StickerButton",
     "Theme",
+    "WashiPanel",
     "Widget",
+    "add_sticker_corner",
+    "get_active_theme",
+    "list_sticker_corners",
+    "register_theme_listener",
+    "remove_sticker_corner",
+    "resolve_theme",
+    "set_active_theme",
+    "unregister_theme_listener",
 ]
