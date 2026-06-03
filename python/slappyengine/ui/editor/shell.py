@@ -383,12 +383,19 @@ class EditorShell:
         # ``setup_theme_subsystem``.
         dpg.create_context()
 
+        # Normal OS chrome — title bar, resize handles, drag from titlebar.
+        # The Nova3D dark theme used decorated=False + transparent clear for
+        # DWM blur; the notebook theme paints its own paper-cream background
+        # and leaves window management to the host OS where it belongs.
         dpg.create_viewport(
             title=self._title,
             width=width,
             height=height,
-            decorated=False,            # remove OS window chrome
-            clear_color=(0, 0, 0, 0),  # transparent for DWM blur-behind
+            decorated=True,
+            resizable=True,
+            min_width=800,
+            min_height=600,
+            clear_color=(251, 247, 236, 255),  # paper cream (theme fallback)
         )
         dpg.setup_dearpygui()
 
@@ -423,36 +430,10 @@ class EditorShell:
             no_scroll_with_mouse=True,
         ):
 
-            # ── Row 0: Custom drag bar (replaces OS title bar) ─────────────
-            with dpg.group(tag="custom_titlebar", horizontal=True):
-                dpg.add_text(
-                    f"  ✿ {self._title}",
-                    color=(120, 80, 110),
-                    tag="tb_title_text",
-                )
-                dpg.add_spacer(width=-90)  # push buttons to right
-
-                # Minimize button
-                dpg.add_button(
-                    label="  —  ",
-                    width=40,
-                    tag="tb_minimize_btn",
-                    callback=lambda: dpg.minimize_viewport(),
-                )
-                # Close button
-                dpg.add_button(
-                    label="  ✕  ",
-                    width=40,
-                    tag="tb_close_btn",
-                    callback=lambda: dpg.stop_dearpygui(),
-                )
-
-            # Register mouse handler for dragging the titlebar
-            with dpg.item_handler_registry() as _drag_handler:
-                dpg.add_item_clicked_handler(
-                    button=0, callback=self._on_titlebar_drag_start
-                )
-            dpg.bind_item_handler_registry("custom_titlebar", _drag_handler)
+            # Row 0: OS title bar now handles drag/minimize/close. Keeping an
+            # empty group with the legacy tag so downstream code that looks
+            # for "custom_titlebar" doesn't blow up.
+            dpg.add_group(tag="custom_titlebar")
 
             # ── Row 1: Toolbar (h=TOOLBAR_H) ───────────────────────────────
             with dpg.child_window(

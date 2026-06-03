@@ -821,8 +821,10 @@ class Engine:
 
         from slappyengine.ui.editor.shell import EditorShell
         from slappyengine.ui.editor.layer_panel import LayerPanel
-        from slappyengine.ui.editor.property_inspector import PropertyInspector
-        from slappyengine.ui.editor.material_editor import MaterialEditor
+        from slappyengine.ui.editor.notebook_inspector import NotebookInspector
+        from slappyengine.ui.editor.notebook_material_editor import (
+            NotebookMaterialEditor,
+        )
         from slappyengine.ui.editor.viewport_panel import ViewportPanel
 
         # TagPainter is a future panel — import gracefully so the editor
@@ -855,8 +857,8 @@ class Engine:
         # --- Panel construction -----------------------------------------
         vp_w, vp_h = self._cfg.window.width, self._cfg.window.height
         layer_panel = LayerPanel()
-        property_inspector = PropertyInspector()
-        material_editor = MaterialEditor()
+        property_inspector = NotebookInspector()
+        material_editor = NotebookMaterialEditor()
         viewport_panel = ViewportPanel(engine=self, width=vp_w, height=vp_h)
 
         # Register sidebar panels (order determines display order)
@@ -874,9 +876,9 @@ class Engine:
         # and gizmo_overlay.set_mode() automatically via the toolbar callback.
         shell._viewport_panel = viewport_panel
 
-        # CodeModePanel — built lazily inside shell.setup() if not pre-assigned
-        from slappyengine.ui.editor.code_mode_panel import CodeModePanel
-        shell._code_mode_panel = CodeModePanel(self)
+        # NotebookCodePanel — diary-themed code mode tab
+        from slappyengine.ui.editor.notebook_code_panel import NotebookCodePanel
+        shell._code_mode_panel = NotebookCodePanel()
 
         # Build the DPG window layout
         shell.setup()
