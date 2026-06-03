@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
     from slappyengine.ui.editor.notebook_inspector import NotebookInspector
     from slappyengine.ui.editor.content_browser import ContentBrowser
+    from slappyengine.ui.editor.movable_panel import MovablePanelWindow
     from slappyengine.ui.editor.notebook_project_picker import (
         NotebookProjectPicker,
     )
@@ -357,7 +358,9 @@ class EditorShell:
             "status_bar":      "status_bar",
         }
         tag = tag_map.get(panel_id)
-        if tag is not None:
+        # Gate on _running because ``dpg.does_item_exist`` segfaults
+        # without a context.
+        if tag is not None and getattr(self, "_running", False):
             try:
                 import dearpygui.dearpygui as dpg
                 if dpg.does_item_exist(tag):
@@ -409,6 +412,9 @@ class EditorShell:
         if not hasattr(self, "_fullscreen"):
             self._fullscreen = False
         self._fullscreen = not self._fullscreen
+        # Gate on _running — DPG viewport calls segfault without a context.
+        if not getattr(self, "_running", False):
+            return
         try:
             import dearpygui.dearpygui as dpg
 
