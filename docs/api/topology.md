@@ -45,7 +45,22 @@ Value: `-1`
 
 _(none)_
 
+## Design notes
+
+The topology subpackage surface is small (two `connected_components*`
+entry points plus a `BACKGROUND_LABEL` constant); no separate
+`topology_design.md` ships. The union-find / 2-D-grid distinction and
+the dual edge-list / grid signatures are documented inline above plus
+in the source docstrings.
+
+If a future sprint adds incremental connectivity, persistent
+labelling, or non-trivial graph algorithms (shortest paths, biconnected
+components), promote that material to a dedicated `topology_design.md`
+and link both ways.
+
 ## See also
 
 - [`numerics.md`](numerics.md) — numerical primitives consumed by the
   same physics stack.
+- [`../numerics_design.md`](../numerics_design.md) — multigrid Poisson
+  solver architecture in the sibling subpackage.

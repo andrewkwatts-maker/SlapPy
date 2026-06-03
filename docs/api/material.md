@@ -254,3 +254,18 @@ on the referenced node types (that is the Rust compiler's job).
   `compile()` raises `RuntimeError` if `_core` is missing. The
   compiled WGSL is cached on `_compiled_wgsl` and exposed read-only
   through the `wgsl` property.
+
+## See also
+
+- [`../material_design.md`](../material_design.md) — `NodeMaterial`
+  graph runtime, the 12+19 factory split, validation layering, and
+  the Rust-only compile rationale.
+- [`../material_catalog.md`](../material_catalog.md) — the
+  `MaterialMap` side of the system (classification + behaviour tags
+  consumed by per-pixel physics).
+- [`ui_editor.md`](ui_editor.md) — `MaterialEditor` (the visual
+  authoring panel) and `PropertyInspector` (the reflection panel
+  softbody / fluid material editing reuses).
+- [`gpu.md`](gpu.md) — `MaterialBuffer` packs the `MaterialMap` into
+  a 32-byte std430 storage buffer for the per-pixel classification
+  shader.

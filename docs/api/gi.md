@@ -226,3 +226,13 @@ the GPU buffer layout (see ReSTIRSystem constructor signature above).
   `shaders/svgf_variance.wgsl`, `shaders/svgf_wavelet.wgsl`,
   `shaders/svgf_modulate.wgsl`, `shaders/lighting_radiance_*.wgsl`,
   and `shaders/restir_*.wgsl`.
+
+## See also
+
+- [`../gi_design.md`](../gi_design.md) — architecture, pass-by-pass
+  rationale, citations, and the headless / Rust-migration story.
+- [`post_process.md`](post_process.md) — the post-process chain that
+  consumes the GI output (TAA / Bloom / Tonemap).
+- [`numerics.md`](numerics.md) — multigrid Poisson primitives the
+  cascade restriction operators could reuse if cascade temporal moves
+  to a Poisson-based smoother.

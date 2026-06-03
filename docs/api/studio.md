@@ -193,6 +193,11 @@ substrate, which has no GPU rasteriser of its own.
 
 ## See also
 
+- [`../studio_design.md`](../studio_design.md) — Stage abstraction,
+  the `render_fn` hook, the `record()` contract, and the per-stage
+  trade-offs.
+- [`../studio_quickstart.md`](../studio_quickstart.md) — 5-minute tour
+  with runnable code.
 - [`testing.md`](testing.md) — `record()` outputs feed the same visual
   regression harness used by the engine suite.
 - [`animation.md`](animation.md) — `humanoid_stage` pairs with the

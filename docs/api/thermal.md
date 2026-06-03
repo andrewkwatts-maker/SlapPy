@@ -51,7 +51,21 @@ _(none)_
 
 _(none)_
 
+## Design notes
+
+The thermal subpackage surface is small (one `HeatField` class plus a
+two-region exchange helper); no separate `thermal_design.md` ships.
+The pairwise-flux explicit diffusion conventions, mass-weighted
+exchange formula, and conservation-check `total_heat()` hook are
+documented inline above plus in the source docstrings.
+
+If a future sprint adds anisotropic conductivity, implicit time
+stepping, or 3-D fields, promote that material to a dedicated
+`thermal_design.md` and link both ways.
+
 ## See also
 
 - [`zones.md`](zones.md) — thermal zones plug into the rect / threshold
   zone bookkeeping.
+- [`../zones_design.md`](../zones_design.md) — the canonical design
+  reference for the zone bookkeeping side.

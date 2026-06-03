@@ -205,7 +205,21 @@ three conventions:
   helpers. Re-exported for introspection only; not part of the
   contract.
 
+## Design notes
+
+No separate `testing_design.md` ships — the four design goals
+(headless, golden-master-on-first-run, cheap mean-absolute-difference
+diff, reviewable red-overlay failures) plus the fallback-chain rules
+for frame extraction are documented inline above.
+
+If a future sprint promotes the harness to support SSIM / PSNR
+metrics, structured baselines across multiple resolutions, or
+GPU-side comparison, promote that material to a dedicated
+`testing_design.md` and link both ways.
+
 ## See also
 
 - [`studio.md`](studio.md) — the studio `record()` helper produces the
   exact PNG / GIF outputs this harness scores against.
+- [`../studio_design.md`](../studio_design.md) — the `record()`
+  contract that produces those outputs.

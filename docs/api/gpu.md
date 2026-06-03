@@ -255,3 +255,29 @@ through MAP_READ-mapped staging buffers.
 These are the "wire the full PBR shader" side of the GPU stack and
 are covered in detail by the lighting design docs
 (`lighting_presets.md`, `docs/api/gi.md`).
+
+## Design notes
+
+No separate `gpu_design.md` ships — the renderer-side decisions
+(lazy-loaded `__getattr__` so wgpu doesn't land until first use,
+`id(layer)`-keyed buffer / texture caches, the "simple" PBR shader
+vs. full PBR shader split, the SDF-extrude GPU-to-CPU graceful
+fallback) are documented inline above plus in the linked design docs
+for the compute / lighting / post-process consumers.
+
+If a future sprint stands up a dedicated render-graph layer or
+materially reshapes the pipeline-creation story, promote that
+material to a dedicated `gpu_design.md` and link both ways.
+
+## See also
+
+- [`compute.md`](compute.md) — the compute-shader dispatch side
+  built on top of `GPUContext` / `BufferManager`.
+- [`gi.md`](gi.md) — lighting compute kernels.
+- [`../gi_design.md`](../gi_design.md) — the GI pipeline architecture.
+- [`post_process.md`](post_process.md) — the post-process chain
+  feeding the swap chain.
+- [`../post_process_design.md`](../post_process_design.md) — pipeline
+  cache + UBO splice conventions.
+- [`../lighting_presets.md`](../lighting_presets.md) — ready-to-use
+  post-process chain presets.

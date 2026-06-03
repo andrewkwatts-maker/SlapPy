@@ -366,3 +366,16 @@ executor writes at dispatch time.
   GPU.
 - **Lazy import.** Top-level `__init__.py` uses `__getattr__` against
   `_LAZY_MAP` so importing the subpackage does not pull in `wgpu`.
+
+## See also
+
+- [`../post_process_design.md`](../post_process_design.md) — chain
+  composition, std140 UBO conventions, the splice executor's per-pass
+  patch contract, and the legacy-vs-pre-packed UBO trade-off.
+- [`gi.md`](gi.md) — the GI output feeds into this chain.
+- [`gpu.md`](gpu.md) — `GPUContext` / `BufferManager` the executor
+  builds against.
+- [`../lighting_presets.md`](../lighting_presets.md) — ready-to-use
+  chains composing the lighting-polish helpers.
+- `CONTRIBUTING.md` § "Adding a post-process pass" — the step-by-step
+  recipe for new passes.

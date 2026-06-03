@@ -180,3 +180,16 @@ breaking change unless the `ext` shim continues to point at the new
 location. See `docs/sprint_1_game_compat_2026_05_30.md` for the
 contract check that runs against Ochema Circuit and Bullet Strata on
 every release.
+
+## Design notes
+
+No separate `ext_design.md` ships — `ext` is a re-export namespace,
+not a substantive subpackage. The design (one namespace for
+"everything that requires an extra dependency", load-bearing back-
+compat for Ochema / Bullet Strata import paths, ~zero wheel-size cost
+because every entry is a thin shim) is documented inline above.
+
+For the canonical modules behind each shim, follow the linked design
+docs in the per-module catalogue (`ext.lighting` → `lighting`
+internals; `ext.iso` → [`../api/iso.md`](iso.md); `ext.animation` →
+[`animation.md`](animation.md); etc.).

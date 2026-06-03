@@ -255,3 +255,17 @@ in demos without disturbing the legacy tests. The next tick is to
 swap the demo-facing fluid call-sites over to `slappyengine.fluid`
 and then delete the per-pixel fluid scaffolding once nothing imports
 it.
+
+## See also
+
+- The fluid subpackage does not ship a dedicated `docs/api/` ref — its
+  public surface is documented inline in the source module's docstring
+  (`python/slappyengine/fluid/__init__.py`) and via the auto-generated
+  entries in [`engine_surface_v030.md`](engine_surface_v030.md).
+- [`softbody_design.md`](softbody_design.md) — the sibling XPBD
+  subpackage; PBF + softbody compose via `apply_fluid_buoyancy`.
+- [`studio_design.md`](studio_design.md) — `fluid_stage()` and
+  `fluid_with_softbody_stage()` wrap this module for demos.
+- [`numerics_design.md`](numerics_design.md) — the multigrid Poisson
+  solver this module's pressure projection could migrate onto in a
+  future tick.

@@ -200,9 +200,23 @@ animation playback does not need it.
 - `slappyengine.animation.video_import` — `extract_frames` (opt-in
   extra; not in `__all__`).
 
+## Design notes
+
+No separate `animation_design.md` ships — the public surface is small
+(two dataclass groups + a video-frame importer) and self-explanatory
+from the constructor signatures + docstrings. The non-obvious bits
+(the `clip_indices` accumulator on `_frame_timer`, the cycle-safe IK
+chain walk, the `[video]` extra contract) are documented inline above.
+
+If a future sprint grows the animation surface (skeletal retargeting,
+blend trees, motion matching), promote that material to a dedicated
+`animation_design.md` and link both ways.
+
 ## See also
 
 - [`studio.md`](studio.md) — `humanoid_stage` consumes the rig + IK
   surface for demo capture.
+- [`../studio_design.md`](../studio_design.md) — Stage abstraction the
+  humanoid demos run on.
 - [`ext.md`](ext.md) — `slappyengine.ext.animation` re-exports the
   same surface for back-compat imports.

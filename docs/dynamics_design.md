@@ -407,11 +407,17 @@ Two cheap wins exist short of porting:
 
 ## See also
 
+- [`api/dynamics.md`](api/dynamics.md) — auto-generated reference for
+  every dataclass, factory, and `World` method in the subpackage.
+- [`softbody_design.md`](softbody_design.md) — the legacy
+  lattice/vehicle interface; `dynamics` is the unifying generalisation.
+- [`studio_design.md`](studio_design.md) — `dynamics_stage()` is the
+  studio entry point that wraps `dynamics.World` for demos.
+- [`rust_port_plan_dynamics.md`](rust_port_plan_dynamics.md) — Phase 1
+  MVP Rust-port plan for `_project_distance`.
 - `python/tests/test_dynamics_*.py` — usage examples and behavioural specs.
 - `SlapPyEngineExamples/examples/hello_rope.py`, `SlapPyEngineExamples/examples/hello_ragdoll.py` — minimal demos
   (where present in the working tree).
-- `docs/softbody_design.md` — the legacy lattice/vehicle interface;
-  `dynamics` is the unifying generalisation.
 - Macklin, Müller, Chentanez (2016) — *"XPBD: Position-Based Simulation of
   Compliant Constrained Dynamics."* The substrate paper.
 - Aristidou, Lasenby, Chrysanthou, Shamir (2018) — *"Inverse Kinematics

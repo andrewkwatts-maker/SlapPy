@@ -404,3 +404,27 @@ the scene render is not seen through the glass.
   `engine.scene`, `engine._project_manager`, and `engine._undo_manager`
   via `getattr(..., None)` guards; the editor is fully usable against
   a bare-minimum Engine without breaking on missing managers.
+
+## Design notes
+
+No separate `ui_editor_design.md` ships — the "Phase A directive"
+prose at the top of this doc already serves as the design statement
+(the `PropertyInspector`-as-single-source-of-reflection mandate, the
+`MaterialEditor.kind=` discriminator, the `SpawnMenu` as the only new
+authoring surface). The full Phase A plan lives in
+`C:\Users\Andrew\.claude\plans\ok-we-were-working-reactive-valley.md`
+for additional context.
+
+If a future Phase B adds a node-graph editor, an inline shader
+editor, or a multi-document-interface tab layout, promote that
+material to a dedicated `ui_editor_design.md` and link both ways.
+
+## See also
+
+- [`material.md`](material.md) — `MaterialEditor` targets this
+  authoring surface; the kind discriminator routes through
+  `PropertyInspector` for softbody / fluid.
+- [`../material_design.md`](../material_design.md) — the material
+  authoring substrate the editor sits on top of.
+- [`animation.md`](animation.md) — `AnimGraphPanel` and `BehaviorPanel`
+  sit alongside this surface.

@@ -243,6 +243,20 @@ The `.slap` directory is rooted at the `save_dir` argument; one
 manager per save slot avoids cross-contamination between
 parallel world loads.
 
+## Design notes
+
+No separate `residency_design.md` ships — the architectural decisions
+(three-tier GPU/RAM/DISK model with distance-based promotion, LZ4
+compression level 0/1 chosen for throughput-over-size, directory-
+first .slap layout so partial loads can seek straight to a named
+asset, soft-fail readbacks that fall back to `_ram_pixel_data = None`)
+are documented inline above.
+
+If a future sprint adds streaming over the network, predictive
+prefetch, or tier-specific budgets per-asset (rather than per-manager),
+promote that material to a dedicated `residency_design.md` and link
+both ways.
+
 ## See also
 
 - [`gpu.md`](gpu.md) — `BufferManager` / `TextureManager` are the

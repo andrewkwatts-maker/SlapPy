@@ -59,5 +59,10 @@ _(none)_
 
 ## See also
 
+- [`../numerics_design.md`](../numerics_design.md) — multigrid V-cycle
+  architecture, the `p == p * mask` invariant, performance notes, and
+  the Rust-migration plan.
 - [`gi.md`](gi.md) — the GI denoiser sits on top of these Laplacian /
   multigrid helpers.
+- [`../rust_migration_plan.md`](../rust_migration_plan.md) — Step 7
+  covers the `_sor_sweep` Rust port plan.

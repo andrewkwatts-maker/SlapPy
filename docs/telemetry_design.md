@@ -185,3 +185,12 @@ the unindexed path. Hot-path lock duration is unchanged.
 * Not persistent. Events live only in the ring buffer.
 * Not a UI. Games render telemetry however they want (the editor's profile
   overlay, an HTML page, stdout).
+
+## See also
+
+- [`api/telemetry.md`](api/telemetry.md) — function signatures,
+  `TelemetryEvent` fields, and the perf-timing conventions surface.
+- [`api/audio_runtime.md`](api/audio_runtime.md) — the same
+  "soft-fail, log-once" posture is mirrored in the audio backend
+  selection path.
+

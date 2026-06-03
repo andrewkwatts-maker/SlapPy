@@ -27,11 +27,14 @@ Regenerate after adding or removing any doc.
 | [`examples_smoke_2026_06_01_v3.md`](examples_smoke_2026_06_01_v3.md) | Examples smoke audit v3 — 47/47 GREEN (first clean sweep, 2026-06-01). |
 | [`fluid_design.md`](fluid_design.md) | Design reference for the Position-Based Fluids (PBF) 2D particle simulator (`slappyengine.fluid`). |
 | [`getting_started.md`](getting_started.md) | Game-dev tutorial; build a runnable mini-game in 15 minutes with 8 verified-runnable snippets (5/5 tripwire tests green, 298 lines). |
+| [`gi_design.md`](gi_design.md) | Design reference for `slappyengine.gi`: radiance cascades + ReSTIR + SVGF pipeline shape, headless `init_gpu` lifecycle, paper citations, and Rust-migration story. |
 | [`hardening_audit_2026_05_29.md`](hardening_audit_2026_05_29.md) | Phase-B/C subpackage input-validation hardening audit (2026-05-29). |
 | [`idle_animation_system_2026_06_03.md`](idle_animation_system_2026_06_03.md) | Idle-animation subsystem spec — `slappyengine.ui.theme.creatures` module surface (Creature / CreatureScheduler / SlotPolicy), 19 event-to-creature bindings, performance contract (≤ 1 ms idle / ≤ 5 ms one-shot), accessibility settings, theme integration, test plan (2026-06-03). |
 | [`lifecycle_contract.md`](lifecycle_contract.md) | Lifecycle hook contract — start/step/shutdown phases, entity/script vs engine-level hooks, F6 per-subpackage Protocol cross-references, hot-reload semantics. |
 | [`lighting_presets.md`](lighting_presets.md) | Sprint-3 ready-to-use post-process chain presets composing the lighting-polish helpers into flagship game looks. |
 | [`material_catalog.md`](material_catalog.md) | Reference catalogue for every material shipped in `config/softbody.yml` and `config/fluid.yml`. |
+| [`material_design.md`](material_design.md) | Design reference for `slappyengine.material`: NodeMaterial graph runtime, the 12 + 19 factory split, validation layering, Rust-only compile rationale, and lazy-import contract. |
+| [`numerics_design.md`](numerics_design.md) | Design reference for `slappyengine.numerics`: multigrid V-cycle architecture, Red-Black SOR smoother, the `p == p * mask` invariant, performance audit (2.4x speedup), and Rust-migration plan (Step 7). |
 | [`particle_field_design.md`](particle_field_design.md) | ParticleField design notes — what worked, what didn't, Phase 1+2 foundation cleanup rationale. |
 | [`particle_field_gpu_buffers.md`](particle_field_gpu_buffers.md) | ParticleField GPU buffer-layout design document (std430 storage buffers, textures, growth strategy). |
 | [`particle_field_gpu_port.md`](particle_field_gpu_port.md) | ParticleField GPU port — 7-sprint architecture for migrating `particle_field` onto WGSL compute shaders. |
@@ -40,6 +43,7 @@ Regenerate after adding or removing any doc.
 | [`perf_dashboard.md`](perf_dashboard.md) | One-page perf tripwire across the six v0.3 hot paths (dynamics, numerics, thermal, topology, telemetry, zones) with bound classifications. |
 | [`perf_dashboard_prev.md`](perf_dashboard_prev.md) | Prior perf dashboard snapshot (2026-05-29) preserved for trend comparison. |
 | [`phase_d_strip_plan_2026_05_31.md`](phase_d_strip_plan_2026_05_31.md) | Phase D strip-pass execution plan (Sprint F, 2026-05-31) — gated on Ochema CI greenness. |
+| [`post_process_design.md`](post_process_design.md) | Design reference for `slappyengine.post_process`: chain composition, the two UBO conventions (executor-packed dict vs pre-packed bytes), the splice executor's runtime-field patch, ping-pong RT pair, pipeline cache, and preset chain factories. |
 | [`repo_cleanup_2026_06_02.md`](repo_cleanup_2026_06_02.md) | Repo cleanup survey — generated-artefact `.gitignore` plan, (a)/(b)/(c) bucket categorisation of 400+ untracked files (2026-06-02). |
 | [`restructure_2026_06_02.md`](restructure_2026_06_02.md) | Top-level restructure — `tests/` → `SlapPyEngineTests/tests/`, `examples/` → `SlapPyEngineExamples/examples/`, with path-translation table and verification log (2026-06-02). |
 | [`physics_module.md`](physics_module.md) | Entry point for the hierarchical-hull per-pixel physics module (`slappyengine.physics`). |
@@ -59,6 +63,7 @@ Regenerate after adding or removing any doc.
 | [`sprint_plan_2026_06_03.md`](sprint_plan_2026_06_03.md) | 7-sprint v0.4 plan (2026-06-03) — editor notebook theme, ECS formalisation, animation graph + IK retargeting, material graph authoring, VFX system, profiler overlay, ship polish. Subpackage classification table + risk callouts. |
 | [`sprite_audit_recipe.md`](sprite_audit_recipe.md) | Sprite-anchor and atlas audit workflow recipe for the `slappyengine.tools.sprite_audit` CPU-only utility. |
 | [`strip_pass_v2_audit.md`](strip_pass_v2_audit.md) | Phase D strip-pass v2 dry-run audit — enumerates deletion candidates and their consumer counts (no files deleted; gated on downstream-game CI). |
+| [`studio_design.md`](studio_design.md) | Design reference for `slappyengine.studio`: the Stage bundle, the `render_fn` hook, the `record()` contract (5 hooks), BodyMeta helper rationale, and per-stage trade-offs. |
 | [`studio_quickstart.md`](studio_quickstart.md) | 5-minute tour of `slappyengine.studio` — high-level scene-scaffolding helpers wrapping the rebuild physics stack into ~15-line demos. |
 | [`telemetry_design.md`](telemetry_design.md) | Design notes for `slappyengine.telemetry`: low-overhead event emission (86 ns no-subscriber) plus the round-2 first-segment bucket-index 6.42x dispatch speedup. |
 | [`theme_diary_family_2026_06_03.md`](theme_diary_family_2026_06_03.md) | Diary aesthetic theme-family design doc — six theme variants (teengirl_notebook, scrapbook_summer, cozy_diary, bullet_journal, cottagecore_garden, kawaii_planner) sharing one runtime contract, 12 new domestic-pet / cuddly-wild creatures (cats, goldens, raccoons, red pandas, panda, porcupines, hedgehog), theme-switch contract, user customisation, 3-phase rollout, perf budget (2026-06-03). |

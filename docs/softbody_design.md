@@ -385,3 +385,17 @@ is *not* touched in this tick. It still drives `test_drop_scenarios.py`
 and the existing demo suite. As features above land, we replace the
 corresponding old paths and delete dead code; the module stays
 operational the whole way.
+
+## See also
+
+- The softbody subpackage does not ship a dedicated `docs/api/` ref —
+  its public surface is documented inline in the source module's
+  docstring (`python/slappyengine/softbody/__init__.py`) and via the
+  auto-generated entries in [`engine_surface_v030.md`](engine_surface_v030.md).
+- [`dynamics_design.md`](dynamics_design.md) — the unifying XPBD
+  substrate that softbody, dynamics, and humanoid all share.
+- [`fluid_design.md`](fluid_design.md) — the sibling PBF subpackage;
+  fluid + softbody compose via `apply_fluid_buoyancy`.
+- [`studio_design.md`](studio_design.md) — `softbody_stage()`,
+  `humanoid_stage()`, and `fluid_with_softbody_stage()` wrap this
+  module for demos.

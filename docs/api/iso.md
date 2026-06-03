@@ -191,7 +191,22 @@ sequence.
 - `slappyengine.iso.iso_scene`
 - `slappyengine.iso.projection`
 
+## Design notes
+
+No separate `iso_design.md` ships — the isometric rendering
+conventions (four-cardinal `IsoViewpoint`, Cramer's-rule ground-plane
+pick in `screen_to_world`, `gz`-as-fractional painter's-order tie-
+breaker, the determinism-as-contract posture for `WaveSchedule.tick`)
+are documented inline above. The combat surface in particular
+deliberately ships without an `on_spawn` callback or event hook so the
+return-value contract stays trivially testable.
+
+If a future sprint adds free-rotation cameras, dynamic LOD, or
+networked wave scheduling, promote that material to a dedicated
+`iso_design.md` and link both ways.
+
 ## See also
 
 - [`ext.md`](ext.md) — `slappyengine.ext.iso` re-exports the same
   surface for back-compat imports.
+- [`gpu.md`](gpu.md) — the renderer side the iso scene composes onto.

@@ -197,3 +197,28 @@ public method validates channel names against the asset's
   by `PixelAPI.apply`; `ASTCompilerError` surfaces authoring errors.
 - `slappyengine.compute.effect` / `hull` / `library` / `shader_cache`
   / `wgsl_chunks` — internal helpers, not part of the public surface.
+
+## Design notes
+
+No separate `compute_design.md` ships — the architectural decisions
+(shared four-argument constructor across every dispatcher, SHA-256 +
+filename pipeline caching, 64-wide workgroup hard-coding, the
+fixed-point `×1000` atomics convention for reductions) are documented
+inline above. The post-process side of the GPU compute story carries
+its own design doc — see [`../post_process_design.md`](../post_process_design.md)
+for the executor pipeline cache + UBO splice patterns.
+
+If a future sprint adds a third dispatcher family or migrates the
+reduction kernels off fixed-point atomics, promote that material to a
+dedicated `compute_design.md` and link both ways.
+
+## See also
+
+- [`gpu.md`](gpu.md) — the renderer-side GPU surface (the buffer /
+  texture managers compute APIs build on).
+- [`gi.md`](gi.md) — GI compute kernels follow the same dispatch
+  conventions as this subpackage.
+- [`../gi_design.md`](../gi_design.md) — pipeline-cache + headless
+  init story this subpackage mirrors.
+- [`post_process.md`](post_process.md) — the post-process chain's
+  executor uses a sibling pipeline-cache pattern.

@@ -124,3 +124,11 @@ historical `O(zones x entities)` path. This exists for:
 Event semantics are byte-identical across both paths - the final
 gating predicate is `RectZone.contains_point` either way, and the set
 arithmetic over `prev` and `now` is order-independent.
+
+## See also
+
+- [`api/zones.md`](api/zones.md) — auto-generated reference for
+  `RectZone`, `ThresholdZone`, and `ZoneManager`.
+- [`api/thermal.md`](api/thermal.md) — heat fields plug into threshold
+  zone bookkeeping for damage-by-temperature scenarios.
+

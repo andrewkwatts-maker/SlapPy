@@ -143,7 +143,17 @@ exposing one would split the interface.
 - `slappyengine.audio_runtime._STUB_WARNING` — the canonical warning
   string; pinned by `SlapPyEngineTests/tests/test_audio_stub.py`.
 
+## Design notes
+
+No separate `audio_runtime_design.md` ships — the public surface is
+intentionally tiny (a `Protocol`, a module-scope getter, two concrete
+backends), and the design choices (bare `except Exception` over
+`ImportError`, no sample-rate negotiation, no device enumeration in the
+protocol, log-once on stub selection) are documented inline above.
+
 ## See also
 
 - [`telemetry.md`](telemetry.md) — the same "soft-fail, log-once"
   posture lives in the telemetry emit path.
+- [`../telemetry_design.md`](../telemetry_design.md) — the canonical
+  design statement for that posture.
