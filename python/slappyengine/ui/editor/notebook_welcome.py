@@ -78,6 +78,17 @@ THEME_SWATCHES: tuple[tuple[str, str], ...] = (
 )
 
 
+# Layout-preset chooser row — pair each preset id with a 2-character
+# sticker label. Order matches :data:`layout_presets.PRESETS`.
+LAYOUT_PRESETS: tuple[tuple[str, str], ...] = (
+    ("default",     "DF"),
+    ("wide_code",   "WC"),
+    ("focus",       "FO"),
+    ("triple_pane", "TP"),
+    ("compact",     "CP"),
+)
+
+
 def _safe_dpg() -> Any | None:
     """Return ``dearpygui.dearpygui`` or ``None`` when the extra is missing."""
     try:
@@ -122,6 +133,10 @@ class NotebookWelcome:
     HEIGHT = 500
     SPARKLE_CREATURE_ID = "sparkle"
 
+    # Movable-window minimums — picked up by ``MovablePanelWindow``.
+    MIN_WIDTH: int = 600
+    MIN_HEIGHT: int = 500
+
     def __init__(
         self,
         settings: Any,
@@ -129,6 +144,7 @@ class NotebookWelcome:
         on_open_demo: Callable[[str], None],
         on_dismiss: Callable[[], None],
         on_open_picker: Callable[[], None] | None = None,
+        on_pick_layout: Callable[[str], None] | None = None,
     ) -> None:
         self._settings = settings
         self._on_start_blank = validate_callable(
@@ -139,6 +155,16 @@ class NotebookWelcome:
         )
         self._on_dismiss = validate_callable(
             "on_dismiss", "NotebookWelcome", on_dismiss,
+        )
+        # ``on_pick_layout`` lets the welcome screen surface a 5-button
+        # layout-preset chooser above the theme swatches. Optional — the
+        # row falls back to a no-op when no callback is supplied.
+        self._on_pick_layout: Callable[[str], None] | None = (
+            validate_callable(
+                "on_pick_layout", "NotebookWelcome", on_pick_layout,
+            )
+            if on_pick_layout is not None
+            else None
         )
         # ``on_open_picker`` opens the project picker modal — wired by the
         # shell so the welcome screen has a dedicated "Open a notebook"
@@ -388,6 +414,24 @@ class NotebookWelcome:
                 except Exception:
                     pass
 
+                # ── Layout preset row ──────────────────────────────
+                # Five sticker buttons matching :data:`LAYOUT_PRESETS`.
+                if self._on_pick_layout is not None:
+                    try:
+                        dpg.add_text("Pick a layout:", color=ink)
+                    except Exception:
+                        pass
+                    try:
+                        with dpg.group(
+                            horizontal=True,
+                            tag=f"{self._panel_tag}_layouts",
+                        ):
+                            for layout_id, label in LAYOUT_PRESETS:
+                                self._build_layout_button(dpg, layout_id, label)
+                    except Exception:
+                        for layout_id, label in LAYOUT_PRESETS:
+                            self._build_layout_button(dpg, layout_id, label)
+
                 # ── Theme swatch row ──────────────────────────────
                 try:
                     dpg.add_text("Or pick a theme:", color=ink)
@@ -470,6 +514,22 @@ class NotebookWelcome:
                     lambda *_a, t=theme_id: self._on_theme_swatch_clicked(t)
                 ),
                 tag=swatch_tag,
+            )
+        except Exception:
+            pass
+
+    def _build_layout_button(self, dpg: Any, layout_id: str, label: str) -> None:
+        """Render a single 36×32 layout-preset sticker button."""
+        button_tag = f"{self._panel_tag}_layout_{layout_id}"
+        try:
+            dpg.add_button(
+                label=f"[{label}]",
+                width=36,
+                height=32,
+                callback=(
+                    lambda *_a, lid=layout_id: self._on_layout_button_clicked(lid)
+                ),
+                tag=button_tag,
             )
         except Exception:
             pass
@@ -560,6 +620,19 @@ class NotebookWelcome:
         self.mark_seen()
         self.dismiss()
 
+    def _on_layout_button_clicked(self, layout_id: str) -> None:
+        validate_non_empty_str(
+            "layout_id", "NotebookWelcome._on_layout_button_clicked", layout_id,
+        )
+        if self._on_pick_layout is None:
+            return
+        try:
+            self._on_pick_layout(layout_id)
+        except Exception:
+            pass
+        self.mark_seen()
+        self.dismiss()
+
     def _on_hide_toggle(self, value: Any) -> None:
         """HeartCheckbox callback — pushes the new value into UISettings."""
         try:
@@ -586,12 +659,18 @@ class NotebookWelcome:
         return [tid for tid, _ in THEME_SWATCHES]
 
     @property
+    def layout_preset_ids(self) -> list[str]:
+        """Return the layout preset ids in render order."""
+        return [lid for lid, _ in LAYOUT_PRESETS]
+
+    @property
     def hide_checkbox(self) -> HeartCheckbox:
         return self._hide_checkbox
 
 
 __all__ = [
     "DEMO_CARDS",
+    "LAYOUT_PRESETS",
     "NotebookWelcome",
     "THEME_SWATCHES",
 ]

@@ -78,6 +78,21 @@ _BINDINGS_FROZEN: dict[str, str] = {
     "h":              "editor.toggle_hud",
     "ctrl+shift+f":   "editor.easter_feed_fox",
     "ctrl+shift+b":   "editor.easter_baby_porcupine_roll",
+    # ── Layout presets ────────────────────────────────────────────────
+    "ctrl+1":         "editor.layout_preset_default",
+    "ctrl+2":         "editor.layout_preset_wide_code",
+    "ctrl+3":         "editor.layout_preset_focus",
+    "ctrl+4":         "editor.layout_preset_triple_pane",
+    "ctrl+5":         "editor.layout_preset_compact",
+    "ctrl+0":         "editor.reset_layout",
+    # ── Theme switcher ───────────────────────────────────────────────
+    "ctrl+t":         "editor.toggle_theme_switcher",
+    "ctrl+shift+t":   "editor.cycle_theme",
+    # ── Panel toggles ────────────────────────────────────────────────
+    "ctrl+\\":        "editor.toggle_panel_outliner",
+    "ctrl+shift+\\":  "editor.toggle_panel_inspector",
+    "ctrl+/":         "editor.toggle_panel_content_browser",
+    "ctrl+shift+/":   "editor.toggle_panel_code",
 }
 
 

@@ -131,6 +131,11 @@ class EditorShell:
         # First-run welcome panel — lazily constructed in :meth:`show_welcome`.
         self._welcome_panel = None
 
+        # Movable panel wrappers — populated by :meth:`setup` (or by
+        # tests calling :meth:`compose_default_panel_layout` directly).
+        # Keyed by short panel name (``"toolbar"``, ``"outliner"``, …).
+        self._panel_windows: dict[str, "MovablePanelWindow"] = {}
+
         # Notebook bookkeeping — outliner selection mirror + active tool.
         self._selected_entity: object | None = None
         self._active_tool: str = "select"
@@ -345,7 +350,12 @@ class EditorShell:
             self._panel_layout_state = state_dict
         current = state_dict.get(panel_id)
         if current is None:
-            current = PanelLayoutState(panel_id=panel_id)
+            # Placeholder geometry so the canonical PanelLayoutState
+            # validator accepts the construction; the real geometry
+            # arrives the next time the user applies a preset.
+            current = PanelLayoutState(
+                panel_id=panel_id, position=(0, 0), size=(100, 100),
+            )
             state_dict[panel_id] = current
         current.visible = not current.visible
         tag_map = {
@@ -563,6 +573,206 @@ class EditorShell:
         if NotebookGizmoOverlay is not None and self._gizmo_overlay is None:
             self._gizmo_overlay = NotebookGizmoOverlay()
 
+    def compose_default_panel_layout(self) -> dict[str, "MovablePanelWindow"]:
+        """Build the default :class:`MovablePanelWindow` set + sensible dock positions.
+
+        Headless-safe: every wrapper is just a Python object. The
+        wrappers are not built (no DPG calls) until :meth:`setup` runs.
+
+        Layout policy (defaults track the editor's primary viewport
+        size — see ``self._width`` / ``self._height``):
+
+        * **toolbar** — top edge, full-width, fixed height, no resize.
+        * **outliner** — left dock under the toolbar.
+        * **inspector** — right dock under the toolbar.
+        * **content_browser** — bottom dock, full-width.
+        * **status_bar** — very bottom, full-width, fixed height,
+          no resize.
+        * **code_panel** — floating centre, hidden by default.
+        * **spawn_menu** — modal floating centre, hidden by default.
+        * **material_editor** — right dock alternative, hidden by
+          default.
+        * **theme_switcher** — floating centre-right, hidden by
+          default.
+        * **welcome** — modal, hidden by default.
+        * **project_picker** — modal, hidden by default.
+
+        Returns the dict so callers can chain follow-up layout edits.
+        """
+        from slappyengine.ui.editor.movable_panel import MovablePanelWindow
+
+        windows: dict[str, "MovablePanelWindow"] = {}
+
+        w = self._width
+        h = self._height
+        TITLEBAR_H = 28
+        # The notebook-themed status bar sits a fixed 24 px tall.
+        STATUS_H = 24
+
+        # ── Toolbar — top edge, full width.
+        if self._toolbar is not None:
+            windows["toolbar"] = MovablePanelWindow(
+                self._toolbar,
+                title="Toolbar",
+                kind="toolbar",
+                default_pos=(0, TITLEBAR_H),
+                default_size=(max(800, w), TOOLBAR_H),
+                min_size=(800, TOOLBAR_H),
+                closable=False,
+                no_resize=True,  # fixed height
+            )
+
+        # ── Outliner — left dock.
+        if self._scene_outliner is not None:
+            outliner_y = TITLEBAR_H + TOOLBAR_H
+            outliner_h = max(300, h - outliner_y - BOTTOM_H - STATUS_H)
+            windows["outliner"] = MovablePanelWindow(
+                self._scene_outliner,
+                title="Scene",
+                kind="sidebar",
+                default_pos=(0, outliner_y),
+                default_size=(max(240, LEFT_W), outliner_h),
+                min_size=(240, 300),
+                closable=False,
+            )
+
+        # ── Inspector — right dock.
+        if self._inspector is not None:
+            insp_x = max(0, w - RIGHT_W)
+            insp_y = TITLEBAR_H + TOOLBAR_H
+            insp_h = max(400, h - insp_y - BOTTOM_H - STATUS_H)
+            windows["inspector"] = MovablePanelWindow(
+                self._inspector,
+                title="Inspector",
+                kind="sidebar",
+                default_pos=(insp_x, insp_y),
+                default_size=(max(280, RIGHT_W), insp_h),
+                min_size=(280, 400),
+                closable=False,
+            )
+
+        # ── Content browser — bottom dock.
+        if self._content_browser is not None:
+            cb_y = max(0, h - BOTTOM_H - STATUS_H)
+            windows["content_browser"] = MovablePanelWindow(
+                self._content_browser,
+                title="Notebook",
+                kind="sidebar",
+                default_pos=(0, cb_y),
+                default_size=(max(320, w), BOTTOM_H),
+                min_size=(320, 180),
+                closable=False,
+            )
+
+        # ── Code panel — floating, hidden by default.
+        if self._code_mode_panel is not None:
+            cp = MovablePanelWindow(
+                self._code_mode_panel,
+                title="Code",
+                kind="code_pane",
+                default_pos=(max(0, (w - 720) // 2), max(0, (h - 480) // 2)),
+                default_size=(720, 480),
+                min_size=(480, 320),
+                closable=True,
+            )
+            cp.hide()
+            windows["code_panel"] = cp
+
+        # ── Spawn menu — modal floating, hidden by default.
+        spawn = getattr(self, "_spawn_menu_panel", None)
+        if spawn is not None:
+            sm = MovablePanelWindow(
+                spawn,
+                title="+ Add",
+                kind="modal",
+                default_pos=(max(0, (w - 700) // 2), max(0, (h - 500) // 2)),
+                default_size=(700, 500),
+                min_size=(600, 400),
+                closable=True,
+                modal=True,
+            )
+            sm.hide()
+            windows["spawn_menu"] = sm
+
+        # ── Material editor — right-dock alternative, hidden by default.
+        mat = getattr(self, "_material_editor", None)
+        if mat is not None:
+            me = MovablePanelWindow(
+                mat,
+                title="Material",
+                kind="sidebar",
+                default_pos=(max(0, w - RIGHT_W), TITLEBAR_H + TOOLBAR_H),
+                default_size=(max(280, RIGHT_W), 500),
+                min_size=(280, 400),
+                closable=True,
+            )
+            me.hide()
+            windows["material_editor"] = me
+
+        # ── Theme switcher — floating, hidden by default.
+        if self._theme_switcher_panel is not None:
+            ts = MovablePanelWindow(
+                self._theme_switcher_panel,
+                title="Theme",
+                kind="sidebar",
+                default_pos=(max(0, w - 320), TITLEBAR_H + TOOLBAR_H + 200),
+                default_size=(300, 380),
+                min_size=(280, 360),
+                closable=True,
+            )
+            ts.hide()
+            windows["theme_switcher"] = ts
+
+        # ── Status bar — very bottom edge, full width, fixed height.
+        if self._notebook_status_bar is not None:
+            windows["status_bar"] = MovablePanelWindow(
+                self._notebook_status_bar,
+                title="Status",
+                kind="status_bar",
+                default_pos=(0, max(0, h - STATUS_H)),
+                default_size=(max(400, w), STATUS_H),
+                min_size=(400, STATUS_H),
+                closable=False,
+                no_resize=True,
+                no_title_bar=True,
+            )
+
+        # ── Welcome — modal, hidden by default (shown on first-run only).
+        if self._welcome_panel is not None:
+            wl = MovablePanelWindow(
+                self._welcome_panel,
+                title="Welcome",
+                kind="modal",
+                default_pos=(max(0, (w - 600) // 2), max(0, (h - 500) // 2)),
+                default_size=(600, 500),
+                min_size=(600, 500),
+                closable=True,
+                modal=True,
+                no_resize=True,
+            )
+            wl.hide()
+            windows["welcome"] = wl
+
+        # ── Project picker — modal, hidden by default.
+        picker = self._project_picker
+        if picker is not None:
+            pp = MovablePanelWindow(
+                picker,
+                title="Pick a notebook",
+                kind="modal",
+                default_pos=(max(0, (w - 520) // 2), max(0, (h - 460) // 2)),
+                default_size=(520, 460),
+                min_size=(480, 420),
+                closable=True,
+                modal=True,
+                no_resize=True,
+            )
+            pp.hide()
+            windows["project_picker"] = pp
+
+        self._panel_windows = windows
+        return windows
+
     def setup(self) -> None:  # noqa: C901 (complexity — UI layout)
         """Initialise the Dear PyGui context and build the window layout.
 
@@ -625,6 +835,23 @@ class EditorShell:
         # entire editor look and was already applied by
         # ``setup_theme_subsystem``.
         dpg.create_context()
+        # Tell the DPG theme bridge that a context is up so it stops
+        # routing every call through the headless stub. The bridge will
+        # rebuild the global theme handle here too.
+        try:
+            from slappyengine.ui.theme.dpg_bridge import (
+                apply_theme_to_dpg,
+                mark_dpg_context_ready,
+            )
+            from slappyengine.ui.theme import get_active_theme
+
+            mark_dpg_context_ready(True)
+            try:
+                apply_theme_to_dpg(get_active_theme())
+            except Exception:
+                pass
+        except Exception:
+            pass
 
         # Normal OS chrome — title bar, resize handles, drag from titlebar.
         # The Nova3D dark theme used decorated=False + transparent clear for
