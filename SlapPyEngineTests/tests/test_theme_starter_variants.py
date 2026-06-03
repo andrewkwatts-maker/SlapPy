@@ -276,7 +276,9 @@ def test_bullet_journal_creature_roster_metadata():
 
 def test_register_starter_themes_registers_all_three():
     names = register_starter_themes()
-    assert set(names) == EXPECTED_NAMES
+    # The helper now registers the full six-theme diary family, but the
+    # three original starters must still be in the returned set.
+    assert set(names) >= EXPECTED_NAMES
     assert set(list_registered_themes()) >= EXPECTED_NAMES
 
 
@@ -284,7 +286,7 @@ def test_register_starter_themes_idempotent():
     register_starter_themes()
     # Second call must not raise — re-registration is allowed.
     names = register_starter_themes()
-    assert set(names) == EXPECTED_NAMES
+    assert set(names) >= EXPECTED_NAMES
 
 
 # ===========================================================================

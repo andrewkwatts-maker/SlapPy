@@ -359,9 +359,9 @@ given `opacity`, and blends them additively over a transparent canvas.
 
 ## Starter themes
 
-The first concrete theme content built on the primitives ships in the
-`slappyengine.ui.theme.themes` subpackage. Three `ThemeSpec` constants
-demonstrate the diary-family contract documented under
+The concrete theme content built on the primitives ships in the
+`slappyengine.ui.theme.themes` subpackage. **Six** `ThemeSpec` constants
+demonstrate the full diary-family contract documented under
 [`docs/theme_diary_family_2026_06_03.md`](../theme_diary_family_2026_06_03.md)
 and the base brief at
 [`docs/theme_teengirl_notebook_2026_06_03.md`](../theme_teengirl_notebook_2026_06_03.md).
@@ -369,12 +369,15 @@ and the base brief at
 ```python
 from slappyengine.ui.theme import apply_theme
 from slappyengine.ui.theme.themes import (
+    # The three original starters (Phase A + B):
     BULLET_JOURNAL, COZY_DIARY, TEENGIRL_NOTEBOOK,
-    register_starter_themes,
+    # The three v0.4 Phase C extended variants:
+    COTTAGECORE_GARDEN, KAWAII_PLANNER, SCRAPBOOK_SUMMER,
+    register_all_themes,
 )
 
-register_starter_themes()
-apply_theme("teengirl_notebook")
+register_all_themes()
+apply_theme("scrapbook_summer")
 ```
 
 | Constant | Theme name | Source file | Vibe | Background shader | Roster |
@@ -382,6 +385,9 @@ apply_theme("teengirl_notebook")
 | `TEENGIRL_NOTEBOOK` | `teengirl_notebook` | `python/slappyengine/ui/theme/themes/teengirl_notebook.py` | Lined-paper + washi tape, bubblegum-pink + lilac | `ruled_paper` (lilac rules, pink margin) | `fox_01`, `butterfly_01` |
 | `COZY_DIARY` | `cozy_diary` | `python/slappyengine/ui/theme/themes/cozy_diary.py` | Warm autumn / leather-journal, sepia ink | `ruled_paper` parametrised as parchment | `red_panda_01`, `fox_01`, `leaf_01` |
 | `BULLET_JOURNAL` | `bullet_journal` | `python/slappyengine/ui/theme/themes/bullet_journal.py` | Minimal grid + pastel highlights, no script | `dot_grid` (1 px every 8 px) | `hedgehog_01`, `porcupine_01` |
+| `SCRAPBOOK_SUMMER` | `scrapbook_summer` | `python/slappyengine/ui/theme/themes/scrapbook_summer.py` | Bright photographic holiday vibes — sky-blue + sunshine-yellow + watermelon-pink | `watercolor_wash` (sky-blue + sunshine-yellow @ 30 %) | `golden_01`, `butterfly_01`, `bee_01` |
+| `COTTAGECORE_GARDEN` | `cottagecore_garden` | `python/slappyengine/ui/theme/themes/cottagecore_garden.py` | Floral / herbal / embroidered linen — mossy-green + cream + lavender + peach | `parchment` with sage `noise_glitter` weave overlay | `rabbit_01`, `deer_01`, `mushroom_01`, `flower_01` |
+| `KAWAII_PLANNER` | `kawaii_planner` | `python/slappyengine/ui/theme/themes/kawaii_planner.py` | Sticker-overload neon-pastel — pastel pink + mint + lavender + butter yellow | `dot_grid` (16 px spacing) + `noise_glitter` confetti | `cat_01`, `panda_01`, `porcupine_01` |
 
 Each constant carries a full `SemanticTokens` block plus a populated
 `palette`, `fonts`, `nine_slices` (procedural — no PNGs), `icons`
@@ -390,10 +396,12 @@ Each constant carries a full `SemanticTokens` block plus a populated
 colour, variant, and source-doc backlink. YAML round-trip works
 out-of-the-box.
 
-`register_starter_themes()` is a convenience helper that calls
+`register_all_themes()` is a convenience helper that calls
 `register_theme()` for each constant in one shot; it returns the list
 of registered theme names so callers can chain a follow-up
-`apply_theme(name)`.
+`apply_theme(name)`. `register_starter_themes()` is kept as a
+backwards-compatible alias that now delegates to `register_all_themes()`
+so existing callers automatically pick up the v0.4 Phase C additions.
 
 YAML location: each theme serialises through `ThemeSpec.to_yaml()`
 without on-disk content. The source-of-truth Python files live under
@@ -420,9 +428,10 @@ Path("teengirl_notebook.yml").write_text(TEENGIRL_NOTEBOOK.to_yaml())
   texture helpers (`ruled_paper`, `highlighter_stroke`,
   `paper_shadow`, `noise_glitter`, `glass_blur`, `frosted_panel`,
   `dot_grid`, `parchment`, `watercolor_wash`).
-- `slappyengine.ui.theme.themes` — three starter `ThemeSpec` constants
-  (`TEENGIRL_NOTEBOOK`, `COZY_DIARY`, `BULLET_JOURNAL`) +
-  `register_starter_themes()`.
+- `slappyengine.ui.theme.themes` — six diary-family `ThemeSpec`
+  constants (`TEENGIRL_NOTEBOOK`, `COZY_DIARY`, `BULLET_JOURNAL`,
+  `SCRAPBOOK_SUMMER`, `COTTAGECORE_GARDEN`, `KAWAII_PLANNER`) +
+  `register_all_themes()` / `register_starter_themes()`.
 
 ## Conventions
 
