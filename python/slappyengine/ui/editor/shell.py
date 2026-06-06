@@ -1437,15 +1437,18 @@ class EditorShell:
                 self._notebook_status_bar.tick(dt)
             except Exception:
                 pass
-            try:
-                import dearpygui.dearpygui as dpg
-                dt_dpg = dpg.get_delta_time()
-                if dt_dpg > 1e-6:
-                    self._notebook_status_bar.set_fps(1.0 / dt_dpg)
-                mx, my = dpg.get_mouse_pos(local=False)
-                self._notebook_status_bar.set_world_cursor(int(mx), int(my))
-            except Exception:
-                pass
+            # FPS + mouse queries require an active DPG context (segfault
+            # on Windows otherwise), so gate them on _running.
+            if self._running:
+                try:
+                    import dearpygui.dearpygui as dpg
+                    dt_dpg = dpg.get_delta_time()
+                    if dt_dpg > 1e-6:
+                        self._notebook_status_bar.set_fps(1.0 / dt_dpg)
+                    mx, my = dpg.get_mouse_pos(local=False)
+                    self._notebook_status_bar.set_world_cursor(int(mx), int(my))
+                except Exception:
+                    pass
 
     def _tick_panel_drag(self) -> None:
         """Poll each movable panel's DPG position; apply snap on drag."""
