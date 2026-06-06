@@ -149,7 +149,7 @@ class EditorShell:
         try:
             from slappyengine.ui.editor.snap_manager import SnapManager
             self._snap_manager = SnapManager()
-            self._snap_manager.set_viewport_size((self._width, self._height))
+            self._snap_manager.set_viewport_size(self._width, self._height)
         except Exception:
             self._snap_manager = None
         try:
@@ -399,13 +399,27 @@ class EditorShell:
         if not isinstance(state_dict, dict):
             state_dict = {}
             self._panel_layout_state = state_dict
+        # Resolve the wrapper *before* mutating state so we can seed the
+        # initial PanelLayoutState.visible from the wrapper's current
+        # visibility — otherwise toggling a hidden panel for the first
+        # time would re-hide it (the default visible=True flips to False).
+        existing_wrapper = self._panel_windows.get(panel_id) if isinstance(
+            self._panel_windows, dict,
+        ) else None
         current = state_dict.get(panel_id)
         if current is None:
+            seed_visible = True
+            if existing_wrapper is not None:
+                try:
+                    seed_visible = bool(existing_wrapper.is_visible())
+                except Exception:
+                    pass
             # Placeholder geometry so the canonical PanelLayoutState
             # validator accepts the construction; the real geometry
             # arrives the next time the user applies a preset.
             current = PanelLayoutState(
                 panel_id=panel_id, position=(0, 0), size=(100, 100),
+                visible=seed_visible,
             )
             state_dict[panel_id] = current
         current.visible = not current.visible
@@ -840,6 +854,9 @@ class EditorShell:
             windows["theme_switcher"] = ts
 
         # ── Status bar — very bottom edge, full width, fixed height.
+        # ``no_move=True`` so the user can't accidentally drag the
+        # ambient-feedback strip off-screen, and ``no_title_bar=True``
+        # so it visually reads as a footer instead of a window.
         if self._notebook_status_bar is not None:
             windows["status_bar"] = MovablePanelWindow(
                 self._notebook_status_bar,
@@ -849,6 +866,7 @@ class EditorShell:
                 default_size=(max(400, w), STATUS_H),
                 min_size=(400, STATUS_H),
                 closable=False,
+                no_move=True,
                 no_resize=True,
                 no_title_bar=True,
             )
@@ -958,6 +976,54 @@ class EditorShell:
             )
             bp.hide()
             windows["behavior_panel"] = bp
+
+        # ── Catch-all wrap for any panel registered via ``register_panel``
+        # that didn't land on a named slot. Without this loop, custom
+        # plugin panels (or future panel classes the slot_map doesn't
+        # know about) end up appended to ``self._panels`` and never
+        # actually rendered. Wrap each into a floating, hidden-by-
+        # default movable window so users can summon them via the View
+        # menu / hotkeys.
+        known_panel_objects: set[int] = set()
+        for w_known in windows.values():
+            try:
+                known_panel_objects.add(id(w_known.panel))
+            except Exception:
+                pass
+        # Status bar is reachable via ``self._notebook_status_bar`` and
+        # owns its own wrapper; never re-wrap.
+        if self._notebook_status_bar is not None:
+            known_panel_objects.add(id(self._notebook_status_bar))
+        legacy_y = TITLEBAR_H + TOOLBAR_H + 40
+        legacy_x = max(0, w - 360)
+        legacy_offset = 0
+        for legacy in list(self._panels):
+            if legacy is None:
+                continue
+            if id(legacy) in known_panel_objects:
+                continue
+            cls_name = type(legacy).__name__
+            # Derive a stable short key from the class name.
+            key = cls_name.lower()
+            if key in windows:
+                # Already taken — fall back to an id-tagged key.
+                key = f"{key}_{id(legacy) & 0xFFFF:04x}"
+            try:
+                wrapper = MovablePanelWindow(
+                    legacy,
+                    title=cls_name,
+                    kind="sidebar",
+                    default_pos=(legacy_x, legacy_y + legacy_offset),
+                    default_size=(320, 280),
+                    min_size=(280, 200),
+                    closable=True,
+                )
+            except Exception:
+                continue
+            wrapper.hide()
+            windows[key] = wrapper
+            known_panel_objects.add(id(legacy))
+            legacy_offset += 24
 
         self._panel_windows = windows
 

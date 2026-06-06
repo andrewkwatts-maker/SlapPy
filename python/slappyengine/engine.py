@@ -953,20 +953,21 @@ class Engine:
         material_editor = NotebookMaterialEditor()
         viewport_panel = ViewportPanel(engine=self, width=vp_w, height=vp_h)
 
-        # Register sidebar panels (order determines display order)
-        shell.register_panel(layer_panel)
+        # Notebook panels still flow through register_panel — they
+        # share the Details sidebar tab stack.
         shell.register_panel(property_inspector)
         shell.register_panel(material_editor)
-        if _has_tag_painter:
-            shell.register_panel(TagPainter())  # type: ignore[name-defined]
-        if _has_behavior_panel:
-            behavior_panel = BehaviorPanel()  # type: ignore[name-defined]
-            shell.register_panel(behavior_panel)
 
-        # ViewportPanel occupies the right-hand canvas area
-        # shell._on_editor_mode_change forwards to viewport_panel.set_mode()
-        # and gizmo_overlay.set_mode() automatically via the toolbar callback.
+        # Nova3D-legacy panels are wrapped in their own MovablePanelWindow
+        # by ``compose_default_panel_layout`` — stash them on the shell
+        # so the layout pass can pick them up. Skip the register_panel
+        # route entirely; mixing the two would build the panel twice.
+        shell._layer_panel = layer_panel
         shell._viewport_panel = viewport_panel
+        if _has_tag_painter:
+            shell._tag_painter = TagPainter()  # type: ignore[name-defined]
+        if _has_behavior_panel:
+            shell._behavior_panel = BehaviorPanel()  # type: ignore[name-defined]
 
         # NotebookCodePanel — diary-themed code mode tab
         from slappyengine.ui.editor.notebook_code_panel import NotebookCodePanel
