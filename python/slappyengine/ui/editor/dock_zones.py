@@ -285,10 +285,82 @@ class DockZoneManager:
         if zone is not DockZone.FLOATING:
             bounds = self._dock_bounds_for(zone)
             self._apply_bounds(panel_window, bounds)
+            # Remember the dock slot so later viewport resizes can
+            # re-snap the panel. Stored as the lowercase zone name on
+            # the panel object (when it supports the attribute) so the
+            # field round-trips into layout persistence cheaply. We
+            # intentionally do *not* set it for FLOATING releases — the
+            # presence of ``docked_to`` is what the viewport-resize
+            # path keys off to decide which panels to follow.
+            try:
+                setattr(panel_window, "docked_to", zone.value)
+            except Exception:
+                pass
+        else:
+            # Floating release — clear any prior dock slot so a
+            # subsequent viewport resize leaves the panel where the
+            # user dropped it. ``setattr`` is wrapped so panels that
+            # forbid the attribute (e.g. test doubles using
+            # ``__slots__``) don't crash the lifecycle.
+            try:
+                setattr(panel_window, "docked_to", None)
+            except Exception:
+                pass
 
         self._dragging_tag = None
         self._active_zone = None
         return zone
+
+    def redock_panel(self, panel_window: "MovablePanelWindow") -> bool:
+        """Re-apply the panel's dock bounds for the current viewport size.
+
+        Called from the editor shell's viewport-resize hook so each
+        already-docked panel follows the new viewport dimensions. Reads
+        the panel's ``docked_to`` attribute (set on the previous
+        successful :meth:`on_drag_end`); panels without a dock slot are
+        left untouched.
+
+        Returns ``True`` when the panel was actually re-docked, ``False``
+        otherwise (floating, missing attribute, or unknown zone name).
+        """
+        slot = getattr(panel_window, "docked_to", None)
+        if not isinstance(slot, str) or not slot:
+            return False
+        try:
+            zone = DockZone(slot)
+        except Exception:
+            return False
+        if zone is DockZone.FLOATING:
+            return False
+        bounds = self._dock_bounds_for(zone)
+        self._apply_bounds(panel_window, bounds)
+        return True
+
+    # ------------------------------------------------------------------
+    # Live-drag introspection (used by the editor shell overlay)
+    # ------------------------------------------------------------------
+
+    def is_active(self) -> bool:
+        """Return ``True`` while a drag is in flight.
+
+        The editor shell's per-frame overlay polls this to decide
+        whether to render any dock-zone previews on the live viewport.
+        Independent of whether the cursor currently sits inside any
+        single zone — the manager may report ``is_active() == True``
+        with :meth:`current_zone` returning ``None`` while the cursor
+        floats in the dead middle of the screen.
+        """
+        return self._dragging_tag is not None
+
+    def current_zone(self) -> "DockZone | None":
+        """Return the dock zone the cursor is hovering, or ``None``.
+
+        While a drag is in flight (:meth:`is_active`) this returns the
+        last value resolved by :meth:`on_drag_tick`; outside a drag it
+        always returns ``None``. Used by the editor shell overlay to
+        decide which zone rectangle to highlight on the viewport.
+        """
+        return self._active_zone
 
     # ------------------------------------------------------------------
     # Rendering
@@ -383,16 +455,38 @@ class DockZoneManager:
     ) -> None:
         """Resize and reposition *panel_window* to match *bounds*.
 
-        Supports both the duck-typed contract (a ``set_bounds(x, y, w, h)``
-        method) and the property-pair contract (``position`` +
-        ``size`` attributes). Failures are swallowed so a partial /
-        stub panel object doesn't crash the dock pipeline.
+        Supports three duck-typed contracts in priority order:
+
+        1. ``set_bounds(x, y, w, h)`` — single call, used by
+           :class:`MovablePanelWindow` (it also propagates the change
+           to the live DPG window via ``configure_item``).
+        2. ``set_position(x, y)`` + ``set_size(w, h)`` — paired
+           accessor mutators, the fallback when ``set_bounds`` is
+           absent but the wrapper still routes through DPG.
+        3. ``position`` + ``size`` property assignment — used by the
+           pure-data ``FakePanel`` test doubles.
+
+        Failures are swallowed so a partial / stub panel object doesn't
+        crash the dock pipeline; ``None`` ``panel_window`` is silently
+        ignored so the shell's degenerate "drag ended but no window"
+        path stays a no-op.
         """
+        if panel_window is None:
+            return
         x, y, w, h = bounds
         try:
             set_bounds = getattr(panel_window, "set_bounds", None)
             if callable(set_bounds):
                 set_bounds(x, y, w, h)
+                return
+        except Exception:
+            pass
+        try:
+            set_position = getattr(panel_window, "set_position", None)
+            set_size = getattr(panel_window, "set_size", None)
+            if callable(set_position) and callable(set_size):
+                set_position(x, y)
+                set_size(w, h)
                 return
         except Exception:
             pass

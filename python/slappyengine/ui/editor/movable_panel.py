@@ -195,6 +195,13 @@ class MovablePanelWindow:
         self._visible = True
         self._built = False
         self._theme_handle: Any = None
+        # Name of the dock zone the window is currently snapped to, or
+        # ``None`` when the window is floating. Set by
+        # :class:`DockZoneManager` on successful drag-end docking and
+        # reset to ``None`` when the user drags the window away again.
+        # Stored as ``str`` (the lowercase zone name, e.g. ``"left"``)
+        # rather than the enum so callers can persist it cheaply.
+        self.docked_to: str | None = None
 
         # Window tag — string for compatibility with DPG's tag system.
         self._window_tag: str = (
@@ -285,6 +292,17 @@ class MovablePanelWindow:
                 dpg.configure_item(self._window_tag, pos=[x, y])
         except Exception:
             pass
+
+    def set_bounds(self, x: int, y: int, w: int, h: int) -> None:
+        """Move + resize the window in one call.
+
+        Convenience wrapper used by :class:`DockZoneManager` when a drag
+        ends inside a dock zone. Delegates to :meth:`set_position` then
+        :meth:`set_size` so the size-clamping and live DPG propagation
+        already implemented on those methods both run.
+        """
+        self.set_position(x, y)
+        self.set_size(w, h)
 
     def get_size(self) -> tuple[int, int]:
         """Return the tracked ``(width, height)`` of the window."""

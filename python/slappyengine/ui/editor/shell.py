@@ -72,6 +72,9 @@ class EditorShell:
         self._height = height
         self._panels: list = []
         self._viewport_panel = None
+        self._layer_panel = None
+        self._tag_painter = None
+        self._behavior_panel = None
         self._code_mode_panel = None
         self._toolbar: "NotebookToolbar | None" = None
         self._scene_outliner: "NotebookOutliner | None" = None
@@ -228,6 +231,15 @@ class EditorShell:
         # Panel-toggle commands route through toggle_panel.
         if local.startswith("toggle_panel_"):
             panel_id = local[len("toggle_panel_"):]
+            # Hotkey aliases for the Nova3D-legacy wrappers. The
+            # MovablePanelWindow keys end in ``_panel`` / ``_painter`` —
+            # the hotkey table uses shorter ids for ergonomics.
+            alias = {
+                "layer":    "layer_panel",
+                "viewport": "viewport_panel",
+                "behavior": "behavior_panel",
+            }
+            panel_id = alias.get(panel_id, panel_id)
             try:
                 self.toggle_panel(panel_id)
             except Exception:
@@ -365,8 +377,23 @@ class EditorShell:
         Updates ``self._panel_layout_state[panel_id].visible`` and best-
         effort calls ``dpg.configure_item(tag, show=...)`` on the
         matching DPG window tag. Returns the new ``visible`` value.
+
+        The viewport panel is special-cased: it's always visible (the
+        wrapper is built with ``no_close=True``) so toggling is a no-op
+        that reports the panel as still visible.
         """
         from slappyengine.ui.editor.layout_presets import PanelLayoutState
+
+        # Viewport is always visible — never hide the GPU canvas.
+        if panel_id == "viewport_panel":
+            if self._notebook_status_bar is not None:
+                try:
+                    self._notebook_status_bar.set_message(
+                        "viewport: always visible", kind="info",
+                    )
+                except Exception:
+                    pass
+            return True
 
         state_dict = getattr(self, "_panel_layout_state", None)
         if not isinstance(state_dict, dict):
@@ -391,7 +418,26 @@ class EditorShell:
             "code":            "code_mode_area",
             "status_bar":      "status_bar",
         }
-        tag = tag_map.get(panel_id)
+        # Movable-panel wrappers are the canonical home for every
+        # panel that owns its own dpg.window — outliner, inspector,
+        # status bar, plus the Nova3D-legacy panels surfaced via
+        # ``register_panel``. Resolve from the wrapper registry first
+        # so the wrapper's tracked ``_visible`` flag stays the source
+        # of truth; fall back to the hard-coded tag_map for panels
+        # that are still embedded as child-windows.
+        wrapper = self._panel_windows.get(panel_id)
+        tag: str | None = None
+        if wrapper is not None:
+            try:
+                tag = wrapper.get_window_tag()
+                if current.visible:
+                    wrapper.show()
+                else:
+                    wrapper.hide()
+            except Exception:
+                pass
+        else:
+            tag = tag_map.get(panel_id)
         # Gate on _running because ``dpg.does_item_exist`` segfaults
         # without a context.
         if tag is not None and getattr(self, "_running", False):
@@ -399,6 +445,18 @@ class EditorShell:
                 import dearpygui.dearpygui as dpg
                 if dpg.does_item_exist(tag):
                     dpg.configure_item(tag, show=current.visible)
+                    # Showing the panel pops it above its neighbours
+                    # — issue show_item + focus_item so it's actually
+                    # raised, not just toggled in DPG bookkeeping.
+                    if current.visible:
+                        try:
+                            dpg.show_item(tag)
+                        except Exception:
+                            pass
+                        try:
+                            dpg.focus_item(tag)
+                        except Exception:
+                            pass
             except Exception:
                 pass
         if self._notebook_status_bar is not None:
@@ -471,7 +529,22 @@ class EditorShell:
     # ------------------------------------------------------------------
 
     def register_panel(self, panel) -> None:
-        """Append *panel* to the list of Details sidebar panels.
+        """Register *panel* on the shell so the layout composer can place it.
+
+        Two registration paths run side-by-side:
+
+        * The panel is appended to ``self._panels`` (the legacy details-
+          sidebar list). External callers that walk this list to inject
+          custom rendering continue to work.
+        * The panel is routed to a *named slot* on the shell when its
+          class matches a known kind — ``LayerPanel`` /
+          ``ViewportPanel`` / ``TagPainter`` / ``BehaviorPanel`` /
+          ``NotebookInspector`` / ``NotebookMaterialEditor``. The slots
+          are read by :meth:`compose_default_panel_layout` to build a
+          :class:`MovablePanelWindow` for each, so every legacy panel
+          ends up with its own movable, themed, snappable dpg.window
+          instead of being trapped inside the primary ``editor_root``
+          child window.
 
         Parameters
         ----------
@@ -479,6 +552,25 @@ class EditorShell:
             Any object that implements ``build(parent_tag: str | int) -> None``.
         """
         self._panels.append(panel)
+
+        # ── Route well-known panel types into named slots. The check is
+        # by class name string so we never import the panel module here
+        # — keeping :mod:`slappyengine.ui.editor.shell` import-cheap.
+        cls_name = type(panel).__name__
+        slot_map = {
+            "LayerPanel": "_layer_panel",
+            "ViewportPanel": "_viewport_panel",
+            "TagPainter": "_tag_painter",
+            "BehaviorPanel": "_behavior_panel",
+            "NotebookInspector": "_inspector",
+            "NotebookMaterialEditor": "_material_editor",
+        }
+        slot = slot_map.get(cls_name)
+        if slot is not None and getattr(self, slot, None) is None:
+            try:
+                setattr(self, slot, panel)
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -794,6 +886,79 @@ class EditorShell:
             pp.hide()
             windows["project_picker"] = pp
 
+        # ── Nova3D-legacy panels — wrapped so they get docking + snap
+        # behaviour like the notebook panels. Each is opt-in via the
+        # View menu (or hotkey toggle); only the viewport is shown by
+        # default because the GPU surface always needs an anchor.
+        top_y = TITLEBAR_H + TOOLBAR_H
+        sidebar_height = max(400, h - top_y - BOTTOM_H - STATUS_H)
+        # The center column lives between the left + right docks.
+        center_width = max(320, w - max(240, LEFT_W) - max(280, RIGHT_W) - 16)
+
+        # Layer panel — narrow side-strip below the outliner; hidden by
+        # default because the layer stack is niche compared to the
+        # outliner/inspector pair.
+        if self._layer_panel is not None:
+            lp = MovablePanelWindow(
+                self._layer_panel,
+                title="Layers",
+                kind="sidebar",
+                default_pos=(0, top_y + 320),
+                default_size=(260, 200),
+                min_size=(240, 160),
+                closable=True,
+            )
+            lp.hide()
+            windows["layer_panel"] = lp
+
+        # Viewport — the GPU canvas, anchored centre-stage. Always
+        # visible; the close button is suppressed so users can't
+        # accidentally dismiss the world view.
+        if self._viewport_panel is not None:
+            vp = MovablePanelWindow(
+                self._viewport_panel,
+                title="Viewport",
+                kind="viewport",
+                default_pos=(max(240, LEFT_W) + 8, top_y),
+                default_size=(center_width, sidebar_height),
+                min_size=(320, 320),
+                closable=False,
+            )
+            windows["viewport_panel"] = vp
+
+        # Tag painter — opt-in tool; tucked to the right-ish edge under
+        # the inspector and hidden until requested.
+        if self._tag_painter is not None:
+            tp = MovablePanelWindow(
+                self._tag_painter,
+                title="Tag Painter",
+                kind="sidebar",
+                default_pos=(max(0, w - 280), top_y + 250),
+                default_size=(280, 250),
+                min_size=(260, 220),
+                closable=True,
+            )
+            tp.hide()
+            windows["tag_painter"] = tp
+
+        # Behavior panel — AI-assisted scripting; floats over the
+        # workspace because it's a heavyweight modal-ish tool.
+        if self._behavior_panel is not None:
+            bp = MovablePanelWindow(
+                self._behavior_panel,
+                title="Behavior",
+                kind="default",
+                default_pos=(
+                    max(0, (w - 480) // 2),
+                    max(0, (h - 320) // 2),
+                ),
+                default_size=(480, 320),
+                min_size=(420, 280),
+                closable=True,
+            )
+            bp.hide()
+            windows["behavior_panel"] = bp
+
         self._panel_windows = windows
 
         # Register each movable window with the SnapManager so dragging
@@ -986,6 +1151,23 @@ class EditorShell:
                     tag="menu_layout_presets",
                 ):
                     self._populate_layout_presets_menu()
+                # ── Nova3D-legacy panel toggles ──────────────────────
+                dpg.add_separator()
+                dpg.add_menu_item(
+                    label="Show Layer Panel",
+                    tag="menu_show_layer_panel",
+                    callback=lambda *_: self.toggle_panel("layer_panel"),
+                )
+                dpg.add_menu_item(
+                    label="Show Tag Painter",
+                    tag="menu_show_tag_painter",
+                    callback=lambda *_: self.toggle_panel("tag_painter"),
+                )
+                dpg.add_menu_item(
+                    label="Show Behavior Panel",
+                    tag="menu_show_behavior_panel",
+                    callback=lambda *_: self.toggle_panel("behavior_panel"),
+                )
             with dpg.menu(label="Help"):
                 dpg.add_menu_item(
                     label="Welcome",
@@ -1431,6 +1613,11 @@ class EditorShell:
         # to compute a snapped position and write it back via DPG.
         self._tick_panel_drag()
 
+        # Snap-guide + dock-zone live-feedback overlay. Runs every
+        # frame so the moment a drag ends the overlay is cleared on
+        # the next tick; cheap when no drag is in flight.
+        self._render_drag_overlay()
+
         # ── Status-bar live signals ────────────────────────────────────────
         if self._notebook_status_bar is not None:
             try:
@@ -1449,6 +1636,151 @@ class EditorShell:
                     self._notebook_status_bar.set_world_cursor(int(mx), int(my))
                 except Exception:
                     pass
+
+    # ------------------------------------------------------------------
+    # Live drag overlay — snap guides + dock zone previews
+    # ------------------------------------------------------------------
+
+    #: DPG tag for the lazily-created viewport drawlist that hosts the
+    #: snap-guide lines and the dock-zone preview rectangles. Lives in
+    #: front of every panel so the user sees feedback while dragging.
+    _OVERLAY_DRAWLIST_TAG: str = "editor_drag_overlay"
+
+    def _ensure_overlay_drawlist(self) -> str:
+        """Lazily create the viewport drawlist used by :meth:`_render_drag_overlay`.
+
+        Returns the drawlist tag. Headless-safe: if Dear PyGui can't be
+        imported, or if the drawlist creation fails (no live context),
+        the constant tag is still returned so callers can swallow
+        downstream errors uniformly.
+        """
+        tag = self._OVERLAY_DRAWLIST_TAG
+        try:
+            import dearpygui.dearpygui as dpg
+        except Exception:
+            return tag
+        try:
+            if dpg.does_item_exist(tag):
+                return tag
+        except Exception:
+            return tag
+        try:
+            dpg.add_viewport_drawlist(front=True, tag=tag)
+        except Exception:
+            # Headless / no viewport — fall through; caller will skip
+            # subsequent draw calls when they raise.
+            pass
+        return tag
+
+    def _get_active_theme(self):
+        """Return the active :class:`ThemeSpec`, or ``None`` if unavailable.
+
+        Wrapped so the overlay can fetch the accent colour without
+        crashing in CI runs that never registered any starter themes
+        (e.g. tests that instantiate :class:`EditorShell` directly).
+        """
+        try:
+            from slappyengine.ui.theme import get_active_theme
+            return get_active_theme()
+        except Exception:
+            return None
+
+    def _render_drag_overlay(self) -> None:
+        """Render snap guides + dock-zone previews on the live viewport.
+
+        Called once per frame from :meth:`tick_subsystems` right after
+        the drag-poll block. The overlay is wiped on every frame and
+        re-populated only while a drag is in flight, so the moment the
+        user releases the mouse all guides disappear without any
+        explicit cleanup hook.
+
+        Headless-safe: every Dear PyGui call sits inside its own
+        ``try/except`` so a missing context never crashes the tick
+        loop.
+        """
+        if not self._running:
+            return
+        try:
+            import dearpygui.dearpygui as dpg
+        except Exception:
+            return
+        dl = self._ensure_overlay_drawlist()
+        try:
+            dpg.delete_item(dl, children_only=True)
+        except Exception:
+            return
+
+        # ── Snap guide lines ─────────────────────────────────────────
+        if self._snap_manager is not None and bool(
+            getattr(self._snap_manager, "is_dragging", False)
+        ):
+            guide_color: tuple[int, int, int, int] = (255, 111, 181, 220)
+            try:
+                t = self._get_active_theme()
+                if t is not None and hasattr(t, "semantic") and t.semantic:
+                    c = t.semantic.accent
+                    guide_color = (int(c.r), int(c.g), int(c.b), 220)
+            except Exception:
+                pass
+
+            ax_target = getattr(self._snap_manager, "active_snap_x", None)
+            ay_target = getattr(self._snap_manager, "active_snap_y", None)
+            ax = ax_target.position if ax_target is not None else None
+            ay = ay_target.position if ay_target is not None else None
+            if ax is not None:
+                try:
+                    dpg.draw_line(
+                        parent=dl,
+                        p1=(ax, 0),
+                        p2=(ax, self._height),
+                        color=guide_color,
+                        thickness=1,
+                    )
+                except Exception:
+                    pass
+            if ay is not None:
+                try:
+                    dpg.draw_line(
+                        parent=dl,
+                        p1=(0, ay),
+                        p2=(self._width, ay),
+                        color=guide_color,
+                        thickness=1,
+                    )
+                except Exception:
+                    pass
+
+        # ── Dock zone preview rectangles ─────────────────────────────
+        if self._dock_zones is not None:
+            try:
+                is_active = self._dock_zones.is_active()
+            except Exception:
+                is_active = False
+            if is_active:
+                try:
+                    active = self._dock_zones.current_zone()
+                except Exception:
+                    active = None
+                if active is not None:
+                    try:
+                        zones = self._dock_zones.compute_zones()
+                    except Exception:
+                        zones = []
+                    for zone in zones:
+                        if zone.zone is not active:
+                            continue
+                        x, y, w, h = zone.bounds
+                        try:
+                            dpg.draw_rectangle(
+                                parent=dl,
+                                pmin=(x, y),
+                                pmax=(x + w, y + h),
+                                color=zone.color,
+                                fill=zone.color,
+                                thickness=2,
+                            )
+                        except Exception:
+                            pass
 
     def _tick_panel_drag(self) -> None:
         """Poll each movable panel's DPG position; apply snap on drag."""
@@ -1516,11 +1848,69 @@ class EditorShell:
             try:
                 if self._dock_zones is not None:
                     self._dock_zones.on_drag_end(
-                        self._actively_dragging, None
+                        self._actively_dragging,
+                        self._find_window_by_tag(self._actively_dragging),
                     )
             except Exception:
                 pass
         self._actively_dragging = any_dragging
+
+    def _find_window_by_tag(self, tag: str) -> "MovablePanelWindow | None":
+        """Return the :class:`MovablePanelWindow` whose DPG tag is *tag*.
+
+        Linear scan over the small ``self._panel_windows`` map (a handful
+        of panels — never enough to warrant a reverse index). Returns
+        ``None`` when no panel matches, so callers can fall through to
+        a safe no-op when the shell sees a stray tag (e.g. a panel that
+        was destroyed mid-drag).
+        """
+        if not tag:
+            return None
+        for win in self._panel_windows.values():
+            wt = getattr(win, "_window_tag", None) or getattr(
+                win, "window_tag", None
+            )
+            if wt == tag:
+                return win
+        return None
+
+    def on_viewport_resize(self, width: int, height: int) -> None:
+        """React to an OS-level editor-window resize.
+
+        Re-binds the snap + dock-zone managers to the new viewport
+        dimensions and recomputes the bounds of every panel currently
+        snapped to a dock zone so the docked layout follows the new
+        viewport. Floating panels (``docked_to is None``) are left
+        wherever the user dropped them.
+
+        Safe to call without a live DPG context — the underlying
+        ``MovablePanelWindow.set_bounds`` already guards on the build
+        flag.
+        """
+        try:
+            self._width = int(width)
+            self._height = int(height)
+        except Exception:
+            return
+        if self._snap_manager is not None:
+            try:
+                self._snap_manager.set_viewport_size(
+                    self._width, self._height
+                )
+            except Exception:
+                pass
+        if self._dock_zones is not None:
+            try:
+                self._dock_zones.update_viewport_size(
+                    (self._width, self._height)
+                )
+            except Exception:
+                pass
+            for win in self._panel_windows.values():
+                try:
+                    self._dock_zones.redock_panel(win)
+                except Exception:
+                    pass
 
     def notify_user_activity(self) -> None:
         """Reset the idle emitter — call on any keyboard / mouse / drag input.
