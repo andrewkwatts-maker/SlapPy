@@ -136,6 +136,30 @@ class EditorShell:
         # Keyed by short panel name (``"toolbar"``, ``"outliner"``, …).
         self._panel_windows: dict[str, "MovablePanelWindow"] = {}
 
+        # ── Snap + dock-zone live-drag managers ──────────────────────────
+        # Constructed eagerly so `compose_default_panel_layout` can wire
+        # each MovablePanelWindow against the same instances. The tick
+        # loop polls each panel's DPG position per frame and applies
+        # snap correction. SnapManager / DockZoneManager are pure-logic
+        # modules; soft-import to keep the editor importable when one
+        # is missing.
+        try:
+            from slappyengine.ui.editor.snap_manager import SnapManager
+            self._snap_manager = SnapManager()
+            self._snap_manager.set_viewport_size((self._width, self._height))
+        except Exception:
+            self._snap_manager = None
+        try:
+            from slappyengine.ui.editor.dock_zones import DockZoneManager
+            self._dock_zones = DockZoneManager((self._width, self._height))
+        except Exception:
+            self._dock_zones = None
+        # Last-known panel positions/sizes used to detect drag/resize in
+        # the polled tick loop. Filled by `tick_subsystems`.
+        self._last_panel_pos: dict[str, tuple[int, int]] = {}
+        self._last_panel_size: dict[str, tuple[int, int]] = {}
+        self._actively_dragging: str | None = None
+
         # Notebook bookkeeping — outliner selection mirror + active tool.
         self._selected_entity: object | None = None
         self._active_tool: str = "select"
@@ -771,6 +795,38 @@ class EditorShell:
             windows["project_picker"] = pp
 
         self._panel_windows = windows
+
+        # Register each movable window with the SnapManager so dragging
+        # one snaps against the others. The SnapManager expects an object
+        # exposing `.tag`, `.x`, `.y`, `.width`, `.height` — adapt each
+        # MovablePanelWindow on the fly via a tiny duck.
+        if self._snap_manager is not None:
+            for short_name, win in windows.items():
+                tag = getattr(win, "_window_tag", None) or getattr(
+                    win, "window_tag", None
+                )
+                if tag is None:
+                    continue
+                pos = win.get_position() if hasattr(win, "get_position") else (0, 0)
+                size = win.get_size() if hasattr(win, "get_size") else (0, 0)
+                try:
+                    from dataclasses import dataclass, field
+
+                    class _PanelHandle:
+                        __slots__ = ("tag", "x", "y", "width", "height")
+
+                        def __init__(self, tag, x, y, w, h):
+                            self.tag = tag
+                            self.x = x
+                            self.y = y
+                            self.width = w
+                            self.height = h
+
+                    self._snap_manager.register_panel(
+                        _PanelHandle(tag, pos[0], pos[1], size[0], size[1])
+                    )
+                except Exception:
+                    pass
         return windows
 
     def setup(self) -> None:  # noqa: C901 (complexity — UI layout)
@@ -1367,6 +1423,101 @@ class EditorShell:
                 self._idle_emitter.tick(dt)
             except Exception:
                 pass
+
+        # ── Per-frame panel drag polling ──────────────────────────────────
+        # DPG handles drag/resize natively via the window title bar +
+        # corners. We poll each panel's current position/size against the
+        # last-known values; when they change we hand off to SnapManager
+        # to compute a snapped position and write it back via DPG.
+        self._tick_panel_drag()
+
+        # ── Status-bar live signals ────────────────────────────────────────
+        if self._notebook_status_bar is not None:
+            try:
+                self._notebook_status_bar.tick(dt)
+            except Exception:
+                pass
+            try:
+                import dearpygui.dearpygui as dpg
+                dt_dpg = dpg.get_delta_time()
+                if dt_dpg > 1e-6:
+                    self._notebook_status_bar.set_fps(1.0 / dt_dpg)
+                mx, my = dpg.get_mouse_pos(local=False)
+                self._notebook_status_bar.set_world_cursor(int(mx), int(my))
+            except Exception:
+                pass
+
+    def _tick_panel_drag(self) -> None:
+        """Poll each movable panel's DPG position; apply snap on drag."""
+        if not self._panel_windows or not self._running:
+            return
+        try:
+            import dearpygui.dearpygui as dpg
+        except Exception:
+            return
+        any_dragging: str | None = None
+        for short_name, window in self._panel_windows.items():
+            tag = getattr(window, "_window_tag", None) or getattr(
+                window, "window_tag", None
+            )
+            if tag is None:
+                continue
+            try:
+                if not dpg.does_item_exist(tag):
+                    continue
+                cur_pos = tuple(dpg.get_item_pos(tag))
+                cur_w = dpg.get_item_width(tag) or 0
+                cur_h = dpg.get_item_height(tag) or 0
+            except Exception:
+                continue
+            cur_pos_t = (int(cur_pos[0]), int(cur_pos[1]))
+            cur_size_t = (int(cur_w), int(cur_h))
+            last_pos = self._last_panel_pos.get(short_name)
+            last_size = self._last_panel_size.get(short_name)
+            self._last_panel_pos[short_name] = cur_pos_t
+            self._last_panel_size[short_name] = cur_size_t
+            if last_pos is None or last_size is None:
+                continue
+            # Position changed → drag in progress
+            if cur_pos_t != last_pos:
+                any_dragging = tag
+                # Lazily inform SnapManager that a drag is underway. If we
+                # haven't seen this tag dragging before, start the snap
+                # session so target snapshots get built once.
+                if self._snap_manager is not None:
+                    try:
+                        if self._actively_dragging != tag:
+                            self._snap_manager.on_drag_start(tag)
+                        snapped = self._snap_manager.on_drag_tick(
+                            tag, cur_pos_t
+                        )
+                        if snapped != cur_pos_t:
+                            dpg.configure_item(tag, pos=list(snapped))
+                            self._last_panel_pos[short_name] = snapped
+                    except Exception:
+                        pass
+                if self._dock_zones is not None:
+                    try:
+                        mx, my = dpg.get_mouse_pos(local=False)
+                        self._dock_zones.on_drag_tick(tag, (int(mx), int(my)))
+                    except Exception:
+                        pass
+        # End of drag: nothing is moving this frame but we had something
+        # actively dragging the previous frame.
+        if any_dragging is None and self._actively_dragging is not None:
+            try:
+                if self._snap_manager is not None:
+                    self._snap_manager.on_drag_end(self._actively_dragging)
+            except Exception:
+                pass
+            try:
+                if self._dock_zones is not None:
+                    self._dock_zones.on_drag_end(
+                        self._actively_dragging, None
+                    )
+            except Exception:
+                pass
+        self._actively_dragging = any_dragging
 
     def notify_user_activity(self) -> None:
         """Reset the idle emitter — call on any keyboard / mouse / drag input.
