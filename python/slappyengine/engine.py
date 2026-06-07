@@ -1010,10 +1010,30 @@ class Engine:
         # --- Main loop (DPG-driven) -------------------------------------
         import dearpygui.dearpygui as dpg  # already verified above
 
+        shell._running = True
         while dpg.is_dearpygui_running():
+            # Per-frame delta time from DPG's clock.
+            try:
+                dt = float(dpg.get_delta_time())
+            except Exception:
+                dt = 1.0 / 60.0
+
             # Redraw gizmo handles before the DPG frame is rendered.
             if shell._gizmo_overlay is not None:
                 shell._gizmo_overlay.update()
+
+            # Drive the editor subsystems that own the per-frame work
+            # the docking + snapping + status-bar pipeline depends on:
+            # - tick_panel_drag (polls panel positions, applies snap correction)
+            # - render_drag_overlay (draws snap guides + dock-zone previews)
+            # - creature scheduler + idle emitter
+            # - status bar FPS / world-cursor refresh
+            # Wrapped so a broken subsystem can't take down the main loop.
+            try:
+                shell.tick_subsystems(dt)
+            except Exception:
+                pass
+
             dpg.render_dearpygui_frame()
             # Refresh Code Mode timestamps each frame.
             if shell._code_mode_panel is not None:
@@ -1026,6 +1046,7 @@ class Engine:
                     # Canvas may not support draw_frame on all backends;
                     # full async wgpu+DPG integration is a future enhancement.
                     pass
+        shell._running = False
 
         dpg.destroy_context()
         self._config_manager.stop()
