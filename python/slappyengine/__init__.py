@@ -39,6 +39,11 @@ Simulation:
   fragmentation / fracture (``connected_components``, ``_grid``).
 * :mod:`slappyengine.numerics` — V-cycle Poisson solver
   (``vcycle_poisson``, ``sor_smooth``, ``compute_residual``).
+* :mod:`slappyengine.math`     — symbolic + numeric formula evaluation
+  (``Formula`` / ``evaluate`` backed by Arithma when the ``[math]``
+  extra is installed; falls back to a Python eval sandbox otherwise) +
+  ``AnimationCurve`` / ``Bezier`` / ``Catmull`` / ``ease`` /
+  ``Vec2`` / ``Vec3`` / ``Vec4``.
 * :mod:`slappyengine.zones`    — generic ``RectZone`` / ``ThresholdZone``
   / ``ZoneManager`` (pickup, spawn pad, damage zone).
 
@@ -428,6 +433,7 @@ def __getattr__(name: str):
         "input",
         "iso",
         "material",
+        "math",
         "modules",
         "numerics",
         "post_process",
@@ -440,6 +446,10 @@ def __getattr__(name: str):
         "tools",
         "ui",
         "ai",
+        # Visual scripting backbone (graph data model + Python codegen +
+        # 20-node starter palette). Editor UI ships in a later sprint —
+        # this subpackage stays headless / framework-agnostic.
+        "visual_scripting",
         # Phase B: generic zone primitive (damage zones, trigger volumes,
         # spawn pads). Registered as a subpackage so
         # ``from slappyengine import zones`` returns the module itself.
