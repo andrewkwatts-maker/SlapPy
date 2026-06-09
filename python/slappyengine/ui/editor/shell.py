@@ -93,6 +93,11 @@ class EditorShell:
         self._creature_bus_adapter = None
         self._idle_emitter = None
         self._theme_switcher_panel = None
+        # Extra-surface notebook panels (hidden by default; toggleable
+        # via the View menu). Constructed in :meth:`setup_notebook_panels`.
+        self._telemetry_panel = None
+        self._post_process_panel = None
+        self._animation_panel = None
 
         # ── Notebook ambient-feedback channels ─────────────────────────────
         # Built during ``setup``; constructed here so callers can introspect
@@ -703,6 +708,34 @@ class EditorShell:
         if NotebookGizmoOverlay is not None and self._gizmo_overlay is None:
             self._gizmo_overlay = NotebookGizmoOverlay()
 
+        # ── Extra-surface panels (hidden by default; toggleable via View menu)
+        if self._telemetry_panel is None:
+            try:
+                from slappyengine.ui.editor.notebook_telemetry_panel import (
+                    NotebookTelemetryPanel,
+                )
+                self._telemetry_panel = NotebookTelemetryPanel()
+            except Exception:
+                self._telemetry_panel = None
+
+        if self._post_process_panel is None:
+            try:
+                from slappyengine.ui.editor.notebook_post_process_panel import (
+                    NotebookPostProcessPanel,
+                )
+                self._post_process_panel = NotebookPostProcessPanel()
+            except Exception:
+                self._post_process_panel = None
+
+        if self._animation_panel is None:
+            try:
+                from slappyengine.ui.editor.notebook_animation_panel import (
+                    NotebookAnimationPanel,
+                )
+                self._animation_panel = NotebookAnimationPanel()
+            except Exception:
+                self._animation_panel = None
+
     def compose_default_panel_layout(self) -> dict[str, "MovablePanelWindow"]:
         """Build the default :class:`MovablePanelWindow` set + sensible dock positions.
 
@@ -852,6 +885,51 @@ class EditorShell:
             )
             ts.hide()
             windows["theme_switcher"] = ts
+
+        # ── Telemetry stream viewer — floating, hidden by default.
+        telemetry_panel = getattr(self, "_telemetry_panel", None)
+        if telemetry_panel is not None:
+            tp = MovablePanelWindow(
+                telemetry_panel,
+                title="Telemetry",
+                kind="sidebar",
+                default_pos=(max(0, w - 420), TITLEBAR_H + TOOLBAR_H + 60),
+                default_size=(400, 320),
+                min_size=(360, 240),
+                closable=True,
+            )
+            tp.hide()
+            windows["telemetry_panel"] = tp
+
+        # ── Post-process chain editor — floating, hidden by default.
+        pp_panel = getattr(self, "_post_process_panel", None)
+        if pp_panel is not None:
+            pp = MovablePanelWindow(
+                pp_panel,
+                title="Post-Process",
+                kind="sidebar",
+                default_pos=(max(0, w - 380), TITLEBAR_H + TOOLBAR_H + 100),
+                default_size=(360, 360),
+                min_size=(320, 280),
+                closable=True,
+            )
+            pp.hide()
+            windows["post_process_panel"] = pp
+
+        # ── Animation timeline / curve editor — floating, hidden by default.
+        anim_panel = getattr(self, "_animation_panel", None)
+        if anim_panel is not None:
+            ap = MovablePanelWindow(
+                anim_panel,
+                title="Timeline",
+                kind="default",
+                default_pos=(max(0, (w - 520) // 2), max(0, h - 380)),
+                default_size=(520, 320),
+                min_size=(420, 320),
+                closable=True,
+            )
+            ap.hide()
+            windows["animation_panel"] = ap
 
         # ── Status bar — very bottom edge, full width, fixed height.
         # ``no_move=True`` so the user can't accidentally drag the
@@ -1180,6 +1258,17 @@ class EditorShell:
                     tag="menu_save_scene_as",
                     shortcut="Ctrl+Shift+S",
                     callback=lambda *_: self.save_scene_as(),
+                )
+                dpg.add_separator()
+                dpg.add_menu_item(
+                    label="New Diary Page",
+                    tag="menu_new_diary_page",
+                    callback=lambda *_: self.new_diary_page(),
+                )
+                dpg.add_menu_item(
+                    label="Open Diary Page...",
+                    tag="menu_open_diary_page",
+                    callback=lambda *_: self.open_diary_page(),
                 )
                 dpg.add_separator()
                 dpg.add_menu_item(
@@ -2486,6 +2575,50 @@ class EditorShell:
         self._scene_path = None
         self._scene_name = "untitled"
         self.mark_clean()
+
+    def get_diary_page(self) -> "NotebookDiaryPage":
+        """Return the lazily-constructed :class:`NotebookDiaryPage`.
+
+        The diary panel hosts a script editor with a live viewport on the
+        left (running a small :class:`slappyengine.studio.Stage`) and the
+        script source on the right. Constructed on first use so the
+        startup path stays cheap when no diaries are open.
+        """
+        panel = getattr(self, "_diary_page", None)
+        if panel is None:
+            from slappyengine.ui.editor.notebook_diary_page import (
+                NotebookDiaryPage,
+            )
+            panel = NotebookDiaryPage(engine=self._engine)
+            self._diary_page = panel
+        return panel
+
+    def new_diary_page(self) -> "NotebookDiaryPage":
+        """File menu hook — open a blank diary with the default scaffold."""
+        panel = self.get_diary_page()
+        from pathlib import Path as _Path
+        panel.open_diary(_Path("untitled.diary.py"))
+        return panel
+
+    def open_diary_page(self, path: Any | None = None) -> "NotebookDiaryPage":
+        """File menu hook — file picker filtered to ``*.diary.py``.
+
+        When *path* is given (test path), it's loaded directly. Otherwise
+        the call defers to ``engine.open_diary_picker`` when present, or
+        records the intent for a follow-up sprint to wire a real picker.
+        """
+        panel = self.get_diary_page()
+        if path is not None:
+            from pathlib import Path as _Path
+            panel.open_diary(_Path(path))
+            return panel
+        picker = getattr(self._engine, "open_diary_picker", None)
+        if callable(picker):
+            try:
+                picker(panel)
+            except Exception:
+                pass
+        return panel
 
     def get_project_picker(self) -> "NotebookProjectPicker":
         """Return the lazily-constructed :class:`NotebookProjectPicker`."""

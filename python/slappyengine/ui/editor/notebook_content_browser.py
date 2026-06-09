@@ -118,6 +118,14 @@ _FILE_ICON_SVGS: dict[str, str] = {
         '<polygon points="2,14 4,12 5,15" fill="#404040"/>'
         '</svg>'
     ),
+    # Diary page for .diary.py scripts — a heart-stamped notebook page.
+    "diary": (
+        '<svg viewBox="0 0 16 16">'
+        '<polygon points="2,1 11,1 14,4 14,15 2,15" fill="#FBF7EC" stroke="#FF6FB5" stroke-width="0.6"/>'
+        '<polyline points="11,1 11,4 14,4" fill="none" stroke="#FF6FB5" stroke-width="0.6"/>'
+        '<path d="M8 12 L5 9 A2 2 0 0 1 8 7 A2 2 0 0 1 11 9 Z" fill="#FF6FB5"/>'
+        '</svg>'
+    ),
     # Paint palette for images.
     "image": (
         '<svg viewBox="0 0 16 16">'
@@ -162,6 +170,8 @@ def icon_for_path(path: Path) -> str:
     name = path.name
     if name.endswith(".scene.yaml"):
         return "scene"
+    if name.endswith(".diary.py"):
+        return "diary"
     suffix = path.suffix.lower()
     if suffix == ".py":
         return "script"
@@ -718,6 +728,7 @@ class NotebookContentBrowser:
         return {
             "scene":  "<>",
             "script": "/",
+            "diary":  "<3",
             "image":  "[]",
             "audio":  "o)",
             "folder": "[+]",

@@ -269,7 +269,7 @@ class TestIcons:
             _FILE_ICON_SVGS,
         )
 
-        expected = {"scene", "script", "image", "audio", "folder", "page"}
+        expected = {"scene", "script", "diary", "image", "audio", "folder", "page"}
         assert set(_FILE_ICON_SVGS.keys()) == expected
         for kind, svg in _FILE_ICON_SVGS.items():
             assert len(svg.encode("utf-8")) <= 500, (
