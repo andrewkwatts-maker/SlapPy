@@ -365,6 +365,22 @@ UI subpackage — lazy-loaded to avoid eager numpy/wgpu imports.
 
 **Inner modules:** `debug_overlay`, `editor`, `html_overlay`, `hud_widgets`, `project_manager`, `scene_ui`, `widgets`
 
+### `slappyengine.math`
+
+slappyengine.math — symbolic + numeric formula evaluation backed by the Arithma extra when installed, with an in-process fallback when it is not.
+
+**Public attributes:** `Formula`, `evaluate`
+
+**Inner modules:** `_arithma_backend`
+
+### `slappyengine.visual_scripting`
+
+slappyengine.visual_scripting — headless visual-scripting graph data model + 20-node starter palette + Python code generator. Editor UI for the system ships in a follow-up sprint.
+
+**Public attributes:** `BUILTIN_NODES`, `BUILTIN_REGISTRY`, `Edge`, `GraphValidationError`, `NODE_KINDS`, `Node`, `NodeGraph`, `NodeKind`, `NodePort`, `NodeRegistry`, `PORT_KINDS`, `PortKind`, `get_node`, `graph_to_python`, `list_nodes`, `ports_compatible`, `python_to_graph`
+
+**Inner modules:** `codegen_python`, `graph`, `node`, `palette`
+
 ### `slappyengine.zones`
 
 slappyengine.zones — Generic zone primitives.
