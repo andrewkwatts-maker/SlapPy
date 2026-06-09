@@ -1,4 +1,12 @@
-﻿from __future__ import annotations
+﻿"""Legacy Nova3D reference. The shipping editor uses notebook_material_editor — see docs/ui_pattern_audit_2026_06_03.md.
+
+Survivors:
+  * ``notebook_material_editor`` imports ``MaterialPropertyAdapter`` / kind constants from here.
+  * ``__init__.py`` still re-exports ``MaterialEditor`` via the lazy map.
+
+Do NOT extend — funnel new work into ``notebook_material_editor.py``.
+"""
+from __future__ import annotations
 
 import dataclasses
 from typing import Any

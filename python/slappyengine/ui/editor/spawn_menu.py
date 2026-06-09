@@ -1,4 +1,11 @@
-"""
+"""Legacy Nova3D reference. The shipping editor uses notebook_spawn_menu — see docs/ui_pattern_audit_2026_06_03.md.
+
+Survivors (do NOT extend):
+  * ``EditorShell`` imports ``SPAWN_ACTIONS`` here for legacy + Add wiring.
+  * ``notebook_spawn_menu`` lazy-imports the Nova3D spec dataclasses
+    (``RopeSpawnSpec`` / ``RagdollSpawnSpec`` / ``HumanoidSpawnSpec`` /
+    ``IKChainSpawnSpec``) so the two menus stay spec-compatible.
+
 Spawn menu — `+ Add` actions that drop softbody / fluid bodies into a world.
 
 Each entry in :data:`SPAWN_ACTIONS` describes:
