@@ -79,14 +79,48 @@ from slappyengine._validation import (
 
 
 __all__ = [
-    "AutosaveState",
     "AutosaveManager",
+    "AutosaveReadError",
+    "AutosaveState",
     "RecoveryChoice",
     "RecoveryOffer",
     "RecoveryPrompt",
     "default_snapshot_dir",
     "snapshot_timestamp",
 ]
+
+
+# ---------------------------------------------------------------------------
+# Exceptions
+# ---------------------------------------------------------------------------
+
+
+class AutosaveReadError(Exception):
+    """Raised when a ``.snap.yaml`` file cannot be decoded.
+
+    Carries the offending line number on the exception when a YAML
+    parse error pinpoints one — the editor's "restore" toast surfaces
+    that line so the user knows exactly where the file broke.
+
+    Attributes
+    ----------
+    path:
+        The snapshot file that failed to parse.
+    line:
+        1-indexed line number of the parse failure, or ``None`` when
+        the underlying loader could not pinpoint one.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        path: Optional[Path] = None,
+        line: Optional[int] = None,
+    ) -> None:
+        super().__init__(message)
+        self.path = path
+        self.line = line
 
 
 # ---------------------------------------------------------------------------
@@ -154,6 +188,44 @@ def _yaml_loads(text: str) -> Any:
             return None
     except Exception:
         return None
+
+
+def _yaml_loads_verbose(text: str) -> tuple[Any, Optional[int]]:
+    """Like :func:`_yaml_loads` but returns ``(doc, line)``.
+
+    ``line`` is the 1-indexed parse-error line when the underlying
+    loader raises with a locatable mark, or ``None`` when the loader
+    succeeds or can't pinpoint one. The document itself is ``None``
+    only when parsing genuinely failed (empty YAML documents decode to
+    ``None`` too — those callers must inspect the return value).
+    """
+    try:
+        import yaml  # type: ignore[import-not-found]
+        try:
+            return yaml.safe_load(text), None
+        except yaml.YAMLError as exc:
+            line: Optional[int] = None
+            mark = getattr(exc, "problem_mark", None)
+            if mark is not None:
+                line = int(getattr(mark, "line", 0)) + 1
+            return None, line
+    except ImportError:
+        try:
+            return json.loads(text), None
+        except json.JSONDecodeError as exc:
+            return None, int(getattr(exc, "lineno", 0)) or None
+        except Exception:
+            return None, None
+
+
+def _peek_line(text: str, line: Optional[int]) -> str:
+    """Return the (stripped) contents of *text*'s 1-indexed *line*, or ''."""
+    if not line or line <= 0:
+        return ""
+    lines = text.splitlines()
+    if line > len(lines):
+        return ""
+    return lines[line - 1].strip()
 
 
 def _encode_payload(payload: Any) -> Any:
@@ -653,6 +725,72 @@ class AutosaveManager:
         with self._lock:
             snapshots = self._collect_snapshots()
         return snapshots[0] if snapshots else None
+
+    @classmethod
+    def read_snapshot(cls, path: Path | str) -> dict:
+        """Load *path* and return the decoded snapshot document.
+
+        Public counterpart to the private ``_decode_payload`` helper —
+        surfaces both ``meta`` and ``payload`` from a ``.snap.yaml``
+        file so external tools (recovery UIs, migration scripts, unit
+        tests) can inspect a snapshot without reaching into module
+        internals.
+
+        The returned dict always exposes:
+
+        * ``"meta"``      — copied from the file (``{}`` if missing).
+        * ``"payload"``   — decoded via the module's internal
+          ``_decode_payload`` (base64 → bytes, etc.).
+
+        Parameters
+        ----------
+        path:
+            Filesystem path to a ``.snap.yaml`` snapshot.
+
+        Returns
+        -------
+        dict
+            ``{"meta": {...}, "payload": <decoded>}``.
+
+        Raises
+        ------
+        FileNotFoundError
+            If *path* does not exist.
+        AutosaveReadError
+            If the file cannot be decoded as YAML/JSON, or if the top-
+            level document is not a dict. The exception's :attr:`line`
+            attribute pinpoints the parse failure when available.
+        """
+        snap_path = validate_path_like("path", "AutosaveManager.read_snapshot", path)
+        if not snap_path.is_file():
+            raise FileNotFoundError(
+                f"AutosaveManager.read_snapshot: snapshot not found: {snap_path}"
+            )
+        try:
+            text = snap_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            raise AutosaveReadError(
+                f"AutosaveManager.read_snapshot: cannot read {snap_path}: {exc}",
+                path=snap_path,
+            ) from exc
+        document, parse_line = _yaml_loads_verbose(text)
+        if document is None:
+            raise AutosaveReadError(
+                f"AutosaveManager.read_snapshot: {snap_path} failed to parse"
+                + (f" at line {parse_line}" if parse_line is not None else "")
+                + (f": '{_peek_line(text, parse_line)}'" if parse_line is not None else ""),
+                path=snap_path,
+                line=parse_line,
+            )
+        if not isinstance(document, dict):
+            raise AutosaveReadError(
+                f"AutosaveManager.read_snapshot: {snap_path} decoded to "
+                f"{type(document).__name__}, expected dict",
+                path=snap_path,
+            )
+        meta = document.get("meta") if isinstance(document.get("meta"), dict) else {}
+        payload = _decode_payload(document.get("payload"))
+        return {"meta": dict(meta), "payload": payload}
 
     def restore_snapshot(
         self,

@@ -225,15 +225,9 @@ def recover(
 
 
 def _load_snapshot(path: Path, editor: EditorState) -> None:
-    """Direct YAML-read fallback (mirrors ``AutosaveManager.restore_snapshot``)."""
-    from slappyengine.autosave import _decode_payload, _yaml_loads
-
-    text = Path(path).read_text(encoding="utf-8")
-    document = _yaml_loads(text)
-    if not isinstance(document, dict):
-        raise ValueError(f"hello_autosave: bad snapshot at {path}")
-    payload = _decode_payload(document.get("payload"))
-    editor.restore_from(payload)
+    """Direct snapshot-read fallback (uses the public read_snapshot API)."""
+    document = AutosaveManager.read_snapshot(path)
+    editor.restore_from(document["payload"])
 
 
 # ────────────────────────────────────────────────────────────────────────────

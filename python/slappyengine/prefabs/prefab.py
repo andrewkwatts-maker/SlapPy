@@ -146,6 +146,69 @@ class Prefab:
             )
 
     # ------------------------------------------------------------------
+    # Entity-count introspection
+    # ------------------------------------------------------------------
+
+    @property
+    def entity_count(self) -> int:
+        """Gameplay entity count for this prefab.
+
+        Convention — matches the way the editor spawn-card widget and
+        gameplay HUD reason about "how many things did I just spawn":
+
+        * ``point`` / ``circle`` / ``box`` → ``1`` (one rigid entity).
+        * ``rope``    → ``body_spec['segments']`` (fallback ``5``).
+        * ``chain``   → ``body_spec['links']`` (fallback ``5``).
+        * ``ragdoll`` → ``7`` (matches the shipping humanoid skeleton).
+        * ``composite`` → recursive sum of every ``child_prefabs`` entry;
+          child lookup requires a library, so the property falls back to
+          ``len(body_spec.get('nodes', [1]))`` when no library is
+          attached. Callers that need accurate composite totals should
+          use :meth:`compute_entity_count` with an explicit library.
+        * Anything else → ``len(body_spec.get('nodes', [1]))``.
+        """
+        return self.compute_entity_count(None)
+
+    def compute_entity_count(self, library: "Any | None" = None) -> int:
+        """Compute :attr:`entity_count` with an optional *library* ref.
+
+        Passing a :class:`PrefabLibrary` allows composite prefabs to
+        resolve their :attr:`child_prefabs` recursively — without one
+        the composite branch falls back to the length of
+        ``body_spec['nodes']`` (or ``1`` when no nodes list is present).
+        """
+        kind = self.body_spec.get("kind")
+        if kind in ("point", "circle", "box"):
+            return 1
+        if kind == "rope":
+            return int(self.body_spec.get("segments", 5))
+        if kind == "chain":
+            return int(self.body_spec.get("links", 5))
+        if kind == "ragdoll":
+            return 7
+        if kind == "composite":
+            if self.child_prefabs and library is not None and hasattr(library, "get"):
+                total = 0
+                resolved_any = False
+                for cname in self.child_prefabs:
+                    child = library.get(cname)
+                    if child is None:
+                        continue
+                    resolved_any = True
+                    total += child.compute_entity_count(library)
+                if resolved_any:
+                    return total
+            nodes = self.body_spec.get("nodes")
+            if isinstance(nodes, list) and nodes:
+                return len(nodes)
+            return 1
+        nodes = self.body_spec.get("nodes", [1])
+        try:
+            return len(nodes)
+        except TypeError:
+            return 1
+
+    # ------------------------------------------------------------------
     # YAML round-trip
     # ------------------------------------------------------------------
 

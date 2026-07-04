@@ -21,7 +21,7 @@ import logging
 import os
 import tempfile
 from pathlib import Path
-from typing import Iterable
+from typing import TYPE_CHECKING, Any, Iterable
 
 from slappyengine._validation import (
     validate_non_empty_str,
@@ -29,6 +29,9 @@ from slappyengine._validation import (
 )
 
 from .prefab import CATEGORIES, Prefab
+
+if TYPE_CHECKING:  # pragma: no cover
+    from slappyengine.dynamics import Body, World
 
 _LOG = logging.getLogger(__name__)
 
@@ -213,6 +216,81 @@ class PrefabLibrary:
         if not self.BAKED_DIR.is_dir():
             return []
         return self.load_from_dir(self.BAKED_DIR)
+
+    def bake_and_load(
+        self,
+        user_dir: Path | str | None = None,
+    ) -> "PrefabLibrary":
+        """Bootstrap the library — bake, then load baked + user prefabs.
+
+        Convenience for the editor / demo boot path that would otherwise
+        write::
+
+            lib.bake_defaults(user_dir=udir)
+            lib.load_from_dir(lib.BAKED_DIR)
+            lib.load_from_dir(udir)
+
+        Idempotent: calling it twice with the same *user_dir* leaves the
+        registry populated with the same entries and never overwrites
+        hand-edited user files (see :meth:`bake_defaults`).
+
+        Parameters
+        ----------
+        user_dir:
+            Override the default :attr:`USER_DIR`. When ``None`` the
+            manager's own :attr:`USER_DIR` is used.
+
+        Returns
+        -------
+        PrefabLibrary
+            ``self`` for fluent chaining.
+        """
+        udir = self.USER_DIR if user_dir is None else Path(validate_path_like(
+            "user_dir", "PrefabLibrary.bake_and_load", user_dir,
+        ))
+        # Bake first so the user directory is guaranteed populated.
+        self.bake_defaults(user_dir=udir)
+        # Then load the baked palette (source of truth for defaults) and
+        # merge any user-authored / hand-edited overrides on top.
+        if self.BAKED_DIR.is_dir():
+            self.load_from_dir(self.BAKED_DIR)
+        if udir.is_dir():
+            self.load_from_dir(udir)
+        return self
+
+    # ------------------------------------------------------------------
+    # One-shot spawn helper
+    # ------------------------------------------------------------------
+
+    def spawn(
+        self,
+        name: str,
+        world: "World",
+        position: tuple[float, float],
+        rotation: float = 0.0,
+    ) -> list["Body"]:
+        """Look up *name* and spawn it into *world* at *position*.
+
+        One-shot wrapper around ``lib.get(name).spawn(world, position,
+        rotation, library=lib)`` — the library reference is threaded
+        through so composite prefabs pull in their children.
+
+        Raises
+        ------
+        KeyError
+            If no prefab is registered under *name*.
+        """
+        if not isinstance(name, str) or not name:
+            raise KeyError(
+                f"PrefabLibrary.spawn: name must be a non-empty str; got {name!r}"
+            )
+        prefab = self._entries.get(name)
+        if prefab is None:
+            raise KeyError(
+                f"PrefabLibrary.spawn: no prefab registered under {name!r} "
+                f"(known: {sorted(self._entries.keys())})"
+            )
+        return prefab.spawn(world, position, rotation, library=self)
 
 
 # ---------------------------------------------------------------------------

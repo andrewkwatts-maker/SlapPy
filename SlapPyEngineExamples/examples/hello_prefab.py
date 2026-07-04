@@ -115,12 +115,13 @@ def build_world(
 
     bodies_by_name: dict[str, list] = {}
     for name, pos in SPAWN_TABLE:
-        prefab = library.get(name)
-        if prefab is None:
+        if library.get(name) is None:
             raise RuntimeError(
                 f"hello_prefab: baked prefab {name!r} not found in library"
             )
-        spawned = prefab.spawn(world, pos)
+        # One-shot spawn via PrefabLibrary.spawn (AA2 polish) — threads
+        # the library ref through so composite prefabs pull children.
+        spawned = library.spawn(name, world, pos)
         bodies_by_name[name] = spawned
     return world, library, bodies_by_name
 
