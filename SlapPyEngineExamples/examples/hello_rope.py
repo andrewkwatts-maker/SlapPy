@@ -7,6 +7,13 @@ A 24-node rope is hung between two pinned anchors 4.0 units apart at
 droops into a catenary curve under gravity. The world is stepped for
 120 frames at ``dt = 1/60`` and the final state is summarised on stdout.
 
+Damping is tuned so ``solver_iterations * damping`` stays at or under
+``0.3`` (the over-damp warning threshold documented in
+:mod:`slappyengine.dynamics.world`): ``iters=12`` and ``damping=0.025``
+give exactly ``0.30`` (effective per-step damping ≈ 0.262), so the demo
+never trips ``RuntimeWarning``. This matches the tuning used by
+``hello_ragdoll``.
+
 Run::
 
     PYTHONPATH=python python examples/hello_rope.py
@@ -34,7 +41,12 @@ SPAN: float = 4.0               # horizontal distance between anchors
 ANCHOR_Y: float = 2.0           # both anchors at this height
 MASS_PER_NODE: float = 0.05
 STIFFNESS: float = 2.0e6
-DAMPING: float = 0.08
+# Solver tuning: keep iters * damping <= 0.3 so the World over-damp warning
+# in :mod:`slappyengine.dynamics.world` (threshold 0.5 on effective per-step
+# damping) never fires. iters=12, damping=0.025 gives product 0.30 and
+# effective damping 1-(1-0.025)^12 ≈ 0.262 — well under the 0.5 threshold.
+SOLVER_ITERATIONS: int = 12
+DAMPING: float = 0.025
 GRAVITY: tuple[float, float] = (0.0, -9.81)
 DEFAULT_DT: float = 1.0 / 60.0
 DEFAULT_FRAMES: int = 120
@@ -55,7 +67,7 @@ VIEW_MAX: tuple[float, float] = (3.0, 3.0)
 def build_world() -> tuple[World, "object"]:
     """Construct the world + rope used by every code path in this demo."""
     world = World(gravity=GRAVITY)
-    world.solver_iterations = 16  # tight enough that segments don't visibly stretch
+    world.solver_iterations = SOLVER_ITERATIONS  # tight enough that segments don't visibly stretch
     spec = RopeSpec(
         node_count=NODE_COUNT,
         total_length=TOTAL_LENGTH,
@@ -165,6 +177,7 @@ def summarise(world: World, body, frames: int) -> dict:
         "droop": droop,
         "expected_lo": expected_lo,
         "expected_hi": expected_hi,
+        "iters_x_damping": SOLVER_ITERATIONS * DAMPING,
     }
 
 
@@ -179,6 +192,7 @@ def print_summary(summary: dict) -> None:
         "  expected droop range: "
         f"[{summary['expected_lo']:.4f}, {summary['expected_hi']:.4f}]"
     )
+    print(f"  iters * damping     : {summary['iters_x_damping']:.3f} (<= 0.3 OK)")
     print(f"  stepped frames      : {summary['frames']}")
 
 
