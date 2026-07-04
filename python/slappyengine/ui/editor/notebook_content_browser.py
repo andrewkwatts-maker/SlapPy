@@ -36,13 +36,16 @@ from __future__ import annotations
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, Iterable
 
 from slappyengine._validation import (
     validate_callable,
     validate_path_like,
     validate_str,
 )
+
+if TYPE_CHECKING:  # pragma: no cover — type hints only
+    from slappyengine.projects.project import Project
 from slappyengine.ui.theme.svg_icon import SVGIcon
 from slappyengine.ui.widgets.notebook_theme import (
     register_theme_listener,
@@ -92,6 +95,102 @@ def classify_file(path: Path) -> str | None:
         return SECTION_ASSETS
     # Everything else (markdown, json, glb, …) still belongs to assets.
     return SECTION_ASSETS
+
+
+# ---------------------------------------------------------------------------
+# Project asset-tree kinds — a wider, Nova3D-style classification used by
+# :meth:`NotebookContentBrowser.set_project`. Distinct from the coarse
+# ``SECTION_*`` buckets so scenes can subdivide into ``.scene.yaml`` vs
+# ``.scene.json``, shaders (``.wgsl`` / ``.glsl``) surface as their own
+# group, and materials get first-class placement.
+# ---------------------------------------------------------------------------
+
+ASSET_KIND_SCRIPT = "script"
+ASSET_KIND_SCENE = "scene"
+ASSET_KIND_TEXTURE = "texture"
+ASSET_KIND_MATERIAL = "material"
+ASSET_KIND_SHADER = "shader"
+ASSET_KIND_OTHER = "other"
+
+#: Display-order for the project asset tree. Mirrors Nova3D's content
+#: browser grouping so users switching between the two feel at home.
+ASSET_KIND_ORDER: tuple[str, ...] = (
+    ASSET_KIND_SCRIPT,
+    ASSET_KIND_SCENE,
+    ASSET_KIND_TEXTURE,
+    ASSET_KIND_MATERIAL,
+    ASSET_KIND_SHADER,
+    ASSET_KIND_OTHER,
+)
+
+#: Display labels for each kind — used by ``_render_group`` and the
+#: DPG collapsing-header widget. Keeps the pluralisation consistent
+#: across the panel + test assertions.
+ASSET_GROUP_LABELS: dict[str, str] = {
+    ASSET_KIND_SCRIPT:   "Scripts",
+    ASSET_KIND_SCENE:    "Scenes",
+    ASSET_KIND_TEXTURE:  "Textures",
+    ASSET_KIND_MATERIAL: "Materials",
+    ASSET_KIND_SHADER:   "Shaders",
+    ASSET_KIND_OTHER:    "Other",
+}
+
+_TEXTURE_EXTS: frozenset[str] = frozenset({".png", ".jpg", ".jpeg", ".webp"})
+_SHADER_EXTS:  frozenset[str] = frozenset({".wgsl", ".glsl"})
+
+
+def classify_asset(path: Path) -> str | None:
+    """Return the :data:`ASSET_KIND_*` string for *path* (or ``None``).
+
+    Hidden files, ``__pycache__`` bytecode and ``*.pyc`` are skipped
+    (returns ``None``). All other files land in one of the six kinds
+    listed in :data:`ASSET_KIND_ORDER` — this is the classifier used by
+    the project asset-tree renderer.
+    """
+    name = path.name
+    if name.startswith("."):
+        return None
+    if name.endswith(".pyc"):
+        return None
+    if "__pycache__" in path.parts:
+        return None
+
+    # Composite (multi-suffix) extensions checked first so their coarser
+    # single-suffix counterparts don't shadow them.
+    lower = name.lower()
+    if lower.endswith(".scene.yaml") or lower.endswith(".scene.json"):
+        return ASSET_KIND_SCENE
+    if lower.endswith(".mat.yaml") or lower.endswith(".material.yaml"):
+        return ASSET_KIND_MATERIAL
+
+    suffix = path.suffix.lower()
+    if suffix == ".py":
+        return ASSET_KIND_SCRIPT
+    if suffix in _TEXTURE_EXTS:
+        return ASSET_KIND_TEXTURE
+    if suffix in _SHADER_EXTS:
+        return ASSET_KIND_SHADER
+    return ASSET_KIND_OTHER
+
+
+def fuzzy_match(needle: str, haystack: str) -> bool:
+    """Return ``True`` if every char of *needle* appears in *haystack* in order.
+
+    Case-insensitive. An empty *needle* matches anything. Used by the
+    search box to filter the project asset tree without dragging in a
+    real fuzzy-matching library (``rapidfuzz`` etc.). Also handles the
+    trivial substring case — ``"main"`` matches ``"main_menu.py"``
+    directly — but falls through to per-character subsequence matching
+    for less exact queries (``"mm"`` matches ``"main_menu.py"``).
+    """
+    if not needle:
+        return True
+    needle_l = needle.lower()
+    haystack_l = haystack.lower()
+    if needle_l in haystack_l:
+        return True
+    it = iter(haystack_l)
+    return all(ch in it for ch in needle_l)
 
 
 # ---------------------------------------------------------------------------
@@ -284,6 +383,20 @@ class NotebookContentBrowser:
         self._theme = resolve_theme()
         self._sticker_handles: list[str] = []
 
+        # Project asset-tree state — populated by :meth:`set_project`.
+        # ``_project`` is kept as ``Any`` to avoid a runtime import of
+        # ``slappyengine.projects.project`` (which itself pulls in a
+        # slice of the ``[editor]`` extra). ``None`` means "no project
+        # loaded — fall back to the plain ``_root`` walker".
+        self._project: Any | None = None
+        self._on_asset_selected: (
+            Callable[[Path, str], None] | None
+        ) = None
+        # Guard flag so a reentrant ``set_on_asset_selected`` call from
+        # inside a callback doesn't smash the ``_on_asset_selected``
+        # slot while it's mid-dispatch. See :meth:`_dispatch_asset`.
+        self._dispatching_asset: bool = False
+
         # Soft-import watchdog so externally-added files surface without a
         # polling restart.  Falls back to refresh()-on-tick when absent.
         self._watchdog_available: bool = _try_import_watchdog()
@@ -327,6 +440,357 @@ class NotebookContentBrowser:
         self._cwd = None
         if self._built:
             self.refresh()
+
+    # ------------------------------------------------------------------
+    # Project asset-tree (Nova3D-style content browser)
+    # ------------------------------------------------------------------
+
+    def set_project(self, project: "Project | None") -> None:
+        """Swap the browsed root to *project*'s ``assets/`` directory.
+
+        Passing ``None`` (or a project with no ``assets/`` directory)
+        clears the tree — subsequent :meth:`iter_asset_tree` calls
+        return an empty dict. The panel *does not* raise on a missing
+        ``assets/`` directory; a freshly-scaffolded project is a
+        common case and must not crash the editor.
+
+        Parameters
+        ----------
+        project:
+            An in-memory :class:`slappyengine.projects.Project` handle,
+            or ``None`` to clear.
+        """
+        if project is None:
+            self._project = None
+            self._root = None
+            self._cwd = None
+            self._expanded_dirs.clear()
+            if self._built:
+                self.refresh()
+            return
+
+        # Duck-typed — the panel doesn't care what class ``project`` is
+        # so long as it exposes ``.path`` (Path-like). This keeps the
+        # test suite free of a hard dependency on the projects package.
+        try:
+            base = getattr(project, "path", None)
+        except Exception:
+            base = None
+        if base is None:
+            self._project = None
+            self._root = None
+        else:
+            self._project = project
+            assets_dir = Path(base) / "assets"
+            # Fall back to the project root itself when there's no
+            # ``assets/`` directory (freshly-created project, unusual
+            # layout, tests, …). ``iter_asset_tree`` will short-circuit
+            # to an empty result when nothing enumerates.
+            self._root = assets_dir if assets_dir.exists() else Path(base)
+        self._cwd = None
+        self._expanded_dirs.clear()
+        if self._built:
+            self.refresh()
+
+    def get_project(self) -> "Project | None":
+        """Return the :class:`Project` handle bound via :meth:`set_project`."""
+        return self._project
+
+    def set_on_asset_selected(
+        self, callback: Callable[[Path, str], None] | None,
+    ) -> None:
+        """Subscribe *callback* to asset clicks in the project tree.
+
+        The callback receives ``(path, asset_kind)`` where ``asset_kind``
+        is one of the :data:`ASSET_KIND_*` strings. Passing ``None``
+        clears the subscription.
+
+        Only one subscriber at a time — the design intent is that the
+        editor shell owns the routing and forks internally to the code
+        panel / scene loader / preview pop-up.
+        """
+        if callback is not None:
+            callback = validate_callable(
+                "callback",
+                "NotebookContentBrowser.set_on_asset_selected",
+                callback,
+            )
+        self._on_asset_selected = callback
+
+    def _build_asset_tree(self, root: Path) -> dict[str, list[Path]]:
+        """Walk *root* and return a ``{kind: [paths]}`` dict.
+
+        Kinds are the :data:`ASSET_KIND_*` strings. Missing or
+        unreadable *root* directories return an empty dict — callers
+        should treat that as "empty project". Files are sorted within
+        each group by lower-case name so the display order stays
+        deterministic across Windows / POSIX filesystems (which return
+        directory entries in different orders).
+        """
+        result: dict[str, list[Path]] = {k: [] for k in ASSET_KIND_ORDER}
+        try:
+            if not root.exists() or not root.is_dir():
+                return result
+        except OSError:
+            return result
+        try:
+            candidates = sorted(root.rglob("*"), key=lambda p: str(p).lower())
+        except (PermissionError, OSError):
+            return result
+        for child in candidates:
+            try:
+                if not child.is_file():
+                    continue
+            except OSError:
+                # Broken symlink / disappearing file → skip cleanly.
+                continue
+            kind = classify_asset(child)
+            if kind is None:
+                continue
+            result[kind].append(child)
+        return result
+
+    def iter_asset_tree(self) -> dict[str, list[Path]]:
+        """Return the current project's asset tree, honouring the search box.
+
+        The return value is the same shape as :meth:`_build_asset_tree`;
+        empty groups are preserved so consumers can rely on
+        :data:`ASSET_KIND_ORDER` for stable iteration.
+        """
+        if self._root is None:
+            return {k: [] for k in ASSET_KIND_ORDER}
+        tree = self._build_asset_tree(self._root)
+        needle = (self._search_text or "").strip()
+        if not needle:
+            return tree
+        filtered: dict[str, list[Path]] = {k: [] for k in ASSET_KIND_ORDER}
+        for kind, files in tree.items():
+            for path in files:
+                if fuzzy_match(needle, path.name):
+                    filtered[kind].append(path)
+        return filtered
+
+    def _render_group(
+        self,
+        group_name: str,
+        files: Iterable[Path],
+    ) -> None:
+        """Render a DPG collapsing-header group of *files*.
+
+        *group_name* should be a value from :data:`ASSET_GROUP_LABELS`;
+        empty groups render nothing. Each row is a click-through button
+        wired to :meth:`_dispatch_asset` — the callback receives the
+        file path and matching :data:`ASSET_KIND_*` string.
+        """
+        dpg = _safe_dpg()
+        if dpg is None:
+            return
+        # Normalise ``files`` first — an empty group is a no-op so we
+        # don't clutter the collapsing-header stack with empty sections.
+        file_list = list(files)
+        if not file_list:
+            return
+
+        accent = list(self._theme.color("accent", (220, 120, 160, 255)))
+        ink = list(self._theme.color("ink", (40, 40, 60, 255)))
+        try:
+            with dpg.collapsing_header(label=group_name, default_open=True):
+                for path in file_list:
+                    kind = classify_asset(path) or ASSET_KIND_OTHER
+                    safe = str(abs(hash(str(path))))
+                    row_tag = f"notebook_cb_asset_{safe}"
+                    try:
+                        with dpg.group(horizontal=True, tag=row_tag):
+                            try:
+                                dpg.add_text(
+                                    self._icon_glyph(icon_for_path(path)),
+                                    color=accent,
+                                )
+                            except Exception:
+                                pass
+                            try:
+                                dpg.add_button(
+                                    label=path.name,
+                                    callback=self._make_asset_callback(
+                                        path, kind,
+                                    ),
+                                    width=-1,
+                                    height=18,
+                                )
+                            except Exception:
+                                pass
+                        # Right-click context menu, per the U7 spec.
+                        self._attach_context_menu(row_tag, path)
+                    except Exception:
+                        try:
+                            dpg.add_text(path.name, color=ink)
+                        except Exception:
+                            pass
+        except Exception:
+            # Stub-DPG without ``collapsing_header`` → flat fallback.
+            try:
+                dpg.add_text(group_name, color=ink)
+            except Exception:
+                pass
+            for path in file_list:
+                try:
+                    dpg.add_text(path.name, color=ink)
+                except Exception:
+                    pass
+
+    def _make_asset_callback(
+        self, path: Path, kind: str,
+    ) -> Callable[..., None]:
+        """Build a per-row DPG callback for the project asset tree."""
+        def _cb(*_args: Any, **_kwargs: Any) -> None:
+            self._dispatch_asset(path, kind)
+        return _cb
+
+    def _dispatch_asset(self, path: Path, kind: str) -> None:
+        """Route an asset-tree click to :attr:`_on_asset_selected`.
+
+        Guarded with ``_dispatching_asset`` so a subscriber that calls
+        :meth:`set_on_asset_selected` from inside its own callback
+        cannot corrupt mid-dispatch state. Exceptions inside the
+        subscriber are swallowed — the editor must never crash because
+        a listener throws.
+        """
+        cb = self._on_asset_selected
+        if cb is None:
+            return
+        self._dispatching_asset = True
+        try:
+            cb(path, kind)
+        except Exception:
+            pass
+        finally:
+            self._dispatching_asset = False
+
+    def _attach_context_menu(self, row_tag: str, path: Path) -> None:
+        """Register a right-click popup for *row_tag* (best-effort).
+
+        Menu items: Open · Reveal in Explorer · Copy Path · Delete
+        (with a confirm modal). All operations are wrapped in
+        try/except so a missing DPG method drops the menu quietly
+        rather than surfacing an editor-breaking traceback.
+        """
+        dpg = _safe_dpg()
+        if dpg is None:
+            return
+        popup_tag = f"{row_tag}_ctx"
+        try:
+            with dpg.popup(row_tag, mousebutton=1, tag=popup_tag):  # type: ignore[attr-defined]
+                dpg.add_button(
+                    label="Open",
+                    callback=lambda *_: self._context_open(path),
+                )
+                dpg.add_button(
+                    label="Reveal in Explorer",
+                    callback=lambda *_: self.reveal(path),
+                )
+                dpg.add_button(
+                    label="Copy Path",
+                    callback=lambda *_: self.copy_path(path),
+                )
+                dpg.add_button(
+                    label="Delete",
+                    callback=lambda *_: self._context_delete(path),
+                )
+        except Exception:
+            # No popup support in the stub → silently drop the menu.
+            pass
+
+    def _context_open(self, path: Path) -> None:
+        """Handle the context-menu ``Open`` action."""
+        kind = classify_asset(path) or ASSET_KIND_OTHER
+        self._dispatch_asset(path, kind)
+
+    def _context_delete(self, path: Path) -> None:
+        """Confirm + delete via the context menu."""
+        dpg = _safe_dpg()
+        if dpg is None:
+            # Headless — no confirm modal, just delete silently.
+            try:
+                self.delete(path)
+            except Exception:
+                pass
+            return
+        modal_tag = f"notebook_cb_confirm_{abs(hash(str(path)))}"
+        try:
+            with dpg.window(  # type: ignore[attr-defined]
+                label="Delete asset?",
+                modal=True,
+                tag=modal_tag,
+                no_close=False,
+            ):
+                dpg.add_text(f"Delete {path.name}?")
+                with dpg.group(horizontal=True):
+                    dpg.add_button(
+                        label="Delete",
+                        callback=lambda *_: self._confirm_delete(path, modal_tag),
+                    )
+                    dpg.add_button(
+                        label="Cancel",
+                        callback=lambda *_: (
+                            dpg.delete_item(modal_tag)  # type: ignore[attr-defined]
+                            if dpg.does_item_exist(modal_tag) else None
+                        ),
+                    )
+        except Exception:
+            # Fallback — best-effort direct delete.
+            try:
+                self.delete(path)
+            except Exception:
+                pass
+
+    def _confirm_delete(self, path: Path, modal_tag: str) -> None:
+        """Execute the confirmed delete + tear down the modal."""
+        dpg = _safe_dpg()
+        try:
+            self.delete(path)
+        except Exception:
+            pass
+        if dpg is not None:
+            try:
+                if dpg.does_item_exist(modal_tag):
+                    dpg.delete_item(modal_tag)
+            except Exception:
+                pass
+
+    def copy_path(self, path: Path) -> str:
+        """Copy *path*'s string form to the OS clipboard.
+
+        Returns the string that was placed on the clipboard so callers
+        (and tests) can verify without poking at platform APIs. Falls
+        back silently on systems without a working clipboard.
+        """
+        text = str(path)
+        # Try DPG first, then pyperclip, then tkinter — each block is
+        # wrapped so a missing dep never becomes an editor crash.
+        dpg = _safe_dpg()
+        if dpg is not None:
+            try:
+                dpg.set_clipboard_text(text)  # type: ignore[attr-defined]
+                return text
+            except Exception:
+                pass
+        try:
+            import pyperclip  # type: ignore[import-not-found]
+            pyperclip.copy(text)
+            return text
+        except Exception:
+            pass
+        try:
+            import tkinter
+            r = tkinter.Tk()
+            r.withdraw()
+            r.clipboard_clear()
+            r.clipboard_append(text)
+            r.update()
+            r.destroy()
+        except Exception:
+            pass
+        return text
 
     # ------------------------------------------------------------------
     # Breadcrumb navigation
@@ -646,6 +1110,22 @@ class NotebookContentBrowser:
         dpg = _safe_dpg()
         if dpg is None:
             return
+
+        # Project mode: render the six-group Nova3D-style asset tree.
+        if self._project is not None:
+            tree = self.iter_asset_tree()
+            has_any = any(tree.values())
+            if not has_any:
+                self._build_empty_state()
+                return
+            for kind in ASSET_KIND_ORDER:
+                files = tree.get(kind, [])
+                if not files:
+                    continue
+                self._render_group(ASSET_GROUP_LABELS[kind], files)
+            return
+
+        # Legacy mode — driven by :meth:`set_root` (no project bound).
         rows = self.iter_rows()
         if not rows:
             self._build_empty_state()
@@ -892,11 +1372,21 @@ def _try_import_watchdog() -> bool:
 
 
 __all__ = [
+    "ASSET_GROUP_LABELS",
+    "ASSET_KIND_MATERIAL",
+    "ASSET_KIND_ORDER",
+    "ASSET_KIND_OTHER",
+    "ASSET_KIND_SCENE",
+    "ASSET_KIND_SCRIPT",
+    "ASSET_KIND_SHADER",
+    "ASSET_KIND_TEXTURE",
     "NotebookContentBrowser",
     "SECTION_ASSETS",
     "SECTION_SCENES",
     "SECTION_SCRIPTS",
+    "classify_asset",
     "classify_file",
+    "fuzzy_match",
     "icon_for_path",
     "icon_svg",
     "make_file_icon",
