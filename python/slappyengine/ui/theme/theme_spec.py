@@ -1275,6 +1275,9 @@ class ThemeSpec:
         transitions = _scale("transitions", TransitionScale, TransitionScale())
         z_index = _scale("z_index", ZIndexScale, ZIndexScale())
 
+        frames = _frames_from_dict(data.get("frames"))
+        decor = _decor_from_dict(data.get("decor"))
+
         return cls(
             name=name,
             semantic=semantic,
@@ -1286,6 +1289,8 @@ class ThemeSpec:
             fonts=fonts,
             nine_slices=nine_slices,
             icons=icons,
+            frames=frames,
+            decor=decor,
             background_shader=bg_shader,
             metadata=dict(data.get("metadata") or {}),
         )
@@ -1325,6 +1330,7 @@ __all__ = [
     "FrameStyle",
     "Gradient",
     "Palette",
+    "PanelDecorConfig",
     "PanelFrameSet",
     "RadiusScale",
     "SemanticTokens",

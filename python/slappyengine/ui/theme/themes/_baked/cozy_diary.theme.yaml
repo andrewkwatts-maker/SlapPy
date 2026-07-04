@@ -1,0 +1,361 @@
+name: cozy_diary
+semantic:
+  primary:
+  - 216
+  - 162
+  - 168
+  - 1.0
+  secondary:
+  - 141
+  - 167
+  - 124
+  - 1.0
+  accent:
+  - 176
+  - 122
+  - 92
+  - 1.0
+  background:
+  - 245
+  - 237
+  - 221
+  - 1.0
+  surface:
+  - 239
+  - 224
+  - 190
+  - 1.0
+  surface_hover:
+  - 245
+  - 230
+  - 200
+  - 1.0
+  border:
+  - 124
+  - 85
+  - 50
+  - 0.9019607843137255
+  text_primary:
+  - 46
+  - 41
+  - 38
+  - 1.0
+  text_secondary:
+  - 92
+  - 70
+  - 48
+  - 1.0
+  text_disabled:
+  - 160
+  - 142
+  - 122
+  - 1.0
+  success:
+  - 122
+  - 170
+  - 102
+  - 1.0
+  warning:
+  - 212
+  - 160
+  - 74
+  - 1.0
+  error:
+  - 184
+  - 80
+  - 64
+  - 1.0
+  info:
+  - 155
+  - 178
+  - 140
+  - 1.0
+  focus_ring:
+  - 216
+  - 162
+  - 168
+  - 1.0
+  glass_bg:
+  - 245
+  - 237
+  - 221
+  - 0.85
+  primary_gradient:
+    start:
+    - 216
+    - 162
+    - 168
+    - 1.0
+    end:
+    - 176
+    - 122
+    - 92
+    - 1.0
+    angle_deg: 135.0
+  glass_blur_px: 10.0
+palette:
+  cream:
+  - 245
+  - 237
+  - 221
+  - 1.0
+  dusty_rose:
+  - 216
+  - 162
+  - 168
+  - 1.0
+  caramel:
+  - 176
+  - 122
+  - 92
+  - 1.0
+  sage:
+  - 141
+  - 167
+  - 124
+  - 1.0
+  ink:
+  - 46
+  - 41
+  - 38
+  - 1.0
+  leather_edge:
+  - 124
+  - 85
+  - 50
+  - 0.9019607843137255
+  body:
+  - 92
+  - 70
+  - 48
+  - 1.0
+  muted_body:
+  - 140
+  - 122
+  - 102
+  - 1.0
+  success:
+  - 122
+  - 170
+  - 102
+  - 1.0
+  warning:
+  - 212
+  - 160
+  - 74
+  - 1.0
+  error:
+  - 184
+  - 80
+  - 64
+  - 1.0
+  surface:
+  - 245
+  - 237
+  - 221
+  - 1.0
+  surface_alt:
+  - 239
+  - 224
+  - 190
+  - 1.0
+  on_surface:
+  - 46
+  - 41
+  - 38
+  - 1.0
+  primary:
+  - 216
+  - 162
+  - 168
+  - 1.0
+  on_primary:
+  - 46
+  - 41
+  - 38
+  - 1.0
+  secondary:
+  - 141
+  - 167
+  - 124
+  - 1.0
+  accent:
+  - 176
+  - 122
+  - 92
+  - 1.0
+spacing:
+  xs: 4.0
+  sm: 8.0
+  md: 16.0
+  lg: 24.0
+  xl: 32.0
+  xxl: 48.0
+radius:
+  sm: 4.0
+  md: 8.0
+  lg: 12.0
+  xl: 16.0
+  pill: 999.0
+transitions:
+  fast: 0.15
+  normal: 0.25
+  slow: 0.5
+z_index:
+  base: 1
+  dropdown: 100
+  modal: 1000
+  toast: 2000
+fonts:
+  header:
+    family: Patrick Hand
+    size: 22
+    weight: '600'
+  h1:
+    family: Patrick Hand
+    size: 28
+    weight: '700'
+  body:
+    family: Quicksand
+    size: 14
+    weight: '500'
+  body_small:
+    family: Quicksand
+    size: 13
+    weight: regular
+  caption:
+    family: Quicksand
+    size: 12
+    weight: italic
+  mono:
+    family: JetBrains Mono
+    size: 14
+    weight: regular
+nine_slices:
+  leather_edge_panel:
+    insets:
+    - 8
+    - 8
+    - 8
+    - 8
+  leather_strap_toolbar:
+    insets:
+    - 0
+    - 8
+    - 0
+    - 8
+  embossed_leather_modal:
+    insets:
+    - 10
+    - 10
+    - 10
+    - 10
+icons:
+  leaf:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4
+      20 C4 10 10 4 20 4 C20 14 14 20 4 20 Z" fill="currentColor"/><line x1="4" y1="20"
+      x2="20" y2="4" stroke="#2E2926" stroke-width="1"/></svg>
+    size: 24
+    default_fill:
+    - 141
+    - 167
+    - 124
+    - 255
+  acorn:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6
+      10 L18 10 L17 18 L12 22 L7 18 Z" fill="currentColor"/><rect x="5" y="6" width="14"
+      height="5" fill="#7C5532"/></svg>
+    size: 24
+    default_fill:
+    - 176
+    - 122
+    - 92
+    - 255
+  bookmark:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon
+      points="6,3 18,3 18,21 12,17 6,21" fill="currentColor"/></svg>
+    size: 24
+    default_fill:
+    - 216
+    - 162
+    - 168
+    - 255
+background_shader:
+  kind: shader_effect
+  name: ruled_paper
+  params:
+    paper_color:
+    - 245
+    - 237
+    - 221
+    - 255
+    line_color:
+    - 124
+    - 85
+    - 50
+    - 100
+    margin_color:
+    - 176
+    - 122
+    - 92
+    - 180
+    line_spacing: 28
+    margin_x: 28
+frames:
+  default:
+    border_size: 2.0
+    rounding: 6.0
+    padding_x: 12
+    padding_y: 10
+    shadow_size: 8.0
+    child_rounding: 4.0
+    child_border_size: 1.0
+    grip_size: 12.0
+    grip_rounding: 3.0
+    title_bar_height: 26
+    border_color:
+    - 176
+    - 122
+    - 92
+    - 1.0
+    shadow_color:
+    - 141
+    - 167
+    - 124
+    - 0.35
+  modal:
+    border_size: 2.5
+    rounding: 6.0
+    padding_x: 14
+    padding_y: 12
+    shadow_size: 10.0
+    child_rounding: 4.0
+    child_border_size: 1.0
+    grip_size: 12.0
+    grip_rounding: 4.0
+    title_bar_height: 24
+    border_color:
+    - 124
+    - 85
+    - 50
+    - 1.0
+    shadow_color:
+    - 141
+    - 167
+    - 124
+    - 0.4
+decor:
+  divider_style: pencil_line
+  corner_style: tape_lavender
+  divider_thickness_px: 2
+  corner_size_px: 32
+  per_kind: {}
+metadata:
+  tape_color: '#7C5532'
+  tape_alt_color: '#8DA77C'
+  seasonal_flavour: autumn
+  creature_roster: red_panda_01,fox_01,leaf_01
+  creature_roster_count: '3'
+  variant: light
+  family: diary
+  source_doc: docs/theme_diary_family_2026_06_03.md

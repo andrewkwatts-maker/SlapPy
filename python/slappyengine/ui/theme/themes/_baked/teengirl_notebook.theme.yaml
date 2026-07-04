@@ -1,0 +1,354 @@
+name: teengirl_notebook
+semantic:
+  primary:
+  - 255
+  - 111
+  - 181
+  - 1.0
+  secondary:
+  - 167
+  - 231
+  - 199
+  - 1.0
+  accent:
+  - 255
+  - 224
+  - 102
+  - 0.8627450980392157
+  background:
+  - 251
+  - 247
+  - 236
+  - 1.0
+  surface:
+  - 244
+  - 239
+  - 227
+  - 1.0
+  surface_hover:
+  - 231
+  - 221
+  - 241
+  - 1.0
+  border:
+  - 184
+  - 176
+  - 160
+  - 0.7843137254901961
+  text_primary:
+  - 31
+  - 47
+  - 102
+  - 1.0
+  text_secondary:
+  - 59
+  - 59
+  - 69
+  - 1.0
+  text_disabled:
+  - 177
+  - 172
+  - 184
+  - 1.0
+  success:
+  - 91
+  - 193
+  - 138
+  - 1.0
+  warning:
+  - 242
+  - 187
+  - 85
+  - 1.0
+  error:
+  - 232
+  - 90
+  - 108
+  - 1.0
+  info:
+  - 127
+  - 200
+  - 232
+  - 1.0
+  focus_ring:
+  - 255
+  - 111
+  - 181
+  - 1.0
+  glass_bg:
+  - 251
+  - 247
+  - 236
+  - 0.85
+  primary_gradient:
+    start:
+    - 255
+    - 111
+    - 181
+    - 1.0
+    end:
+    - 231
+    - 221
+    - 241
+    - 1.0
+    angle_deg: 135.0
+  glass_blur_px: 12.0
+palette:
+  cream:
+  - 251
+  - 247
+  - 236
+  - 1.0
+  lilac:
+  - 231
+  - 221
+  - 241
+  - 1.0
+  bubblegum_pink:
+  - 255
+  - 111
+  - 181
+  - 1.0
+  highlighter_yellow:
+  - 255
+  - 224
+  - 102
+  - 0.8627450980392157
+  mint:
+  - 167
+  - 231
+  - 199
+  - 1.0
+  ink_navy:
+  - 31
+  - 47
+  - 102
+  - 1.0
+  muted_body:
+  - 122
+  - 118
+  - 137
+  - 1.0
+  success:
+  - 91
+  - 193
+  - 138
+  - 1.0
+  warning:
+  - 242
+  - 187
+  - 85
+  - 1.0
+  error:
+  - 232
+  - 90
+  - 108
+  - 1.0
+  surface:
+  - 251
+  - 247
+  - 236
+  - 1.0
+  surface_alt:
+  - 231
+  - 221
+  - 241
+  - 1.0
+  on_surface:
+  - 31
+  - 47
+  - 102
+  - 1.0
+  primary:
+  - 255
+  - 111
+  - 181
+  - 1.0
+  on_primary:
+  - 251
+  - 247
+  - 236
+  - 1.0
+  secondary:
+  - 167
+  - 231
+  - 199
+  - 1.0
+  accent:
+  - 255
+  - 224
+  - 102
+  - 0.8627450980392157
+spacing:
+  xs: 4.0
+  sm: 8.0
+  md: 16.0
+  lg: 24.0
+  xl: 32.0
+  xxl: 48.0
+radius:
+  sm: 4.0
+  md: 8.0
+  lg: 12.0
+  xl: 16.0
+  pill: 999.0
+transitions:
+  fast: 0.15
+  normal: 0.25
+  slow: 0.5
+z_index:
+  base: 1
+  dropdown: 100
+  modal: 1000
+  toast: 2000
+fonts:
+  header:
+    family: Caveat
+    size: 22
+    weight: '600'
+  h1:
+    family: Caveat
+    size: 28
+    weight: '700'
+  body:
+    family: Quicksand
+    size: 14
+    weight: '500'
+  body_small:
+    family: Quicksand
+    size: 13
+    weight: regular
+  caption:
+    family: Quicksand
+    size: 12
+    weight: italic
+  mono:
+    family: Fira Code
+    size: 14
+    weight: regular
+nine_slices:
+  washi_tape_panel:
+    insets:
+    - 8
+    - 8
+    - 8
+    - 8
+  washi_tape_toolbar:
+    insets:
+    - 0
+    - 8
+    - 0
+    - 8
+  washi_tape_modal:
+    insets:
+    - 8
+    - 8
+    - 8
+    - 8
+icons:
+  heart:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12
+      21 L4 13 A5 5 0 0 1 12 7 A5 5 0 0 1 20 13 Z" fill="currentColor"/></svg>
+    size: 24
+    default_fill:
+    - 255
+    - 111
+    - 181
+    - 255
+  star:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon
+      points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9" fill="currentColor"/></svg>
+    size: 24
+    default_fill:
+    - 255
+    - 224
+    - 102
+    - 255
+  sparkle:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon
+      points="12,2 14,10 22,12 14,14 12,22 10,14 2,12 10,10" fill="currentColor"/></svg>
+    size: 24
+    default_fill:
+    - 245
+    - 200
+    - 75
+    - 255
+background_shader:
+  kind: shader_effect
+  name: ruled_paper
+  params:
+    paper_color:
+    - 251
+    - 247
+    - 236
+    - 255
+    line_color:
+    - 231
+    - 221
+    - 241
+    - 255
+    margin_color:
+    - 255
+    - 111
+    - 181
+    - 255
+    line_spacing: 24
+    margin_x: 32
+frames:
+  default:
+    border_size: 1.0
+    rounding: 10.0
+    padding_x: 10
+    padding_y: 8
+    shadow_size: 6.0
+    child_rounding: 8.0
+    child_border_size: 0.5
+    grip_size: 12.0
+    grip_rounding: 6.0
+    title_bar_height: 24
+    border_color:
+    - 231
+    - 221
+    - 241
+    - 1.0
+    shadow_color:
+    - 255
+    - 111
+    - 181
+    - 0.25
+  sidebar:
+    border_size: 1.0
+    rounding: 12.0
+    padding_x: 10
+    padding_y: 8
+    shadow_size: 6.0
+    child_rounding: 10.0
+    child_border_size: 0.5
+    grip_size: 12.0
+    grip_rounding: 6.0
+    title_bar_height: 24
+    border_color:
+    - 231
+    - 221
+    - 241
+    - 1.0
+    shadow_color:
+    - 255
+    - 111
+    - 181
+    - 0.25
+decor:
+  divider_style: wavy
+  corner_style: tape_pink
+  divider_thickness_px: 2
+  corner_size_px: 32
+  per_kind: {}
+metadata:
+  tape_color: '#FF6FB5'
+  tape_alt_color: '#A7E7C7'
+  seasonal_flavour: summer
+  creature_roster: fox_01,butterfly_01
+  creature_roster_count: '2'
+  variant: light
+  family: diary
+  source_doc: docs/theme_teengirl_notebook_2026_06_03.md

@@ -1,0 +1,369 @@
+name: scrapbook_summer
+semantic:
+  primary:
+  - 135
+  - 206
+  - 235
+  - 1.0
+  secondary:
+  - 255
+  - 217
+  - 61
+  - 1.0
+  accent:
+  - 255
+  - 107
+  - 157
+  - 1.0
+  background:
+  - 250
+  - 250
+  - 250
+  - 1.0
+  surface:
+  - 244
+  - 236
+  - 216
+  - 1.0
+  surface_hover:
+  - 248
+  - 240
+  - 220
+  - 1.0
+  border:
+  - 198
+  - 168
+  - 116
+  - 0.9019607843137255
+  text_primary:
+  - 42
+  - 42
+  - 42
+  - 1.0
+  text_secondary:
+  - 59
+  - 70
+  - 84
+  - 1.0
+  text_disabled:
+  - 160
+  - 165
+  - 175
+  - 1.0
+  success:
+  - 107
+  - 203
+  - 119
+  - 1.0
+  warning:
+  - 242
+  - 187
+  - 85
+  - 1.0
+  error:
+  - 232
+  - 90
+  - 108
+  - 1.0
+  info:
+  - 135
+  - 206
+  - 235
+  - 1.0
+  focus_ring:
+  - 255
+  - 107
+  - 157
+  - 1.0
+  glass_bg:
+  - 250
+  - 250
+  - 250
+  - 0.85
+  primary_gradient:
+    start:
+    - 135
+    - 206
+    - 235
+    - 1.0
+    end:
+    - 255
+    - 217
+    - 61
+    - 1.0
+    angle_deg: 135.0
+  glass_blur_px: 10.0
+palette:
+  sky_blue:
+  - 135
+  - 206
+  - 235
+  - 1.0
+  sunshine_yellow:
+  - 255
+  - 217
+  - 61
+  - 1.0
+  watermelon_pink:
+  - 255
+  - 107
+  - 157
+  - 1.0
+  grass_green:
+  - 107
+  - 203
+  - 119
+  - 1.0
+  paper_white:
+  - 250
+  - 250
+  - 250
+  - 1.0
+  ink_charcoal:
+  - 42
+  - 42
+  - 42
+  - 1.0
+  kraft_paper:
+  - 198
+  - 168
+  - 116
+  - 0.9019607843137255
+  body:
+  - 59
+  - 70
+  - 84
+  - 1.0
+  muted_body:
+  - 120
+  - 130
+  - 145
+  - 1.0
+  success:
+  - 91
+  - 193
+  - 138
+  - 1.0
+  warning:
+  - 242
+  - 187
+  - 85
+  - 1.0
+  error:
+  - 232
+  - 90
+  - 108
+  - 1.0
+  surface:
+  - 250
+  - 250
+  - 250
+  - 1.0
+  surface_alt:
+  - 244
+  - 236
+  - 216
+  - 1.0
+  on_surface:
+  - 42
+  - 42
+  - 42
+  - 1.0
+  primary:
+  - 135
+  - 206
+  - 235
+  - 1.0
+  on_primary:
+  - 42
+  - 42
+  - 42
+  - 1.0
+  secondary:
+  - 255
+  - 217
+  - 61
+  - 1.0
+  accent:
+  - 255
+  - 107
+  - 157
+  - 1.0
+spacing:
+  xs: 4.0
+  sm: 8.0
+  md: 16.0
+  lg: 24.0
+  xl: 32.0
+  xxl: 48.0
+radius:
+  sm: 4.0
+  md: 8.0
+  lg: 12.0
+  xl: 16.0
+  pill: 999.0
+transitions:
+  fast: 0.15
+  normal: 0.25
+  slow: 0.5
+z_index:
+  base: 1
+  dropdown: 100
+  modal: 1000
+  toast: 2000
+fonts:
+  header:
+    family: Caveat
+    size: 24
+    weight: '600'
+  h1:
+    family: Caveat
+    size: 32
+    weight: '700'
+  body:
+    family: Quicksand
+    size: 14
+    weight: '500'
+  body_small:
+    family: Quicksand
+    size: 13
+    weight: regular
+  caption:
+    family: Quicksand
+    size: 12
+    weight: italic
+  mono:
+    family: Fira Code
+    size: 14
+    weight: regular
+nine_slices:
+  polaroid_panel:
+    insets:
+    - 8
+    - 8
+    - 24
+    - 8
+  washi_corner_toolbar:
+    insets:
+    - 0
+    - 8
+    - 0
+    - 8
+  polaroid_modal:
+    insets:
+    - 8
+    - 8
+    - 24
+    - 8
+icons:
+  sun:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon
+      points="12,1 14,8 21,5 18,11 23,12 18,13 21,19 14,16 12,23 10,16 3,19 6,13 1,12
+      6,11 3,5 10,8" fill="currentColor"/><circle cx="12" cy="12" r="5" fill="currentColor"/></svg>
+    size: 24
+    default_fill:
+    - 255
+    - 217
+    - 61
+    - 255
+  watermelon:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M2
+      20 L22 20 A12 12 0 0 0 2 20 Z" fill="currentColor"/><path d="M4 20 L20 20 A10
+      10 0 0 0 4 20 Z" fill="#6BCB77"/><circle cx="9" cy="17" r="1" fill="#2A2A2A"/><circle
+      cx="15" cy="17" r="1" fill="#2A2A2A"/><circle cx="12" cy="19" r="1" fill="#2A2A2A"/></svg>
+    size: 24
+    default_fill:
+    - 255
+    - 107
+    - 157
+    - 255
+  beach_ball:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12"
+      cy="12" r="10" fill="currentColor"/><path d="M12 2 A10 10 0 0 1 12 22" stroke="#FFD93D"
+      stroke-width="3" fill="none"/><path d="M2 12 A10 10 0 0 1 22 12" stroke="#6BCB77"
+      stroke-width="3" fill="none"/></svg>
+    size: 24
+    default_fill:
+    - 135
+    - 206
+    - 235
+    - 255
+background_shader:
+  kind: shader_effect
+  name: watercolor_wash
+  params:
+    base_color:
+    - 250
+    - 250
+    - 250
+    - 255
+    color_palette:
+    - - 135
+      - 206
+      - 235
+      - 255
+    - - 255
+      - 217
+      - 61
+      - 255
+    wash_count: 3
+    opacity: 0.3
+    seed: 314159
+frames:
+  default:
+    border_size: 2.0
+    rounding: 14.0
+    padding_x: 10
+    padding_y: 8
+    shadow_size: 7.0
+    child_rounding: 10.0
+    child_border_size: 1.0
+    grip_size: 12.0
+    grip_rounding: 8.0
+    title_bar_height: 26
+    border_color:
+    - 127
+    - 200
+    - 232
+    - 1.0
+    shadow_color:
+    - 255
+    - 111
+    - 141
+    - 0.3
+  viewport:
+    border_size: 2.0
+    rounding: 14.0
+    padding_x: 10
+    padding_y: 8
+    shadow_size: 8.0
+    child_rounding: 10.0
+    child_border_size: 0.5
+    grip_size: 12.0
+    grip_rounding: 4.0
+    title_bar_height: 24
+    border_color:
+    - 127
+    - 200
+    - 232
+    - 1.0
+    shadow_color:
+    - 255
+    - 111
+    - 141
+    - 0.3
+decor:
+  divider_style: star_chain
+  corner_style: tape_blue
+  divider_thickness_px: 2
+  corner_size_px: 32
+  per_kind: {}
+metadata:
+  tape_color: '#FF6B9D'
+  tape_alt_color: '#FFD93D'
+  seasonal_flavour: summer
+  creature_roster: golden_01,butterfly_01,bee_01
+  creature_roster_count: '3'
+  variant: light
+  family: diary
+  source_doc: docs/theme_diary_family_2026_06_03.md

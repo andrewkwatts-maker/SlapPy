@@ -1,0 +1,343 @@
+name: bullet_journal
+semantic:
+  primary:
+  - 255
+  - 181
+  - 197
+  - 1.0
+  secondary:
+  - 181
+  - 230
+  - 203
+  - 1.0
+  accent:
+  - 213
+  - 194
+  - 240
+  - 1.0
+  background:
+  - 255
+  - 255
+  - 255
+  - 1.0
+  surface:
+  - 248
+  - 246
+  - 242
+  - 1.0
+  surface_hover:
+  - 245
+  - 242
+  - 235
+  - 1.0
+  border:
+  - 176
+  - 170
+  - 160
+  - 0.7843137254901961
+  text_primary:
+  - 42
+  - 42
+  - 42
+  - 1.0
+  text_secondary:
+  - 46
+  - 46
+  - 50
+  - 1.0
+  text_disabled:
+  - 122
+  - 118
+  - 128
+  - 1.0
+  success:
+  - 111
+  - 179
+  - 136
+  - 1.0
+  warning:
+  - 224
+  - 180
+  - 90
+  - 1.0
+  error:
+  - 212
+  - 90
+  - 108
+  - 1.0
+  info:
+  - 213
+  - 194
+  - 240
+  - 1.0
+  focus_ring:
+  - 255
+  - 181
+  - 197
+  - 1.0
+  glass_bg:
+  - 255
+  - 255
+  - 255
+  - 0.9
+  primary_gradient:
+    start:
+    - 255
+    - 181
+    - 197
+    - 1.0
+    end:
+    - 181
+    - 230
+    - 203
+    - 1.0
+    angle_deg: 135.0
+  glass_blur_px: 6.0
+palette:
+  white:
+  - 255
+  - 255
+  - 255
+  - 1.0
+  soft_black:
+  - 42
+  - 42
+  - 42
+  - 1.0
+  pastel_pink:
+  - 255
+  - 181
+  - 197
+  - 1.0
+  pastel_mint:
+  - 181
+  - 230
+  - 203
+  - 1.0
+  pastel_lavender:
+  - 213
+  - 194
+  - 240
+  - 1.0
+  pastel_butter:
+  - 250
+  - 227
+  - 162
+  - 1.0
+  off_white:
+  - 248
+  - 246
+  - 242
+  - 1.0
+  pencil_grey:
+  - 176
+  - 170
+  - 160
+  - 0.7843137254901961
+  body:
+  - 46
+  - 46
+  - 50
+  - 1.0
+  muted_body:
+  - 122
+  - 118
+  - 128
+  - 1.0
+  success:
+  - 111
+  - 179
+  - 136
+  - 1.0
+  warning:
+  - 224
+  - 180
+  - 90
+  - 1.0
+  error:
+  - 212
+  - 90
+  - 108
+  - 1.0
+  surface:
+  - 255
+  - 255
+  - 255
+  - 1.0
+  surface_alt:
+  - 248
+  - 246
+  - 242
+  - 1.0
+  on_surface:
+  - 42
+  - 42
+  - 42
+  - 1.0
+  primary:
+  - 255
+  - 181
+  - 197
+  - 1.0
+  on_primary:
+  - 42
+  - 42
+  - 42
+  - 1.0
+  secondary:
+  - 181
+  - 230
+  - 203
+  - 1.0
+  accent:
+  - 213
+  - 194
+  - 240
+  - 1.0
+spacing:
+  xs: 4.0
+  sm: 8.0
+  md: 16.0
+  lg: 24.0
+  xl: 32.0
+  xxl: 48.0
+radius:
+  sm: 4.0
+  md: 8.0
+  lg: 12.0
+  xl: 16.0
+  pill: 999.0
+transitions:
+  fast: 0.15
+  normal: 0.25
+  slow: 0.5
+z_index:
+  base: 1
+  dropdown: 100
+  modal: 1000
+  toast: 2000
+fonts:
+  header:
+    family: Quicksand
+    size: 22
+    weight: '600'
+  h1:
+    family: Quicksand
+    size: 28
+    weight: '700'
+  body:
+    family: Quicksand
+    size: 14
+    weight: '500'
+  body_small:
+    family: Quicksand
+    size: 13
+    weight: regular
+  caption:
+    family: Quicksand
+    size: 12
+    weight: regular
+  mono:
+    family: Cascadia Code
+    size: 14
+    weight: regular
+nine_slices:
+  pencil_stroke_panel:
+    insets:
+    - 1
+    - 1
+    - 1
+    - 1
+  pencil_stroke_toolbar:
+    insets:
+    - 0
+    - 1
+    - 0
+    - 1
+  pencil_stroke_modal:
+    insets:
+    - 2
+    - 2
+    - 2
+    - 2
+icons:
+  bullet:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12"
+      cy="12" r="4" fill="currentColor"/></svg>
+    size: 24
+    default_fill:
+    - 42
+    - 42
+    - 42
+    - 255
+  dash:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="4"
+      y="11" width="16" height="2" fill="currentColor"/></svg>
+    size: 24
+    default_fill:
+    - 42
+    - 42
+    - 42
+    - 255
+  arrow:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon
+      points="4,11 16,11 16,7 22,12 16,17 16,13 4,13" fill="currentColor"/></svg>
+    size: 24
+    default_fill:
+    - 213
+    - 194
+    - 240
+    - 255
+background_shader:
+  kind: shader_effect
+  name: dot_grid
+  params:
+    paper_color:
+    - 255
+    - 255
+    - 255
+    - 255
+    dot_color:
+    - 42
+    - 42
+    - 42
+    - 90
+    spacing: 8
+    dot_radius: 1
+frames:
+  default:
+    border_size: 1.0
+    rounding: 2.0
+    padding_x: 8
+    padding_y: 6
+    shadow_size: 1.0
+    child_rounding: 2.0
+    child_border_size: 0.5
+    grip_size: 10.0
+    grip_rounding: 2.0
+    title_bar_height: 22
+    border_color:
+    - 42
+    - 42
+    - 42
+    - 1.0
+    shadow_color:
+    - 42
+    - 42
+    - 42
+    - 0.15
+decor:
+  divider_style: dashed
+  corner_style: tape_yellow
+  divider_thickness_px: 1
+  corner_size_px: 32
+  per_kind: {}
+metadata:
+  tape_color: '#B0AAA0'
+  tape_alt_color: '#D5C2F0'
+  seasonal_flavour: spring
+  creature_roster: hedgehog_01,porcupine_01
+  creature_roster_count: '2'
+  variant: light
+  family: diary
+  source_doc: docs/theme_diary_family_2026_06_03.md

@@ -1,0 +1,370 @@
+name: cottagecore_garden
+semantic:
+  primary:
+  - 141
+  - 167
+  - 124
+  - 1.0
+  secondary:
+  - 184
+  - 168
+  - 213
+  - 1.0
+  accent:
+  - 255
+  - 176
+  - 122
+  - 1.0
+  background:
+  - 245
+  - 237
+  - 221
+  - 1.0
+  surface:
+  - 235
+  - 229
+  - 208
+  - 1.0
+  surface_hover:
+  - 240
+  - 233
+  - 215
+  - 1.0
+  border:
+  - 107
+  - 132
+  - 86
+  - 0.8627450980392157
+  text_primary:
+  - 74
+  - 60
+  - 42
+  - 1.0
+  text_secondary:
+  - 90
+  - 74
+  - 56
+  - 1.0
+  text_disabled:
+  - 160
+  - 145
+  - 125
+  - 1.0
+  success:
+  - 122
+  - 170
+  - 102
+  - 1.0
+  warning:
+  - 224
+  - 180
+  - 90
+  - 1.0
+  error:
+  - 184
+  - 80
+  - 64
+  - 1.0
+  info:
+  - 156
+  - 175
+  - 136
+  - 1.0
+  focus_ring:
+  - 141
+  - 167
+  - 124
+  - 1.0
+  glass_bg:
+  - 245
+  - 237
+  - 221
+  - 0.85
+  primary_gradient:
+    start:
+    - 141
+    - 167
+    - 124
+    - 1.0
+    end:
+    - 184
+    - 168
+    - 213
+    - 1.0
+    angle_deg: 135.0
+  glass_blur_px: 10.0
+palette:
+  mossy_green:
+  - 141
+  - 167
+  - 124
+  - 1.0
+  cream:
+  - 245
+  - 237
+  - 221
+  - 1.0
+  lavender:
+  - 184
+  - 168
+  - 213
+  - 1.0
+  peach:
+  - 255
+  - 176
+  - 122
+  - 1.0
+  sage:
+  - 156
+  - 175
+  - 136
+  - 1.0
+  ink_sepia:
+  - 74
+  - 60
+  - 42
+  - 1.0
+  embroidered_moss:
+  - 107
+  - 132
+  - 86
+  - 0.8627450980392157
+  body:
+  - 90
+  - 74
+  - 56
+  - 1.0
+  muted_body:
+  - 140
+  - 122
+  - 102
+  - 1.0
+  success:
+  - 122
+  - 170
+  - 102
+  - 1.0
+  warning:
+  - 224
+  - 180
+  - 90
+  - 1.0
+  error:
+  - 184
+  - 80
+  - 64
+  - 1.0
+  surface:
+  - 245
+  - 237
+  - 221
+  - 1.0
+  surface_alt:
+  - 235
+  - 229
+  - 208
+  - 1.0
+  on_surface:
+  - 74
+  - 60
+  - 42
+  - 1.0
+  primary:
+  - 141
+  - 167
+  - 124
+  - 1.0
+  on_primary:
+  - 245
+  - 237
+  - 221
+  - 1.0
+  secondary:
+  - 184
+  - 168
+  - 213
+  - 1.0
+  accent:
+  - 255
+  - 176
+  - 122
+  - 1.0
+spacing:
+  xs: 4.0
+  sm: 8.0
+  md: 16.0
+  lg: 24.0
+  xl: 32.0
+  xxl: 48.0
+radius:
+  sm: 4.0
+  md: 8.0
+  lg: 12.0
+  xl: 16.0
+  pill: 999.0
+transitions:
+  fast: 0.15
+  normal: 0.25
+  slow: 0.5
+z_index:
+  base: 1
+  dropdown: 100
+  modal: 1000
+  toast: 2000
+fonts:
+  header:
+    family: Patrick Hand
+    size: 24
+    weight: '600'
+  h1:
+    family: Patrick Hand
+    size: 30
+    weight: '700'
+  body:
+    family: Quicksand
+    size: 14
+    weight: '500'
+  body_small:
+    family: Quicksand
+    size: 13
+    weight: regular
+  caption:
+    family: Quicksand
+    size: 12
+    weight: italic
+  mono:
+    family: Fira Code
+    size: 14
+    weight: regular
+nine_slices:
+  embroidered_panel:
+    insets:
+    - 8
+    - 8
+    - 8
+    - 8
+  herb_sprig_toolbar:
+    insets:
+    - 0
+    - 8
+    - 0
+    - 8
+  pressed_flower_modal:
+    insets:
+    - 12
+    - 12
+    - 12
+    - 12
+icons:
+  daisy:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><ellipse
+      cx="12" cy="4" rx="2" ry="4" fill="currentColor"/><ellipse cx="12" cy="20" rx="2"
+      ry="4" fill="currentColor"/><ellipse cx="4" cy="12" rx="4" ry="2" fill="currentColor"/><ellipse
+      cx="20" cy="12" rx="4" ry="2" fill="currentColor"/><circle cx="12" cy="12" r="3"
+      fill="#FFD93D"/></svg>
+    size: 24
+    default_fill:
+    - 245
+    - 237
+    - 221
+    - 255
+  sprig:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><line x1="12"
+      y1="2" x2="12" y2="22" stroke="currentColor" stroke-width="2"/><polygon points="12,7
+      7,5 9,9" fill="currentColor"/><polygon points="12,11 17,9 15,13" fill="currentColor"/><polygon
+      points="12,15 7,13 9,17" fill="currentColor"/></svg>
+    size: 24
+    default_fill:
+    - 141
+    - 167
+    - 124
+    - 255
+  embroidery_hoop:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12"
+      cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/><rect x="11"
+      y="1" width="2" height="4" fill="currentColor"/><circle cx="12" cy="12" r="3"
+      fill="#FFB07A"/></svg>
+    size: 24
+    default_fill:
+    - 107
+    - 132
+    - 86
+    - 255
+background_shader:
+  kind: shader_effect
+  name: parchment
+  params:
+    base_color:
+    - 245
+    - 237
+    - 221
+    - 255
+    edge_dark: 0.92
+    noise_amount: 0.04
+    weave_overlay:
+      name: noise_glitter
+      density: 0.03
+      color:
+      - 156
+      - 175
+      - 136
+      - 90
+      seed: 1707
+frames:
+  default:
+    border_size: 2.0
+    rounding: 8.0
+    padding_x: 14
+    padding_y: 10
+    shadow_size: 6.0
+    child_rounding: 6.0
+    child_border_size: 1.0
+    grip_size: 12.0
+    grip_rounding: 5.0
+    title_bar_height: 25
+    border_color:
+    - 141
+    - 167
+    - 124
+    - 1.0
+    shadow_color:
+    - 184
+    - 168
+    - 213
+    - 0.3
+  sidebar:
+    border_size: 2.0
+    rounding: 8.0
+    padding_x: 14
+    padding_y: 10
+    shadow_size: 6.0
+    child_rounding: 6.0
+    child_border_size: 0.5
+    grip_size: 12.0
+    grip_rounding: 4.0
+    title_bar_height: 24
+    border_color:
+    - 107
+    - 132
+    - 86
+    - 1.0
+    shadow_color:
+    - 184
+    - 168
+    - 213
+    - 0.3
+decor:
+  divider_style: flower_chain
+  corner_style: tape_mint
+  divider_thickness_px: 2
+  corner_size_px: 32
+  per_kind: {}
+metadata:
+  tape_color: '#6B8456'
+  tape_alt_color: '#B8A8D5'
+  seasonal_flavour: spring
+  creature_roster: rabbit_01,deer_01,mushroom_01,flower_01
+  creature_roster_count: '4'
+  variant: light
+  family: diary
+  source_doc: docs/theme_diary_family_2026_06_03.md

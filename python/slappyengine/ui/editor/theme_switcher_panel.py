@@ -184,9 +184,14 @@ class ThemeSwitcherPanel:
         self,
         scheduler: Any | None = None,
         on_refresh: Callable[[], None] | None = None,
+        user_theme_store: Any | None = None,
     ) -> None:
         self._scheduler: Any | None = scheduler
         self._on_refresh: Callable[[], None] | None = on_refresh
+        # Lazily-materialised so the panel imports cheaply in tests.
+        # Injecting a store is what tests do; production leaves this
+        # ``None`` and pays for construction on first Reset-to-default.
+        self._user_theme_store: Any | None = user_theme_store
         self._panel_tag: str = f"theme_switcher_panel_{id(self)}"
         self._cards_group_tag: str = f"{self._panel_tag}_cards"
         self._roster_group_tag: str = f"{self._panel_tag}_roster"
@@ -217,6 +222,64 @@ class ThemeSwitcherPanel:
     def set_scheduler(self, scheduler: Any | None) -> None:
         """Attach a creature scheduler (or detach with ``None``)."""
         self._scheduler = scheduler
+
+    def set_user_theme_store(self, store: Any | None) -> None:
+        """Bind a :class:`UserThemeStore` (used by the Reset-to-default button).
+
+        Panels without a store degrade gracefully — the Reset button is
+        still clickable but becomes a no-op instead of raising.
+        """
+        self._user_theme_store = store
+
+    def _get_user_theme_store(self) -> Any | None:
+        """Return the injected store, or lazily materialise the default."""
+        if self._user_theme_store is not None:
+            return self._user_theme_store
+        try:
+            from slappyengine.ui.theme.user_themes import UserThemeStore
+
+            self._user_theme_store = UserThemeStore()
+        except Exception:
+            self._user_theme_store = None
+        return self._user_theme_store
+
+    def reset_theme_to_default(self, theme_id: str) -> bool:
+        """Revert *theme_id*'s user-side YAML back to the baked baseline.
+
+        Returns ``True`` when the revert succeeded, ``False`` when the
+        store is unavailable, the theme is not a baked default, or the
+        on-disk copy failed. Every code path routes through the store's
+        atomic write so a failed revert never partially-corrupts the
+        user file.
+        """
+        validate_non_empty_str(
+            "theme_id", "ThemeSwitcherPanel.reset_theme_to_default", theme_id,
+        )
+        store = self._get_user_theme_store()
+        if store is None:
+            self.call_log.append(("theme_reset_failed", theme_id, "no_store"))
+            return False
+        try:
+            store.revert_to_baked(theme_id)
+        except Exception as exc:
+            self.call_log.append(("theme_reset_failed", theme_id, str(exc)))
+            return False
+        self.call_log.append(("theme_reset", theme_id))
+        # Reload the active theme from disk when the user just reset
+        # the one they're currently on — otherwise the on-screen
+        # rendering keeps showing the pre-reset palette.
+        try:
+            active = self.active_theme_name()
+            if active == theme_id:
+                from slappyengine.ui.theme import apply_theme, register_theme
+
+                reloaded = store.load_theme(theme_id)
+                register_theme(reloaded)
+                apply_theme(theme_id)
+        except Exception:
+            pass
+        self.refresh()
+        return True
 
     def set_on_refresh(self, callback: Callable[[], None] | None) -> None:
         """Register the footer "Refresh editor" callback."""
@@ -473,6 +536,16 @@ class ThemeSwitcherPanel:
                     callback=lambda s, a, u=theme_id: self._on_theme_card_clicked(u),
                     width=-1,
                     height=18,
+                )
+                # Reset-to-default sits below Apply; harmless to click on
+                # an unedited theme (revert copies baked → user), and it
+                # is the escape hatch when the user's YAML edit broke
+                # something they now want to un-do.
+                dpg.add_button(
+                    label="Reset",
+                    callback=lambda s, a, u=theme_id: self.reset_theme_to_default(u),
+                    width=-1,
+                    height=16,
                 )
         except Exception:
             try:

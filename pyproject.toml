@@ -66,6 +66,13 @@ network = [
 python-source = "python"
 module-name = "slappyengine._core"
 features = ["pyo3/extension-module"]
+# Non-Python package data that must ship inside the wheel. Maturin auto-
+# includes ``*.py`` files under ``python-source`` but skips other file
+# types unless they are named here. The baked diary themes are
+# copied on first launch by ``slappyengine.ui.theme.user_themes``.
+include = [
+    "python/slappyengine/ui/theme/themes/_baked/*.theme.yaml",
+]
 # Strip debug symbols from the compiled _core extension to shrink wheel size.
 # Combined with [profile.release] strip = true in Cargo.toml, this drops the
 # wheel by ~30-50% on platforms where Cargo's strip doesn't fully apply.

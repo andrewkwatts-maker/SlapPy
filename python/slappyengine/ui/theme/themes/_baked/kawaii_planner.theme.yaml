@@ -1,0 +1,374 @@
+name: kawaii_planner
+semantic:
+  primary:
+  - 255
+  - 128
+  - 171
+  - 1.0
+  secondary:
+  - 168
+  - 230
+  - 207
+  - 1.0
+  accent:
+  - 201
+  - 177
+  - 255
+  - 1.0
+  background:
+  - 255
+  - 243
+  - 176
+  - 1.0
+  surface:
+  - 255
+  - 250
+  - 220
+  - 1.0
+  surface_hover:
+  - 255
+  - 245
+  - 200
+  - 1.0
+  border:
+  - 232
+  - 168
+  - 194
+  - 0.7843137254901961
+  text_primary:
+  - 92
+  - 92
+  - 92
+  - 1.0
+  text_secondary:
+  - 90
+  - 79
+  - 112
+  - 1.0
+  text_disabled:
+  - 180
+  - 175
+  - 188
+  - 1.0
+  success:
+  - 123
+  - 208
+  - 160
+  - 1.0
+  warning:
+  - 255
+  - 204
+  - 106
+  - 1.0
+  error:
+  - 255
+  - 122
+  - 138
+  - 1.0
+  info:
+  - 168
+  - 230
+  - 207
+  - 1.0
+  focus_ring:
+  - 255
+  - 128
+  - 171
+  - 1.0
+  glass_bg:
+  - 255
+  - 252
+  - 247
+  - 0.9
+  primary_gradient:
+    start:
+    - 255
+    - 128
+    - 171
+    - 1.0
+    end:
+    - 201
+    - 177
+    - 255
+    - 1.0
+    angle_deg: 135.0
+  glass_blur_px: 8.0
+palette:
+  pastel_pink:
+  - 255
+  - 192
+  - 203
+  - 1.0
+  mint:
+  - 168
+  - 230
+  - 207
+  - 1.0
+  lavender:
+  - 201
+  - 177
+  - 255
+  - 1.0
+  butter_yellow:
+  - 255
+  - 243
+  - 176
+  - 1.0
+  neon_rose:
+  - 255
+  - 128
+  - 171
+  - 1.0
+  ink_warm_grey:
+  - 92
+  - 92
+  - 92
+  - 1.0
+  pencil_pink:
+  - 232
+  - 168
+  - 194
+  - 0.7843137254901961
+  body:
+  - 90
+  - 79
+  - 112
+  - 1.0
+  muted_body:
+  - 140
+  - 130
+  - 155
+  - 1.0
+  success:
+  - 123
+  - 208
+  - 160
+  - 1.0
+  warning:
+  - 255
+  - 204
+  - 106
+  - 1.0
+  error:
+  - 255
+  - 122
+  - 138
+  - 1.0
+  surface:
+  - 255
+  - 243
+  - 176
+  - 1.0
+  surface_alt:
+  - 255
+  - 192
+  - 203
+  - 1.0
+  on_surface:
+  - 92
+  - 92
+  - 92
+  - 1.0
+  primary:
+  - 255
+  - 128
+  - 171
+  - 1.0
+  on_primary:
+  - 255
+  - 255
+  - 255
+  - 1.0
+  secondary:
+  - 168
+  - 230
+  - 207
+  - 1.0
+  accent:
+  - 201
+  - 177
+  - 255
+  - 1.0
+spacing:
+  xs: 4.0
+  sm: 8.0
+  md: 16.0
+  lg: 24.0
+  xl: 32.0
+  xxl: 48.0
+radius:
+  sm: 4.0
+  md: 8.0
+  lg: 12.0
+  xl: 16.0
+  pill: 999.0
+transitions:
+  fast: 0.15
+  normal: 0.25
+  slow: 0.5
+z_index:
+  base: 1
+  dropdown: 100
+  modal: 1000
+  toast: 2000
+fonts:
+  header:
+    family: Caveat
+    size: 26
+    weight: '700'
+  h1:
+    family: Caveat
+    size: 34
+    weight: '700'
+  body:
+    family: Comfortaa
+    size: 14
+    weight: '500'
+  body_small:
+    family: Comfortaa
+    size: 13
+    weight: regular
+  caption:
+    family: Comfortaa
+    size: 12
+    weight: regular
+  mono:
+    family: Fira Code
+    size: 14
+    weight: regular
+nine_slices:
+  washi_panel:
+    insets:
+    - 8
+    - 8
+    - 8
+    - 8
+  washi_toolbar:
+    insets:
+    - 0
+    - 8
+    - 0
+    - 8
+  polka_dot_modal:
+    insets:
+    - 10
+    - 10
+    - 10
+    - 10
+icons:
+  rainbow_bow:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12
+      12 L4 6 L4 18 Z" fill="currentColor"/><path d="M12 12 L20 6 L20 18 Z" fill="#C9B1FF"/><circle
+      cx="12" cy="12" r="3" fill="#A8E6CF"/><rect x="10" y="12" width="4" height="8"
+      fill="#FFF3B0"/></svg>
+    size: 24
+    default_fill:
+    - 255
+    - 128
+    - 171
+    - 255
+  kawaii_face:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12"
+      cy="12" r="10" fill="currentColor"/><ellipse cx="8" cy="11" rx="1.4" ry="2.2"
+      fill="#5C5C5C"/><ellipse cx="16" cy="11" rx="1.4" ry="2.2" fill="#5C5C5C"/><path
+      d="M9 15 Q12 17 15 15" stroke="#5C5C5C" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+    size: 24
+    default_fill:
+    - 255
+    - 192
+    - 203
+    - 255
+  star_burst:
+    svg_xml: <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon
+      points="12,1 14,9 22,10 16,15 18,23 12,18 6,23 8,15 2,10 10,9" fill="currentColor"/><polygon
+      points="12,5 13,11 18,11 14,14 15,19 12,16 9,19 10,14 6,11 11,11" fill="#FFF3B0"/></svg>
+    size: 24
+    default_fill:
+    - 201
+    - 177
+    - 255
+    - 255
+background_shader:
+  kind: shader_effect
+  name: dot_grid
+  params:
+    bg_color:
+    - 255
+    - 243
+    - 176
+    - 255
+    dot_color:
+    - 255
+    - 192
+    - 203
+    - 200
+    spacing: 16
+    dot_radius: 2
+    confetti:
+      name: noise_glitter
+      density: 0.012
+      color:
+      - 255
+      - 128
+      - 171
+      - 200
+      seed: 4242
+frames:
+  default:
+    border_size: 3.0
+    rounding: 16.0
+    padding_x: 12
+    padding_y: 10
+    shadow_size: 10.0
+    child_rounding: 14.0
+    child_border_size: 1.0
+    grip_size: 16.0
+    grip_rounding: 10.0
+    title_bar_height: 28
+    border_color:
+    - 255
+    - 192
+    - 203
+    - 1.0
+    shadow_color:
+    - 168
+    - 230
+    - 207
+    - 0.4
+  modal:
+    border_size: 3.0
+    rounding: 18.0
+    padding_x: 14
+    padding_y: 12
+    shadow_size: 12.0
+    child_rounding: 14.0
+    child_border_size: 0.5
+    grip_size: 16.0
+    grip_rounding: 10.0
+    title_bar_height: 24
+    border_color:
+    - 255
+    - 128
+    - 171
+    - 1.0
+    shadow_color:
+    - 168
+    - 230
+    - 207
+    - 0.45
+decor:
+  divider_style: heart_chain
+  corner_style: tape_pink
+  divider_thickness_px: 2
+  corner_size_px: 32
+  per_kind: {}
+metadata:
+  tape_color: '#FFC0CB'
+  tape_alt_color: '#A8E6CF'
+  seasonal_flavour: summer
+  creature_roster: cat_01,panda_01,porcupine_01
+  creature_roster_count: '3'
+  sticker_density: maximal
+  variant: light
+  family: diary
+  source_doc: docs/theme_diary_family_2026_06_03.md
