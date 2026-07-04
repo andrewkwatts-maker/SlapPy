@@ -687,6 +687,44 @@ def _fb_export_current_theme(ctx: dict[str, Any]) -> Any:
     return export_current_theme(ctx)
 
 
+# ---------------------------------------------------------------------------
+# AA1 STUB-triage fallbacks (2026-07-05, round 4)
+#
+# Wire the next five STUB rows: cut / delete selection, center-on-selection,
+# frame-all, and pan-tool activation. See
+# :mod:`slappyengine.actions.destructive_edit_actions`,
+# :mod:`slappyengine.actions.viewport_framing_actions`, and
+# :mod:`slappyengine.actions.tool_mode_actions` for the implementations.
+# ---------------------------------------------------------------------------
+
+
+def _fb_cut_selection(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.destructive_edit_actions import cut_selection
+    return cut_selection(ctx)
+
+
+def _fb_delete_selection(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.destructive_edit_actions import delete_selection
+    return delete_selection(ctx)
+
+
+def _fb_center_on_selection(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.viewport_framing_actions import (
+        center_on_selection,
+    )
+    return center_on_selection(ctx)
+
+
+def _fb_frame_all(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.viewport_framing_actions import frame_all
+    return frame_all(ctx)
+
+
+def _fb_activate_pan_tool(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.tool_mode_actions import activate_pan_tool
+    return activate_pan_tool(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -845,6 +883,23 @@ def _default_actions() -> list[ToolAction]:
             required_args=[],
             category="edit",
         ),
+        # ── AA1 STUB-triage: destructive edits (2026-07-05, round 4) ──
+        ToolAction(
+            action_id="edit.cut_selection",
+            label="Cut Selection",
+            rust_backing=None,
+            python_fallback=_fb_cut_selection,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="edit.delete_selection",
+            label="Delete Selection",
+            rust_backing=None,
+            python_fallback=_fb_delete_selection,
+            required_args=[],
+            category="edit",
+        ),
         # ── Tool changes ─────────────────────────────────────────────
         ToolAction(
             action_id="editor.tool_select",
@@ -901,6 +956,15 @@ def _default_actions() -> list[ToolAction]:
             label="Toggle Snap to Grid",
             rust_backing=None,
             python_fallback=_fb_snap_to_grid,
+            required_args=[],
+            category="tool",
+        ),
+        # AA1 STUB-triage: navigation-mode "pan" tool activation.
+        ToolAction(
+            action_id="tool.pan",
+            label="Pan Tool",
+            rust_backing=None,
+            python_fallback=_fb_activate_pan_tool,
             required_args=[],
             category="tool",
         ),
@@ -1019,6 +1083,23 @@ def _default_actions() -> list[ToolAction]:
             label="Reset Zoom",
             rust_backing=None,
             python_fallback=_fb_zoom_reset,
+            required_args=[],
+            category="view",
+        ),
+        # AA1 STUB-triage: viewport framing (pan-only + frame-all).
+        ToolAction(
+            action_id="view.center_on_selection",
+            label="Center on Selection",
+            rust_backing=None,
+            python_fallback=_fb_center_on_selection,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="view.frame_all",
+            label="Frame All",
+            rust_backing=None,
+            python_fallback=_fb_frame_all,
             required_args=[],
             category="view",
         ),

@@ -308,10 +308,15 @@ Status legend:
 | 259 | `view.zoom_out` action | Router action id (Z7) | WIRED | `tool_router.py` → `_fb_zoom_out` → `actions/camera_actions.py::zoom_out` | Mirror of `view.zoom_in`; multiplies distance / shrinks 2D zoom. Same clamps. |
 | 260 | `view.zoom_reset` action | Router action id (Z7) | WIRED | `tool_router.py` → `_fb_zoom_reset` → `actions/camera_actions.py::zoom_reset` | Restores `_cam_distance = 5.0` (ViewportPanel default) or `_zoom_level = 1.0`; `ctx["distance"]` overrides for "recenter-on-selection" flows. |
 | 261 | `theme.export_current` action | Router action id (Z7) | WIRED | `tool_router.py` → `_fb_export_current_theme` → `actions/theme_io_actions.py::export_current_theme` | Writes active `ThemeSpec` to `ctx["path"]` (or via `shell.prompt_save_path` hook) via `UserThemeStore._atomic_write_text`. YAML round-trippable through `ThemeSpec.from_yaml`. |
+| 262 | `edit.cut_selection` action | Router action id (AA1) | WIRED | `tool_router.py` → `_fb_cut_selection` → `actions/destructive_edit_actions.py::cut_selection` | Snapshots into `EntityClipboard.cut()` + removes originals via `scene.remove_entity`; clears shell selection. Headless-safe when scene missing (removed=0). |
+| 263 | `edit.delete_selection` action | Router action id (AA1) | WIRED | `tool_router.py` → `_fb_delete_selection` → `actions/destructive_edit_actions.py::delete_selection` | Multi-select-aware scene removal without touching the clipboard. Distinguished from `editor.delete` which routes through the legacy single-select shell hook. |
+| 264 | `view.center_on_selection` action | Router action id (AA1) | WIRED | `tool_router.py` → `_fb_center_on_selection` → `actions/viewport_framing_actions.py::center_on_selection` | Pans `camera._cam_target` to the centroid of the selection's `(x, y, z)` positions; `_cam_distance` untouched. 2D fallback writes `_pan_x`/`_pan_y`. |
+| 265 | `view.frame_all` action | Router action id (AA1) | WIRED | `tool_router.py` → `_fb_frame_all` → `actions/viewport_framing_actions.py::frame_all` | Computes AABB + centroid + bounding-sphere radius across every scene entity; writes `_cam_target` and `_cam_distance = radius * 2 * 1.15` with clamps. |
+| 266 | `tool.pan` action | Router action id (AA1) | WIRED | `tool_router.py` → `_fb_activate_pan_tool` → `actions/tool_mode_actions.py::activate_pan_tool` | Sets `shell._active_tool = "pan"` and mirrors to notebook status bar + engine hook. Deliberately bypasses `NotebookToolbar.set_active` (pan isn't a sticker-button tool). |
 
-**Total rows: 261.** Status tally:
+**Total rows: 266.** Status tally:
 
-* **WIRED**: 243 (215 baseline + 18 delta + 5 Y1 + 5 Z7; row 189 also flipped STUB -> WIRED)
+* **WIRED**: 248 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1; row 189 also flipped STUB -> WIRED)
 * **STUB**: 15 (rows 50, 78, 79, 94, 95, 191, 192, 193, 222, 224, 225, 226, 227, 228, 243 — row 189 dropped after W2 landing; row 243 added for X4 delete ctx handler)
 * **BROKEN**: 3 (rows 80, 223 code-paths — see previous note; dedupes to 2 real import/attribute defects)
 
@@ -463,3 +468,52 @@ Regression tests: `SlapPyEngineTests/tests/test_stub_triage_z7.py`
 previously-absent router action ids across 5 category buckets
 (`file`, `edit`, `tool`, `view`, `theme`). Roll-up: **261 total,
 243 WIRED (93.1%), 15 STUB (5.7%), 3 BROKEN (1.1%)**.
+
+---
+
+## AA1 STUB-triage patch (2026-07-05, round 4 after X3 + Y1 + Z7)
+
+Five more action ids landed in this tick, moving 5 rows from STUB
+(implicit — the ids were not yet registered) to WIRED (rows 262-266):
+
+* `edit.cut_selection` → `slappyengine.actions.destructive_edit_actions.cut_selection`
+* `edit.delete_selection` → `slappyengine.actions.destructive_edit_actions.delete_selection`
+* `view.center_on_selection` → `slappyengine.actions.viewport_framing_actions.center_on_selection`
+* `view.frame_all` → `slappyengine.actions.viewport_framing_actions.frame_all`
+* `tool.pan` → `slappyengine.actions.tool_mode_actions.activate_pan_tool`
+
+New subpackages: `python/slappyengine/actions/destructive_edit_actions.py`
++ `python/slappyengine/actions/viewport_framing_actions.py` +
+`python/slappyengine/actions/tool_mode_actions.py`.
+
+Behavioural notes for AA1:
+
+* **`edit.cut_selection`** — the "copy-and-delete" combo: routes
+  through `EntityClipboard.cut()` so `last_action == "cut"`, then walks
+  the resolved selection through `scene.remove_entity`. Headless-safe:
+  a missing scene keeps the clipboard snapshot but returns
+  `removed=0`. The shell's `_selected_entity` / `_selected_entities`
+  slots are cleared post-cut so the outliner refreshes empty.
+* **`edit.delete_selection`** — pure scene removal. Distinguished from
+  `editor.delete` (which uses the legacy single-select shell hook) by
+  supporting multi-select via `ctx["selection"]` and returning
+  `{"status": "no_scene"}` when no scene is reachable so tests can
+  assert on the failure mode.
+* **`view.center_on_selection`** — writes only `camera._cam_target`
+  (a list[3]). The 2D fallback writes `_pan_x` / `_pan_y` when the
+  camera exposes them. `_cam_distance` is untouched — this is a *pan*.
+* **`view.frame_all`** — walks every entity in the scene (or
+  `ctx["entities"]` for headless testing), computes AABB + centroid +
+  bounding-sphere radius, writes `_cam_target = centroid` and
+  `_cam_distance = max(radius * 2 * 1.15, 5.0)` with clamps to the
+  same `[0.05, 10000]` range camera_actions uses.
+* **`tool.pan`** — sets `shell._active_tool = "pan"`. Deliberately
+  bypasses `NotebookToolbar.set_active` (which rejects unknown ids —
+  pan isn't one of the four sticker-button tools). Notebook status bar
+  + engine `set_active_tool` hooks fire best-effort.
+
+Regression tests: `SlapPyEngineTests/tests/test_stub_triage_aa1.py`
+(34 tests, all passing). Combined X3+Y1+Z7+AA1 wiring now covers 20
+previously-absent router action ids across 5 category buckets
+(`file`, `edit`, `tool`, `view`, `theme`). Roll-up: **266 total,
+248 WIRED (93.2%), 15 STUB (5.6%), 3 BROKEN (1.1%)**.

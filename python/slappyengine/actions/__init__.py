@@ -49,6 +49,18 @@ from .camera_actions import (
 from .theme_io_actions import (
     export_current_theme as export_current_theme,
 )
+from .destructive_edit_actions import (
+    cut_selection as cut_selection,
+    delete_selection as delete_selection,
+)
+from .viewport_framing_actions import (
+    center_on_selection as center_on_selection,
+    frame_all as frame_all,
+)
+from .tool_mode_actions import (
+    activate_pan_tool as activate_pan_tool,
+    PAN_TOOL_ID as PAN_TOOL_ID,
+)
 
 
 __all__ = [
@@ -67,4 +79,10 @@ __all__ = [
     "zoom_out",
     "zoom_reset",
     "export_current_theme",
+    "cut_selection",
+    "delete_selection",
+    "center_on_selection",
+    "frame_all",
+    "activate_pan_tool",
+    "PAN_TOOL_ID",
 ]
