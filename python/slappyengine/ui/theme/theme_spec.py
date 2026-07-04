@@ -591,6 +591,9 @@ def _serialise_background_shader(shader: Any) -> Any:
         return None
     # Delayed import to keep the theme_spec module cheap to import.
     from .wgsl_backgrounds import WGSLShaderSpec as _WGSLSpec
+    if isinstance(shader, str):
+        # Page-lining id — tagged so from_dict can pick the right arm.
+        return {"kind": "lining", "style_id": shader}
     if isinstance(shader, _WGSLSpec):
         payload = shader.to_dict()
         payload["kind"] = "wgsl"
@@ -603,7 +606,8 @@ def _serialise_background_shader(shader: Any) -> Any:
         }
     raise TypeError(
         "_serialise_background_shader: shader must be ShaderEffect, "
-        f"WGSLShaderSpec, or None; got {type(shader).__name__}"
+        f"WGSLShaderSpec, page-lining id str, or None; "
+        f"got {type(shader).__name__}"
     )
 
 
@@ -619,10 +623,14 @@ def _deserialise_background_shader(raw: Any) -> Any:
     if raw is None:
         return None
     from .wgsl_backgrounds import WGSLShaderSpec as _WGSLSpec
+    if isinstance(raw, str):
+        return raw
     if isinstance(raw, (ShaderEffect, _WGSLSpec)):
         return raw
     if isinstance(raw, dict):
         kind = raw.get("kind")
+        if kind == "lining":
+            return str(raw.get("style_id", ""))
         if kind == "wgsl" or "source" in raw:
             payload = {k: v for k, v in raw.items() if k != "kind"}
             return _WGSLSpec.from_dict(payload)
@@ -632,7 +640,7 @@ def _deserialise_background_shader(raw: Any) -> Any:
         )
     raise TypeError(
         "ThemeSpec.from_dict: background_shader must be dict, "
-        "ShaderEffect, WGSLShaderSpec, or None; "
+        "ShaderEffect, WGSLShaderSpec, page-lining id str, or None; "
         f"got {type(raw).__name__}"
     )
 
@@ -843,6 +851,164 @@ class PanelDecorConfig:
 
 
 # ---------------------------------------------------------------------------
+# Frames / decor YAML serialisation helpers
+# ---------------------------------------------------------------------------
+#
+# ``ThemeSpec.frames`` and ``ThemeSpec.decor`` are nested dataclasses;
+# these module-level helpers flatten them to YAML-safe dicts and back.
+# Round-trip is lossless — every field on :class:`FrameStyle`,
+# :class:`PanelFrameSet`, and :class:`PanelDecorConfig` survives a full
+# ``to_dict → from_dict`` cycle. Used by :meth:`ThemeSpec.to_dict` and
+# :meth:`ThemeSpec.from_dict`.
+
+
+def _frames_to_dict(frames: "PanelFrameSet") -> dict[str, Any]:
+    """Serialise a :class:`PanelFrameSet` to a YAML-safe dict."""
+
+    def _fs(style: "FrameStyle | None") -> dict[str, Any] | None:
+        if style is None:
+            return None
+        out: dict[str, Any] = {
+            "border_size": style.border_size,
+            "rounding": style.rounding,
+            "padding_x": style.padding_x,
+            "padding_y": style.padding_y,
+            "shadow_size": style.shadow_size,
+            "child_rounding": style.child_rounding,
+            "child_border_size": style.child_border_size,
+            "grip_size": style.grip_size,
+            "grip_rounding": style.grip_rounding,
+            "title_bar_height": style.title_bar_height,
+        }
+        if style.border_color is not None:
+            bc = style.border_color
+            out["border_color"] = [bc.r, bc.g, bc.b, bc.a]
+        if style.shadow_color is not None:
+            sc = style.shadow_color
+            out["shadow_color"] = [sc.r, sc.g, sc.b, sc.a]
+        return out
+
+    result: dict[str, Any] = {"default": _fs(frames.default)}
+    for kind in PanelFrameSet._KINDS:
+        override = getattr(frames, kind)
+        if override is not None:
+            result[kind] = _fs(override)
+    return result
+
+
+def _frames_from_dict(raw: Any) -> "PanelFrameSet":
+    """Rebuild a :class:`PanelFrameSet` from :func:`_frames_to_dict`."""
+    if raw is None:
+        return PanelFrameSet()
+    if isinstance(raw, PanelFrameSet):
+        return raw
+    if not isinstance(raw, dict):
+        raise TypeError(
+            f"_frames_from_dict: frames must be a dict or "
+            f"PanelFrameSet; got {type(raw).__name__}"
+        )
+
+    def _color_or_none(v: Any) -> Color | None:
+        if v is None:
+            return None
+        if isinstance(v, Color):
+            return v
+        if isinstance(v, (list, tuple)) and len(v) == 4:
+            return Color(int(v[0]), int(v[1]), int(v[2]), float(v[3]))
+        raise TypeError(
+            "_frames_from_dict: frame colour must be Color, "
+            f"4-sequence, or None; got {type(v).__name__}"
+        )
+
+    def _fs(entry: Any) -> "FrameStyle | None":
+        if entry is None:
+            return None
+        if isinstance(entry, FrameStyle):
+            return entry
+        if not isinstance(entry, dict):
+            raise TypeError(
+                "_frames_from_dict: frame entry must be a dict, "
+                f"FrameStyle, or None; got {type(entry).__name__}"
+            )
+        kwargs: dict[str, Any] = {}
+        for key in (
+            "border_size", "rounding", "shadow_size",
+            "child_rounding", "child_border_size",
+            "grip_size", "grip_rounding",
+        ):
+            if key in entry:
+                kwargs[key] = float(entry[key])
+        for key in ("padding_x", "padding_y", "title_bar_height"):
+            if key in entry:
+                kwargs[key] = int(entry[key])
+        if "border_color" in entry:
+            kwargs["border_color"] = _color_or_none(entry["border_color"])
+        if "shadow_color" in entry:
+            kwargs["shadow_color"] = _color_or_none(entry["shadow_color"])
+        return FrameStyle(**kwargs)
+
+    default_style = _fs(raw.get("default")) or FrameStyle()
+    overrides: dict[str, "FrameStyle | None"] = {}
+    for kind in PanelFrameSet._KINDS:
+        if kind in raw:
+            overrides[kind] = _fs(raw[kind])
+    return PanelFrameSet(default=default_style, **overrides)
+
+
+def _decor_to_dict(decor: "PanelDecorConfig") -> dict[str, Any]:
+    """Serialise a :class:`PanelDecorConfig` to a YAML-safe dict."""
+    return {
+        "divider_style": decor.divider_style,
+        "corner_style": decor.corner_style,
+        "divider_thickness_px": decor.divider_thickness_px,
+        "corner_size_px": decor.corner_size_px,
+        "per_kind": {
+            k: [v[0], v[1]] for k, v in decor.per_kind.items()
+        },
+    }
+
+
+def _decor_from_dict(raw: Any) -> "PanelDecorConfig":
+    """Rebuild a :class:`PanelDecorConfig` from :func:`_decor_to_dict`."""
+    if raw is None:
+        return PanelDecorConfig()
+    if isinstance(raw, PanelDecorConfig):
+        return raw
+    if not isinstance(raw, dict):
+        raise TypeError(
+            f"_decor_from_dict: decor must be a dict or "
+            f"PanelDecorConfig; got {type(raw).__name__}"
+        )
+    per_kind_raw = raw.get("per_kind") or {}
+    if not isinstance(per_kind_raw, dict):
+        raise TypeError(
+            "_decor_from_dict: decor.per_kind must be a dict; "
+            f"got {type(per_kind_raw).__name__}"
+        )
+    per_kind: dict[str, tuple[str, str]] = {}
+    for key, value in per_kind_raw.items():
+        if isinstance(value, list):
+            value = tuple(value)
+        if (
+            not isinstance(value, tuple)
+            or len(value) != 2
+            or not all(isinstance(v, str) and v for v in value)
+        ):
+            raise TypeError(
+                f"_decor_from_dict: decor.per_kind[{key!r}] must be "
+                f"a (str, str) pair; got {value!r}"
+            )
+        per_kind[key] = (value[0], value[1])
+    return PanelDecorConfig(
+        divider_style=str(raw.get("divider_style", "wavy")),
+        corner_style=str(raw.get("corner_style", "tape_pink")),
+        divider_thickness_px=int(raw.get("divider_thickness_px", 2)),
+        corner_size_px=int(raw.get("corner_size_px", 32)),
+        per_kind=per_kind,
+    )
+
+
+# ---------------------------------------------------------------------------
 # ThemeSpec
 # ---------------------------------------------------------------------------
 
@@ -923,16 +1089,29 @@ class ThemeSpec:
         if self.background_shader is not None:
             # Local import so the theme_spec module remains free of a
             # hard dependency on wgsl_backgrounds (which soft-imports
-            # wgpu). We accept either the numpy-side ShaderEffect or
-            # the GPU-side WGSLShaderSpec.
+            # wgpu). Accepts the numpy-side ShaderEffect, the GPU-side
+            # WGSLShaderSpec, or a page-lining id str (validated against
+            # the registry so a typo fails at theme construction).
             from .wgsl_backgrounds import WGSLShaderSpec as _WGSLSpec
-            if not isinstance(
-                self.background_shader, (ShaderEffect, _WGSLSpec)
-            ):
+            bg = self.background_shader
+            if isinstance(bg, str):
+                from .page_linings.library import PAGE_LININGS
+                if not bg:
+                    raise ValueError(
+                        f"{fn}: background_shader lining id must be "
+                        "a non-empty string"
+                    )
+                if bg not in PAGE_LININGS:
+                    known = ", ".join(sorted(PAGE_LININGS.keys()))
+                    raise ValueError(
+                        f"{fn}: background_shader lining id {bg!r} not "
+                        f"registered; known ids: {known}"
+                    )
+            elif not isinstance(bg, (ShaderEffect, _WGSLSpec)):
                 raise TypeError(
                     f"{fn}: background_shader must be a ShaderEffect, "
-                    "WGSLShaderSpec, or None; "
-                    f"got {type(self.background_shader).__name__}"
+                    "WGSLShaderSpec, page-lining id str, or None; "
+                    f"got {type(bg).__name__}"
                 )
         if not isinstance(self.frames, PanelFrameSet):
             raise TypeError(
@@ -991,6 +1170,8 @@ class ThemeSpec:
             "background_shader": _serialise_background_shader(
                 self.background_shader
             ),
+            "frames": _frames_to_dict(self.frames),
+            "decor": _decor_to_dict(self.decor),
             "metadata": dict(self.metadata),
         }
 
