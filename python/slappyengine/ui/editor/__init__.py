@@ -10,6 +10,7 @@ __all__ = [
     "DiaryShell",
     "EditorLayout",
     "EditorShell",
+    "EntityClipboard",
     "LayerLightingPanel",
     "LayerPanel",
     "LayoutPersistence",
@@ -23,10 +24,20 @@ __all__ = [
     "PRESET_LAYOUTS",
     "PanelLayoutState",
     "PropertyInspector",
+    "SaveOnQuitPrompt",
+    "SavePromptChoice",
     "TRIPLE_PANE_LAYOUT",
     "TagPainter",
+    "TooltipEntry",
+    "TooltipRegistry",
+    "UndoEntry",
+    "UndoStack",
     "ViewportPanel",
     "WIDE_CODE_LAYOUT",
+    "build_default_tooltip_registry",
+    "get_active_clipboard",
+    "reset_active_clipboard",
+    "resolve_undo_stack",
 ]
 
 _LAZY_MAP: dict[str, str] = {
@@ -55,6 +66,18 @@ _LAZY_MAP: dict[str, str] = {
     "TagPainter":             ".tag_painter",
     "ViewportPanel":          ".viewport_panel",
     "WIDE_CODE_LAYOUT":       ".default_layouts",
+    # Usability polish landings — 2026-07-04 sprint
+    "EntityClipboard":                ".entity_clipboard",
+    "SaveOnQuitPrompt":               ".save_on_quit",
+    "SavePromptChoice":               ".save_on_quit",
+    "TooltipEntry":                   ".tooltip_registry",
+    "TooltipRegistry":                ".tooltip_registry",
+    "UndoEntry":                      ".editor_undo",
+    "UndoStack":                      ".editor_undo",
+    "build_default_tooltip_registry": ".tooltip_registry",
+    "get_active_clipboard":           ".entity_clipboard",
+    "reset_active_clipboard":         ".entity_clipboard",
+    "resolve_undo_stack":             ".editor_undo",
 }
 
 

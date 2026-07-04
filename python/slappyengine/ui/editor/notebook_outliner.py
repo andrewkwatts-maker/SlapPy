@@ -257,12 +257,28 @@ class NotebookOutliner:
         )
 
         self._selected_id: str | None = None
+        # Multi-selection state — id list (order = selection order). The
+        # single-select ``_selected_id`` mirrors the anchor (first item)
+        # so legacy callers still see a scalar id.
+        self._selected_ids: list[str] = []
+        # Anchor id for shift-range selection.
+        self._range_anchor_id: str | None = None
         self._search_text: str = ""
         self._built: bool = False
         self._parent_tag: str | int | None = None
         self._theme = resolve_theme()
         self._scene: Any | None = None
         self._sticker_handles: list[str] = []
+        # Context-menu callbacks — populated by ``set_context_callbacks``.
+        self._on_rename: Callable[[Any, str], None] | None = None
+        self._on_delete: Callable[[Any], None] | None = None
+        self._on_duplicate: Callable[[Any], Any] | None = None
+        self._on_group: Callable[[list[Any]], None] | None = None
+        self._on_copy: Callable[[list[Any]], None] | None = None
+        self._on_paste: Callable[[], list[Any]] | None = None
+        # Last-opened context menu — inspected by tests + status bar.
+        self._context_menu_target: Any | None = None
+        self._context_menu_open: bool = False
 
         register_theme_listener(self._on_theme_changed)
 
@@ -320,15 +336,342 @@ class NotebookOutliner:
     # ------------------------------------------------------------------
 
     def set_selected(self, entity_id: str) -> None:
-        """Programmatically mark *entity_id* as the selected row."""
+        """Programmatically mark *entity_id* as the (sole) selected row."""
         validate_str("entity_id", "set_selected", entity_id, allow_empty=True)
         self._selected_id = entity_id or None
+        self._selected_ids = [entity_id] if entity_id else []
+        self._range_anchor_id = entity_id or None
         if self._built:
             self.refresh()
 
     def get_selected(self) -> str | None:
         """Return the currently selected entity id (or ``None``)."""
         return self._selected_id
+
+    # ------------------------------------------------------------------
+    # Multi-selection API
+    # ------------------------------------------------------------------
+
+    @property
+    def selection(self) -> list[Any]:
+        """Return the current multi-selection as a list of entity objects.
+
+        Order matches selection order (first-selected first). Empty when
+        nothing is selected. Names present in :attr:`selection_ids` but
+        missing from the world are silently dropped.
+        """
+        ids = set(self._selected_ids)
+        if not ids:
+            return []
+        out: list[Any] = []
+        for ent in self.iter_entities():
+            eid = self._entity_id(ent)
+            if eid in ids:
+                out.append(ent)
+        return out
+
+    @property
+    def selection_ids(self) -> list[str]:
+        """Return the raw id list backing :attr:`selection`."""
+        return list(self._selected_ids)
+
+    @property
+    def selection_count(self) -> int:
+        """Return the number of items currently in the multi-selection."""
+        return len(self._selected_ids)
+
+    def clear_selection(self) -> None:
+        """Drop every item from the multi-selection (Escape key handler)."""
+        self._selected_id = None
+        self._selected_ids = []
+        self._range_anchor_id = None
+        self._context_menu_open = False
+        self._context_menu_target = None
+        if self._built:
+            self.refresh()
+
+    def toggle_in_selection(self, entity_id: str) -> None:
+        """Ctrl+click behaviour — flip the entity's membership in the selection."""
+        validate_str(
+            "entity_id", "toggle_in_selection", entity_id, allow_empty=False,
+        )
+        if entity_id in self._selected_ids:
+            self._selected_ids.remove(entity_id)
+        else:
+            self._selected_ids.append(entity_id)
+        # Anchor + scalar mirror follow the newest event.
+        self._selected_id = self._selected_ids[0] if self._selected_ids else None
+        self._range_anchor_id = entity_id
+        if self._built:
+            self.refresh()
+
+    def extend_selection_to(self, entity_id: str) -> None:
+        """Shift+click behaviour — range-select from anchor to *entity_id*.
+
+        The anchor is the id set by the most recent single or Ctrl+click.
+        When no anchor exists, the *entity_id* becomes both anchor and
+        selection.
+        """
+        validate_str(
+            "entity_id", "extend_selection_to", entity_id, allow_empty=False,
+        )
+        rows = self.iter_rows()
+        ids = [r["id"] for r in rows]
+        if entity_id not in ids:
+            return
+        anchor = self._range_anchor_id or (
+            self._selected_ids[0] if self._selected_ids else None
+        )
+        if anchor is None or anchor not in ids:
+            self._selected_ids = [entity_id]
+            self._selected_id = entity_id
+            self._range_anchor_id = entity_id
+            if self._built:
+                self.refresh()
+            return
+        lo = ids.index(anchor)
+        hi = ids.index(entity_id)
+        if lo > hi:
+            lo, hi = hi, lo
+        self._selected_ids = ids[lo: hi + 1]
+        self._selected_id = self._selected_ids[0]
+        if self._built:
+            self.refresh()
+
+    # ------------------------------------------------------------------
+    # Context menu API
+    # ------------------------------------------------------------------
+
+    def set_context_callbacks(
+        self,
+        *,
+        on_rename: Callable[[Any, str], None] | None = None,
+        on_delete: Callable[[Any], None] | None = None,
+        on_duplicate: Callable[[Any], Any] | None = None,
+        on_group: Callable[[list[Any]], None] | None = None,
+        on_copy: Callable[[list[Any]], None] | None = None,
+        on_paste: Callable[[], list[Any]] | None = None,
+    ) -> None:
+        """Bind right-click context-menu callbacks.
+
+        Each callback is optional — missing ones cause the corresponding
+        menu entry to no-op silently. Passing ``None`` deliberately
+        clears a previously bound callback.
+        """
+        for name, cb in (
+            ("on_rename", on_rename),
+            ("on_delete", on_delete),
+            ("on_duplicate", on_duplicate),
+            ("on_group", on_group),
+            ("on_copy", on_copy),
+            ("on_paste", on_paste),
+        ):
+            if cb is not None:
+                validate_callable(name, "set_context_callbacks", cb)
+        self._on_rename = on_rename
+        self._on_delete = on_delete
+        self._on_duplicate = on_duplicate
+        self._on_group = on_group
+        self._on_copy = on_copy
+        self._on_paste = on_paste
+
+    def open_context_menu(self, entity: Any) -> dict[str, Any]:
+        """Open the right-click context menu for *entity*.
+
+        Returns a state dict listing every available action; tests use
+        this to assert the menu opens with the expected entries. The
+        DPG modal is rendered as a best-effort in the same step.
+        """
+        self._context_menu_target = entity
+        self._context_menu_open = True
+        # Ensure the target is in the current selection so bulk actions
+        # (Group with…) always include the right-clicked row.
+        eid = self._entity_id(entity)
+        if eid and eid not in self._selected_ids:
+            self._selected_ids.append(eid)
+        actions = self.context_menu_actions()
+        self._build_context_menu_modal(entity, actions)
+        return {"target": entity, "actions": actions, "open": True}
+
+    def context_menu_actions(self) -> list[str]:
+        """Return the enabled context-menu action ids for the current state."""
+        actions = ["rename", "delete", "duplicate", "copy"]
+        if len(self._selected_ids) > 1:
+            actions.append("group")
+        if self._on_paste is not None:
+            actions.append("paste")
+        return actions
+
+    def is_context_menu_open(self) -> bool:
+        return self._context_menu_open
+
+    def close_context_menu(self) -> None:
+        self._context_menu_open = False
+        self._context_menu_target = None
+        dpg = self._safe_dpg()
+        if dpg is None:
+            return
+        try:
+            if dpg.does_item_exist("notebook_outliner_ctx_menu"):
+                dpg.delete_item("notebook_outliner_ctx_menu")
+        except Exception:
+            pass
+
+    def invoke_context_action(self, action: str, *args: Any) -> Any:
+        """Fire the named context action against the current target.
+
+        Recognised actions: ``rename``, ``delete``, ``duplicate``,
+        ``group``, ``copy``, ``paste``.
+        """
+        validate_str(
+            "action", "invoke_context_action", action, allow_empty=False,
+        )
+        target = self._context_menu_target
+        if action == "rename" and self._on_rename is not None and target is not None:
+            new_name = args[0] if args else (getattr(target, "name", "") + "_renamed")
+            self._on_rename(target, str(new_name))
+            self.close_context_menu()
+            if self._built:
+                self.refresh()
+            return None
+        if action == "delete" and self._on_delete is not None and target is not None:
+            self._on_delete(target)
+            self.close_context_menu()
+            if self._built:
+                self.refresh()
+            return None
+        if action == "duplicate" and self._on_duplicate is not None and target is not None:
+            clone = self._on_duplicate(target)
+            # Append " (copy)" to the clone's name when it exposes one.
+            if clone is not None and hasattr(clone, "name"):
+                try:
+                    orig_name = str(getattr(clone, "name", "") or "")
+                    if not orig_name.endswith(" (copy)"):
+                        clone.name = f"{orig_name} (copy)"
+                except Exception:
+                    pass
+            self.close_context_menu()
+            if self._built:
+                self.refresh()
+            return clone
+        if action == "group" and self._on_group is not None:
+            self._on_group(self.selection)
+            self.close_context_menu()
+            if self._built:
+                self.refresh()
+            return None
+        if action == "copy" and self._on_copy is not None:
+            self._on_copy(self.selection or ([target] if target else []))
+            self.close_context_menu()
+            return None
+        if action == "paste" and self._on_paste is not None:
+            pasted = self._on_paste()
+            self.close_context_menu()
+            if self._built:
+                self.refresh()
+            return pasted
+        # Fallback — recognised but no callback bound.
+        return None
+
+    def _build_context_menu_modal(
+        self, entity: Any, actions: list[str],
+    ) -> None:
+        """Render the right-click context menu as a DPG popup."""
+        dpg = self._safe_dpg()
+        if dpg is None:
+            return
+        modal_tag = "notebook_outliner_ctx_menu"
+        try:
+            if dpg.does_item_exist(modal_tag):
+                dpg.delete_item(modal_tag)
+        except Exception:
+            pass
+        try:
+            with dpg.window(
+                label="Entry",
+                modal=True,
+                tag=modal_tag,
+                width=200,
+                height=180,
+                no_close=False,
+            ):
+                for action in actions:
+                    try:
+                        dpg.add_button(
+                            label=action.title(),
+                            callback=(
+                                lambda s, a, u, act=action:
+                                self.invoke_context_action(act)
+                            ),
+                            width=-1,
+                        )
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+    def handle_row_click(
+        self,
+        entity_id: str,
+        *,
+        ctrl: bool = False,
+        shift: bool = False,
+        button: int = 0,
+    ) -> None:
+        """Route a row-click event through the selection state machine.
+
+        Parameters
+        ----------
+        entity_id:
+            Id of the clicked row.
+        ctrl:
+            True when Ctrl was held (toggle-in-selection).
+        shift:
+            True when Shift was held (range extend).
+        button:
+            DPG button id — ``0`` = left, ``1`` = right. Right-click
+            opens the context menu instead of mutating the selection.
+        """
+        # Find the entity object so we can fire on_select / open menu.
+        rows = self.iter_rows()
+        entity = None
+        for r in rows:
+            if r["id"] == entity_id:
+                entity = r["entity"]
+                break
+
+        if button == 1:  # right-click
+            if entity is not None:
+                # Right-click on a row that isn't currently selected snaps
+                # the selection to it first — matches File Explorer.
+                if entity_id not in self._selected_ids:
+                    self._selected_ids = [entity_id]
+                    self._selected_id = entity_id
+                    self._range_anchor_id = entity_id
+                self.open_context_menu(entity)
+            return
+
+        if ctrl:
+            self.toggle_in_selection(entity_id)
+        elif shift:
+            self.extend_selection_to(entity_id)
+        else:
+            # Plain click — replace the selection.
+            self._selected_ids = [entity_id]
+            self._selected_id = entity_id
+            self._range_anchor_id = entity_id
+            if entity is not None:
+                try:
+                    self._on_select(entity)
+                except Exception:
+                    pass
+        if self._built:
+            self.refresh()
+
+    def handle_escape(self) -> None:
+        """Escape key — clear multi-selection + close any context menu."""
+        self.close_context_menu()
+        self.clear_selection()
 
     def set_search(self, text: str) -> None:
         """Set the search filter text — only matching rows render."""
@@ -575,7 +918,12 @@ class NotebookOutliner:
 
         safe = eid.replace(" ", "_").replace(".", "_") or "row"
         row_tag = f"notebook_row_{safe}"
-        is_selected = (self._selected_id == eid)
+        # A row is highlighted when its id is anywhere in the multi-
+        # selection (scalar ``_selected_id`` is kept as a compat alias).
+        is_selected = (
+            eid in self._selected_ids
+            or self._selected_id == eid
+        )
 
         try:
             with dpg.group(horizontal=True, tag=row_tag):
@@ -605,12 +953,26 @@ class NotebookOutliner:
                     pass
 
                 # Entity name (handwritten label).
+                button_tag = f"{row_tag}_btn"
                 try:
                     dpg.add_button(
                         label=name,
+                        tag=button_tag,
                         callback=lambda s, a, u=entity: self._handle_select(u),
                         width=-90,
                         height=18,
+                    )
+                except Exception:
+                    pass
+                # Right-click handler → open the context menu. DPG's
+                # ``add_item_clicked_handler`` takes ``button=1`` for RMB.
+                try:
+                    dpg.add_item_clicked_handler(
+                        button=1,
+                        parent=button_tag,
+                        callback=(
+                            lambda s, a, u, e=entity: self.open_context_menu(e)
+                        ),
                     )
                 except Exception:
                     pass

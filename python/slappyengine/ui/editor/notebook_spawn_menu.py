@@ -31,10 +31,12 @@ from __future__ import annotations
 
 import dataclasses
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Callable
 
 from slappyengine._validation import (
     validate_callable,
+    validate_int,
     validate_non_empty_str,
 )
 from slappyengine.ui.widgets.notebook_theme import (
@@ -298,6 +300,12 @@ class NotebookSpawnMenu:
     SHIMMER_H: int = 160
     SHIMMER_DENSITY: float = 0.06
 
+    # Persistent-recents parameters — see :meth:`load_recents` /
+    # :meth:`record_recent`. The relative path is joined against the
+    # active project root; the LRU list is capped so old cards fall off.
+    RECENT_MAX: int = 5
+    RECENT_YAML_RELPATH: str = ".slappy/recent_spawns.yaml"
+
     # ------------------------------------------------------------------
 
     def __init__(self, on_spawn: Callable[[str, dict], None]) -> None:
@@ -331,6 +339,11 @@ class NotebookSpawnMenu:
         self._ink = self._theme.color("ink", (40, 40, 60, 255))
         self._accent = self._theme.color("accent", (220, 120, 160, 255))
         self._washi = self._theme.color("washi", (180, 200, 230, 255))
+
+        # Recently-used spawn cards — an LRU list persisted per-project.
+        # The bound project root controls the recents-file location.
+        self._project_root: Path | None = None
+        self._recent_ids: list[str] = []
 
         # Theme listener so the cards re-tint on a theme switch.
         register_theme_listener(self._on_theme_changed)
@@ -378,6 +391,107 @@ class NotebookSpawnMenu:
             if card.card_id == card_id:
                 return card
         return None
+
+    # ------------------------------------------------------------------
+    # Recently-used spawn cards (persisted per project)
+    # ------------------------------------------------------------------
+
+    def set_project_root(self, root: Path | str | None) -> None:
+        """Bind the project *root* for the persistent recents file.
+
+        Passing ``None`` leaves recents in memory only; setting a path
+        loads any existing ``<root>/.slappy/recent_spawns.yaml`` file.
+        """
+        if root is None:
+            self._project_root = None
+            self._recent_ids = []
+            return
+        self._project_root = Path(root)
+        self.load_recents()
+
+    def get_recent_ids(self) -> list[str]:
+        """Return the current LRU recents list, oldest -> newest."""
+        return list(self._recent_ids)
+
+    def recent_cards(self) -> list[SpawnCard]:
+        """Return :class:`SpawnCard` objects for the current recents list.
+
+        Cards absent from the deck (e.g. after a version bump) are
+        silently dropped so the panel never renders a broken tile.
+        """
+        out: list[SpawnCard] = []
+        for cid in self._recent_ids:
+            card = self.get_card(cid)
+            if card is not None:
+                out.append(card)
+        return out
+
+    def record_recent(self, card_id: str) -> None:
+        """Push *card_id* onto the LRU recents list + persist to disk.
+
+        The list is capped at :data:`RECENT_MAX`; duplicates are moved to
+        the newest slot rather than duplicated.
+        """
+        validate_non_empty_str("card_id", "record_recent", card_id)
+        if self.get_card(card_id) is None:
+            return
+        if card_id in self._recent_ids:
+            self._recent_ids.remove(card_id)
+        self._recent_ids.append(card_id)
+        while len(self._recent_ids) > self.RECENT_MAX:
+            self._recent_ids.pop(0)
+        self.save_recents()
+
+    def load_recents(self) -> list[str]:
+        """Read the recents YAML from disk (best-effort, empty on any error)."""
+        self._recent_ids = []
+        if self._project_root is None:
+            return []
+        path = self._project_root / self.RECENT_YAML_RELPATH
+        if not path.exists():
+            return []
+        try:
+            import yaml  # type: ignore[import-not-found]
+
+            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        except Exception:
+            return []
+        raw = data.get("recent") if isinstance(data, dict) else None
+        if not isinstance(raw, list):
+            return []
+        ids: list[str] = []
+        for item in raw:
+            if isinstance(item, str) and self.get_card(item) is not None:
+                ids.append(item)
+        # Cap at RECENT_MAX in case the file was hand-edited.
+        self._recent_ids = ids[-self.RECENT_MAX:]
+        return list(self._recent_ids)
+
+    def save_recents(self) -> None:
+        """Persist the current recents list to the project YAML file."""
+        if self._project_root is None:
+            return
+        path = self._project_root / self.RECENT_YAML_RELPATH
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            return
+        payload = {"recent": list(self._recent_ids)}
+        try:
+            import yaml  # type: ignore[import-not-found]
+
+            text = yaml.safe_dump(payload, sort_keys=False)
+        except Exception:
+            # Fallback to a minimal manual YAML emitter so tests that
+            # don't have pyyaml still hit disk.
+            lines = ["recent:"]
+            for cid in self._recent_ids:
+                lines.append(f"  - {cid}")
+            text = "\n".join(lines) + "\n"
+        try:
+            path.write_text(text, encoding="utf-8")
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------
     # Public surface — Nova3D ``build(parent_tag)`` protocol
@@ -497,6 +611,13 @@ class NotebookSpawnMenu:
         spec_instance = card.spec_cls()
         modal_state = self._open_summon_modal(card, spec_instance)
         self._open_modal = modal_state
+        # Bump the recents list — the user clearly wanted this card, so
+        # persist it before the modal even submits so an aborted spawn
+        # still surfaces the card in the "Recent" row next session.
+        try:
+            self.record_recent(card_id)
+        except Exception:
+            pass
         self.call_log.append(("summon", card_id))
 
     def submit_modal(self) -> None:
@@ -647,10 +768,40 @@ class NotebookSpawnMenu:
                 autosize_x=True,
                 height=self.VISIBLE_ROWS * self.CARD_HEIGHT + 4,
             ):
+                self._build_recent_row(dpg)
                 self._build_grid_rows(dpg)
         except Exception:
             # Stub-DPG fallback — render flat.
+            self._build_recent_row(dpg)
             self._build_grid_rows(dpg)
+
+    def _build_recent_row(self, dpg: Any) -> None:
+        """Render the "Recent" row at the top of the palette.
+
+        Only fires when at least one recent card is registered. The row
+        is separated from the main deck by a washi-tape divider so it
+        reads as a distinct section.
+        """
+        recents = self.recent_cards()
+        if not recents:
+            return
+        washi = list(self._washi)
+        ink = list(self._ink)
+        try:
+            dpg.add_text("Recent", color=ink)
+        except Exception:
+            pass
+        try:
+            with dpg.group(horizontal=True, tag="notebook_spawn_recent_row"):
+                for card in recents:
+                    self._build_card(dpg, card)
+        except Exception:
+            for card in recents:
+                self._build_card(dpg, card)
+        try:
+            dpg.add_text("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~", color=washi)
+        except Exception:
+            pass
 
     def _build_grid_rows(self, dpg: Any) -> None:
         """Lay out the cards in rows of :data:`CARDS_PER_ROW`."""

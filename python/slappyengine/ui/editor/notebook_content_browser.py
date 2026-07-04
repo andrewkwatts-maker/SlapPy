@@ -246,6 +246,7 @@ class NotebookContentBrowser:
     _SEARCH_TAG = "notebook_cb_search"
     _ROWS_GROUP = "notebook_cb_rows"
     _EMPTY_TAG = "notebook_cb_empty"
+    _BREADCRUMB_TAG = "notebook_cb_breadcrumb"
     _POLL_INTERVAL_SECONDS = 5.0
 
     SECTION_ORDER: tuple[str, ...] = (
@@ -271,6 +272,11 @@ class NotebookContentBrowser:
         )
 
         self._root: Path | None = None
+        # Current sub-directory the browser is focused on. When ``None``
+        # or equal to the root, the whole project is shown; otherwise the
+        # breadcrumb bar renders the ancestor chain relative to the root
+        # and only files under ``_cwd`` are enumerated.
+        self._cwd: Path | None = None
         self._search_text: str = ""
         self._expanded_dirs: set[Path] = set()
         self._built: bool = False
@@ -318,6 +324,88 @@ class NotebookContentBrowser:
         # Reset expansion state when the root changes; the user clearly
         # wants a fresh look at a new tree.
         self._expanded_dirs.clear()
+        self._cwd = None
+        if self._built:
+            self.refresh()
+
+    # ------------------------------------------------------------------
+    # Breadcrumb navigation
+    # ------------------------------------------------------------------
+
+    def get_cwd(self) -> Path | None:
+        """Return the current sub-directory (or ``None`` when at the root)."""
+        return self._cwd
+
+    def set_cwd(self, cwd: Path | str | None) -> None:
+        """Navigate into *cwd* — must be an ancestor of the root or ``None``.
+
+        Passing ``None`` (or the root itself) clears the sub-directory
+        focus so the whole project renders again. Values outside the
+        root raise :class:`ValueError`.
+        """
+        if cwd is None:
+            self._cwd = None
+        else:
+            path = Path(cwd)
+            root = self._root
+            if root is None:
+                raise ValueError(
+                    "NotebookContentBrowser.set_cwd: no root bound; "
+                    "call set_root() first",
+                )
+            try:
+                path.relative_to(root)
+            except ValueError as exc:
+                raise ValueError(
+                    "NotebookContentBrowser.set_cwd: cwd must live under "
+                    f"the current root ({root}); got {path}",
+                ) from exc
+            self._cwd = path
+        if self._built:
+            self.refresh()
+
+    def breadcrumb_segments(self) -> list[tuple[str, Path]]:
+        """Return ``(label, path)`` tuples for the breadcrumb bar.
+
+        The first segment is always the root's folder name (or
+        ``"projects"`` when the root has no ``name``). Subsequent
+        segments walk the :meth:`get_cwd` chain relative to the root.
+        """
+        segments: list[tuple[str, Path]] = []
+        root = self._root
+        if root is None:
+            return [("projects", Path("."))]
+        segments.append(("projects", root))
+        segments.append((root.name or "root", root))
+        cwd = self._cwd
+        if cwd is not None and cwd != root:
+            try:
+                rel = cwd.relative_to(root)
+            except ValueError:
+                return segments
+            cursor = root
+            for part in rel.parts:
+                cursor = cursor / part
+                segments.append((part, cursor))
+        return segments
+
+    def navigate_to_segment(self, index: int) -> None:
+        """Navigate to the breadcrumb segment at *index*.
+
+        ``index == 0`` (or ``1`` on the root row) clears the sub-cwd.
+        Other indices set the cwd to the corresponding ancestor path.
+        """
+        segments = self.breadcrumb_segments()
+        if index < 0 or index >= len(segments):
+            return
+        _, path = segments[index]
+        root = self._root
+        if root is None:
+            return
+        if index <= 1 or path == root:
+            self._cwd = None
+        else:
+            self._cwd = path
         if self._built:
             self.refresh()
 
@@ -351,15 +439,16 @@ class NotebookContentBrowser:
     # ------------------------------------------------------------------
 
     def iter_files(self) -> list[Path]:
-        """Walk the root and return every classifiable file."""
+        """Walk the root (or cwd) and return every classifiable file."""
         if self._root is None:
             return []
-        root = self._root
-        if not root.exists() or not root.is_dir():
+        # When focused into a sub-directory, list from there instead.
+        base = self._cwd if (self._cwd is not None) else self._root
+        if not base.exists() or not base.is_dir():
             return []
         out: list[Path] = []
         try:
-            for child in sorted(root.rglob("*"), key=lambda p: str(p).lower()):
+            for child in sorted(base.rglob("*"), key=lambda p: str(p).lower()):
                 if not child.is_file():
                     continue
                 if classify_file(child) is None:
@@ -436,6 +525,17 @@ class NotebookContentBrowser:
             with dpg.collapsing_header(
                 label=self.TITLE, default_open=True, parent=parent_tag,
             ):
+                # Breadcrumb bar — renders above the search box so the
+                # user can jump back to any ancestor with one click.
+                try:
+                    with dpg.group(horizontal=True, tag=self._BREADCRUMB_TAG):
+                        self._build_breadcrumb()
+                except Exception:
+                    try:
+                        self._build_breadcrumb()
+                    except Exception:
+                        pass
+
                 # Search box wrapped with a washi-tape underline.
                 try:
                     dpg.add_input_text(
@@ -509,6 +609,38 @@ class NotebookContentBrowser:
     # ------------------------------------------------------------------
     # Row rendering
     # ------------------------------------------------------------------
+
+    def _build_breadcrumb(self) -> None:
+        """Render the top-of-panel breadcrumb bar.
+
+        Each segment is a clickable button; the separators between them
+        render as ``" / "`` text in the theme's ink colour.
+        """
+        dpg = _safe_dpg()
+        if dpg is None:
+            return
+        segments = self.breadcrumb_segments()
+        ink = list(self._theme.color("ink", (40, 40, 60, 255)))
+        for i, (label, _path) in enumerate(segments):
+            if i > 0:
+                try:
+                    dpg.add_text(" / ", color=ink)
+                except Exception:
+                    pass
+            try:
+                dpg.add_button(
+                    label=label,
+                    small=True,
+                    callback=(
+                        lambda s, a, u, idx=i: self.navigate_to_segment(idx)
+                    ),
+                )
+            except Exception:
+                # Stub-DPG without ``small`` → fall through with plain text.
+                try:
+                    dpg.add_text(label, color=ink)
+                except Exception:
+                    pass
 
     def _build_rows(self) -> None:
         dpg = _safe_dpg()
