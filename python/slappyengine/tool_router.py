@@ -888,6 +888,14 @@ def _default_actions() -> list[ToolAction]:
             required_args=[],
             category="panel",
         ),
+        ToolAction(
+            action_id="editor.toggle_panel_tag_painter",
+            label="Toggle Tag Painter",
+            rust_backing=None,
+            python_fallback=lambda ctx: _fb_toggle_panel(ctx, "tag_painter"),
+            required_args=[],
+            category="panel",
+        ),
         # ── Spawn cards (10 entries — one per SPAWN_CARDS row) ───────
         ToolAction(
             action_id="spawn.rope",
