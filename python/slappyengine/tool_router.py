@@ -579,6 +579,43 @@ def _fb_switch_project(ctx: dict[str, Any]) -> Any:
     return _shell_call(ctx, "menu_switch_project")
 
 
+# ---------------------------------------------------------------------------
+# X3 STUB-triage fallbacks (2026-07-04)
+#
+# The following five wrappers back the ``editor.save_project`` /
+# ``editor.new_project`` / ``editor.open_recent`` / ``view.reset_layout`` /
+# ``edit.duplicate_selection`` action ids added by
+# ``docs/engine_feature_map_2026_07_04.md`` §"Top 5 STUB Fixes". They live
+# in :mod:`slappyengine.actions` so headless tests can import them
+# directly without spinning up the DPG editor.
+# ---------------------------------------------------------------------------
+
+
+def _fb_save_project(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.project_actions import save_project
+    return save_project(ctx)
+
+
+def _fb_new_project(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.project_actions import new_project
+    return new_project(ctx)
+
+
+def _fb_open_recent(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.project_actions import open_recent
+    return open_recent(ctx)
+
+
+def _fb_view_reset_layout(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_actions import reset_layout
+    return reset_layout(ctx)
+
+
+def _fb_duplicate_selection(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_actions import duplicate_selection
+    return duplicate_selection(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -636,6 +673,32 @@ def _default_actions() -> list[ToolAction]:
             required_args=[],
             category="file",
         ),
+        # ── X3 project-lifecycle actions (2026-07-04) ────────────────
+        # Wired top-5 STUB actions from engine_feature_map_2026_07_04.
+        ToolAction(
+            action_id="editor.save_project",
+            label="Save Project",
+            rust_backing=None,
+            python_fallback=_fb_save_project,
+            required_args=[],
+            category="file",
+        ),
+        ToolAction(
+            action_id="editor.new_project",
+            label="New Project",
+            rust_backing=None,
+            python_fallback=_fb_new_project,
+            required_args=["path", "name"],
+            category="file",
+        ),
+        ToolAction(
+            action_id="editor.open_recent",
+            label="Open Recent Project",
+            rust_backing=None,
+            python_fallback=_fb_open_recent,
+            required_args=[],
+            category="file",
+        ),
         # ── Edit ─────────────────────────────────────────────────────
         ToolAction(
             action_id="editor.undo",
@@ -685,6 +748,15 @@ def _default_actions() -> list[ToolAction]:
             required_args=[],
             category="edit",
         ),
+        # X3 STUB-triage: EntityClipboard-backed duplicate flow.
+        ToolAction(
+            action_id="edit.duplicate_selection",
+            label="Duplicate Selection",
+            rust_backing=None,
+            python_fallback=_fb_duplicate_selection,
+            required_args=[],
+            category="edit",
+        ),
         # ── Tool changes ─────────────────────────────────────────────
         ToolAction(
             action_id="editor.tool_select",
@@ -726,6 +798,16 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_reset_layout,
             required_args=[],
             category="layout",
+        ),
+        # X3 STUB-triage: category="view" alias — restores DEFAULT preset
+        # via ``apply_layout_preset`` with a headless-safe fallback.
+        ToolAction(
+            action_id="view.reset_layout",
+            label="Reset Layout (View)",
+            rust_backing=None,
+            python_fallback=_fb_view_reset_layout,
+            required_args=[],
+            category="view",
         ),
         ToolAction(
             action_id="editor.layout_preset_default",

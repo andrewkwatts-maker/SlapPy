@@ -275,10 +275,15 @@ Status legend:
 | 226 | Toggle Panel Behavior (no hotkey) | Same as above | STUB | `tool_router.py:883` | No default binding. |
 | 227 | Toggle Panel Viewport (no hotkey) | Same as above | STUB | `tool_router.py:867` | No default binding. |
 | 228 | Editor: Sticker "creature slot" click | Right-margin creature | STUB | `notebook_toolbar.py:238-247` — slot is reserved and creature id is recorded but no interaction handler wires clicks | Passive slot only. |
+| 229 | `editor.save_project` action | Router action id (X3) | WIRED | `tool_router.py:672` → `_fb_save_project` → `actions/project_actions.py:73` (`save_project`) | Writes `project.slap_proj` via `Project.save()`; returns `{"status":"saved","path":...}`. |
+| 230 | `editor.new_project` action | Router action id (X3) | WIRED | `tool_router.py:680` → `_fb_new_project` → `actions/project_actions.py:91` (`new_project`) | Scaffolds a fresh project via `Project.new()` and registers it in the recents. |
+| 231 | `editor.open_recent` action | Router action id (X3) | WIRED | `tool_router.py:688` → `_fb_open_recent` → `actions/project_actions.py:143` (`open_recent`) | Opens by `path` or `index` from `ProjectRegistry.list_recent()`. |
+| 232 | `view.reset_layout` action | Router action id (X3) | WIRED | `tool_router.py:816` → `_fb_view_reset_layout` → `actions/view_actions.py:19` (`reset_layout`) | Restores DEFAULT preset via `apply_layout_preset` with a headless-safe fallback to `apply_preset`. |
+| 233 | `edit.duplicate_selection` action | Router action id (X3) | WIRED | `tool_router.py:757` → `_fb_duplicate_selection` → `actions/edit_actions.py:44` (`duplicate_selection`) | Snapshots + pastes via `EntityClipboard`; prefers shell's `_duplicate_selected` when present. |
 
-**Total rows: 228.** Status tally:
+**Total rows: 233.** Status tally:
 
-* **WIRED**: 210
+* **WIRED**: 215
 * **STUB**: 15 (rows 50, 78, 79, 94, 95, 189, 191, 192, 193, 222, 224, 225, 226, 227, 228)
 * **BROKEN**: 3 (rows 80, 223 — the third slot is the diary→softbody import path counted separately at row 80; row 223 is the missing engine hook; row 80 shows up twice because `run_script` and `tick` both do the import — one entry.)
 
@@ -329,3 +334,19 @@ Deduplicated broken count: **2** import/attribute paths.
 *Audit generated 2026-07-04. Sources: `tool_router.py` REGISTRY
 (53 actions), `notebook_hotkeys.py` `_BINDINGS_FROZEN` (27 bindings),
 34 editor UI modules under `python/slappyengine/ui/editor/`.*
+
+---
+
+## X3 STUB-triage patch (2026-07-04)
+
+Five new action ids landed in this tick, moving 5 rows from STUB
+(implicit — the ids were not yet registered) to WIRED:
+
+* `editor.save_project` → `slappyengine.actions.project_actions.save_project`
+* `editor.new_project` → `slappyengine.actions.project_actions.new_project`
+* `editor.open_recent` → `slappyengine.actions.project_actions.open_recent`
+* `view.reset_layout` → `slappyengine.actions.view_actions.reset_layout`
+* `edit.duplicate_selection` → `slappyengine.actions.edit_actions.duplicate_selection`
+
+Regression tests: `SlapPyEngineTests/tests/test_stub_triage_x3.py`
+(25 tests, all passing).
