@@ -19,6 +19,7 @@ from ..theme_spec import (
     Font,
     FrameStyle,
     Gradient,
+    PanelDecorConfig,
     PanelFrameSet,
     SemanticTokens,
     ShaderEffect,
@@ -207,6 +208,15 @@ _METADATA: dict[str, str] = {
 }
 
 
+# Decor — botanical flower chain + mint washi tape.
+_DECOR = PanelDecorConfig(
+    divider_style="flower_chain",
+    corner_style="tape_mint",
+    divider_thickness_px=2,
+    corner_size_px=32,
+)
+
+
 COTTAGECORE_GARDEN: ThemeSpec = ThemeSpec(
     name="cottagecore_garden",
     semantic=_SEMANTIC,
@@ -215,6 +225,7 @@ COTTAGECORE_GARDEN: ThemeSpec = ThemeSpec(
     nine_slices=_NINE_SLICES,
     icons=_ICONS,
     frames=_FRAMES,
+    decor=_DECOR,
     background_shader=_BACKGROUND,
     metadata=_METADATA,
 )

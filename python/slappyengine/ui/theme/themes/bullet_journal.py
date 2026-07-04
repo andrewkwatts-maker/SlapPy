@@ -16,6 +16,7 @@ from ..theme_spec import (
     Font,
     FrameStyle,
     Gradient,
+    PanelDecorConfig,
     PanelFrameSet,
     SemanticTokens,
     ShaderEffect,
@@ -178,6 +179,15 @@ _METADATA: dict[str, str] = {
 }
 
 
+# Decor — restrained dashed rule + butter-yellow washi tape.
+_DECOR = PanelDecorConfig(
+    divider_style="dashed",
+    corner_style="tape_yellow",
+    divider_thickness_px=1,
+    corner_size_px=32,
+)
+
+
 BULLET_JOURNAL: ThemeSpec = ThemeSpec(
     name="bullet_journal",
     semantic=_SEMANTIC,
@@ -186,6 +196,7 @@ BULLET_JOURNAL: ThemeSpec = ThemeSpec(
     nine_slices=_NINE_SLICES,
     icons=_ICONS,
     frames=_FRAMES,
+    decor=_DECOR,
     background_shader=_BACKGROUND,
     metadata=_METADATA,
 )

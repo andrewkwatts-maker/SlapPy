@@ -19,6 +19,7 @@ from ..theme_spec import (
     Font,
     FrameStyle,
     Gradient,
+    PanelDecorConfig,
     PanelFrameSet,
     SemanticTokens,
     ShaderEffect,
@@ -210,6 +211,15 @@ _METADATA: dict[str, str] = {
 }
 
 
+# Decor — maximalist pink hearts + pink washi tape.
+_DECOR = PanelDecorConfig(
+    divider_style="heart_chain",
+    corner_style="tape_pink",
+    divider_thickness_px=2,
+    corner_size_px=32,
+)
+
+
 KAWAII_PLANNER: ThemeSpec = ThemeSpec(
     name="kawaii_planner",
     semantic=_SEMANTIC,
@@ -218,6 +228,7 @@ KAWAII_PLANNER: ThemeSpec = ThemeSpec(
     nine_slices=_NINE_SLICES,
     icons=_ICONS,
     frames=_FRAMES,
+    decor=_DECOR,
     background_shader=_BACKGROUND,
     metadata=_METADATA,
 )

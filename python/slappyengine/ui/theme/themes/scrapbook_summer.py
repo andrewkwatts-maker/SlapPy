@@ -20,6 +20,7 @@ from ..theme_spec import (
     Font,
     FrameStyle,
     Gradient,
+    PanelDecorConfig,
     PanelFrameSet,
     SemanticTokens,
     ShaderEffect,
@@ -207,6 +208,15 @@ _METADATA: dict[str, str] = {
 }
 
 
+# Decor — sticker-riot star chain + blue postcard-style washi tape.
+_DECOR = PanelDecorConfig(
+    divider_style="star_chain",
+    corner_style="tape_blue",
+    divider_thickness_px=2,
+    corner_size_px=32,
+)
+
+
 SCRAPBOOK_SUMMER: ThemeSpec = ThemeSpec(
     name="scrapbook_summer",
     semantic=_SEMANTIC,
@@ -215,6 +225,7 @@ SCRAPBOOK_SUMMER: ThemeSpec = ThemeSpec(
     nine_slices=_NINE_SLICES,
     icons=_ICONS,
     frames=_FRAMES,
+    decor=_DECOR,
     background_shader=_BACKGROUND,
     metadata=_METADATA,
 )

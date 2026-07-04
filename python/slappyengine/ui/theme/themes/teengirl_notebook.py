@@ -20,6 +20,7 @@ from ..theme_spec import (
     Font,
     FrameStyle,
     Gradient,
+    PanelDecorConfig,
     PanelFrameSet,
     SemanticTokens,
     ShaderEffect,
@@ -194,6 +195,15 @@ _METADATA: dict[str, str] = {
 }
 
 
+# Decor — playful wavy divider + pink washi tape.
+_DECOR = PanelDecorConfig(
+    divider_style="wavy",
+    corner_style="tape_pink",
+    divider_thickness_px=2,
+    corner_size_px=32,
+)
+
+
 TEENGIRL_NOTEBOOK: ThemeSpec = ThemeSpec(
     name="teengirl_notebook",
     semantic=_SEMANTIC,
@@ -202,6 +212,7 @@ TEENGIRL_NOTEBOOK: ThemeSpec = ThemeSpec(
     nine_slices=_NINE_SLICES,
     icons=_ICONS,
     frames=_FRAMES,
+    decor=_DECOR,
     background_shader=_BACKGROUND,
     metadata=_METADATA,
 )

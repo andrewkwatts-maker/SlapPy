@@ -18,6 +18,7 @@ from ..theme_spec import (
     Font,
     FrameStyle,
     Gradient,
+    PanelDecorConfig,
     PanelFrameSet,
     SemanticTokens,
     ShaderEffect,
@@ -191,6 +192,15 @@ _METADATA: dict[str, str] = {
 }
 
 
+# Decor — warm pencil rule + lavender washi tape.
+_DECOR = PanelDecorConfig(
+    divider_style="pencil_line",
+    corner_style="tape_lavender",
+    divider_thickness_px=2,
+    corner_size_px=32,
+)
+
+
 COZY_DIARY: ThemeSpec = ThemeSpec(
     name="cozy_diary",
     semantic=_SEMANTIC,
@@ -199,6 +209,7 @@ COZY_DIARY: ThemeSpec = ThemeSpec(
     nine_slices=_NINE_SLICES,
     icons=_ICONS,
     frames=_FRAMES,
+    decor=_DECOR,
     background_shader=_BACKGROUND,
     metadata=_METADATA,
 )
