@@ -126,6 +126,7 @@ and are skipped by the generator.
 | [`api/washi_tape_shaders.md`](api/washi_tape_shaders.md) | Hand-authored reference for the 15 washi-tape WGSL shader corner decorations (T2/U1 landing). |
 | [`consolidation_2026_06_07.md`](consolidation_2026_06_07.md) | Consolidation report — Nova3D legacy inventory + banner status + deletion blockers (2026-06-07). |
 | [`engine_feature_map_2026_07_04.md`](engine_feature_map_2026_07_04.md) | Engine feature map — every menu / toolbar / panel action mapped to WIRED / STUB / BROKEN + backing file (V1 landing 2026-07-04). |
+| [`feature_map_delta_2026_07_04.md`](feature_map_delta_2026_07_04.md) | Feature-map delta re-audit — 24 new features + 6 STUB→WIRED flips + 6 drift risks after V/W/X/Y batches (Y7 landing 2026-07-04). |
 | [`missing_ui_audit_2026_06_07.md`](missing_ui_audit_2026_06_07.md) | Missing-UI audit — gaps between Nova3D reference and notebook editor coverage (2026-06-07). |
 | [`tool_routing_2026_06_07.md`](tool_routing_2026_06_07.md) | Tool-routing audit — 51-action ToolRouter registry vs `_core` PyO3 exposure (2026-06-07). |
 | [`user_customization_2026_06_07.md`](user_customization_2026_06_07.md) | User-customization guide — `~/.slappyengine/ui/` panel/hotkey/shader override folders and load order (U7 landing 2026-06-07). |
