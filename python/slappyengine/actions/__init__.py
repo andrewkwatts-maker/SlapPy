@@ -61,6 +61,17 @@ from .tool_mode_actions import (
     activate_pan_tool as activate_pan_tool,
     PAN_TOOL_ID as PAN_TOOL_ID,
 )
+from .theme_import_actions import (
+    import_from_file as import_theme_from_file,
+)
+from .layout_io_actions import (
+    save_layout_as as save_layout_as,
+    load_layout_from_file as load_layout_from_file,
+)
+from .history_actions import (
+    undo as undo_action,
+    redo as redo_action,
+)
 
 
 __all__ = [
@@ -85,4 +96,9 @@ __all__ = [
     "frame_all",
     "activate_pan_tool",
     "PAN_TOOL_ID",
+    "import_theme_from_file",
+    "save_layout_as",
+    "load_layout_from_file",
+    "undo_action",
+    "redo_action",
 ]

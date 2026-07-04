@@ -313,10 +313,15 @@ Status legend:
 | 264 | `view.center_on_selection` action | Router action id (AA1) | WIRED | `tool_router.py` → `_fb_center_on_selection` → `actions/viewport_framing_actions.py::center_on_selection` | Pans `camera._cam_target` to the centroid of the selection's `(x, y, z)` positions; `_cam_distance` untouched. 2D fallback writes `_pan_x`/`_pan_y`. |
 | 265 | `view.frame_all` action | Router action id (AA1) | WIRED | `tool_router.py` → `_fb_frame_all` → `actions/viewport_framing_actions.py::frame_all` | Computes AABB + centroid + bounding-sphere radius across every scene entity; writes `_cam_target` and `_cam_distance = radius * 2 * 1.15` with clamps. |
 | 266 | `tool.pan` action | Router action id (AA1) | WIRED | `tool_router.py` → `_fb_activate_pan_tool` → `actions/tool_mode_actions.py::activate_pan_tool` | Sets `shell._active_tool = "pan"` and mirrors to notebook status bar + engine hook. Deliberately bypasses `NotebookToolbar.set_active` (pan isn't a sticker-button tool). |
+| 267 | `theme.import_from_file` action | Router action id (BB1) | WIRED | `tool_router.py` → `_fb_theme_import_from_file` → `actions/theme_import_actions.py::import_from_file` | Loads a ``*.theme.yaml`` via ``ThemeSpec.from_yaml`` + ``register_theme`` + optional ``apply_theme``. Rejects ``.theme.css`` as `unsupported` until the declarative-CSS loader lands. |
+| 268 | `file.save_layout_as` action | Router action id (BB1) | WIRED | `tool_router.py` → `_fb_save_layout_as` → `actions/layout_io_actions.py::save_layout_as` | Snapshots the shell via ``LayoutPersistence.snapshot_from_shell`` (or accepts a ``ctx["layout"]`` override) and atomically writes YAML to a caller-picked path. Sibling to the implicit ``.slappy/layout.yaml`` write. |
+| 269 | `file.load_layout_from_file` action | Router action id (BB1) | WIRED | `tool_router.py` → `_fb_load_layout_from_file` → `actions/layout_io_actions.py::load_layout_from_file` | Reads YAML, validates schema, dispatches through ``LayoutPersistence.apply_to_shell``. Returns ``malformed`` on schema mismatch instead of silently loading defaults. |
+| 270 | `edit.undo` action | Router action id (BB1) | WIRED | `tool_router.py` → `_fb_edit_undo` → `actions/history_actions.py::undo` | Resolves ``ctx["stack"]`` / ``shell._undo_stack`` / ``shell._engine._undo_manager`` in that order, then calls ``UndoStack.undo``. Returns ``empty`` when the stack is idle so callers can grey out the button. |
+| 271 | `edit.redo` action | Router action id (BB1) | WIRED | `tool_router.py` → `_fb_edit_redo` → `actions/history_actions.py::redo` | Mirror of `edit.undo` — calls ``UndoStack.redo`` and returns the popped entry's action id + label + updated depths. |
 
-**Total rows: 266.** Status tally:
+**Total rows: 271.** Status tally:
 
-* **WIRED**: 248 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1; row 189 also flipped STUB -> WIRED)
+* **WIRED**: 253 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1; row 189 also flipped STUB -> WIRED)
 * **STUB**: 15 (rows 50, 78, 79, 94, 95, 191, 192, 193, 222, 224, 225, 226, 227, 228, 243 — row 189 dropped after W2 landing; row 243 added for X4 delete ctx handler)
 * **BROKEN**: 3 (rows 80, 223 code-paths — see previous note; dedupes to 2 real import/attribute defects)
 
@@ -517,3 +522,62 @@ Regression tests: `SlapPyEngineTests/tests/test_stub_triage_aa1.py`
 previously-absent router action ids across 5 category buckets
 (`file`, `edit`, `tool`, `view`, `theme`). Roll-up: **266 total,
 248 WIRED (93.2%), 15 STUB (5.6%), 3 BROKEN (1.1%)**.
+
+---
+
+## BB1 STUB-triage patch (2026-07-05, round 5 after X3 + Y1 + Z7 + AA1)
+
+Five more action ids landed in this tick, moving 5 rows from STUB
+(implicit — the ids were not yet registered) to WIRED (rows 267-271):
+
+* `theme.import_from_file` → `slappyengine.actions.theme_import_actions.import_from_file`
+* `file.save_layout_as` → `slappyengine.actions.layout_io_actions.save_layout_as`
+* `file.load_layout_from_file` → `slappyengine.actions.layout_io_actions.load_layout_from_file`
+* `edit.undo` → `slappyengine.actions.history_actions.undo`
+* `edit.redo` → `slappyengine.actions.history_actions.redo`
+
+New subpackages: `python/slappyengine/actions/theme_import_actions.py`
++ `python/slappyengine/actions/layout_io_actions.py`
++ `python/slappyengine/actions/history_actions.py`.
+
+Behavioural notes for BB1:
+
+* **`theme.import_from_file`** — sibling to Z7's `theme.export_current`.
+  Reads a ``*.theme.yaml`` (or plain ``.yaml`` / ``.yml``) through
+  ``ThemeSpec.from_yaml``, calls ``register_theme(spec)``, and (unless
+  ``ctx["activate"]=False``) swaps the process-wide active theme via
+  ``apply_theme``. ``*.theme.css`` files return ``unsupported`` so a
+  future CSS loader can land without breaking this contract. Falls
+  back to ``ctx["shell"].prompt_open_path(".theme.yaml")`` when no
+  path override is supplied — a mirror of the ``prompt_save_path``
+  hook the export action uses.
+* **`file.save_layout_as`** — snapshots the shell via
+  ``LayoutPersistence.snapshot_from_shell`` (or accepts a
+  ``ctx["layout"]`` override for headless tests) and writes YAML
+  atomically (temp file + ``os.replace``). The suggested default
+  filename is ``layout.layout.yaml`` so the Tk chooser hints the
+  compound extension. This is the *explicit-path* counterpart to
+  ``LayoutPersistence.save`` which owns the implicit per-project
+  ``.slappy/layout.yaml`` path.
+* **`file.load_layout_from_file`** — reads YAML, validates
+  ``schema_version == SCHEMA_VERSION``, and dispatches through
+  ``LayoutPersistence.apply_to_shell``. Returns ``malformed`` on
+  schema mismatch instead of silently loading defaults so a
+  "layout from an older / newer editor build" case surfaces cleanly
+  in the toast. Supports ``ctx["apply"]=False`` for preview flows.
+* **`edit.undo` / `edit.redo`** — distinct from the legacy
+  ``editor.undo`` / ``editor.redo`` router entries which route
+  through ``shell._undo`` / ``shell._engine._undo_manager.redo``.
+  The BB1 pair resolves the process-wide undo stack via
+  ``ctx["stack"]`` → ``shell._undo_stack`` →
+  ``shell._engine._undo_manager`` (that last hop is the legacy
+  path — kept so this action is a strict superset), then calls
+  ``UndoStack.undo`` / ``UndoStack.redo`` directly. Returns
+  ``{"status": "empty"}`` on an idle stack so hotkey handlers can
+  grey out the button without extra probing.
+
+Regression tests: `SlapPyEngineTests/tests/test_stub_triage_bb1.py`
+(37 tests, all passing). Combined X3+Y1+Z7+AA1+BB1 wiring now covers
+25 previously-absent router action ids across 5 category buckets
+(`file`, `edit`, `tool`, `view`, `theme`). Roll-up: **271 total,
+253 WIRED (93.4%), 15 STUB (5.5%), 3 BROKEN (1.1%)**.

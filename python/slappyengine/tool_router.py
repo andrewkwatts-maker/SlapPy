@@ -725,6 +725,42 @@ def _fb_activate_pan_tool(ctx: dict[str, Any]) -> Any:
     return activate_pan_tool(ctx)
 
 
+# ---------------------------------------------------------------------------
+# BB1 STUB-triage fallbacks (2026-07-05, round 5)
+#
+# Wire the next five STUB rows: theme import from file, layout save-as /
+# load-from-file, and history undo / redo via the process-wide UndoStack.
+# See :mod:`slappyengine.actions.theme_import_actions`,
+# :mod:`slappyengine.actions.layout_io_actions`, and
+# :mod:`slappyengine.actions.history_actions` for the implementations.
+# ---------------------------------------------------------------------------
+
+
+def _fb_theme_import_from_file(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.theme_import_actions import import_from_file
+    return import_from_file(ctx)
+
+
+def _fb_save_layout_as(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layout_io_actions import save_layout_as
+    return save_layout_as(ctx)
+
+
+def _fb_load_layout_from_file(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layout_io_actions import load_layout_from_file
+    return load_layout_from_file(ctx)
+
+
+def _fb_edit_undo(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.history_actions import undo
+    return undo(ctx)
+
+
+def _fb_edit_redo(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.history_actions import redo
+    return redo(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -805,6 +841,23 @@ def _default_actions() -> list[ToolAction]:
             label="Open Recent Project",
             rust_backing=None,
             python_fallback=_fb_open_recent,
+            required_args=[],
+            category="file",
+        ),
+        # ── BB1 STUB-triage: layout I/O to explicit files ──
+        ToolAction(
+            action_id="file.save_layout_as",
+            label="Save Layout As...",
+            rust_backing=None,
+            python_fallback=_fb_save_layout_as,
+            required_args=[],
+            category="file",
+        ),
+        ToolAction(
+            action_id="file.load_layout_from_file",
+            label="Load Layout from File...",
+            rust_backing=None,
+            python_fallback=_fb_load_layout_from_file,
             required_args=[],
             category="file",
         ),
@@ -897,6 +950,26 @@ def _default_actions() -> list[ToolAction]:
             label="Delete Selection",
             rust_backing=None,
             python_fallback=_fb_delete_selection,
+            required_args=[],
+            category="edit",
+        ),
+        # ── BB1 STUB-triage: history (2026-07-05, round 5) ────────────
+        # Distinct from the legacy ``editor.undo`` / ``editor.redo`` —
+        # this pair resolves the process-wide UndoStack directly instead
+        # of the fragile shell -> engine._undo_manager hop.
+        ToolAction(
+            action_id="edit.undo",
+            label="Undo (History)",
+            rust_backing=None,
+            python_fallback=_fb_edit_undo,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="edit.redo",
+            label="Redo (History)",
+            rust_backing=None,
+            python_fallback=_fb_edit_redo,
             required_args=[],
             category="edit",
         ),
@@ -1109,6 +1182,15 @@ def _default_actions() -> list[ToolAction]:
             label="Export Current Theme...",
             rust_backing=None,
             python_fallback=_fb_export_current_theme,
+            required_args=[],
+            category="theme",
+        ),
+        # BB1 STUB-triage: theme import from a caller-chosen file.
+        ToolAction(
+            action_id="theme.import_from_file",
+            label="Import Theme from File...",
+            rust_backing=None,
+            python_fallback=_fb_theme_import_from_file,
             required_args=[],
             category="theme",
         ),
