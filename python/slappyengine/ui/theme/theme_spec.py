@@ -674,6 +674,11 @@ class FrameStyle:
     grip_size: float = 12.0
     grip_rounding: float = 4.0
     title_bar_height: int = 24
+    # Optional hand-drawn edge stroke — when set, the renderer draws a
+    # textured border (pencil / marker / brush / etc.) around the panel
+    # instead of the flat ``border_color`` line. See
+    # :mod:`slappyengine.ui.theme.edge_strokes`.
+    edge_stroke: Any = None
 
     def __post_init__(self) -> None:
         fn = "FrameStyle"
@@ -697,6 +702,14 @@ class FrameStyle:
                 raise TypeError(
                     f"{fn}: {name} must be a Color or None; "
                     f"got {type(value).__name__}"
+                )
+        if self.edge_stroke is not None:
+            # Local import — theme_spec must remain cheap to import.
+            from .edge_strokes.library import EdgeStrokeStyle
+            if not isinstance(self.edge_stroke, EdgeStrokeStyle):
+                raise TypeError(
+                    f"{fn}: edge_stroke must be EdgeStrokeStyle or None; "
+                    f"got {type(self.edge_stroke).__name__}"
                 )
 
 

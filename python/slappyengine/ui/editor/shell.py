@@ -98,6 +98,12 @@ class EditorShell:
         self._telemetry_panel = None
         self._post_process_panel = None
         self._animation_panel = None
+        self._theming_editor = None
+
+        # ── User-override layer (loaded on setup) ──────────────────────────
+        # Populated by :meth:`load_user_overrides`; consumers should treat
+        # ``None`` as "no user overrides discovered yet".
+        self._user_override_bundle = None
 
         # ── Notebook ambient-feedback channels ─────────────────────────────
         # Built during ``setup``; constructed here so callers can introspect
@@ -687,6 +693,117 @@ class EditorShell:
         self._theme_switcher_panel = panel
         self.register_panel(panel)
 
+    # ------------------------------------------------------------------
+    # User overrides — ~/.slappyengine/ui/
+    # ------------------------------------------------------------------
+
+    def load_user_overrides(self) -> None:
+        """Discover + fold user overrides from ``~/.slappyengine/ui/``.
+
+        Called from :meth:`setup` after the built-in notebook panels are
+        constructed so user panels can layer on top. Never raises — the
+        :class:`UserOverrideLoader` logs individual file failures and
+        the shell degrades to a base editor when the whole load fails.
+
+        Behaviour
+        ---------
+
+        * User panels are handed to :meth:`register_panel` and stashed
+          on ``self._user_override_bundle.panels`` for a subsequent
+          "View > User" submenu.
+        * Hotkey bindings are merged into
+          :attr:`NotebookHotkeys.BINDINGS` (user entries win on
+          collision).
+        * Hotkey commands (``user.<name>()``) are wrapped into a
+          fallback dispatcher chained through
+          :meth:`_dispatch_notebook_command`.
+        * Spawn actions are appended to the SPAWN menu module.
+        * WGSL shaders are handed to the matching theme registry.
+        """
+        try:
+            from slappyengine.ui.user_overrides import UserOverrideLoader
+        except Exception:
+            return
+
+        loader = UserOverrideLoader()
+        try:
+            loader.ensure_scaffolded()
+        except Exception:
+            pass
+        try:
+            bundle = loader.load_all()
+        except Exception:
+            return
+
+        self._user_override_bundle = bundle
+
+        # Panels — register on the shell so the layout composer can pick
+        # them up. If the panel does not implement ``build`` it will
+        # simply be skipped by the compositor — that's fine.
+        for panel in bundle.panels:
+            try:
+                self.register_panel(panel)
+            except Exception:
+                pass
+
+        # Hotkeys — merge into the class-level BINDINGS. User keys win.
+        if bundle.hotkey_bindings:
+            try:
+                self._notebook_hotkeys.BINDINGS.update(bundle.hotkey_bindings)
+            except Exception:
+                pass
+
+        # Spawn actions — extend ``spawn_menu.SPAWN_ACTIONS`` if we have
+        # it wired up already.
+        if bundle.spawn_actions:
+            try:
+                from slappyengine.ui.editor import spawn_menu as _sm
+                for card in bundle.spawn_actions:
+                    _sm.SPAWN_ACTIONS.append(card)
+            except Exception:
+                pass
+
+        # Shaders — hand each to the correct registry by kind.
+        if bundle.shaders:
+            self._register_user_shaders(bundle)
+
+    def _register_user_shaders(self, bundle) -> None:  # type: ignore[no-untyped-def]
+        """Route ``bundle.shaders`` into the theme registries by kind."""
+        for shader_id, wgsl in bundle.shaders.items():
+            kind = bundle.shader_kinds.get(shader_id, "")
+            try:
+                if kind == "page_linings":
+                    from slappyengine.ui.theme.page_linings.library import (
+                        PAGE_LININGS, LiningStyle,
+                    )
+                    PAGE_LININGS[shader_id] = LiningStyle(  # type: ignore[call-arg]
+                        style_id=shader_id,
+                        display_name=shader_id,
+                        wgsl_source=wgsl,
+                    )
+                elif kind == "washi_tape":
+                    from slappyengine.ui.theme.washi_tape.library import (
+                        WASHI_TAPES, WashiTapeStyle,
+                    )
+                    WASHI_TAPES[shader_id] = WashiTapeStyle(
+                        id=shader_id,
+                        display_name=shader_id,
+                        wgsl_source=wgsl,
+                    )
+                elif kind == "edge_strokes":
+                    from slappyengine.ui.theme.edge_strokes.library import (
+                        EDGE_STROKES, EdgeStrokeStyle,
+                    )
+                    EDGE_STROKES[shader_id] = EdgeStrokeStyle(
+                        style_id=shader_id,
+                        thickness_px=1.0,
+                        alpha=1.0,
+                        wgsl_source=wgsl,
+                    )
+            except Exception:
+                # Never let a broken registry hijack editor startup.
+                continue
+
     def setup_notebook_panels(self) -> None:
         """Auto-wire the notebook panel family on the shell.
 
@@ -754,6 +871,15 @@ class EditorShell:
                 self._animation_panel = NotebookAnimationPanel()
             except Exception:
                 self._animation_panel = None
+
+        if self._theming_editor is None:
+            try:
+                from slappyengine.ui.editor.notebook_theming_editor import (
+                    NotebookThemingEditor,
+                )
+                self._theming_editor = NotebookThemingEditor()
+            except Exception:
+                self._theming_editor = None
 
     def compose_default_panel_layout(self) -> dict[str, "MovablePanelWindow"]:
         """Build the default :class:`MovablePanelWindow` set + sensible dock positions.
@@ -949,6 +1075,21 @@ class EditorShell:
             )
             ap.hide()
             windows["animation_panel"] = ap
+
+        # ── Theming editor — floating, hidden by default (Ctrl+Shift+P).
+        theming_editor = getattr(self, "_theming_editor", None)
+        if theming_editor is not None:
+            te = MovablePanelWindow(
+                theming_editor,
+                title="Theming",
+                kind="sidebar",
+                default_pos=(max(0, (w - 460) // 2), max(0, (h - 540) // 2)),
+                default_size=(460, 540),
+                min_size=(420, 480),
+                closable=True,
+            )
+            te.hide()
+            windows["theming_editor"] = te
 
         # ── Status bar — very bottom edge, full width, fixed height.
         # ``no_move=True`` so the user can't accidentally drag the
@@ -1202,6 +1343,15 @@ class EditorShell:
         # outliner is built.
         from slappyengine.ui.editor import spawn_menu as _spawn_menu
         self._spawn_menu = _spawn_menu
+
+        # ── User-override layer — ~/.slappyengine/ui/ ─────────────────────
+        # Loaded AFTER the built-in panels + spawn menu are wired so user
+        # panels layer on top and user spawn cards land alongside the
+        # built-in deck. Never raises — see ``load_user_overrides``.
+        try:
+            self.load_user_overrides()
+        except Exception:
+            pass
 
         if self._content_browser is None:
             from slappyengine.ui.editor.content_browser import ContentBrowser

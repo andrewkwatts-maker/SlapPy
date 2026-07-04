@@ -58,6 +58,7 @@ from .theme_spec import (
     FrameStyle,
     Gradient,
     Palette,
+    PanelDecorConfig,
     PanelFrameSet,
     RadiusScale,
     SemanticTokens,
@@ -67,6 +68,11 @@ from .theme_spec import (
     TransitionScale,
     ZIndexScale,
 )
+from .user_themes import (
+    UserThemeError,
+    UserThemeStore,
+    bake_default_themes,
+)
 from .wgsl_backgrounds import (
     BUILTIN_BACKGROUNDS,
     WGSLBackgroundTicker,
@@ -75,6 +81,14 @@ from .wgsl_backgrounds import (
     has_wgpu,
     resolve_background,
 )
+from .edge_strokes import (
+    EDGE_STROKES,
+    EdgeStrokeStyle,
+    bake_stroke_texture,
+    render_stroke_border,
+)
+from .edge_strokes import get_stroke as get_edge_stroke
+from .edge_strokes import list_strokes as list_edge_strokes
 
 from slappyengine._validation import validate_non_empty_str
 
@@ -191,6 +205,8 @@ __all__ = [
     "Color",
     "DeclarativeTheme",
     "DeclarativeThemeError",
+    "EDGE_STROKES",
+    "EdgeStrokeStyle",
     "Font",
     "FrameStyle",
     "Gradient",
@@ -210,20 +226,24 @@ __all__ = [
     "ZIndexScale",
     "apply_theme",
     "apply_theme_to_dpg",
+    "bake_stroke_texture",
     "compile_wgsl_background",
     "dot_grid",
     "frosted_panel",
     "get_active_theme",
     "get_baked_background",
+    "get_edge_stroke",
     "glass_blur",
     "has_wgpu",
     "highlighter_stroke",
+    "list_edge_strokes",
     "list_registered_themes",
     "load_declarative",
     "noise_glitter",
     "paper_shadow",
     "parchment",
     "register_theme",
+    "render_stroke_border",
     "resolve_background",
     "ruled_paper",
     "watercolor_wash",
