@@ -203,6 +203,16 @@ class MovablePanelWindow:
         # rather than the enum so callers can persist it cheaply.
         self.docked_to: str | None = None
 
+        # ── Extended washi-tape corner stickers ───────────────────────
+        # Populated by :class:`ExtendedPanelDecorator.attach` — a list of
+        # :class:`ExtendedCornerSpec` describing tape strips that extend
+        # PAST the panel edge. The wrapper itself doesn't render them
+        # (they live on a viewport-level drawlist so they can spill
+        # outside the window rect); we keep the slot here so the theme
+        # switcher + layout persistence can inspect / re-attach without
+        # bouncing through the decorator's private bookkeeping.
+        self.extended_corners: list = []
+
         # Window tag — string for compatibility with DPG's tag system.
         self._window_tag: str = (
             window_tag if isinstance(window_tag, str) and window_tag
