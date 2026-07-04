@@ -1,0 +1,55 @@
+schema_version: 1
+theme: teengirl_notebook
+viewport_size: [1280, 800]
+meta:
+  status_bar_size: large
+  hide_chrome: true
+panels:
+  notebook_status_bar:
+    position: [0, 0]
+    size: [1280, 80]
+    visible: true
+    z_order: 2
+    docked_to: top
+  notebook_toolbar:
+    position: [0, 80]
+    size: [1280, 32]
+    visible: false
+    z_order: 0
+    docked_to: top
+  notebook_outliner:
+    position: [0, 80]
+    size: [200, 720]
+    visible: false
+    z_order: 0
+    docked_to: left
+  notebook_inspector:
+    position: [1080, 80]
+    size: [200, 720]
+    visible: false
+    z_order: 0
+    docked_to: right
+  notebook_content_browser:
+    position: [0, 780]
+    size: [1280, 20]
+    visible: false
+    z_order: 0
+    docked_to: bottom
+  notebook_code_panel:
+    position: [300, 100]
+    size: [640, 400]
+    visible: false
+    z_order: 0
+    docked_to: floating
+  theme_switcher_panel:
+    position: [280, 200]
+    size: [280, 360]
+    visible: false
+    z_order: 0
+    docked_to: floating
+  notebook_viewport:
+    position: [0, 80]
+    size: [1280, 720]
+    visible: true
+    z_order: 1
+    docked_to: floating

@@ -566,6 +566,38 @@ class LayoutPersistence:
             _push_visible(handle, state.visible)
             _push_z_order(handle, state.z_order)
 
+    # ------------------------------------------------------------------
+    # Baked-preset shortcut (sprint CC4)
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def load_baked_preset(cls, name: str) -> EditorLayout:
+        """Return the shipping :class:`EditorLayout` for baked preset *name*.
+
+        Thin delegation to :class:`slappyengine.ui.editor.layout_baker.LayoutBaker`
+        so callers can reach the six shipping presets (``default``,
+        ``triple_pane``, ``wide_code``, ``focus_mode``, ``debugging``,
+        ``presentation``) without importing the baker module directly.
+
+        The user-side file wins when it exists — matching the same
+        precedence as every other baker (``ChainBaker``,
+        ``PrefabLibrary``, ``UserThemeStore``) so hand-edits made in
+        ``~/.slappyengine/layouts/`` survive across engine upgrades.
+
+        Raises
+        ------
+        LayoutBakerError
+            When no baked or user preset matches *name*, or when the
+            on-disk YAML is malformed. Imported lazily so the base
+            persistence surface remains free of extra top-level
+            dependencies.
+        """
+        # Lazy import — avoids a module-level cycle between
+        # ``layout_persistence`` and ``layout_baker`` (the latter
+        # imports :class:`EditorLayout` from here).
+        from .layout_baker import LayoutBaker
+        return LayoutBaker().load(name)
+
 
 # ---------------------------------------------------------------------------
 # Internal probe / push helpers — keep ``snapshot_from_shell`` /
