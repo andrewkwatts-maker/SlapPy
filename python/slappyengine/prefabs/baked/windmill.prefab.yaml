@@ -1,0 +1,51 @@
+name: windmill
+category: structural
+body_spec:
+  kind: composite
+  nodes:
+    - [0.0, 0.0, 0.0]
+    - [2.0, 0.0, 1.0]
+    - [0.0, 2.0, 1.0]
+    - [-2.0, 0.0, 1.0]
+    - [0.0, -2.0, 1.0]
+joint_specs:
+  - kind: distance
+    node_a: 0
+    node_b: 1
+    rest_length: 2.0
+    stiffness: 8000000.0
+    damping: 0.02
+  - kind: distance
+    node_a: 0
+    node_b: 2
+    rest_length: 2.0
+    stiffness: 8000000.0
+    damping: 0.02
+  - kind: distance
+    node_a: 0
+    node_b: 3
+    rest_length: 2.0
+    stiffness: 8000000.0
+    damping: 0.02
+  - kind: distance
+    node_a: 0
+    node_b: 4
+    rest_length: 2.0
+    stiffness: 8000000.0
+    damping: 0.02
+  - kind: distance
+    node_a: 1
+    node_b: 3
+    rest_length: 4.0
+    stiffness: 8000000.0
+    damping: 0.02
+  - kind: distance
+    node_a: 2
+    node_b: 4
+    rest_length: 4.0
+    stiffness: 8000000.0
+    damping: 0.02
+child_prefabs: []
+metadata:
+  description: A pin-jointed cross that rotates freely around a fixed hub.
+  hub_index: 0

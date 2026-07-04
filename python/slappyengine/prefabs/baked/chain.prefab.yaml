@@ -1,0 +1,15 @@
+name: chain
+category: structural
+body_spec:
+  kind: chain
+  link_count: 5
+  link_length: 0.6
+  mass_per_link: 0.4
+  stiffness: 12000000.0
+  damping: 0.03
+  pin_first: true
+joint_specs: []
+child_prefabs: []
+metadata:
+  material: iron
+  description: A 5-link iron chain pinned at the first link.

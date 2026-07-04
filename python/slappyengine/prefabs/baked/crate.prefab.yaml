@@ -1,0 +1,16 @@
+name: crate
+category: props
+body_spec:
+  kind: box
+  width: 1.0
+  height: 1.0
+  mass: 4.0
+  edge_stiffness: 1500000.0
+  diag_stiffness: 500000.0
+joint_specs: []
+child_prefabs: []
+metadata:
+  material: wood
+  friction: 0.6
+  restitution: 0.15
+  description: A stackable wooden crate.

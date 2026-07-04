@@ -1,0 +1,14 @@
+name: ball
+category: props
+body_spec:
+  kind: circle
+  radius: 0.5
+  mass: 1.0
+  bounce: 0.85
+joint_specs: []
+child_prefabs: []
+metadata:
+  material: rubber
+  friction: 0.4
+  restitution: 0.85
+  description: A bouncy rubber ball.

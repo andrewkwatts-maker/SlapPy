@@ -1,0 +1,16 @@
+name: bridge
+category: structural
+body_spec:
+  kind: rope
+  node_count: 3
+  total_length: 6.0
+  mass_per_node: 2.0
+  stiffness: 4000000.0
+  damping: 0.04
+  anchor_a_pinned: true
+  anchor_b_pinned: true
+joint_specs: []
+child_prefabs: []
+metadata:
+  material: plank
+  description: A short 3-plank rope-joined bridge.

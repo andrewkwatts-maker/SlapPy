@@ -72,6 +72,7 @@ features = ["pyo3/extension-module"]
 # copied on first launch by ``slappyengine.ui.theme.user_themes``.
 include = [
     "python/slappyengine/ui/theme/themes/_baked/*.theme.yaml",
+    "python/slappyengine/prefabs/baked/*.prefab.yaml",
 ]
 # Strip debug symbols from the compiled _core extension to shrink wheel size.
 # Combined with [profile.release] strip = true in Cargo.toml, this drops the
