@@ -566,6 +566,78 @@ class ShaderEffect:
 
 
 # ---------------------------------------------------------------------------
+# Background-shader serialisation helpers
+# ---------------------------------------------------------------------------
+#
+# The ``background_shader`` field on :class:`ThemeSpec` accepts either
+# the CPU-side :class:`ShaderEffect` or the GPU-side
+# :class:`~.wgsl_backgrounds.WGSLShaderSpec`. Both round-trip through
+# YAML via these helpers — a ``"kind"`` tag disambiguates the two on
+# reload. Legacy dicts without a ``"kind"`` tag are treated as
+# ``ShaderEffect`` for backwards compatibility.
+
+
+def _serialise_background_shader(shader: Any) -> Any:
+    """Serialise a ThemeSpec.background_shader to a YAML-safe dict.
+
+    Returns ``None`` when *shader* is ``None``. :class:`ShaderEffect`
+    serialises to ``{"kind": "shader_effect", "name": ..., "params": ...}``
+    and :class:`WGSLShaderSpec` to
+    ``{"kind": "wgsl", "source": ..., ...}`` so :meth:`ThemeSpec.from_dict`
+    can pick the correct constructor on reload without introspecting
+    each field.
+    """
+    if shader is None:
+        return None
+    # Delayed import to keep the theme_spec module cheap to import.
+    from .wgsl_backgrounds import WGSLShaderSpec as _WGSLSpec
+    if isinstance(shader, _WGSLSpec):
+        payload = shader.to_dict()
+        payload["kind"] = "wgsl"
+        return payload
+    if isinstance(shader, ShaderEffect):
+        return {
+            "kind": "shader_effect",
+            "name": shader.name,
+            "params": dict(shader.params),
+        }
+    raise TypeError(
+        "_serialise_background_shader: shader must be ShaderEffect, "
+        f"WGSLShaderSpec, or None; got {type(shader).__name__}"
+    )
+
+
+def _deserialise_background_shader(raw: Any) -> Any:
+    """Rebuild a background shader from :func:`_serialise_background_shader`.
+
+    Accepts ``None`` (returns ``None``), a live :class:`ShaderEffect`
+    / :class:`~.wgsl_backgrounds.WGSLShaderSpec` (passes through), or
+    a dict produced by :func:`_serialise_background_shader`. Dicts
+    without a ``"kind"`` tag default to ``ShaderEffect`` so legacy
+    YAML files keep loading.
+    """
+    if raw is None:
+        return None
+    from .wgsl_backgrounds import WGSLShaderSpec as _WGSLSpec
+    if isinstance(raw, (ShaderEffect, _WGSLSpec)):
+        return raw
+    if isinstance(raw, dict):
+        kind = raw.get("kind")
+        if kind == "wgsl" or "source" in raw:
+            payload = {k: v for k, v in raw.items() if k != "kind"}
+            return _WGSLSpec.from_dict(payload)
+        return ShaderEffect(
+            name=raw.get("name", ""),
+            params=dict(raw.get("params", {})),
+        )
+    raise TypeError(
+        "ThemeSpec.from_dict: background_shader must be dict, "
+        "ShaderEffect, WGSLShaderSpec, or None; "
+        f"got {type(raw).__name__}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # FrameStyle & PanelFrameSet — DPG panel frame tokens
 # ---------------------------------------------------------------------------
 #
@@ -688,6 +760,76 @@ class PanelFrameSet:
 
 
 # ---------------------------------------------------------------------------
+# PanelDecorConfig — hand-drawn dividers + washi-tape corner defaults
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class PanelDecorConfig:
+    """Per-theme defaults for the ``panel_decor`` renderer.
+
+    The ``panel_decor`` renderer draws hand-drawn dividers between nested
+    panels and washi-tape corner stickers on floating (dragged-out)
+    windows. A ``PanelDecorConfig`` picks the default divider + corner
+    style for the theme and lets themes override per panel kind.
+
+    Divider / corner style names are stored as plain strings so this
+    dataclass stays YAML-safe. The panel_decor module maps the strings
+    to its own ``DividerStyle`` / ``WashiCornerStyle`` enums at draw
+    time.
+    """
+
+    divider_style: str = "wavy"
+    corner_style: str = "tape_pink"
+    divider_thickness_px: int = 2
+    corner_size_px: int = 32
+    per_kind: dict[str, tuple[str, str]] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        fn = "PanelDecorConfig"
+        self.divider_style = validate_non_empty_str(
+            "divider_style", fn, self.divider_style,
+        )
+        self.corner_style = validate_non_empty_str(
+            "corner_style", fn, self.corner_style,
+        )
+        self.divider_thickness_px = validate_positive_int(
+            "divider_thickness_px", fn, self.divider_thickness_px,
+        )
+        self.corner_size_px = validate_positive_int(
+            "corner_size_px", fn, self.corner_size_px,
+        )
+        if not isinstance(self.per_kind, dict):
+            raise TypeError(
+                f"{fn}: per_kind must be a dict; "
+                f"got {type(self.per_kind).__name__}"
+            )
+        for key, value in self.per_kind.items():
+            validate_non_empty_str("per_kind key", fn, key)
+            if (
+                not isinstance(value, tuple)
+                or len(value) != 2
+                or not all(isinstance(v, str) and v for v in value)
+            ):
+                raise TypeError(
+                    f"{fn}: per_kind[{key!r}] must be a (str, str) tuple; "
+                    f"got {value!r}"
+                )
+
+    def for_panel(self, kind: str) -> tuple[str, str]:
+        """Return ``(divider_style, corner_style)`` for *kind*.
+
+        Falls back to the top-level defaults when *kind* is not present
+        in :attr:`per_kind`.
+        """
+        validate_non_empty_str("kind", "PanelDecorConfig.for_panel", kind)
+        override = self.per_kind.get(kind)
+        if override is not None:
+            return override
+        return (self.divider_style, self.corner_style)
+
+
+# ---------------------------------------------------------------------------
 # ThemeSpec
 # ---------------------------------------------------------------------------
 
@@ -721,7 +863,15 @@ class ThemeSpec:
     nine_slices: dict[str, Any] = field(default_factory=dict)
     icons: dict[str, Any] = field(default_factory=dict)
     frames: PanelFrameSet = field(default_factory=PanelFrameSet)
-    background_shader: ShaderEffect | None = None
+    decor: PanelDecorConfig = field(default_factory=PanelDecorConfig)
+    # ``background_shader`` accepts either the CPU-side
+    # :class:`ShaderEffect` (dispatched through the numpy helpers in
+    # :mod:`shader_effects`) or the GPU-side
+    # :class:`~.wgsl_backgrounds.WGSLShaderSpec` (compiled through the
+    # WGSL fragment-shader hook). The union is validated in
+    # ``__post_init__``; the field is declared as ``Any`` to avoid an
+    # eager import cycle on ``wgsl_backgrounds``.
+    background_shader: Any = None
     metadata: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -757,13 +907,20 @@ class ThemeSpec:
                 )
             for key in bag:
                 validate_str(f"{bag_name} key", fn, key, allow_empty=False)
-        if self.background_shader is not None and not isinstance(
-            self.background_shader, ShaderEffect
-        ):
-            raise TypeError(
-                f"{fn}: background_shader must be a ShaderEffect or None; "
-                f"got {type(self.background_shader).__name__}"
-            )
+        if self.background_shader is not None:
+            # Local import so the theme_spec module remains free of a
+            # hard dependency on wgsl_backgrounds (which soft-imports
+            # wgpu). We accept either the numpy-side ShaderEffect or
+            # the GPU-side WGSLShaderSpec.
+            from .wgsl_backgrounds import WGSLShaderSpec as _WGSLSpec
+            if not isinstance(
+                self.background_shader, (ShaderEffect, _WGSLSpec)
+            ):
+                raise TypeError(
+                    f"{fn}: background_shader must be a ShaderEffect, "
+                    "WGSLShaderSpec, or None; "
+                    f"got {type(self.background_shader).__name__}"
+                )
         if not isinstance(self.frames, PanelFrameSet):
             raise TypeError(
                 f"{fn}: frames must be a PanelFrameSet; "
@@ -818,10 +975,8 @@ class ThemeSpec:
                 k: (v.to_dict() if hasattr(v, "to_dict") else repr(v))
                 for k, v in self.icons.items()
             },
-            "background_shader": (
-                {"name": self.background_shader.name,
-                 "params": dict(self.background_shader.params)}
-                if self.background_shader is not None else None
+            "background_shader": _serialise_background_shader(
+                self.background_shader
             ),
             "metadata": dict(self.metadata),
         }
@@ -891,20 +1046,7 @@ class ThemeSpec:
             else:
                 icons[k] = v
         bg = data.get("background_shader")
-        bg_shader: ShaderEffect | None
-        if bg is None:
-            bg_shader = None
-        elif isinstance(bg, ShaderEffect):
-            bg_shader = bg
-        elif isinstance(bg, dict):
-            bg_shader = ShaderEffect(
-                name=bg.get("name", ""), params=dict(bg.get("params", {}))
-            )
-        else:
-            raise TypeError(
-                f"ThemeSpec.from_dict: background_shader must be dict "
-                f"or ShaderEffect; got {type(bg).__name__}"
-            )
+        bg_shader = _deserialise_background_shader(bg)
 
         semantic_raw = data.get("semantic")
         if semantic_raw is None:

@@ -516,6 +516,25 @@ def resolve_background(spec_or_effect: Any) -> np.ndarray | None:
         return None
     if isinstance(spec_or_effect, WGSLShaderSpec):
         return compile_wgsl_background(spec_or_effect)
+    # Page-lining id string — route through the lining renderer, which
+    # itself falls back to numpy when wgpu isn't installed.
+    if isinstance(spec_or_effect, str):
+        try:
+            from .page_linings import render_lining
+            from .page_linings.library import PAGE_LININGS
+        except Exception:
+            return None
+        style = PAGE_LININGS.get(spec_or_effect)
+        if style is None:
+            logger.warning(
+                "resolve_background: unknown page-lining id %r",
+                spec_or_effect,
+            )
+            return None
+        # Default to 2 tile-repeats so the panel background samples a
+        # visible chunk of pattern rather than a single tile.
+        tw, th = style.tile_size
+        return render_lining(spec_or_effect, (tw * 2, th * 2))
     # Fall through to the numpy-side ShaderEffect dispatcher.
     try:
         from .theme_spec import ShaderEffect
