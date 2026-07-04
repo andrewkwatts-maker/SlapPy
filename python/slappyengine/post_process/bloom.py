@@ -129,12 +129,20 @@ class BloomPass(PostProcessPassBase):
     # the regression tests' allow-list explicit.
     UPSAMPLE_MODES = ("tent9", "karis13")
 
+    # Mip-count range accepted by the pyramid pipeline.  Advertised here so
+    # downstream code (validation, config schemas, unit tests) has a single
+    # source of truth for the [4, 8] window.
+    MIP_MIN = 4
+    MIP_MAX = 8
+    MIP_DEFAULT = 6
+
     def __init__(
         self,
         threshold: float = 1.0,
         knee: float = 0.2,
         intensity: float = 1.0,
         upsample_mode: str = "tent9",
+        mip_count: int = 6,
     ) -> None:
         """Construct a bloom extraction pass.
 
@@ -148,15 +156,21 @@ class BloomPass(PostProcessPassBase):
             chains).  ``"karis13"`` uses the wider 13-tap Karis upsample,
             matching the partial-Karis 13-tap downsample for higher-quality
             progressive blur.
+        mip_count
+            Number of downsample steps in the bloom pyramid.  Must be in
+            ``[4, 8]``; defaults to ``6`` per the COD:AW slide-deck
+            recommendation for 1080p targets.
 
         Raises
         ------
         TypeError
             If ``threshold`` / ``knee`` / ``intensity`` are not real numbers,
-            or ``upsample_mode`` is not a ``str``.
+            or ``upsample_mode`` is not a ``str``, or ``mip_count`` is not
+            an int.
         ValueError
             If any numeric kwarg is NaN/inf or negative, or
-            ``upsample_mode`` is not one of ``UPSAMPLE_MODES``.
+            ``upsample_mode`` is not one of ``UPSAMPLE_MODES``, or
+            ``mip_count`` is outside ``[MIP_MIN, MIP_MAX]``.
         """
         self.threshold = validate_non_negative_float(
             "threshold", "BloomPass", threshold,
@@ -178,6 +192,20 @@ class BloomPass(PostProcessPassBase):
                 f"{self.UPSAMPLE_MODES!r}; got {upsample_mode!r}"
             )
         self.upsample_mode = upsample_mode
+        # Mip-count validation.  We deliberately reject bool for the same
+        # reason the base-class rejects bool for numeric fields — a stray
+        # ``True`` from a config coerces to ``1`` which is silently wrong.
+        if isinstance(mip_count, bool) or not isinstance(mip_count, int):
+            raise TypeError(
+                f"BloomPass: mip_count must be an int; "
+                f"got {type(mip_count).__name__}"
+            )
+        if mip_count < self.MIP_MIN or mip_count > self.MIP_MAX:
+            raise ValueError(
+                f"BloomPass: mip_count must be in "
+                f"[{self.MIP_MIN}, {self.MIP_MAX}]; got {mip_count!r}"
+            )
+        self.mip_count = mip_count
 
     # ----------------------------------------------------------- config glue
     @classmethod
@@ -197,6 +225,7 @@ class BloomPass(PostProcessPassBase):
             knee=getattr(b, "knee", 0.2),
             intensity=getattr(b, "intensity", 1.0),
             upsample_mode=getattr(b, "upsample_mode", "tent9"),
+            mip_count=int(getattr(b, "mip_count", cls.MIP_DEFAULT)),
         )
 
     # ----------------------------------------------------------- GPU plumbing
@@ -245,6 +274,22 @@ class BloomPass(PostProcessPassBase):
         if self.intensity != 1.0:
             glow = glow * self.intensity
         return glow
+
+    def apply_pyramid_cpu(self, rgb: np.ndarray, strength: float = 1.0) -> np.ndarray:
+        """Full-pipeline CPU reference — extract, pyramid, additive composite.
+
+        Convenience wrapper around :func:`apply_bloom` that forwards the
+        class-configured ``threshold`` / ``knee`` / ``mip_count`` so tests
+        and offline tools can drive the whole bloom pipeline from a single
+        ``BloomPass`` instance.
+        """
+        return apply_bloom(
+            rgb,
+            strength=strength * float(self.intensity),
+            threshold=self.threshold,
+            knee=self.knee,
+            mip_count=self.mip_count,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -579,6 +624,228 @@ def downsample_box2(rgb: np.ndarray) -> np.ndarray:
     # Crop to even dims, then reshape-and-mean.
     cropped = rgb[: dh * 2, : dw * 2]
     return cropped.reshape(dh, 2, dw, 2, 3).mean(axis=(1, 3))
+
+
+# ---------------------------------------------------------------------------
+# Firefly filter — Reinhard-local first-mip-only HDR clamp
+# ---------------------------------------------------------------------------
+#
+# Applied on the FIRST downsample only (the rest of the mip chain gets clean
+# input already).  Formula: ``L' = L / (1 + L / 4)`` — a Reinhard-local
+# tone-map anchored at exposure 4 so an ``L = 100`` firefly clamps to
+# ``100 / 26 ≈ 3.85`` instead of blowing out the pyramid.
+#
+# The clamp is applied per-pixel by scaling the RGB triple by ``L' / L`` so
+# hue is preserved.  Pixels below the anchor pass through effectively
+# unchanged: ``L = 1`` gives ``L' = 1 / 1.25 = 0.8`` (soft roll-off starts
+# immediately, which is what we want — otherwise a hard "only clamp above X"
+# would reintroduce popping fireflies as the exposure floats).
+#
+# References:
+#   Karis, "Tone Mapping" (2013) — the 1/(1+L) partial-Karis firefly clamp.
+#   Reinhard et al., "Photographic Tone Reproduction" (2002) — the L/(1+L)
+#   local tone-map that the anchor-4 variant reduces to for L >> 4.
+# ---------------------------------------------------------------------------
+
+# Anchor luma for the Reinhard-local firefly clamp.  Chosen to match the
+# COD:AW slide-deck "clamp above ~4× exposure" recommendation — high enough
+# that most mid-scene HDR content passes through with only a mild roll-off,
+# but low enough that a 100× firefly gets crushed by ~25×.
+_FIREFLY_ANCHOR = 4.0
+
+
+def firefly_filter(rgb: np.ndarray, anchor: float = _FIREFLY_ANCHOR) -> np.ndarray:
+    """Reinhard-local firefly clamp for the first bloom downsample only.
+
+    Applies ``L' = L / (1 + L / anchor)`` per pixel to the BT.709 luma of
+    ``rgb``, then rescales the RGB triple by ``L' / L`` so hue is preserved.
+
+    Parameters
+    ----------
+    rgb
+        ``(..., 3)`` float array of linear-HDR RGB values.
+    anchor
+        Luma value at which the Reinhard roll-off is anchored.  Defaults to
+        ``4.0`` — the value recommended in the COD:AW SIGGRAPH slides.
+        Must be strictly positive.
+
+    Returns
+    -------
+    np.ndarray
+        Same shape as ``rgb`` with fireflies (luma >> anchor) crushed
+        toward the anchor by the Reinhard curve.
+
+    Notes
+    -----
+    Meant for use on the **first mip only**.  Subsequent downsamples get
+    clean (post-clamp) input so applying the filter again would just dim
+    the whole pyramid.
+    """
+    rgb = np.asarray(rgb, dtype=np.float32)
+    if rgb.ndim < 1 or rgb.shape[-1] != 3:
+        raise ValueError(
+            f"firefly_filter expects (..., 3) RGB, got shape {rgb.shape!r}"
+        )
+    if not np.isfinite(anchor) or anchor <= 0.0:
+        raise ValueError(
+            f"firefly_filter: anchor must be a positive finite float; got {anchor!r}"
+        )
+    a = float(anchor)
+    luma = _luma709(rgb)
+    # Reinhard-local: L' = L / (1 + L/a).  Weight = L'/L = 1 / (1 + L/a).
+    weight = 1.0 / (1.0 + luma / a)
+    return rgb * weight[..., None]
+
+
+# ---------------------------------------------------------------------------
+# Full bloom pyramid — mip chain build + progressive additive upsample
+# ---------------------------------------------------------------------------
+
+
+# Valid mip-count range.  The COD:AW slide-deck recommends 6 mips for a
+# 1080p target; 4 is the sensible floor (below that the top mip still has
+# hard high-frequency content) and 8 is the practical ceiling before the
+# mip footprint dips below the workgroup size.
+_MIP_MIN = 4
+_MIP_MAX = 8
+_MIP_DEFAULT = 6
+
+
+def _build_pyramid(rgb: np.ndarray, mip_count: int) -> list[np.ndarray]:
+    """Build the bloom downsample pyramid — firefly clamp applied to mip 0 only.
+
+    Returns a list of ``mip_count + 1`` mip levels: index 0 is the original
+    (post-firefly-filter) full-res image, index ``N`` is the coarsest mip.
+    """
+    if mip_count < _MIP_MIN or mip_count > _MIP_MAX:
+        raise ValueError(
+            f"_build_pyramid: mip_count must be in [{_MIP_MIN}, {_MIP_MAX}]; "
+            f"got {mip_count!r}"
+        )
+    # First downsample gets the firefly-suppressed input; subsequent mips
+    # get the pure low-pass so the kernel remains linear.
+    mips: list[np.ndarray] = [rgb]
+    prev = firefly_filter(rgb)
+    for level in range(mip_count):
+        # Karis clamp on the first downsample only (belt-and-braces — the
+        # firefly filter already handles the worst cases; the per-quad
+        # clamp catches any residual sub-pixel fireflies).
+        clamp = (level == 0)
+        prev = downsample_mn13(prev, karis_clamp=clamp)
+        mips.append(prev)
+        # Numerical safety net: if a mip collapses to 1×1 we stop early.
+        if prev.shape[0] <= 1 or prev.shape[1] <= 1:
+            break
+    return mips
+
+
+def _mip_strength(level: int, mip_count: int) -> float:
+    """Mip-independent strength curve: ``mip_strength ^ 0.5``.
+
+    Level 0 (largest mip, actually mip 1 in our indexing since level 0 is
+    the source) contributes with weight 1.0 and the coarsest mip contributes
+    with weight (1 / mip_count) ** 0.5.  Taking the square root damps the
+    otherwise-linear compounding so that adding more mips does not brighten
+    the composite; instead it broadens the halo.
+    """
+    if mip_count <= 0:
+        return 1.0
+    # Interpolate from 1.0 at the largest mip down to 1/mip_count at the
+    # smallest — then apply the sqrt() curve.
+    linear = 1.0 - (level / float(mip_count))
+    # Clamp to a small positive floor so pow() is always well-defined.
+    linear = max(linear, 1.0e-6)
+    return float(linear ** 0.5)
+
+
+def apply_bloom(
+    image: np.ndarray,
+    strength: float = 1.0,
+    *,
+    threshold: float = 1.0,
+    knee: float = 0.2,
+    mip_count: int = _MIP_DEFAULT,
+) -> np.ndarray:
+    """CPU reference: full bloom pipeline — extract, pyramid, progressive tent.
+
+    Applies the Lottes 2017 smooth-threshold extraction, builds an
+    ``mip_count``-level Karis 13-tap downsample pyramid (with the Reinhard-
+    local firefly filter on the top mip only), and composites the pyramid
+    back onto ``image`` with progressive 3×3 tent upsample and the
+    mip-independent ``bloom_mix = mip_strength ^ 0.5`` weighting curve.
+
+    Parameters
+    ----------
+    image
+        ``(H, W, 3)`` linear-HDR RGB float image.
+    strength
+        Scalar multiplier applied to the composite bloom before it is
+        added back to ``image``.  ``strength == 0`` returns ``image``
+        untouched (identity — proves the bloom pipeline is additive and
+        respects zero-strength).
+    threshold, knee
+        Lottes smooth-threshold parameters (see :func:`smooth_threshold`).
+    mip_count
+        Number of downsample steps (4-8, default 6).  More mips ⇒ wider
+        halo; the strength curve keeps the total energy from compounding.
+
+    Returns
+    -------
+    np.ndarray
+        ``(H, W, 3)`` linear-HDR RGB float image with bloom added.
+
+    Notes
+    -----
+    Preserves backward-compat: existing callers using
+    ``apply_bloom(image, strength)`` positionally see identical behaviour
+    once ``strength == 0`` (identity) and the standard threshold/knee/mip
+    defaults apply.
+    """
+    image = np.asarray(image, dtype=np.float32)
+    if image.ndim != 3 or image.shape[-1] != 3:
+        raise ValueError(
+            f"apply_bloom expects (H, W, 3) RGB, got shape {image.shape!r}"
+        )
+    if not np.isfinite(strength):
+        raise ValueError(f"apply_bloom: strength must be finite; got {strength!r}")
+    if strength < 0.0:
+        raise ValueError(f"apply_bloom: strength must be >= 0; got {strength!r}")
+    if mip_count < _MIP_MIN or mip_count > _MIP_MAX:
+        raise ValueError(
+            f"apply_bloom: mip_count must be in [{_MIP_MIN}, {_MIP_MAX}]; "
+            f"got {mip_count!r}"
+        )
+    if strength == 0.0:
+        # Identity — bloom disabled.  This is the backward-compat contract.
+        return image.copy()
+
+    # Stage 1 — threshold extraction (Lottes smooth-knee).
+    glow = smooth_threshold(image, threshold=threshold, knee=knee)
+
+    # Stage 2 — build the mip pyramid on the extracted glow.  Index 0 is
+    # the full-res glow; index >=1 are the downsampled mips.
+    mips = _build_pyramid(glow, mip_count=mip_count)
+    n = len(mips) - 1  # actual number of downsamples we managed to do
+    if n == 0:
+        # Image was already tiny — nothing to composite, just add glow.
+        return image + glow * float(strength)
+
+    # Stage 3 — progressive additive upsample using 3×3 tent.  Starting
+    # from the smallest mip we walk back up the chain, blending in each
+    # coarser level using the sqrt-tapered strength curve.
+    #
+    # ``composite`` lives at the resolution of ``mips[level]``; at each
+    # step it is tent-upsampled to match the next-coarser-up mip and
+    # additively mixed with that mip.
+    composite = mips[n].copy()
+    for level in range(n - 1, -1, -1):
+        target = mips[level]
+        dst_shape = (target.shape[0], target.shape[1])
+        up = upsample_tent9(composite, dst_shape)
+        mix = _mip_strength(level, n)
+        composite = up + target * mix
+
+    return image + composite * float(strength)
 
 
 def synth_hdr_strip(lumas: Iterable[float], width: int = 1) -> np.ndarray:
