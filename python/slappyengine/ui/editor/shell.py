@@ -194,6 +194,20 @@ class EditorShell:
         self._layout_persistence: LayoutPersistence = LayoutPersistence(None)
         self._layout_state = None  # type: ignore[assignment]
 
+        # ── Diary shell — book-of-pages workspace ---------------------------
+        # Constructed lazily via :meth:`get_diary_shell` so a plugin that
+        # replaces the workspace layout can supply its own instance
+        # before :meth:`setup` runs. Ctrl+Tab / Ctrl+Shift+Tab and per-
+        # page ``editor.diary_switch_<id>`` commands are dispatched
+        # through :meth:`_dispatch_editor_command`.
+        self._diary_shell = None  # type: ignore[assignment]
+        try:
+            from slappyengine.ui.editor.diary_shell import DiaryShell
+            self._diary_shell = DiaryShell(self)
+            self._diary_shell.install_hotkeys(self._notebook_hotkeys)
+        except Exception:
+            self._diary_shell = None
+
     # ------------------------------------------------------------------
     # Ambient-feedback helpers (status bar + hotkeys)
     # ------------------------------------------------------------------
@@ -219,54 +233,45 @@ class EditorShell:
     def _dispatch_editor_command(self, command: str) -> None:
         """Route a notebook-hotkey command name to a shell action.
 
-        The :class:`NotebookHotkeys` table emits namespaced ids such as
-        ``"editor.save"``; we strip the prefix when probing the local
-        action table and the engine hook table so callers can subscribe
-        with either flavour.
+        Every editor action ships as a :class:`ToolAction` in
+        :data:`slappyengine.tool_router.REGISTRY`. This dispatcher
+        builds a ``ctx`` dict from the current shell state (selection,
+        active tool, project) and hands off to
+        :meth:`ToolRouter.dispatch`. Unknown ids fall through to the
+        legacy engine-hook probe so untracked host code can still fire
+        arbitrary engine methods.
+
+        Provenance: ``docs/tool_routing_2026_06_07.md`` — the tool
+        routing contract this call site implements.
         """
+        from slappyengine.tool_router import REGISTRY as _ROUTER
+
         local = command.split(".", 1)[1] if command.startswith("editor.") else command
-        # Layout-preset commands route through apply_layout_preset.
-        if local.startswith("layout_preset_"):
-            preset_name = local[len("layout_preset_"):]
-            try:
-                self.apply_layout_preset(preset_name)
-            except Exception:
-                pass
+        # Diary-shell page-cycling + direct-switch commands stay bespoke
+        # — they route to a scoped sub-shell, not to a router action.
+        if local.startswith("diary_"):
+            diary = getattr(self, "_diary_shell", None)
+            if diary is not None:
+                try:
+                    diary.dispatch_command(command)
+                except Exception:
+                    pass
             return
-        # Panel-toggle commands route through toggle_panel.
-        if local.startswith("toggle_panel_"):
-            panel_id = local[len("toggle_panel_"):]
-            # Hotkey aliases for the Nova3D-legacy wrappers. The
-            # MovablePanelWindow keys end in ``_panel`` / ``_painter`` —
-            # the hotkey table uses shorter ids for ergonomics.
-            alias = {
-                "layer":    "layer_panel",
-                "viewport": "viewport_panel",
-                "behavior": "behavior_panel",
+        # Prefer the tool router when the command is registered.
+        if _ROUTER.has_action(command):
+            ctx: dict[str, Any] = {
+                "shell": self,
+                "engine": self._engine,
+                "selection": self._selected_entity,
+                "active_tool": self._active_tool,
+                "project": self._project,
             }
-            panel_id = alias.get(panel_id, panel_id)
             try:
-                self.toggle_panel(panel_id)
+                _ROUTER.dispatch(command, ctx)
             except Exception:
                 pass
             return
-        action = {
-            "save":                   self._save_project,
-            "undo":                   self._undo,
-            "delete":                 self._delete_selected,
-            "play":                   self._toggle_play,
-            "run":                    self._toggle_play,
-            "reset_layout":           self.reset_layout,
-            "toggle_theme_switcher":  self.toggle_theme_switcher,
-            "cycle_theme":            self.cycle_theme,
-            "toggle_fullscreen":      self.toggle_fullscreen,
-        }.get(local)
-        if action is not None:
-            try:
-                action()
-            except Exception:
-                pass
-            return
+        # Legacy fallback path — engine hook probe.
         hook = getattr(self._engine, local, None)
         if callable(hook):
             try:
@@ -542,6 +547,20 @@ class EditorShell:
                     pass
         except Exception:
             pass
+
+    # ------------------------------------------------------------------
+    # Diary-shell accessor
+    # ------------------------------------------------------------------
+
+    def get_diary_shell(self):
+        """Return the :class:`DiaryShell` orchestrating the tabbed pages.
+
+        Constructed eagerly in ``__init__`` — this getter exists so the
+        callable surface stays symmetric with the other subsystem
+        accessors (``get_notebook_hotkeys`` etc.). Returns ``None`` when
+        the module import failed at construction time.
+        """
+        return self._diary_shell
 
     # ------------------------------------------------------------------
     # Panel registration
@@ -1382,6 +1401,18 @@ class EditorShell:
         for window in self._panel_windows.values():
             try:
                 window.build()
+            except Exception:
+                pass
+
+        # ── DiaryShell — build the index-tab strip + activate first page ──
+        # After every wrapper is built we can safely flip visibility on
+        # them. DiaryShell.build() picks the first registered page as
+        # the initial active page, hiding every panel that doesn't
+        # belong there.
+        diary = getattr(self, "_diary_shell", None)
+        if diary is not None:
+            try:
+                diary.build()
             except Exception:
                 pass
 
