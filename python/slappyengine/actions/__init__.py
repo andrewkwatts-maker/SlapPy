@@ -31,6 +31,13 @@ from .project_actions import (
 )
 from .view_actions import reset_layout as reset_layout
 from .edit_actions import duplicate_selection as duplicate_selection
+from .selection_actions import (
+    select_all as select_all,
+    deselect_all as deselect_all,
+    copy_selection as copy_selection,
+    paste_selection as paste_selection,
+)
+from .theme_actions import cycle_theme as cycle_theme
 
 
 __all__ = [
@@ -39,4 +46,9 @@ __all__ = [
     "open_recent",
     "reset_layout",
     "duplicate_selection",
+    "select_all",
+    "deselect_all",
+    "copy_selection",
+    "paste_selection",
+    "cycle_theme",
 ]

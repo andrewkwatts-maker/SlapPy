@@ -298,10 +298,15 @@ Status legend:
 | 249 | Theming Editor: Save as new (via UserThemeStore) | W2 `notebook_theming_editor.py::save_as_new` | WIRED | V1 row 189 flipped STUB -> WIRED under W2 hardening. Import / Export still STUB (rows 191/192). |
 | 250 | `editor.toggle_panel_tag_painter` action | `tool_router.py` (post-V1 registration `b019bdb`) | WIRED | Fills tag-painter toggle gap. |
 | 251 | 8 animated washi-tape shaders | V7 `ui/theme/washi_tape/library.py` | WIRED | heart_pulse / sparkle_shimmer / rainbow_flow / marching_dots / wave_shift / dashed_scroll / stars_twinkle / music_notes_flow. Budget widened to 1000B for animated variants. |
+| 252 | `tool.select_all` action | Router action id (Y1) | WIRED | `tool_router.py:846` → `_fb_select_all` → `actions/selection_actions.py:137` (`select_all`) | Reads scene from `ctx["scene"]` / `shell._engine.scene`; writes `_selected_entities` + populates `_selected_entity` with the head. |
+| 253 | `tool.deselect_all` action | Router action id (Y1) | WIRED | `tool_router.py:854` → `_fb_deselect_all` → `actions/selection_actions.py:173` (`deselect_all`) | Clears both `_selected_entity` + `_selected_entities`; headless-safe when shell missing. |
+| 254 | `editor.copy_selection` action | Router action id (Y1) | WIRED | `tool_router.py:796` → `_fb_copy_selection` → `actions/selection_actions.py:192` (`copy_selection`) | Snapshots into the process-wide `EntityClipboard`; does NOT auto-paste (contrast with `edit.duplicate_selection`). |
+| 255 | `editor.paste_selection` action | Router action id (Y1) | WIRED | `tool_router.py:804` → `_fb_paste_selection` → `actions/selection_actions.py:212` (`paste_selection`) | Pulls from `EntityClipboard`, applies `name_suffix` (default `" (paste)"`), best-effort `scene.add(clone)` when reachable. |
+| 256 | `theme.cycle` action | Router action id (Y1) | WIRED | `tool_router.py:939` → `_fb_theme_cycle` → `actions/theme_actions.py:42` (`cycle_theme`) | Prefers `shell.cycle_theme()`; headless fallback walks `list_registered_themes()` with a module-level deterministic cursor. |
 
-**Total rows: 251.** Status tally:
+**Total rows: 256.** Status tally:
 
-* **WIRED**: 233 (215 baseline + 18 new WIRED; row 189 also flipped STUB -> WIRED)
+* **WIRED**: 238 (215 baseline + 18 delta + 5 Y1; row 189 also flipped STUB -> WIRED)
 * **STUB**: 15 (rows 50, 78, 79, 94, 95, 191, 192, 193, 222, 224, 225, 226, 227, 228, 243 — row 189 dropped after W2 landing; row 243 added for X4 delete ctx handler)
 * **BROKEN**: 3 (rows 80, 223 code-paths — see previous note; dedupes to 2 real import/attribute defects)
 
@@ -387,3 +392,25 @@ Highest-impact remaining STUBs after Y7:
 2. Row 79 — Diary "Generate Python from nodes" (V6 codegen exists;
    Diary panel button still emits placeholder).
 3. Rows 191 / 192 — Theming editor Import / Export.
+
+---
+
+## Y1 STUB-triage patch (2026-07-04, round 2 after X3)
+
+Five more action ids landed in this tick, moving 5 rows from STUB
+(implicit — the ids were not yet registered) to WIRED (rows 252-256):
+
+* `tool.select_all` → `slappyengine.actions.selection_actions.select_all`
+* `tool.deselect_all` → `slappyengine.actions.selection_actions.deselect_all`
+* `editor.copy_selection` → `slappyengine.actions.selection_actions.copy_selection`
+* `editor.paste_selection` → `slappyengine.actions.selection_actions.paste_selection`
+* `theme.cycle` → `slappyengine.actions.theme_actions.cycle_theme`
+
+New subpackages: `python/slappyengine/actions/selection_actions.py`
++ `python/slappyengine/actions/theme_actions.py`.
+
+Regression tests: `SlapPyEngineTests/tests/test_stub_triage_y1.py`
+(29 tests, all passing). Combined X3+Y1 wiring now covers 10 previously-
+absent router action ids across 5 category buckets (`file`, `edit`,
+`tool`, `view`, `theme`). Roll-up: **256 total, 238 WIRED (93.0%),
+15 STUB (5.9%), 3 BROKEN (1.1%)**.

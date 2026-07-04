@@ -616,6 +616,40 @@ def _fb_duplicate_selection(ctx: dict[str, Any]) -> Any:
     return duplicate_selection(ctx)
 
 
+# ---------------------------------------------------------------------------
+# Y1 STUB-triage fallbacks (2026-07-04, round 2)
+#
+# Wire the next five STUB rows: selection / clipboard / theme cycling.
+# See :mod:`slappyengine.actions.selection_actions` and
+# :mod:`slappyengine.actions.theme_actions` for the implementations.
+# ---------------------------------------------------------------------------
+
+
+def _fb_select_all(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.selection_actions import select_all
+    return select_all(ctx)
+
+
+def _fb_deselect_all(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.selection_actions import deselect_all
+    return deselect_all(ctx)
+
+
+def _fb_copy_selection(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.selection_actions import copy_selection
+    return copy_selection(ctx)
+
+
+def _fb_paste_selection(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.selection_actions import paste_selection
+    return paste_selection(ctx)
+
+
+def _fb_theme_cycle(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.theme_actions import cycle_theme
+    return cycle_theme(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -757,6 +791,23 @@ def _default_actions() -> list[ToolAction]:
             required_args=[],
             category="edit",
         ),
+        # ── Y1 STUB-triage: selection / clipboard flows (2026-07-04) ──
+        ToolAction(
+            action_id="editor.copy_selection",
+            label="Copy Selection",
+            rust_backing=None,
+            python_fallback=_fb_copy_selection,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="editor.paste_selection",
+            label="Paste Selection",
+            rust_backing=None,
+            python_fallback=_fb_paste_selection,
+            required_args=[],
+            category="edit",
+        ),
         # ── Tool changes ─────────────────────────────────────────────
         ToolAction(
             action_id="editor.tool_select",
@@ -787,6 +838,23 @@ def _default_actions() -> list[ToolAction]:
             label="Scale Tool",
             rust_backing="math_3d.Mat4x4",
             python_fallback=lambda ctx: _fb_set_tool(ctx, "scale"),
+            required_args=[],
+            category="tool",
+        ),
+        # Y1 STUB-triage: scene-wide selection flows.
+        ToolAction(
+            action_id="tool.select_all",
+            label="Select All",
+            rust_backing=None,
+            python_fallback=_fb_select_all,
+            required_args=[],
+            category="tool",
+        ),
+        ToolAction(
+            action_id="tool.deselect_all",
+            label="Deselect All",
+            rust_backing=None,
+            python_fallback=_fb_deselect_all,
             required_args=[],
             category="tool",
         ),
@@ -862,6 +930,16 @@ def _default_actions() -> list[ToolAction]:
             label="Cycle Theme",
             rust_backing=None,
             python_fallback=_fb_cycle_theme,
+            required_args=[],
+            category="theme",
+        ),
+        # Y1 STUB-triage: category="theme" alias — headless-safe cycle
+        # over ``list_registered_themes()`` when no shell is present.
+        ToolAction(
+            action_id="theme.cycle",
+            label="Cycle Theme (headless-safe)",
+            rust_backing=None,
+            python_fallback=_fb_theme_cycle,
             required_args=[],
             category="theme",
         ),
