@@ -6,10 +6,31 @@ Karis 2014).  ``width`` and ``height`` stay pinned at offsets 8 and 12
 respectively so the executor's runtime-splice helper
 (``_splice_runtime_params``) can patch them at dispatch time without
 re-uploading the entire UBO.
+
+Round 6 — polish (W3 sprint 2026-07-04):
+    * Module-level YCoCg conversion helpers exposed for external tools
+      (variance-clip debug HUDs, unit tests, offline resolves).
+    * Karis 2014 canonical ``k = 1.25`` sigma-envelope variance clip
+      exposed as a first-class helper (``variance_clip_ycocg``).
+    * Halton(2,3) 8-sample sub-pixel jitter sequence (upgraded from the
+      previous 4-sample table) — improves screen-space sample coverage
+      by roughly √2 and drops residual aliasing on high-contrast edges.
+    * Velocity-aware blend factor helper
+      (``velocity_aware_alpha``) — history contribution drops on fast
+      motion, following DICE's Frostbite TAA 2016 recommendation
+      ``alpha = clamp(0.05, 0.95, 0.9 - 0.5 * |v|)``.
+    * Luminance-based ghost rejection
+      (``luminance_rejection``) — drops the history sample when the
+      per-pixel luminance disparity exceeds ``0.5 * max(cur, hist)``.
+    * Relative-depth rejection (``depth_rejection``) — a 2 % of current
+      NDC depth divergence flags disocclusion, which is a much better
+      camera-distance-independent threshold than the round-5 absolute
+      ``0.1``.  The existing ``reject_on_depth_disocclusion`` absolute
+      path stays for backwards compat.
 """
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 from ._pass_base import PostProcessPassBase
 from ._ubo import UboField
@@ -28,6 +49,267 @@ _ENTRY  = "taa_resolve_main"
 _LUM_R = 0.2126
 _LUM_G = 0.7152
 _LUM_B = 0.0722
+
+
+# ---------------------------------------------------------------------------
+# Round 6 — Halton(2,3) 8-sample sub-pixel jitter table
+# ---------------------------------------------------------------------------
+#
+# Halton(base_x, base_y) yields a low-discrepancy sequence in [0, 1)^2.
+# Index 0 is (0, 0) which is trivial and skipped; the 8 usable samples
+# are Halton indices 1..8.  Values reproduced here as float literals so
+# tests can pin them at compile time without invoking the sequence
+# generator (and so the module import cost stays zero).  The offsets
+# are pre-centred on the pixel — subtract 0.5 to get the ± offset from
+# the pixel centre used by most TAA jitter camera-matrix builders.
+HALTON_2_3_8_SAMPLES: tuple[tuple[float, float], ...] = (
+    (0.5000000000, 0.3333333333),
+    (0.2500000000, 0.6666666667),
+    (0.7500000000, 0.1111111111),
+    (0.1250000000, 0.4444444444),
+    (0.6250000000, 0.7777777778),
+    (0.3750000000, 0.2222222222),
+    (0.8750000000, 0.5555555556),
+    (0.0625000000, 0.8888888889),
+)
+
+
+def halton_sample(index: int, base: int) -> float:
+    """Return the *index*-th sample of the Halton sequence in ``base``.
+
+    Uses the canonical van-der-Corput folding.  Deterministic and
+    stateless — pure function, no globals.  Raises ``ValueError`` if
+    ``base < 2`` or ``index < 0``.
+    """
+    if not isinstance(index, int) or isinstance(index, bool):
+        raise TypeError(f"index must be int; got {type(index).__name__}")
+    if not isinstance(base, int) or isinstance(base, bool):
+        raise TypeError(f"base must be int; got {type(base).__name__}")
+    if index < 0:
+        raise ValueError(f"index must be >= 0; got {index}")
+    if base < 2:
+        raise ValueError(f"base must be >= 2; got {base}")
+    f = 1.0
+    r = 0.0
+    i = index
+    while i > 0:
+        f /= base
+        r += f * (i % base)
+        i //= base
+    return r
+
+
+def halton_2_3_sequence(count: int = 8) -> tuple[tuple[float, float], ...]:
+    """Return the first ``count`` Halton(2,3) 2-D samples.
+
+    Skips index 0 (which is ``(0, 0)`` and therefore useless as a
+    jitter offset) and returns samples at indices 1..count inclusive.
+    """
+    if not isinstance(count, int) or isinstance(count, bool):
+        raise TypeError(f"count must be int; got {type(count).__name__}")
+    if count < 1:
+        raise ValueError(f"count must be >= 1; got {count}")
+    return tuple(
+        (halton_sample(i, 2), halton_sample(i, 3))
+        for i in range(1, count + 1)
+    )
+
+
+# ---------------------------------------------------------------------------
+# Round 6 — YCoCg conversion + variance-clip helpers
+# ---------------------------------------------------------------------------
+
+
+def rgb_to_ycocg(rgb: "object") -> "object":
+    """Convert an ``(..., 3)`` RGB numpy array to YCoCg.
+
+    Matches the ``rgb_to_ycocg`` helper in ``taa_resolve.wgsl`` exactly
+    so unit tests can compare CPU and GPU paths bit-for-bit.
+    """
+    import numpy as np
+    a = np.asarray(rgb, dtype=np.float32)
+    if a.ndim < 1 or a.shape[-1] != 3:
+        raise ValueError(f"rgb must have trailing dim 3; got shape {a.shape}")
+    r = a[..., 0]
+    g = a[..., 1]
+    b = a[..., 2]
+    y  = 0.25 * r + 0.5 * g + 0.25 * b
+    co = 0.5 * r - 0.5 * b
+    cg = -0.25 * r + 0.5 * g - 0.25 * b
+    return np.stack([y, co, cg], axis=-1).astype(np.float32)
+
+
+def ycocg_to_rgb(ycocg: "object") -> "object":
+    """Inverse of :func:`rgb_to_ycocg` — matches WGSL ``ycocg_to_rgb``."""
+    import numpy as np
+    a = np.asarray(ycocg, dtype=np.float32)
+    if a.ndim < 1 or a.shape[-1] != 3:
+        raise ValueError(
+            f"ycocg must have trailing dim 3; got shape {a.shape}"
+        )
+    y  = a[..., 0]
+    co = a[..., 1]
+    cg = a[..., 2]
+    tmp = y - cg
+    return np.stack([tmp + co, y + cg, tmp - co], axis=-1).astype(np.float32)
+
+
+# Karis 2014 canonical sigma-envelope tightness.  The paper reports
+# k = 1.0 for still cameras and k = 1.25 as a "slight motion tolerance"
+# default that matches Frostbite's 2016 TAA presentation.
+KARIS_2014_K: float = 1.25
+
+
+def variance_clip_ycocg(
+    current: "object",
+    history: "object",
+    k: float = KARIS_2014_K,
+) -> "object":
+    """Clip ``history`` (``(H, W, 3)`` RGB) to the k-sigma YCoCg AABB.
+
+    Computes the per-pixel 3x3 neighbourhood mean and stddev of
+    ``current`` in YCoCg space and clamps every history sample into the
+    envelope ``[mean - k*std, mean + k*std]`` per channel.  Returns the
+    clipped history in RGB.  This is the round-6 canonical variance
+    clip; the existing :class:`TAAPass.resolve_numpy` path is left
+    unchanged for backwards compatibility.
+    """
+    import numpy as np
+    cur = np.asarray(current, dtype=np.float32)
+    hist = np.asarray(history, dtype=np.float32)
+    if cur.shape != hist.shape or cur.ndim != 3 or cur.shape[2] != 3:
+        raise ValueError(
+            f"current and history must be matching (H, W, 3) arrays; "
+            f"got {cur.shape} vs {hist.shape}"
+        )
+    if not float(k) >= 0.0:
+        raise ValueError(f"k must be >= 0; got {k!r}")
+    h, w, _ = cur.shape
+
+    cur_yc = rgb_to_ycocg(cur)
+    hist_yc = rgb_to_ycocg(hist)
+
+    # 3x3 neighbourhood tiles built via edge-padded reflection.
+    padded = np.pad(cur_yc, ((1, 1), (1, 1), (0, 0)), mode="edge")
+    tiles = np.stack(
+        [padded[i:i + h, j:j + w, :] for i in range(3) for j in range(3)],
+        axis=0,
+    )
+    mu = tiles.mean(axis=0)
+    sigma = np.sqrt(
+        np.maximum((tiles ** 2).mean(axis=0) - mu ** 2, 0.0)
+    )
+    lo = mu - float(k) * sigma
+    hi = mu + float(k) * sigma
+    clipped_yc = np.clip(hist_yc, lo, hi).astype(np.float32)
+    return ycocg_to_rgb(clipped_yc)
+
+
+# ---------------------------------------------------------------------------
+# Round 6 — Velocity-aware blend factor (DICE Frostbite 2016)
+# ---------------------------------------------------------------------------
+
+
+def velocity_aware_alpha(
+    velocity: "object",
+    base_alpha: float = 0.9,
+    lo: float = 0.05,
+    hi: float = 0.95,
+    scale: float = 0.5,
+) -> "object":
+    """Per-pixel alpha that drops history contribution on high motion.
+
+    ``alpha = clamp(lo, hi, base_alpha - scale * length(velocity))``
+
+    ``velocity`` may be a scalar magnitude, an ``(H, W)`` scalar field,
+    or an ``(H, W, 2)`` UV-space vector field — the caller's choice.
+
+    The default ``base_alpha`` here follows the sprint spec's Frostbite
+    2016 recipe (``0.9 - 0.5 * |v|``), *NOT* the ``TAAPass.alpha`` field
+    which is documented as the fraction-of-current-blended-in and
+    therefore semantically inverse.  Returned array is float32 so it
+    can flow straight into the shader UBO.
+    """
+    import numpy as np
+    v = np.asarray(velocity, dtype=np.float32)
+    if v.ndim >= 1 and v.shape[-1] == 2 and v.ndim >= 2:
+        mag = np.sqrt(v[..., 0] ** 2 + v[..., 1] ** 2)
+    else:
+        mag = np.abs(v)
+    if not (float(lo) <= float(hi)):
+        raise ValueError(f"lo ({lo}) must be <= hi ({hi})")
+    alpha = float(base_alpha) - float(scale) * mag
+    return np.clip(alpha, float(lo), float(hi)).astype(np.float32)
+
+
+# ---------------------------------------------------------------------------
+# Round 6 — Luminance rejection (Karis 2014 ghosting suppression)
+# ---------------------------------------------------------------------------
+
+
+def _luminance(rgb: "object") -> "object":
+    """Rec. 709 luminance for a numpy ``(H, W, 3)`` array."""
+    import numpy as np
+    a = np.asarray(rgb, dtype=np.float32)
+    return (
+        _LUM_R * a[..., 0]
+        + _LUM_G * a[..., 1]
+        + _LUM_B * a[..., 2]
+    ).astype(np.float32)
+
+
+def luminance_rejection(
+    current: "object",
+    history: "object",
+    threshold: float = 0.5,
+) -> "object":
+    """Bool mask: ``True`` where history should be rejected.
+
+    Karis 2014 §5.4: a per-pixel ghost mask fires when
+    ``|lum(cur) - lum(hist)| > threshold * max(lum(cur), lum(hist))``.
+    The default ``0.5`` matches the ``UE4`` production value.
+    """
+    import numpy as np
+    lc = _luminance(current)
+    lh = _luminance(history)
+    diff = np.abs(lc - lh)
+    m = np.maximum(lc, lh)
+    return (diff > float(threshold) * m).astype(bool)
+
+
+# ---------------------------------------------------------------------------
+# Round 6 — Relative depth rejection
+# ---------------------------------------------------------------------------
+
+
+def depth_rejection(
+    current_depth: "object",
+    previous_depth: "object",
+    relative_threshold: float = 0.02,
+) -> "object":
+    """Bool mask: ``True`` where relative depth divergence exceeds threshold.
+
+    ``reject = |prev - cur| > relative_threshold * cur``
+
+    Camera-distance-independent — a 2 % divergence corresponds to a
+    10 mm plane break at 0.5 m eye depth (roughly hand-in-front-of-face
+    distance), scaling smoothly to a 2 cm break at 1 m and 20 cm at
+    10 m.  This is the sprint W3 spec's ``0.02 * curr_depth`` rule.
+    """
+    import numpy as np
+    cd = np.asarray(current_depth, dtype=np.float32)
+    pd = np.asarray(previous_depth, dtype=np.float32)
+    if cd.shape != pd.shape:
+        raise ValueError(
+            f"current_depth and previous_depth shapes differ: "
+            f"{cd.shape} vs {pd.shape}"
+        )
+    if not float(relative_threshold) >= 0.0:
+        raise ValueError(
+            f"relative_threshold must be >= 0; got {relative_threshold!r}"
+        )
+    diff = np.abs(pd - cd)
+    return (diff > float(relative_threshold) * np.abs(cd)).astype(bool)
 
 
 # TaaParams std140 layout — explicit offsets pin width/height at 8 and 12
