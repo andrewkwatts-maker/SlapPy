@@ -1526,6 +1526,15 @@ def _default_actions() -> list[ToolAction]:
             required_args=[],
             category="content",
         ),
+        # ── CC1 STUB-triage: copy asset path to clipboard (round 6) ──
+        ToolAction(
+            action_id="content.copy_asset_path",
+            label="Copy Asset Path",
+            rust_backing=None,
+            python_fallback=_fb_copy_asset_path,
+            required_args=["path"],
+            category="content",
+        ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(
             action_id="editor.easter_feed_fox",

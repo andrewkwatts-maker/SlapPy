@@ -72,6 +72,20 @@ from .history_actions import (
     undo as undo_action,
     redo as redo_action,
 )
+from .edit_by_name_actions import (
+    select_by_name as select_by_name,
+)
+from .spawn_history_actions import (
+    repeat_last as repeat_last_spawn,
+    record_last_spawn as record_last_spawn,
+)
+from .view_toggle_actions import (
+    toggle_grid as toggle_grid,
+    toggle_gizmos as toggle_gizmos,
+)
+from .content_shell_actions import (
+    copy_asset_path as copy_asset_path,
+)
 
 
 __all__ = [
@@ -101,4 +115,10 @@ __all__ = [
     "load_layout_from_file",
     "undo_action",
     "redo_action",
+    "select_by_name",
+    "repeat_last_spawn",
+    "record_last_spawn",
+    "toggle_grid",
+    "toggle_gizmos",
+    "copy_asset_path",
 ]

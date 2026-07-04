@@ -318,10 +318,15 @@ Status legend:
 | 269 | `file.load_layout_from_file` action | Router action id (BB1) | WIRED | `tool_router.py` → `_fb_load_layout_from_file` → `actions/layout_io_actions.py::load_layout_from_file` | Reads YAML, validates schema, dispatches through ``LayoutPersistence.apply_to_shell``. Returns ``malformed`` on schema mismatch instead of silently loading defaults. |
 | 270 | `edit.undo` action | Router action id (BB1) | WIRED | `tool_router.py` → `_fb_edit_undo` → `actions/history_actions.py::undo` | Resolves ``ctx["stack"]`` / ``shell._undo_stack`` / ``shell._engine._undo_manager`` in that order, then calls ``UndoStack.undo``. Returns ``empty`` when the stack is idle so callers can grey out the button. |
 | 271 | `edit.redo` action | Router action id (BB1) | WIRED | `tool_router.py` → `_fb_edit_redo` → `actions/history_actions.py::redo` | Mirror of `edit.undo` — calls ``UndoStack.redo`` and returns the popped entry's action id + label + updated depths. |
+| 272 | `edit.select_by_name` action | Router action id (CC1) | WIRED | `tool_router.py` → `_fb_select_by_name` → `actions/edit_by_name_actions.py::select_by_name` | Walks `scene.find_by_name(ctx["name"])`, writes matches to `shell._selected_entity` / `_selected_entities`. Returns `not_found` when nothing matches, `missing_name` on empty input, `no_scene` when unreachable. |
+| 273 | `spawn.repeat_last` action | Router action id (CC1) | WIRED | `tool_router.py` → `_fb_repeat_last_spawn` → `actions/spawn_history_actions.py::repeat_last` | Reads `shell._last_spawn` tuple `(card_id, spec)` (or `shell._spawn_menu._last_spawn`), re-fires `shell._on_spawn` with the same card+spec. Supports `ctx["offset"]` for micro-translation so successive presses don't stack copies. |
+| 274 | `view.toggle_grid` action | Router action id (CC1) | WIRED | `tool_router.py` → `_fb_toggle_grid` → `actions/view_toggle_actions.py::toggle_grid` | Flips `shell._grid_visible`; fires optional `shell._on_view_toggle(attr, value)` hook so the DPG draw callback observes the change next tick. Accepts `ctx["visible"]` seed for headless tests. |
+| 275 | `view.toggle_gizmos` action | Router action id (CC1) | WIRED | `tool_router.py` → `_fb_toggle_gizmos` → `actions/view_toggle_actions.py::toggle_gizmos` | Symmetric to `view.toggle_grid` — flips `shell._gizmos_visible` (plural: covers transform gizmo, marquee, IK bone lines). Same seed / hook semantics. |
+| 276 | `content.copy_asset_path` action | Router action id (CC1) | WIRED | `tool_router.py` → `_fb_copy_asset_path` → `actions/content_shell_actions.py::copy_asset_path` | Prefers `NotebookContentBrowser.copy_path` (already walks DPG / pyperclip / tkinter fallback). Direct pyperclip → tkinter → noop chain when no browser is reachable. Reports `backend` so tests can assert on graceful degradation. |
 
-**Total rows: 271.** Status tally:
+**Total rows: 276.** Status tally:
 
-* **WIRED**: 253 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1; row 189 also flipped STUB -> WIRED)
+* **WIRED**: 258 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1 + 5 CC1; row 189 also flipped STUB -> WIRED)
 * **STUB**: 15 (rows 50, 78, 79, 94, 95, 191, 192, 193, 222, 224, 225, 226, 227, 228, 243 — row 189 dropped after W2 landing; row 243 added for X4 delete ctx handler)
 * **BROKEN**: 3 (rows 80, 223 code-paths — see previous note; dedupes to 2 real import/attribute defects)
 
@@ -581,3 +586,59 @@ Regression tests: `SlapPyEngineTests/tests/test_stub_triage_bb1.py`
 25 previously-absent router action ids across 5 category buckets
 (`file`, `edit`, `tool`, `view`, `theme`). Roll-up: **271 total,
 253 WIRED (93.4%), 15 STUB (5.5%), 3 BROKEN (1.1%)**.
+
+---
+
+## CC1 STUB-triage patch (2026-07-05, round 6 after X3 + Y1 + Z7 + AA1 + BB1)
+
+Five more action ids landed in this tick, moving 5 rows from STUB
+(implicit — the ids were not yet registered) to WIRED (rows 272-276):
+
+* `edit.select_by_name` → `slappyengine.actions.edit_by_name_actions.select_by_name`
+* `spawn.repeat_last` → `slappyengine.actions.spawn_history_actions.repeat_last`
+* `view.toggle_grid` → `slappyengine.actions.view_toggle_actions.toggle_grid`
+* `view.toggle_gizmos` → `slappyengine.actions.view_toggle_actions.toggle_gizmos`
+* `content.copy_asset_path` → `slappyengine.actions.content_shell_actions.copy_asset_path`
+
+New subpackages: `python/slappyengine/actions/edit_by_name_actions.py`
++ `python/slappyengine/actions/spawn_history_actions.py`
++ `python/slappyengine/actions/view_toggle_actions.py`
++ `python/slappyengine/actions/content_shell_actions.py`.
+
+Behavioural notes for CC1:
+
+* **`edit.select_by_name`** — prefers `Scene.find_by_name(name)` when
+  the scene exposes it, falls back to a manual walk over `_entities`.
+  Writes the full match list to `shell._selected_entities` and the
+  first match to `shell._selected_entity` (so the inspector still
+  fires on single-select semantics). Returns `not_found` when no
+  entity has the name, `missing_name` on empty input, `no_scene`
+  when no scene is reachable.
+* **`spawn.repeat_last`** — reads `shell._last_spawn = (card_id, spec)`
+  (or the notebook spawn menu's own `_last_spawn` slot) and re-fires
+  `shell._on_spawn` with the same arguments. The companion
+  `record_last_spawn(shell, card_id, spec)` helper is exposed so
+  future ticks can wire the "record on dispatch" side without owning
+  a new module. Supports `ctx["offset"]` to nudge the position by a
+  fixed delta so successive Shift-D presses don't overlap copies.
+* **`view.toggle_grid` / `view.toggle_gizmos`** — cheap boolean flips
+  on `shell._grid_visible` / `shell._gizmos_visible`. Both default to
+  ON when the attribute is missing (matches the DPG editor's initial
+  state). Both fire an optional `shell._on_view_toggle(attr, value)`
+  hook so the draw callback observes the change next tick. Both
+  accept a `ctx["visible"]` seed so headless tests can drive the
+  flip without a shell.
+* **`content.copy_asset_path`** — routes through
+  `NotebookContentBrowser.copy_path` when the shell owns a browser
+  (that method already walks DPG → pyperclip → tkinter). Falls back
+  to `pyperclip.copy` → `tkinter.clipboard_append` → noop when no
+  browser is reachable. Reports the `backend` used so tests can
+  assert on the graceful-degradation path. Never spawns a subprocess
+  (unlike `content.reveal_in_folder`).
+
+Regression tests: `SlapPyEngineTests/tests/test_stub_triage_cc1.py`
+(39 tests, all passing). Combined X3+Y1+Z7+AA1+BB1+CC1 wiring now
+covers 30 previously-absent router action ids across 6 category
+buckets (`file`, `edit`, `tool`, `view`, `theme`, `spawn`,
+`content`). Roll-up: **276 total, 258 WIRED (93.5%), 15 STUB (5.4%),
+3 BROKEN (1.1%)**.
