@@ -59,13 +59,23 @@ SCENE_TOP_Y: float = 3.0          # y position of every pinned anchor
 SCENE_DROP: float = 2.0           # initial distance from anchor to the bottom
 
 # Joint tuning that applies to every scene unless overridden below.
+# Solver tuning: keep ``iters * damping <= 0.3`` so the over-damp warning in
+# :mod:`slappyengine.dynamics.world` (threshold 0.5 on effective per-step
+# damping) never fires. With ``iters=16`` we pick ``damping=0.018`` giving a
+# product of 0.288 and effective per-step damping
+# ``1 - (1 - 0.018)^16 ≈ 0.253`` — well under the 0.5 threshold. Mirrors the
+# X2 (hello_rope) and W1 (hello_ragdoll) fix pattern.
 RIGID_STIFFNESS: float = 1.0e8    # distance / weld -- nearly rigid
-RIGID_DAMPING: float = 0.05
+RIGID_DAMPING: float = 0.018
 BALL_STIFFNESS: float = 1.0e7
-BALL_DAMPING: float = 0.05
+BALL_DAMPING: float = 0.018
 HINGE_STIFFNESS: float = 1.0e7
-HINGE_DAMPING: float = 0.05
+HINGE_DAMPING: float = 0.018
 HINGE_LIMIT: float = math.pi / 4.0
+
+# Aggregate damping used by tests and the summary print — the maximum of
+# the per-kind damping constants so any over-damp regression is visible.
+DAMPING: float = max(RIGID_DAMPING, BALL_DAMPING, HINGE_DAMPING)
 
 # Per-scene tunables -- kept here so tests can import them.
 SCENE_A_REST_LENGTH: float = SCENE_DROP                         # 2.0
@@ -381,6 +391,7 @@ def summarise(world: World, info: dict, trace: dict, frames: int) -> dict:
             "max_angle_limit": info["scene_d"]["max_angle"],
         },
         "nan_seen": bool(trace["nan_seen"]),
+        "iters_x_damping": SOLVER_ITERATIONS * DAMPING,
     }
 
 
@@ -408,6 +419,10 @@ def print_summary(summary: dict) -> None:
         f"  (limit=+-{d['max_angle_limit']:.5f})"
     )
     print(f"  any NaN in positions  : {summary['nan_seen']}")
+    print(
+        f"  iters * damping       : {summary['iters_x_damping']:.3f}"
+        f" (<= 0.3 OK)"
+    )
 
 
 # ---------------------------------------------------------------------------
