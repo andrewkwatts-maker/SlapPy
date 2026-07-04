@@ -1,0 +1,13 @@
+# Debug preset — tonemap only. No bloom, no TAA, no dither.
+#
+# Useful when isolating other subsystems (lighting, materials,
+# shadow attenuation) where you want the raw HDR-to-LDR fit without
+# temporal smoothing or highlight bloom colouring the frame.
+passes:
+  - name: tonemap
+    kind: tonemap
+    enabled: true
+    params:
+      exposure_ev: 0.0
+      mode: 0
+    depends_on: []

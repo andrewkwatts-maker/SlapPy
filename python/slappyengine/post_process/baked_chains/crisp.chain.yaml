@@ -1,0 +1,20 @@
+# Crisp preset — tonemap + dither only, no bloom, no TAA.
+#
+# Designed for pixel-art scenes where bloom smears hard edges and TAA
+# blurs single-pixel highlights. Keeps the tonemap + dither pair so
+# HDR-to-LDR compression and banding suppression still run.
+passes:
+  - name: tonemap
+    kind: tonemap
+    enabled: true
+    params:
+      exposure_ev: 0.0
+      mode: 0
+    depends_on: []
+  - name: dither
+    kind: dither
+    enabled: true
+    params:
+      strength: 0.00392156862745098
+    depends_on:
+      - tonemap

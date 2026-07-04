@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 __all__ = [
+    "BakerResult",
+    "ChainBaker",
+    "ChainBakerError",
     "ChainManifest",
     "ChainManifestError",
     "ContactShadowsPass",
@@ -24,6 +27,9 @@ __all__ = [
 ]
 
 _LAZY_MAP: dict[str, str] = {
+    "BakerResult":         ".chain_baker",
+    "ChainBaker":          ".chain_baker",
+    "ChainBakerError":     ".chain_baker",
     "ChainManifest":       ".chain_manifest",
     "ChainManifestError":  ".chain_manifest",
     "ContactShadowsPass":  ".contact_shadows",

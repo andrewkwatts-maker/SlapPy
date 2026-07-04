@@ -1,0 +1,39 @@
+# Neon preset — bloom + chromatic aberration for a synthwave arcade look.
+#
+# The chromatic_aberration pass is a custom kind; the stub handler that
+# ships with ChainBaker is a pass-through so the pipeline stays intact
+# on the CPU harness. GPU consumers can register a real CA handler
+# without editing this YAML.
+passes:
+  - name: bloom
+    kind: bloom
+    enabled: true
+    params:
+      strength: 1.2
+      threshold: 0.9
+      knee: 0.15
+      mip_count: 6
+    depends_on: []
+  - name: chromatic_aberration
+    kind: custom
+    enabled: true
+    params:
+      handler: chromatic_aberration
+      amount: 0.005
+    depends_on:
+      - bloom
+  - name: tonemap
+    kind: tonemap
+    enabled: true
+    params:
+      exposure_ev: 0.0
+      mode: 0
+    depends_on:
+      - chromatic_aberration
+  - name: dither
+    kind: dither
+    enabled: true
+    params:
+      strength: 0.00392156862745098
+    depends_on:
+      - tonemap
