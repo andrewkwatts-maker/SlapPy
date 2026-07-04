@@ -59,6 +59,7 @@ panel is headless-safe and testable under a stub DPG.
 from __future__ import annotations
 
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -76,13 +77,52 @@ from slappyengine._validation import (
 # ---------------------------------------------------------------------------
 
 
+def _is_real_dpg(dpg: Any) -> bool:
+    """Return ``True`` when *dpg* is the real ``dearpygui.dearpygui`` module.
+
+    The real module binds ``internal_dpg`` to the ``_dearpygui`` C
+    extension module. Test stubs set up via ``sys.modules`` monkey-
+    patching typically install a ``__getattr__`` fallback that returns a
+    callable for any missing name, so we cannot rely on
+    ``hasattr(dpg, "internal_dpg")`` alone — instead we require that the
+    attribute resolves to an actual ``ModuleType`` whose ``__name__``
+    starts with ``dearpygui``.
+    """
+    import types
+    inner = getattr(dpg, "internal_dpg", None)
+    if not isinstance(inner, types.ModuleType):
+        return False
+    return getattr(inner, "__name__", "").startswith("dearpygui")
+
+
+def _headless_env_active() -> bool:
+    """Return ``True`` when ``SLAPPY_HEADLESS=1`` (or truthy) is set."""
+    val = os.environ.get("SLAPPY_HEADLESS", "")
+    return val.strip().lower() in ("1", "true", "yes", "on")
+
+
 def _safe_dpg() -> Any | None:
-    """Return ``dearpygui.dearpygui`` if importable, else ``None``."""
+    """Return ``dearpygui.dearpygui`` if usable, else ``None``.
+
+    "Usable" means either:
+
+    * A test-installed stub module (detected by absence of the
+      ``internal_dpg`` marker), or
+    * The real DPG module *and* ``SLAPPY_HEADLESS`` is unset. When
+      ``SLAPPY_HEADLESS=1`` is set, calling into the real DPG module
+      before ``dpg.create_context()`` triggers a Windows access-violation
+      inside the C runtime — that access violation cannot be caught by
+      Python-level ``try/except``. This guard degrades gracefully to
+      "no widgets rendered" so the panel's pure-Python logic stays
+      testable under real DPG in headless CI.
+    """
     try:
         import dearpygui.dearpygui as dpg  # type: ignore[import-not-found]
-        return dpg
     except Exception:
         return None
+    if _is_real_dpg(dpg) and _headless_env_active():
+        return None
+    return dpg
 
 
 # Levels the panel knows about + their default chip colours (RGBA 0..255).
