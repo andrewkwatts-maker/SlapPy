@@ -726,6 +726,30 @@ def _fb_activate_pan_tool(ctx: dict[str, Any]) -> Any:
 
 
 # ---------------------------------------------------------------------------
+# CC6 sprint tick — animated camera moves (7-sprint push).
+#
+# view.focus_on_selection_animated  — pans + zooms to selection over 800 ms.
+# view.frame_all_animated           — animated version of view.frame_all.
+#
+# Implementation: :mod:`slappyengine.actions.camera_animation_actions`.
+# ---------------------------------------------------------------------------
+
+
+def _fb_focus_on_selection_animated(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.camera_animation_actions import (
+        focus_on_selection_animated,
+    )
+    return focus_on_selection_animated(ctx)
+
+
+def _fb_frame_all_animated(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.camera_animation_actions import (
+        frame_all_animated,
+    )
+    return frame_all_animated(ctx)
+
+
+# ---------------------------------------------------------------------------
 # BB1 STUB-triage fallbacks (2026-07-05, round 5)
 #
 # Wire the next five STUB rows: theme import from file, layout save-as /
@@ -759,6 +783,43 @@ def _fb_edit_undo(ctx: dict[str, Any]) -> Any:
 def _fb_edit_redo(ctx: dict[str, Any]) -> Any:
     from slappyengine.actions.history_actions import redo
     return redo(ctx)
+
+
+# ---------------------------------------------------------------------------
+# CC1 STUB-triage fallbacks (2026-07-05, round 6)
+#
+# Wire five more STUB rows: select-by-name, repeat-last-spawn, grid /
+# gizmo overlay toggles, and copy-asset-path clipboard write. See
+# :mod:`slappyengine.actions.edit_by_name_actions`,
+# :mod:`slappyengine.actions.spawn_history_actions`,
+# :mod:`slappyengine.actions.view_toggle_actions`, and
+# :mod:`slappyengine.actions.content_shell_actions` for the implementations.
+# ---------------------------------------------------------------------------
+
+
+def _fb_select_by_name(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_by_name_actions import select_by_name
+    return select_by_name(ctx)
+
+
+def _fb_repeat_last_spawn(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_history_actions import repeat_last
+    return repeat_last(ctx)
+
+
+def _fb_toggle_grid(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_toggle_actions import toggle_grid
+    return toggle_grid(ctx)
+
+
+def _fb_toggle_gizmos(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_toggle_actions import toggle_gizmos
+    return toggle_gizmos(ctx)
+
+
+def _fb_copy_asset_path(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.content_shell_actions import copy_asset_path
+    return copy_asset_path(ctx)
 
 
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
@@ -973,6 +1034,15 @@ def _default_actions() -> list[ToolAction]:
             required_args=[],
             category="edit",
         ),
+        # ── CC1 STUB-triage: select-by-name (2026-07-05, round 6) ─────
+        ToolAction(
+            action_id="edit.select_by_name",
+            label="Select by Name...",
+            rust_backing=None,
+            python_fallback=_fb_select_by_name,
+            required_args=["name"],
+            category="edit",
+        ),
         # ── Tool changes ─────────────────────────────────────────────
         ToolAction(
             action_id="editor.tool_select",
@@ -1173,6 +1243,40 @@ def _default_actions() -> list[ToolAction]:
             label="Frame All",
             rust_backing=None,
             python_fallback=_fb_frame_all,
+            required_args=[],
+            category="view",
+        ),
+        # CC6 sprint tick — animation-curve-driven camera moves.
+        ToolAction(
+            action_id="view.focus_on_selection_animated",
+            label="Focus on Selection (Animated)",
+            rust_backing=None,
+            python_fallback=_fb_focus_on_selection_animated,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="view.frame_all_animated",
+            label="Frame All (Animated)",
+            rust_backing=None,
+            python_fallback=_fb_frame_all_animated,
+            required_args=[],
+            category="view",
+        ),
+        # ── CC1 STUB-triage: overlay toggles (2026-07-05, round 6) ────
+        ToolAction(
+            action_id="view.toggle_grid",
+            label="Toggle Grid",
+            rust_backing=None,
+            python_fallback=_fb_toggle_grid,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="view.toggle_gizmos",
+            label="Toggle Gizmos",
+            rust_backing=None,
+            python_fallback=_fb_toggle_gizmos,
             required_args=[],
             category="view",
         ),
@@ -1378,6 +1482,15 @@ def _default_actions() -> list[ToolAction]:
             rust_backing=None,
             python_fallback=lambda ctx: _fb_spawn(ctx, "emitter"),
             required_args=["spec"],
+            category="spawn",
+        ),
+        # ── CC1 STUB-triage: replay most-recent spawn (round 6) ───────
+        ToolAction(
+            action_id="spawn.repeat_last",
+            label="Repeat Last Spawn",
+            rust_backing=None,
+            python_fallback=_fb_repeat_last_spawn,
+            required_args=[],
             category="spawn",
         ),
         # ── Content-browser actions ──────────────────────────────────
