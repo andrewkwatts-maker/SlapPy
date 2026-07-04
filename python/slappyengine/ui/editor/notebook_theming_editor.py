@@ -35,6 +35,7 @@ Public surface
 from __future__ import annotations
 
 import copy
+import logging
 from pathlib import Path
 from typing import Any, Callable
 
@@ -42,6 +43,8 @@ from slappyengine._validation import (
     validate_non_empty_str,
     validate_path_like,
 )
+
+_LOG = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -605,24 +608,67 @@ class NotebookThemingEditor:
     # Public state mutators
     # ------------------------------------------------------------------
 
-    def set_active_theme(self, name: str) -> None:
+    def set_active_theme(self, name: str) -> bool:
         """Bind the panel to the theme registered under *name*.
 
         When the underlying registry is not importable this just records
         the name locally so the panel reflects the pick in the base-theme
         dropdown; palette + selection sync happens on the next call.
+
+        Returns
+        -------
+        bool
+            ``True`` when the theme was applied through the live theme
+            registry, ``False`` when the registry isn't importable or the
+            underlying ``apply_theme`` call raised (the local name is
+            still updated in both cases).
         """
         validate_non_empty_str(
             "name", "NotebookThemingEditor.set_active_theme", name,
         )
         self._active_theme_name = name
         self.call_log.append(("set_active_theme", name))
-        if self._apply_theme is not None:
-            try:
-                spec = self._apply_theme(name)
-                self._sync_from_spec(spec)
-            except Exception:
-                pass
+        if self._apply_theme is None:
+            _LOG.warning(
+                "NotebookThemingEditor.set_active_theme: theme registry "
+                "unavailable; recorded %r locally only",
+                name,
+            )
+            return False
+        try:
+            spec = self._apply_theme(name)
+            self._sync_from_spec(spec)
+        except Exception as exc:
+            _LOG.warning(
+                "NotebookThemingEditor.set_active_theme: apply_theme(%r) "
+                "raised %s: %s",
+                name, type(exc).__name__, exc,
+            )
+            return False
+        return True
+
+    def _validate_state(self) -> bool:
+        """Verify the editor's palette + selection are internally consistent.
+
+        Raises
+        ------
+        RuntimeError
+            When a palette role is missing or a selection key drops out
+            of its option list.
+        """
+        for role in PALETTE_ROLES:
+            if role not in self._palette:
+                raise RuntimeError(
+                    "NotebookThemingEditor._validate_state: missing palette "
+                    f"role {role!r}"
+                )
+        for key in STYLE_KEYS:
+            if key not in self._selection:
+                raise RuntimeError(
+                    "NotebookThemingEditor._validate_state: missing "
+                    f"selection for key {key!r}"
+                )
+        return True
 
     def preview_page_lining(self, style: str) -> Any:
         """Preview a page-lining shader; also mutates the active selection."""
@@ -707,14 +753,19 @@ class NotebookThemingEditor:
         """Snapshot the current state to a new theme file.
 
         Returns the resulting path when the U2 store is present; ``None``
-        when the store is missing (the call is still recorded so tests
-        can verify the code path).
+        when the store is missing (a warning is logged so callers can
+        surface the miss during CI).
         """
         validate_non_empty_str(
             "name", "NotebookThemingEditor.save_as_new", name,
         )
         self.call_log.append(("save_as_new", name))
         if self._store is None:
+            _LOG.warning(
+                "NotebookThemingEditor.save_as_new: user store missing; "
+                "cannot persist theme %r",
+                name,
+            )
             return None
         try:
             # Prefer a dedicated ``save_as`` method; fall back to
@@ -723,26 +774,61 @@ class NotebookThemingEditor:
                 return Path(self._store.save_as(name, self._snapshot_dict()))
             if hasattr(self._store, "save"):
                 return Path(self._store.save(name, self._snapshot_dict()))
-        except Exception:
+        except Exception as exc:
+            _LOG.warning(
+                "NotebookThemingEditor.save_as_new(%r) raised %s: %s",
+                name, type(exc).__name__, exc,
+            )
             return None
+        _LOG.warning(
+            "NotebookThemingEditor.save_as_new: user store %r exposes no "
+            "save_as / save method; nothing written",
+            type(self._store).__name__,
+        )
         return None
 
-    def reset_to_default(self) -> None:
+    def reset_to_default(self) -> bool:
         """Copy the current theme back from the baked defaults via U2.
 
-        No-op when the store is missing; still logs so tests can verify
-        the invocation.
+        Returns
+        -------
+        bool
+            ``True`` when the underlying store handled the reset;
+            ``False`` when the store is missing / the active theme name
+            is unknown / the store call raised (all cases are logged).
         """
         self.call_log.append(("reset_to_default", self._active_theme_name))
         if self._store is None:
-            return
+            _LOG.warning(
+                "NotebookThemingEditor.reset_to_default: user store "
+                "missing; nothing to reset",
+            )
+            return False
+        if self._active_theme_name is None:
+            _LOG.warning(
+                "NotebookThemingEditor.reset_to_default: no active theme "
+                "bound; nothing to reset",
+            )
+            return False
         try:
             if hasattr(self._store, "revert_to_baked"):
                 self._store.revert_to_baked(self._active_theme_name)
-            elif hasattr(self._store, "reset"):
+                return True
+            if hasattr(self._store, "reset"):
                 self._store.reset(self._active_theme_name)
-        except Exception:
-            pass
+                return True
+        except Exception as exc:
+            _LOG.warning(
+                "NotebookThemingEditor.reset_to_default(%r) raised %s: %s",
+                self._active_theme_name, type(exc).__name__, exc,
+            )
+            return False
+        _LOG.warning(
+            "NotebookThemingEditor.reset_to_default: user store %r exposes "
+            "no revert_to_baked / reset method",
+            type(self._store).__name__,
+        )
+        return False
 
     def export_yaml(self, path: Path | str) -> Path:
         """Write the current snapshot to *path* as YAML.
@@ -1024,32 +1110,52 @@ class NotebookThemingEditor:
     # Internal — DPG callback shims
     # ------------------------------------------------------------------
 
-    def _on_theme_selected(self, sender: Any, app_data: Any, user_data: Any) -> None:
+    def _on_theme_selected(self, sender: Any, app_data: Any, user_data: Any) -> bool:
         name = app_data if isinstance(app_data, str) else None
         if not name:
-            return
+            _LOG.warning(
+                "NotebookThemingEditor._on_theme_selected: ignored "
+                "non-string app_data %r",
+                app_data,
+            )
+            return False
         self.set_active_theme(name)
+        return True
 
     def _make_style_callback(self, key: str) -> Callable[..., None]:
-        def _cb(sender: Any, app_data: Any, user_data: Any) -> None:
-            if isinstance(app_data, str) and app_data:
-                self._preview_style(key, app_data)
+        def _cb(sender: Any, app_data: Any, user_data: Any) -> bool:
+            if not isinstance(app_data, str) or not app_data:
+                _LOG.warning(
+                    "NotebookThemingEditor style callback for %r ignored "
+                    "non-string app_data %r",
+                    key, app_data,
+                )
+                return False
+            self._preview_style(key, app_data)
+            return True
         return _cb
 
     def _make_palette_callback(self, role: str) -> Callable[..., None]:
-        def _cb(sender: Any, app_data: Any, user_data: Any) -> None:
+        def _cb(sender: Any, app_data: Any, user_data: Any) -> bool:
             try:
                 rgba = tuple(int(v) for v in app_data)
             except (TypeError, ValueError):
-                return
+                _LOG.warning(
+                    "NotebookThemingEditor palette callback for role %r "
+                    "ignored non-numeric app_data %r",
+                    role, app_data,
+                )
+                return False
             self.apply_color(role, rgba)  # type: ignore[arg-type]
+            return True
         return _cb
 
     def _make_creature_callback(self, cid: str) -> Callable[..., None]:
-        def _cb(sender: Any, app_data: Any, user_data: Any) -> None:
+        def _cb(sender: Any, app_data: Any, user_data: Any) -> bool:
             self._creatures_enabled[cid] = bool(app_data)
             self.call_log.append(("creature", (cid, bool(app_data))))
             self._persist_active()
+            return True
         return _cb
 
     def _on_save_as_new_clicked(self, *_a: Any, **_kw: Any) -> None:

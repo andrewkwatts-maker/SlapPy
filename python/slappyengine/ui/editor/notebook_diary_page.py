@@ -46,11 +46,14 @@ Headless / soft-import contract
 """
 from __future__ import annotations
 
+import logging
 import traceback
 from pathlib import Path
 from typing import Any, Callable
 
 from slappyengine._validation import validate_non_empty_str
+
+_LOG = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -300,8 +303,19 @@ class NotebookDiaryPage:
             return self._node_sources.get(self._active_path, "")
         return self._sources.get(self._active_path, "")
 
-    def set_source(self, source: str) -> None:
-        """Set the source for the current mode + active path."""
+    def set_source(self, source: str) -> bool:
+        """Set the source for the current mode + active path.
+
+        Returns
+        -------
+        bool
+            ``True`` when the buffer was stored.
+
+        Raises
+        ------
+        TypeError
+            If *source* is not a ``str``.
+        """
         if not isinstance(source, str):
             raise TypeError(
                 f"NotebookDiaryPage.set_source: source must be str; "
@@ -317,29 +331,74 @@ class NotebookDiaryPage:
             self._sources[self._active_path] = source
         self.call_log.append(("set_source", len(source)))
         self._sync_inputs_to_dpg()
+        return True
 
     def get_mode(self) -> str:
         """Return the current mode — ``"python"`` or ``"nodes"``."""
         return self._mode
 
-    def set_mode(self, mode: str) -> None:
+    def set_mode(self, mode: str) -> bool:
         """Switch the right pane between Python and Nodes.
 
         Source for each mode is preserved per file so the user can
         flip back and forth without losing work.
+
+        Returns
+        -------
+        bool
+            ``True`` when the mode was toggled, ``False`` when the
+            request matched the current mode (idempotent short-circuit).
+
+        Raises
+        ------
+        ValueError
+            If *mode* isn't one of the known modes.
+        TypeError
+            If *mode* isn't a ``str``.
         """
+        if not isinstance(mode, str):
+            raise TypeError(
+                f"NotebookDiaryPage.set_mode: mode must be str; "
+                f"got {type(mode).__name__}",
+            )
         if mode not in _VALID_MODES:
             raise ValueError(
                 f"NotebookDiaryPage.set_mode: mode must be one of "
                 f"{_VALID_MODES}; got {mode!r}",
             )
         if mode == self._mode:
-            return
+            return False
         self._mode = mode
         if self._active_path is not None:
             self._modes[self._active_path] = mode
         self.call_log.append(("set_mode", mode))
         self._refresh_mode_visibility()
+        return True
+
+    def _validate_state(self) -> bool:
+        """Verify the diary page's active-path + mode + buffer maps are sane.
+
+        Raises
+        ------
+        RuntimeError
+            When the current mode is unknown or the active path is
+            registered without a buffer entry.
+        """
+        if self._mode not in _VALID_MODES:
+            raise RuntimeError(
+                "NotebookDiaryPage._validate_state: mode "
+                f"{self._mode!r} is not one of {_VALID_MODES}"
+            )
+        if self._active_path is not None:
+            if (
+                self._active_path not in self._sources
+                and self._active_path not in self._node_sources
+            ):
+                raise RuntimeError(
+                    "NotebookDiaryPage._validate_state: active_path "
+                    f"{self._active_path} has no buffer entry"
+                )
+        return True
 
     @property
     def status(self) -> str:
@@ -356,13 +415,35 @@ class NotebookDiaryPage:
         """Return the underlying :class:`Stage`, if one has been spun up."""
         return self._stage
 
-    def open_diary(self, path: Path | str) -> None:
+    def open_diary(self, path: Path | str) -> bool:
         """Load the .py source + companion .meta.yaml for *path*.
 
         The path is canonicalised but never required to exist on disk —
         a missing file simply opens a blank scaffold so "New Diary"
         works without disk writes.
+
+        Returns
+        -------
+        bool
+            ``True`` when the diary was opened. Read errors are logged
+            and the panel still swaps to a blank scaffold.
+
+        Raises
+        ------
+        TypeError
+            If *path* is not a ``str`` or :class:`Path`.
+        ValueError
+            If *path* is an empty string.
         """
+        if isinstance(path, bool) or not isinstance(path, (str, Path)):
+            raise TypeError(
+                "NotebookDiaryPage.open_diary: path must be str or Path; "
+                f"got {type(path).__name__}"
+            )
+        if isinstance(path, str) and not path:
+            raise ValueError(
+                "NotebookDiaryPage.open_diary: path must not be empty"
+            )
         p = Path(path)
         self._active_path = p
         self.call_log.append(("open_diary", str(p)))
@@ -370,7 +451,11 @@ class NotebookDiaryPage:
         # Load source from disk (best-effort).
         try:
             source = p.read_text(encoding="utf-8") if p.exists() else ""
-        except Exception:
+        except Exception as exc:
+            _LOG.warning(
+                "NotebookDiaryPage.open_diary: read(%s) raised %s: %s",
+                p, type(exc).__name__, exc,
+            )
             source = ""
         if not source:
             source = _PLACEHOLDER_CODE
@@ -390,8 +475,9 @@ class NotebookDiaryPage:
         self._set_status(f"Opened: {p.name}")
         self._sync_inputs_to_dpg()
         self._refresh_mode_visibility()
+        return True
 
-    def run_script(self) -> None:
+    def run_script(self) -> bool:
         """Spin up (or reuse) a Stage + bind the source as ``update_fn``.
 
         When the engine exposes a ``run_script(panel)`` hook, this
@@ -399,7 +485,13 @@ class NotebookDiaryPage:
         :class:`slappyengine.studio.Stage`, wrap the diary source in a
         callable, and start ticking it from :meth:`tick`.
 
-        Soft no-op + status hint when ``studio.Stage`` is missing.
+        Returns
+        -------
+        bool
+            ``True`` when the script is now live-running; ``False``
+            when the studio extra is missing, the source failed to
+            compile, or an engine hook raised (all cases are logged
+            and reflected in the status bar).
         """
         self.call_log.append(("run_script",))
 
@@ -411,35 +503,43 @@ class NotebookDiaryPage:
                     hook(self)
                     self._script_running = True
                     self._set_status("Running (engine)")
-                    return
+                    return True
                 except Exception as exc:
+                    _LOG.warning(
+                        "NotebookDiaryPage.run_script: engine hook raised "
+                        "%s: %s",
+                        type(exc).__name__, exc,
+                    )
                     self._record_exception(exc)
-                    return
+                    return False
 
         studio = _try_import_studio()
         if studio is None:
+            _LOG.warning(
+                "NotebookDiaryPage.run_script: slappyengine.studio missing"
+            )
             self._set_status(_STUDIO_MISSING_HINT)
-            return
+            return False
 
         # Compile + extract update_fn from the source.
         source = self.get_source()
         if self._mode == NODES_MODE:
             self._set_status("Nodes mode - run not yet wired")
-            return
+            return False
         try:
             ns: dict[str, Any] = {}
             code = compile(source, str(self._active_path or "<diary>"), "exec")
             exec(code, ns)  # noqa: S102 - intentional sandbox-light
         except Exception as exc:
             self._record_exception(exc)
-            return
+            return False
 
         # Build a Stage — softbody_stage is the lightest viable default.
         try:
             self._stage = studio.softbody_stage()
         except Exception as exc:
             self._record_exception(exc)
-            return
+            return False
 
         setup_fn = ns.get("setup")
         if callable(setup_fn):
@@ -447,27 +547,39 @@ class NotebookDiaryPage:
                 setup_fn()
             except Exception as exc:
                 self._record_exception(exc)
-                return
+                return False
 
         self._update_fn = ns.get("update")
         self._script_running = True
         self._last_exception = None
         self._set_status("Running")
+        return True
 
-    def stop_script(self) -> None:
+    def stop_script(self) -> bool:
         """Tear down the running stage + clear the live viewport.
 
         Forwards to ``engine.stop_script`` when available; otherwise
         drops the local Stage handle and resets the running flag.
+
+        Returns
+        -------
+        bool
+            ``True`` when a running script was stopped; ``False`` when
+            there was nothing running to stop.
         """
         self.call_log.append(("stop_script",))
+        was_running = self._script_running
         if self._engine is not None:
             hook = getattr(self._engine, "stop_script", None)
             if callable(hook):
                 try:
                     hook(self)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    _LOG.warning(
+                        "NotebookDiaryPage.stop_script: engine hook "
+                        "raised %s: %s",
+                        type(exc).__name__, exc,
+                    )
         self._script_running = False
         # Allow a teardown() hook to run for clean stop.
         teardown = getattr(self, "_update_fn", None)
@@ -477,6 +589,7 @@ class NotebookDiaryPage:
         self._stage = None
         self._frame = 0
         self._set_status("Stopped")
+        return was_running
 
     def tick(self, dt: float = 1.0 / 60.0) -> None:
         """Per-frame tick driven by the editor main loop.
@@ -501,24 +614,39 @@ class NotebookDiaryPage:
             return
         self._frame += 1
 
-    def save(self) -> None:
+    def save(self) -> bool:
         """Write the current source + meta.yaml back to disk.
 
         Triggers the optional ``on_save`` callback so the editor shell
         can refresh views (content browser, recent files, …).
+
+        Returns
+        -------
+        bool
+            ``True`` when the file was written; ``False`` when there's
+            no active diary bound or the write raised (warning logged;
+            status bar carries the error message for the user).
         """
         self.call_log.append(("save",))
         if self._active_path is None:
+            _LOG.warning(
+                "NotebookDiaryPage.save: no active diary bound; nothing "
+                "to write"
+            )
             self._set_status("Save: no active diary")
-            return
+            return False
         path = self._active_path
         source = self.get_source()
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(source, encoding="utf-8")
         except Exception as exc:
+            _LOG.warning(
+                "NotebookDiaryPage.save: write(%s) raised %s: %s",
+                path, type(exc).__name__, exc,
+            )
             self._set_status(f"Save error: {exc}")
-            return
+            return False
         # Update companion meta.
         meta = _load_meta(_meta_path_for(path))
         meta["last_mode"] = self._mode
@@ -528,17 +656,31 @@ class NotebookDiaryPage:
         if self._on_save is not None:
             try:
                 self._on_save(path, source)
-            except Exception:
-                pass
+            except Exception as exc:
+                _LOG.warning(
+                    "NotebookDiaryPage.save: on_save callback raised "
+                    "%s: %s",
+                    type(exc).__name__, exc,
+                )
+        return True
 
-    def refresh_theme(self) -> None:
+    def refresh_theme(self) -> bool:
         """Re-pull theme colours after a theme switch.
 
         The new diary palette is read from the active theme via the
         widget ``_theme`` resolver; falls back to the cream/ink/pink
         defaults when no theme is bound.
+
+        Returns
+        -------
+        bool
+            ``True`` when a live theme was resolved and colours were
+            refreshed; ``False`` when the resolver raised (defaults
+            preserved). Either way, the status bar is re-emitted so
+            listeners observe the swap.
         """
         self.call_log.append(("refresh_theme",))
+        ok = True
         try:
             from slappyengine.ui.theme import resolve_theme
 
@@ -550,16 +692,22 @@ class NotebookDiaryPage:
                 "text_secondary", self._muted_color,
             )
             self._accent_color = theme.color("accent", self._accent_color)
-        except Exception:
-            pass
+        except Exception as exc:
+            _LOG.warning(
+                "NotebookDiaryPage.refresh_theme: resolve_theme raised "
+                "%s: %s",
+                type(exc).__name__, exc,
+            )
+            ok = False
         # Re-emit the status so any listener observes the swap.
         self._set_status(self._status)
+        return ok
 
     # ------------------------------------------------------------------
     # Build
     # ------------------------------------------------------------------
 
-    def build(self, parent_tag: int | str) -> None:
+    def build(self, parent_tag: int | str) -> bool:
         """Materialise the panel under *parent_tag* (DPG protocol).
 
         Layout:
@@ -568,14 +716,35 @@ class NotebookDiaryPage:
         2. Two-column body — LEFT viewport, RIGHT code/nodes pane.
         3. Footer ribbon: Run / Stop / mode toggle / Save / Open.
         4. Status row at the bottom.
+
+        Returns
+        -------
+        bool
+            ``True`` once the panel is marked built (headless-safe).
+
+        Raises
+        ------
+        TypeError
+            If *parent_tag* is not a ``str`` or ``int``.
+        ValueError
+            If *parent_tag* is an empty ``str``.
         """
+        if isinstance(parent_tag, str):
+            validate_non_empty_str(
+                "parent_tag", "NotebookDiaryPage.build", parent_tag,
+            )
+        elif not isinstance(parent_tag, int):
+            raise TypeError(
+                "NotebookDiaryPage.build: parent_tag must be str or int; "
+                f"got {type(parent_tag).__name__}"
+            )
         self._parent_tag = parent_tag
         self._built = True
         self.call_log.append(("build", parent_tag))
 
         dpg = _safe_dpg()
         if dpg is None:
-            return
+            return True
 
         try:
             with dpg.group(parent=parent_tag, tag=self._panel_tag):
@@ -596,6 +765,7 @@ class NotebookDiaryPage:
 
         # Sync mode visibility once at the end — both panes were just built.
         self._refresh_mode_visibility()
+        return True
 
     # ------------------------------------------------------------------
     # Build helpers — title strip

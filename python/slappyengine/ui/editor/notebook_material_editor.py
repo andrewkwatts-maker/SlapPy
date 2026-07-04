@@ -42,7 +42,10 @@ is missing or stubbed out.
 from __future__ import annotations
 
 import dataclasses
+import logging
 from typing import Any
+
+from slappyengine._validation import validate_non_empty_str
 
 # Re-use the existing kind discriminator so the two editors can never
 # drift apart on which target → which kind.
@@ -53,6 +56,12 @@ from slappyengine.ui.editor.material_editor import (
     _detect_kind,
 )
 from slappyengine.ui.editor.notebook_inspector import NotebookInspector
+
+_LOG = logging.getLogger(__name__)
+
+_VALID_KINDS: frozenset[str] = frozenset(
+    (KIND_MATERIAL_MAP, KIND_SOFTBODY, KIND_FLUID),
+)
 
 
 # ---------------------------------------------------------------------------
@@ -367,14 +376,20 @@ class NotebookMaterialEditor:
         """Return the cached colour stops for the swatch row."""
         return list(self._swatch_stops)
 
-    def set_material(self, material: Any) -> None:
+    def set_material(self, material: Any) -> bool:
         """Bind *material* as the editor target and rebuild the page.
 
         Equivalent to :meth:`set_target` — kept for the spec API.
-        """
-        self.set_target(material)
 
-    def set_target(self, target: Any, kind: str | None = None) -> None:
+        Returns
+        -------
+        bool
+            ``True`` when the material was accepted (the target field
+            was reassigned).
+        """
+        return self.set_target(material)
+
+    def set_target(self, target: Any, kind: str | None = None) -> bool:
         """Bind a new target and rebuild the colour-story page.
 
         Parameters
@@ -385,7 +400,30 @@ class NotebookMaterialEditor:
         kind:
             Explicit kind override.  When ``None`` the kind is
             auto-detected via :func:`_detect_kind`.
+
+        Returns
+        -------
+        bool
+            ``True`` when the target was successfully rebound (always
+            true on the happy path; the method raises on invalid input
+            rather than returning ``False``).
+
+        Raises
+        ------
+        ValueError
+            If *kind* is a non-empty string outside the known kind set.
+        TypeError
+            If *kind* is not ``None`` and not a ``str``.
         """
+        if kind is not None:
+            validate_non_empty_str(
+                "kind", "NotebookMaterialEditor.set_target", kind,
+            )
+            if kind not in _VALID_KINDS:
+                raise ValueError(
+                    "NotebookMaterialEditor.set_target: kind must be one of "
+                    f"{sorted(_VALID_KINDS)}; got {kind!r}"
+                )
         self._target = target
         if target is None:
             self._kind = KIND_MATERIAL_MAP
@@ -397,20 +435,59 @@ class NotebookMaterialEditor:
             self._kind,
         ))
         self.refresh()
+        return True
 
-    def build(self, parent_tag: int | str) -> None:
+    def _validate_state(self) -> bool:
+        """Sanity-check the editor's cached kind + target pairing.
+
+        Raises
+        ------
+        RuntimeError
+            When the cached kind is not one of the known kinds.
+        """
+        if self._kind not in _VALID_KINDS:
+            raise RuntimeError(
+                "NotebookMaterialEditor._validate_state: unknown cached "
+                f"kind {self._kind!r} (target={type(self._target).__name__})"
+            )
+        return True
+
+    def build(self, parent_tag: int | str) -> bool:
         """Materialise the colour-story page under *parent_tag*.
 
         Safe to call when ``dearpygui`` is missing — every DPG call is
         guarded so the editor still registers its tags for tests.
+
+        Returns
+        -------
+        bool
+            ``True`` once the panel is marked built (headless-safe).
+
+        Raises
+        ------
+        TypeError
+            If *parent_tag* is not a ``str`` or ``int``.
+        ValueError
+            If *parent_tag* is an empty string.
         """
+        if isinstance(parent_tag, str):
+            validate_non_empty_str(
+                "parent_tag",
+                "NotebookMaterialEditor.build",
+                parent_tag,
+            )
+        elif not isinstance(parent_tag, int):
+            raise TypeError(
+                "NotebookMaterialEditor.build: parent_tag must be str or "
+                f"int; got {type(parent_tag).__name__}"
+            )
         self._parent_tag = parent_tag
         self._built = True
         self.call_log.append(("build", parent_tag))
 
         dpg = _safe_dpg()
         if dpg is None:
-            return
+            return True
 
         try:
             with dpg.child_window(
@@ -437,20 +514,28 @@ class NotebookMaterialEditor:
                 pass
 
         self._render_body(dpg)
+        return True
 
-    def refresh(self) -> None:
+    def refresh(self) -> bool:
         """Tear down and rebuild the colour-story body.
 
         Safe to call before :meth:`build` — becomes a no-op in that
         case (the call is still logged).
+
+        Returns
+        -------
+        bool
+            ``True`` when the body was re-rendered under an active DPG
+            context, ``False`` when the panel isn't built yet or the
+            DPG extra is missing (headless-safe no-op).
         """
         self.call_log.append(("refresh",))
         if not self._built:
-            return
+            return False
 
         dpg = _safe_dpg()
         if dpg is None:
-            return
+            return False
 
         # Wipe the existing body so we can re-render.
         for tag in (
@@ -474,6 +559,7 @@ class NotebookMaterialEditor:
         self._inspector = None
 
         self._render_body(dpg)
+        return True
 
     # ------------------------------------------------------------------
     # Body renderer
@@ -750,10 +836,18 @@ class NotebookMaterialEditor:
     # Theme integration — repaint hooks for the theme switcher.
     # ------------------------------------------------------------------
 
-    def on_theme_change(self) -> None:
-        """Refresh on active-theme change so palette tokens repaint."""
+    def on_theme_change(self) -> bool:
+        """Refresh on active-theme change so palette tokens repaint.
+
+        Returns
+        -------
+        bool
+            The status forwarded from :meth:`refresh` — ``True`` when a
+            live rebuild happened, ``False`` when the panel wasn't built
+            yet or DPG is missing.
+        """
         self.call_log.append(("theme_change",))
-        self.refresh()
+        return self.refresh()
 
 
 __all__ = ["NotebookMaterialEditor"]

@@ -30,6 +30,7 @@ edit can't quietly bust the budget).
 from __future__ import annotations
 
 import dataclasses
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -39,6 +40,8 @@ from slappyengine._validation import (
     validate_int,
     validate_non_empty_str,
 )
+
+_LOG = logging.getLogger(__name__)
 from slappyengine.ui.widgets.notebook_theme import (
     register_theme_listener,
     resolve_theme,
@@ -396,18 +399,57 @@ class NotebookSpawnMenu:
     # Recently-used spawn cards (persisted per project)
     # ------------------------------------------------------------------
 
-    def set_project_root(self, root: Path | str | None) -> None:
+    def set_project_root(self, root: Path | str | None) -> bool:
         """Bind the project *root* for the persistent recents file.
 
         Passing ``None`` leaves recents in memory only; setting a path
         loads any existing ``<root>/.slappy/recent_spawns.yaml`` file.
+
+        Returns
+        -------
+        bool
+            ``True`` when a path was bound and recents were loaded (or
+            attempted); ``False`` when *root* was ``None``.
         """
         if root is None:
             self._project_root = None
             self._recent_ids = []
-            return
+            return False
+        if not isinstance(root, (str, Path)):
+            raise TypeError(
+                "NotebookSpawnMenu.set_project_root: root must be str, Path "
+                f"or None; got {type(root).__name__}"
+            )
+        if isinstance(root, str) and not root:
+            raise ValueError(
+                "NotebookSpawnMenu.set_project_root: root string must not "
+                "be empty"
+            )
         self._project_root = Path(root)
         self.load_recents()
+        return True
+
+    def _validate_state(self) -> bool:
+        """Verify the menu's card table + recents list are internally consistent.
+
+        Raises
+        ------
+        RuntimeError
+            If a recent id references a card that isn't in the deck, or
+            the deck is empty.
+        """
+        if not self._cards:
+            raise RuntimeError(
+                "NotebookSpawnMenu._validate_state: card table is empty"
+            )
+        known_ids = {c.card_id for c in self._cards}
+        for cid in self._recent_ids:
+            if cid not in known_ids:
+                raise RuntimeError(
+                    "NotebookSpawnMenu._validate_state: recents list "
+                    f"references unknown card {cid!r}"
+                )
+        return True
 
     def get_recent_ids(self) -> list[str]:
         """Return the current LRU recents list, oldest -> newest."""
@@ -426,21 +468,34 @@ class NotebookSpawnMenu:
                 out.append(card)
         return out
 
-    def record_recent(self, card_id: str) -> None:
+    def record_recent(self, card_id: str) -> bool:
         """Push *card_id* onto the LRU recents list + persist to disk.
 
         The list is capped at :data:`RECENT_MAX`; duplicates are moved to
         the newest slot rather than duplicated.
+
+        Returns
+        -------
+        bool
+            ``True`` when the card was recorded, ``False`` when the id
+            isn't in the deck (a warning is logged in that case so
+            silent drops are surfaced during CI).
         """
         validate_non_empty_str("card_id", "record_recent", card_id)
         if self.get_card(card_id) is None:
-            return
+            _LOG.warning(
+                "NotebookSpawnMenu.record_recent: unknown card_id %r; "
+                "dropping (known: %s)",
+                card_id, sorted(c.card_id for c in self._cards),
+            )
+            return False
         if card_id in self._recent_ids:
             self._recent_ids.remove(card_id)
         self._recent_ids.append(card_id)
         while len(self._recent_ids) > self.RECENT_MAX:
             self._recent_ids.pop(0)
         self.save_recents()
+        return True
 
     def load_recents(self) -> list[str]:
         """Read the recents YAML from disk (best-effort, empty on any error)."""
@@ -467,15 +522,26 @@ class NotebookSpawnMenu:
         self._recent_ids = ids[-self.RECENT_MAX:]
         return list(self._recent_ids)
 
-    def save_recents(self) -> None:
-        """Persist the current recents list to the project YAML file."""
+    def save_recents(self) -> bool:
+        """Persist the current recents list to the project YAML file.
+
+        Returns
+        -------
+        bool
+            ``True`` when the YAML was written, ``False`` when there's
+            no project root bound or writing failed (warning logged).
+        """
         if self._project_root is None:
-            return
+            return False
         path = self._project_root / self.RECENT_YAML_RELPATH
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-        except Exception:
-            return
+        except Exception as exc:
+            _LOG.warning(
+                "NotebookSpawnMenu.save_recents: mkdir(%s) raised %s: %s",
+                path.parent, type(exc).__name__, exc,
+            )
+            return False
         payload = {"recent": list(self._recent_ids)}
         try:
             import yaml  # type: ignore[import-not-found]
@@ -490,22 +556,44 @@ class NotebookSpawnMenu:
             text = "\n".join(lines) + "\n"
         try:
             path.write_text(text, encoding="utf-8")
-        except Exception:
-            pass
+        except Exception as exc:
+            _LOG.warning(
+                "NotebookSpawnMenu.save_recents: write(%s) raised %s: %s",
+                path, type(exc).__name__, exc,
+            )
+            return False
+        return True
 
     # ------------------------------------------------------------------
     # Public surface — Nova3D ``build(parent_tag)`` protocol
     # ------------------------------------------------------------------
 
-    def build(self, parent_tag: int | str) -> None:
+    def build(self, parent_tag: int | str) -> bool:
         """Materialise the deck under *parent_tag*.
 
         Safe to call when ``dearpygui`` is missing — every DPG call is
         guarded so the menu still registers its bookkeeping for tests.
+
+        Returns
+        -------
+        bool
+            ``True`` when the menu is marked built (headless-safe).
+
+        Raises
+        ------
+        TypeError
+            If *parent_tag* is not a ``str`` or ``int``.
+        ValueError
+            If *parent_tag* is an empty ``str``.
         """
         if isinstance(parent_tag, str):
             validate_non_empty_str(
                 "parent_tag", "NotebookSpawnMenu.build", parent_tag,
+            )
+        elif not isinstance(parent_tag, int):
+            raise TypeError(
+                "NotebookSpawnMenu.build: parent_tag must be str or int; "
+                f"got {type(parent_tag).__name__}"
             )
 
         self._parent_tag = parent_tag
@@ -514,7 +602,7 @@ class NotebookSpawnMenu:
 
         dpg = self._safe_dpg()
         if dpg is None:
-            return
+            return True
 
         root_tag = f"notebook_spawn_menu_{id(self)}"
         try:
@@ -531,6 +619,7 @@ class NotebookSpawnMenu:
             # Stub-DPG / context-manager-less fallback.
             self._build_title(dpg)
             self._build_grid(dpg)
+        return True
 
     def open(self) -> None:
         """Mark the deck as open (e.g. after a `+ Add` toolbar click)."""
@@ -554,12 +643,19 @@ class NotebookSpawnMenu:
     # Hover / shimmer overlay
     # ------------------------------------------------------------------
 
-    def set_hover(self, card_id: str | None) -> None:
+    def set_hover(self, card_id: str | None) -> bool:
         """Mark *card_id* as hovered (``None`` clears the hover state).
 
         On hover, a sparkle-shimmer overlay is lazily baked via
         :func:`noise_glitter` and cached so subsequent hover-enters on the
         same card are allocation-free.
+
+        Returns
+        -------
+        bool
+            ``True`` when a valid card became hovered; ``False`` when
+            *card_id* is ``None`` (clear) or the id isn't in the deck
+            (warning logged so silent drops surface in CI).
         """
         if card_id is not None:
             if not isinstance(card_id, str) or not card_id:
@@ -567,18 +663,23 @@ class NotebookSpawnMenu:
                     "NotebookSpawnMenu.set_hover: card_id must be str or None"
                 )
             if self.get_card(card_id) is None:
-                # Unknown card id — silently clear instead of crashing.
+                _LOG.warning(
+                    "NotebookSpawnMenu.set_hover: unknown card_id %r; "
+                    "clearing hover instead",
+                    card_id,
+                )
                 card_id = None
 
         self._hovered_card = card_id
         self.call_log.append(("hover", card_id))
 
         if card_id is None:
-            return
+            return False
 
         # Lazily bake the shimmer texture for this card.
         if card_id not in self._shimmer_overlays:
             self._shimmer_overlays[card_id] = self._make_shimmer_texture()
+        return True
 
     def shimmer_overlay(self, card_id: str) -> Any | None:
         """Return the cached sparkle-shimmer overlay texture for *card_id*.
@@ -620,33 +721,57 @@ class NotebookSpawnMenu:
             pass
         self.call_log.append(("summon", card_id))
 
-    def submit_modal(self) -> None:
+    def submit_modal(self) -> bool:
         """Submit the currently open modal — fires :data:`on_spawn`.
 
-        No-op when no modal is open.
+        Returns
+        -------
+        bool
+            ``True`` when the callback was invoked without raising;
+            ``False`` when no modal is open OR the callback raised
+            (which is logged so the miss surfaces in CI).
         """
         if self._open_modal is None:
-            return
+            _LOG.warning(
+                "NotebookSpawnMenu.submit_modal: no modal is open; "
+                "nothing to submit"
+            )
+            return False
 
         card_id = self._open_modal["card_id"]
         spec_instance = self._open_modal["spec"]
         spec_dict = self._spec_to_dict(spec_instance)
         self.call_log.append(("submit", card_id, spec_dict))
 
+        callback_ok = True
         try:
             self._on_spawn(card_id, spec_dict)
-        except Exception:
+        except Exception as exc:
             # Callback errors must not poison the menu.
-            pass
+            _LOG.warning(
+                "NotebookSpawnMenu.submit_modal: on_spawn(%r) raised "
+                "%s: %s",
+                card_id, type(exc).__name__, exc,
+            )
+            callback_ok = False
 
         self._close_modal()
+        return callback_ok
 
-    def cancel_modal(self) -> None:
-        """Cancel the currently open modal without firing :data:`on_spawn`."""
+    def cancel_modal(self) -> bool:
+        """Cancel the currently open modal without firing :data:`on_spawn`.
+
+        Returns
+        -------
+        bool
+            ``True`` when a modal was closed, ``False`` when there was
+            no modal open.
+        """
         if self._open_modal is None:
-            return
+            return False
         self.call_log.append(("cancel", self._open_modal["card_id"]))
         self._close_modal()
+        return True
 
     # ------------------------------------------------------------------
     # Internal helpers — modal + grid + DPG paths
