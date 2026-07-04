@@ -280,12 +280,30 @@ Status legend:
 | 231 | `editor.open_recent` action | Router action id (X3) | WIRED | `tool_router.py:688` → `_fb_open_recent` → `actions/project_actions.py:143` (`open_recent`) | Opens by `path` or `index` from `ProjectRegistry.list_recent()`. |
 | 232 | `view.reset_layout` action | Router action id (X3) | WIRED | `tool_router.py:816` → `_fb_view_reset_layout` → `actions/view_actions.py:19` (`reset_layout`) | Restores DEFAULT preset via `apply_layout_preset` with a headless-safe fallback to `apply_preset`. |
 | 233 | `edit.duplicate_selection` action | Router action id (X3) | WIRED | `tool_router.py:757` → `_fb_duplicate_selection` → `actions/edit_actions.py:44` (`duplicate_selection`) | Snapshots + pastes via `EntityClipboard`; prefers shell's `_duplicate_selected` when present. |
+| 234 | Notebook Startup Prompt: open recent row | `notebook_startup_prompt.py:428` → `_on_row_clicked` | WIRED | V2. Routes through `project_registry.open`. |
+| 235 | Notebook Startup Prompt: New project | `notebook_startup_prompt.py:431` → `_on_new_clicked` | WIRED | V2. Launches new-project flow. |
+| 236 | Notebook Startup Prompt: Skip | `notebook_startup_prompt.py:434` → `_on_skip_clicked` | WIRED | V2. Closes the modal. |
+| 237 | Notebook Project Registry: Open project | `notebook_project_registry.py:413` → `_on_open_clicked` | WIRED | V2. Commits to `ProjectRegistry.open`. |
+| 238 | Notebook Project Registry: Remove project | `notebook_project_registry.py:416` → `_on_remove_clicked` | WIRED | V2. |
+| 239 | Notebook Project Registry: Add project | `notebook_project_registry.py:419` → `_on_add_clicked` → `_on_folder_chosen` | WIRED | V2. Uses Tk folder dialog. |
+| 240 | Notebook SnapOverlay: snap preview | Drag event | WIRED | V4. `notebook_snap_overlay.py:626` → `_on_snap_preview` renders dashed-rect ghost. |
+| 241 | Notebook SnapOverlay: dock preview | Drag event | WIRED | V4. `notebook_snap_overlay.py:635` → `_on_dock_preview` renders arrow indicator. |
+| 242 | Content Browser: `set_project` project asset tree | X4 `notebook_content_browser.py::set_project` | WIRED | Groups files into 6 kinds; fuzzy search + right-click ctx menu. |
+| 243 | Content Browser: Delete asset (ctx menu) | X4 right-click ctx entry | STUB | Ctx entry rendered but delete handler defers to host callback which may be unbound; Y1 target. |
+| 244 | Post-Process: `apply_manifest` executor | X5 `post_process/executor.py::from_manifest` + `apply_manifest` | WIRED | Declarative pass ordering; carries manifest through the CPU dispatcher. |
+| 245 | User Overrides: live-reload autoreload | X6 `ui/user_overrides.py::autoreload` | WIRED | Watchdog soft-imported; NullWatcherHandle when unavailable. |
+| 246 | Widget primitives: 6 new notebook widgets | X7 `ui/widgets/{glitter_progress_bar, ribbon_tab, paper_clip_attachment, washi_tape_divider, sketch_button, ink_stamp_badge}.py` | WIRED | Each inherits `_NotebookWidget` lifecycle (mount / set_theme / set_enabled). |
+| 247 | Visual Scripting: 18+ material graph nodes | V5 `visual_scripting/material_nodes.py` | WIRED | WGSL-emitting nodes. Palette-visible from Notebook Node Editor. |
+| 248 | Visual Scripting: Python <-> Graph codegen | V6 `visual_scripting/codegen.py` | WIRED | Bidirectional; still not wired into the Diary "Generate Python from nodes" button (row 79 remains STUB). |
+| 249 | Theming Editor: Save as new (via UserThemeStore) | W2 `notebook_theming_editor.py::save_as_new` | WIRED | V1 row 189 flipped STUB -> WIRED under W2 hardening. Import / Export still STUB (rows 191/192). |
+| 250 | `editor.toggle_panel_tag_painter` action | `tool_router.py` (post-V1 registration `b019bdb`) | WIRED | Fills tag-painter toggle gap. |
+| 251 | 8 animated washi-tape shaders | V7 `ui/theme/washi_tape/library.py` | WIRED | heart_pulse / sparkle_shimmer / rainbow_flow / marching_dots / wave_shift / dashed_scroll / stars_twinkle / music_notes_flow. Budget widened to 1000B for animated variants. |
 
-**Total rows: 233.** Status tally:
+**Total rows: 251.** Status tally:
 
-* **WIRED**: 215
-* **STUB**: 15 (rows 50, 78, 79, 94, 95, 189, 191, 192, 193, 222, 224, 225, 226, 227, 228)
-* **BROKEN**: 3 (rows 80, 223 — the third slot is the diary→softbody import path counted separately at row 80; row 223 is the missing engine hook; row 80 shows up twice because `run_script` and `tick` both do the import — one entry.)
+* **WIRED**: 233 (215 baseline + 18 new WIRED; row 189 also flipped STUB -> WIRED)
+* **STUB**: 15 (rows 50, 78, 79, 94, 95, 191, 192, 193, 222, 224, 225, 226, 227, 228, 243 — row 189 dropped after W2 landing; row 243 added for X4 delete ctx handler)
+* **BROKEN**: 3 (rows 80, 223 code-paths — see previous note; dedupes to 2 real import/attribute defects)
 
 Deduplicated broken count: **2** import/attribute paths.
 
@@ -350,3 +368,22 @@ Five new action ids landed in this tick, moving 5 rows from STUB
 
 Regression tests: `SlapPyEngineTests/tests/test_stub_triage_x3.py`
 (25 tests, all passing).
+
+---
+
+## Y7 delta re-audit (2026-07-04)
+
+Appended rows 234-251 covering V-, W-, X-batch additions committed
+between V1's freeze (`db56df3`) and the Y-batch scrum window (through
+`194a0c9`). See `docs/feature_map_delta_2026_07_04.md` for the full
+delta breakdown, including STUB-to-WIRED flips, feature-drift risks,
+and the roll-up percentages (WIRED 92.8% / STUB 6.0% / BROKEN 1.2%).
+
+New row totals: **251 total, 233 WIRED, 15 STUB, 3 BROKEN**.
+
+Highest-impact remaining STUBs after Y7:
+
+1. Row 80 / 223 — Diary softbody import + Open-picker fallback.
+2. Row 79 — Diary "Generate Python from nodes" (V6 codegen exists;
+   Diary panel button still emits placeholder).
+3. Rows 191 / 192 — Theming editor Import / Export.
