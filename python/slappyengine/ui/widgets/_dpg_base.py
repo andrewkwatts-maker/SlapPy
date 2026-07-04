@@ -32,6 +32,7 @@ class _NotebookWidget:
         self._built: bool = False
         self._parent_tag: str | int | None = None
         self._root_tag: str | None = None
+        self._enabled: bool = True
         # Auto-track theme changes so widgets restyle without manual rebind.
         register_theme_listener(self._on_theme_changed)
 
@@ -48,12 +49,19 @@ class _NotebookWidget:
         new palette into DPG should override :meth:`refresh_theme` and
         check ``self._built`` before issuing DPG calls.
         """
+        # Follow the global registry unless the widget has been pinned to
+        # a specific theme via ``set_theme``.
         self._theme = resolve_theme()
         self.refresh_theme()
 
     def refresh_theme(self) -> None:
-        """Re-apply the active theme.  Subclasses override when needed."""
-        self._theme = resolve_theme()
+        """Re-apply the currently bound theme.
+
+        Subclasses override to re-cache palette slots.  This method must
+        *not* re-resolve the theme — callers (either the global listener
+        or :meth:`set_theme`) update ``self._theme`` before invoking us.
+        """
+        pass
 
     @property
     def theme(self) -> NotebookTheme:
@@ -76,6 +84,77 @@ class _NotebookWidget:
         once the root group has been created.
         """
         raise NotImplementedError
+
+    def mount(self, parent_tag: str | int) -> None:
+        """Alias for :meth:`build` — the newer notebook widgets prefer this name."""
+        self.build(parent_tag)
+
+    # ------------------------------------------------------------------
+    # Enabled state
+    # ------------------------------------------------------------------
+
+    @property
+    def enabled(self) -> bool:
+        """Return whether the widget is currently interactable."""
+        return self._enabled
+
+    def set_enabled(self, enabled: bool) -> None:
+        """Toggle the widget's interactable state.
+
+        The base implementation caches the flag and, when built, tries to
+        push it into DPG via ``dpg.configure_item(root, enabled=...)`` /
+        ``dpg.disable_item`` / ``dpg.enable_item``.  Subclasses override
+        when they need to disable multiple sub-items.
+        """
+        self._enabled = bool(enabled)
+        if not self._built or self._root_tag is None:
+            return
+        dpg = self._safe_dpg()
+        if dpg is None:
+            return
+        try:
+            if self._enabled:
+                enable = getattr(dpg, "enable_item", None)
+                if callable(enable):
+                    enable(self._root_tag)
+                else:
+                    dpg.configure_item(self._root_tag, enabled=True)
+            else:
+                disable = getattr(dpg, "disable_item", None)
+                if callable(disable):
+                    disable(self._root_tag)
+                else:
+                    dpg.configure_item(self._root_tag, enabled=False)
+        except Exception:
+            pass
+
+    # ------------------------------------------------------------------
+    # Theme override
+    # ------------------------------------------------------------------
+
+    def set_theme(self, theme: NotebookTheme | None) -> None:
+        """Rebind this widget against *theme* (or the fallback when ``None``).
+
+        Unlike :func:`set_active_theme`, this only re-styles *this* widget
+        instance — the global registry is untouched.  Widgets whose cached
+        palette entries derive from the fallback / active theme are
+        refreshed via :meth:`refresh_theme`.
+        """
+        from slappyengine.ui.widgets.notebook_theme import (
+            NotebookTheme as _NT,
+            resolve_theme as _resolve,
+        )
+
+        if theme is None:
+            self._theme = _resolve()
+        elif isinstance(theme, _NT):
+            self._theme = theme
+        else:
+            raise TypeError(
+                "set_theme: theme must be NotebookTheme or None; "
+                f"got {type(theme).__name__}"
+            )
+        self.refresh_theme()
 
     def _mark_built(self, parent_tag: str | int, root_tag: str | None) -> None:
         self._parent_tag = parent_tag

@@ -970,8 +970,10 @@ class LayoutBox:
 # ``slappyengine.ui.widgets.notebook_theme.set_active_theme``.
 # ---------------------------------------------------------------------------
 from slappyengine.ui.widgets.doodle_separator import DoodleSeparator
+from slappyengine.ui.widgets.glitter_progress_bar import GlitterProgressBar
 from slappyengine.ui.widgets.heart_checkbox import HeartCheckbox
 from slappyengine.ui.widgets.highlighter_slider import HighlighterSlider
+from slappyengine.ui.widgets.ink_stamp_badge import InkStampBadge
 from slappyengine.ui.widgets.notebook_tab import NotebookTab
 from slappyengine.ui.widgets.notebook_theme import (
     NotebookTheme,
@@ -981,6 +983,9 @@ from slappyengine.ui.widgets.notebook_theme import (
     set_active_theme,
     unregister_theme_listener,
 )
+from slappyengine.ui.widgets.paper_clip_attachment import PaperClipAttachment
+from slappyengine.ui.widgets.ribbon_tab import RibbonTab
+from slappyengine.ui.widgets.sketch_button import SketchButton
 from slappyengine.ui.widgets.sticker_button import StickerButton
 from slappyengine.ui.widgets.sticker_corner import (
     add_sticker_corner,
@@ -988,6 +993,7 @@ from slappyengine.ui.widgets.sticker_corner import (
     remove_sticker_corner,
 )
 from slappyengine.ui.widgets.washi_panel import WashiPanel
+from slappyengine.ui.widgets.washi_tape_divider import WashiTapeDivider
 
 
 __all__ = [
@@ -996,21 +1002,27 @@ __all__ = [
     "Dial",
     "DoodleSeparator",
     "Dropdown",
+    "GlitterProgressBar",
     "HeartCheckbox",
     "HighlighterSlider",
     "ImageWidget",
+    "InkStampBadge",
     "Label",
     "LayoutBox",
     "NotebookTab",
     "NotebookTheme",
     "Panel",
+    "PaperClipAttachment",
     "ProgressBar",
+    "RibbonTab",
     "ScrollView",
+    "SketchButton",
     "Slider",
     "StatBar",
     "StickerButton",
     "Theme",
     "WashiPanel",
+    "WashiTapeDivider",
     "Widget",
     "add_sticker_corner",
     "get_active_theme",
