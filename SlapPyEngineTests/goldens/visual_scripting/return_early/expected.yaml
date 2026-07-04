@@ -1,0 +1,156 @@
+name: return_early
+nodes:
+- id: n_0000
+  node_type: var.get.x
+  kind: io
+  name: var.get.x
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: any
+    default: null
+  params:
+    name: x
+  position:
+  - 0
+  - 0
+  to_python_template: ''
+- id: n_0001
+  node_type: math.constant
+  kind: math
+  name: math.constant
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: int
+    default: 0
+  params:
+    value: 0
+  position:
+  - 200
+  - 0
+  to_python_template: ''
+- id: n_0002
+  node_type: logic.compare
+  kind: logic
+  name: logic.compare
+  inputs:
+  - name: a
+    port_kind: float
+    default: null
+  - name: b
+    port_kind: float
+    default: null
+  outputs:
+  - name: result
+    port_kind: bool
+    default: null
+  params:
+    op: '>'
+  position:
+  - 400
+  - 0
+  to_python_template: ''
+- id: n_0003
+  node_type: control.branch
+  kind: control
+  name: control.branch
+  inputs:
+  - name: cond
+    port_kind: bool
+    default: null
+  outputs:
+  - name: then
+    port_kind: any
+    default: null
+  - name: else
+    port_kind: any
+    default: null
+  params:
+    then_body:
+    - n_0004
+    - n_0005
+    else_body: []
+  position:
+  - 600
+  - 0
+  to_python_template: ''
+- id: n_0004
+  node_type: math.constant
+  kind: math
+  name: math.constant
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: int
+    default: 1
+  params:
+    value: 1
+  position:
+  - 0
+  - 150
+  to_python_template: ''
+- id: n_0005
+  node_type: control.return
+  kind: control
+  name: control.return
+  inputs:
+  - name: value
+    port_kind: any
+    default: null
+  outputs: []
+  params: {}
+  position:
+  - 200
+  - 150
+  to_python_template: ''
+- id: n_0006
+  node_type: math.constant
+  kind: math
+  name: math.constant
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: int
+    default: 0
+  params:
+    value: 0
+  position:
+  - 800
+  - 0
+  to_python_template: ''
+- id: n_0007
+  node_type: control.return
+  kind: control
+  name: control.return
+  inputs:
+  - name: value
+    port_kind: any
+    default: null
+  outputs: []
+  params: {}
+  position:
+  - 1000
+  - 0
+  to_python_template: ''
+edges:
+- from_node_id: n_0000
+  from_port: value
+  to_node_id: n_0002
+  to_port: a
+- from_node_id: n_0001
+  from_port: value
+  to_node_id: n_0002
+  to_port: b
+- from_node_id: n_0002
+  from_port: result
+  to_node_id: n_0003
+  to_port: cond
+- from_node_id: n_0004
+  from_port: value
+  to_node_id: n_0005
+  to_port: value
+- from_node_id: n_0006
+  from_port: value
+  to_node_id: n_0007
+  to_port: value

@@ -1,0 +1,86 @@
+name: for_range
+nodes:
+- id: n_0000
+  node_type: math.constant
+  kind: math
+  name: math.constant
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: int
+    default: 10
+  params:
+    value: 10
+  position:
+  - 0
+  - 0
+  to_python_template: ''
+- id: n_0001
+  node_type: call.range
+  kind: compute
+  name: call.range
+  inputs:
+  - name: arg0
+    port_kind: any
+    default: null
+  outputs:
+  - name: result
+    port_kind: any
+    default: null
+  params:
+    func: range
+  position:
+  - 200
+  - 0
+  to_python_template: ''
+- id: n_0002
+  node_type: control.foreach
+  kind: control
+  name: control.foreach
+  inputs:
+  - name: iterable
+    port_kind: any
+    default: null
+  outputs:
+  - name: item
+    port_kind: any
+    default: null
+  params:
+    var: i
+    body:
+    - n_0003
+  position:
+  - 400
+  - 0
+  to_python_template: ''
+- id: n_0003
+  node_type: io.print
+  kind: io
+  name: io.print
+  inputs:
+  - name: message
+    port_kind: any
+    default: null
+  outputs:
+  - name: done
+    port_kind: any
+    default: null
+  params:
+    argc: 1
+  position:
+  - 0
+  - 150
+  to_python_template: ''
+edges:
+- from_node_id: n_0000
+  from_port: value
+  to_node_id: n_0001
+  to_port: arg0
+- from_node_id: n_0001
+  from_port: result
+  to_node_id: n_0002
+  to_port: iterable
+- from_node_id: n_0002
+  from_port: item
+  to_node_id: n_0003
+  to_port: message

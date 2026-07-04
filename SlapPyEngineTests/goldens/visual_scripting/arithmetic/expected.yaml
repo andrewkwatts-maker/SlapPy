@@ -1,0 +1,148 @@
+name: arithmetic
+nodes:
+- id: n_0000
+  node_type: math.constant
+  kind: math
+  name: math.constant
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: int
+    default: 1
+  params:
+    value: 1
+  position:
+  - 0
+  - 0
+  to_python_template: ''
+- id: n_0001
+  node_type: math.constant
+  kind: math
+  name: math.constant
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: int
+    default: 2
+  params:
+    value: 2
+  position:
+  - 200
+  - 0
+  to_python_template: ''
+- id: n_0002
+  node_type: math.add
+  kind: math
+  name: math.add
+  inputs:
+  - name: a
+    port_kind: float
+    default: null
+  - name: b
+    port_kind: float
+    default: null
+  outputs:
+  - name: sum
+    port_kind: float
+    default: null
+  params: {}
+  position:
+  - 400
+  - 0
+  to_python_template: ''
+- id: n_0003
+  node_type: math.constant
+  kind: math
+  name: math.constant
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: int
+    default: 3
+  params:
+    value: 3
+  position:
+  - 600
+  - 0
+  to_python_template: ''
+- id: n_0004
+  node_type: math.multiply
+  kind: math
+  name: math.multiply
+  inputs:
+  - name: a
+    port_kind: float
+    default: null
+  - name: b
+    port_kind: float
+    default: null
+  outputs:
+  - name: product
+    port_kind: float
+    default: null
+  params: {}
+  position:
+  - 800
+  - 0
+  to_python_template: ''
+- id: n_0005
+  node_type: math.constant
+  kind: math
+  name: math.constant
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: int
+    default: 4
+  params:
+    value: 4
+  position:
+  - 1000
+  - 0
+  to_python_template: ''
+- id: n_0006
+  node_type: math.subtract
+  kind: math
+  name: math.subtract
+  inputs:
+  - name: a
+    port_kind: float
+    default: null
+  - name: b
+    port_kind: float
+    default: null
+  outputs:
+  - name: diff
+    port_kind: float
+    default: null
+  params:
+    __var__: x
+  position:
+  - 1200
+  - 0
+  to_python_template: ''
+edges:
+- from_node_id: n_0000
+  from_port: value
+  to_node_id: n_0002
+  to_port: a
+- from_node_id: n_0001
+  from_port: value
+  to_node_id: n_0002
+  to_port: b
+- from_node_id: n_0002
+  from_port: sum
+  to_node_id: n_0004
+  to_port: a
+- from_node_id: n_0003
+  from_port: value
+  to_node_id: n_0004
+  to_port: b
+- from_node_id: n_0004
+  from_port: product
+  to_node_id: n_0006
+  to_port: a
+- from_node_id: n_0005
+  from_port: value
+  to_node_id: n_0006
+  to_port: b

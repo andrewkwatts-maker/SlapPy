@@ -1,0 +1,126 @@
+name: boolean_logic
+nodes:
+- id: n_0000
+  node_type: var.get.a
+  kind: io
+  name: var.get.a
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: any
+    default: null
+  params:
+    name: a
+  position:
+  - 0
+  - 0
+  to_python_template: ''
+- id: n_0001
+  node_type: var.get.b
+  kind: io
+  name: var.get.b
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: any
+    default: null
+  params:
+    name: b
+  position:
+  - 200
+  - 0
+  to_python_template: ''
+- id: n_0002
+  node_type: var.get.c
+  kind: io
+  name: var.get.c
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: any
+    default: null
+  params:
+    name: c
+  position:
+  - 400
+  - 0
+  to_python_template: ''
+- id: n_0003
+  node_type: logic.not
+  kind: logic
+  name: logic.not
+  inputs:
+  - name: a
+    port_kind: bool
+    default: null
+  outputs:
+  - name: result
+    port_kind: bool
+    default: null
+  params: {}
+  position:
+  - 600
+  - 0
+  to_python_template: ''
+- id: n_0004
+  node_type: logic.or
+  kind: logic
+  name: logic.or
+  inputs:
+  - name: a
+    port_kind: bool
+    default: null
+  - name: b
+    port_kind: bool
+    default: null
+  outputs:
+  - name: result
+    port_kind: bool
+    default: null
+  params: {}
+  position:
+  - 800
+  - 0
+  to_python_template: ''
+- id: n_0005
+  node_type: logic.and
+  kind: logic
+  name: logic.and
+  inputs:
+  - name: a
+    port_kind: bool
+    default: null
+  - name: b
+    port_kind: bool
+    default: null
+  outputs:
+  - name: result
+    port_kind: bool
+    default: null
+  params:
+    __var__: x
+  position:
+  - 1000
+  - 0
+  to_python_template: ''
+edges:
+- from_node_id: n_0002
+  from_port: value
+  to_node_id: n_0003
+  to_port: a
+- from_node_id: n_0001
+  from_port: value
+  to_node_id: n_0004
+  to_port: a
+- from_node_id: n_0003
+  from_port: result
+  to_node_id: n_0004
+  to_port: b
+- from_node_id: n_0000
+  from_port: value
+  to_node_id: n_0005
+  to_port: a
+- from_node_id: n_0004
+  from_port: result
+  to_node_id: n_0005
+  to_port: b

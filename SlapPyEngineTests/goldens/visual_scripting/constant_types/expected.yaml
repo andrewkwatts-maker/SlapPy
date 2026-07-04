@@ -1,0 +1,67 @@
+name: constant_types
+nodes:
+- id: n_0000
+  node_type: math.constant
+  kind: math
+  name: math.constant
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: int
+    default: 1
+  params:
+    value: 1
+    __var__: a
+  position:
+  - 0
+  - 0
+  to_python_template: ''
+- id: n_0001
+  node_type: math.constant
+  kind: math
+  name: math.constant
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: float
+    default: 2.5
+  params:
+    value: 2.5
+    __var__: b
+  position:
+  - 200
+  - 0
+  to_python_template: ''
+- id: n_0002
+  node_type: math.constant
+  kind: math
+  name: math.constant
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: bool
+    default: true
+  params:
+    value: true
+    __var__: c
+  position:
+  - 400
+  - 0
+  to_python_template: ''
+- id: n_0003
+  node_type: math.constant
+  kind: math
+  name: math.constant
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: str
+    default: hello
+  params:
+    value: hello
+    __var__: d
+  position:
+  - 600
+  - 0
+  to_python_template: ''
+edges: []
