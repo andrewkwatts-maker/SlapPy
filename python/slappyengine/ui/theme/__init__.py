@@ -46,6 +46,12 @@ from .shader_effects import (
 )
 from .svg_icon import SVGIcon
 from .dpg_bridge import apply_theme_to_dpg
+from .declarative import (
+    DeclarativeTheme,
+    DeclarativeThemeError,
+    NAMED_COLORS,
+    load_declarative,
+)
 from .theme_spec import (
     Color,
     Font,
@@ -60,6 +66,14 @@ from .theme_spec import (
     ThemeSpec,
     TransitionScale,
     ZIndexScale,
+)
+from .wgsl_backgrounds import (
+    BUILTIN_BACKGROUNDS,
+    WGSLBackgroundTicker,
+    WGSLShaderSpec,
+    compile_wgsl_background,
+    has_wgpu,
+    resolve_background,
 )
 
 from slappyengine._validation import validate_non_empty_str
@@ -132,7 +146,32 @@ def apply_theme(theme_name: str) -> ThemeSpec:
         apply_theme_to_dpg(_ACTIVE)
     except Exception:  # pragma: no cover - defensive: bridge soft-fails
         pass
+    # WGSL background hook: eagerly bake the panel background so the
+    # editor picks up the new texture on the very next frame. The bake
+    # is cached on the ThemeSpec instance so subsequent lookups skip
+    # the compile step. Soft-fails when the shader/wgpu path is missing.
+    try:
+        if _ACTIVE.background_shader is not None:
+            baked = resolve_background(_ACTIVE.background_shader)
+            # Store on the ThemeSpec as a private attribute — kept
+            # underscore-prefixed so YAML round-trips ignore it.
+            _ACTIVE.__dict__["_baked_background"] = baked
+    except Exception:  # pragma: no cover - defensive: bake soft-fails
+        pass
     return _ACTIVE
+
+
+def get_baked_background():
+    """Return the last-baked WGSL/ShaderEffect background as an ndarray.
+
+    Returns ``None`` when no theme is active, when the active theme has
+    no ``background_shader``, or when the last bake failed. The editor
+    calls this on each panel-draw to source the panel-background
+    texture without re-running the shader.
+    """
+    if _ACTIVE is None:
+        return None
+    return _ACTIVE.__dict__.get("_baked_background")
 
 
 def list_registered_themes() -> list[str]:
@@ -148,10 +187,14 @@ def _reset_registry_for_tests() -> None:
 
 
 __all__ = [
+    "BUILTIN_BACKGROUNDS",
     "Color",
+    "DeclarativeTheme",
+    "DeclarativeThemeError",
     "Font",
     "FrameStyle",
     "Gradient",
+    "NAMED_COLORS",
     "NineSlice",
     "Palette",
     "PanelFrameSet",
@@ -162,19 +205,26 @@ __all__ = [
     "SVGIcon",
     "ThemeSpec",
     "TransitionScale",
+    "WGSLBackgroundTicker",
+    "WGSLShaderSpec",
     "ZIndexScale",
     "apply_theme",
     "apply_theme_to_dpg",
+    "compile_wgsl_background",
     "dot_grid",
     "frosted_panel",
     "get_active_theme",
+    "get_baked_background",
     "glass_blur",
+    "has_wgpu",
     "highlighter_stroke",
     "list_registered_themes",
+    "load_declarative",
     "noise_glitter",
     "paper_shadow",
     "parchment",
     "register_theme",
+    "resolve_background",
     "ruled_paper",
     "watercolor_wash",
 ]
