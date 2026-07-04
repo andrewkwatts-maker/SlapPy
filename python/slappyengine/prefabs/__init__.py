@@ -30,9 +30,12 @@ from __future__ import annotations
 
 from .library import PrefabLibrary
 from .prefab import CATEGORIES, Prefab
+from .preview_baker import DIARY_PALETTE, PreviewBaker
 
 __all__ = [
     "CATEGORIES",
+    "DIARY_PALETTE",
     "Prefab",
     "PrefabLibrary",
+    "PreviewBaker",
 ]

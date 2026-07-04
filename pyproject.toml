@@ -73,6 +73,7 @@ features = ["pyo3/extension-module"]
 include = [
     "python/slappyengine/ui/theme/themes/_baked/*.theme.yaml",
     "python/slappyengine/prefabs/baked/*.prefab.yaml",
+    "python/slappyengine/prefabs/baked/previews/*.png",
     "python/slappyengine/post_process/baked_chains/*.chain.yaml",
     "python/slappyengine/ui/hotkeys/baked/*.yaml",
 ]
