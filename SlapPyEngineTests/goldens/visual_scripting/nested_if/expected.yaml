@@ -72,8 +72,6 @@ nodes:
     - n_0005
     - n_0006
     - n_0007
-    - n_0008
-    - n_0009
     else_body:
     - n_0010
   position:

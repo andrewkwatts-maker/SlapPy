@@ -275,6 +275,12 @@ class _Ctx:
         self._depth = 0
         # per-depth counter for horizontal grid slot
         self._slot: dict[int, int] = {}
+        # Stack of "currently collecting" body-id lists for nested walks.
+        # When a nested block (if/for/while) is active, newly-minted node
+        # ids are appended to the innermost list *only* — so an inner
+        # branch's descendants don't leak into the outer branch's
+        # then_body / else_body / body param.
+        self._collecting: list[list[str]] = []
 
     # ------------------------------------------------------------------
     # node minting helpers
@@ -287,6 +293,12 @@ class _Ctx:
         col = self._slot.get(self._depth, 0)
         self._slot[self._depth] = col + 1
         node.position = (col * _GRID_STEP_X, self._depth * _GRID_STEP_Y)
+        # If we're inside a nested block, register this id with the
+        # innermost collecting list so the parent container (branch /
+        # loop) sees it exactly once. Sub-blocks push their own list on
+        # top; their ids do NOT bubble up to the outer list.
+        if self._collecting:
+            self._collecting[-1].append(node.id)
         return node
 
     def _bind_var(self, name: str, node_id: str, port: str) -> None:
@@ -373,30 +385,56 @@ class _Ctx:
         return n.id, out_port
 
     def _mint_compare(self, expr: ast.Compare) -> tuple[str, str]:
-        if len(expr.ops) != 1 or len(expr.comparators) != 1:
+        if len(expr.ops) != len(expr.comparators):
             raise CodegenError(
-                "only single-op comparisons are supported "
-                "(a < b, not a < b < c)",
+                "compare op/comparator length mismatch",
                 lineno=expr.lineno,
             )
-        op_str = _compare_op_str(expr.ops[0])
-        if op_str is None:
-            raise CodegenError(
-                f"unsupported comparison op {type(expr.ops[0]).__name__!r}",
-                lineno=expr.lineno,
+        for op in expr.ops:
+            if _compare_op_str(op) is None:
+                raise CodegenError(
+                    f"unsupported comparison op {type(op).__name__!r}",
+                    lineno=expr.lineno,
+                )
+        # Single comparison — mint the classic 2-input logic.compare so
+        # existing graphs / palette entries keep working.
+        if len(expr.ops) == 1:
+            op_str = _compare_op_str(expr.ops[0])
+            left_id, left_port = self._resolve_or_get(expr.left)
+            right_id, right_port = self._resolve_or_get(expr.comparators[0])
+            n = Node(
+                node_type="logic.compare",
+                kind="logic",
+                inputs=[NodePort("a", "float"), NodePort("b", "float")],
+                outputs=[NodePort("result", "bool")],
+                params={"op": op_str},
             )
-        left_id, left_port = self._resolve_or_get(expr.left)
-        right_id, right_port = self._resolve_or_get(expr.comparators[0])
+            self._add(n)
+            self.graph.add_edge(left_id, left_port, n.id, "a")
+            self.graph.add_edge(right_id, right_port, n.id, "b")
+            return n.id, "result"
+
+        # Chained comparison (``a < b < c``) — mint a single dedicated
+        # ``logic.compare_chain`` node with one input per operand and an
+        # ordered ``ops`` param. The emitter reconstructs the source
+        # form ``a < b < c`` (rather than the semantically-equivalent
+        # but AST-distinct desugar ``a < b and b < c``).
+        operands = [expr.left] + list(expr.comparators)
+        producers: list[tuple[str, str]] = [
+            self._resolve_or_get(operand) for operand in operands
+        ]
+        input_ports = [NodePort(f"a{i}", "float") for i in range(len(operands))]
+        ops = [_compare_op_str(op) for op in expr.ops]
         n = Node(
-            node_type="logic.compare",
+            node_type="logic.compare_chain",
             kind="logic",
-            inputs=[NodePort("a", "float"), NodePort("b", "float")],
+            inputs=input_ports,
             outputs=[NodePort("result", "bool")],
-            params={"op": op_str},
+            params={"ops": ops},
         )
         self._add(n)
-        self.graph.add_edge(left_id, left_port, n.id, "a")
-        self.graph.add_edge(right_id, right_port, n.id, "b")
+        for (src_id, src_port), port in zip(producers, input_ports):
+            self.graph.add_edge(src_id, src_port, n.id, port.name)
         return n.id, "result"
 
     def _mint_boolop(self, expr: ast.BoolOp) -> tuple[str, str]:
@@ -434,7 +472,15 @@ class _Ctx:
             self.graph.add_edge(operand_id, operand_port, n.id, "a")
             return n.id, "result"
         if isinstance(expr.op, ast.USub):
-            # -x -> subtract from a zero constant
+            # ``-<constant>`` folds into a single negated constant so the
+            # round-trip preserves the ``-25`` idiom rather than expanding
+            # it into ``0 - 25``. Non-constant operands still lower to a
+            # subtract-from-zero pair (there is no dedicated negate node
+            # in the palette yet).
+            if isinstance(expr.operand, ast.Constant) and isinstance(
+                expr.operand.value, (int, float)
+            ) and not isinstance(expr.operand.value, bool):
+                return self._mint_constant(-expr.operand.value)
             zero_id, zero_port = self._mint_constant(0)
             operand_id, operand_port = self._resolve_or_get(expr.operand)
             n = Node(
@@ -682,13 +728,22 @@ class _Ctx:
 
     def _walk_nested_block(self, body: list[ast.stmt]) -> list[str]:
         # capture the node ids created while walking this nested block so
-        # the parent (branch / loop) can point at them.
+        # the parent (branch / loop) can point at them. Uses the
+        # ``_collecting`` stack so that when an inner branch / loop opens
+        # its own nested block, those descendants land in the inner
+        # container's list — NOT in this one. This prevents the
+        # then_body double-emit bug where an outer branch's then_body
+        # used to contain the inner branch's children flat as well.
         self._depth += 1
-        start = len(self.order)
-        self.walk_body(body)
-        collected = list(self.order[start:])
-        self._depth -= 1
-        return collected
+        self._collecting.append([])
+        try:
+            self.walk_body(body)
+            collected = self._collecting[-1]
+        finally:
+            self._collecting.pop()
+            self._depth -= 1
+        # Direct children only — sub-blocks did not push into our list.
+        return list(collected)
 
     # ------------------------------------------------------------------
     # layout finaliser
@@ -781,6 +836,23 @@ def _emit_from_ast_graph(
     Walks ``graph.nodes`` in insertion order (which matches the AST
     walker's own order), emitting each construct into a flat function
     body. Nested branch/loop bodies are looked up via ``node.params``.
+
+    Precedence
+    ----------
+    ``expr_for`` accepts an optional ``parent_prec`` argument. When a
+    sub-expression's operator precedence is *lower* than its consumer's,
+    it wraps itself in parentheses so ``(1 + 2) * 3`` survives the
+    round-trip instead of collapsing into ``1 + 2 * 3``.
+
+    Variable reuse
+    --------------
+    Whenever a node's assignment statement is emitted (``x = <expr>``)
+    the (node_id, out_port) is registered in ``emitted_names``. Any
+    subsequent ``expr_for`` call that hits the same (node_id, out_port)
+    returns the bound name ``x`` instead of re-inlining the RHS. This
+    fixes the ``y = 5 + 1; z = 5 + 5 + 1`` regression from
+    ``assignment_reuse`` and the constant-inlined-into-while-condition
+    regression from ``while_countdown``.
     """
     # index for lookup
     by_id = {n.id: n for n in graph.nodes}
@@ -801,72 +873,148 @@ def _emit_from_ast_graph(
 
     lines: list[str] = [f"def {function_name}():"]
 
-    def expr_for(node_id: str, port: str) -> str:
+    # (node_id, port) -> bound name; populated as ``x = <expr>`` lines
+    # are emitted so downstream reads can reuse the name.
+    emitted_names: dict[tuple[str, str], str] = {}
+
+    def expr_for(node_id: str, port: str, parent_prec: int = 0) -> str:
+        # If the producer has already been emitted as a named assignment
+        # anywhere upstream, reuse the name — otherwise every consumer
+        # would re-inline the RHS (bug 4 and 6).
+        bound = emitted_names.get((node_id, port))
+        if bound is not None:
+            return bound
+
         n = by_id[node_id]
         nt = n.node_type
+        my_prec = _op_precedence(nt)
         if nt == "math.constant":
-            return _py_literal(n.params.get("value"))
-        if nt.startswith("var.get."):
-            return str(n.params.get("name", nt.split(".", 2)[-1]))
-        if nt == "math.add":
-            a = _in_expr(n, "a"); b = _in_expr(n, "b")
-            return f"{a} + {b}"
-        if nt == "math.subtract":
-            a = _in_expr(n, "a"); b = _in_expr(n, "b")
-            return f"{a} - {b}"
-        if nt == "math.multiply":
-            a = _in_expr(n, "a"); b = _in_expr(n, "b")
-            return f"{a} * {b}"
-        if nt == "math.divide":
-            a = _in_expr(n, "a"); b = _in_expr(n, "b")
-            return f"{a} / {b}"
-        if nt == "math.power":
-            a = _in_expr(n, "a"); b = _in_expr(n, "b")
-            return f"{a} ** {b}"
-        if nt == "math.mod":
-            a = _in_expr(n, "a"); b = _in_expr(n, "b")
-            return f"{a} % {b}"
-        if nt == "math.floordiv":
-            a = _in_expr(n, "a"); b = _in_expr(n, "b")
-            return f"{a} // {b}"
-        if nt == "logic.compare":
-            a = _in_expr(n, "a"); b = _in_expr(n, "b")
+            expr = _py_literal(n.params.get("value"))
+        elif nt.startswith("var.get."):
+            expr = str(n.params.get("name", nt.split(".", 2)[-1]))
+        elif nt == "control.foreach":
+            # The foreach node's ``item`` output is the loop variable.
+            # Emission here means a downstream statement (e.g. ``print(i)``)
+            # is reading the loop var; return the bound name.
+            expr = str(n.params.get("var", "i"))
+        elif nt == "math.add":
+            a = expr_for(*_src(n, "a"), my_prec)
+            b = expr_for(*_src(n, "b"), my_prec)
+            expr = f"{a} + {b}"
+        elif nt == "math.subtract":
+            a = expr_for(*_src(n, "a"), my_prec)
+            # Subtraction is left-associative; the RHS needs a higher
+            # effective precedence to force parens around ``a - (b - c)``
+            # (which is semantically different from ``a - b - c``).
+            b = expr_for(*_src(n, "b"), my_prec + 1)
+            expr = f"{a} - {b}"
+        elif nt == "math.multiply":
+            a = expr_for(*_src(n, "a"), my_prec)
+            b = expr_for(*_src(n, "b"), my_prec)
+            expr = f"{a} * {b}"
+        elif nt == "math.divide":
+            a = expr_for(*_src(n, "a"), my_prec)
+            b = expr_for(*_src(n, "b"), my_prec + 1)
+            expr = f"{a} / {b}"
+        elif nt == "math.power":
+            # Power is right-associative in Python; ``a ** b ** c`` reads
+            # as ``a ** (b ** c)``. Force parens on the LHS instead.
+            a = expr_for(*_src(n, "a"), my_prec + 1)
+            b = expr_for(*_src(n, "b"), my_prec)
+            expr = f"{a} ** {b}"
+        elif nt == "math.mod":
+            a = expr_for(*_src(n, "a"), my_prec)
+            b = expr_for(*_src(n, "b"), my_prec + 1)
+            expr = f"{a} % {b}"
+        elif nt == "math.floordiv":
+            a = expr_for(*_src(n, "a"), my_prec)
+            b = expr_for(*_src(n, "b"), my_prec + 1)
+            expr = f"{a} // {b}"
+        elif nt == "logic.compare":
+            a = expr_for(*_src(n, "a"), my_prec + 1)
+            b = expr_for(*_src(n, "b"), my_prec + 1)
             op = n.params.get("op", "==")
-            return f"{a} {op} {b}"
-        if nt == "logic.and":
-            a = _in_expr(n, "a"); b = _in_expr(n, "b")
-            return f"{a} and {b}"
-        if nt == "logic.or":
-            a = _in_expr(n, "a"); b = _in_expr(n, "b")
-            return f"{a} or {b}"
-        if nt == "logic.not":
-            a = _in_expr(n, "a")
-            return f"not {a}"
-        if nt == "io.print":
-            msg = _in_expr(n, "message")
-            return f"print({msg})"
-        if nt.startswith("call."):
+            expr = f"{a} {op} {b}"
+        elif nt == "logic.compare_chain":
+            # Reconstruct a chained comparison ``a op0 b op1 c ...``.
+            ops = n.params.get("ops", []) or []
+            operands = [
+                expr_for(*_src(n, p.name), my_prec + 1) for p in n.inputs
+            ]
+            parts = [operands[0]]
+            for i, op in enumerate(ops):
+                parts.append(op)
+                parts.append(operands[i + 1])
+            expr = " ".join(parts)
+        elif nt == "logic.and":
+            a = expr_for(*_src(n, "a"), my_prec)
+            b = expr_for(*_src(n, "b"), my_prec)
+            expr = f"{a} and {b}"
+        elif nt == "logic.or":
+            a = expr_for(*_src(n, "a"), my_prec)
+            b = expr_for(*_src(n, "b"), my_prec)
+            expr = f"{a} or {b}"
+        elif nt == "logic.not":
+            a = expr_for(*_src(n, "a"), my_prec)
+            expr = f"not {a}"
+        elif nt == "io.print":
+            msg = expr_for(*_src(n, "message"), 0)
+            expr = f"print({msg})"
+        elif nt.startswith("call."):
             fname = n.params.get("func", nt.split(".", 1)[-1])
-            args = [_in_expr(n, p.name) for p in n.inputs]
+            args = [expr_for(*_src(n, p.name), 0) for p in n.inputs]
+            # Filter walker-internal sentinels (``__var__`` records the
+            # assignment target for name reuse; ``func`` is the callable)
+            # so they don't leak into the emitted kwargs.
             kw_parts = [
                 f"{k}={_py_literal(v)}"
                 for k, v in n.params.items()
-                if k != "func"
+                if k not in ("func", "__var__")
             ]
-            return f"{fname}({', '.join(args + kw_parts)})"
-        # fallback
-        return f"# unrecognised node {nt}"
+            expr = f"{fname}({', '.join(args + kw_parts)})"
+        else:
+            # fallback
+            expr = f"# unrecognised node {nt}"
 
-    def _in_expr(n: Node, port: str) -> str:
+        if my_prec < parent_prec:
+            expr = f"({expr})"
+        return expr
+
+    def _src(n: Node, port: str) -> tuple[str, str]:
+        """Return the ``(node_id, out_port)`` driving ``n.<port>``.
+
+        If nothing is wired, mint a synthetic ``__default__:<value>``
+        producer id so :func:`expr_for` can materialise the default via
+        a ``__default__`` prefix — but in practice the AST-driven graphs
+        never leave inputs dangling, so this returns ``("__default__",
+        port)`` and the caller falls through to a literal-default path.
+        """
         src = incoming.get((n.id, port))
-        if src is None:
-            # no wire — use the input port's default
-            try:
-                default = n.get_input(port).default
-            except KeyError:
-                return "None"
-            return _py_literal(default)
-        return expr_for(src[0], src[1])
+        if src is not None:
+            return src
+        # Encode the default lookup with a sentinel prefix so expr_for
+        # can produce the literal without needing the node id.
+        try:
+            default = n.get_input(port).default
+        except KeyError:
+            default = None
+        # Reuse the constants-table by storing the literal directly under
+        # a synthetic key; we shortcut via a lambda so we don't have to
+        # mint a real Node.
+        key = f"__default_{id(n)}_{port}"
+        _defaults[key] = default
+        return (key, "__default__")
+
+    # Overload expr_for to understand the synthetic default sentinel.
+    _defaults: dict[str, Any] = {}
+    _real_expr_for = expr_for
+
+    def expr_for_wrapped(node_id: str, port: str, parent_prec: int = 0) -> str:
+        if port == "__default__":
+            return _py_literal(_defaults.get(node_id))
+        return _real_expr_for(node_id, port, parent_prec)
+
+    expr_for = expr_for_wrapped  # type: ignore[assignment]
 
     def emit_stmt(node_id: str, prefix: str) -> None:
         n = by_id[node_id]
@@ -875,11 +1023,11 @@ def _emit_from_ast_graph(
             lines.append(prefix + expr_for(node_id, "done"))
             return
         if nt == "control.return":
-            val = _in_expr(n, "value")
+            val = expr_for(*_src(n, "value"), 0)
             lines.append(prefix + f"return {val}")
             return
         if nt == "control.branch":
-            cond = _in_expr(n, "cond")
+            cond = expr_for(*_src(n, "cond"), 0)
             lines.append(prefix + f"if {cond}:")
             then_body = n.params.get("then_body", []) or []
             if not then_body:
@@ -893,8 +1041,12 @@ def _emit_from_ast_graph(
                     emit_stmt(cid, prefix + indent)
             return
         if nt == "control.foreach":
-            iterable = _in_expr(n, "iterable")
+            iterable = expr_for(*_src(n, "iterable"), 0)
             var = n.params.get("var", "i")
+            # Register the ``item`` output as bound to the loop var name
+            # BEFORE emitting the body so any consumer (``print(i)``)
+            # can look it up.
+            emitted_names[(n.id, "item")] = var
             lines.append(prefix + f"for {var} in {iterable}:")
             body = n.params.get("body", []) or []
             if not body:
@@ -903,7 +1055,7 @@ def _emit_from_ast_graph(
                 emit_stmt(cid, prefix + indent)
             return
         if nt == "control.while":
-            cond = _in_expr(n, "cond")
+            cond = expr_for(*_src(n, "cond"), 0)
             lines.append(prefix + f"while {cond}:")
             body = n.params.get("body", []) or []
             if not body:
@@ -919,27 +1071,27 @@ def _emit_from_ast_graph(
             return
         if nt.startswith("call.") and not _has_assignment_consumer(
             graph, n.id, "result"
-        ):
-            # bare-expression call statement
+        ) and "__var__" not in n.params:
+            # bare-expression call statement (result not consumed and not
+            # assigned to a variable).
             lines.append(prefix + expr_for(node_id, "result"))
             return
         # generic assignment: bind each output to a fresh local
         for p in n.outputs:
-            expr = expr_for(node_id, p.name)
-            # find the variable name (if any) the walker recorded for
-            # this node/output
             var_name = _find_var_name_for(graph, n.id, p.name)
             if var_name is None:
-                # only emit the value if it has downstream consumers or
-                # side effects; skip pure-value producers whose result is
-                # already inlined into their consumer.
+                # only emit the value if it has no downstream consumers;
+                # otherwise the consumer inlines the expression itself.
                 if _has_consumer(graph, n.id, p.name):
                     return
-                # else emit a bare expression statement so the source is
-                # non-empty and structurally faithful.
+                expr = expr_for(node_id, p.name, 0)
                 lines.append(prefix + expr)
                 return
+            expr = expr_for(node_id, p.name, 0)
             lines.append(prefix + f"{var_name} = {expr}")
+            # Record so subsequent expr_for() calls emit the name rather
+            # than re-inlining the RHS.
+            emitted_names[(n.id, p.name)] = var_name
 
     # walk in insertion order, skipping nested-body ids
     _pre_pass_bind_vars(graph)
@@ -957,6 +1109,46 @@ def _emit_from_ast_graph(
         lines = _splice_formatting(lines, src_lines, indent)
 
     return "\n".join(lines) + "\n"
+
+
+# ---------------------------------------------------------------------------
+# operator precedence helper (used by _emit_from_ast_graph)
+# ---------------------------------------------------------------------------
+
+
+# Higher numbers bind tighter. Values match Python's grammar precedence
+# ordering closely enough for the emitter's parenthesisation choices;
+# ``0`` is reserved for "statement context" (no wrapping ever needed).
+_PRECEDENCE: dict[str, int] = {
+    "logic.or":       1,
+    "logic.and":      2,
+    "logic.not":      3,
+    "logic.compare":  4,
+    "logic.compare_chain": 4,
+    "math.add":       5,
+    "math.subtract":  5,
+    "math.multiply":  6,
+    "math.divide":    6,
+    "math.mod":       6,
+    "math.floordiv":  6,
+    "math.power":     7,
+    # atoms — never need wrapping
+    "math.constant":  99,
+    "io.print":       99,
+}
+
+
+def _op_precedence(node_type: str) -> int:
+    if node_type in _PRECEDENCE:
+        return _PRECEDENCE[node_type]
+    if node_type.startswith("var.get."):
+        return 99
+    if node_type.startswith("call."):
+        return 99
+    if node_type == "control.foreach":
+        return 99
+    # Unknown / control-flow nodes never appear as expressions.
+    return 0
 
 
 # The AST walker records the *last* variable name that a given

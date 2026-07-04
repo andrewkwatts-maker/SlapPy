@@ -1,1 +1,87 @@
-# python_to_graph raised CodegenError: only single-op comparisons are supported (a < b, not a < b < c) (line 1)
+name: comparison_chain
+nodes:
+- id: n_0000
+  node_type: var.get.a
+  kind: io
+  name: var.get.a
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: any
+    default: null
+  params:
+    name: a
+  position:
+  - 0
+  - 0
+  to_python_template: ''
+- id: n_0001
+  node_type: var.get.b
+  kind: io
+  name: var.get.b
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: any
+    default: null
+  params:
+    name: b
+  position:
+  - 200
+  - 0
+  to_python_template: ''
+- id: n_0002
+  node_type: var.get.c
+  kind: io
+  name: var.get.c
+  inputs: []
+  outputs:
+  - name: value
+    port_kind: any
+    default: null
+  params:
+    name: c
+  position:
+  - 400
+  - 0
+  to_python_template: ''
+- id: n_0003
+  node_type: logic.compare_chain
+  kind: logic
+  name: logic.compare_chain
+  inputs:
+  - name: a0
+    port_kind: float
+    default: null
+  - name: a1
+    port_kind: float
+    default: null
+  - name: a2
+    port_kind: float
+    default: null
+  outputs:
+  - name: result
+    port_kind: bool
+    default: null
+  params:
+    ops:
+    - <
+    - <
+    __var__: x
+  position:
+  - 600
+  - 0
+  to_python_template: ''
+edges:
+- from_node_id: n_0000
+  from_port: value
+  to_node_id: n_0003
+  to_port: a0
+- from_node_id: n_0001
+  from_port: value
+  to_node_id: n_0003
+  to_port: a1
+- from_node_id: n_0002
+  from_port: value
+  to_node_id: n_0003
+  to_port: a2

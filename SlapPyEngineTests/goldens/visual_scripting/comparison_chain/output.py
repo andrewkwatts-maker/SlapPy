@@ -1,1 +1,2 @@
-# no output — comparison_chain does not import cleanly
+def run():
+    x = a < b < c

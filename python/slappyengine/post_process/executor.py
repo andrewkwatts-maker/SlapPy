@@ -2,11 +2,17 @@
 import struct
 import wgpu
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
+
+from slappyengine.compute._validation import (
+    validate_bind_group_entries,
+    validate_workgroup_count,
+)
 
 if TYPE_CHECKING:
     from slappyengine.gpu.context import GPUContext
     from slappyengine.post_process.chain import PostProcessChain, PostProcessPass
+    from slappyengine.post_process.chain_manifest import ChainManifest
 
 _SHADER_DIR = Path(__file__).parent.parent.parent.parent / "shaders"
 
@@ -43,6 +49,100 @@ class PostProcessExecutor:
         self._pong: wgpu.GPUTexture | None = None
         self._width: int = 0
         self._height: int = 0
+        # Optional attached manifest — populated by :meth:`from_manifest` and
+        # inspected by tests to prove the round-trip landed.  ``None`` for
+        # executors built the legacy way (``PostProcessExecutor(ctx)``).
+        self._manifest: "ChainManifest | None" = None
+
+    # --- Manifest bootstrap ------------------------------------------------
+
+    @classmethod
+    def from_manifest(
+        cls,
+        manifest: "ChainManifest",
+        ctx: "GPUContext | None" = None,
+    ) -> "PostProcessExecutor":
+        """Build an executor that carries a :class:`ChainManifest` on its side.
+
+        The manifest itself is *not* auto-translated into
+        :class:`PostProcessChain` — the WGSL layer keeps its explicit
+        chain builders (they expose per-pass GPU wiring the manifest
+        deliberately abstracts away).  The executor merely stashes the
+        manifest so downstream tooling (editor introspection, the CPU
+        dispatcher in :func:`apply_manifest`) can round-trip through it.
+
+        Parameters
+        ----------
+        manifest
+            The :class:`ChainManifest` to attach.  Validated eagerly so
+            an ill-formed manifest fails at construction time rather
+            than at first-frame dispatch.
+        ctx
+            Optional GPU context.  Left ``None`` for headless / CPU-only
+            harness use — the resulting executor cannot ``execute()`` on
+            the GPU but can still hand its :attr:`manifest` back for
+            tests and offline preview tools.
+        """
+        # Local import to avoid the wgpu-free unit tests paying the
+        # slappyengine.gpu import cost.
+        from slappyengine.post_process.chain_manifest import (
+            ChainManifest,
+            ChainManifestError,
+        )
+
+        if not isinstance(manifest, ChainManifest):
+            raise ChainManifestError(
+                f"PostProcessExecutor.from_manifest expects a ChainManifest; "
+                f"got {type(manifest).__name__}"
+            )
+        manifest.validate()
+        # ``ctx=None`` produces a headless shell — useful for the CPU
+        # dispatcher tests.  ``__init__`` never dereferences ``ctx`` so
+        # this is safe as long as callers stay off ``execute()``.
+        exe = cls.__new__(cls)
+        exe._ctx = ctx  # may legitimately be None in headless use
+        exe._pipeline_cache = {}
+        exe._ping = None
+        exe._pong = None
+        exe._width = 0
+        exe._height = 0
+        exe._manifest = manifest
+        return exe
+
+    @property
+    def manifest(self) -> "ChainManifest | None":
+        """Return the :class:`ChainManifest` attached via :meth:`from_manifest`.
+
+        ``None`` when the executor was built the legacy way.  Read-only —
+        callers wanting to swap the manifest should build a fresh executor.
+        """
+        return self._manifest
+
+    @staticmethod
+    def validate_bind_entries(entries: Any) -> list[dict]:
+        """Validate bind-group entries before passing to ``create_bind_group``.
+
+        Refuses duplicate binding indices (wgpu silently keeps the LAST
+        entry on some backends — a silent-acceptance bug) and any non-
+        well-formed entry shape.
+        """
+        return validate_bind_group_entries(
+            "entries", "PostProcessExecutor.execute", entries,
+        )
+
+    @staticmethod
+    def validate_dispatch_size(wg_x: Any, wg_y: Any = 1, wg_z: Any = 1) -> tuple[int, int, int]:
+        """Validate a ``(wg_x, wg_y, wg_z)`` dispatch triple.
+
+        Mirrors :meth:`ComputePipeline.validate_workgroups` for the
+        post-process path — useful for tests + future direct callers.
+        """
+        fn = "PostProcessExecutor.execute"
+        return (
+            validate_workgroup_count("wg_x", fn, wg_x),
+            validate_workgroup_count("wg_y", fn, wg_y),
+            validate_workgroup_count("wg_z", fn, wg_z),
+        )
 
     def _ensure_buffers(self, width: int, height: int) -> None:
         if self._ping is not None and self._width == width and self._height == height:
@@ -222,13 +322,14 @@ class PostProcessExecutor:
                 usage=wgpu.TextureUsage.STORAGE_BINDING,
             )
 
+            entries = self.validate_bind_entries([
+                {"binding": 0, "resource": in_view},
+                {"binding": 1, "resource": out_view},
+                {"binding": 2, "resource": {"buffer": params_buf}},
+            ])
             bg = device.create_bind_group(
                 layout=pipeline.get_bind_group_layout(0),
-                entries=[
-                    {"binding": 0, "resource": in_view},
-                    {"binding": 1, "resource": out_view},
-                    {"binding": 2, "resource": {"buffer": params_buf}},
-                ],
+                entries=entries,
             )
 
             enc = device.create_command_encoder(label=f"pp_{pass_.label}")

@@ -8,49 +8,14 @@ nodes:
   outputs:
   - name: value
     port_kind: int
-    default: 0
+    default: -25
   params:
-    value: 0
+    value: -25
   position:
   - 0
   - 0
   to_python_template: ''
 - id: n_0001
-  node_type: math.constant
-  kind: math
-  name: math.constant
-  inputs: []
-  outputs:
-  - name: value
-    port_kind: int
-    default: 25
-  params:
-    value: 25
-  position:
-  - 200
-  - 0
-  to_python_template: ''
-- id: n_0002
-  node_type: math.subtract
-  kind: math
-  name: math.subtract
-  inputs:
-  - name: a
-    port_kind: float
-    default: null
-  - name: b
-    port_kind: float
-    default: null
-  outputs:
-  - name: diff
-    port_kind: float
-    default: null
-  params: {}
-  position:
-  - 400
-  - 0
-  to_python_template: ''
-- id: n_0003
   node_type: call.abs
   kind: compute
   name: call.abs
@@ -65,10 +30,10 @@ nodes:
   params:
     func: abs
   position:
-  - 600
+  - 200
   - 0
   to_python_template: ''
-- id: n_0004
+- id: n_0002
   node_type: call.sqrt
   kind: compute
   name: call.sqrt
@@ -83,10 +48,10 @@ nodes:
   params:
     func: sqrt
   position:
-  - 800
+  - 400
   - 0
   to_python_template: ''
-- id: n_0005
+- id: n_0003
   node_type: call.round
   kind: compute
   name: call.round
@@ -102,27 +67,19 @@ nodes:
     func: round
     __var__: x
   position:
-  - 1000
+  - 600
   - 0
   to_python_template: ''
 edges:
 - from_node_id: n_0000
   from_port: value
-  to_node_id: n_0002
-  to_port: a
+  to_node_id: n_0001
+  to_port: arg0
 - from_node_id: n_0001
-  from_port: value
+  from_port: result
   to_node_id: n_0002
-  to_port: b
+  to_port: arg0
 - from_node_id: n_0002
-  from_port: diff
+  from_port: result
   to_node_id: n_0003
-  to_port: arg0
-- from_node_id: n_0003
-  from_port: result
-  to_node_id: n_0004
-  to_port: arg0
-- from_node_id: n_0004
-  from_port: result
-  to_node_id: n_0005
   to_port: arg0

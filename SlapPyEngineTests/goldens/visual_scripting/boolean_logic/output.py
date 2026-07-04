@@ -1,2 +1,2 @@
 def run():
-    x = a and b or not c
+    x = a and (b or not c)

@@ -1,28 +1,35 @@
 """Post-process subpackage — lazy-loaded to avoid eager wgpu imports."""
 from __future__ import annotations
 
-from ._protocol import PostProcessPassProtocol
-
 __all__ = [
+    "ChainManifest",
+    "ChainManifestError",
     "ContactShadowsPass",
+    "DEFAULT_CHAIN",
     "GTAOPass",
+    "PassSpec",
     "PostProcessChain",
     "PostProcessExecutor",
     "PostProcessParams",
     "PostProcessPass",
     "PostProcessPassBase",
-    "PostProcessPassProtocol",
     "ShadowCSM",
     "TAAPass",
     "VolumetricFog",
+    "apply_manifest",
     "arcade_chain",
     "cinematic_chain",
     "iso_strategy_chain",
+    "register_pass_handler",
 ]
 
 _LAZY_MAP: dict[str, str] = {
+    "ChainManifest":       ".chain_manifest",
+    "ChainManifestError":  ".chain_manifest",
     "ContactShadowsPass":  ".contact_shadows",
+    "DEFAULT_CHAIN":       ".chain_manifest",
     "GTAOPass":            ".gtao",
+    "PassSpec":            ".chain_manifest",
     "PostProcessChain":    ".chain",
     "PostProcessExecutor": ".executor",
     "PostProcessParams":   "._pass_base",
@@ -31,9 +38,11 @@ _LAZY_MAP: dict[str, str] = {
     "ShadowCSM":           ".shadow_csm",
     "TAAPass":             ".taa",
     "VolumetricFog":       ".volumetric_fog",
+    "apply_manifest":      ".chain_manifest",
     "arcade_chain":        ".preset_chains",
     "cinematic_chain":     ".preset_chains",
     "iso_strategy_chain":  ".preset_chains",
+    "register_pass_handler": ".chain_manifest",
 }
 
 

@@ -79,73 +79,22 @@ CASES: list[str] = [
 
 
 # --- test_source_to_graph_yaml_matches_golden ------------------------------
-# Only comparison_chain is xfail here — its source raises CodegenError so
-# python_to_graph never returns a graph. Every other case successfully
-# imports; the YAML is stable through canonical_graph_yaml.
-_XFAIL_YAML: dict[str, str] = {
-    "comparison_chain": (
-        "TODO: python_to_graph refuses chained comparisons (a < b < c). "
-        "Codegen should either flatten them to left-associated pairs "
-        "with logic.and, or emit a single logic.compare with an ordered "
-        "op list."
-    ),
-}
+# All ten cases now import cleanly — chained comparisons desugar into a
+# ``logic.compare_chain`` node with ordered ops so the YAML is stable.
+_XFAIL_YAML: dict[str, str] = {}
 
 
 # --- test_graph_to_python_matches_golden -----------------------------------
-# Emission is compared verbatim against output.py — comparison_chain has
-# no valid emission (there is no graph), so it xfails here too.
-_XFAIL_EMIT: dict[str, str] = {
-    "comparison_chain": (
-        "TODO: no graph to emit — python_to_graph refuses the source."
-    ),
-}
+# Emission is compared verbatim against output.py — every case has a
+# real graph and a stable emission.
+_XFAIL_EMIT: dict[str, str] = {}
 
 
 # --- test_round_trip_lossless ---------------------------------------------
 # Round-trip AST equality is the strictest of the three. All eight of
-# the below cases have real codegen bugs that need fixing before they
-# can pass:
-_XFAIL_ROUND_TRIP: dict[str, str] = {
-    "arithmetic": (
-        "TODO: graph_to_python drops parentheses around binop subtrees. "
-        "'(1 + 2) * 3 - 4' emits as '1 + 2 * 3 - 4' — precedence lost."
-    ),
-    "nested_if": (
-        "TODO: control.branch emits its then_body twice — once nested "
-        "inside the inner if/else, once flat after the inner branch. "
-        "Fix: _emit_from_ast_graph.emit_stmt should skip child ids that "
-        "already appear in a nested-body param."
-    ),
-    "for_range": (
-        "TODO: graph_to_python emits '# unrecognised node control.foreach' "
-        "inside print(...) because expr_for has no case for control.foreach's "
-        "'item' output port. Fix: return the loop variable name."
-    ),
-    "while_countdown": (
-        "TODO: constant 'n = 10' gets inlined into the loop condition and "
-        "body ('while 10 > 0: n = 10 - 1'). __var__ binding on the constant "
-        "should force a real assignment even when it has downstream "
-        "consumers."
-    ),
-    "function_call_chain": (
-        "TODO: __var__ param leaks into call kwargs — 'x = round(...)' "
-        "emits as 'round(..., __var__=\\'x\\')'. Fix: strip '__var__' in "
-        "the kwarg-building loop of expr_for's call branch."
-    ),
-    "assignment_reuse": (
-        "TODO: 'y = x + 1; z = x + y' — later reads inline the producer's "
-        "expression instead of the variable name. Fix: expr_for should "
-        "check for __var__ on the producer and emit the name."
-    ),
-    "boolean_logic": (
-        "TODO: graph_to_python drops parentheses around boolop subtrees. "
-        "'a and (b or not c)' emits as 'a and b or not c'."
-    ),
-    "comparison_chain": (
-        "TODO: python_to_graph raises CodegenError on chained comparisons."
-    ),
-}
+# the previously-known codegen bugs are fixed as of the visual-scripting
+# codegen sweep — no cases remain xfail here.
+_XFAIL_ROUND_TRIP: dict[str, str] = {}
 
 
 def _yaml_params() -> list:
