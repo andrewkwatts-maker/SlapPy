@@ -1,0 +1,34 @@
+# SlapPyEngine — baked default hotkey preset.
+#
+# Mirrors NotebookHotkeys.BINDINGS as of 2026-07-05. Copied verbatim into
+# ~/.slappyengine/ui/hotkeys/default.yaml on first launch by
+# slappyengine.ui.hotkey_remap.bake_defaults(). Users may edit that copy
+# freely — the baked version stays read-only.
+ctrl+s: editor.save
+ctrl+z: editor.undo
+ctrl+y: editor.redo
+ctrl+n: editor.new
+ctrl+o: editor.open
+f1: editor.help
+f3: editor.profiler_toggle
+f5: editor.run
+f11: editor.toggle_fullscreen
+s: editor.tool_select
+t: editor.tool_move
+r: editor.tool_rotate
+c: editor.tool_scale
+h: editor.toggle_hud
+ctrl+shift+f: editor.easter_feed_fox
+ctrl+shift+b: editor.easter_baby_porcupine_roll
+ctrl+1: editor.layout_preset_default
+ctrl+2: editor.layout_preset_wide_code
+ctrl+3: editor.layout_preset_focus
+ctrl+4: editor.layout_preset_triple_pane
+ctrl+5: editor.layout_preset_compact
+ctrl+0: editor.reset_layout
+ctrl+t: editor.toggle_theme_switcher
+ctrl+shift+t: editor.cycle_theme
+"ctrl+\\": editor.toggle_panel_outliner
+"ctrl+shift+\\": editor.toggle_panel_inspector
+ctrl+/: editor.toggle_panel_content_browser
+ctrl+shift+/: editor.toggle_panel_code

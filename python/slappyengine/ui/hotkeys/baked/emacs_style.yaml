@@ -1,0 +1,66 @@
+# SlapPyEngine — emacs-style hotkey preset.
+#
+# Chord-based overrides layered on top of the default map:
+#   C-x C-s     save,
+#   C-x C-f     open,
+#   C-x C-c     switch project,
+#   M-x         help / command palette entry,
+#   C-w / M-w   cut / copy selection,
+#   C-y         paste,
+#   C-/  C-?    undo / redo.
+#
+# The multi-chord combos parse via HotkeyMap.from_yaml and dispatch to
+# the same ToolRouter action_ids the default preset uses.
+bindings:
+  - combo: ctrl+x ctrl+s
+    action_id: editor.save
+    enabled: true
+    source: emacs_style
+  - combo: ctrl+x ctrl+f
+    action_id: editor.open
+    enabled: true
+    source: emacs_style
+  - combo: ctrl+x ctrl+c
+    action_id: editor.switch_project
+    enabled: true
+    source: emacs_style
+  - combo: ctrl+x ctrl+n
+    action_id: editor.new
+    enabled: true
+    source: emacs_style
+  - combo: alt+x
+    action_id: editor.help
+    enabled: true
+    source: emacs_style
+  - combo: ctrl+w
+    action_id: edit.cut_selection
+    enabled: true
+    source: emacs_style
+  - combo: alt+w
+    action_id: editor.copy_selection
+    enabled: true
+    source: emacs_style
+  - combo: ctrl+y
+    action_id: editor.paste_selection
+    enabled: true
+    source: emacs_style
+  - combo: ctrl+/
+    action_id: editor.undo
+    enabled: true
+    source: emacs_style
+  - combo: ctrl+shift+/
+    action_id: editor.redo
+    enabled: true
+    source: emacs_style
+  - combo: ctrl+x u
+    action_id: editor.undo
+    enabled: true
+    source: emacs_style
+  - combo: ctrl+g
+    action_id: tool.deselect_all
+    enabled: true
+    source: emacs_style
+  - combo: ctrl+space
+    action_id: editor.play
+    enabled: true
+    source: emacs_style
