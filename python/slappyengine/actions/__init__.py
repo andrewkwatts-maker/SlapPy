@@ -38,6 +38,17 @@ from .selection_actions import (
     paste_selection as paste_selection,
 )
 from .theme_actions import cycle_theme as cycle_theme
+from .tool_settings_actions import (
+    toggle_snap_to_grid as toggle_snap_to_grid,
+)
+from .camera_actions import (
+    zoom_in as zoom_in,
+    zoom_out as zoom_out,
+    zoom_reset as zoom_reset,
+)
+from .theme_io_actions import (
+    export_current_theme as export_current_theme,
+)
 
 
 __all__ = [
@@ -51,4 +62,9 @@ __all__ = [
     "copy_selection",
     "paste_selection",
     "cycle_theme",
+    "toggle_snap_to_grid",
+    "zoom_in",
+    "zoom_out",
+    "zoom_reset",
+    "export_current_theme",
 ]

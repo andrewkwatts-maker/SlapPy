@@ -303,10 +303,15 @@ Status legend:
 | 254 | `editor.copy_selection` action | Router action id (Y1) | WIRED | `tool_router.py:796` → `_fb_copy_selection` → `actions/selection_actions.py:192` (`copy_selection`) | Snapshots into the process-wide `EntityClipboard`; does NOT auto-paste (contrast with `edit.duplicate_selection`). |
 | 255 | `editor.paste_selection` action | Router action id (Y1) | WIRED | `tool_router.py:804` → `_fb_paste_selection` → `actions/selection_actions.py:212` (`paste_selection`) | Pulls from `EntityClipboard`, applies `name_suffix` (default `" (paste)"`), best-effort `scene.add(clone)` when reachable. |
 | 256 | `theme.cycle` action | Router action id (Y1) | WIRED | `tool_router.py:939` → `_fb_theme_cycle` → `actions/theme_actions.py:42` (`cycle_theme`) | Prefers `shell.cycle_theme()`; headless fallback walks `list_registered_themes()` with a module-level deterministic cursor. |
+| 257 | `tool.snap_to_grid` action | Router action id (Z7) | WIRED | `tool_router.py` → `_fb_snap_to_grid` → `actions/tool_settings_actions.py::toggle_snap_to_grid` | Toggles `shell._snap_manager.config.enable_grid`; accepts `ctx["force"]` to lock ON/OFF; headless-safe module-level flag when no shell is reachable. |
+| 258 | `view.zoom_in` action | Router action id (Z7) | WIRED | `tool_router.py` → `_fb_zoom_in` → `actions/camera_actions.py::zoom_in` | Divides `_cam_distance` by `ctx["step"]` (default 1.2); clamped to `[0.05, 10000]`; handles 2D `_zoom_level` cameras too. |
+| 259 | `view.zoom_out` action | Router action id (Z7) | WIRED | `tool_router.py` → `_fb_zoom_out` → `actions/camera_actions.py::zoom_out` | Mirror of `view.zoom_in`; multiplies distance / shrinks 2D zoom. Same clamps. |
+| 260 | `view.zoom_reset` action | Router action id (Z7) | WIRED | `tool_router.py` → `_fb_zoom_reset` → `actions/camera_actions.py::zoom_reset` | Restores `_cam_distance = 5.0` (ViewportPanel default) or `_zoom_level = 1.0`; `ctx["distance"]` overrides for "recenter-on-selection" flows. |
+| 261 | `theme.export_current` action | Router action id (Z7) | WIRED | `tool_router.py` → `_fb_export_current_theme` → `actions/theme_io_actions.py::export_current_theme` | Writes active `ThemeSpec` to `ctx["path"]` (or via `shell.prompt_save_path` hook) via `UserThemeStore._atomic_write_text`. YAML round-trippable through `ThemeSpec.from_yaml`. |
 
-**Total rows: 256.** Status tally:
+**Total rows: 261.** Status tally:
 
-* **WIRED**: 238 (215 baseline + 18 delta + 5 Y1; row 189 also flipped STUB -> WIRED)
+* **WIRED**: 243 (215 baseline + 18 delta + 5 Y1 + 5 Z7; row 189 also flipped STUB -> WIRED)
 * **STUB**: 15 (rows 50, 78, 79, 94, 95, 191, 192, 193, 222, 224, 225, 226, 227, 228, 243 — row 189 dropped after W2 landing; row 243 added for X4 delete ctx handler)
 * **BROKEN**: 3 (rows 80, 223 code-paths — see previous note; dedupes to 2 real import/attribute defects)
 
@@ -414,3 +419,47 @@ Regression tests: `SlapPyEngineTests/tests/test_stub_triage_y1.py`
 absent router action ids across 5 category buckets (`file`, `edit`,
 `tool`, `view`, `theme`). Roll-up: **256 total, 238 WIRED (93.0%),
 15 STUB (5.9%), 3 BROKEN (1.1%)**.
+
+---
+
+## Z7 STUB-triage patch (2026-07-04, round 3 after X3 + Y1)
+
+Five more action ids landed in this tick, moving 5 rows from STUB
+(implicit — the ids were not yet registered) to WIRED (rows 257-261):
+
+* `tool.snap_to_grid` → `slappyengine.actions.tool_settings_actions.toggle_snap_to_grid`
+* `view.zoom_in` → `slappyengine.actions.camera_actions.zoom_in`
+* `view.zoom_out` → `slappyengine.actions.camera_actions.zoom_out`
+* `view.zoom_reset` → `slappyengine.actions.camera_actions.zoom_reset`
+* `theme.export_current` → `slappyengine.actions.theme_io_actions.export_current_theme`
+
+New subpackages: `python/slappyengine/actions/tool_settings_actions.py`
++ `python/slappyengine/actions/camera_actions.py` +
+`python/slappyengine/actions/theme_io_actions.py`.
+
+Behavioural notes for Z7:
+
+* **`tool.snap_to_grid`** — toggles `SnapManager.config.enable_grid`
+  in place; accepts `ctx["force"]=bool` for menu-item "Snap: ON" /
+  "Snap: OFF" callers; falls back to a module-level flag when no
+  shell is reachable so tests + notebook mode still round-trip a
+  boolean.
+* **`view.zoom_in` / `view.zoom_out`** — multiplicative stepping
+  (default 1.2×) against `_cam_distance` (3D) or `_zoom_level` (2D),
+  clamped to `[0.05, 10000]` / `[0.01, 100]` so a runaway wheel-spin
+  can't send the camera to infinity. Reads camera from
+  `ctx["camera"]`, `shell._viewport_panel`, or `shell._camera` in that
+  order.
+* **`view.zoom_reset`** — writes back the ViewportPanel ctor default
+  (5.0) or 1.0 for 2D shells; accepts `ctx["distance"]` for
+  bounding-box-aware "frame the selection" resets.
+* **`theme.export_current`** — YAML-round-trippable through
+  `ThemeSpec.from_yaml`; reuses `UserThemeStore._atomic_write_text`
+  for crash-safe writes. Prefers `ctx["path"]`; falls back to
+  `shell.prompt_save_path(default_name)` when the shell exposes it.
+
+Regression tests: `SlapPyEngineTests/tests/test_stub_triage_z7.py`
+(36 tests, all passing). Combined X3+Y1+Z7 wiring now covers 15
+previously-absent router action ids across 5 category buckets
+(`file`, `edit`, `tool`, `view`, `theme`). Roll-up: **261 total,
+243 WIRED (93.1%), 15 STUB (5.7%), 3 BROKEN (1.1%)**.

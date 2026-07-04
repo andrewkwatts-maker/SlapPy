@@ -650,6 +650,43 @@ def _fb_theme_cycle(ctx: dict[str, Any]) -> Any:
     return cycle_theme(ctx)
 
 
+# ---------------------------------------------------------------------------
+# Z7 STUB-triage fallbacks (2026-07-04, round 3)
+#
+# Wire five more STUB rows: snap-to-grid toggle, viewport zoom in/out/reset,
+# and active-theme export. See :mod:`slappyengine.actions.tool_settings_actions`,
+# :mod:`slappyengine.actions.camera_actions`, and
+# :mod:`slappyengine.actions.theme_io_actions` for the implementations.
+# ---------------------------------------------------------------------------
+
+
+def _fb_snap_to_grid(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.tool_settings_actions import (
+        toggle_snap_to_grid,
+    )
+    return toggle_snap_to_grid(ctx)
+
+
+def _fb_zoom_in(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.camera_actions import zoom_in
+    return zoom_in(ctx)
+
+
+def _fb_zoom_out(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.camera_actions import zoom_out
+    return zoom_out(ctx)
+
+
+def _fb_zoom_reset(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.camera_actions import zoom_reset
+    return zoom_reset(ctx)
+
+
+def _fb_export_current_theme(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.theme_io_actions import export_current_theme
+    return export_current_theme(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -858,6 +895,15 @@ def _default_actions() -> list[ToolAction]:
             required_args=[],
             category="tool",
         ),
+        # Z7 STUB-triage: snap-to-grid tool-setting toggle.
+        ToolAction(
+            action_id="tool.snap_to_grid",
+            label="Toggle Snap to Grid",
+            rust_backing=None,
+            python_fallback=_fb_snap_to_grid,
+            required_args=[],
+            category="tool",
+        ),
         # ── View / layout / theme ────────────────────────────────────
         ToolAction(
             action_id="editor.reset_layout",
@@ -950,6 +996,40 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_toggle_fullscreen,
             required_args=[],
             category="view",
+        ),
+        # Z7 STUB-triage: viewport-camera zoom actions.
+        ToolAction(
+            action_id="view.zoom_in",
+            label="Zoom In",
+            rust_backing=None,
+            python_fallback=_fb_zoom_in,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="view.zoom_out",
+            label="Zoom Out",
+            rust_backing=None,
+            python_fallback=_fb_zoom_out,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="view.zoom_reset",
+            label="Reset Zoom",
+            rust_backing=None,
+            python_fallback=_fb_zoom_reset,
+            required_args=[],
+            category="view",
+        ),
+        # Z7 STUB-triage: active-theme YAML export.
+        ToolAction(
+            action_id="theme.export_current",
+            label="Export Current Theme...",
+            rust_backing=None,
+            python_fallback=_fb_export_current_theme,
+            required_args=[],
+            category="theme",
         ),
         ToolAction(
             action_id="editor.toggle_hud",
