@@ -30,6 +30,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from ._ctx import ensure_ctx
+
 
 def _get_shell(ctx: dict[str, Any]) -> Any:
     return ctx.get("shell")
@@ -70,7 +72,13 @@ def save_project(ctx: dict[str, Any]) -> dict[str, Any]:
     :meth:`Project.save`. When the shell / project handle is missing,
     returns ``{"status": "no_project"}`` so the caller can surface a
     "No project loaded" toast rather than crash.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("save_project", ctx)
     project = _get_project_from_ctx(ctx)
     if project is None:
         return {"status": "no_project"}
@@ -95,9 +103,20 @@ def new_project(ctx: dict[str, Any]) -> dict[str, Any]:
 
     When a shell is present and exposes a ``_project_registry`` attr,
     the new project is registered so it appears in the recents list.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping, or ``ctx["name"]`` is present but not
+        a str.
     """
+    ensure_ctx("new_project", ctx)
     path = ctx.get("path")
     name = ctx.get("name")
+    if name is not None and not isinstance(name, str):
+        raise TypeError(
+            f"new_project: ctx['name'] must be a str; got {type(name).__name__}"
+        )
     if not path:
         return {"status": "missing_path"}
     if not name:
@@ -156,7 +175,13 @@ def open_recent(ctx: dict[str, Any]) -> dict[str, Any]:
     ``{"status": "empty"}`` when the registry has no entries,
     ``{"status": "not_found", "index": N}`` when the requested index is
     out of range.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("open_recent", ctx)
     registry = ctx.get("registry")
     if registry is None:
         try:

@@ -38,6 +38,8 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from ._ctx import ensure_ctx
+
 
 # Same margin ratio used by many DCCs — "frame all" leaves ~15% headroom
 # around the bounding sphere so labels don't clip against the viewport
@@ -292,7 +294,13 @@ def center_on_selection(ctx: dict[str, Any]) -> dict[str, Any]:
 
     Distance is untouched — this is a *pan*, not a frame-fit. Use
     :func:`frame_all` when you also want to re-zoom.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("center_on_selection", ctx)
     camera = _get_camera(ctx)
     if camera is None:
         return {"status": "no_camera"}
@@ -335,7 +343,13 @@ def frame_all(ctx: dict[str, Any]) -> dict[str, Any]:
         "radius": float, "path": ...}`` on success.
         ``{"status": "empty_scene"}`` when the scene has no entities.
         ``{"status": "no_camera"}`` when no camera is reachable.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("frame_all", ctx)
     camera = _get_camera(ctx)
     if camera is None:
         return {"status": "no_camera"}

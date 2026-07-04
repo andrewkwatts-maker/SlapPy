@@ -41,6 +41,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from ._ctx import ensure_ctx
+
 
 def _resolve_theme(ctx: dict[str, Any]) -> Any:
     """Return the :class:`ThemeSpec` to export.
@@ -135,7 +137,13 @@ def export_current_theme(ctx: dict[str, Any]) -> dict[str, Any]:
     -------
     dict
         See the module docstring for the full contract.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("export_current_theme", ctx)
     theme = _resolve_theme(ctx)
     if theme is None:
         return {"status": "no_theme"}

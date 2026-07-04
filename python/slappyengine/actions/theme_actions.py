@@ -23,6 +23,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ._ctx import ensure_ctx
+
 
 # Module-level cursor tracking the last cycled theme so consecutive
 # dispatches walk the ``list_registered_themes()`` order deterministically.
@@ -52,7 +54,13 @@ def cycle_theme(ctx: dict[str, Any]) -> dict[str, Any]:
     When the theme registry is empty (nothing has been registered yet)
     the fallback returns ``{"status": "no_themes"}`` so the caller can
     surface a "no themes available" toast rather than crash.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("cycle_theme", ctx)
     global _THEME_CURSOR
     shell = _get_shell(ctx)
     if shell is not None:

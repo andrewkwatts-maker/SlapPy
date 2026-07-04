@@ -26,6 +26,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ._ctx import ensure_ctx
+
 
 # Module-level fallback flag used when no shell is reachable. Tests can
 # reset via :func:`_reset_snap_grid_for_tests`.
@@ -63,7 +65,13 @@ def toggle_snap_to_grid(ctx: dict[str, Any]) -> dict[str, Any]:
     When ``ctx["force"]`` is ``True`` / ``False`` the flag is set to that
     value instead of toggled. This lets menu items like "Snap: ON" /
     "Snap: OFF" reuse the same action id.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("toggle_snap_to_grid", ctx)
     global _HEADLESS_SNAP_GRID_ENABLED
 
     force = _resolve_force(ctx)

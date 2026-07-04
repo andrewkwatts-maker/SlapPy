@@ -38,6 +38,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ._ctx import ensure_ctx
+
 
 # The tool id used across the shell, status bar, and viewport drag
 # handler. Exposed as a module-level constant so tests and downstream
@@ -95,7 +97,13 @@ def activate_pan_tool(ctx: dict[str, Any]) -> dict[str, Any]:
     Parameters (via ``ctx``)
     ------------------------
     * ``shell`` — :class:`EditorShell` handle. Optional.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("activate_pan_tool", ctx)
     shell = _get_shell(ctx)
     if shell is None:
         return {

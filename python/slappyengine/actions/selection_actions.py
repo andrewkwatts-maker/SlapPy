@@ -35,6 +35,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ._ctx import ensure_ctx
+
 
 def _get_shell(ctx: dict[str, Any]) -> Any:
     return ctx.get("shell")
@@ -148,7 +150,13 @@ def select_all(ctx: dict[str, Any]) -> dict[str, Any]:
     dict
         ``{"status": "selected", "count": N}`` on success. When no scene
         is reachable returns ``{"status": "no_scene"}``.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("select_all", ctx)
     scene = _get_scene(ctx)
     if scene is None:
         return {"status": "no_scene"}
@@ -175,7 +183,13 @@ def deselect_all(ctx: dict[str, Any]) -> dict[str, Any]:
 
     Clears both the singular ``_selected_entity`` slot and the plural
     ``_selected_entities`` list so the two views agree.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("deselect_all", ctx)
     shell = _get_shell(ctx)
     if shell is not None:
         try:
@@ -195,7 +209,13 @@ def copy_selection(ctx: dict[str, Any]) -> dict[str, Any]:
     Unlike ``edit.duplicate_selection`` this does NOT auto-paste — it
     only stashes the copies so a subsequent ``editor.paste_selection`` /
     ``Ctrl+V`` can consume them.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("copy_selection", ctx)
     entities = _resolve_selection(ctx)
     if not entities:
         return {"status": "no_selection"}
@@ -224,7 +244,13 @@ def paste_selection(ctx: dict[str, Any]) -> dict[str, Any]:
         ``{"status": "pasted", "count": N, "clones": [...]}`` on success,
         ``{"status": "empty_clipboard"}`` when the clipboard has no
         snapshots yet.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("paste_selection", ctx)
     clipboard = _get_clipboard(ctx)
     if clipboard is None:
         return {"status": "error", "message": "clipboard unavailable"}

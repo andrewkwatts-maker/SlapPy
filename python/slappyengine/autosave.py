@@ -60,6 +60,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import threading
 import time
 from dataclasses import dataclass, field
@@ -76,6 +77,9 @@ from slappyengine._validation import (
     validate_positive_float,
     validate_positive_int,
 )
+
+
+_LOG = logging.getLogger(__name__)
 
 
 __all__ = [
@@ -137,7 +141,17 @@ def default_snapshot_dir(project_name: str) -> Path:
     The directory is *not* created here — :meth:`AutosaveManager._tick`
     creates it lazily via ``mkdir(parents=True, exist_ok=True)`` so a
     read-only home dir doesn't crash the constructor.
+
+    Raises
+    ------
+    TypeError
+        If *project_name* is not a ``str``.
     """
+    if not isinstance(project_name, str):
+        raise TypeError(
+            f"default_snapshot_dir: project_name must be a str; "
+            f"got {type(project_name).__name__}"
+        )
     safe = project_name.strip() or "unnamed"
     # Replace path separators so a slash in project_name can't escape.
     safe = safe.replace("/", "_").replace("\\", "_")
@@ -612,11 +626,15 @@ class AutosaveManager:
         """Timer callback — write a snapshot then re-arm."""
         try:
             self._write_snapshot()
-        except Exception:
+        except Exception as exc:
             # Autosave failures MUST NOT bring the editor down. Swallow
             # every exception; a failed tick just means the ring buffer
-            # doesn't grow this round.
-            pass
+            # doesn't grow this round. Log at warning level so a
+            # persistently-failing autosave surfaces in the log tail.
+            _LOG.warning(
+                "AutosaveManager._tick: snapshot failed (%s: %s)",
+                type(exc).__name__, exc,
+            )
         with self._lock:
             self._schedule_locked()
 
@@ -640,7 +658,15 @@ class AutosaveManager:
             seq = self._seq
             now = time.time()
             snap_dir = self._state.snapshot_dir
-            snap_dir.mkdir(parents=True, exist_ok=True)
+            try:
+                snap_dir.mkdir(parents=True, exist_ok=True)
+            except OSError as exc:
+                _LOG.warning(
+                    "AutosaveManager._write_snapshot: cannot mkdir %s "
+                    "(%s: %s)",
+                    snap_dir, type(exc).__name__, exc,
+                )
+                raise
             try:
                 raw_payload = self._save_callback()
             except Exception as exc:
@@ -650,6 +676,15 @@ class AutosaveManager:
                 raise RuntimeError(
                     f"AutosaveManager: save_callback raised {type(exc).__name__}: {exc}"
                 ) from exc
+            if raw_payload is None:
+                # Silent-acceptance guard: a callback returning None
+                # would produce an empty snapshot the recovery UI can't
+                # do anything useful with. Refuse — the tick swallows
+                # this and logs, force_save propagates.
+                raise ValueError(
+                    "AutosaveManager: save_callback returned None; "
+                    "refusing to snapshot an empty payload"
+                )
             filename = f"{snapshot_timestamp(now)}_{seq:04d}{_SNAPSHOT_SUFFIX}"
             path = snap_dir / filename
             document = {

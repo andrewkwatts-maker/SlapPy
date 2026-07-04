@@ -14,6 +14,7 @@ world, returning the :class:`Body` handles it created.
 """
 from __future__ import annotations
 
+import logging
 import math
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
@@ -22,6 +23,8 @@ from slappyengine._validation import validate_non_empty_str
 
 if TYPE_CHECKING:  # pragma: no cover
     from slappyengine.dynamics import Body, World
+
+_LOG = logging.getLogger(__name__)
 
 # The five categories the trading-card deck buckets prefabs into. Kept
 # as a module-level tuple so tests and the editor can enumerate them
@@ -306,6 +309,8 @@ class Prefab:
             If *position* is not a 2-sequence of finite floats or
             *rotation* is non-finite.
         """
+        if world is None:
+            raise TypeError("Prefab.spawn: world must not be None")
         px, py = _validate_position(position)
         rot = _validate_rotation(rotation)
 
@@ -324,11 +329,17 @@ class Prefab:
 
         # Compose children (best-effort — a missing library or unknown
         # child name is a soft skip rather than a hard failure so half-
-        # authored YAML still spawns the primary body).
+        # authored YAML still spawns the primary body). Unknown children
+        # do log a warning so authoring errors surface in the log.
         if library is not None and self.child_prefabs:
             for cname in self.child_prefabs:
                 child = library.get(cname)
                 if child is None:
+                    _LOG.warning(
+                        "Prefab.spawn: %r child %r missing from library; "
+                        "skipping",
+                        self.name, cname,
+                    )
                     continue
                 bodies.extend(
                     child.spawn(world, (px, py), rot, library=library)

@@ -37,6 +37,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ._ctx import ensure_ctx
+
 
 # Reset defaults — match ViewportPanel.__init__.
 _DEFAULT_CAM_DISTANCE: float = 5.0
@@ -143,7 +145,13 @@ def zoom_in(ctx: dict[str, Any]) -> dict[str, Any]:
     2D ``_zoom_level`` by the same amount, then clamps against the
     per-attribute safety range. Returns the new distance for the status
     bar readout.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("zoom_in", ctx)
     camera = _get_camera(ctx)
     current = _read_current(camera)
     if current is None:
@@ -169,7 +177,13 @@ def zoom_out(ctx: dict[str, Any]) -> dict[str, Any]:
 
     Mirror of :func:`zoom_in` — ``_cam_distance`` grows or the ortho
     ``_zoom_level`` shrinks.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("zoom_out", ctx)
     camera = _get_camera(ctx)
     current = _read_current(camera)
     if current is None:
@@ -196,7 +210,13 @@ def zoom_reset(ctx: dict[str, Any]) -> dict[str, Any]:
     override the reset target via ``ctx["distance"]`` — useful for the
     "recenter on selection" flow that computes an ideal distance from
     the current selection's bounding box.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("zoom_reset", ctx)
     camera = _get_camera(ctx)
     current = _read_current(camera)
     if current is None:

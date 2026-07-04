@@ -33,6 +33,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ._ctx import ensure_ctx
+
 
 def _get_shell(ctx: dict[str, Any]) -> Any:
     return ctx.get("shell")
@@ -146,7 +148,13 @@ def cut_selection(ctx: dict[str, Any]) -> dict[str, Any]:
         ``{"status": "cut", "count": copied, "removed": removed}`` on
         success. ``{"status": "no_selection"}`` when nothing was selected.
         ``{"status": "error", "message": str}`` when the clipboard raised.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("cut_selection", ctx)
     entities = _resolve_selection(ctx)
     if not entities:
         return {"status": "no_selection"}
@@ -189,7 +197,13 @@ def delete_selection(ctx: dict[str, Any]) -> dict[str, Any]:
         entities actually removed). ``{"status": "no_selection"}`` when
         nothing was selected. ``{"status": "no_scene"}`` when the shell
         has no reachable scene.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("delete_selection", ctx)
     entities = _resolve_selection(ctx)
     if not entities:
         return {"status": "no_selection"}

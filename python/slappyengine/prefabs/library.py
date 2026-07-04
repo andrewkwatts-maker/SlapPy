@@ -64,11 +64,26 @@ class PrefabLibrary:
         ------
         TypeError
             If *prefab* is not a :class:`Prefab`.
+        ValueError
+            If ``prefab.name`` is empty / not a str (defensive — the
+            :class:`Prefab` post-init should have caught this, but a
+            caller mutating ``.name`` after construction could slip
+            through).
         """
         if not isinstance(prefab, Prefab):
             raise TypeError(
                 f"PrefabLibrary.register: prefab must be a Prefab; got "
                 f"{type(prefab).__name__}"
+            )
+        if not isinstance(prefab.name, str) or not prefab.name:
+            raise ValueError(
+                f"PrefabLibrary.register: prefab.name must be a non-empty "
+                f"str; got {prefab.name!r}"
+            )
+        if prefab.name in self._entries:
+            _LOG.debug(
+                "PrefabLibrary.register: replacing existing entry %r",
+                prefab.name,
             )
         self._entries[prefab.name] = prefab
         return prefab
@@ -146,7 +161,21 @@ class PrefabLibrary:
                 f"PrefabLibrary.load_from_dir: {p} is not a directory"
             )
         loaded: list[str] = []
-        for yaml_path in sorted(p.glob(f"**/*{self.SUFFIX}")):
+        try:
+            candidates = sorted(p.glob(f"**/*{self.SUFFIX}"))
+        except OSError as exc:
+            _LOG.warning(
+                "PrefabLibrary.load_from_dir: glob failed on %s (%s: %s)",
+                p, type(exc).__name__, exc,
+            )
+            return loaded
+        if not candidates:
+            _LOG.warning(
+                "PrefabLibrary.load_from_dir: no %s files under %s",
+                self.SUFFIX, p,
+            )
+            return loaded
+        for yaml_path in candidates:
             try:
                 text = yaml_path.read_text(encoding="utf-8")
                 prefab = Prefab.from_yaml(text)
@@ -195,14 +224,34 @@ class PrefabLibrary:
             "baked_dir", "PrefabLibrary.bake_defaults", baked_dir,
         ))
         if not bdir.is_dir():
+            _LOG.warning(
+                "PrefabLibrary.bake_defaults: baked dir %s does not exist; "
+                "nothing to copy",
+                bdir,
+            )
             return []
-        udir.mkdir(parents=True, exist_ok=True)
+        try:
+            udir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            _LOG.warning(
+                "PrefabLibrary.bake_defaults: cannot create %s (%s: %s)",
+                udir, type(exc).__name__, exc,
+            )
+            return []
         written: list[Path] = []
         for src in sorted(bdir.glob(f"*{self.SUFFIX}")):
             dest = udir / src.name
             if dest.exists():
                 continue
-            _atomic_copy(src, dest)
+            try:
+                _atomic_copy(src, dest)
+            except OSError as exc:
+                _LOG.warning(
+                    "PrefabLibrary.bake_defaults: cannot copy %s -> %s "
+                    "(%s: %s)",
+                    src, dest, type(exc).__name__, exc,
+                )
+                continue
             written.append(dest)
         return written
 
@@ -214,6 +263,10 @@ class PrefabLibrary:
         the shipping palette without touching the user's file system.
         """
         if not self.BAKED_DIR.is_dir():
+            _LOG.warning(
+                "PrefabLibrary.load_baked: baked dir %s does not exist",
+                self.BAKED_DIR,
+            )
             return []
         return self.load_from_dir(self.BAKED_DIR)
 
@@ -284,6 +337,8 @@ class PrefabLibrary:
             raise KeyError(
                 f"PrefabLibrary.spawn: name must be a non-empty str; got {name!r}"
             )
+        if world is None:
+            raise TypeError("PrefabLibrary.spawn: world must not be None")
         prefab = self._entries.get(name)
         if prefab is None:
             raise KeyError(

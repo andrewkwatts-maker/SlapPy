@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ._ctx import ensure_ctx
+
 
 def _get_shell(ctx: dict[str, Any]) -> Any:
     return ctx.get("shell")
@@ -54,7 +56,13 @@ def duplicate_selection(ctx: dict[str, Any]) -> dict[str, Any]:
     When ``ctx["shell"]`` exposes ``_duplicate_selected()`` (matches the
     legacy shell hook), that method is preferred so the shell can route
     into whichever scene-add path it owns.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping.
     """
+    ensure_ctx("duplicate_selection", ctx)
     shell = _get_shell(ctx)
 
     # Legacy shell hook takes precedence — matches the existing

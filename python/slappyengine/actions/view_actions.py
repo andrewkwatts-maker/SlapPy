@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ._ctx import ensure_ctx
+
 
 def _get_shell(ctx: dict[str, Any]) -> Any:
     return ctx.get("shell")
@@ -28,7 +30,20 @@ def reset_layout(ctx: dict[str, Any]) -> dict[str, Any]:
     Returns a small dict describing what happened so tests can assert on
     it: ``{"status": "reset", "preset": "default"}`` on success,
     ``{"status": "no_shell"}`` when the ctx has no shell handle at all.
+
+    Raises
+    ------
+    TypeError
+        If *ctx* is not a mapping, or ``ctx["preset"]`` is present but
+        not a str.
     """
+    ensure_ctx("reset_layout", ctx)
+    preset_override = ctx.get("preset")
+    if preset_override is not None and not isinstance(preset_override, str):
+        raise TypeError(
+            f"reset_layout: ctx['preset'] must be a str; "
+            f"got {type(preset_override).__name__}"
+        )
     shell = _get_shell(ctx)
     preset_name = ctx.get("preset", "default") or "default"
     if shell is None:
