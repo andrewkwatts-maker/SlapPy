@@ -299,6 +299,121 @@ def _fb_music_notes(w, h, c1, c2, t):
     return rgb, alpha
 
 
+# ---------------------------------------------------------------------------
+# Animated V7 fallbacks — each mirrors the corresponding WGSL body and
+# advances by ``t`` so ``time_offset`` sweeps produce distinct frames.
+# ---------------------------------------------------------------------------
+
+
+def _fb_heart_pulse(w, h, c1, c2, t):
+    uu, vv = _uv_grid(w, h)
+    s = 1.0 + 0.1 * np.sin(t * 2.0 * np.pi * 2.0)
+    gx = ((uu * 5.0) % 1.0 - 0.5) / s
+    gy = -((vv * 2.0) % 1.0 - 0.5) / s
+    a = gx * gx + gy * gy - 0.09
+    heart = a * a * a - gx * gx * gy * gy * gy
+    m = 1.0 - np.clip((heart + 0.002) / 0.006, 0.0, 1.0)
+    rgb = c1[None, None, :] * (1.0 - m[..., None]) + c2[None, None, :] * m[..., None]
+    alpha = 0.9 * _edge_mask(vv)
+    return rgb, alpha
+
+
+def _fb_sparkle_shimmer(w, h, c1, c2, t):
+    uu, vv = _uv_grid(w, h)
+    shift_u = t * 0.15
+    shift_v = t * 0.05
+    cell_u = np.floor((uu + shift_u) * 14.0)
+    cell_v = np.floor((vv + shift_v) * 4.0)
+    seed = _hash01(cell_u * 12.9 + cell_v * 78.2)
+    phase = (t * 3.0 + seed) % 1.0
+    envelope = np.clip((phase - 0.3) / 0.7, 0.0, 1.0)
+    envelope = envelope * envelope * (3.0 - 2.0 * envelope)
+    sp = envelope * (seed >= 0.7).astype(np.float32)
+    rgb = c1[None, None, :] * (1.0 - sp[..., None]) + c2[None, None, :] * sp[..., None]
+    alpha = 0.9 * _edge_mask(vv)
+    return rgb, alpha
+
+
+def _fb_rainbow_flow(w, h, c1, c2, t):
+    uu, vv = _uv_grid(w, h)
+    h_ = uu + t * (60.0 / 360.0)
+    r = 0.5 + 0.5 * np.cos(6.28 * (h_ + 0.0))
+    g = 0.5 + 0.5 * np.cos(6.28 * (h_ + 0.33))
+    b = 0.5 + 0.5 * np.cos(6.28 * (h_ + 0.67))
+    rainbow = np.stack([r, g, b], axis=-1)
+    rgb = c1[None, None, :] * 0.3 + rainbow * 0.7
+    alpha = 0.85 * _edge_mask(vv)
+    return rgb, alpha
+
+
+def _fb_marching_dots(w, h, c1, c2, t):
+    uu, vv = _uv_grid(w, h)
+    shift = t * 20.0 / float(w)
+    du = ((uu + shift) * 8.0) % 1.0
+    dv = (vv * 3.0) % 1.0
+    d = np.sqrt((du - 0.5) ** 2 + (dv - 0.5) ** 2)
+    m = 1.0 - np.clip((d - 0.15) / 0.10, 0.0, 1.0)
+    rgb = c1[None, None, :] * (1.0 - m[..., None]) + c2[None, None, :] * m[..., None]
+    alpha = 0.9 * _edge_mask(vv)
+    return rgb, alpha
+
+
+def _fb_wave_shift(w, h, c1, c2, t):
+    uu, vv = _uv_grid(w, h)
+    wave = 0.05 * np.sin(uu * 12.0 + t * 2.0)
+    shift = t * 15.0 / float(h)
+    vy = (vv - shift + wave) % 1.0
+    band = (vy >= 0.5).astype(np.float32)
+    m = band * 0.55
+    rgb = c1[None, None, :] * (1.0 - m[..., None]) + c2[None, None, :] * m[..., None]
+    alpha = 0.9 * _edge_mask(vv)
+    return rgb, alpha
+
+
+def _fb_dashed_scroll(w, h, c1, c2, t):
+    uu, vv = _uv_grid(w, h)
+    shift = t * 30.0 / float(w)
+    dash = (((uu + shift) * 10.0) % 1.0 >= 0.5).astype(np.float32)
+    band = ((vv >= 0.35) & (vv <= 0.65)).astype(np.float32)
+    m = dash * band
+    rgb = c1[None, None, :] * (1.0 - m[..., None]) + c2[None, None, :] * m[..., None]
+    alpha = 0.9 * _edge_mask(vv)
+    return rgb, alpha
+
+
+def _fb_stars_twinkle(w, h, c1, c2, t):
+    uu, vv = _uv_grid(w, h)
+    cell_u = np.floor(uu * 6.0)
+    cell_v = np.floor(vv * 2.0)
+    seed = _hash01(cell_u * 12.0 + cell_v * 78.0)
+    phase = seed * 2.0 * np.pi
+    tw = 0.5 + 0.5 * np.sin(t * 3.0 + phase)
+    gx = (uu * 6.0) % 1.0 - 0.5
+    gy = (vv * 2.0) % 1.0 - 0.5
+    r = np.sqrt(gx * gx + gy * gy)
+    ang = np.abs(np.arctan2(gy, gx))
+    star = 0.24 + 0.08 * np.cos(ang * 5.0)
+    m = (1.0 - np.clip((r - (star - 0.02)) / 0.04, 0.0, 1.0)) * tw
+    rgb = c1[None, None, :] * (1.0 - m[..., None]) + c2[None, None, :] * m[..., None]
+    alpha = 0.9 * _edge_mask(vv)
+    return rgb, alpha
+
+
+def _fb_music_notes_flow(w, h, c1, c2, t):
+    uu, vv = _uv_grid(w, h)
+    staff_val = 1.0 - np.abs(((vv * 5.0) % 1.0) - 0.5) * 2.0
+    staff = (staff_val >= 0.98).astype(np.float32) * 0.4
+    shift = t * 25.0 / float(w)
+    gx = ((uu + shift) * 6.0) % 1.0 - 0.5
+    gy = (vv * 1.0) - 0.5
+    dnorm = np.sqrt(gx * gx + (gy * 1.6) ** 2)
+    head = 1.0 - np.clip((dnorm - 0.10) / 0.04, 0.0, 1.0)
+    m = np.maximum(staff, head)
+    rgb = c1[None, None, :] * (1.0 - m[..., None]) + c2[None, None, :] * m[..., None]
+    alpha = 0.85 * _edge_mask(vv)
+    return rgb, alpha
+
+
 _FALLBACKS: dict[str, Callable[..., tuple[np.ndarray, np.ndarray]]] = {
     "tape_pink_solid": _fb_pink_solid,
     "tape_pink_dots": _fb_pink_dots,
@@ -315,6 +430,15 @@ _FALLBACKS: dict[str, Callable[..., tuple[np.ndarray, np.ndarray]]] = {
     "tape_rainbow_gradient": _fb_rainbow_gradient,
     "tape_sparkle_animated": _fb_sparkle_animated,
     "tape_music_notes": _fb_music_notes,
+    # V7 animated variants
+    "tape_heart_pulse": _fb_heart_pulse,
+    "tape_sparkle_shimmer": _fb_sparkle_shimmer,
+    "tape_rainbow_flow": _fb_rainbow_flow,
+    "tape_marching_dots": _fb_marching_dots,
+    "tape_wave_shift": _fb_wave_shift,
+    "tape_dashed_scroll": _fb_dashed_scroll,
+    "tape_stars_twinkle": _fb_stars_twinkle,
+    "tape_music_notes_flow": _fb_music_notes_flow,
 }
 
 

@@ -48,6 +48,35 @@ from .node import (
 )
 from .palette import BUILTIN_NODES, BUILTIN_REGISTRY, get_node, list_nodes
 
+# --- V5: material-graph WGSL node palette ---------------------------------
+from .material_nodes import (
+    MATERIAL_CATEGORY,
+    MATERIAL_NODE_TYPES,
+    AbsNode,
+    AddNode,
+    ClampNode,
+    CrossNode,
+    DefaultWgslEmitContext,
+    DotNode,
+    FresnelNode,
+    GradientRampNode,
+    LerpNode,
+    MaterialNode,
+    MaterialOutputNode,
+    MultiplyNode,
+    NormalizeNode,
+    PerlinNoiseNode,
+    PowerNode,
+    SaturateNode,
+    SqrtNode,
+    TextureSampleNode,
+    TimeNode,
+    UVOffsetNode,
+    WgslEmitContext,
+    WorleyNoiseNode,
+    register_material_nodes,
+)
+
 
 __all__ = [
     # node primitives
@@ -71,4 +100,30 @@ __all__ = [
     "BUILTIN_REGISTRY",
     "get_node",
     "list_nodes",
+    # V5: material-graph WGSL palette (append-only extension)
+    "MaterialNode",
+    "WgslEmitContext",
+    "DefaultWgslEmitContext",
+    "AddNode",
+    "MultiplyNode",
+    "LerpNode",
+    "SaturateNode",
+    "ClampNode",
+    "PowerNode",
+    "SqrtNode",
+    "AbsNode",
+    "DotNode",
+    "NormalizeNode",
+    "CrossNode",
+    "FresnelNode",
+    "PerlinNoiseNode",
+    "WorleyNoiseNode",
+    "GradientRampNode",
+    "TextureSampleNode",
+    "UVOffsetNode",
+    "TimeNode",
+    "MaterialOutputNode",
+    "MATERIAL_NODE_TYPES",
+    "MATERIAL_CATEGORY",
+    "register_material_nodes",
 ]

@@ -24,6 +24,7 @@ stubbed out.
 """
 from __future__ import annotations
 
+import enum
 from pathlib import Path
 from typing import Any
 
@@ -119,12 +120,145 @@ class InspectorDispatchMixin:
     def _add_help_button(self, name: str) -> None:  # pragma: no cover
         ...
 
+    # Provided by :class:`NotebookInspector` (V3 reflection).  Stub-defined
+    # here so subclasses without the reflection helpers still type-check.
+    def field_metadata(self, name: str) -> dict[str, Any]:  # pragma: no cover
+        return {}
+
+    def field_range(self, name: str):  # pragma: no cover
+        return None
+
+    def field_is_read_only(self, name: str) -> bool:  # pragma: no cover
+        return False
+
+    def field_doc(self, name: str):  # pragma: no cover
+        return None
+
+    def _enum_type_for_field(self, name: str):  # pragma: no cover
+        return None
+
+    def reset_field(self, name: str) -> Any:  # pragma: no cover
+        ...
+
+    def field_default(self, name: str) -> Any:  # pragma: no cover
+        ...
+
+    # ------------------------------------------------------------------
+    # Row-decoration helpers (tooltip / reset button / read-only lock)
+    # ------------------------------------------------------------------
+
+    def _apply_tooltip(self, widget_tag: str, name: str) -> None:
+        """Attach a DPG tooltip to *widget_tag* with the field's ``doc``.
+
+        Uses ``dpg.tooltip`` when available; falls back to a no-op when
+        the field has no documented metadata OR when the DPG stub in
+        headless tests lacks tooltip support.
+        """
+        doc = None
+        try:
+            doc = self.field_doc(name)
+        except Exception:
+            doc = None
+        if not doc:
+            return
+        dpg = _safe_dpg()
+        if dpg is None:
+            return
+        tip_tag = f"{widget_tag}_tip"
+        try:
+            with dpg.tooltip(parent=widget_tag, tag=tip_tag):
+                dpg.add_text(str(doc), wrap=320)
+        except Exception:
+            # Stub-DPG without tooltip CM support — still record the doc
+            # via a plain text row so tests can inspect it.
+            try:
+                dpg.add_text(f"[tip:{name}] {doc}", parent=self._panel_tag)
+            except Exception:
+                pass
+        # Bookkeeping for the tests.
+        try:
+            self.call_log.append(("tooltip", name, str(doc)))
+        except Exception:
+            pass
+
+    def _apply_read_only(self, widget_tag: str, name: str) -> bool:
+        """Disable *widget_tag* when the field's metadata says read-only.
+
+        Returns ``True`` when the widget was disabled so callers can
+        record the state or skip write-back wiring.
+        """
+        try:
+            locked = self.field_is_read_only(name)
+        except Exception:
+            locked = False
+        if not locked:
+            return False
+        dpg = _safe_dpg()
+        if dpg is None:
+            self.call_log.append(("read_only", name))
+            return True
+        try:
+            dpg.configure_item(widget_tag, enabled=False)
+        except Exception:
+            pass
+        self.call_log.append(("read_only", name))
+        return True
+
+    def _add_reset_button(self, name: str) -> None:
+        """Add a 🔄 button that restores *name* to its dataclass default.
+
+        No-ops when the field has no default (freestanding attribute,
+        or a dataclass field without ``default`` / ``default_factory``).
+        The button is recorded in the call log as ``("reset_button", name)``.
+        """
+        dpg = _safe_dpg()
+        if dpg is None:
+            return
+        # Skip when there's no recoverable default — nothing to reset to.
+        try:
+            import dataclasses as _dc
+
+            default = self.field_default(name)
+            if default is _dc.MISSING:
+                return
+        except Exception:
+            return
+        btn_tag = f"{self._panel_tag}__{name}_reset_btn"
+
+        def _on_reset(_sender, _app, _user, _n=name):
+            self.reset_field(_n)
+
+        try:
+            dpg.add_button(
+                label="reset",
+                small=True,
+                parent=self._panel_tag,
+                tag=btn_tag,
+                callback=_on_reset,
+            )
+        except Exception:
+            try:
+                dpg.add_button(
+                    label="reset",
+                    parent=self._panel_tag,
+                    tag=btn_tag,
+                    callback=_on_reset,
+                )
+            except Exception:
+                pass
+        self.call_log.append(("reset_button", name))
+
     # ------------------------------------------------------------------
     # Dispatch entry point
     # ------------------------------------------------------------------
 
     def _render_field(self, name: str, value: Any) -> None:
         """Dispatch *value* to the right notebook widget."""
+        # Enum → combo, ahead of the int/str branches so IntEnum /
+        # StrEnum don't decay to their base primitive representation.
+        if isinstance(value, enum.Enum):
+            self._render_enum(name, value)
+            return
         # NOTE: ``bool`` is a subclass of ``int`` — keep the bool branch first.
         if isinstance(value, bool):
             self._render_bool(name, value)
@@ -154,6 +288,7 @@ class InspectorDispatchMixin:
     def _render_bool(self, name: str, value: bool) -> None:
         from slappyengine.ui.widgets import HeartCheckbox
 
+        tag = f"{self._panel_tag}__{name}"
         try:
             heart = HeartCheckbox(
                 label=name,
@@ -163,12 +298,14 @@ class InspectorDispatchMixin:
             heart.build(self._panel_tag)
             self._widgets.append(heart)
             self._widget_map[name] = heart.root_tag or name
+            tag = heart.root_tag or tag
         except Exception:
             dpg = _safe_dpg()
             if dpg is None:
+                self.call_log.append(("field", name, "bool"))
+                self._add_help_button(name)
                 return
             try:
-                tag = f"{self._panel_tag}__{name}"
                 dpg.add_checkbox(
                     label=name,
                     default_value=value,
@@ -180,31 +317,72 @@ class InspectorDispatchMixin:
             except Exception:
                 pass
         self.call_log.append(("field", name, "bool"))
+        self._apply_read_only(tag, name)
+        self._apply_tooltip(tag, name)
         self._add_help_button(name)
+        self._add_reset_button(name)
 
     def _render_int(self, name: str, value: int) -> None:
         dpg = _safe_dpg()
         if dpg is None:
             return
         tag = f"{self._panel_tag}__{name}"
+        # metadata['range'] promotes the int input to a slider.
+        rng = None
         try:
-            dpg.add_input_int(
-                label=name,
-                default_value=value,
-                parent=self._panel_tag,
-                tag=tag,
-                callback=lambda s, a, u, *_extra: self._write_back(name, int(a)),
-            )
+            rng = self.field_range(name)
+        except Exception:
+            rng = None
+        try:
+            if rng is not None:
+                lo, hi = int(rng[0]), int(rng[1])
+                dpg.add_slider_int(
+                    label=name,
+                    default_value=int(value),
+                    min_value=lo,
+                    max_value=hi,
+                    parent=self._panel_tag,
+                    tag=tag,
+                    callback=lambda s, a, u, *_extra: self._write_back(name, int(a)),
+                )
+                self.call_log.append(("field", name, "int_slider"))
+            else:
+                dpg.add_input_int(
+                    label=name,
+                    default_value=value,
+                    parent=self._panel_tag,
+                    tag=tag,
+                    callback=lambda s, a, u, *_extra: self._write_back(name, int(a)),
+                )
+                self.call_log.append(("field", name, "int"))
             self._widget_map[name] = tag
         except Exception:
-            pass
-        self.call_log.append(("field", name, "int"))
+            self.call_log.append(("field", name, "int"))
+        self._apply_read_only(tag, name)
+        self._apply_tooltip(tag, name)
         self._add_help_button(name)
+        self._add_reset_button(name)
 
     def _render_float(self, name: str, value: float) -> None:
         from slappyengine.ui.widgets import HighlighterSlider
 
+        # metadata['range'] wins over the auto-picked HighlighterSlider
+        # bounds so authors can pin the min/max explicitly.
+        try:
+            meta_range = self.field_range(name)
+        except Exception:
+            meta_range = None
+        if meta_range is not None:
+            lo, hi = meta_range
+            self._render_float_slider(name, float(value), float(lo), float(hi))
+            self._apply_read_only(self._widget_map.get(name, ""), name)
+            self._apply_tooltip(self._widget_map.get(name, ""), name)
+            self._add_help_button(name)
+            self._add_reset_button(name)
+            return
+
         lo, hi = _slider_range_for(name, value)
+        tag = f"{self._panel_tag}__{name}"
         try:
             slider = HighlighterSlider(
                 label=name,
@@ -216,15 +394,18 @@ class InspectorDispatchMixin:
             slider.build(self._panel_tag)
             self._widgets.append(slider)
             self._widget_map[name] = slider.root_tag or name
+            tag = slider.root_tag or tag
         except Exception:
             dpg = _safe_dpg()
             if dpg is None:
+                self.call_log.append(("field", name, "float"))
+                self._add_help_button(name)
                 return
-            tag = f"{self._panel_tag}__{name}"
             try:
                 dpg.add_input_float(
                     label=name,
                     default_value=float(value),
+                    step=0.001,  # 3-decimal step per V3 contract
                     parent=self._panel_tag,
                     tag=tag,
                     callback=lambda s, a, u, *_extra: self._write_back(name, float(a)),
@@ -233,7 +414,37 @@ class InspectorDispatchMixin:
             except Exception:
                 pass
         self.call_log.append(("field", name, "float"))
+        self._apply_read_only(tag, name)
+        self._apply_tooltip(tag, name)
         self._add_help_button(name)
+        self._add_reset_button(name)
+
+    def _render_float_slider(
+        self, name: str, value: float, lo: float, hi: float
+    ) -> None:
+        """Render a float field as a ``dpg.add_slider_float`` widget.
+
+        Used when the field carries ``metadata['range']`` — the V3
+        contract requires the min/max there to be honoured verbatim.
+        """
+        dpg = _safe_dpg()
+        if dpg is None:
+            return
+        tag = f"{self._panel_tag}__{name}"
+        try:
+            dpg.add_slider_float(
+                label=name,
+                default_value=value,
+                min_value=lo,
+                max_value=hi,
+                parent=self._panel_tag,
+                tag=tag,
+                callback=lambda s, a, u, *_extra: self._write_back(name, float(a)),
+            )
+            self._widget_map[name] = tag
+        except Exception:
+            pass
+        self.call_log.append(("field", name, "float_slider"))
 
     def _render_str(self, name: str, value: str) -> None:
         dpg = _safe_dpg()
@@ -263,7 +474,10 @@ class InspectorDispatchMixin:
         except Exception:
             pass
         self.call_log.append(("field", name, "str"))
+        self._apply_read_only(tag, name)
+        self._apply_tooltip(tag, name)
         self._add_help_button(name)
+        self._add_reset_button(name)
 
     def _render_path(self, name: str, value: Path) -> None:
         dpg = _safe_dpg()
@@ -290,7 +504,10 @@ class InspectorDispatchMixin:
         except Exception:
             pass
         self.call_log.append(("field", name, "path"))
+        self._apply_read_only(tag, name)
+        self._apply_tooltip(tag, name)
         self._add_help_button(name)
+        self._add_reset_button(name)
 
     def _render_color(self, name: str, value: tuple) -> None:
         dpg = _safe_dpg()
@@ -319,7 +536,10 @@ class InspectorDispatchMixin:
         except Exception:
             pass
         self.call_log.append(("field", name, "color"))
+        self._apply_read_only(tag, name)
+        self._apply_tooltip(tag, name)
         self._add_help_button(name)
+        self._add_reset_button(name)
 
     def _render_float_tuple(self, name: str, value: tuple) -> None:
         """Multi-axis float widget for ``(x, y)`` and ``(x, y, z)`` tuples."""
@@ -340,7 +560,49 @@ class InspectorDispatchMixin:
         except Exception:
             pass
         self.call_log.append(("field", name, f"float{len(value)}"))
+        self._apply_read_only(tag, name)
+        self._apply_tooltip(tag, name)
         self._add_help_button(name)
+        self._add_reset_button(name)
+
+    def _render_enum(self, name: str, value: enum.Enum) -> None:
+        """Render an enum field as a ``dpg.add_combo`` populated with names."""
+        dpg = _safe_dpg()
+        if dpg is None:
+            return
+        tag = f"{self._panel_tag}__{name}"
+        enum_cls: type[enum.Enum]
+        try:
+            enum_cls = self._enum_type_for_field(name) or type(value)
+        except Exception:
+            enum_cls = type(value)
+        items = [e.name for e in enum_cls]
+        current = value.name
+
+        def _cb(_sender, app_data, _user, _cls=enum_cls, _n=name):
+            try:
+                new_val = _cls[str(app_data)]
+            except KeyError:
+                return
+            self._write_back(_n, new_val)
+
+        try:
+            dpg.add_combo(
+                items=items,
+                default_value=current,
+                label=name,
+                parent=self._panel_tag,
+                tag=tag,
+                callback=_cb,
+            )
+            self._widget_map[name] = tag
+        except Exception:
+            pass
+        self.call_log.append(("field", name, "enum"))
+        self._apply_read_only(tag, name)
+        self._apply_tooltip(tag, name)
+        self._add_help_button(name)
+        self._add_reset_button(name)
 
     def _render_list_str(self, name: str, value: list[str]) -> None:
         dpg = _safe_dpg()

@@ -488,7 +488,7 @@ diagnostics land in the telemetry bus.
 `H:/Github/Arithma` (package name `arithma`, version `2.0.3`,
 distribution `arithma` on PyPI) is a Rust-backed symbolic mathematics
 engine with the following surface (per
-[`H:/Github/Arithma/python/arithma/__init__.py`](file://H:/Github/Arithma/python/arithma/__init__.py)):
+`H:/Github/Arithma/python/arithma/__init__.py`):
 
 * `Expression` — symbolic expression tree node.
 * `Integer` — exact integer literal wrapper.

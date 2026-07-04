@@ -1,5 +1,7 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.ui.theme — Declarative Theme Grammar
+# slappyengine.ui.theme.declarative — API Reference
+
+## Declarative Theme Grammar
 
 > Hand-written reference for the **HTML5-like declarative theme spec**:
 > an ergonomic, CSS-inspired source format that compiles into the

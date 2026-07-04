@@ -25,8 +25,9 @@ set are re-baked on demand by the panel-decor ticker.
 Design constraints
 ------------------
 
-* Every WGSL source is capped at **800 bytes** so the entire built-in
-  library fits comfortably in a single embedded resource.
+* Every WGSL source is capped at **1000 bytes** so the entire built-in
+  library fits comfortably in a single embedded resource. Animated
+  variants use the extra headroom for time-driven expressions.
 * All shaders declare their outputs as sRGB fragments — the fallback
   numpy renderer keeps its numeric range in ``[0, 1]`` for parity.
 * The alpha channel encodes the tape's torn-paper transparency so
@@ -67,6 +68,12 @@ class WashiTapeStyle:
         ``True`` iff the shader depends on ``u_time``.
     description:
         Short prose describing the style, surfaced by the theme picker.
+    frame_period_ms:
+        Requested re-bake cadence for animated styles, in milliseconds.
+        Must be one of ``{200, 300, 500}`` when :attr:`animated` is
+        ``True``. For static styles the value is stored but unused (the
+        renderer skips re-bakes). The panel-decor ticker clamps this to
+        the 10 Hz cap defined in :mod:`.wgsl_backgrounds`.
     """
 
     id: str
@@ -75,6 +82,7 @@ class WashiTapeStyle:
     default_size: tuple[int, int] = (64, 24)
     animated: bool = False
     description: str = ""
+    frame_period_ms: int = 500
 
     def __post_init__(self) -> None:
         fn = "WashiTapeStyle"
@@ -90,9 +98,9 @@ class WashiTapeStyle:
                 f"{fn}: wgsl_source must be a non-empty str; "
                 f"got {type(self.wgsl_source).__name__}"
             )
-        if len(self.wgsl_source.encode("utf-8")) > 800:
+        if len(self.wgsl_source.encode("utf-8")) > 1000:
             raise ValueError(
-                f"{fn}: wgsl_source for {self.id!r} exceeds the 800-byte "
+                f"{fn}: wgsl_source for {self.id!r} exceeds the 1000-byte "
                 f"budget ({len(self.wgsl_source.encode('utf-8'))} bytes)"
             )
         if (
@@ -113,6 +121,24 @@ class WashiTapeStyle:
             raise TypeError(
                 f"{fn}: description must be str; "
                 f"got {type(self.description).__name__}"
+            )
+        if not isinstance(self.frame_period_ms, int) or isinstance(
+            self.frame_period_ms, bool
+        ):
+            raise TypeError(
+                f"{fn}: frame_period_ms must be int; "
+                f"got {type(self.frame_period_ms).__name__}"
+            )
+        if self.animated and self.frame_period_ms not in (200, 300, 500):
+            raise ValueError(
+                f"{fn}: frame_period_ms for animated style {self.id!r} "
+                f"must be one of {{200, 300, 500}}; "
+                f"got {self.frame_period_ms}"
+            )
+        if self.frame_period_ms <= 0:
+            raise ValueError(
+                f"{fn}: frame_period_ms must be positive; "
+                f"got {self.frame_period_ms}"
             )
 
 
@@ -371,6 +397,150 @@ fn fs_main(@builtin(position) p: vec4<f32>) -> @location(0) vec4<f32> {
 
 
 # ---------------------------------------------------------------------------
+# Animated variants (V7) — sample u_time for shimmer / drift / scroll.
+# Every body still fits inside the 1000-byte WashiTapeStyle budget.
+# ---------------------------------------------------------------------------
+
+
+_TAPE_HEART_PULSE = _shader("""
+@fragment
+fn fs_main(@builtin(position) p: vec4<f32>) -> @location(0) vec4<f32> {
+    let uv = p.xy / u.u_size;
+    let base = u.u_theme_color_1.rgb;
+    let s = 1.0 + 0.1 * sin(u.u_time * 12.566);
+    let g = (fract(uv * vec2<f32>(5.0, 2.0)) - vec2<f32>(0.5, 0.5)) / s;
+    let x = g.x;
+    let y = -g.y;
+    let a = x * x + y * y - 0.09;
+    let heart = a * a * a - x * x * y * y * y;
+    let m = 1.0 - smoothstep(-0.002, 0.004, heart);
+    let color = mix(base, u.u_theme_color_2.rgb, m);
+    let edge = smoothstep(0.0, 0.05, uv.y) * smoothstep(1.0, 0.95, uv.y);
+    return vec4<f32>(color, 0.9 * edge);
+}
+""")
+
+
+_TAPE_SPARKLE_SHIMMER = _shader("""
+@fragment
+fn fs_main(@builtin(position) p: vec4<f32>) -> @location(0) vec4<f32> {
+    let uv = p.xy / u.u_size;
+    let base = u.u_theme_color_1.rgb;
+    let shift = vec2<f32>(u.u_time * 0.15, u.u_time * 0.05);
+    let cell = floor((uv + shift) * vec2<f32>(14.0, 4.0));
+    let h = fract(sin(dot(cell, vec2<f32>(12.9, 78.2))) * 43758.0);
+    let phase = fract(u.u_time * 3.0 + h);
+    let sp = smoothstep(0.3, 1.0, phase) * step(0.7, h);
+    let color = mix(base, u.u_theme_color_2.rgb, sp);
+    let edge = smoothstep(0.0, 0.05, uv.y) * smoothstep(1.0, 0.95, uv.y);
+    return vec4<f32>(color, 0.9 * edge);
+}
+""")
+
+
+_TAPE_RAINBOW_FLOW = _shader("""
+@fragment
+fn fs_main(@builtin(position) p: vec4<f32>) -> @location(0) vec4<f32> {
+    let uv = p.xy / u.u_size;
+    let h = uv.x + u.u_time * 0.1667;
+    let r = 0.5 + 0.5 * cos(6.28 * (h + 0.0));
+    let g = 0.5 + 0.5 * cos(6.28 * (h + 0.33));
+    let b = 0.5 + 0.5 * cos(6.28 * (h + 0.67));
+    let tint = mix(u.u_theme_color_1.rgb, vec3<f32>(r, g, b), 0.7);
+    let edge = smoothstep(0.0, 0.05, uv.y) * smoothstep(1.0, 0.95, uv.y);
+    return vec4<f32>(tint, 0.85 * edge);
+}
+""")
+
+
+_TAPE_MARCHING_DOTS = _shader("""
+@fragment
+fn fs_main(@builtin(position) p: vec4<f32>) -> @location(0) vec4<f32> {
+    let uv = p.xy / u.u_size;
+    let base = u.u_theme_color_1.rgb;
+    let shift = u.u_time * 20.0 / u.u_size.x;
+    let du = fract((uv.x + shift) * 8.0);
+    let dv = fract(uv.y * 3.0);
+    let d = distance(vec2<f32>(du, dv), vec2<f32>(0.5, 0.5));
+    let m = 1.0 - smoothstep(0.15, 0.25, d);
+    let color = mix(base, u.u_theme_color_2.rgb, m);
+    let edge = smoothstep(0.0, 0.05, uv.y) * smoothstep(1.0, 0.95, uv.y);
+    return vec4<f32>(color, 0.9 * edge);
+}
+""")
+
+
+_TAPE_WAVE_SHIFT = _shader("""
+@fragment
+fn fs_main(@builtin(position) p: vec4<f32>) -> @location(0) vec4<f32> {
+    let uv = p.xy / u.u_size;
+    let base = u.u_theme_color_1.rgb;
+    let wave = 0.05 * sin(uv.x * 12.0 + u.u_time * 2.0);
+    let shift = u.u_time * 15.0 / u.u_size.y;
+    let vy = fract(uv.y - shift + wave);
+    let band = step(0.5, vy);
+    let color = mix(base, u.u_theme_color_2.rgb, band * 0.55);
+    let edge = smoothstep(0.0, 0.05, uv.y) * smoothstep(1.0, 0.95, uv.y);
+    return vec4<f32>(color, 0.9 * edge);
+}
+""")
+
+
+_TAPE_DASHED_SCROLL = _shader("""
+@fragment
+fn fs_main(@builtin(position) p: vec4<f32>) -> @location(0) vec4<f32> {
+    let uv = p.xy / u.u_size;
+    let base = u.u_theme_color_1.rgb;
+    let shift = u.u_time * 30.0 / u.u_size.x;
+    let dash = step(0.5, fract((uv.x + shift) * 10.0));
+    let band = step(0.35, uv.y) * step(uv.y, 0.65);
+    let m = dash * band;
+    let color = mix(base, u.u_theme_color_2.rgb, m);
+    let edge = smoothstep(0.0, 0.05, uv.y) * smoothstep(1.0, 0.95, uv.y);
+    return vec4<f32>(color, 0.9 * edge);
+}
+""")
+
+
+_TAPE_STARS_TWINKLE = _shader("""
+@fragment
+fn fs_main(@builtin(position) p: vec4<f32>) -> @location(0) vec4<f32> {
+    let uv = p.xy / u.u_size;
+    let base = u.u_theme_color_1.rgb;
+    let cell = floor(uv * vec2<f32>(6.0, 2.0));
+    let h = fract(sin(dot(cell, vec2<f32>(12.0, 78.0))) * 43758.0);
+    let phase = h * 6.283;
+    let tw = 0.5 + 0.5 * sin(u.u_time * 3.0 + phase);
+    let g = fract(uv * vec2<f32>(6.0, 2.0)) - vec2<f32>(0.5, 0.5);
+    let r = length(g);
+    let a = abs(atan2(g.y, g.x));
+    let star = 0.24 + 0.08 * cos(a * 5.0);
+    let m = (1.0 - smoothstep(star - 0.02, star + 0.02, r)) * tw;
+    let color = mix(base, u.u_theme_color_2.rgb, m);
+    let edge = smoothstep(0.0, 0.05, uv.y) * smoothstep(1.0, 0.95, uv.y);
+    return vec4<f32>(color, 0.9 * edge);
+}
+""")
+
+
+_TAPE_MUSIC_NOTES_FLOW = _shader("""
+@fragment
+fn fs_main(@builtin(position) p: vec4<f32>) -> @location(0) vec4<f32> {
+    let uv = p.xy / u.u_size;
+    let base = u.u_theme_color_1.rgb;
+    let staff = step(0.98, 1.0 - abs(fract(uv.y * 5.0) - 0.5) * 2.0) * 0.4;
+    let shift = u.u_time * 25.0 / u.u_size.x;
+    let g = fract((uv + vec2<f32>(shift, 0.0)) * vec2<f32>(6.0, 1.0)) - vec2<f32>(0.5, 0.5);
+    let head = 1.0 - smoothstep(0.10, 0.14, length(g * vec2<f32>(1.0, 1.6)));
+    let m = max(staff, head);
+    let color = mix(base, u.u_theme_color_2.rgb, m);
+    let edge = smoothstep(0.0, 0.05, uv.y) * smoothstep(1.0, 0.95, uv.y);
+    return vec4<f32>(color, 0.85 * edge);
+}
+""")
+
+
+# ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
 
@@ -460,6 +630,7 @@ WASHI_TAPES: dict[str, WashiTapeStyle] = {
             display_name="Animated Sparkle",
             wgsl_source=_TAPE_SPARKLE_ANIMATED,
             animated=True,
+            frame_period_ms=500,
             description="Tape with twinkling glitter cells driven by u_time.",
         ),
         WashiTapeStyle(
@@ -468,8 +639,89 @@ WASHI_TAPES: dict[str, WashiTapeStyle] = {
             wgsl_source=_TAPE_MUSIC_NOTES,
             description="Tape with a five-line music staff and note heads.",
         ),
+        WashiTapeStyle(
+            id="tape_heart_pulse",
+            display_name="Heart Pulse",
+            wgsl_source=_TAPE_HEART_PULSE,
+            animated=True,
+            frame_period_ms=200,
+            description="Tape of hearts that scale gently with a 2 Hz pulse.",
+        ),
+        WashiTapeStyle(
+            id="tape_sparkle_shimmer",
+            display_name="Sparkle Shimmer",
+            wgsl_source=_TAPE_SPARKLE_SHIMMER,
+            animated=True,
+            frame_period_ms=200,
+            description="Sparkles that drift and brighten via smoothstep envelopes.",
+        ),
+        WashiTapeStyle(
+            id="tape_rainbow_flow",
+            display_name="Rainbow Flow",
+            wgsl_source=_TAPE_RAINBOW_FLOW,
+            animated=True,
+            frame_period_ms=300,
+            description="Rainbow gradient whose hue rotates 60 degrees per second.",
+        ),
+        WashiTapeStyle(
+            id="tape_marching_dots",
+            display_name="Marching Dots",
+            wgsl_source=_TAPE_MARCHING_DOTS,
+            animated=True,
+            frame_period_ms=300,
+            description="Row of polka dots scrolling horizontally at 20 px/s.",
+        ),
+        WashiTapeStyle(
+            id="tape_wave_shift",
+            display_name="Wave Shift",
+            wgsl_source=_TAPE_WAVE_SHIFT,
+            animated=True,
+            frame_period_ms=300,
+            description="Sinusoidal bands that ripple upward at 15 px/s.",
+        ),
+        WashiTapeStyle(
+            id="tape_dashed_scroll",
+            display_name="Dashed Scroll",
+            wgsl_source=_TAPE_DASHED_SCROLL,
+            animated=True,
+            frame_period_ms=300,
+            description="Dashed centre band scrolling horizontally at 30 px/s.",
+        ),
+        WashiTapeStyle(
+            id="tape_stars_twinkle",
+            display_name="Stars Twinkle",
+            wgsl_source=_TAPE_STARS_TWINKLE,
+            animated=True,
+            frame_period_ms=500,
+            description="Five-point stars that twinkle at independent phases.",
+        ),
+        WashiTapeStyle(
+            id="tape_music_notes_flow",
+            display_name="Music Notes Flow",
+            wgsl_source=_TAPE_MUSIC_NOTES_FLOW,
+            animated=True,
+            frame_period_ms=300,
+            description="Music notes drifting left to right at 25 px/s.",
+        ),
     ]
 }
+
+
+# ---------------------------------------------------------------------------
+# Convenience: enumerate the animated V7 subset.
+# ---------------------------------------------------------------------------
+
+
+ANIMATED_V7_STYLE_IDS: tuple[str, ...] = (
+    "tape_heart_pulse",
+    "tape_sparkle_shimmer",
+    "tape_rainbow_flow",
+    "tape_marching_dots",
+    "tape_wave_shift",
+    "tape_dashed_scroll",
+    "tape_stars_twinkle",
+    "tape_music_notes_flow",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -509,6 +761,7 @@ def get_tape(style_id: str) -> WashiTapeStyle:
 
 
 __all__ = [
+    "ANIMATED_V7_STYLE_IDS",
     "WashiTapeStyle",
     "WASHI_TAPES",
     "get_tape",

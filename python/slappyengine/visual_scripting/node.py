@@ -50,6 +50,7 @@ PORT_KINDS: frozenset[str] = frozenset({
     "vec2",
     "vec3",
     "vec4",
+    "sampler2d",
     "any",
 })
 
@@ -69,6 +70,7 @@ _COMPATIBLE_PORTS: dict[str, frozenset[str]] = {
     "vec2":  frozenset({"vec2", "any"}),
     "vec3":  frozenset({"vec3", "any"}),
     "vec4":  frozenset({"vec4", "any"}),
+    "sampler2d": frozenset({"sampler2d", "any"}),
 }
 
 

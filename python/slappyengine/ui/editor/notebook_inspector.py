@@ -35,6 +35,8 @@ call-log entries when ``dearpygui`` is missing or stubbed out.
 from __future__ import annotations
 
 import dataclasses
+import enum
+import typing
 from pathlib import Path
 from typing import Any, Callable
 
@@ -112,13 +114,20 @@ class NotebookInspector(InspectorDispatchMixin):
     MIN_WIDTH: int = 280
     MIN_HEIGHT: int = 400
 
-    def __init__(self, target: Any | None = None) -> None:
+    def __init__(
+        self,
+        target: Any | None = None,
+        *,
+        on_field_changed: Callable[[str, Any, Any], None] | None = None,
+    ) -> None:
         self._target: Any = target
+        self._on_field_changed: Callable[[str, Any, Any], None] | None = on_field_changed
         self._panel_tag: str = f"notebook_inspector_{id(self)}"
         self._transform_tag = f"{self._panel_tag}_transform"
         self._properties_tag = f"{self._panel_tag}_properties"
         self._references_tag = f"{self._panel_tag}_references"
         self._empty_tag = f"{self._panel_tag}_empty"
+        self._reflection_tag = f"{self._panel_tag}_reflection"
 
         # Map of attr-name -> widget root tag.  Tests and the refresh
         # path use it; one entry per built widget.
@@ -224,6 +233,7 @@ class NotebookInspector(InspectorDispatchMixin):
                     self._properties_tag,
                     self._references_tag,
                     self._empty_tag,
+                    self._reflection_tag,
                 ):
                     try:
                         if dpg.does_item_exist(tag):
@@ -462,17 +472,47 @@ class NotebookInspector(InspectorDispatchMixin):
     def _render_reference_field(self, name: str, value: Any) -> None:
         """Render a complex value — nested dataclasses recurse."""
         dpg = _safe_dpg()
-        # Nested dataclass → sub-NotebookInspector.
+        # Nested dataclass → collapsing_header + recursive NotebookInspector.
         if _is_dataclass_value(value):
+            nested_parent = self._panel_tag
+            header_tag = f"{self._panel_tag}__{name}_header"
+            # Wrap the nested inspector in a collapsing_header so V3
+            # nested-dataclass rows fold like the task contract asks.
+            if dpg is not None:
+                try:
+                    header_cm = dpg.collapsing_header(
+                        label=f"{name}: {type(value).__name__}",
+                        parent=self._panel_tag,
+                        tag=header_tag,
+                        default_open=True,
+                    )
+                    header_cm.__enter__()
+                    nested_parent = header_tag
+                    self.call_log.append(("collapsing_header", name))
+                except Exception:
+                    header_cm = None
+            else:
+                header_cm = None
+
             try:
-                nested = NotebookInspector(target=value)
-                nested.build(self._panel_tag)
+                # Forward the ``on_field_changed`` hook so edits inside a
+                # nested inspector still surface at the parent's callback.
+                nested = NotebookInspector(
+                    target=value, on_field_changed=self._on_field_changed
+                )
+                nested.build(nested_parent)
                 self._nested.append(nested)
                 self._widget_map[name] = nested._panel_tag
                 self.call_log.append(("nested", name, type(value).__name__))
-                return
             except Exception:
                 pass
+            finally:
+                if header_cm is not None:
+                    try:
+                        header_cm.__exit__(None, None, None)
+                    except Exception:
+                        pass
+            return
 
         # Non-dataclass complex value — `name: TypeName [?]` row.
         if dpg is None:
@@ -602,6 +642,129 @@ class NotebookInspector(InspectorDispatchMixin):
             if not k.startswith("_")
         ]
 
+    # ------------------------------------------------------------------
+    # V3 — dataclass reflection helpers
+    # ------------------------------------------------------------------
+
+    def _dataclass_fields_by_name(self) -> dict[str, dataclasses.Field]:
+        """Return a ``{name: Field}`` map for the current target, or ``{}``.
+
+        Used by the V3 reflection path so per-row helpers (metadata
+        lookup, reset-to-default, ``object.__setattr__`` write-back)
+        can pull the source-of-truth Field descriptor without re-walking
+        ``dataclasses.fields(target)`` on every access.
+        """
+        obj = self._target
+        if obj is None or not dataclasses.is_dataclass(obj) or isinstance(obj, type):
+            return {}
+        try:
+            return {f.name: f for f in dataclasses.fields(obj)}
+        except Exception:
+            return {}
+
+    def field_metadata(self, name: str) -> dict[str, Any]:
+        """Return ``field.metadata`` (as a plain dict) or ``{}``.
+
+        Exposed so tests + callers can round-trip the same source of
+        truth that the widget-builder consults for ``doc`` / ``range`` /
+        ``read_only`` decoration.
+        """
+        f = self._dataclass_fields_by_name().get(name)
+        if f is None:
+            return {}
+        try:
+            return dict(f.metadata) if f.metadata else {}
+        except Exception:
+            return {}
+
+    def field_range(self, name: str) -> tuple[float, float] | None:
+        """Return the ``metadata['range']`` tuple for *name*, or ``None``.
+
+        Accepts either a 2-tuple ``(min, max)`` or a 2-list; anything
+        else returns ``None`` so the caller falls back to the automatic
+        slider range table.
+        """
+        rng = self.field_metadata(name).get("range")
+        if rng is None:
+            return None
+        try:
+            lo, hi = rng
+            return (float(lo), float(hi))
+        except Exception:
+            return None
+
+    def field_is_read_only(self, name: str) -> bool:
+        """Return True when the field's metadata carries ``read_only=True``."""
+        return bool(self.field_metadata(name).get("read_only", False))
+
+    def field_doc(self, name: str) -> str | None:
+        """Return ``metadata['doc']`` for *name* (or ``None`` when absent)."""
+        doc = self.field_metadata(name).get("doc")
+        if doc is None:
+            return None
+        return str(doc)
+
+    def field_default(self, name: str) -> Any:
+        """Return the dataclass default for *name*.
+
+        Prefers ``field.default``; falls back to
+        ``field.default_factory()`` when the field uses one.  Returns
+        the sentinel :data:`dataclasses.MISSING` when the field has
+        neither so callers can detect the "no default" case.
+        """
+        f = self._dataclass_fields_by_name().get(name)
+        if f is None:
+            return dataclasses.MISSING
+        if f.default is not dataclasses.MISSING:
+            return f.default
+        if f.default_factory is not dataclasses.MISSING:  # type: ignore[misc]
+            try:
+                return f.default_factory()  # type: ignore[misc]
+            except Exception:
+                return dataclasses.MISSING
+        return dataclasses.MISSING
+
+    def reset_field(self, name: str) -> Any:
+        """Restore *name* to its dataclass default and fire the change hook.
+
+        Returns the value written back, or :data:`dataclasses.MISSING`
+        when the field has no default (in which case no write happens).
+        This is the target of the per-row 🔄 "Reset to default" button.
+        """
+        default = self.field_default(name)
+        if default is dataclasses.MISSING:
+            self.call_log.append(("reset_missing", name))
+            return dataclasses.MISSING
+        self._write_back(name, default)
+        self.call_log.append(("reset", name, default))
+        return default
+
+    def _enum_type_for_field(self, name: str) -> type[enum.Enum] | None:
+        """Return the ``Enum`` subclass for *name*, if any.
+
+        Uses ``typing.get_type_hints`` (evaluated) with a
+        ``getattr`` fallback for classes whose annotations aren't
+        forward-resolvable (e.g. ``from __future__ import annotations``
+        combined with local type names).  We check the current value's
+        runtime class first — it's the fastest and always accurate for
+        already-populated fields.
+        """
+        obj = self._target
+        if obj is None:
+            return None
+        current = getattr(obj, name, None)
+        if isinstance(current, enum.Enum):
+            return type(current)
+        # Fallback — resolve the annotation.
+        try:
+            hints = typing.get_type_hints(type(obj))
+        except Exception:
+            return None
+        hint = hints.get(name)
+        if isinstance(hint, type) and issubclass(hint, enum.Enum):
+            return hint
+        return None
+
     def _make_callback(self, name: str) -> Callable[[Any], None]:
         """Return a 1-arg callback that writes ``target.<name> = value``."""
         def _cb(value: Any) -> None:
@@ -610,15 +773,39 @@ class NotebookInspector(InspectorDispatchMixin):
         return _cb
 
     def _write_back(self, name: str, value: Any) -> None:
-        """Write *value* into ``self._target.<name>`` and log the edit."""
+        """Write *value* into ``self._target.<name>`` and log the edit.
+
+        Uses :func:`object.__setattr__` so frozen dataclasses can still
+        be edited from the inspector (the V3 write-back contract) and
+        publishes the ``on_field_changed(name, old, new)`` callback when
+        one was supplied to the constructor.
+        """
         validate_non_empty_str("name", "NotebookInspector._write_back", name)
         if self._target is None:
             return
+        # Snapshot the old value BEFORE the write so ``on_field_changed``
+        # sees the pre-edit state.  ``getattr`` with a sentinel keeps
+        # unknown-attr edits silent (backwards-compat with the earlier
+        # contract that swallowed AttributeError).
+        _sentinel = object()
+        old = getattr(self._target, name, _sentinel)
         try:
-            setattr(self._target, name, value)
-            self.call_log.append(("edit", name, value))
+            # ``object.__setattr__`` bypasses frozen dataclasses AND any
+            # ``__setattr__`` override on the target's class — the
+            # inspector should always land the edit.
+            object.__setattr__(self._target, name, value)
         except (AttributeError, TypeError):
-            pass
+            # Some __slots__ classes still reject unknown names via
+            # object.__setattr__; keep the historic silent-swallow.
+            self.call_log.append(("edit_dropped", name))
+            return
+        self.call_log.append(("edit", name, value))
+        if self._on_field_changed is not None and old is not _sentinel:
+            try:
+                self._on_field_changed(name, old, value)
+            except Exception:
+                # Never let a caller's listener take down the inspector.
+                self.call_log.append(("on_field_changed_error", name))
 
 
 __all__ = ["NotebookInspector"]

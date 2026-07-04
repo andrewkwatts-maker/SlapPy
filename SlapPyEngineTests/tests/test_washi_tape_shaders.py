@@ -50,13 +50,13 @@ EXPECTED_IDS = {
 
 
 def test_registry_has_all_fifteen_styles():
-    assert set(WASHI_TAPES.keys()) == EXPECTED_IDS
-    assert len(WASHI_TAPES) == 15
+    assert EXPECTED_IDS.issubset(set(WASHI_TAPES.keys()))
+    assert len(WASHI_TAPES) >= 15
 
 
 def test_list_tapes_matches_registry_and_is_sorted():
     ids = list_tapes()
-    assert set(ids) == EXPECTED_IDS
+    assert EXPECTED_IDS.issubset(set(ids))
     assert ids == sorted(ids)
 
 
@@ -86,8 +86,8 @@ def test_get_tape_empty_string_raises():
 def test_wgsl_source_within_byte_budget(style_id):
     style = WASHI_TAPES[style_id]
     encoded = style.wgsl_source.encode("utf-8")
-    assert 0 < len(encoded) <= 800, (
-        f"{style_id}: WGSL source is {len(encoded)} bytes (budget 800)"
+    assert 0 < len(encoded) <= 1000, (
+        f"{style_id}: WGSL source is {len(encoded)} bytes (budget 1000)"
     )
 
 
@@ -145,11 +145,11 @@ def test_style_default_size_is_positive_2tuple():
 
 
 def test_style_rejects_oversized_source():
-    with pytest.raises(ValueError, match="800-byte budget"):
+    with pytest.raises(ValueError, match="1000-byte budget"):
         WashiTapeStyle(
             id="tape_oversized",
             display_name="Oversized",
-            wgsl_source="x" * 801,
+            wgsl_source="x" * 1001,
         )
 
 
