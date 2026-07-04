@@ -791,3 +791,175 @@ Adjust the number of `.parent` steps depending on how deep the calling module is
 | Add a new config key | `config/engine.yml` + matching dataclass field in `python/slappyengine/config.py` |
 | Profile the render loop | Set `rendering.backend: "vulkan"` and use RenderDoc or PIX |
 | Understand the `.slap` format | `python/slappyengine/residency/slap_format.py` + `src/slap_format.rs` |
+
+---
+
+## 11. The Tool Router (`tool_router.REGISTRY`)
+
+Every user-invocable editor action — hotkey, menu entry, spawn-card
+button, toolbar sticker — routes through a single dispatcher.
+
+**Source:** `python/slappyengine/tool_router.py`.
+
+**Contract:**
+
+- `ToolAction` is one immutable row of the registry — an `action_id`
+  string (`"editor.save"`, `"tool.select_all"`, `"theme.cycle"`,
+  `"editor.spawn.ragdoll"`, …), a category bucket
+  (`file` / `edit` / `tool` / `view` / `theme` / `editor` / `content`),
+  a display label, and a Python callable that mutates shell / scene state.
+- `REGISTRY` is the module-level singleton pre-populated at import time
+  with 53+ actions.
+- The DPG shell resolves clicks by looking up `action_id` in `REGISTRY`
+  and invoking the callable with a `ctx` dict — never by calling the
+  panel method directly. This is what keeps every action headless-safe.
+- Callables live either as inline `_fb_*` closures inside
+  `tool_router.py` or (for anything that touches persistent state) as
+  a helper in `python/slappyengine/actions/*.py` — see Section 13.
+
+Grep patterns you will use often:
+
+```bash
+# Find all registered ids
+grep -n 'ToolAction(' python/slappyengine/tool_router.py
+
+# See which id a hotkey binds to
+grep -n 'Ctrl+Shift+T\|ctrl+shift+t' python/slappyengine/ui/editor/notebook_hotkeys.py
+
+# See where a spawn card fires from
+grep -n 'editor.spawn' python/slappyengine/ui/editor/notebook_spawn_menu.py
+```
+
+When you add a new user-invocable action, register it here before
+wiring it into a panel. The router is the choke point for user-override
+YAML hotkeys (`~/.slappyengine/ui/hotkeys/*.yaml` → `user.*` command ids
+resolve inside `commands.py`; every other id passes straight through).
+
+---
+
+## 12. Feature-map status ledger
+
+`docs/engine_feature_map_YYYY_MM_DD.md` is the audit ledger for every
+editor action. Rows carry:
+
+- **Feature name** (matching the menu / hotkey label).
+- **Location** (panel + file : line).
+- **Impl status** — `WIRED` (side-effecting real code), `STUB` (callback
+  runs but only records `call_log` / emits a "coming soon" hint), or
+  `BROKEN` (references a missing symbol / uncommitted WIP module).
+- **Backing file : line** — the actual dispatch site so you can jump
+  straight to the code.
+
+**Latest audit:** `docs/engine_feature_map_2026_07_04.md`
+(256 rows, 238 WIRED / 15 STUB / 3 BROKEN after the Y7 delta).
+
+Read this **before** filing a bug against a menu item — if the row is
+STUB, the callback is already stubbed on purpose and your patch should
+target that specific line.  The document also carries a rolling "Top 10
+Broken/Stub Fixes to Prioritize" list at the bottom.
+
+Sibling docs:
+
+- `docs/feature_map_delta_2026_07_04.md` — commit-by-commit delta since
+  the previous audit freeze.
+- `docs/feature_map_2026_06_03.md` — earlier snapshot, kept for
+  historical comparison.
+
+---
+
+## 13. The `actions/` subpackage (X3 / Y1 idiom)
+
+Every `ToolAction` that mutates persistent state (project files, editor
+layout, entity clipboard, selection) lives as a small pure-Python
+helper under `python/slappyengine/actions/*.py` — one file per
+category bucket.
+
+**Files:**
+
+- `actions/project_actions.py` — `save_project`, `new_project`,
+  `open_recent` (X3 batch).
+- `actions/view_actions.py` — `reset_layout` (X3 batch).
+- `actions/edit_actions.py` — `duplicate_selection` (X3 batch).
+- `actions/selection_actions.py` — `select_all`, `deselect_all`,
+  `copy_selection`, `paste_selection` (Y1 batch).
+- `actions/theme_actions.py` — `cycle_theme` (Y1 batch).
+- `actions/tool_settings_actions.py` — snap grid / gizmo mode / etc.
+
+**Contract:**
+
+Every helper takes a single `ctx: dict` argument matching the router's
+Python-fallback signature. It resolves whichever shell / registry /
+clipboard handle it needs from `ctx` (or falls back to a headless-safe
+default), performs its work, and returns a small dict describing the
+outcome. `None` means "no-op" (missing dependency / cancelled).
+
+```python
+# actions/project_actions.py::save_project (abridged)
+def save_project(ctx: dict) -> dict | None:
+    shell = ctx.get("shell")
+    project = _resolve_project(ctx)
+    if project is None:
+        return None
+    project.save()
+    return {"status": "saved", "path": str(project.path)}
+```
+
+This split is what makes every user-invocable action unit-testable
+without spinning up the DPG viewport — the regression tests
+(`SlapPyEngineTests/tests/test_stub_triage_x3.py` and
+`test_stub_triage_y1.py`) call the helpers with a synthetic `ctx`
+dict and assert on the return value.
+
+When you add a new persistent-state action:
+
+1. Add the `ToolAction` row in `tool_router.py` REGISTRY.
+2. Add the helper function under `actions/<category>_actions.py`.
+3. Re-export it from `actions/__init__.py`.
+4. Add a regression test that calls it with a synthetic `ctx` dict.
+
+Design provenance: `docs/tool_routing_2026_06_07.md` §5.
+
+---
+
+## 14. Prefab library + autosave subsystems
+
+Two engine-side subsystems every editor session touches.
+
+### `slappyengine.prefabs.PrefabLibrary`
+
+- **Source:** `python/slappyengine/prefabs/{prefab.py, library.py}`.
+- **Baked entries** (read-only, ship inside the wheel):
+  `python/slappyengine/prefabs/baked/{ball, bridge, chain, crate,
+  ragdoll, windmill}.prefab.yaml`.
+- **User overlay** (writable): `~/.slappyengine/prefabs/`.
+  `PrefabLibrary.bake_defaults()` idempotently copies baked → user on
+  first use so entries can be edited without touching the installed
+  package.
+- **Instantiate:** `library.get("ragdoll").instantiate(dynamics, position=(0.0, 3.0))`.
+- **File format:** YAML with `name` / `category` / `spec` top-level
+  keys. The spec is a dynamics-world builder blob consumed by
+  `dynamics.build_*` helpers.
+
+Mirrors the same pattern as `UserThemeStore`
+(`ui/theme/user_themes.py`) so any code that reads themes reads
+prefabs the same way.
+
+### `slappyengine.autosave.AutosaveManager`
+
+- **Source:** `python/slappyengine/autosave.py`.
+- **Three orthogonal pieces:** `AutosaveState` (dataclass config bag),
+  `AutosaveManager` (background timer + snapshot ring buffer +
+  `threading.Lock`), `RecoveryPrompt` (boot-time helper that returns a
+  `RecoveryOffer` if the newest snapshot is newer than the last-saved
+  timestamp).
+- **Snapshot format:** `~/.slappyengine/autosave/YYYYMMDD_HHMMSS_<seq>.snap.yaml`
+  with a `meta:` block (`saved_at` ISO-Z, `project`, `engine_version`)
+  and a `payload:` slot (dict / bytes-as-base64 / str).
+- **Thread safety:** every `_tick()` grabs `self._lock` before invoking
+  the save callback. Restart-with-new-interval is likewise
+  lock-protected so a timer tick can't fire mid-reconfigure.
+- **Design provenance:** sprint Y6 (autosave + crash-recovery).
+
+Both subsystems land under `~/.slappyengine/` — the same root the
+user-override loader uses. See `docs/user_customization_2026_06_07.md`
+for the full folder contract.

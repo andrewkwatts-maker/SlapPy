@@ -1,8 +1,120 @@
 # SlapPyEngine
 
-**2D pixel-art game engine with optional 3D layers, a Rust core, and wgpu rendering.**
+**2D pixel-art game engine with a notebook-diary aesthetic editor, a Python game surface, a Rust `_core` backend, and an [Arithma](https://pypi.org/project/arithma/) symbolic-math sibling.**
 
-Build expressive 2D games in Python — from classic pixel-art shooters to hybrid 2D/3D worlds — backed by a Rust `_core` extension (PyO3 / maturin) and cross-platform GPU rendering via wgpu.
+Build expressive 2D games in Python — from classic pixel-art shooters to hybrid 2D/3D worlds — driven by the DearPyGui **notebook-diary** editor (six shipped themes, procedural washi-tape / page-lining / edge-stroke shaders, a stationery-tray toolbar, and idle woodland creatures), backed by a Rust `_core` extension (PyO3 / maturin) for hot paths, cross-platform GPU rendering via wgpu, and an optional symbolic-math bridge into the Rust-backed [Arithma](https://pypi.org/project/arithma/) sibling for animation curves, IK targets, and material graphs.
+
+New here? Read [`docs/quickstart.md`](docs/quickstart.md) (5 minutes) then jump to [`docs/ONBOARDING.md`](docs/ONBOARDING.md) for the deeper tour.
+
+---
+
+## Quickstart
+
+```bash
+# 1. Install the engine + editor (Dear PyGui + pywebview + Arithma).
+pip install "slappy-engine[editor]"
+
+# 2. Verify the install — the ragdoll demo exercises softbody + IK + Rust core.
+python SlapPyEngineExamples/examples/hello_ragdoll.py --no-gif
+
+# 3. Boot the notebook-diary editor.
+python -c "import slappyengine as se; se.Engine().run_editor()"
+```
+
+Full walkthrough with themes, hotkeys, and prefab drops:
+[`docs/quickstart.md`](docs/quickstart.md).
+
+---
+
+## Feature highlights
+
+Sourced from the 2026-07-04 feature-map audit (`docs/engine_feature_map_2026_07_04.md`,
+256 rows, 93.0% WIRED / 5.9% STUB / 1.1% BROKEN):
+
+- **Notebook-diary editor** — DearPyGui shell reskinned as a stationery
+  tray with a sticker toolbar, bestiary-style outliner, field-journal
+  inspector, coloured-pencil gizmos, idle woodland creatures, and a
+  27-shortcut hotkey map.
+- **6 shipped diary themes** — `teengirl_notebook`, `cozy_diary`,
+  `bullet_journal`, `scrapbook_summer`, `cottagecore_garden`,
+  `kawaii_planner`; hot-swap losslessly, extendable via
+  `~/.slappyengine/themes/*.theme.yaml`.
+- **Procedural stationery shader libraries** — 15 page-lining patterns,
+  15 edge-stroke pens/pencils, and 23 washi-tape variants (15 static +
+  8 animated, `u_time`-driven).
+- **Prefab library** — 6 baked entries (`ball`, `bridge`, `chain`,
+  `crate`, `ragdoll`, `windmill`) with a per-user
+  `~/.slappyengine/prefabs/` overlay for edits.
+- **Visual scripting** — Notebook Node Editor with 18+ material graph
+  nodes, palette + right-click add, WGSL-emitting compile, and
+  Python ↔ Graph codegen.
+- **Post-process chain manifest** — declarative pass ordering via
+  `post_process/executor.py::apply_manifest`; presets ship for
+  cinematic / arcade / iso-strategy.
+- **Autosave + crash recovery** — background timer snapshots the
+  editor state to `~/.slappyengine/autosave/`; a boot-time
+  `RecoveryPrompt` offers to restore newer-than-last-save work.
+- **User override layer** — drop `.py` panels, `.yaml` hotkeys,
+  `.wgsl` shaders under `~/.slappyengine/ui/` to extend the editor
+  without touching the installed wheel.
+- **First-party integration tests** — three shipping games
+  (Bullet Strata, Ochema Circuit, Stone Keep) run the engine as
+  living regression harnesses.
+
+---
+
+## Repository layout
+
+Top-level Python subpackages under `python/slappyengine/` — every entry
+is a lazy top-level import (`import slappyengine as sle; sle.dynamics`).
+See [`docs/engine_surface_v030.md`](docs/engine_surface_v030.md) for the
+auto-generated public symbol map.
+
+```
+python/slappyengine/
+├── actions/          # Headless-safe callbacks for editor menu actions (X3 / Y1 idiom).
+├── ai/               # LLM client + script generation (httpx-backed, Ollama-compatible).
+├── animation/        # Anim-graph nodes, blend trees, IK retargeting hooks.
+├── audio_runtime/    # Sounddevice + soundfile backend behind engine.audio.
+├── autosave.py       # AutosaveManager + RecoveryPrompt (background snapshotting).
+├── build/            # Project scaffolder — `slap new` template writer.
+├── compute/          # ComputePass, EffectPipeline, WGSL AST compiler.
+├── dynamics/         # Unified XPBD primitives (Body, JointSpec, RopeSpec, RagdollSpec, IK).
+├── ext/              # Stable shims for downstream games (Bullet Strata, Ochema Circuit).
+├── fluid/            # PBF particle-based fluid (Rust-backed step, Python surface).
+├── gi/               # Radiance cascades, ReSTIR DI, SVGF denoiser.
+├── gpu/              # GPUContext, render / mesh / texture managers, PBR material.
+├── input/            # ActionMap + InputManager (keyboard / mouse / gamepad).
+├── iso/              # Isometric 2D-grid-with-Z rendering + iso.combat.
+├── material/         # NodeMaterial + material node types (add / lerp / sample / …).
+├── math/             # Formula (Arithma bridge), Vec2/3/4, animation curves.
+├── net/              # P2P (kademlia DHT + zeroconf LAN) + lockstep sync.
+├── numerics/         # Generic numerical kernels (V-cycle Poisson, SOR).
+├── physics/          # Broadphase, CCD, particle graph, hulls (WIP subpackage).
+├── post_process/     # Bloom / GTAO / TAA / DoF / SSR / shadow CSM + manifest.
+├── prefabs/          # PrefabLibrary — 6 baked entries + user overlay.
+├── projects/         # Project + registry — `.slap_proj` load/save/recents.
+├── residency/        # Disk → RAM → VRAM promotion, .slap binary format.
+├── softbody/         # XPBD softbody solver (Rust-backed step).
+├── studio.py         # Stage scaffolding — softbody / fluid / humanoid / dynamics + record().
+├── telemetry/        # Low-overhead event emission (86 ns no-subscriber emit).
+├── testing/          # Visual regression harness (assert_scene_matches, diff_pngs).
+├── thermal/          # HeatField + pairwise boundary exchange.
+├── tool_router.py    # REGISTRY of ToolAction entries gating every hotkey / spawn / menu.
+├── tools/            # sprite_audit, texture / audio / video / track CLIs.
+├── topology/         # Connected components / union-find primitives.
+├── ui/               # Editor (notebook shell + Nova3D legacy panels) + widgets + theming.
+├── visual_scripting/ # 18+ material nodes + Python ↔ Graph codegen.
+└── zones/            # RectZone / ThresholdZone / ZoneManager + spatial hash.
+```
+
+Rust source under `src/` provides the `_core` extension (softbody, PBF,
+IK, hull, raster, node compiler). WGSL shaders live under `shaders/`
+(templates) and `python/slappyengine/compute/defaults/` (default pipelines).
+User overrides land at `~/.slappyengine/`; see
+[`docs/user_customization_2026_06_07.md`](docs/user_customization_2026_06_07.md).
+
+---
 
 ## What's new in v0.3.0b0
 
