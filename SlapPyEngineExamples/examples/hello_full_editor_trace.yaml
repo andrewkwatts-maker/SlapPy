@@ -1,0 +1,155 @@
+events:
+- kind: demo_start
+  python: 3.13.14
+  has_dpg: true
+  headless_env: true
+- kind: dpg_context
+  state: skipped
+- kind: themes_registered
+  names:
+  - teengirl_notebook
+  - cozy_diary
+  - bullet_journal
+  - scrapbook_summer
+  - cottagecore_garden
+  - kawaii_planner
+  count: 6
+- kind: theme_prime
+  name: teengirl_notebook
+- kind: diary_built
+  page_count: 6
+  page_ids:
+  - scene
+  - code
+  - material
+  - animation
+  - fx
+  - settings
+  active: scene
+- kind: prefab_spawned
+  name: crate
+  pos:
+  - -3.0
+  - 3.0
+  body_count: 1
+  via: library.spawn
+- kind: prefab_spawned
+  name: ball
+  pos:
+  - 0.0
+  - 3.0
+  body_count: 1
+  via: library.spawn
+- kind: prefab_spawned
+  name: chain
+  pos:
+  - 3.0
+  - 4.0
+  body_count: 1
+  via: library.spawn
+- kind: prefabs_summary
+  spawned:
+  - crate
+  - ball
+  - chain
+  body_count: 3
+  node_count: 10
+- kind: page_switch
+  to_page: scene
+  switch_count: 2
+- kind: outliner_select
+  entity_id: ent_crate
+  entity_name: crate_alpha
+  inspector_field_count: 8
+- kind: outliner_select
+  entity_id: ent_ball
+  entity_name: ball_beta
+  inspector_field_count: 8
+- kind: outliner_select
+  entity_id: ent_chain
+  entity_name: chain_gamma
+  inspector_field_count: 8
+- kind: outliner_select
+  entity_id: ent_light
+  entity_name: lantern_delta
+  inspector_field_count: 8
+- kind: outliner_select
+  entity_id: ent_camera
+  entity_name: orbit_epsilon
+  inspector_field_count: 8
+- kind: page_switch
+  to_page: material
+  switch_count: 3
+- kind: material_bridge_failed
+  error: 'to_material: one or more nodes failed to compile (mat_gain: input ''a''
+    wired to mat_input.value which has no emitted symbol; mat_output: input ''albedo''
+    wired to mat_gain.product which has no emitted symbol)'
+- kind: material_graph_built
+  node_count: 3
+  edge_count: 2
+  used_bridge: false
+  node_ids:
+  - mat_input
+  - mat_gain
+  - mat_output
+  bridge_output_keys: []
+- kind: material_graph_validated
+  error_count: 0
+  errors: []
+- kind: page_switch
+  to_page: fx
+  switch_count: 4
+- kind: fx_preset_loaded
+  preset: dreamy
+  pass_count: 4
+  user_dir: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_fx_qx6ipb6h
+- kind: fx_preset_applied
+  preset: dreamy
+- kind: page_switch
+  to_page: code
+  switch_count: 5
+- kind: code_evaluated
+  expression: sin(x) * a + b
+  bindings:
+    x: 0.5
+    a: 2.0
+    b: 3.0
+  value: 3.958851077208406
+  ok: true
+  error: ''
+- kind: autosave_snapshot
+  index: 0
+  path: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_t64xlo7y\20260704_193156_0001.snap.yaml
+  iteration: 1
+- kind: autosave_snapshot
+  index: 1
+  path: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_t64xlo7y\20260704_193156_0002.snap.yaml
+  iteration: 2
+- kind: autosave_snapshot
+  index: 2
+  path: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_t64xlo7y\20260704_193156_0003.snap.yaml
+  iteration: 3
+- kind: autosave_done
+  snapshot_count: 3
+  latest: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_t64xlo7y\20260704_193156_0003.snap.yaml
+- kind: autosave_summary
+  latest: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_t64xlo7y\20260704_193156_0003.snap.yaml
+- kind: theme_applied
+  theme_id: teengirl_notebook
+  active_name: teengirl_notebook
+- kind: theme_applied
+  theme_id: cozy_diary
+  active_name: cozy_diary
+- kind: theme_applied
+  theme_id: bullet_journal
+  active_name: bullet_journal
+- kind: theme_applied
+  theme_id: scrapbook_summer
+  active_name: scrapbook_summer
+- kind: theme_applied
+  theme_id: cottagecore_garden
+  active_name: cottagecore_garden
+- kind: theme_applied
+  theme_id: kawaii_planner
+  active_name: kawaii_planner
+event_count: 35
