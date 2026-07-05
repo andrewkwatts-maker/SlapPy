@@ -112,6 +112,80 @@ def cmd_pack(args: argparse.Namespace) -> None:
 
 
 # ---------------------------------------------------------------------------
+# HH2 sub-commands (scaffolder / launcher / config regen)
+# ---------------------------------------------------------------------------
+
+def cmd_launch(args: argparse.Namespace) -> None:
+    """Launch a scaffolded project — or spin up a temp project when no path.
+
+    ``slappy launch``          → new temp project in ~/.slappyengine/temp_projects
+    ``slappy launch PATH``     → launch that project
+    ``slappy launch --editor`` → open the editor instead of main.py
+    """
+    from slappyengine import scaffold
+
+    if args.path is None:
+        proj = scaffold.create_temp_project(editor=args.editor)
+        print(f"scaffolded temp project at {proj}")
+    else:
+        proj = Path(args.path).resolve()
+        if not scaffold.is_project_dir(proj):
+            _die(f"not a SlapPyEngine project: {proj}")
+
+    if args.dry_run:
+        cmd = scaffold.launch_project(proj, editor=args.editor, dry_run=True)
+        print(" ".join(str(c) for c in cmd))
+        return
+
+    result = scaffold.launch_project(proj, editor=args.editor)
+    if hasattr(result, "returncode"):
+        sys.exit(result.returncode)
+
+
+def cmd_dev(args: argparse.Namespace) -> None:
+    """Launch with hot-reload watching begin.py/tick.py/end.py.
+
+    When ``watchdog`` is not installed the command falls back to a plain
+    launch and prints a hint to install the dev extra.
+    """
+    from slappyengine import scaffold
+
+    proj = Path(args.path).resolve() if args.path else Path.cwd().resolve()
+    if not scaffold.is_project_dir(proj):
+        _die(f"not a SlapPyEngine project: {proj}")
+
+    try:
+        import watchdog  # noqa: F401
+    except ImportError:
+        print("watchdog not installed — hot-reload disabled. "
+              "Install with: pip install 'slappy-engine[dev]'", file=sys.stderr)
+
+    if args.dry_run:
+        cmd = scaffold.launch_project(proj, dry_run=True)
+        print("dev-mode command: " + " ".join(str(c) for c in cmd))
+        return
+
+    # Set an env var main.py can consult to enable engine-side hot reload,
+    # then hand off to the standard launch path.
+    env = {"SLAPPY_HOT_RELOAD": "1"}
+    result = scaffold.launch_project(proj, env=env)
+    if hasattr(result, "returncode"):
+        sys.exit(result.returncode)
+
+
+def cmd_config(args: argparse.Namespace) -> None:
+    """Regenerate config.yaml, preserving user values, filling missing keys."""
+    from slappyengine import scaffold
+
+    proj = Path(args.path).resolve() if args.path else Path.cwd().resolve()
+    if not proj.is_dir():
+        _die(f"not a directory: {proj}")
+    cfg = scaffold.regenerate_config(proj, preserve=not args.reset)
+    action = "reset" if args.reset else "reconciled"
+    print(f"{action} {cfg}")
+
+
+# ---------------------------------------------------------------------------
 # Argument parser
 # ---------------------------------------------------------------------------
 
@@ -158,6 +232,38 @@ def _build_parser() -> argparse.ArgumentParser:
     p_pack.add_argument("--project", default=None, metavar="PATH",
                         help="path containing project.slap_proj (default: cwd)")
 
+    # slap launch — HH2 scaffolder launcher
+    p_launch = sub.add_parser(
+        "launch",
+        help="launch a scaffolded project (or a fresh temp project)",
+    )
+    p_launch.add_argument("path", nargs="?", default=None,
+                          help="project directory (default: create a temp project)")
+    p_launch.add_argument("--editor", action="store_true",
+                          help="launch the editor instead of main.py")
+    p_launch.add_argument("--dry-run", action="store_true",
+                          help="print the launch command without executing it")
+
+    # slap dev — hot-reload launcher
+    p_dev = sub.add_parser(
+        "dev",
+        help="launch with begin.py/tick.py/end.py hot-reload",
+    )
+    p_dev.add_argument("path", nargs="?", default=None,
+                       help="project directory (default: cwd)")
+    p_dev.add_argument("--dry-run", action="store_true",
+                       help="print the launch command without executing it")
+
+    # slap config — regenerate config.yaml with defaults
+    p_config = sub.add_parser(
+        "config",
+        help="regenerate config.yaml with defaults for missing keys",
+    )
+    p_config.add_argument("path", nargs="?", default=None,
+                          help="project directory (default: cwd)")
+    p_config.add_argument("--reset", action="store_true",
+                          help="discard user values and write pristine defaults")
+
     return parser
 
 
@@ -166,12 +272,15 @@ def _build_parser() -> argparse.ArgumentParser:
 # ---------------------------------------------------------------------------
 
 _COMMANDS = {
-    "new":   cmd_new,
-    "run":   cmd_run,
-    "build": cmd_build,
-    "check": cmd_check,
-    "info":  cmd_info,
-    "pack":  cmd_pack,
+    "new":    cmd_new,
+    "run":    cmd_run,
+    "build":  cmd_build,
+    "check":  cmd_check,
+    "info":   cmd_info,
+    "pack":   cmd_pack,
+    "launch": cmd_launch,
+    "dev":    cmd_dev,
+    "config": cmd_config,
 }
 
 
