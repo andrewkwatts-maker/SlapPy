@@ -417,3 +417,15 @@ Historical cross-references:
 Cross-referenced against `git log --oneline --since=2026-07-04` (89
 commits), FF4 audit, EE5 rollup, Y7 delta, EE5 delta v2, engine feature
 map footer (291-row FF1 tally), and AA3 diary bridge investigation.*
+
+---
+
+## Attribution note (GG7 salvage)
+
+The initial version of this file was written into the working tree by
+GG7 during its authoring window, but the file was inadvertently swept
+into GG5's `NotebookCurveEditor` commit (`1ea284b`) by a parallel-agent
+`git add`. This is the exact cross-agent-commit-race risk documented in
+§7 of this report. The current commit re-establishes GG7 authorship
+attribution for the report body and adds this note; no report content
+was lost in the race.
