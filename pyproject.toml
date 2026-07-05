@@ -39,21 +39,77 @@ Repository = "https://github.com/andrewkwatts-maker/SlapPyEngine"
 Issues = "https://github.com/andrewkwatts-maker/SlapPyEngine/issues"
 
 [project.optional-dependencies]
+# Notebook / diary editor UI stack — DearPyGui-based panels + gizmos,
+# pywebview-based project-manager splash, arithma expression editor.
 editor = ["dearpygui>=1.11", "pywebview>=4.0", "arithma>=2.0.2"]
-video = ["av>=12.0"]
-audio = ["sounddevice>=0.4", "soundfile>=0.12"]
-dev = ["pytest>=7.0", "pytest-asyncio>=0.21", "watchdog>=3.0"]
-ai = ["httpx>=0.27"]
+# 3D asset import — glTF 2.0 + Wavefront OBJ + STL/PLY (trimesh) +
+# HDR/EXR/DDS textures (imageio). Pillow is already a core dep and
+# covers PNG/JPEG/WebP/TGA out of the box.
+#
+# HH3 recommendation (docs/nova3d_gap_audit_2026_07_05.md §6, §8):
+# ship all mesh + optional texture backends behind a single ``assets``
+# extra to keep the base wheel small (< 800 KiB core; +~30 MB with
+# assets). Users doing pure 2D pixel-art work never need these.
+assets = [
+    "pygltflib>=1.16",
+    "trimesh>=4.0",
+    "imageio>=2.34",
+    "Pillow>=10.0",
+]
+# Runtime game HUD — immediate-mode UI backed by imgui[glfw]. Kept
+# separate from ``editor`` because a shipped game must not depend on
+# DearPyGui (~15 MB), and imgui integrates directly with the wgpu +
+# glfw event loop the game already runs.
+hud = ["imgui[glfw]>=2.0"]
+# Video recording + import. ``av`` is the historical backend (PyAV,
+# libav bindings); opencv-python and imageio-ffmpeg are lighter
+# alternatives for capture-only / ffmpeg-CLI-only workflows. All three
+# are optional — the video subpackage soft-imports whichever it finds.
+video = [
+    "av>=12.0",
+    "opencv-python>=4.9",
+    "imageio-ffmpeg>=0.4",
+]
+# Audio backends. sounddevice + soundfile is the primary path
+# (already used by audio.py); pyaudio is provided as a fallback for
+# platforms where PortAudio via sounddevice fails to bind.
+audio = [
+    "sounddevice>=0.4",
+    "soundfile>=0.12",
+    "pyaudio>=0.2",
+]
+# Development-time tooling: pytest + async plugin + filesystem watcher
+# for hot reload, plus maturin for building the Rust ``_core`` wheel
+# from a checkout.
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "watchdog>=3.0",
+    "maturin>=1.5",
+]
+# AI-assisted authoring. httpx is used by the built-in Ollama client
+# for local LLM inference; torch + transformers gate the (heavy)
+# hugging-face model paths. These are opt-in because torch alone is
+# ~800 MB and would blow up the ``all`` meta-extra.
+ai = [
+    "httpx>=0.27",
+    "torch>=2.0",
+    "transformers>=4.30",
+]
 # Symbolic + numeric formula evaluation surface for `slappyengine.math`.
 # When this extra is installed `Formula` / `evaluate` / `compile_formula`
 # route through arithma's Rust-backed `Expression`. Without it the math
 # subpackage still imports — it falls back to a locked-down Python eval
 # sandbox (stdlib ``math`` only) for formula evaluation.
 math = ["arithma>=2.0.2"]
+# Multiplayer / peer-to-peer networking. kademlia = DHT peer
+# discovery, aioice = WebRTC ICE, zeroconf = LAN discovery,
+# websockets = signalling / lobby transport.
 network = [
     "kademlia>=2.2.2",
     "aioice>=0.9.0",
     "zeroconf>=0.131",
+    "websockets>=12.0",
 ]
 # 3D mesh + PBR rendering support.
 # wgpu is already a core dependency, so no additional Python packages are needed.
@@ -61,6 +117,10 @@ network = [
 #   maturin build --features 3d
 # Install with: pip install slappyengine[3d]
 3d = []
+# Meta-extra: pull in every optional runtime dep except the (~800 MB)
+# ``ai`` bundle. This is the "install everything I might reasonably
+# want" bucket; the heavy torch + transformers path stays opt-in.
+all = ["slappy-engine[editor,assets,hud,math,video,audio,network]"]
 
 [tool.maturin]
 python-source = "python"
