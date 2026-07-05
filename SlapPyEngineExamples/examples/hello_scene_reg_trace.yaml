@@ -1,0 +1,155 @@
+events:
+- kind: demo_start
+  python: 3.13.14
+  schema_version: 1
+- kind: temp_root_created
+  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0
+- kind: library_ready
+  prefab_names:
+  - ball
+  - bridge
+  - chain
+  - crate
+  - ragdoll
+  - windmill
+  prefab_count: 6
+- kind: entity_added
+  scene: scene1
+  name: crate_a
+  prefab_ref: crate
+  position:
+  - -4.0
+  - 3.0
+  tags:
+  - demo
+  - crate
+- kind: entity_added
+  scene: scene1
+  name: crate_b
+  prefab_ref: crate
+  position:
+  - -2.0
+  - 3.0
+  tags:
+  - demo
+  - crate
+- kind: entity_added
+  scene: scene1
+  name: ball_a
+  prefab_ref: ball
+  position:
+  - 0.5
+  - 3.0
+  tags:
+  - demo
+  - ball
+- kind: entity_added
+  scene: scene1
+  name: ball_b
+  prefab_ref: ball
+  position:
+  - 2.5
+  - 3.0
+  tags:
+  - demo
+  - ball
+- kind: entity_added
+  scene: scene1
+  name: chain_a
+  prefab_ref: chain
+  position:
+  - 4.5
+  - 4.0
+  tags:
+  - demo
+  - chain
+- kind: scene1_built
+  name: scene1
+  entity_count: 5
+  entity_names:
+  - crate_a
+  - crate_b
+  - ball_a
+  - ball_b
+  - chain_a
+- kind: scene1_saved
+  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0\scenes\scene1.scene.yaml
+  size_bytes: 613
+- kind: scene1_round_trip
+  equal: true
+  loaded_entity_count: 5
+- kind: registry_created
+  root: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0\scenes
+- kind: extra_scene_saved
+  tag: small
+  name: scene_small
+  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0\scenes\scene_small.scene.yaml
+  entity_count: 1
+- kind: extra_scene_saved
+  tag: medium
+  name: scene_medium
+  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0\scenes\scene_medium.scene.yaml
+  entity_count: 3
+- kind: extra_scene_saved
+  tag: large
+  name: scene_large
+  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0\scenes\scene_large.scene.yaml
+  entity_count: 7
+- kind: registry_discovered
+  count: 4
+  names:
+  - scene1
+  - scene_large
+  - scene_medium
+  - scene_small
+- kind: entity_spawned
+  name: crate_a
+  body_count: 1
+  first_kind: box
+- kind: entity_spawned
+  name: crate_b
+  body_count: 1
+  first_kind: box
+- kind: entity_spawned
+  name: ball_a
+  body_count: 1
+  first_kind: circle
+- kind: entity_spawned
+  name: ball_b
+  body_count: 1
+  first_kind: circle
+- kind: entity_spawned
+  name: chain_a
+  body_count: 1
+  first_kind: chain
+- kind: scene1_applied
+  world_body_count: 5
+  spawned_body_count: 5
+  entities_covered:
+  - ball_a
+  - ball_b
+  - chain_a
+  - crate_a
+  - crate_b
+- kind: snapshot_taken
+  snapshot_name: scene1_snapshot
+  snapshot_entity_count: 5
+  world_body_count: 5
+  diff_ok: true
+- kind: validation_error_expected
+  raised: true
+  line: null
+  message: entity 'no_prefab_or_inline' must set either 'prefab_ref' or 'inline_spec'
+- kind: summary
+  scenes_on_disk: 4
+  discovered_by_registry: 4
+  scene1_entities: 5
+  scene1_bodies_spawned: 5
+  snapshot_entities: 5
+  world_bodies: 5
+  validation_error_raised: true
+  trace_events: 25
+- kind: demo_end
+  total_events: 26
+  temp_root: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0
+event_count: 26
