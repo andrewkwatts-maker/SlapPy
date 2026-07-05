@@ -86,6 +86,7 @@ class ImportResult:
     textures: list[TextureData] = field(default_factory=list)
     materials: list[dict[str, Any]] = field(default_factory=list)
     hierarchy: list[dict[str, Any]] = field(default_factory=list)
+    skeletons: list[Any] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
 
     # ------------------------------------------------------------------
@@ -108,7 +109,8 @@ class ImportResult:
             f"meshes={len(self.meshes)}, "
             f"textures={len(self.textures)}, "
             f"materials={len(self.materials)}, "
-            f"hierarchy_nodes={len(self.hierarchy)})"
+            f"hierarchy_nodes={len(self.hierarchy)}, "
+            f"skeletons={len(self.skeletons)})"
         )
 
 

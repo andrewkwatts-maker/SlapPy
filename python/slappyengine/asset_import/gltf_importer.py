@@ -21,6 +21,7 @@ from typing import Any
 import numpy as np
 
 from .import_result import ImportDependencyError, ImportResult, TextureData
+from .skinned_mesh import Skeleton, SkeletonNode, SkinnedMeshData
 
 
 def _import_pygltflib():
@@ -152,6 +153,178 @@ def _build_mesh_from_primitive(
     }
 
 
+def _extract_joints_weights(
+    gltf,
+    joints_accessor_idx: int | None,
+    weights_accessor_idx: int | None,
+    buffers: list[bytes],
+) -> tuple[np.ndarray | None, np.ndarray | None]:
+    """Extract JOINTS_0 + WEIGHTS_0 attributes from a mesh primitive.
+
+    Both attributes are always 4-component per vertex in glTF 2.0. This
+    helper normalises the joint dtype to ``uint16`` (glTF permits
+    ``uint8`` or ``uint16``) and re-normalises weights so each row sums
+    to 1.0 when the source authoring tool did not — accepted per the
+    glTF spec but easier to consume when guaranteed.
+
+    Returns
+    -------
+    (joints, weights)
+        ``joints`` is ``(N, 4)`` ``uint16``; ``weights`` is ``(N, 4)``
+        ``float32``. Either may be ``None`` when the corresponding
+        accessor index is ``None`` (i.e. the primitive is not skinned).
+    """
+    joints = None
+    weights = None
+
+    if joints_accessor_idx is not None:
+        raw = _accessor_to_ndarray(gltf, joints_accessor_idx, buffers)
+        # Ensure 2D (N, 4).
+        if raw.ndim == 1:
+            raw = raw.reshape(-1, 4)
+        # Canonical dtype: uint16, so shaders and downstream code have
+        # one code path.
+        joints = raw.astype(np.uint16, copy=False)
+
+    if weights_accessor_idx is not None:
+        raw_w = _accessor_to_ndarray(gltf, weights_accessor_idx, buffers)
+        if raw_w.ndim == 1:
+            raw_w = raw_w.reshape(-1, 4)
+        weights = raw_w.astype(np.float32, copy=False)
+        # Renormalise rows whose sum ≠ 1 (within tolerance). Rows that
+        # sum to 0 (i.e. no bone influence) are left alone.
+        sums = weights.sum(axis=1)
+        needs_norm = ~np.isclose(sums, 1.0, atol=1e-4) & (sums > 0.0)
+        if np.any(needs_norm):
+            # Broadcast divide with safety on zero sums.
+            weights = weights.copy()
+            weights[needs_norm] = weights[needs_norm] / sums[needs_norm, None]
+
+    return joints, weights
+
+
+def _extract_inverse_bind_matrices(
+    gltf,
+    skin_index: int,
+    buffers: list[bytes],
+) -> np.ndarray | None:
+    """Read the K x 4 x 4 IBM accessor for a skin, or return identities.
+
+    Per glTF spec, if a skin omits ``inverseBindMatrices`` every joint
+    is assumed to have an identity IBM. We materialise identities
+    explicitly so downstream code doesn't need to special-case ``None``.
+    """
+    if skin_index is None or gltf.skins is None or skin_index >= len(gltf.skins):
+        return None
+    skin = gltf.skins[skin_index]
+    n_joints = len(skin.joints or [])
+    if getattr(skin, "inverseBindMatrices", None) is None:
+        # Identity fallback.
+        return np.tile(np.eye(4, dtype=np.float32), (n_joints, 1, 1))
+    raw = _accessor_to_ndarray(gltf, skin.inverseBindMatrices, buffers)
+    # glTF stores each matrix as 16 floats, column-major.
+    # _accessor_to_ndarray reshapes MAT4 to (-1, 16) since n_comp=16.
+    if raw.ndim == 2 and raw.shape[1] == 16:
+        matrices = raw.reshape(-1, 4, 4).astype(np.float32, copy=False)
+    elif raw.ndim == 1:
+        matrices = raw.reshape(-1, 4, 4).astype(np.float32, copy=False)
+    else:
+        matrices = raw.astype(np.float32, copy=False)
+    # glTF matrices are column-major; numpy interprets the flat 16
+    # floats as row-major. Transpose the last two axes so consumers
+    # can treat matrices[i] as a standard row-major 4x4.
+    matrices = np.transpose(matrices, (0, 2, 1))
+    return matrices
+
+
+def _extract_skeleton(
+    gltf,
+    skin_index: int,
+    buffers: list[bytes],
+) -> Skeleton | None:
+    """Walk gltf.skins[skin_index] + gltf.nodes to build a Skeleton.
+
+    Returns ``None`` if the skin is missing or has no joints.
+    """
+    if skin_index is None or gltf.skins is None or skin_index >= len(gltf.skins):
+        return None
+    skin = gltf.skins[skin_index]
+    joint_indices = list(skin.joints or [])
+    if not joint_indices:
+        return None
+
+    ibms = _extract_inverse_bind_matrices(gltf, skin_index, buffers)
+
+    # Build parent map: absolute node index -> parent absolute node
+    # index. glTF stores children lists, not parent pointers, so we
+    # invert by scanning nodes once.
+    parent_of: dict[int, int] = {}
+    for i, node in enumerate(gltf.nodes or []):
+        for child in node.children or []:
+            parent_of[child] = i
+
+    # Skin.skeleton is optional — it names the common ancestor of the
+    # joints. When absent, we detect the root as the joint whose parent
+    # is either not in the joint set or missing.
+    joint_set = set(joint_indices)
+    declared_root = getattr(skin, "skeleton", None)
+
+    nodes: list[SkeletonNode] = []
+    for local_i, abs_i in enumerate(joint_indices):
+        gnode = gltf.nodes[abs_i] if abs_i < len(gltf.nodes or []) else None
+        parent = parent_of.get(abs_i)
+        # For skeleton purposes we treat parents outside the joint set
+        # as "no parent" — the joint is effectively a root.
+        parent_in_skeleton = parent if parent in joint_set else None
+        ibm = (
+            ibms[local_i]
+            if ibms is not None and local_i < ibms.shape[0]
+            else np.eye(4, dtype=np.float32)
+        )
+        translation = (0.0, 0.0, 0.0)
+        rotation = (0.0, 0.0, 0.0, 1.0)
+        scale = (1.0, 1.0, 1.0)
+        name = f"joint_{abs_i}"
+        children: list[int] = []
+        if gnode is not None:
+            if gnode.translation is not None:
+                translation = tuple(float(x) for x in gnode.translation)
+            if gnode.rotation is not None:
+                rotation = tuple(float(x) for x in gnode.rotation)
+            if gnode.scale is not None:
+                scale = tuple(float(x) for x in gnode.scale)
+            if gnode.name:
+                name = gnode.name
+            # Only surface children that are joints of this skin.
+            children = [c for c in (gnode.children or []) if c in joint_set]
+        nodes.append(
+            SkeletonNode(
+                name=name,
+                index=int(abs_i),
+                parent_index=(int(parent_in_skeleton) if parent_in_skeleton is not None else None),
+                local_translation=translation,
+                local_rotation=rotation,
+                local_scale=scale,
+                children=children,
+                inverse_bind_matrix=ibm,
+            )
+        )
+
+    # Determine root local index.
+    root_local = 0
+    if declared_root is not None and declared_root in joint_indices:
+        root_local = joint_indices.index(declared_root)
+    else:
+        # First joint whose parent isn't in the skeleton.
+        for i, n in enumerate(nodes):
+            if n.parent_index is None:
+                root_local = i
+                break
+
+    name = skin.name or (nodes[root_local].name if nodes else "skeleton")
+    return Skeleton(nodes=nodes, root_index=root_local, name=name)
+
+
 def import_gltf(path: str | Path) -> ImportResult:
     """Load a .gltf or .glb file into an :class:`ImportResult`.
 
@@ -177,14 +350,33 @@ def import_gltf(path: str | Path) -> ImportResult:
     buffers = _load_buffers(gltf, base_dir)
 
     # ------------------------------------------------------------------
+    # Skeletons — build one Skeleton per glTF skin so mesh primitives
+    # can reference them by skin index.
+    # ------------------------------------------------------------------
+    skeletons: list[Skeleton] = []
+    for skin_idx in range(len(gltf.skins or [])):
+        skel = _extract_skeleton(gltf, skin_idx, buffers)
+        if skel is not None:
+            skeletons.append(skel)
+
+    # gltf mesh idx -> skin idx (looked up via first node that references
+    # that mesh with a skin). glTF binds mesh↔skin at the node level.
+    mesh_to_skin: dict[int, int] = {}
+    for node in gltf.nodes or []:
+        if node.mesh is not None and node.skin is not None:
+            mesh_to_skin.setdefault(node.mesh, node.skin)
+
+    # ------------------------------------------------------------------
     # Meshes — each glTF mesh may have multiple primitives; we emit one
-    # GpuMesh per primitive.
+    # GpuMesh per primitive. When a primitive has JOINTS_0/WEIGHTS_0 we
+    # wrap the mesh in a SkinnedMeshData with the linked skeleton.
     # ------------------------------------------------------------------
     meshes: list[Any] = []
     gltf_mesh_to_first_prim: list[int] = []  # gltf mesh idx -> our meshes[] idx
 
-    for mesh in gltf.meshes or []:
+    for mesh_i, mesh in enumerate(gltf.meshes or []):
         gltf_mesh_to_first_prim.append(len(meshes))
+        skin_idx = mesh_to_skin.get(mesh_i)
         for prim in mesh.primitives:
             attrs = prim.attributes
             pos_idx = getattr(attrs, "POSITION", None)
@@ -202,9 +394,40 @@ def import_gltf(path: str | Path) -> ImportResult:
             indices = None
             if prim.indices is not None:
                 indices = _accessor_to_ndarray(gltf, prim.indices, buffers)
-            meshes.append(
-                _build_mesh_from_primitive(positions, normals, uvs, indices)
-            )
+            base_mesh = _build_mesh_from_primitive(positions, normals, uvs, indices)
+
+            joints_idx = getattr(attrs, "JOINTS_0", None)
+            weights_idx = getattr(attrs, "WEIGHTS_0", None)
+            if joints_idx is not None or weights_idx is not None:
+                joints_arr, weights_arr = _extract_joints_weights(
+                    gltf, joints_idx, weights_idx, buffers
+                )
+                skel = None
+                skel_joints: list[int] = []
+                skin_root: int | None = None
+                ibms = None
+                if skin_idx is not None and skin_idx < len(skeletons):
+                    skel = skeletons[skin_idx]
+                    src_skin = gltf.skins[skin_idx]
+                    skel_joints = list(src_skin.joints or [])
+                    skin_root = src_skin.skeleton
+                    ibms = _extract_inverse_bind_matrices(
+                        gltf, skin_idx, buffers
+                    )
+                meshes.append(
+                    SkinnedMeshData(
+                        mesh=base_mesh,
+                        joints_0=joints_arr,
+                        weights_0=weights_arr,
+                        inverse_bind_matrices=ibms,
+                        skeleton=skel,
+                        skeleton_joints=skel_joints,
+                        skin_root_joint=skin_root,
+                        name=getattr(mesh, "name", None) or f"skinned_mesh_{mesh_i}",
+                    )
+                )
+            else:
+                meshes.append(base_mesh)
 
     # ------------------------------------------------------------------
     # Materials
@@ -280,12 +503,14 @@ def import_gltf(path: str | Path) -> ImportResult:
         hierarchy.append(n)
 
     dt_ms = (time.perf_counter() - t0) * 1000.0
+    skinned_count = sum(1 for m in meshes if isinstance(m, SkinnedMeshData))
     return ImportResult(
         kind="scene",
         meshes=meshes,
         textures=textures,
         materials=materials,
         hierarchy=hierarchy,
+        skeletons=skeletons,
         metadata={
             "source_path": str(path),
             "importer_used": "import_gltf",
@@ -294,6 +519,8 @@ def import_gltf(path: str | Path) -> ImportResult:
             "material_count": len(materials),
             "texture_count": len(textures),
             "node_count": len(hierarchy),
+            "skeleton_count": len(skeletons),
+            "skinned_mesh_count": skinned_count,
             "is_glb": path.suffix.lower() == ".glb",
         },
     )
