@@ -77,6 +77,8 @@ include = [
     "python/slappyengine/post_process/baked_chains/*.chain.yaml",
     "python/slappyengine/ui/hotkeys/baked/*.yaml",
     "python/slappyengine/ui/editor/baked_layouts/*.layout.yaml",
+    "python/slappyengine/ui/plugin_samples/**/*.py",
+    "python/slappyengine/ui/plugin_samples/**/*.yaml",
 ]
 # Strip debug symbols from the compiled _core extension to shrink wheel size.
 # Combined with [profile.release] strip = true in Cargo.toml, this drops the

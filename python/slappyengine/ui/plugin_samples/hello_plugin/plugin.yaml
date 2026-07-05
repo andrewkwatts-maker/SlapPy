@@ -1,0 +1,12 @@
+name: hello_plugin
+version: "0.1.0"
+author: SlapPyEngine
+entry: hello_plugin.py
+on_load: on_load
+on_shell_ready: on_shell_ready
+on_unload: on_unload
+provides:
+  - greeting
+  - sample
+requires: []
+enabled: true
