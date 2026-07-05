@@ -464,3 +464,37 @@ def __getattr__(name: str):
         return mod
 
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+# ---------------------------------------------------------------------------
+# HH1 (2026-07-04): ergonomic top-level API — App + launch() + load_model()
+#
+# Eager import so ``import slappyengine; slappyengine.launch(...)`` works
+# without hitting the PEP 562 lazy path (which only covers symbols in
+# ``_LAZY_MAP``). The ``app`` module has no heavy dependencies (soft-imports
+# the renderer) so the eager import cost is negligible.
+# ---------------------------------------------------------------------------
+from slappyengine.app import (  # noqa: E402
+    App,
+    AppConfig,
+    ModelHandle,
+    TextureHandle,
+    CameraHandle,
+    LightHandle,
+    launch,
+    load_model,
+    load_texture,
+)
+
+# Extend __all__ append-only so the locked pre-HH1 ordering is preserved.
+__all__ = list(__all__) + [
+    "App",
+    "AppConfig",
+    "ModelHandle",
+    "TextureHandle",
+    "CameraHandle",
+    "LightHandle",
+    "launch",
+    "load_model",
+    "load_texture",
+]
