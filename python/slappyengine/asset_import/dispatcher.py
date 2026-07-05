@@ -19,9 +19,41 @@ from typing import Any, Callable
 
 from .import_result import ImportResult
 from .gltf_importer import import_gltf
+from .mtl_resolver import parse_mtl
 from .obj_importer import import_obj
 from .stub_importer import import_fbx, import_ply, import_stl
 from .texture_importer import import_texture
+
+
+def _import_mtl(path: str | Path) -> ImportResult:
+    """Route .mtl through the resolver — return an ImportResult wrapper.
+
+    The returned :class:`ImportResult` has ``kind="material_library"``,
+    empty meshes/textures, and ``materials`` populated with dicts (one
+    per parsed material) plus ``metadata["mtl_defs"]`` for full access
+    to the raw parsed :class:`MtlMaterialDef` instances.
+    """
+    from .mtl_resolver import mtl_to_material  # noqa: PLC0415 - avoid cycle
+
+    p = Path(path)
+    defs = parse_mtl(p)
+    materials: list[dict] = []
+    resolved: dict[str, object] = {}
+    for name, mdef in defs.items():
+        materials.append({"name": name, "mtllib": p.name})
+        resolved[name] = mtl_to_material(mdef)
+    return ImportResult(
+        kind="material_library",
+        meshes=[],
+        materials=materials,
+        metadata={
+            "source_path": str(p),
+            "importer_used": "import_mtl",
+            "mtl_defs": defs,
+            "materials_by_name": resolved,
+            "material_count": len(defs),
+        },
+    )
 
 
 # Extension → importer function.
@@ -33,8 +65,11 @@ _MESH_EXT: dict[str, Callable[[str | Path], ImportResult]] = {
     ".ply": import_ply,
     ".stl": import_stl,
 }
+_MATERIAL_EXT: dict[str, Callable[[str | Path], ImportResult]] = {
+    ".mtl": _import_mtl,
+}
 _TEXTURE_EXT = {".png", ".jpg", ".jpeg", ".webp", ".tga"}
-_ALL_EXT = set(_MESH_EXT.keys()) | _TEXTURE_EXT
+_ALL_EXT = set(_MESH_EXT.keys()) | _TEXTURE_EXT | set(_MATERIAL_EXT.keys())
 
 
 class AssetImportDispatcher:
@@ -68,12 +103,14 @@ class AssetImportDispatcher:
         self._extra[ext.lower()] = fn
 
     def classify(self, path: str | Path) -> str:
-        """Return ``"mesh"`` / ``"texture"`` / ``"unknown"`` for ``path``."""
+        """Return ``"mesh"`` / ``"texture"`` / ``"material"`` / ``"unknown"``."""
         ext = Path(path).suffix.lower()
         if ext in _MESH_EXT or ext in self._extra:
             return "mesh"
         if ext in _TEXTURE_EXT:
             return "texture"
+        if ext in _MATERIAL_EXT:
+            return "material"
         return "unknown"
 
     def import_asset(self, path: str | Path) -> ImportResult:
@@ -94,6 +131,8 @@ class AssetImportDispatcher:
             return self._extra[ext](p)
         if ext in _MESH_EXT:
             return _MESH_EXT[ext](p)
+        if ext in _MATERIAL_EXT:
+            return _MATERIAL_EXT[ext](p)
         if ext in _TEXTURE_EXT:
             return import_texture(p)
         raise ImportError(

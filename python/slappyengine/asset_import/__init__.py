@@ -43,7 +43,15 @@ from .import_result import (
     ImportResult,
     TextureData,
 )
+from .mtl_resolver import (
+    MtlMaterialDef,
+    import_obj_with_materials,
+    mtl_to_material,
+    parse_mtl,
+    resolve_mtl_references,
+)
 from .obj_importer import import_obj
+from .skinned_mesh import Skeleton, SkeletonNode, SkinnedMeshData
 from .stub_importer import import_fbx, import_ply, import_stl
 from .texture_importer import import_texture
 
@@ -51,14 +59,22 @@ __all__ = [
     "AssetImportDispatcher",
     "ImportDependencyError",
     "ImportResult",
+    "MtlMaterialDef",
+    "Skeleton",
+    "SkeletonNode",
+    "SkinnedMeshData",
     "TextureData",
     "import_asset",
     "import_fbx",
     "import_gltf",
     "import_obj",
+    "import_obj_with_materials",
     "import_ply",
     "import_stl",
     "import_texture",
     "load_model",
     "load_texture",
+    "mtl_to_material",
+    "parse_mtl",
+    "resolve_mtl_references",
 ]
