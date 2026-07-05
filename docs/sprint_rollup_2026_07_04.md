@@ -1,18 +1,21 @@
-# Sprint Rollup — 2026-07-04 (V / W / X / Y / Z / AA batches)
+# Sprint Rollup — 2026-07-04 (V / W / X / Y / Z / AA / BB / CC / DD batches)
 
-Consolidated retrospective of the six-batch scrum push that ran between
+Consolidated retrospective of the nine-batch scrum push that ran between
 `db56df3` (V-batch start freeze, 2026-06-07 master review + 7-sprint
-refactor plan) and `9997cdd` (AA5, hello_full_editor demo). Six batches,
-approximately 42 sprint slots dispatched to parallel agents, ~55 commits
-landed on master. The engine feature map moved from 233 rows at V1 freeze
-to **266 rows with 248 WIRED (93.2%)** at AA1 close. All six diary themes,
-three 15-shader WGSL libraries (washi tape, page linings, edge strokes),
-and six baked prefabs shipped alongside a diary-shell workspace, prefab
-library, autosave subsystem, and hotkey remap layer. Live viewport polish
-(TAA / bloom / gizmo overlay), five hardening rounds, seven new hello_*
-demos, and a 20-action `slappyengine.actions.*` subpackage round out the
-push; downstream game compat (Ochema Circuit / Bullet Strata) was
-deliberately not touched.
+refactor plan) and `7be6617` (DD1/DD3/DD5 salvage, 2026-07-05 nightly).
+Nine batches, approximately 63 sprint slots dispatched to parallel
+agents, ~76 commits landed on master. The engine feature map moved from
+233 rows at V1 freeze to **281 rows with 263 WIRED (93.6%)** at DD1
+close. All six diary themes, three 15-shader WGSL libraries (washi tape,
+page linings, edge strokes), six baked prefabs, and six baked layout
+presets shipped alongside a diary-shell workspace, prefab library,
+autosave subsystem, hotkey remap layer, toast notification system,
+camera-tween animator, VS-Code-style command palette, telemetry
+dashboard, timeline editor, smoke runner, and shader batch validator.
+Live viewport polish (TAA / bloom / gizmo overlay), seven hardening
+rounds, nine new hello_* demos, and a 35-action `slappyengine.actions.*`
+subpackage round out the push; downstream game compat (Ochema Circuit /
+Bullet Strata) was deliberately not touched.
 
 ---
 
@@ -26,6 +29,9 @@ deliberately not touched.
 | **Y** | `48eb8ee`..`61d6b83` | ~7 | Y1 STUB triage round 2, Y2 hello_joint fix, Y3 prefab library, Y4 gizmo overlay, Y5 message log, Y6 autosave subsystem, Y7 re-audit | Feature-map delta doc (Y7). `slappyengine.prefabs` — Prefab dataclass + PrefabLibrary registry + 7 body kinds + `.prefab.yaml` round-trip. `slappyengine.autosave` — AutosaveManager threading.Timer + RecoveryPrompt / RecoveryOffer. NotebookGizmoOverlay hand-drawn move/rotate/scale handles. NotebookMessageLog + `_DiaryLogHandler` telemetry bridge. 5 more actions wired (`tool.select_all` / `deselect_all` / `editor.copy_selection` / `paste_selection` / `theme.cycle`). |
 | **Z** | `fb073f4`..`39cad69` | ~7 | Z1 message-log headless fix, Z2 prefab spawn menu, Z3 baked chain presets, Z4 hello_prefab + hello_autosave, Z5 docs polish, Z6 editor autosave integration, Z7 STUB triage round 3 | NotebookPrefabMenu 96×96 card grid. 6 baked post-process chain presets (`default` / `crisp` / `dreamy` / `neon` / `retro_film` / `debug`) via ChainBaker. EditorAutosaveIntegration wiring Y6 into shell lifecycle. Fix for `NotebookMessageLog` real-DPG headless segfault. 5 more actions wired (`tool.snap_to_grid` / `view.zoom_in` / `zoom_out` / `zoom_reset` / `theme.export_current`). README + quickstart + onboarding polish. |
 | **AA** | `f6bb3f0`..`9997cdd` | ~7 | AA1 STUB triage round 4, AA2 prefab/autosave polish, AA3 diary softbody bridge, AA4 material graph bridge, AA5 hello_full_editor, AA6 WGSL shader lint, AA7 hotkey remap | `slappyengine.ui.editor.diary_softbody_bridge` shim + 8-test suite (rows 80/223 preview-flip). MaterialGraphBridge round-trip between V5 material nodes and NotebookMaterialEditor. hello_full_editor end-to-end scripted demo (6 pages + prefabs + material + autosave + 6 themes + 37 events). `slappyengine.shader_lint` with 53-shader coverage. `slappyengine.ui.hotkey_remap` + 3 baked hotkey presets. 5 more actions wired (`edit.cut_selection` / `delete_selection` / `view.center_on_selection` / `frame_all` / `tool.pan`). PrefabLibrary API polish (spawn / entity_count / bake_and_load) + AutosaveManager.read_snapshot. |
+| **BB** | `a360d56`..`8b6f8b1` | ~7 | BB1 STUB triage round 5, BB3 autosave panel, BB4 shader hot-reload watcher, BB5 sprint rollup, BB6 prefab preview baker, BB7 hotkey help panel | 5 more actions wired (`theme.import_from_file` / `file.save_layout_as` / `file.load_layout_from_file` / `edit.undo` / `edit.redo`). NotebookAutosavePanel snapshot restore. Shader hot-reload watcher (auto-lint WGSL edits). Prefab preview icon baker + 6 baked previews. NotebookHotkeyHelp diary-themed rebind panel. Rollup doc for V-AA batches. |
+| **CC** | `2b835c3`..`06620e8` | ~7 | CC1 STUB triage round 6, CC2 hello_material_graph, CC3 asset inspector, CC4 baked layout presets, CC5 toast manager, CC6 camera tweens, CC7 command palette | 5 more actions wired (`edit.select_by_name` / `spawn.repeat_last` / `view.toggle_grid` / `view.toggle_gizmos` / `content.copy_asset_path`). hello_material_graph demo (4 WGSL graphs via V5+AA4 bridge). NotebookAssetInspector (7 asset kinds — script/scene/texture/material/shader/prefab/other). 6 baked layout presets (default/triple_pane/wide_code/focus_mode/debugging/presentation) via LayoutBaker. NotebookToastManager (4 levels + 20 sticker glyphs + logging subscriber). Camera animation tweens (`view.focus_on_selection_animated` + `view.frame_all_animated`) with 6 easing curves. NotebookCommandPalette (Ctrl+Shift+P VS-Code-style fuzzy finder). |
+| **DD** | `324e8e6`..`7be6617` | ~6 (DD7 lost) | DD1+DD3+DD5 salvage, DD2 hello_toast_animation, DD4 telemetry dashboard, DD6 shader batch validator | 5 more actions wired via DD1 salvage (`layer.duplicate` / `panel.close_all` / `panel.restore_last_hidden` / `spawn.repeat_last_batch` / `theme.cycle_reverse`). SmokeRunner (DD3 salvage — discover/run_one/run_all_parallel + format_summary + write_report). NotebookTimelineEditor (DD5 salvage — keyframe curves, cubic/linear/step interpolation, YAML round-trip). hello_toast_animation demo (6-second CC5+CC6 walkthrough at 60 FPS). NotebookTelemetryDashboard (4 view kinds — counters/gauges/histograms/perf timers, CSV export). Shader batch validator (walks 3 libraries + all `*.wgsl` roots, Markdown report + YAML manifest for CI). DD7 not committed. |
 
 ---
 
@@ -242,6 +248,130 @@ WIRED (93.2%), 15 STUB (5.6%), 3 BROKEN (1.1%)**.
 
 ---
 
+## CC batch (2026-07-04 late)
+
+Seven CC-batch sprints landed between `2b835c3` and `06620e8` on
+2026-07-05 (~06:51–06:55 window). The batch focused on polish surfaces:
+a second demo pass through the V5/AA4 material graph, a specialist
+asset inspector, baked layout presets to mirror the ChainBaker /
+PrefabLibrary / UserThemeStore baking pattern, and three UX
+subsystems (toast notifications, camera tweens, command palette).
+
+* **CC1** (`06620e8`) — Round 6 STUB triage. Five action ids wired:
+  `edit.select_by_name` / `spawn.repeat_last` / `view.toggle_grid` /
+  `view.toggle_gizmos` / `content.copy_asset_path`. Backing modules:
+  `edit_by_name_actions.py`, `spawn_history_actions.py`,
+  `view_toggle_actions.py`, `content_shell_actions.py`. Every helper
+  raises `TypeError` on `None`/non-mapping ctx (BB2 hardening pattern).
+  39 regression tests.
+* **CC2** (`54b9104`) — `hello_material_graph` demo. Compiles four
+  material graphs (simple diffuse, fresnel-tinted, Perlin noise ramp,
+  textured PBR) via the V5 palette + AA4 `MaterialGraphBridge.emit_full_shader`.
+  Emits `hello_material_graph_<name>.wgsl` next to the module plus an
+  18-event trace. Declares two demo-local `MaterialNode` subclasses
+  (`ConstantVec3`, `ConstantFloat`) to plug the constant-leaf gap.
+  10 tests.
+* **CC3** (`039763e`) — `NotebookAssetInspector`. `MovablePanelWindow`-wrapped
+  diary-themed inspector that swaps its body layout on the currently-selected
+  asset's kind: script (line-capped source w/ syntax hints), scene (YAML
+  summary), texture (128×128 PIL preview + metadata), material (WGSL
+  summary + "Open in Material Editor" callback), shader (WGSL + byte
+  count + AA6 lint WARN/ERROR), prefab (node/joint count + bbox +
+  optional BB6 preview bake), other (size + mtime + hex dump). 55 tests.
+* **CC4** (`2b835c3`) — Baked layout presets. Mirrors the ChainBaker /
+  PrefabLibrary / UserThemeStore baking pattern for editor layout
+  snapshots. Six shipping presets under
+  `python/slappyengine/ui/editor/baked_layouts/*.layout.yaml`:
+  `default`, `triple_pane`, `wide_code`, `focus_mode`, `debugging`,
+  `presentation`. `LayoutBaker` exposes
+  `bake_defaults` / `list_baked` / `list_user` / `load` /
+  `is_edited` / `revert` with user-wins-over-baked precedence.
+  `LayoutPersistence.load_baked_preset()` classmethod delegates
+  lazily. `pyproject.toml` maturin include glob picks up
+  `*.layout.yaml`. 46 tests.
+* **CC5** (`7b14ec7`) — `NotebookToastManager`. `ToastLevel` enum
+  (INFO / SUCCESS / WARN / ERROR) with diary-page-palette border colours.
+  `Toast` dataclass with `progress()` reporting slide-in (300 ms) /
+  hold / fade-out (500 ms) / expired phases and alpha.
+  `show`/`dismiss`/`dismiss_all`/`tick` transport + `on_toast_shown`
+  / `on_toast_dismissed` subscribers. Newest-first stacking with
+  `max_visible` cap (default 5). `subscribe_to_logging(threshold=WARNING)`
+  installs a stdlib logging handler so any warning-level record becomes
+  a toast automatically. 20-glyph `STICKER_OPTIONS`. 69 tests.
+* **CC6** (`78755c8`) — Camera animation tweens. New
+  `camera_animation_actions.py` with `CameraAnimator` (non-blocking
+  pan/zoom/focus/frame-all tweens), `CameraTweenState` dataclass,
+  six easing curves (`linear`, `ease_in`, `ease_out`, `ease_in_out`,
+  `bounce`, `back`), and `_fb_tween_to_position` +
+  `_fb_focus_on_entity` router fallbacks. Wires
+  `view.focus_on_selection_animated` (800 ms `ease_in_out`) and
+  `view.frame_all_animated` (1200 ms) into `tool_router.REGISTRY`.
+  45 tests.
+* **CC7** (`c923b82`) — `NotebookCommandPalette`. Ctrl+Shift+P overlay
+  that fuzzy-searches every `ToolRouter` action. Substring on
+  label/action_id first, then acronym match; ties broken by category
+  priority (`file > edit > tool > view > panel > theme > spawn > other`).
+  Recent-actions ring buffer (max 8, MRU/dedup) surfaces on top when
+  the search is empty. Diary-themed washi-tape overlay with hand-drawn
+  separator. `open`/`close`/`toggle` bound to Ctrl+Shift+P; arrow keys
+  move highlight, Enter dispatches + closes, Escape closes without
+  dispatch. Stale recent action_ids filtered on router mutation. 60 tests.
+
+**CC batch total**: 7 landings, ~327 new tests, 5 STUB → WIRED flips
+(feature map jumps 271 → 276 rows).
+
+---
+
+## DD batch (2026-07-04 nightly)
+
+Six DD-batch sprints landed (DD7 lost — no commit reached master)
+between `324e8e6` and `7be6617` on 2026-07-05 (~08:00–10:09 window).
+Three of the seven agents (DD1 STUB triage r7, DD3 smoke runner,
+DD5 timeline editor) hit rate limit during summary generation but
+had already dropped complete files in the working tree; those three
+were salvaged as a single commit.
+
+* **DD1 + DD3 + DD5 salvage** (`7be6617`) — three-in-one salvage
+  commit. **DD1** (round 7 STUB triage): 5 more actions wired
+  (`layer.duplicate` / `panel.close_all` / `panel.restore_last_hidden`
+  / `spawn.repeat_last_batch` / `theme.cycle_reverse`); backing
+  modules `layer_duplicate_actions.py`, `panel_visibility_actions.py`,
+  `spawn_batch_actions.py`, `theme_cycle_reverse_actions.py`.
+  40 tests. **DD3** (`smoke_runner.py`): `SmokeRunner` + `SmokeResult`
+  + `discover` / `run_one` / `run_all_parallel` + `format_summary` +
+  `write_report`; 30 tests. **DD5** (`NotebookTimelineEditor`):
+  keyframe curve editing, cubic/linear/step interpolation, YAML
+  round-trip; ~79 tests. All 149 tests pass.
+* **DD2** (`324e8e6`) — `hello_toast_animation` demo. Scripted
+  6-second timeline driving `NotebookToastManager` + `CameraAnimator`
+  together at 60 FPS with a `MockCamera` and origin-beacon
+  `MockEntity`. Records per-frame camera state, active-tween count,
+  and toast counts into `hello_toast_animation_trace.yaml`, then
+  prints a milestone table to stdout. Fully headless.
+* **DD4** (`18b9618`) — `NotebookTelemetryDashboard`.
+  `MovablePanelWindow`-wrappable panel that buckets `telemetry.emit`
+  events into four synthetic views: counters (with per-poll delta),
+  gauges (60-sample sparklines rendered as pencil-jittered polylines),
+  histograms (hand-drawn ASCII bar charts), perf timers (sorted by
+  mean, showing count / p50 / p95 / p99 / max). Header exposes
+  Pause/Resume + Clear + Auto-scroll + Export CSV + poll-interval
+  slider (100..5000 ms). Diary-themed via `DoodleSeparator` +
+  washi tape underline. 46 tests.
+* **DD6** (`8c55a43`) — Shader batch validator. Walks the three
+  notebook theme libraries plus any `*.wgsl` files under `ui/theme/`,
+  `gi/`, `post_process/`, `hello_examples/` and (optionally) the
+  `post_process/baked_chains` subtree. Every source is routed through
+  the AA6 `lint_wgsl` (piggybacks on wgpu when available), aggregated
+  into a `ValidationSummary`, and emitted as a Markdown report plus a
+  YAML manifest for CI tracking. 25 tests.
+* **DD7** — Lost. No commit reached master. Retry needed on the next
+  batch.
+
+**DD batch total**: 6 landings (7 dispatched), ~149 new tests, 5 STUB
+→ WIRED flips via the DD1 salvage (feature map jumps 276 → 281 rows).
+
+---
+
 ## Test coverage summary
 
 At sprint end the test suite passes (individual per-batch counts as
@@ -258,19 +388,32 @@ reported by each sprint's commit message):
 * AA-batch: AA1 34, AA2 API polish tests in
   `test_api_polish_aa2.py`, AA3 diary softbody bridge 8, AA6 shader
   lint 244.
+* BB-batch: BB1 37, BB3 autosave panel, BB4 shader hot-reload,
+  BB6 preview baker, BB7 hotkey help.
+* CC-batch: CC1 39, CC2 10, CC3 55, CC4 46, CC5 69, CC6 45, CC7 60
+  — **~327 new tests**.
+* DD-batch (salvage-inclusive): DD1 40, DD3 30, DD5 ~79, DD2 demo
+  coverage, DD4 46, DD6 25 — **~149 new tests** (DD1+DD3+DD5 salvage
+  commit reports 149 combined for the three rate-limited sprints).
 
-Aggregate order-of-magnitude: **~4000+ tests running** across
-`SlapPyEngineTests/tests/` at AA5 close. No batch reported a red
-suite. The five Rounds of STUB triage (X3 / Y1 / Z7 / AA1 plus the
-pre-V post-V1 tag_painter registration) collectively land 20 new
-router-action wirings + ~124 regression tests.
+Aggregate order-of-magnitude: **~4476+ tests running** across
+`SlapPyEngineTests/tests/` at DD-close (roughly ~4000 at AA5 + 327 CC
++ 149 DD). No batch reported a red suite. The seven rounds of STUB
+triage (X3 / Y1 / Z7 / AA1 / BB1 / CC1 / DD1 plus the pre-V post-V1
+tag_painter registration) collectively land 35 new router-action
+wirings across 8 category buckets (`file`, `edit`, `tool`, `view`,
+`theme`, `panel`, `spawn`, `content`) + ~250+ regression tests.
 
 ---
 
 ## What's next
 
-Concrete follow-ups the six batches deferred:
+Concrete follow-ups the nine batches deferred:
 
+0. **DD7 retry.** The seventh DD-batch sprint slot produced no commit
+   (rate-limit-induced silent drop with no working-tree fragment to
+   salvage). Re-dispatch on the next batch; scope should be reconfirmed
+   against the DD sprint plan.
 1. **Uncommitted physics WIP dirs need tracking.** `git status` at
    AA-close shows uncommitted trees for `python/slappyengine/softbody/`,
    `python/slappyengine/fluid/`, `python/slappyengine/physics/`,
@@ -281,14 +424,17 @@ Concrete follow-ups the six batches deferred:
    `pressure_multigrid.py`, `world.py`, and more). AA3's bridge shim was
    built specifically so these can land without breaking the diary
    runner; a follow-up sprint should stage + review + commit these.
-2. **Diary softbody import STUB (rows 80 / 223) still BROKEN.** AA3
+2. **Softbody / diary panel un-pinning still pending.** AA3
    shipped `diary_softbody_bridge.py` + 8 tests but did NOT rewire the
    two callsites at `notebook_diary_page.py:539` (stage construction)
    and `notebook_diary_page.py:610` (per-tick step) because that file is
    pinned read-only by the AA-batch sprint plan. Un-pin the diary panel
    and swap in `bridge.step_stage(stage)` to flip both rows to WIRED on
-   the next feature-map delta.
-3. **Remaining STUBs after AA1 (15 total).**
+   the next feature-map delta. Rows 80 / 223 still BROKEN.
+3. **Remaining STUBs after DD1 (15 total, unchanged from AA1 tally).**
+   Seven rounds of triage (X3 + Y1 + Z7 + AA1 + BB1 + CC1 + DD1) landed
+   35 new router wirings + 1 flip (row 189 W2), but the 15 canonical
+   STUB rows below all persist:
    * Row 50 — `H` hotkey Toggle HUD: only flips `shell._hud_visible`;
      nothing reads it. Route through the viewport renderer's overlay
      layer.
@@ -380,13 +526,39 @@ Code hubs:
   WGSL lint suite (53 shaders).
 * `H:\Github\SlapPyEngine\SlapPyEngineExamples\examples\hello_full_editor.py`
   — AA5 full-stack editor demo.
+* `H:\Github\SlapPyEngine\SlapPyEngineExamples\examples\hello_material_graph.py`
+  — CC2 four-graph WGSL demo via V5+AA4 bridge.
+* `H:\Github\SlapPyEngine\SlapPyEngineExamples\examples\hello_toast_animation.py`
+  — DD2 6-second CC5+CC6 walkthrough.
+* `H:\Github\SlapPyEngine\python\slappyengine\ui\editor\baked_layouts\`
+  — CC4 6 baked layout presets.
+* `H:\Github\SlapPyEngine\python\slappyengine\ui\editor\layout_baker.py`
+  — CC4 LayoutBaker.
+* `H:\Github\SlapPyEngine\python\slappyengine\ui\editor\notebook_asset_inspector.py`
+  — CC3 7-kind asset inspector.
+* `H:\Github\SlapPyEngine\python\slappyengine\ui\editor\notebook_toast_manager.py`
+  — CC5 toast subsystem.
+* `H:\Github\SlapPyEngine\python\slappyengine\ui\editor\notebook_command_palette.py`
+  — CC7 Ctrl+Shift+P fuzzy finder.
+* `H:\Github\SlapPyEngine\python\slappyengine\ui\editor\notebook_telemetry_dashboard.py`
+  — DD4 4-view telemetry panel.
+* `H:\Github\SlapPyEngine\python\slappyengine\ui\editor\notebook_timeline_editor.py`
+  — DD5 keyframe curve editor (salvage).
+* `H:\Github\SlapPyEngine\python\slappyengine\actions\camera_animation_actions.py`
+  — CC6 CameraAnimator + 6 easing curves.
+* `H:\Github\SlapPyEngine\python\slappyengine\smoke_runner.py`
+  — DD3 SmokeRunner + parallel runner (salvage).
+* `H:\Github\SlapPyEngine\python\slappyengine\ui\theme\shader_batch_validator.py`
+  — DD6 WGSL batch validator + Markdown/YAML report.
 
 ---
 
-*Rollup generated 2026-07-05 by BB5 scrum agent. Sources: 55 commits
-between `db56df3` (2026-06-07) and `9997cdd` (2026-07-05). Baselines:
-`docs/engine_feature_map_2026_07_04.md` (V1 → AA1 tail),
-`docs/feature_map_delta_2026_07_04.md` (Y7), and
+*Rollup regenerated 2026-07-05 by EE5 scrum agent (originally BB5,
+extended with CC + DD landings). Sources: 76 commits between `db56df3`
+(2026-06-07) and `7be6617` (2026-07-05 nightly). Baselines:
+`docs/engine_feature_map_2026_07_04.md` (V1 → DD1 tail),
+`docs/feature_map_delta_2026_07_04.md` (Y7),
+`docs/feature_map_delta_2026_07_04_v2.md` (post-DD delta), and
 `docs/diary_softbody_bridge_2026_07_04.md` (AA3). Cross-referenced
-against `git log --oneline -60` + per-commit `git show --stat` for
-V/W/X/Y/Z/AA landings.*
+against `git log --oneline -40` + per-commit `git show --stat` for
+V/W/X/Y/Z/AA/BB/CC/DD landings.*
