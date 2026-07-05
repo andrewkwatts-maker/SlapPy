@@ -69,7 +69,42 @@ _MATERIAL_EXT: dict[str, Callable[[str | Path], ImportResult]] = {
     ".mtl": _import_mtl,
 }
 _TEXTURE_EXT = {".png", ".jpg", ".jpeg", ".webp", ".tga"}
-_ALL_EXT = set(_MESH_EXT.keys()) | _TEXTURE_EXT | set(_MATERIAL_EXT.keys())
+
+
+def _import_cubemap_manifest(path: str | Path) -> ImportResult:
+    """Route ``.cubemap.yaml`` (compound suffix) through the cubemap importer.
+
+    Returns an :class:`ImportResult` with ``kind="cubemap"`` and the
+    :class:`CubemapData` object stashed in ``metadata["cubemap"]``.
+    """
+    from .cubemap_importer import import_cubemap  # noqa: PLC0415 - avoid cycle
+
+    p = Path(path)
+    cubemap = import_cubemap(p)
+    return ImportResult(
+        kind="cubemap",
+        metadata={
+            "source_path": str(p),
+            "importer_used": "import_cubemap",
+            "cubemap": cubemap,
+            "resolution": cubemap.resolution,
+            "format": cubemap.format,
+        },
+    )
+
+
+# Compound suffix routing — checked before single-suffix routing.
+_COMPOUND_EXT: dict[str, Callable[[str | Path], ImportResult]] = {
+    ".cubemap.yaml": _import_cubemap_manifest,
+    ".cubemap.yml": _import_cubemap_manifest,
+}
+
+_ALL_EXT = (
+    set(_MESH_EXT.keys())
+    | _TEXTURE_EXT
+    | set(_MATERIAL_EXT.keys())
+    | set(_COMPOUND_EXT.keys())
+)
 
 
 class AssetImportDispatcher:
@@ -103,7 +138,11 @@ class AssetImportDispatcher:
         self._extra[ext.lower()] = fn
 
     def classify(self, path: str | Path) -> str:
-        """Return ``"mesh"`` / ``"texture"`` / ``"material"`` / ``"unknown"``."""
+        """Return ``"mesh"`` / ``"texture"`` / ``"material"`` / ``"cubemap"`` / ``"unknown"``."""
+        name_lower = Path(path).name.lower()
+        for compound in _COMPOUND_EXT:
+            if name_lower.endswith(compound):
+                return "cubemap"
         ext = Path(path).suffix.lower()
         if ext in _MESH_EXT or ext in self._extra:
             return "mesh"
@@ -126,6 +165,10 @@ class AssetImportDispatcher:
         p = Path(path)
         if not p.exists():
             raise FileNotFoundError(f"Asset not found: {p}")
+        name_lower = p.name.lower()
+        for compound, fn in _COMPOUND_EXT.items():
+            if name_lower.endswith(compound):
+                return fn(p)
         ext = p.suffix.lower()
         if ext in self._extra:
             return self._extra[ext](p)

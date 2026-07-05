@@ -50,6 +50,7 @@ from .mtl_resolver import (
     parse_mtl,
     resolve_mtl_references,
 )
+from .cubemap_importer import import_cubemap, import_hdr_cubemap
 from .obj_importer import import_obj
 from .skinned_mesh import Skeleton, SkeletonNode, SkinnedMeshData
 from .stub_importer import import_fbx, import_ply, import_stl
@@ -65,8 +66,10 @@ __all__ = [
     "SkinnedMeshData",
     "TextureData",
     "import_asset",
+    "import_cubemap",
     "import_fbx",
     "import_gltf",
+    "import_hdr_cubemap",
     "import_obj",
     "import_obj_with_materials",
     "import_ply",
