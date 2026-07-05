@@ -220,6 +220,11 @@ __all__ = [
     "LayerDataBuffer",
     # asset database
     "AssetDatabase",
+    # asset import (HH5)
+    "import_asset",
+    "AssetImportDispatcher",
+    "ImportResult",
+    "TextureData",
 ]
 
 # ---------------------------------------------------------------------------
@@ -368,6 +373,13 @@ _LAZY_MAP: dict[str, str] = {
     "LayerDataBuffer":                 ".layer",
     # asset database
     "AssetDatabase":                   ".assets.database",
+    # asset import (HH5)
+    "load_model":            ".asset_import.dispatcher",
+    "load_texture":          ".asset_import.dispatcher",
+    "import_asset":          ".asset_import.dispatcher",
+    "AssetImportDispatcher": ".asset_import.dispatcher",
+    "ImportResult":          ".asset_import.import_result",
+    "TextureData":           ".asset_import.import_result",
     # thermal (heat-Laplacian repackage — Phase B)
     "thermal":                         ".thermal",
 }
@@ -425,6 +437,7 @@ def __getattr__(name: str):
     # Subpackages returned as modules
     _subpackages = {
         "animation",
+        "asset_import",
         "assets",
         "compute",
         "dynamics",
