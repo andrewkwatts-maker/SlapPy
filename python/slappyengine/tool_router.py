@@ -1070,6 +1070,42 @@ def _fb_select_by_prefab_kind(ctx: dict[str, Any]) -> Any:
     return select_by_prefab_kind(ctx)
 
 
+# ---------------------------------------------------------------------------
+# KK7 STUB-triage fallbacks (2026-07-05 — round 13 after X3 / Y1 / Z7 /
+# AA1 / BB1 / CC1 / DD1 / EE1 / FF1 / GG1 / II5 / JJ6)
+#
+# Five more action ids: mirror-X/Y/Z trio, orbit-selection, top-down view.
+# See :mod:`slappyengine.actions.edit_mirror_actions`,
+# :mod:`slappyengine.actions.view_orbit_actions`, and
+# :mod:`slappyengine.actions.view_snap_actions`.
+# ---------------------------------------------------------------------------
+
+
+def _fb_mirror_selection_x(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_mirror_actions import mirror_selection_x
+    return mirror_selection_x(ctx)
+
+
+def _fb_mirror_selection_y(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_mirror_actions import mirror_selection_y
+    return mirror_selection_y(ctx)
+
+
+def _fb_mirror_selection_z(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_mirror_actions import mirror_selection_z
+    return mirror_selection_z(ctx)
+
+
+def _fb_orbit_selection(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_orbit_actions import orbit_selection
+    return orbit_selection(ctx)
+
+
+def _fb_top_down_view(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_snap_actions import top_down_view
+    return top_down_view(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -2038,6 +2074,48 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_select_by_prefab_kind,
             required_args=[],
             category="edit",
+        ),
+        # ── KK7 STUB-triage: mirror-X/Y/Z + orbit-selection + top-down
+        #    view (round 13) ────────────────────────────────────────────
+        ToolAction(
+            action_id="edit.mirror_selection_x",
+            label="Mirror Selection (X)",
+            rust_backing=None,
+            python_fallback=_fb_mirror_selection_x,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="edit.mirror_selection_y",
+            label="Mirror Selection (Y)",
+            rust_backing=None,
+            python_fallback=_fb_mirror_selection_y,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="edit.mirror_selection_z",
+            label="Mirror Selection (Z)",
+            rust_backing=None,
+            python_fallback=_fb_mirror_selection_z,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="view.orbit_selection",
+            label="Orbit Selection",
+            rust_backing=None,
+            python_fallback=_fb_orbit_selection,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="view.top_down_view",
+            label="Top-Down View",
+            rust_backing=None,
+            python_fallback=_fb_top_down_view,
+            required_args=[],
+            category="view",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(

@@ -353,10 +353,15 @@ Status legend:
 | 304 | `edit.lock_selection` action | Router action id (JJ6) | WIRED | `tool_router.py` → `_fb_lock_selection` → `actions/edit_lock_unlock_actions.py::lock_selection` | Sibling to hide_selection — marks selected entities uneditable. Writes both public (`entity.locked = True`) and legacy underscored (`entity._locked = True`) attributes when present. Locked entries are skipped by GG1 `invert_selection`, II5 Tab-through, and the JJ6 `select_by_prefab_kind` helper (unless `include_locked=True`) so locking effectively removes an entity from every selection flow. Returns `no_selection` / `already_locked` distinct from success `locked`. |
 | 305 | `edit.unlock_all` action | Router action id (JJ6) | WIRED | `tool_router.py` → `_fb_unlock_all` → `actions/edit_lock_unlock_actions.py::unlock_all` | Maya `Ctrl+Shift+L` — clears the lock flag scene-wide. Same roster walker + selection retarget as `show_all`. Returns `no_scene` / `empty_scene` / `all_unlocked` / `unlocked` (with `previous_locked_count`). |
 | 306 | `edit.select_by_prefab_kind` action | Router action id (JJ6) | WIRED | `tool_router.py` → `_fb_select_by_prefab_kind` → `actions/edit_select_by_kind_actions.py::select_by_prefab_kind` | Blender `Shift+G` "Select Similar" — swaps the selection for every entity whose `kind` / `prefab_kind` / `type` / `category` attribute matches the reference. Kind resolved from `ctx["kind"]` first (explicit override), else from the current selection's head entity. `mode="replace"` (default) / `mode="add"`. Locked / hidden entries filtered by default (`include_locked` / `include_hidden` opt back in). Returns `no_scene` / `empty_scene` / `no_selection` (kind unresolvable) / `no_kind_on_reference` (reference has no kind-like attribute) / `no_matches` / success `selected` (with `kind`, `count`, `previous_count`, `match_count`). |
+| 307 | `edit.mirror_selection_x` action | Router action id (KK7) | WIRED | `tool_router.py` → `_fb_mirror_selection_x` → `actions/edit_mirror_actions.py::mirror_selection_x` | Blender `Ctrl+M X` — reflects every selected entity's position across the X axis. Default pivot is the selection centroid (self-mirror = flip-in-place); `ctx["pivot"]` accepts a scalar or 2/3-tuple to override. When an entity carries an `entity.scale` iterable the corresponding axis component is negated so the mesh flips visually (opt-out via `ctx["flip_scale"]=False`). 2D positions (length-2) round-trip cleanly — the position tuple keeps its arity. Returns `no_selection` / `no_positions` distinct from success `mirrored` (with `axis`, `pivot`, `count`). |
+| 308 | `edit.mirror_selection_y` action | Router action id (KK7) | WIRED | `tool_router.py` → `_fb_mirror_selection_y` → `actions/edit_mirror_actions.py::mirror_selection_y` | Blender `Ctrl+M Y` — mirror of row 307, swaps `position.y` and negates `scale.y`. Same pivot / scale / return contract. |
+| 309 | `edit.mirror_selection_z` action | Router action id (KK7) | WIRED | `tool_router.py` → `_fb_mirror_selection_z` → `actions/edit_mirror_actions.py::mirror_selection_z` | Blender `Ctrl+M Z` — 3D-scene mirror. For 2D shells the `z_height` slot is written when the position stays length-2 so pixel-art tilemaps still round-trip. Same pivot / scale / return contract as rows 307-308. |
+| 310 | `view.orbit_selection` action | Router action id (KK7) | WIRED | `tool_router.py` → `_fb_orbit_selection` → `actions/view_orbit_actions.py::orbit_selection` | Blender `Numpad 4/6/8/2` — spins the viewport camera around the selection centroid. Increments `_cam_yaw` / `_cam_pitch` by `ctx["yaw_deg"]` (default 15°) / `ctx["pitch_deg"]` (default 0°). Pitch clamped to `[-π/2 + ε, π/2 - ε]` so the up-vector never inverts. Retargets `_cam_target` to the selection centroid on every fire (mirrors AA1 `view.center_on_selection`). Returns `no_camera` / `no_selection` / `no_positions` / success `orbited` (with `yaw` / `pitch` in radians + degrees). |
+| 311 | `view.top_down_view` action | Router action id (KK7) | WIRED | `tool_router.py` → `_fb_top_down_view` → `actions/view_snap_actions.py::top_down_view` | Blender `Numpad 7` — snaps the viewport camera to a top-down orthographic pose. Writes `_cam_yaw = 0`, `_cam_pitch = -π/2`, and (when the slot exists) `_cam_projection = "ortho"` (pass `ctx["projection"]="perspective"` to keep perspective). Optional `ctx["selection"]` / `ctx["entities"]` retargets `_cam_target` to the centroid; when omitted the previous look-at is kept so the snap only changes orientation. Returns `no_camera` / success `snapped` (with `view = "top_down"`, `yaw`, `pitch`, `projection`, `target`). |
 
-**Total rows: 306.** Status tally:
+**Total rows: 311.** Status tally:
 
-* **WIRED**: 289 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1 + 5 CC1 + 5 DD1 + 5 EE1 + 5 FF1 + 5 GG1 + 5 II5 + 5 JJ6; rows 189 + 243 also flipped STUB -> WIRED)
+* **WIRED**: 294 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1 + 5 CC1 + 5 DD1 + 5 EE1 + 5 FF1 + 5 GG1 + 5 II5 + 5 JJ6 + 5 KK7; rows 189 + 243 also flipped STUB -> WIRED)
 * **STUB**: 14 (rows 50, 78, 79, 94, 95, 191, 192, 193, 222, 224, 225, 226, 227, 228 — row 243 flipped to WIRED under GG1)
 * **BROKEN**: 3 (rows 80, 223 code-paths — see previous note; dedupes to 2 real import/attribute defects)
 
@@ -1032,4 +1037,72 @@ X3+Y1+Z7+AA1+BB1+CC1+DD1+EE1+FF1+GG1+II5+JJ6 wiring now covers 60
 previously-absent router action ids across 8 category buckets
 (`file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`,
 `content`). Roll-up: **306 total, 289 WIRED (94.4%), 14 STUB (4.6%),
+3 BROKEN (1.0%)**.
+
+
+## KK7 STUB-triage patch (2026-07-05, round 13 after X3 + Y1 + Z7 + AA1 + BB1 + CC1 + DD1 + EE1 + FF1 + GG1 + II5 + JJ6)
+
+Five more action ids landed in this tick, moving 5 rows from STUB
+(implicit — the ids were not yet registered) to WIRED (rows 307-311).
+The remaining 14 named STUBs are still DPG-shell-dependent
+(HUD toggle, diary "Open…" file picker, inspector help popups, theming
+save-as-new / import / export modals). This round wires the last set of
+common DCC QoL actions that don't need the DPG shell — the mirror-X/Y/Z
+trio plus two camera-orientation snaps:
+
+* `edit.mirror_selection_x` → `slappyengine.actions.edit_mirror_actions.mirror_selection_x`
+* `edit.mirror_selection_y` → `slappyengine.actions.edit_mirror_actions.mirror_selection_y`
+* `edit.mirror_selection_z` → `slappyengine.actions.edit_mirror_actions.mirror_selection_z`
+* `view.orbit_selection` → `slappyengine.actions.view_orbit_actions.orbit_selection`
+* `view.top_down_view` → `slappyengine.actions.view_snap_actions.top_down_view`
+
+New subpackages:
+`python/slappyengine/actions/edit_mirror_actions.py`
++ `python/slappyengine/actions/view_orbit_actions.py`
++ `python/slappyengine/actions/view_snap_actions.py`.
+
+Behavioural notes for KK7:
+
+* **`edit.mirror_selection_x` / `_y` / `_z`** — Blender `Ctrl+M X/Y/Z`,
+  Maya "Mesh > Mirror", AE "Layer > Transform > Flip Horizontal /
+  Vertical". Reflects each selected entity's position through the
+  requested axis. Default pivot is the selection centroid so a self-
+  mirror produces a stable flip-in-place (no drift on repeated calls —
+  the two-mirror round-trip test exercises this); `ctx["pivot"]` accepts
+  a scalar (axis-coordinate) or a 2/3-vec (only the relevant component
+  is consumed). When the entity carries an iterable `scale` slot the
+  corresponding axis component is negated so triangles / meshes flip
+  visually (opt-out via `ctx["flip_scale"] = False`). Position tuples
+  keep their arity — a 2D sprite stays 2D, and the mirrored Z folds
+  into `z_height` when present. Return contract:
+  `no_selection` (nothing to mirror) / `no_positions` (selection had
+  no position-carrying entries) / success `mirrored` (with `axis`,
+  `pivot`, `count`).
+* **`view.orbit_selection`** — Blender Numpad-4/6/8/2 orbit gesture.
+  Retargets the camera's `_cam_target` to the selection centroid, then
+  increments `_cam_yaw` by `ctx["yaw_deg"]` (default 15°) and
+  `_cam_pitch` by `ctx["pitch_deg"]` (default 0°). Pitch clamped to
+  `[-π/2 + 1°, π/2 - 1°]` — matches Blender's pole-avoidance behaviour
+  so the up-vector stays well-defined. Camera distance is not touched;
+  a follow-up `view.frame_all` re-fits the zoom. Return contract:
+  `no_camera` / `no_selection` / `no_positions` / success `orbited`
+  (with `yaw`, `pitch` in both radians + degrees, plus `target`).
+* **`view.top_down_view`** — Blender Numpad-7. Snaps camera orientation
+  to canonical top-down orthographic: `_cam_yaw = 0`,
+  `_cam_pitch = -π/2`, `_cam_projection = "ortho"` when the camera
+  carries the slot. Pass `ctx["projection"] = "perspective"` to keep
+  perspective (rare — matches Blender's `Numpad 5` toggle). Optional
+  `ctx["selection"]` / `ctx["entities"]` retargets `_cam_target` to the
+  centroid; when neither is provided the camera keeps its previous
+  look-at target so the snap is purely an orientation change (matches
+  Blender's "no selection" Numpad-7 behaviour). Return contract:
+  `no_camera` / success `snapped` (with `view = "top_down"`, `yaw`,
+  `pitch`, `projection`, `target`).
+
+Regression tests: `SlapPyEngineTests/tests/test_stub_triage_kk7.py`
+(36 tests, all passing). Combined
+X3+Y1+Z7+AA1+BB1+CC1+DD1+EE1+FF1+GG1+II5+JJ6+KK7 wiring now covers 65
+previously-absent router action ids across 8 category buckets
+(`file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`,
+`content`). Roll-up: **311 total, 294 WIRED (94.5%), 14 STUB (4.5%),
 3 BROKEN (1.0%)**.
