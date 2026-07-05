@@ -1,0 +1,291 @@
+events:
+- kind: demo_start
+  python: 3.13.14
+  has_dpg: true
+  headless_env: true
+- kind: dpg_context
+  state: skipped
+- kind: themes_registered
+  names:
+  - teengirl_notebook
+  - cozy_diary
+  - bullet_journal
+  - scrapbook_summer
+  - cottagecore_garden
+  - kawaii_planner
+  count: 6
+- kind: theme_prime
+  name: teengirl_notebook
+  active_name: teengirl_notebook
+- kind: project_added
+  name: hello_v2_alpha
+  index: 0
+- kind: project_added
+  name: hello_v2_beta
+  index: 1
+- kind: project_added
+  name: hello_v2_gamma
+  index: 2
+- kind: project_touched
+  name: hello_v2_alpha
+- kind: project_registry
+  store_path: C:\Users\Andrew\AppData\Local\Temp\hello_v2_showcase_d9ax8upi\projects.yaml
+  added_count: 3
+  added:
+  - hello_v2_alpha
+  - hello_v2_beta
+  - hello_v2_gamma
+  recent_count: 3
+  recent_names:
+  - hello_v2_alpha
+  - hello_v2_beta
+  - hello_v2_gamma
+- kind: user_theme_store
+  user_dir: C:\Users\Andrew\AppData\Local\Temp\hello_v2_showcase_d9ax8upi\themes
+  baked_count: 6
+  copied_count: 6
+  target: teengirl_notebook
+  loaded_name: teengirl_notebook
+- kind: prefab_library_loaded
+  user_dir: C:\Users\Andrew\AppData\Local\Temp\hello_v2_showcase_d9ax8upi\prefabs
+  registered:
+  - ball
+  - bridge
+  - chain
+  - crate
+  - ragdoll
+  - windmill
+- kind: prefab_spawned
+  name: crate
+  pos:
+  - -3.0
+  - 3.0
+  body_count: 1
+  via: library.spawn
+- kind: prefab_spawned
+  name: ball
+  pos:
+  - 0.0
+  - 3.0
+  body_count: 1
+  via: library.spawn
+- kind: prefab_spawned
+  name: chain
+  pos:
+  - 3.0
+  - 4.0
+  body_count: 1
+  via: library.spawn
+- kind: prefab_spawned
+  name: ragdoll
+  pos:
+  - 6.0
+  - 5.0
+  body_count: 1
+  via: library.spawn
+- kind: prefab_summary
+  spawned:
+  - crate
+  - ball
+  - chain
+  - ragdoll
+  body_count: 4
+  node_count: 18
+- kind: preview_baked
+  out_dir: C:\Users\Andrew\AppData\Local\Temp\hello_v2_showcase_d9ax8upi\previews
+  count: 6
+  first: C:\Users\Andrew\AppData\Local\Temp\hello_v2_showcase_d9ax8upi\previews\ball.png
+- kind: autosave_snapshot
+  index: 0
+  path: C:\Users\Andrew\AppData\Local\Temp\hello_v2_showcase_d9ax8upi\autosave\20260705_011823_0001.snap.yaml
+- kind: autosave_snapshot
+  index: 1
+  path: C:\Users\Andrew\AppData\Local\Temp\hello_v2_showcase_d9ax8upi\autosave\20260705_011823_0002.snap.yaml
+- kind: autosave_snapshot
+  index: 2
+  path: C:\Users\Andrew\AppData\Local\Temp\hello_v2_showcase_d9ax8upi\autosave\20260705_011823_0003.snap.yaml
+- kind: autosave_read
+  latest: C:\Users\Andrew\AppData\Local\Temp\hello_v2_showcase_d9ax8upi\autosave\20260705_011823_0003.snap.yaml
+  meta_keys:
+  - engine_version
+  - project
+  - saved_at
+  payload_keys:
+  - iteration
+  - text
+  - when
+- kind: chain_manifest_pass
+  name: bloom
+  pass_kind: bloom
+  enabled: true
+  depends_on: []
+- kind: chain_manifest_pass
+  name: tonemap
+  pass_kind: tonemap
+  enabled: true
+  depends_on:
+  - bloom
+- kind: chain_manifest_pass
+  name: dither
+  pass_kind: dither
+  enabled: true
+  depends_on:
+  - tonemap
+- kind: chain_manifest
+  pass_count: 3
+  topological:
+  - bloom
+  - tonemap
+  - dither
+  applied_ok: true
+  applied_shape:
+  - 16
+  - 16
+  - 3
+- kind: chain_baker
+  user_dir: C:\Users\Andrew\AppData\Local\Temp\hello_v2_showcase_d9ax8upi\chains
+  written_count: 6
+  baked_names:
+  - crisp
+  - debug
+  - default
+  - dreamy
+  - neon
+  - retro_film
+  loaded: dreamy
+  pass_count: 4
+- kind: material_bridge
+  node_count: 5
+  edge_count: 4
+  used_bridge: true
+  wgsl_bytes: 341
+  uniform_count: 1
+- kind: shader_lint
+  source_id: hello_v2_showcase.material
+  parseable: false
+  error_count: 1
+  warning_count: 0
+  size_bytes: 341
+- kind: hotkey_remap
+  user_dir: C:\Users\Andrew\AppData\Local\Temp\hello_v2_showcase_d9ax8upi\hotkeys
+  copied_count: 3
+  preset_names:
+  - default
+  - emacs_style
+  - vim_style
+  binding_count: 49
+- kind: camera_tween_scheduled
+  slot: position
+  easing: ease_in_out
+  duration_ms: 800.0
+- kind: camera_tween_scheduled
+  slot: zoom
+  easing: back
+  duration_ms: 1000.0
+- kind: camera_tween_done
+  scheduled: 2
+  ticks: 23
+  final_target:
+  - 3.0
+  - 4.0
+  - 0.0
+  final_distance: 3.5
+- kind: toast_shown
+  message: Project loaded
+  level: INFO
+  toast_id: toast-cbedd689a25e
+- kind: toast_shown
+  message: Prefabs baked
+  level: SUCCESS
+  toast_id: toast-9aa7af57a404
+- kind: toast_shown
+  message: Autosave interval short
+  level: WARN
+  toast_id: toast-1f961ddf8b7f
+- kind: toast_shown
+  message: Chain preset applied
+  level: SUCCESS
+  toast_id: toast-c01ab075a187
+- kind: toast_shown
+  message: GPU driver mismatch
+  level: ERROR
+  toast_id: toast-9878f92327f1
+- kind: toast_summary
+  pushed: 5
+  active: 5
+  levels:
+  - ERROR
+  - SUCCESS
+  - WARN
+  - SUCCESS
+  - INFO
+- kind: command_palette
+  query: spawn
+  match_count: 13
+  top_action: spawn.rope
+- kind: layout_baker
+  user_dir: C:\Users\Andrew\AppData\Local\Temp\hello_v2_showcase_d9ax8upi\layouts
+  baked_names:
+  - debugging
+  - default
+  - focus_mode
+  - presentation
+  - triple_pane
+  - wide_code
+  loaded: debugging
+  panel_count: 9
+- kind: timeline_keyframe
+  property: camera.x
+  kf_id: 0
+  time: 0.0
+  value: 0.0
+- kind: timeline_keyframe
+  property: camera.x
+  kf_id: 1
+  time: 1.0
+  value: 3.0
+- kind: timeline_keyframe
+  property: camera.x
+  kf_id: 2
+  time: 2.0
+  value: 0.0
+- kind: timeline_track
+  property: camera.x
+  keyframe_count: 3
+- kind: timeline_keyframe
+  property: light.intensity
+  kf_id: 0
+  time: 0.0
+  value: 0.1
+- kind: timeline_keyframe
+  property: light.intensity
+  kf_id: 1
+  time: 1.0
+  value: 1.0
+- kind: timeline_keyframe
+  property: light.intensity
+  kf_id: 2
+  time: 2.5
+  value: 0.4
+- kind: timeline_track
+  property: light.intensity
+  keyframe_count: 3
+- kind: timeline_summary
+  track_count: 2
+  total_keyframes: 6
+  duration_s: 3.0
+  bpm: 120.0
+- kind: feature_map
+  wired_rows: 324
+  threshold: 250
+  met_threshold: true
+  scanned:
+  - engine_feature_map_2026_07_04.md:290
+  - feature_map_delta_2026_07_04.md:34
+  - feature_map_2026_06_03.md:0
+- kind: user_overrides_watcher
+  root: C:\Users\Andrew\AppData\Local\Temp\hello_v2_showcase_d9ax8upi\overrides
+  started: false
+  stopped_clean: true
+  event_count: 0
+event_count: 51
