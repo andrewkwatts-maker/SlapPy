@@ -95,6 +95,15 @@ class ModelHandle:
     visible: bool = True
     id: int = -1
 
+    # HH1↔HH4↔HH5 integration payload. Populated by
+    # :func:`slappyengine.app_integration.bridge_load_model`; stays
+    # ``None`` for stub loads so existing HH1 tests never trip on it.
+    mesh: Any = field(default=None, repr=False, compare=False)
+    material: Any = field(default=None, repr=False, compare=False)
+    bounding_box: tuple[tuple[float, float, float], tuple[float, float, float]] | None = field(
+        default=None, repr=False, compare=False
+    )
+
     # Owner ref — set by App.load_model. Not part of the public repr.
     _app: "App | None" = field(default=None, repr=False, compare=False)
     _destroyed: bool = field(default=False, repr=False, compare=False)
@@ -147,6 +156,21 @@ class ModelHandle:
         self._destroyed = True
         if self._app is not None:
             self._app._remove_model(self)
+
+    # ------------------------------------------------------------------
+    def transform_matrix(self):
+        """Return the 4x4 model matrix as a numpy float32 array.
+
+        Delegates to :mod:`slappyengine.app_integration` so the app
+        module stays free of a numpy import at the top level. Returns
+        ``None`` on any soft-import failure.
+        """
+        try:
+            from slappyengine.app_integration import handle_transform_matrix
+
+            return handle_transform_matrix(self)
+        except Exception:  # pragma: no cover - only hit in stripped envs
+            return None
 
     # ------------------------------------------------------------------
     def _log(self, op: str, value: Any) -> None:
@@ -547,12 +571,26 @@ class App:
     def load_model(self, path: str | Path) -> ModelHandle:
         """Load a 3D model asset and return a :class:`ModelHandle`.
 
-        Dispatches on file extension via :func:`register_model_loader`.
-        Unknown extensions still return a handle (with a warning) so
-        prototypes never break on a typo.
+        Preferred path: hand off to the HH5 asset importer via
+        :func:`slappyengine.app_integration.bridge_load_model`. This
+        returns a handle with a real :class:`slappyengine.render.mesh.Mesh`
+        attached (see :meth:`_load_via_asset_importer`).
+
+        Fallback path: dispatches on file extension via
+        :func:`register_model_loader`. Unknown extensions still return a
+        handle (with a warning) so prototypes never break on a typo.
         """
         p = Path(path)
         ext = p.suffix.lower()
+
+        # HH5 preferred path — only when the asset actually exists on disk.
+        # (Existing HH1 tests pass fake paths like "bunny.obj"; those keep
+        # the historical stub behaviour.)
+        if p.exists():
+            imported = self._load_via_asset_importer(p)
+            if imported is not None:
+                return imported
+
         loader = _MODEL_LOADERS.get(ext)
         meta: dict[str, Any] = {}
         if loader is None:
@@ -575,6 +613,70 @@ class App:
         )
         self.models.append(handle)
         self.trace.append(("load_model", handle.id, str(p), ext))
+        return handle
+
+    def _load_model_stub(self, path: str | Path) -> ModelHandle:
+        """Legacy stub loader — extension dispatch, no asset_import.
+
+        Public for the app_integration bridge fallback path so it can
+        avoid recursion into :meth:`load_model` (which now tries HH5
+        first). Behaviour matches the pre-HH1↔HH5 :meth:`load_model`.
+        """
+        p = Path(path)
+        ext = p.suffix.lower()
+        loader = _MODEL_LOADERS.get(ext)
+        meta: dict[str, Any] = {}
+        if loader is None:
+            logger.warning("_load_model_stub: no loader for %r", ext)
+        else:
+            try:
+                meta = loader(str(p)) or {}
+            except Exception as exc:
+                logger.warning("_load_model_stub: loader %s raised %s", ext, exc)
+                meta = {}
+        handle = ModelHandle(
+            path=str(p),
+            id=self._next_id(),
+            _app=self,
+            position=tuple(meta.get("position", (0.0, 0.0, 0.0))),
+            rotation=tuple(meta.get("rotation", (0.0, 0.0, 0.0))),
+            scale=tuple(meta.get("scale", (1.0, 1.0, 1.0))),
+            visible=bool(meta.get("visible", True)),
+        )
+        self.models.append(handle)
+        self.trace.append(("load_model", handle.id, str(p), ext))
+        return handle
+
+    def _load_via_asset_importer(self, path: str | Path) -> ModelHandle | None:
+        """Soft-import ``slappyengine.app_integration`` and call the bridge.
+
+        Returns
+        -------
+        ModelHandle
+            When the bridge successfully produced a mesh-populated handle
+            (``.mesh`` set, appended to ``self.models``).
+        None
+            When the bridge / asset_import / render subpackage is not
+            available. Callers must then fall back to stub behaviour.
+        """
+        try:
+            from slappyengine.app_integration import bridge_load_model
+        except Exception as exc:
+            logger.debug(
+                "_load_via_asset_importer: app_integration unavailable (%s)", exc
+            )
+            return None
+        try:
+            handle = bridge_load_model(self, str(path))
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.info(
+                "_load_via_asset_importer: bridge_load_model raised %s", exc
+            )
+            return None
+        if getattr(handle, "mesh", None) is None:
+            # Bridge fell back to the stub loader (e.g. no importer for
+            # ext). Caller may retry the local stub-only path.
+            return None
         return handle
 
     def load_texture(self, path: str | Path) -> TextureHandle:
@@ -687,16 +789,23 @@ class App:
                 for hook in self._after_tick:
                     hook(self, dt)
 
-                # Render pass — stub logs, real renderer would blit here
-                for hook in self._before_frame_render:
-                    hook(self)
-                self._renderer.begin_frame()
-                for model in self.models:
-                    if model.visible:
-                        self._renderer.draw_model(model)
-                self._renderer.end_frame()
+                # Render pass — stub logs draw_model; HH4 renderers get
+                # the full submit_mesh / set_lights / set_camera path via
+                # the integration bridge.
+                if hasattr(self._renderer, "submit_mesh"):
+                    # HH4 path — render_frame handles begin/end + hooks +
+                    # bridge_submit_frame and increments _frame_count.
+                    self.render_frame()
+                else:
+                    for hook in self._before_frame_render:
+                        hook(self)
+                    self._renderer.begin_frame()
+                    for model in self.models:
+                        if model.visible:
+                            self._renderer.draw_model(model)
+                    self._renderer.end_frame()
+                    self._frame_count += 1
 
-                self._frame_count += 1
                 self._elapsed += dt
                 frame += 1
 
@@ -720,6 +829,106 @@ class App:
         finally:
             self._running = False
 
+    # ------------------------------------------------------------------
+    # HH1 ↔ HH4 integration helpers (bridge glue)
+    # ------------------------------------------------------------------
+    def render_frame(self) -> None:
+        """Render one frame using whichever backend is bound.
+
+        Preserves HH1's 2-line pattern: if ``self._renderer`` is still
+        the logging :class:`_StubRenderer`, we drive the stub's tiny
+        ``begin_frame`` / ``draw_model`` / ``end_frame`` surface exactly
+        as :meth:`run` does. If the renderer has been swapped for a HH4
+        :class:`Renderer` / :class:`NullRenderer` (via
+        :func:`slappyengine.app_integration.promote_stub_renderer`),
+        we route through :func:`bridge_submit_frame` instead so meshes,
+        materials, lights, and the camera all flow through.
+        """
+        renderer = self._renderer
+        # HH4 renderers expose ``submit_mesh``; the HH1 stub does not.
+        if hasattr(renderer, "submit_mesh"):
+            try:
+                from slappyengine.app_integration import bridge_submit_frame
+            except Exception as exc:  # pragma: no cover
+                logger.info("render_frame: bridge unavailable (%s)", exc)
+                return
+            renderer.begin_frame()
+            for hook in self._before_frame_render:
+                hook(self)
+            bridge_submit_frame(self, renderer)
+            renderer.end_frame()
+            self._frame_count += 1
+            return
+
+        # Stub path — unchanged HH1 behaviour.
+        for hook in self._before_frame_render:
+            hook(self)
+        renderer.begin_frame()
+        for model in self.models:
+            if model.visible:
+                renderer.draw_model(model)
+        renderer.end_frame()
+        self._frame_count += 1
+
+    def get_bounding_box_of_all_models(
+        self,
+    ) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
+        """Return the axis-aligned bounding box enclosing all loaded models.
+
+        Used by callers wanting to auto-frame a camera. Considers each
+        handle's ``.bounding_box`` (populated by
+        :func:`slappyengine.app_integration.bridge_load_model`) after
+        transforming its 8 corners by :meth:`ModelHandle.transform_matrix`.
+
+        Returns ``((0,0,0), (0,0,0))`` when there are no models with
+        bounding boxes.
+        """
+        import numpy as _np  # local import — keep the module-top light
+
+        mins: list[float] = []
+        maxs: list[float] = []
+        found_any = False
+        for handle in self.models:
+            bbox = getattr(handle, "bounding_box", None)
+            if bbox is None:
+                continue
+            (mn_x, mn_y, mn_z), (mx_x, mx_y, mx_z) = bbox
+            corners = _np.array(
+                [
+                    [mn_x, mn_y, mn_z, 1.0],
+                    [mx_x, mn_y, mn_z, 1.0],
+                    [mn_x, mx_y, mn_z, 1.0],
+                    [mx_x, mx_y, mn_z, 1.0],
+                    [mn_x, mn_y, mx_z, 1.0],
+                    [mx_x, mn_y, mx_z, 1.0],
+                    [mn_x, mx_y, mx_z, 1.0],
+                    [mx_x, mx_y, mx_z, 1.0],
+                ],
+                dtype=_np.float32,
+            )
+            m = handle.transform_matrix()
+            if m is None:
+                world = corners[:, :3]
+            else:
+                world4 = corners @ m.T
+                world = world4[:, :3]
+            if not found_any:
+                mins = world.min(axis=0).tolist()
+                maxs = world.max(axis=0).tolist()
+                found_any = True
+            else:
+                cur_min = world.min(axis=0)
+                cur_max = world.max(axis=0)
+                mins = [min(mins[i], float(cur_min[i])) for i in range(3)]
+                maxs = [max(maxs[i], float(cur_max[i])) for i in range(3)]
+
+        if not found_any:
+            return ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0))
+        return (
+            (float(mins[0]), float(mins[1]), float(mins[2])),
+            (float(maxs[0]), float(maxs[1]), float(maxs[2])),
+        )
+
     def stop(self) -> None:
         """Signal the tick loop to exit at the top of the next iteration."""
         self._running = False
@@ -730,10 +939,14 @@ class App:
         if self._closed:
             return
         self._running = False
-        try:
-            self._renderer.close()
-        except Exception as exc:  # pragma: no cover
-            logger.warning("renderer.close() raised %s", exc)
+        # HH4 renderers currently don't expose close(); guard for both
+        # the stub (which does) and the real backend (which doesn't).
+        _close = getattr(self._renderer, "close", None)
+        if callable(_close):
+            try:
+                _close()
+            except Exception as exc:  # pragma: no cover
+                logger.warning("renderer.close() raised %s", exc)
         self._closed = True
         self.trace.append(("close",))
         if App._implicit is self:
