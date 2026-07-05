@@ -985,6 +985,52 @@ def _fb_view_fullscreen(ctx: dict[str, Any]) -> Any:
     return fullscreen(ctx)
 
 
+# ---------------------------------------------------------------------------
+# II5 STUB-triage fallbacks (2026-07-05 — round 11 after X3 / Y1 / Z7 /
+# AA1 / BB1 / CC1 / DD1 / EE1 / FF1 / GG1)
+#
+# Five more action ids: tab-through selection (next / previous), paste-
+# at-original-position (Illustrator Cmd+Shift+V), row-batch spawn
+# (single-line variant of GG1's grid spawn), and content-browser
+# duplicate-asset (Explorer-style ``_copy`` suffix). See
+# :mod:`slappyengine.actions.edit_select_next_actions`,
+# :mod:`slappyengine.actions.edit_paste_original_actions`,
+# :mod:`slappyengine.actions.spawn_batch_row_actions`, and
+# :mod:`slappyengine.actions.content_duplicate_asset_actions`.
+# ---------------------------------------------------------------------------
+
+
+def _fb_select_next(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_select_next_actions import select_next
+    return select_next(ctx)
+
+
+def _fb_select_previous(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_select_next_actions import (
+        select_previous,
+    )
+    return select_previous(ctx)
+
+
+def _fb_paste_at_original_position(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_paste_original_actions import (
+        paste_at_original_position,
+    )
+    return paste_at_original_position(ctx)
+
+
+def _fb_spawn_batch_row(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_batch_row_actions import spawn_batch_row
+    return spawn_batch_row(ctx)
+
+
+def _fb_duplicate_asset(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.content_duplicate_asset_actions import (
+        duplicate_asset,
+    )
+    return duplicate_asset(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -1869,6 +1915,48 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_view_fullscreen,
             required_args=[],
             category="view",
+        ),
+        # ── II5 STUB-triage: tab-select + paste-at-original +
+        #    row-batch spawn + content-duplicate (round 11) ────────────
+        ToolAction(
+            action_id="edit.select_next",
+            label="Select Next Entity",
+            rust_backing=None,
+            python_fallback=_fb_select_next,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="edit.select_previous",
+            label="Select Previous Entity",
+            rust_backing=None,
+            python_fallback=_fb_select_previous,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="edit.paste_at_original_position",
+            label="Paste at Original Position",
+            rust_backing=None,
+            python_fallback=_fb_paste_at_original_position,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="spawn.spawn_batch_row",
+            label="Spawn Batch (Row)",
+            rust_backing=None,
+            python_fallback=_fb_spawn_batch_row,
+            required_args=[],
+            category="spawn",
+        ),
+        ToolAction(
+            action_id="content.duplicate_asset",
+            label="Duplicate Asset",
+            rust_backing=None,
+            python_fallback=_fb_duplicate_asset,
+            required_args=["path"],
+            category="content",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(

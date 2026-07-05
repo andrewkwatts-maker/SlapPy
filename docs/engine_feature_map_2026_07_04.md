@@ -343,10 +343,15 @@ Status legend:
 | 294 | `panel.cascade` action | Router action id (GG1) | WIRED | `tool_router.py` → `_fb_cascade_panels` → `actions/panel_layout_actions.py::cascade` | Cascades every visible panel into an offset staircase (`(dx, dy)` default `(32, 32)`; `(w, h)` default `(640, 480)`). Clamps against `viewport_size` so no panel walks fully off the viewport edge. Same rect-writer as `panel.tile_grid`. |
 | 295 | `edit.invert_selection` action | Router action id (GG1) | WIRED | `tool_router.py` → `_fb_invert_selection` → `actions/edit_invert_selection_actions.py::invert_selection` | Selects every scene entity that is *not* currently selected. Walks `scene.entities` / `scene.get_entities()` / `scene.z_layers`; skips locked (`entity.locked`) and hidden (`entity.visible=False`) entries by default (`ctx["include_locked"]` / `ctx["include_hidden"]` opt-in). Distinguishes `no_scene` / `empty_scene` / `all_selected` so callers can render distinct hints. |
 | 296 | `view.fullscreen` action | Router action id (GG1) | WIRED | `tool_router.py` → `_fb_view_fullscreen` → `actions/view_fullscreen_actions.py::fullscreen` | Focus-mode fullscreen — hides every chrome element (`_menu_bar_visible`, `_toolbar_visible`, `_status_bar_visible`, `_left_sidebar_visible`, `_right_sidebar_visible`) + every non-viewport panel. Snapshots the pre-FS state on `shell._fullscreen_snapshot` so `mode="exit"` restores it exactly. `mode="toggle"` (default) / `mode="enter"` / `mode="exit"` — enter-while-in-FS returns `already_fullscreen`; exit-while-not-in-FS returns `not_fullscreen`. Complementary to the OS-level `editor.toggle_fullscreen` (`F11`) which handles the OS window chrome. |
+| 297 | `edit.select_next` action | Router action id (II5) | WIRED | `tool_router.py` → `_fb_select_next` → `actions/edit_select_next_actions.py::select_next` | Tab-through the scene entity roster (Blender `[` / Maya `.` / AE `F2` semantics). Reuses the GG1 `_walk_scene_entities` walker so ordering matches `select_all` / `invert_selection`. Wraps by default (`ctx["wrap"] = False` clamps → `at_end` / `at_start`). Skips locked / hidden entries unless `include_locked` / `include_hidden` opt in. Empty-selection cursor lands on entity 0 for forward and N-1 for reverse. |
+| 298 | `edit.select_previous` action | Router action id (II5) | WIRED | `tool_router.py` → `_fb_select_previous` → `actions/edit_select_next_actions.py::select_previous` | Shift+Tab; retreats the cursor by one entity. Same ctx contract + roster walker as `edit.select_next`; only the direction flips. |
+| 299 | `edit.paste_at_original_position` action | Router action id (II5) | WIRED | `tool_router.py` → `_fb_paste_at_original_position` → `actions/edit_paste_original_actions.py::paste_at_original_position` | Illustrator `Cmd+Shift+V` / Photoshop `Shift+Ctrl+V` / Blender `Alt+V` semantics — pulls the clipboard snapshots but *does not* apply a cursor-relative offset. Default `name_suffix` is `" (copy)"` (pass `""` to preserve names); positions are always preserved. Best-effort `scene.add_entity` / `scene.add` walk. Distinct `pasted_at_original` status so the shell can toast "pasted at original position" instead of the generic "pasted". |
+| 300 | `spawn.spawn_batch_row` action | Router action id (II5) | WIRED | `tool_router.py` → `_fb_spawn_batch_row` → `actions/spawn_batch_row_actions.py::spawn_batch_row` | Sibling to DD1 `spawn.repeat_last_batch` — lays down `count` (default 5) copies in a single row instead of a grid. `direction="horizontal"` (default, +X) / `direction="vertical"` (+Y); `spacing` scalar picks the stride. `ctx["stride"]` 2/3-vec overrides direction+spacing for arbitrary diagonals. Retargets `shell._last_spawn` to the final cell so a follow-up `spawn.repeat_last` continues the row. |
+| 301 | `content.duplicate_asset` action | Router action id (II5) | WIRED | `tool_router.py` → `_fb_duplicate_asset` → `actions/content_duplicate_asset_actions.py::duplicate_asset` | Explorer / Finder style in-place duplicate. Files splice `_copy` before the extension (`hero.png` → `hero_copy.png`); directories append the suffix (`Sprites` → `Sprites_copy`) and copy recursively via `shutil.copytree`. Auto-uniquify on collision (`hero_copy.png` → `hero_copy_2.png` → `hero_copy_3.png`). `ctx["suffix"]` overrides the default. Best-effort `browser.refresh()` after the copy so the new entry shows up without an explicit reload. Returns `not_found` / `missing_path` / `error` alongside the success shape. |
 
-**Total rows: 296.** Status tally:
+**Total rows: 301.** Status tally:
 
-* **WIRED**: 279 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1 + 5 CC1 + 5 DD1 + 5 EE1 + 5 FF1 + 5 GG1; rows 189 + 243 also flipped STUB -> WIRED)
+* **WIRED**: 284 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1 + 5 CC1 + 5 DD1 + 5 EE1 + 5 FF1 + 5 GG1 + 5 II5; rows 189 + 243 also flipped STUB -> WIRED)
 * **STUB**: 14 (rows 50, 78, 79, 94, 95, 191, 192, 193, 222, 224, 225, 226, 227, 228 — row 243 flipped to WIRED under GG1)
 * **BROKEN**: 3 (rows 80, 223 code-paths — see previous note; dedupes to 2 real import/attribute defects)
 
@@ -877,3 +882,73 @@ X3+Y1+Z7+AA1+BB1+CC1+DD1+EE1+FF1 wiring now covers 45 previously-
 absent router action ids across 7 category buckets (`file`, `edit`,
 `tool`, `view`, `theme`, `panel`, `spawn`, `content`). Roll-up:
 **291 total, 273 WIRED (93.8%), 15 STUB (5.2%), 3 BROKEN (1.0%)**.
+
+
+## II5 STUB-triage patch (2026-07-05, round 11 after X3 + Y1 + Z7 + AA1 + BB1 + CC1 + DD1 + EE1 + FF1 + GG1)
+
+Five more action ids landed in this tick, moving 5 rows from STUB
+(implicit — the ids were not yet registered) to WIRED (rows 297-301):
+
+* `edit.select_next` → `slappyengine.actions.edit_select_next_actions.select_next`
+* `edit.select_previous` → `slappyengine.actions.edit_select_next_actions.select_previous`
+* `edit.paste_at_original_position` → `slappyengine.actions.edit_paste_original_actions.paste_at_original_position`
+* `spawn.spawn_batch_row` → `slappyengine.actions.spawn_batch_row_actions.spawn_batch_row`
+* `content.duplicate_asset` → `slappyengine.actions.content_duplicate_asset_actions.duplicate_asset`
+
+New subpackages:
+`python/slappyengine/actions/edit_select_next_actions.py`
++ `python/slappyengine/actions/edit_paste_original_actions.py`
++ `python/slappyengine/actions/spawn_batch_row_actions.py`
++ `python/slappyengine/actions/content_duplicate_asset_actions.py`.
+
+Behavioural notes for II5:
+
+* **`edit.select_next` / `edit.select_previous`** — Tab-through the
+  scene entity roster (Blender `[` / `]`, Maya `,` / `.`, AE `F2` /
+  `Shift+F2`). Reuses the GG1 `_walk_scene_entities` iterator so
+  ordering matches `select_all` / `invert_selection`. Cursor wraps by
+  default (`ctx["wrap"] = False` clamps → returns `at_end` /
+  `at_start` when the cursor sits at the roster boundary). Locked
+  (`entity.locked`) and hidden (`entity.visible = False`) entries are
+  skipped so Tab never lands on an unclickable entry — the caller opts
+  back in via `ctx["include_locked"] = True` /
+  `ctx["include_hidden"] = True`. Empty selection lands on entity 0
+  for forward and entity N-1 for reverse, matching Blender.
+* **`edit.paste_at_original_position`** — Illustrator `Cmd+Shift+V` /
+  Photoshop `Shift+Ctrl+V` semantics. Pulls the process-wide
+  `EntityClipboard` snapshots and returns them *without* any offset
+  applied, so a copy → paste-in-place cycle yields a clone sitting at
+  the exact source coordinate. Default `name_suffix` is `" (copy)"` so
+  the outliner can still tell the copies from the sources; pass
+  `ctx["name_suffix"] = ""` to preserve names verbatim. Best-effort
+  `scene.add_entity` / `scene.add` walk on the resolved scene handle.
+  Distinct `pasted_at_original` status string lets the shell render
+  "pasted at original position" toasts.
+* **`spawn.spawn_batch_row`** — Sibling to DD1
+  `spawn.repeat_last_batch`. Where the DD1 helper lays down copies in
+  a near-square grid, this variant lays down N copies in a single
+  straight row (default `count = 5`). `direction = "horizontal"`
+  (default, +X) or `"vertical"` (+Y); `spacing` scalar picks the
+  stride. `ctx["stride"]` 2/3-tuple overrides both for arbitrary
+  diagonals. Same shell probe (`_on_spawn` + `_last_spawn`), same
+  final-cell retarget so a follow-up `spawn.repeat_last` continues
+  the row. Returns `no_history` for `count <= 0` / missing history,
+  `no_shell` when neither `shell` nor `last_spawn` is in ctx.
+* **`content.duplicate_asset`** — Explorer / Finder in-place duplicate
+  with a `_copy` suffix. Files splice the suffix before the extension
+  (`hero.png` → `hero_copy.png`); directories append it
+  (`Sprites` → `Sprites_copy`) and copy recursively via
+  `shutil.copytree`. Repeated duplicates auto-uniquify with a numeric
+  suffix (`hero_copy.png` → `hero_copy_2.png` → `hero_copy_3.png`,
+  bounded at 999 attempts). `ctx["suffix"]` swaps the default for
+  `_backup` / `_v2` / whatever. Best-effort `browser.refresh()` after
+  the copy so the new entry shows up without an explicit reload.
+  Returns `duplicated` / `missing_path` / `not_found` / `error`.
+
+Regression tests: `SlapPyEngineTests/tests/test_stub_triage_ii5.py`
+(34 tests, all passing). Combined
+X3+Y1+Z7+AA1+BB1+CC1+DD1+EE1+FF1+GG1+II5 wiring now covers 55
+previously-absent router action ids across 8 category buckets
+(`file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`,
+`content`). Roll-up: **301 total, 284 WIRED (94.4%), 14 STUB (4.7%),
+3 BROKEN (1.0%)**.
