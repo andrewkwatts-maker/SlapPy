@@ -8,15 +8,39 @@ __all__ = [
     "AnimationGraph",
     "ControlPoint",
     "ProceduralRig",
+    # JJ4 skeletal runtime.
+    "PoseState",
+    "PosedSkeleton",
+    "Skeleton",
+    "SkeletonNode",
+    "SkinnedMeshData",
+    "AnimationChannel",
+    "AnimationClip",
+    "Skinner",
+    "Animator",
+    "quat_slerp",
+    "compose_trs",
 ]
 
 _LAZY_MAP: dict[str, str] = {
-    "AnimState":       ".graph",
-    "AnimTransition":  ".graph",
-    "AnimUpdate":      ".graph",
-    "AnimationGraph":  ".graph",
-    "ControlPoint":    ".procedural",
-    "ProceduralRig":   ".procedural",
+    "AnimState":         ".graph",
+    "AnimTransition":    ".graph",
+    "AnimUpdate":        ".graph",
+    "AnimationGraph":    ".graph",
+    "ControlPoint":      ".procedural",
+    "ProceduralRig":     ".procedural",
+    # JJ4.
+    "PoseState":         ".skeleton_runtime",
+    "PosedSkeleton":     ".skeleton_runtime",
+    "Skeleton":          ".skeleton_runtime",
+    "SkeletonNode":      ".skeleton_runtime",
+    "SkinnedMeshData":   ".skeleton_runtime",
+    "compose_trs":       ".skeleton_runtime",
+    "AnimationChannel":  ".clip",
+    "AnimationClip":     ".clip",
+    "quat_slerp":        ".clip",
+    "Skinner":           ".skinner",
+    "Animator":          ".skinner",
 }
 
 

@@ -31,6 +31,15 @@ from .material import Material, TextureHandle
 from .mesh import Mesh, MeshHandle, cube, quad
 from .null_renderer import DrawCall, NullRenderer
 from .renderer import Renderer, is_wgpu_available
+from .scene_walker import (
+    AssetCache,
+    EntityDrawInfo,
+    Frustum,
+    RenderStats,
+    SceneWalker,
+    bridge_render_scene,
+    render_scene,
+)
 from .shader_stock import (
     LINE_3D_WGSL,
     PHONG_3D_WGSL,
@@ -40,12 +49,27 @@ from .shader_stock import (
     UNLIT_3D_WGSL,
     get_shader,
 )
+from .shadows import (
+    CSMBuilder,
+    CascadeSplit,
+    SHADOW_DEPTH_ONLY_WGSL,
+    SHADOW_SAMPLE_WGSL_SNIPPET,
+    SHADOW_SAMPLER_DESC,
+    ShadowMapConfig,
+    find_cascade_for_world_pos,
+    pack_cascade_ubo,
+)
 from .transform import Transform2D, Transform3D
 
 __all__ = [
+    "AssetCache",
+    "CSMBuilder",
     "Camera2D",
     "Camera3D",
+    "CascadeSplit",
     "DrawCall",
+    "EntityDrawInfo",
+    "Frustum",
     "Light",
     "LINE_3D_WGSL",
     "MAX_LIGHTS",
@@ -54,18 +78,28 @@ __all__ = [
     "MeshHandle",
     "NullRenderer",
     "PHONG_3D_WGSL",
+    "RenderStats",
     "Renderer",
+    "SHADOW_DEPTH_ONLY_WGSL",
+    "SHADOW_SAMPLE_WGSL_SNIPPET",
+    "SHADOW_SAMPLER_DESC",
     "SPRITE_2D_WGSL",
     "STOCK_SHADERS",
+    "SceneWalker",
     "ShaderSource",
+    "ShadowMapConfig",
     "TextureHandle",
     "Transform2D",
     "Transform3D",
     "UNLIT_3D_WGSL",
+    "bridge_render_scene",
     "cube",
+    "find_cascade_for_world_pos",
     "get_shader",
     "is_unlit",
     "is_wgpu_available",
+    "pack_cascade_ubo",
     "pack_lights_ubo",
     "quad",
+    "render_scene",
 ]
