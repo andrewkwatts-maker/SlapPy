@@ -822,6 +822,47 @@ def _fb_copy_asset_path(ctx: dict[str, Any]) -> Any:
     return copy_asset_path(ctx)
 
 
+# ---------------------------------------------------------------------------
+# DD1 STUB-triage fallbacks (2026-07-05, round 7)
+#
+# Wire five more STUB rows: layer duplication, reverse theme cycle,
+# batch panel close + last-hidden restore, and grid-batch spawn repeat.
+# See :mod:`slappyengine.actions.layer_duplicate_actions`,
+# :mod:`slappyengine.actions.theme_cycle_reverse_actions`,
+# :mod:`slappyengine.actions.panel_visibility_actions`, and
+# :mod:`slappyengine.actions.spawn_batch_actions` for the implementations.
+# ---------------------------------------------------------------------------
+
+
+def _fb_duplicate_layer(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_duplicate_actions import duplicate_layer
+    return duplicate_layer(ctx)
+
+
+def _fb_cycle_theme_reverse(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.theme_cycle_reverse_actions import (
+        cycle_theme_reverse,
+    )
+    return cycle_theme_reverse(ctx)
+
+
+def _fb_close_all_panels(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.panel_visibility_actions import close_all_panels
+    return close_all_panels(ctx)
+
+
+def _fb_restore_last_hidden_panel(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.panel_visibility_actions import (
+        restore_last_hidden_panel,
+    )
+    return restore_last_hidden_panel(ctx)
+
+
+def _fb_repeat_last_batch(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_batch_actions import repeat_last_batch
+    return repeat_last_batch(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -1041,6 +1082,15 @@ def _default_actions() -> list[ToolAction]:
             rust_backing=None,
             python_fallback=_fb_select_by_name,
             required_args=["name"],
+            category="edit",
+        ),
+        # ── DD1 STUB-triage: duplicate active layer (round 7) ─────────
+        ToolAction(
+            action_id="edit.duplicate_layer",
+            label="Duplicate Layer",
+            rust_backing=None,
+            python_fallback=_fb_duplicate_layer,
+            required_args=[],
             category="edit",
         ),
         # ── Tool changes ─────────────────────────────────────────────
@@ -1298,6 +1348,15 @@ def _default_actions() -> list[ToolAction]:
             required_args=[],
             category="theme",
         ),
+        # ── DD1 STUB-triage: reverse theme cycle (round 7) ────────────
+        ToolAction(
+            action_id="theme.cycle_reverse",
+            label="Cycle Theme (Reverse)",
+            rust_backing=None,
+            python_fallback=_fb_cycle_theme_reverse,
+            required_args=[],
+            category="theme",
+        ),
         ToolAction(
             action_id="editor.toggle_hud",
             label="Toggle HUD",
@@ -1403,6 +1462,23 @@ def _default_actions() -> list[ToolAction]:
             required_args=[],
             category="panel",
         ),
+        # ── DD1 STUB-triage: batch panel visibility (round 7) ────────
+        ToolAction(
+            action_id="panel.close_all",
+            label="Close All Panels",
+            rust_backing=None,
+            python_fallback=_fb_close_all_panels,
+            required_args=[],
+            category="panel",
+        ),
+        ToolAction(
+            action_id="panel.restore_last_hidden",
+            label="Restore Last Hidden Panel",
+            rust_backing=None,
+            python_fallback=_fb_restore_last_hidden_panel,
+            required_args=[],
+            category="panel",
+        ),
         # ── Spawn cards (10 entries — one per SPAWN_CARDS row) ───────
         ToolAction(
             action_id="spawn.rope",
@@ -1490,6 +1566,15 @@ def _default_actions() -> list[ToolAction]:
             label="Repeat Last Spawn",
             rust_backing=None,
             python_fallback=_fb_repeat_last_spawn,
+            required_args=[],
+            category="spawn",
+        ),
+        # ── DD1 STUB-triage: grid-batch repeat (round 7) ──────────────
+        ToolAction(
+            action_id="spawn.repeat_last_batch",
+            label="Repeat Last Spawn (Batch)",
+            rust_backing=None,
+            python_fallback=_fb_repeat_last_batch,
             required_args=[],
             category="spawn",
         ),

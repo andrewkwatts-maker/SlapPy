@@ -323,10 +323,15 @@ Status legend:
 | 274 | `view.toggle_grid` action | Router action id (CC1) | WIRED | `tool_router.py` → `_fb_toggle_grid` → `actions/view_toggle_actions.py::toggle_grid` | Flips `shell._grid_visible`; fires optional `shell._on_view_toggle(attr, value)` hook so the DPG draw callback observes the change next tick. Accepts `ctx["visible"]` seed for headless tests. |
 | 275 | `view.toggle_gizmos` action | Router action id (CC1) | WIRED | `tool_router.py` → `_fb_toggle_gizmos` → `actions/view_toggle_actions.py::toggle_gizmos` | Symmetric to `view.toggle_grid` — flips `shell._gizmos_visible` (plural: covers transform gizmo, marquee, IK bone lines). Same seed / hook semantics. |
 | 276 | `content.copy_asset_path` action | Router action id (CC1) | WIRED | `tool_router.py` → `_fb_copy_asset_path` → `actions/content_shell_actions.py::copy_asset_path` | Prefers `NotebookContentBrowser.copy_path` (already walks DPG / pyperclip / tkinter fallback). Direct pyperclip → tkinter → noop chain when no browser is reachable. Reports `backend` so tests can assert on graceful degradation. |
+| 277 | `edit.duplicate_layer` action | Router action id (DD1) | WIRED | `tool_router.py` → `_fb_duplicate_layer` → `actions/layer_duplicate_actions.py::duplicate_layer` | Deep-copies the active `ZLayer`, bumps the name (`bg` → `bg copy`, then `bg copy 2` on collision), and repoints `shell._active_layer` at the clone. Falls back to `scene.z_layers[-1]` when no active layer is set. |
+| 278 | `theme.cycle_reverse` action | Router action id (DD1) | WIRED | `tool_router.py` → `_fb_cycle_theme_reverse` → `actions/theme_cycle_reverse_actions.py::cycle_theme_reverse` | Symmetric to `theme.cycle`. Shares `_THEME_CURSOR` so a forward tick followed by a reverse tick returns to the starting theme. Shell hooks preferred (`cycle_theme_reverse`, or `cycle_theme(direction="reverse")`), else walks the registered-themes list backwards. |
+| 279 | `panel.close_all` action | Router action id (DD1) | WIRED | `tool_router.py` → `_fb_close_all_panels` → `actions/panel_visibility_actions.py::close_all_panels` | Sweeps the canonical panel roster (`outliner`, `inspector`, `content_browser`, `code`, `layer_panel`, `behavior_panel`, `tag_painter`) and calls `shell.set_panel_visible(id, False)` (or the `toggle_panel` fallback) on every currently-visible entry. Pushes the closed batch onto `shell._hidden_panel_stack` so `panel.restore_last_hidden` can undo. Viewport panel is skipped (always-visible in the shell). |
+| 280 | `panel.restore_last_hidden` action | Router action id (DD1) | WIRED | `tool_router.py` → `_fb_restore_last_hidden_panel` → `actions/panel_visibility_actions.py::restore_last_hidden_panel` | Pops the top of `shell._hidden_panel_stack` and re-shows every panel id in it. Returns `empty_stack` when nothing has been hidden yet (legal on fresh editors). |
+| 281 | `spawn.repeat_last_batch` action | Router action id (DD1) | WIRED | `tool_router.py` → `_fb_repeat_last_batch` → `actions/spawn_batch_actions.py::repeat_last_batch` | Sibling to `spawn.repeat_last`. Reads the same `shell._last_spawn` slot, then lays down `count` copies (default 4) in a `ceil(sqrt(count))`-wide grid with per-cell offset `ctx["spacing"]` (default `(1.0, 1.0)`). Updates the last-spawn slot to the final cell so a follow-up `spawn.repeat_last` continues the grid. |
 
-**Total rows: 276.** Status tally:
+**Total rows: 281.** Status tally:
 
-* **WIRED**: 258 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1 + 5 CC1; row 189 also flipped STUB -> WIRED)
+* **WIRED**: 263 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1 + 5 CC1 + 5 DD1; row 189 also flipped STUB -> WIRED)
 * **STUB**: 15 (rows 50, 78, 79, 94, 95, 191, 192, 193, 222, 224, 225, 226, 227, 228, 243 — row 189 dropped after W2 landing; row 243 added for X4 delete ctx handler)
 * **BROKEN**: 3 (rows 80, 223 code-paths — see previous note; dedupes to 2 real import/attribute defects)
 
@@ -641,4 +646,68 @@ Regression tests: `SlapPyEngineTests/tests/test_stub_triage_cc1.py`
 covers 30 previously-absent router action ids across 6 category
 buckets (`file`, `edit`, `tool`, `view`, `theme`, `spawn`,
 `content`). Roll-up: **276 total, 258 WIRED (93.5%), 15 STUB (5.4%),
+3 BROKEN (1.1%)**.
+
+---
+
+## DD1 STUB-triage patch (2026-07-05, round 7 after X3 + Y1 + Z7 + AA1 + BB1 + CC1)
+
+Five more action ids landed in this tick, moving 5 rows from STUB
+(implicit — the ids were not yet registered) to WIRED (rows 277-281):
+
+* `edit.duplicate_layer` → `slappyengine.actions.layer_duplicate_actions.duplicate_layer`
+* `theme.cycle_reverse` → `slappyengine.actions.theme_cycle_reverse_actions.cycle_theme_reverse`
+* `panel.close_all` → `slappyengine.actions.panel_visibility_actions.close_all_panels`
+* `panel.restore_last_hidden` → `slappyengine.actions.panel_visibility_actions.restore_last_hidden_panel`
+* `spawn.repeat_last_batch` → `slappyengine.actions.spawn_batch_actions.repeat_last_batch`
+
+New subpackages: `python/slappyengine/actions/layer_duplicate_actions.py`
++ `python/slappyengine/actions/theme_cycle_reverse_actions.py`
++ `python/slappyengine/actions/panel_visibility_actions.py`
++ `python/slappyengine/actions/spawn_batch_actions.py`.
+
+Behavioural notes for DD1:
+
+* **`edit.duplicate_layer`** — deep-copies the source layer (falls back
+  to a shallow `copy.copy` when deep-copy fails on custom slots), bumps
+  the name so `"bg"` → `"bg copy"` → `"bg copy 2"` on collision, and
+  registers the clone via `scene.add_z_layer(clone)` (falls through to
+  a direct `scene._z_layers.append` when the setter is missing). The
+  shell's `_active_layer` slot is then retargeted at the clone so the
+  next inspector refresh binds to the fresh copy. Returns `no_scene` /
+  `no_layer` cleanly when either side is missing.
+* **`theme.cycle_reverse`** — mirrors `theme.cycle` semantics but rewinds
+  the shared `_THEME_CURSOR`. Preferred shell hooks: `cycle_theme_reverse`
+  (dedicated method) or `cycle_theme(direction="reverse")` (kwarg). Falls
+  back to a walk over `list_registered_themes()` using
+  `(idx - 1) % len(themes)`. When the cursor has never been seeded a
+  single reverse click lands on the *tail* of the list so the wrap
+  semantics stay consistent.
+* **`panel.close_all`** — pushes an N-item batch onto
+  `shell._hidden_panel_stack`. Deliberately skips `viewport_panel` (the
+  DPG canvas is `no_close=True` in the shell). Reads `panel_windows[id].is_visible()`
+  before `panel_layout_state[id].visible` before defaulting to `True`
+  so a first-run editor with no persisted state still hides everything.
+  Uses `set_panel_visible` when the shell exposes it; falls back to
+  `toggle_panel` when current != target so we don't spuriously flip a
+  panel that was already at the target state.
+* **`panel.restore_last_hidden`** — companion pop. Returns
+  `{"status": "empty_stack"}` (not an error) when the stack is empty so
+  the caller can toast "nothing to restore" without special-casing.
+* **`spawn.repeat_last_batch`** — reuses the CC1
+  `_resolve_last_spawn` / `record_last_spawn` helpers from
+  `spawn_history_actions`. Grid layout: `count` default 4, `columns`
+  default `ceil(sqrt(count))` (near-square), `spacing` default
+  `(1.0, 1.0)` (2-vec auto-pads a `0.0` Z-stride; 3-vec applies xyz).
+  Each cell gets a deep-copy of the template spec with its
+  `position`/`origin`/`pos` field shifted. Records the *final* cell as
+  the new `_last_spawn` so a subsequent `spawn.repeat_last` continues
+  the grid rather than restarting at the template origin. Rejects
+  non-positive counts with `no_history` (nothing to lay down).
+
+Regression tests: `SlapPyEngineTests/tests/test_stub_triage_dd1.py`
+(40 tests, all passing). Combined X3+Y1+Z7+AA1+BB1+CC1+DD1 wiring now
+covers 35 previously-absent router action ids across 7 category
+buckets (`file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`,
+`content`). Roll-up: **281 total, 263 WIRED (93.6%), 15 STUB (5.3%),
 3 BROKEN (1.1%)**.

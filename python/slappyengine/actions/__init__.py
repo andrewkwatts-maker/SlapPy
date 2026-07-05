@@ -86,6 +86,19 @@ from .view_toggle_actions import (
 from .content_shell_actions import (
     copy_asset_path as copy_asset_path,
 )
+from .layer_duplicate_actions import (
+    duplicate_layer as duplicate_layer,
+)
+from .theme_cycle_reverse_actions import (
+    cycle_theme_reverse as cycle_theme_reverse,
+)
+from .panel_visibility_actions import (
+    close_all_panels as close_all_panels,
+    restore_last_hidden_panel as restore_last_hidden_panel,
+)
+from .spawn_batch_actions import (
+    repeat_last_batch as repeat_last_batch,
+)
 
 
 __all__ = [
@@ -121,4 +134,9 @@ __all__ = [
     "toggle_grid",
     "toggle_gizmos",
     "copy_asset_path",
+    "duplicate_layer",
+    "cycle_theme_reverse",
+    "close_all_panels",
+    "restore_last_hidden_panel",
+    "repeat_last_batch",
 ]
