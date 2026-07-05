@@ -900,6 +900,49 @@ def _fb_snap_to_pixel_grid(ctx: dict[str, Any]) -> Any:
     return snap_to_pixel_grid(ctx)
 
 
+# ---------------------------------------------------------------------------
+# FF1 STUB-triage fallbacks (2026-07-05, round 9)
+#
+# Wire five more STUB rows: content-browser new-folder / rename-asset,
+# panel "close others" (companion to DD1 close-all), recursive
+# select-children, and theme registry reload. See
+# :mod:`slappyengine.actions.content_folder_actions`,
+# :mod:`slappyengine.actions.content_rename_actions`,
+# :mod:`slappyengine.actions.panel_close_others_actions`,
+# :mod:`slappyengine.actions.edit_select_children_actions`, and
+# :mod:`slappyengine.actions.theme_reload_actions` for the implementations.
+# ---------------------------------------------------------------------------
+
+
+def _fb_new_folder(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.content_folder_actions import new_folder
+    return new_folder(ctx)
+
+
+def _fb_rename_asset(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.content_rename_actions import rename_asset
+    return rename_asset(ctx)
+
+
+def _fb_close_other_panels(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.panel_close_others_actions import (
+        close_other_panels,
+    )
+    return close_other_panels(ctx)
+
+
+def _fb_select_children(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_select_children_actions import (
+        select_children,
+    )
+    return select_children(ctx)
+
+
+def _fb_reload_all_themes(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.theme_reload_actions import reload_all_themes
+    return reload_all_themes(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -1699,6 +1742,49 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_copy_asset_path,
             required_args=["path"],
             category="content",
+        ),
+        # ── FF1 STUB-triage: new folder + rename (round 9) ────────────
+        ToolAction(
+            action_id="content.new_folder",
+            label="New Folder",
+            rust_backing=None,
+            python_fallback=_fb_new_folder,
+            required_args=[],
+            category="content",
+        ),
+        ToolAction(
+            action_id="content.rename_asset",
+            label="Rename Asset...",
+            rust_backing=None,
+            python_fallback=_fb_rename_asset,
+            required_args=["path", "new_name"],
+            category="content",
+        ),
+        # ── FF1 STUB-triage: solo panel + recursive select + theme
+        #    registry reload (round 9) ───────────────────────────────
+        ToolAction(
+            action_id="panel.close_others",
+            label="Close Other Panels",
+            rust_backing=None,
+            python_fallback=_fb_close_other_panels,
+            required_args=[],
+            category="panel",
+        ),
+        ToolAction(
+            action_id="edit.select_children",
+            label="Select Children",
+            rust_backing=None,
+            python_fallback=_fb_select_children,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="theme.reload_all",
+            label="Reload All Themes",
+            rust_backing=None,
+            python_fallback=_fb_reload_all_themes,
+            required_args=[],
+            category="theme",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(

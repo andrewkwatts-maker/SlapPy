@@ -8,8 +8,8 @@ struct MaterialOutput {
     normal: vec3<f32>,
 };
 
-@group(0) @binding(0) var<uniform> u_albedo: f32;
-@group(0) @binding(1) var<uniform> u_albedo_sampler: f32;
+@group(0) @binding(0) var u_albedo_sampler: sampler;
+@group(0) @binding(1) var u_albedo_texture: texture_2d<f32>;
 
 @fragment
 fn fs_main() -> @location(0) vec4<f32> {
@@ -21,7 +21,7 @@ fn fs_main() -> @location(0) vec4<f32> {
     material_output.normal = vec3<f32>(0.0, 0.0, 1.0);
     let uv_off_1 = vec2<f32>(0.0, 0.0) + vec2<f32>(0.0, 0.0);
     let kf_2 = f32(0.35);
-    let tex_3 = textureSample(u_albedo, u_albedo_sampler, uv_off_1);
+    let tex_3 = textureSample(u_albedo_texture, u_albedo_sampler, uv_off_1);
     let add_4 = (tex_3) + (kf_2);
     material_output.base_color = vec3<f32>(1.0, 1.0, 1.0);
     material_output.metallic = 0.0;

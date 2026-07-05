@@ -333,10 +333,15 @@ Status legend:
 | 284 | `theme.random` action | Router action id (EE1) | WIRED | `tool_router.py` → `_fb_random_theme` → `actions/theme_random_actions.py::random_theme` | Picks a random registered theme via `random.choice`; deterministic under `ctx["rng"]`. Excludes the current theme by default (`exclude_current=True`) so a click never lands on the theme already in use. Distinguishes `single_theme` (only one registered) from `no_themes` (empty registry). |
 | 285 | `spawn.spawn_at_cursor` action | Router action id (EE1) | WIRED | `tool_router.py` → `_fb_spawn_at_cursor` → `actions/spawn_cursor_actions.py::spawn_at_cursor` | Two-mode action. `mode="arm"` (default) stashes the resolved cursor coord on `shell._pending_spawn_position` for the next spawn-menu click. `mode="repeat"` re-fires `shell._last_spawn` centred on the cursor. Cursor probe walks `ctx["cursor"]` → `shell.get_cursor_world_position()` → `shell._cursor_world_position` → `shell._last_cursor`. |
 | 286 | `edit.snap_to_pixel_grid` action | Router action id (EE1) | WIRED | `tool_router.py` → `_fb_snap_to_pixel_grid` → `actions/edit_snap_pixel_actions.py::snap_to_pixel_grid` | Rounds selected entity positions to integer pixels (or an arbitrary `ctx["pixel_size"]` grid — 32 for tilemaps). Default axes are `xy` so 2D pixel-art work doesn't collapse fractional Z ordering; pass `ctx["axes"] = "xyz"` to include Z. `ctx["all"]=True` walks every scene entity instead of just the selection. |
+| 287 | `content.new_folder` action | Router action id (FF1) | WIRED | `tool_router.py` → `_fb_new_folder` → `actions/content_folder_actions.py::new_folder` | Creates a sub-directory beneath the resolved parent (`ctx["parent"]` → `browser.current_path` → `browser.root_path` → `shell._content_root`). Default name `"New Folder"` on empty input; auto-uniquifies collisions (`Sprites` → `Sprites (2)` → `Sprites (3)`). Best-effort `browser.refresh()` after creation. |
+| 288 | `content.rename_asset` action | Router action id (FF1) | WIRED | `tool_router.py` → `_fb_rename_asset` → `actions/content_rename_actions.py::rename_asset` | Renames `ctx["path"]` to sibling `ctx["new_name"]`. Preserves source extension when the new name has none (so `bar.png` → `foo` yields `foo.png`); directories pass through untouched. Rejects path-separators in `new_name` with `invalid_name` so rename never accidentally moves. `ctx["overwrite"]=True` opts into replacing the target. |
+| 289 | `panel.close_others` action | Router action id (FF1) | WIRED | `tool_router.py` → `_fb_close_other_panels` → `actions/panel_close_others_actions.py::close_other_panels` | Companion to DD1 `panel.close_all`. Hides every panel except `ctx["keep"]` (falls back to `shell._active_panel_id` / `shell._last_focused_panel_id`). Reuses the DD1 `_hidden_panel_stack` so `panel.restore_last_hidden` cleanly undoes the batch. Returns `no_target` when no focus is resolvable. |
+| 290 | `edit.select_children` action | Router action id (FF1) | WIRED | `tool_router.py` → `_fb_select_children` → `actions/edit_select_children_actions.py::select_children` | Depth-first walk of `entity.children` / `entity._children` / dict `children` from every currently-selected entity. `mode="add"` (default) appends descendants to the selection; `mode="replace"` drops the roots. Cycle-guarded via visited-set on `id()`. Returns `no_children` when the selection is a leaf (differentiated from `no_selection`). |
+| 291 | `theme.reload_all` action | Router action id (FF1) | WIRED | `tool_router.py` → `_fb_reload_all_themes` → `actions/theme_reload_actions.py::reload_all_themes` | Snapshots active theme name → resets `_THEME_CURSOR` → clears `_REGISTRY` → re-runs `bake_default_themes` → re-registers user themes from `UserThemeStore` (or `ctx["store"]`) → re-applies the previously-active theme. Fires `shell.on_themes_reloaded(themes)` broadcast so the switcher panel rebuilds. `ctx["skip_bake"]=True` opt-out for headless tests. |
 
-**Total rows: 286.** Status tally:
+**Total rows: 291.** Status tally:
 
-* **WIRED**: 268 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1 + 5 CC1 + 5 DD1 + 5 EE1; row 189 also flipped STUB -> WIRED)
+* **WIRED**: 273 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1 + 5 CC1 + 5 DD1 + 5 EE1 + 5 FF1; row 189 also flipped STUB -> WIRED)
 * **STUB**: 15 (rows 50, 78, 79, 94, 95, 191, 192, 193, 222, 224, 225, 226, 227, 228, 243 — row 189 dropped after W2 landing; row 243 added for X4 delete ctx handler)
 * **BROKEN**: 3 (rows 80, 223 code-paths — see previous note; dedupes to 2 real import/attribute defects)
 
@@ -787,3 +792,83 @@ now covers 40 previously-absent router action ids across 7 category
 buckets (`file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`,
 `content`). Roll-up: **286 total, 268 WIRED (93.7%), 15 STUB (5.2%),
 3 BROKEN (1.0%)**.
+
+---
+
+## FF1 STUB-triage patch (2026-07-05, round 9 after X3 + Y1 + Z7 + AA1 + BB1 + CC1 + DD1 + EE1)
+
+Five more action ids landed in this tick, moving 5 rows from STUB
+(implicit — the ids were not yet registered) to WIRED (rows 287-291):
+
+* `content.new_folder` → `slappyengine.actions.content_folder_actions.new_folder`
+* `content.rename_asset` → `slappyengine.actions.content_rename_actions.rename_asset`
+* `panel.close_others` → `slappyengine.actions.panel_close_others_actions.close_other_panels`
+* `edit.select_children` → `slappyengine.actions.edit_select_children_actions.select_children`
+* `theme.reload_all` → `slappyengine.actions.theme_reload_actions.reload_all_themes`
+
+New subpackages: `python/slappyengine/actions/content_folder_actions.py`
++ `python/slappyengine/actions/content_rename_actions.py`
++ `python/slappyengine/actions/panel_close_others_actions.py`
++ `python/slappyengine/actions/edit_select_children_actions.py`
++ `python/slappyengine/actions/theme_reload_actions.py`.
+
+Behavioural notes for FF1:
+
+* **`content.new_folder`** — resolves the parent directory in order
+  (`ctx["parent"]` → `browser.current_path` → `browser.root_path` →
+  `shell._content_root`) so the same helper backs both "New Folder"
+  button clicks and right-click context menu commands. Default name
+  is `"New Folder"` (matches Explorer / Finder). Collisions
+  auto-uniquify — `Sprites` → `Sprites (2)` → `Sprites (3)`, bounded
+  at 999 attempts so a mis-configured filesystem can never spin the
+  helper forever. Best-effort `browser.refresh()` after creation so
+  the new folder shows up without an explicit reload. Returns
+  `parent_missing` (parent doesn't exist on disk) distinct from
+  `no_parent` (no parent could be resolved) so the caller can route
+  the two error modes to different toasts.
+* **`content.rename_asset`** — preserves the source extension when
+  the new name has none (typing `foo` for `bar.png` yields
+  `foo.png`), matching Explorer / Finder. Directories skip the
+  extension step so `Old Folder` → `New Folder` isn't mangled into
+  `New Folder.Folder`. Rejects path-separators in `new_name` with
+  `invalid_name` so "rename" never accidentally does a "move".
+  `ctx["overwrite"]=True` opts into `os.replace` semantics.
+  Retargets `shell._selected_asset_path` at the new path on success.
+* **`panel.close_others`** — companion to DD1 `panel.close_all`.
+  Solo the currently-focused panel by hiding every other visible
+  panel. Reuses `panel_visibility_actions._panel_ids` /
+  `_is_visible` / `_set_panel_visibility` / `_push_stack` so the
+  DD1 `panel.restore_last_hidden` cleanly undoes the batch. Keep-
+  target resolution walks `ctx["keep"]` →
+  `shell._active_panel_id` → `shell._last_focused_panel_id`, or
+  returns `no_target` when unresolvable (caller surfaces "click a
+  panel first" toast).
+* **`edit.select_children`** — depth-first walk of `entity.children`
+  / `entity._children` / dict `children` from every currently-
+  selected entity. Cycles are guarded via a visited-set on `id()`.
+  Two modes: `mode="add"` (default, Blender's Shift+G→Children
+  semantics) appends descendants to the existing selection;
+  `mode="replace"` drops the roots and selects just the leaves.
+  Returns `no_children` when the selection is a leaf (differentiated
+  from `no_selection` so the caller can say "leaf node" instead of
+  "nothing selected"). Works on the EE1 `_GroupEntity` (children
+  live on `.children`) plus dict-shaped and legacy Nova3D entities.
+* **`theme.reload_all`** — flushes and re-scans the process-wide
+  theme registry after the user edits a theme's underlying JSON /
+  TOML on disk. Six-step sequence: (1) snapshot active theme name
+  (via `get_active_theme()` — LookupError-safe when no theme is
+  active), (2) reset the shared `_THEME_CURSOR` so post-reload
+  `theme.cycle` starts fresh, (3) clear `_REGISTRY` via
+  `_reset_registry_for_tests()`, (4) re-run `bake_default_themes()`
+  (skip via `ctx["skip_bake"]` for headless tests), (5) re-register
+  user themes from `UserThemeStore`, (6) re-apply the previously-
+  active theme. Fires `shell.on_themes_reloaded(themes)` broadcast
+  when the shell exposes the hook so the theme-switcher panel
+  rebuilds.
+
+Regression tests: `SlapPyEngineTests/tests/test_stub_triage_ff1.py`
+(30 tests, all passing). Combined
+X3+Y1+Z7+AA1+BB1+CC1+DD1+EE1+FF1 wiring now covers 45 previously-
+absent router action ids across 7 category buckets (`file`, `edit`,
+`tool`, `view`, `theme`, `panel`, `spawn`, `content`). Roll-up:
+**291 total, 273 WIRED (93.8%), 15 STUB (5.2%), 3 BROKEN (1.0%)**.

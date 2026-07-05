@@ -42,26 +42,26 @@ events:
   uniform_count: 2
 - kind: shader_verified
   name: perlin_ramp
-  shader_bytes: 1786
+  shader_bytes: 2233
 - kind: shader_written
   name: perlin_ramp
   path: hello_material_graph_perlin_ramp.wgsl
-  size_bytes: 1834
+  size_bytes: 2296
 - kind: graph_built
   name: textured_pbr
   node_count: 5
   edge_count: 4
 - kind: graph_compiled
   name: textured_pbr
-  body_length: 400
+  body_length: 408
   uniform_count: 2
 - kind: shader_verified
   name: textured_pbr
-  shader_bytes: 1164
+  shader_bytes: 1178
 - kind: shader_written
   name: textured_pbr
   path: hello_material_graph_textured_pbr.wgsl
-  size_bytes: 1196
+  size_bytes: 1210
 - kind: demo_complete
   graph_count: 4
 event_count: 18

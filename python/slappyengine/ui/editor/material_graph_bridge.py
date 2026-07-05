@@ -40,10 +40,30 @@ Both constructor arguments may be ``None``; the bridge behaves as a
 pure compile / decompile utility in that case, and only the sync
 helpers require a live editor / node-editor. All headless-safety is
 delegated to the underlying editor / node-editor implementations.
+
+FF2 fix — binding-heuristic robustness
+--------------------------------------
+The V5 palette occasionally leaks helper-function markers (``perlin2d``,
+``worley2d``, ``_hash2``) into ``used_uniforms`` so that
+:meth:`emit_full_shader` can auto-insert the helper definitions once per
+shader. Before the FF2 fix those markers were incorrectly promoted into
+``texture_2d`` bindings, producing WGSL that failed to compile under
+``wgpu``. The fix introduces:
+
+* :data:`HELPER_FUNCTION_MARKERS` — a set of well-known names that are
+  helper-function stand-ins rather than real bindings.
+* :class:`_FunctionRegistry` — a per-emit registry of ``(name, wgsl)``
+  helper definitions that get prepended to the compiled shader.
+* :func:`_classify_uniform` — the canonical texture-vs-sampler-vs-uniform
+  classifier used by :meth:`emit_full_shader`.
+* A ``strict_mode`` flag on :meth:`emit_full_shader` that raises on
+  unclassified names by default; passing ``strict_mode=False`` restores
+  the pre-fix warn-and-skip behaviour for backward-compat.
 """
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import Any
 
 _LOG = logging.getLogger(__name__)
@@ -107,6 +127,129 @@ KEY_OUTPUT_TYPE: str = "output_type"
 DEFAULT_OUTPUT_TYPE: str = "vec4<f32>"
 
 
+#: Names that the V5 palette adds to ``used_uniforms`` even though they
+#: refer to WGSL *helper functions* rather than resource bindings. The
+#: bridge filters these out of the binding block and, when a
+#: corresponding entry exists in :data:`HELPER_FUNCTION_LIBRARY`, injects
+#: the helper's definition into the shader header instead.
+#:
+#: This set is intentionally extensible: callers can register additional
+#: helper markers per-emit via
+#: :meth:`_BridgeEmitContext.register_helper_function`.
+HELPER_FUNCTION_MARKERS: frozenset[str] = frozenset({
+    "perlin2d",
+    "worley2d",
+    "worley",
+    "_hash2",
+    "hash21",
+    "hash22",
+    "voronoi",
+    "simplex_noise",
+    "value_noise",
+    "fbm",
+})
+
+
+#: Canonical WGSL bodies for each :data:`HELPER_FUNCTION_MARKERS` entry
+#: that ships with the V5 palette. Emitted at most once per shader
+#: (deduplicated by function name). Entries that don't have an inline
+#: body here — e.g. ``worley2d``, which the ``WorleyNoiseNode`` inlines
+#: directly — simply produce no header injection; the marker is still
+#: excluded from the binding block.
+_PERLIN2D_WGSL: str = (
+    "fn _hash2(p: vec2<f32>) -> f32 {\n"
+    "    var p3 = fract(vec3<f32>(p.xyx) * 0.1031);\n"
+    "    p3 = p3 + dot(p3, p3.yzx + 33.33);\n"
+    "    return fract((p3.x + p3.y) * p3.z);\n"
+    "}\n"
+    "fn perlin2d(p: vec2<f32>) -> f32 {\n"
+    "    let pi = floor(p);\n"
+    "    let pf = fract(p);\n"
+    "    let a = _hash2(pi);\n"
+    "    let b = _hash2(pi + vec2<f32>(1.0, 0.0));\n"
+    "    let c = _hash2(pi + vec2<f32>(0.0, 1.0));\n"
+    "    let d = _hash2(pi + vec2<f32>(1.0, 1.0));\n"
+    "    let u = pf * pf * (3.0 - 2.0 * pf);\n"
+    "    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);\n"
+    "}"
+)
+
+#: Standalone ``_hash2`` body — reused by both perlin and worley noise
+#: nodes. Emitted stand-alone when a shader only uses ``_hash2`` without
+#: the full perlin helper.
+_HASH2_WGSL: str = (
+    "fn _hash2(p: vec2<f32>) -> f32 {\n"
+    "    var p3 = fract(vec3<f32>(p.xyx) * 0.1031);\n"
+    "    p3 = p3 + dot(p3, p3.yzx + 33.33);\n"
+    "    return fract((p3.x + p3.y) * p3.z);\n"
+    "}"
+)
+
+HELPER_FUNCTION_LIBRARY: dict[str, str] = {
+    # perlin2d ships with its own copy of _hash2 so we don't need to
+    # emit a second one when both are marked.
+    "perlin2d": _PERLIN2D_WGSL,
+    "_hash2": _HASH2_WGSL,
+}
+
+
+# ---------------------------------------------------------------------------
+# Binding classifier
+# ---------------------------------------------------------------------------
+
+
+def _classify_uniform(name: str) -> str:
+    """Return the WGSL binding kind for a uniform-registry entry.
+
+    Returns one of:
+
+    * ``"helper"``  — the name is a helper-function marker; do not emit
+      a binding for it (the caller should inject a helper definition).
+    * ``"sampler"`` — the name should be bound as a ``sampler``.
+    * ``"texture"`` — the name should be bound as ``texture_2d<f32>``.
+    * ``"uniform"`` — the name should be bound as ``var<uniform> : f32``.
+    * ``"unknown"`` — the name did not match any recognised pattern.
+
+    Rules (checked in order):
+
+    1. Names in :data:`HELPER_FUNCTION_MARKERS` or names containing a
+       WGSL function-call parenthesis are classified as ``helper``.
+    2. Names ending in ``_sampler`` or exactly ``u_sampler`` are
+       ``sampler``.
+    3. Names matching ``u_*_texture``, ``u_*_tex``, or ``u_texture``
+       are ``texture``.
+    4. Any other ``u_*`` prefixed name is ``uniform``.
+    5. Anything else — lowercase leading char, no prefix — is
+       ``unknown`` (the caller decides whether to raise or skip).
+    """
+    if not isinstance(name, str) or not name:
+        return "unknown"
+    # Rule 1 — helper functions.
+    if name in HELPER_FUNCTION_MARKERS:
+        return "helper"
+    if "(" in name or ")" in name:
+        return "helper"
+    # Rule 2 — samplers.
+    if name.endswith("_sampler") or name == "u_sampler":
+        return "sampler"
+    # Rule 3 — textures. Order matters: check before the generic ``u_*``
+    # rule so ``u_albedo_texture`` doesn't fall through to ``uniform``.
+    if name.startswith("u_") and (
+        name.endswith("_texture")
+        or name.endswith("_tex")
+        or name == "u_texture"
+    ):
+        return "texture"
+    # Rule 4 — scalar / struct uniforms.
+    if name.startswith("u_"):
+        return "uniform"
+    # Rule 5 — bare lowercase-starting names with no ``u_`` prefix and
+    # no explicit texture/sampler suffix look like leaked identifiers
+    # (helper names, symbol fragments). Flag as unknown so the caller
+    # can raise in strict mode.
+    return "unknown"
+
+
 # ---------------------------------------------------------------------------
 # Small local shims — keep the module importable without touching the
 # forbidden physics / fluid / softbody trees.
@@ -131,12 +274,87 @@ def _import_visual_scripting() -> Any:
 # ---------------------------------------------------------------------------
 
 
+class _FunctionRegistry:
+    """Ordered registry of ``(name, wgsl_definition)`` helper functions.
+
+    Populated by :meth:`_BridgeEmitContext.register_helper_function` and
+    consumed by :meth:`MaterialGraphBridge.emit_full_shader`, which
+    prepends every registered definition to the shader header exactly
+    once (dedup by function name, insertion-order preserved).
+    """
+
+    def __init__(self) -> None:
+        self._defs: dict[str, str] = {}
+
+    def register(self, name: str, wgsl_definition: str) -> None:
+        """Register a helper function under ``name`` (idempotent).
+
+        Duplicate registrations under the same name are silently ignored
+        (the first-registered body wins) so nodes can defensively add
+        their helpers without needing to know if a peer already did.
+
+        Raises
+        ------
+        TypeError
+            When ``name`` or ``wgsl_definition`` is not a string.
+        ValueError
+            When ``name`` is empty.
+        """
+        if not isinstance(name, str):
+            raise TypeError(
+                f"register_helper_function: name must be str; "
+                f"got {type(name).__name__}"
+            )
+        if not name:
+            raise ValueError("register_helper_function: name must be non-empty")
+        if not isinstance(wgsl_definition, str):
+            raise TypeError(
+                f"register_helper_function: wgsl_definition must be str; "
+                f"got {type(wgsl_definition).__name__}"
+            )
+        if name in self._defs:
+            return
+        self._defs[name] = wgsl_definition
+
+    def names(self) -> list[str]:
+        """Return the registered helper names in insertion order."""
+        return list(self._defs.keys())
+
+    def definitions(self) -> list[tuple[str, str]]:
+        """Return the ``(name, wgsl)`` pairs in insertion order."""
+        return list(self._defs.items())
+
+    def as_wgsl(self) -> str:
+        """Return every registered definition joined by blank lines."""
+        return "\n\n".join(body for body in self._defs.values())
+
+    def __len__(self) -> int:  # pragma: no cover - trivial
+        return len(self._defs)
+
+    def __contains__(self, name: object) -> bool:  # pragma: no cover - trivial
+        return isinstance(name, str) and name in self._defs
+
+
 class _BridgeEmitContext:
     """Fresh emit context that tracks per-node symbol allocations.
 
     A single instance is used per :meth:`MaterialGraphBridge.to_material`
     call so downstream nodes see a consistent symbol namespace.
+
+    The context also owns:
+
+    * :attr:`HELPER_FUNCTION_MARKERS` — a per-instance mutable set of
+      helper-function names that override / extend the module-level
+      :data:`HELPER_FUNCTION_MARKERS` set. Callers can add markers
+      before compilation without touching the module.
+    * :attr:`function_registry` — a :class:`_FunctionRegistry` that
+      accumulates helper-function definitions for downstream shader
+      assembly.
     """
+
+    #: Instance-level marker set — starts from the module-level default
+    #: but callers may extend it per-emit.
+    HELPER_FUNCTION_MARKERS: set[str]
 
     def __init__(self) -> None:
         self.used_uniforms: set[str] = set()
@@ -145,6 +363,10 @@ class _BridgeEmitContext:
         # downstream nodes can substitute an incoming edge's symbol
         # into their emit slot.
         self.symbol_by_output: dict[tuple[str, str], str] = {}
+        # Per-instance markers (module set + any user additions).
+        self.HELPER_FUNCTION_MARKERS = set(HELPER_FUNCTION_MARKERS)
+        # Per-instance helper-function registry.
+        self.function_registry: _FunctionRegistry = _FunctionRegistry()
 
     def alloc_symbol(self, prefix: str) -> str:
         self._counter += 1
@@ -154,6 +376,31 @@ class _BridgeEmitContext:
         if not safe:
             safe = "sym"
         return f"{safe}_{self._counter}"
+
+    # ------------------------------------------------------------------
+    # Helper-function registration surface — nodes call this to have a
+    # WGSL helper definition inserted once per shader header.
+    # ------------------------------------------------------------------
+
+    def register_helper_function(self, name: str,
+                                 wgsl_definition: str) -> None:
+        """Register a helper function under ``name`` (idempotent).
+
+        Also adds ``name`` to :attr:`HELPER_FUNCTION_MARKERS` so the
+        binding classifier excludes it from resource bindings.
+        """
+        self.function_registry.register(name, wgsl_definition)
+        self.HELPER_FUNCTION_MARKERS.add(name)
+
+    def is_helper_marker(self, name: str) -> bool:
+        """Return ``True`` iff ``name`` is a recognised helper marker."""
+        if not isinstance(name, str):
+            return False
+        if name in self.HELPER_FUNCTION_MARKERS:
+            return True
+        if "(" in name or ")" in name:
+            return True
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -285,6 +532,16 @@ class MaterialGraphBridge:
                 "to_material: one or more nodes failed to compile",
                 errors=errors,
             )
+
+        # Post-pass: for every helper marker the palette pushed onto
+        # ``used_uniforms``, auto-register its canonical WGSL definition
+        # (when we know one) so downstream shader assembly can emit it
+        # in the header. This is what the palette *meant* when it added
+        # names like ``perlin2d`` to ``used_uniforms`` — the pre-FF2
+        # behaviour of promoting them to texture bindings was a bug.
+        for name in list(ctx.used_uniforms):
+            if name in HELPER_FUNCTION_LIBRARY and name not in ctx.function_registry:
+                ctx.function_registry.register(name, HELPER_FUNCTION_LIBRARY[name])
 
         wgsl_source = "\n".join(fragments)
         uniforms = sorted(ctx.used_uniforms)
@@ -499,7 +756,8 @@ class MaterialGraphBridge:
     # Full-shader helper
     # ------------------------------------------------------------------
 
-    def emit_full_shader(self, nodes: Any, entry_expr: str = "fs_out") -> str:
+    def emit_full_shader(self, nodes: Any, entry_expr: str = "fs_out",
+                         strict_mode: bool = True) -> str:
         """Return a complete WGSL fragment shader from *nodes*.
 
         *nodes* may be a :class:`NodeGraph` or an iterable of :class:`Node`
@@ -508,7 +766,14 @@ class MaterialGraphBridge:
         wraps the compiled body with:
 
         * a header comment,
-        * a uniforms block sourced from the compiled ``uniforms`` list,
+        * any helper-function definitions accumulated during compile
+          (:data:`HELPER_FUNCTION_LIBRARY` entries + any function the
+          nodes registered via
+          :meth:`_BridgeEmitContext.register_helper_function`),
+        * a uniforms block sourced from the compiled ``uniforms`` list
+          — filtered through :func:`_classify_uniform` so helper-function
+          markers, function-call fragments, and other non-binding names
+          are **not** promoted into ``texture_2d`` bindings,
         * a fragment-shader entry point tagged ``@fragment fn fs_main``
           that returns ``@location(0) vec4<f32>``.
 
@@ -521,11 +786,25 @@ class MaterialGraphBridge:
             colour. Purely cosmetic — the produced shader always writes
             to ``material_output.base_color`` at the end, so the entry
             expression is only used as the returned identifier.
+        strict_mode:
+            When ``True`` (default), any uniform name that fails
+            :func:`_classify_uniform` (i.e. is neither a helper marker
+            nor a recognised sampler/texture/uniform prefix) raises
+            :class:`MaterialGraphError`. When ``False``, unclassified
+            names are skipped with a :func:`warnings.warn` call — the
+            pre-FF2 behaviour, kept for backward-compat.
 
         Returns
         -------
         str
             A syntactically-plausible WGSL fragment shader source.
+
+        Raises
+        ------
+        MaterialGraphError
+            When ``strict_mode`` is ``True`` and one or more entries in
+            the compiled ``uniforms`` list cannot be classified as
+            helper / sampler / texture / uniform.
         """
         vs = _import_visual_scripting()
         NodeGraph = vs.NodeGraph
@@ -542,8 +821,70 @@ class MaterialGraphBridge:
         uniforms = material[KEY_UNIFORMS]
         output_type = material.get(KEY_OUTPUT_TYPE, DEFAULT_OUTPUT_TYPE)
 
-        # Uniforms block — one binding per uniform. WGSL requires an
-        # explicit ``@group`` / ``@binding`` attribute so we allocate
+        # Classify every uniform entry so we know which names are
+        # helper-function markers (drop from binding block, ensure a
+        # definition lands in the header), which are real bindings, and
+        # which are unclassified junk.
+        helpers: list[str] = []
+        real_bindings: list[str] = []
+        unclassified: list[str] = []
+        for u in uniforms:
+            kind = _classify_uniform(u)
+            if kind == "helper":
+                helpers.append(u)
+            elif kind in ("sampler", "texture", "uniform"):
+                real_bindings.append(u)
+            else:
+                unclassified.append(u)
+
+        if unclassified:
+            if strict_mode:
+                raise MaterialGraphError(
+                    "emit_full_shader: unclassified uniform names "
+                    "(strict_mode=True); "
+                    f"got {sorted(unclassified)!r}. "
+                    "Names must be helper markers, ``*_sampler``, "
+                    "``u_*_texture`` / ``u_*_tex``, or ``u_*`` "
+                    "uniforms. Pass strict_mode=False to skip with a "
+                    "warning.",
+                    errors=[
+                        (name, "unclassified uniform name")
+                        for name in unclassified
+                    ],
+                )
+            for name in unclassified:
+                warnings.warn(
+                    f"emit_full_shader: skipping unclassified uniform "
+                    f"name {name!r} (strict_mode=False)",
+                    stacklevel=2,
+                )
+
+        # Build a set of helper-function bodies to inject. Two sources:
+        # 1. Anything the nodes explicitly registered on the compile-time
+        #    _FunctionRegistry (not available here because to_material
+        #    doesn't leak the ctx — but helpers marked via used_uniforms
+        #    are re-derived below).
+        # 2. Names in ``helpers`` that have a canonical entry in
+        #    :data:`HELPER_FUNCTION_LIBRARY`. This matches what the V5
+        #    palette does when it pushes ``perlin2d`` into used_uniforms
+        #    to request an auto-inserted helper.
+        helper_bodies: list[tuple[str, str]] = []
+        seen_helpers: set[str] = set()
+        for name in helpers:
+            if name in seen_helpers:
+                continue
+            body_wgsl = HELPER_FUNCTION_LIBRARY.get(name)
+            if body_wgsl is None:
+                # Marker recognised but no canonical body — the palette
+                # inlined the helper inside a node fragment (e.g.
+                # ``worley2d`` re-uses ``_hash2`` inline). Skip the
+                # header injection but keep the marker out of bindings.
+                continue
+            helper_bodies.append((name, body_wgsl))
+            seen_helpers.add(name)
+
+        # Uniforms block — one binding per *real* binding. WGSL requires
+        # an explicit ``@group`` / ``@binding`` attribute so we allocate
         # binding indices sequentially. This is a skeleton for tests —
         # a real material system would resolve the binding indices
         # through its own uniform registry.
@@ -559,22 +900,32 @@ class MaterialGraphBridge:
             "};",
             "",
         ]
-        for i, u in enumerate(uniforms):
-            if u.startswith("u_"):
-                # Uniform variable — bind as a raw f32 for the sample
-                # shader (real materials would type-check here).
-                lines.append(
-                    f"@group(0) @binding({i}) var<uniform> {u}: f32;"
-                )
-            elif u.endswith("_sampler") or u == "u_sampler":
+
+        # Helper function definitions — prepended before uniforms so
+        # they can be referenced by any subsequent code. Blank line
+        # separator after the block for readability.
+        if helper_bodies:
+            for _name, wgsl in helper_bodies:
+                lines.append(wgsl)
+                lines.append("")
+
+        for i, u in enumerate(real_bindings):
+            kind = _classify_uniform(u)
+            if kind == "sampler":
                 lines.append(
                     f"@group(0) @binding({i}) var {u}: sampler;"
                 )
-            else:
+            elif kind == "texture":
                 lines.append(
                     f"@group(0) @binding({i}) var {u}: texture_2d<f32>;"
                 )
-        if uniforms:
+            else:
+                # ``uniform`` — bind as a raw f32 for the sample shader
+                # (real materials would type-check here).
+                lines.append(
+                    f"@group(0) @binding({i}) var<uniform> {u}: f32;"
+                )
+        if real_bindings:
             lines.append("")
 
         lines.extend([
@@ -608,4 +959,6 @@ __all__ = [
     "KEY_UNIFORMS",
     "KEY_OUTPUT_TYPE",
     "DEFAULT_OUTPUT_TYPE",
+    "HELPER_FUNCTION_MARKERS",
+    "HELPER_FUNCTION_LIBRARY",
 ]

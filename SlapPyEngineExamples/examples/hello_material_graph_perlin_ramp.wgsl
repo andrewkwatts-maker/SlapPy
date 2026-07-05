@@ -8,8 +8,23 @@ struct MaterialOutput {
     normal: vec3<f32>,
 };
 
-@group(0) @binding(0) var perlin2d: texture_2d<f32>;
-@group(0) @binding(1) var<uniform> u_time: f32;
+fn _hash2(p: vec2<f32>) -> f32 {
+    var p3 = fract(vec3<f32>(p.xyx) * 0.1031);
+    p3 = p3 + dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+fn perlin2d(p: vec2<f32>) -> f32 {
+    let pi = floor(p);
+    let pf = fract(p);
+    let a = _hash2(pi);
+    let b = _hash2(pi + vec2<f32>(1.0, 0.0));
+    let c = _hash2(pi + vec2<f32>(0.0, 1.0));
+    let d = _hash2(pi + vec2<f32>(1.0, 1.0));
+    let u = pf * pf * (3.0 - 2.0 * pf);
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+@group(0) @binding(0) var<uniform> u_time: f32;
 
 @fragment
 fn fs_main() -> @location(0) vec4<f32> {

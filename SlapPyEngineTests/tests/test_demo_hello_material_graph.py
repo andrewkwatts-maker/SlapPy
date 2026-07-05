@@ -102,12 +102,13 @@ def test_lint_wgsl_soft_imported(demo, tmp_path):
     for path in sorted(tmp_path.glob("hello_material_graph_*.wgsl")):
         source = path.read_text(encoding="utf-8")
         result = lint_wgsl(path.stem, source, contract=contract)
-        # The demo shader wrapper is a skeleton — its uniform bindings are
-        # sequential placeholder types, so an actual wgpu compile pass
-        # naturally trips on cases like a helper name (``perlin2d``)
-        # bound as a texture. We filter out the ``wgpu parse failed``
-        # noise and enforce the *structural* checks (byte budget, entry
-        # point, encoding hygiene, deprecated syntax).
+        # Post-FF2, the demo shaders should pass every structural check
+        # cleanly (helper markers are now injected as function defs, not
+        # texture bindings; sampler names bind as ``sampler``; only
+        # ``u_*_texture`` / ``u_*_tex`` names bind as ``texture_2d``).
+        # The wgpu parse pass is soft — some CI hosts don't have a
+        # working device — so we still tolerate ``wgpu parse failed``
+        # entries, but every *structural* error must be absent.
         structural = [
             e for e in result.errors
             if not e[1].startswith("wgpu parse failed")
@@ -230,8 +231,11 @@ def test_expected_uniforms_appear(demo):
     )
 
     tex_mat = bridge.to_material(demo.build_textured_pbr())
-    assert "u_albedo" in tex_mat["uniforms"], (
-        f"textured_pbr should register u_albedo; got {tex_mat['uniforms']}"
+    # After the FF2 fix, textures must use a ``_texture`` / ``_tex``
+    # suffix so the classifier binds them as ``texture_2d<f32>``.
+    assert "u_albedo_texture" in tex_mat["uniforms"], (
+        f"textured_pbr should register u_albedo_texture; "
+        f"got {tex_mat['uniforms']}"
     )
     assert "u_albedo_sampler" in tex_mat["uniforms"], (
         f"textured_pbr should register u_albedo_sampler; "

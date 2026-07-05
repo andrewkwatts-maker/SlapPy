@@ -276,8 +276,12 @@ def build_textured_pbr() -> NodeGraph:
     """
     graph = NodeGraph(name="textured_pbr")
     uv_offset = UVOffsetNode()
+    # Texture bindings must include the ``_texture`` (or ``_tex``) suffix
+    # so the FF2-fixed MaterialGraphBridge classifies them as
+    # ``texture_2d<f32>`` bindings rather than scalar uniforms. Samplers
+    # follow the same rule with a ``_sampler`` suffix.
     tex = TextureSampleNode(params={
-        "texture": "u_albedo",
+        "texture": "u_albedo_texture",
         "sampler": "u_albedo_sampler",
     })
     spec_const = ConstantFloatNode(params={"value": 0.35})
