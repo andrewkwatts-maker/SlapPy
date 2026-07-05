@@ -943,6 +943,48 @@ def _fb_reload_all_themes(ctx: dict[str, Any]) -> Any:
     return reload_all_themes(ctx)
 
 
+# ---------------------------------------------------------------------------
+# GG1 STUB-triage fallbacks (2026-07-05, round 10)
+#
+# Wire five more STUB rows: content-browser delete-asset (row 243 flip),
+# panel tile-grid + cascade (auto-layout companions to DD1 close-all),
+# edit invert-selection (photoshop-style Shift+Ctrl+I), and view
+# fullscreen (chrome + panel hide with snapshot/restore). See
+# :mod:`slappyengine.actions.content_delete_actions`,
+# :mod:`slappyengine.actions.panel_layout_actions`,
+# :mod:`slappyengine.actions.edit_invert_selection_actions`, and
+# :mod:`slappyengine.actions.view_fullscreen_actions` for the
+# implementations.
+# ---------------------------------------------------------------------------
+
+
+def _fb_delete_asset(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.content_delete_actions import delete_asset
+    return delete_asset(ctx)
+
+
+def _fb_tile_grid(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.panel_layout_actions import tile_grid
+    return tile_grid(ctx)
+
+
+def _fb_cascade_panels(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.panel_layout_actions import cascade
+    return cascade(ctx)
+
+
+def _fb_invert_selection(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_invert_selection_actions import (
+        invert_selection,
+    )
+    return invert_selection(ctx)
+
+
+def _fb_view_fullscreen(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_fullscreen_actions import fullscreen
+    return fullscreen(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -1785,6 +1827,48 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_reload_all_themes,
             required_args=[],
             category="theme",
+        ),
+        # ── GG1 STUB-triage: content delete + panel layout +
+        #    invert selection + view fullscreen (round 10) ────────────
+        ToolAction(
+            action_id="content.delete_asset",
+            label="Delete Asset...",
+            rust_backing=None,
+            python_fallback=_fb_delete_asset,
+            required_args=["path"],
+            category="content",
+        ),
+        ToolAction(
+            action_id="panel.tile_grid",
+            label="Tile Panels in Grid",
+            rust_backing=None,
+            python_fallback=_fb_tile_grid,
+            required_args=[],
+            category="panel",
+        ),
+        ToolAction(
+            action_id="panel.cascade",
+            label="Cascade Panels",
+            rust_backing=None,
+            python_fallback=_fb_cascade_panels,
+            required_args=[],
+            category="panel",
+        ),
+        ToolAction(
+            action_id="edit.invert_selection",
+            label="Invert Selection",
+            rust_backing=None,
+            python_fallback=_fb_invert_selection,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="view.fullscreen",
+            label="Fullscreen (Focus Mode)",
+            rust_backing=None,
+            python_fallback=_fb_view_fullscreen,
+            required_args=[],
+            category="view",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(
