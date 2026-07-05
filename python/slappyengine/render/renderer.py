@@ -27,6 +27,7 @@ import numpy as np
 
 from .light import Light, pack_lights_ubo
 from .null_renderer import NullRenderer
+from .passes import DepthPrepass, MSAAResolvePass, PassChain
 from .pipeline import (
     BufferUploader,
     PipelineCache,
@@ -139,6 +140,16 @@ class Renderer:
         self._sprite_ib = None
         self._sprite_sampler = None
         self._backend = "null"
+        # KK2: reusable pass chain (depth prepass + MSAA resolve).
+        # Depth prepass is off by default so existing lifecycle is
+        # unchanged for backward compat; ``enable_depth_prepass()`` flips
+        # it on. MSAA resolve is registered eagerly so callers can query
+        # the chain, but stays a no-op when ``msaa == 1``.
+        self._pass_chain: PassChain = PassChain(renderer=self)
+        self._pass_chain.add(MSAAResolvePass())
+        self._depth_prepass_enabled: bool = False
+        # Main-pass depth compare op — flipped by EarlyZPass when active.
+        self.depth_compare: str = "less"
         if _HAS_WGPU and not force_null:
             self._try_init_wgpu()
         # Ensure the offscreen render target matches the initial window size
@@ -193,6 +204,43 @@ class Renderer:
     @property
     def uniform_pool(self) -> UniformBufferPool:
         return self._ubo_pool
+
+    # ------------------------------------------------------------------
+    # KK2 — reusable pass chain
+    # ------------------------------------------------------------------
+    @property
+    def pass_chain(self) -> PassChain:
+        """The reusable :class:`PassChain` for this renderer.
+
+        Populated at construction with a :class:`MSAAResolvePass`;
+        :meth:`enable_depth_prepass` inserts a :class:`DepthPrepass`
+        ahead of it. Callers may append their own passes.
+        """
+        return self._pass_chain
+
+    def enable_depth_prepass(self, enabled: bool = True) -> None:
+        """Toggle the KK2 depth prepass in the renderer's :attr:`pass_chain`.
+
+        The prepass runs before MSAA resolve and skips transparent
+        meshes. Backward-compat safe — existing frame lifecycle only
+        picks up the prepass when this flag flips on.
+        """
+        if bool(enabled) == self._depth_prepass_enabled:
+            return
+        if enabled:
+            # Insert DepthPrepass ahead of the existing MSAA resolve.
+            prepass = DepthPrepass()
+            prepass.setup(self)
+            # Re-order: [DepthPrepass, ..existing..].
+            existing = list(self._pass_chain)
+            self._pass_chain = PassChain(renderer=self)
+            self._pass_chain._passes.append(prepass)
+            for p in existing:
+                self._pass_chain._passes.append(p)
+            self._depth_prepass_enabled = True
+        else:
+            self._pass_chain.remove("depth_prepass")
+            self._depth_prepass_enabled = False
 
     # ------------------------------------------------------------------
     # Surface / offscreen

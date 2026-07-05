@@ -426,7 +426,8 @@ def test_pack_lights_ubo_caps_at_max_lights():
 # Shader stock
 # ----------------------------------------------------------------------
 def test_stock_shaders_registered():
-    assert set(STOCK_SHADERS) == {"unlit_3d", "phong_3d", "sprite_2d", "line_3d"}
+    # KK2 added "depth_only" for the DepthPrepass; base 4 shaders remain.
+    assert {"unlit_3d", "phong_3d", "sprite_2d", "line_3d"} <= set(STOCK_SHADERS)
 
 
 def test_unlit_shader_has_entry_points():

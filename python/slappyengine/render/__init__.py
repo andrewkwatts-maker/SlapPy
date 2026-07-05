@@ -30,6 +30,14 @@ from .light import Light, MAX_LIGHTS, pack_lights_ubo, is_unlit
 from .material import Material, TextureHandle
 from .mesh import Mesh, MeshHandle, cube, quad
 from .null_renderer import DrawCall, NullRenderer
+from .passes import (
+    DepthPrepass,
+    EarlyZPass,
+    MSAAResolvePass,
+    PassChain,
+    RenderPass,
+    install_default_passes,
+)
 from .renderer import Renderer, is_wgpu_available
 from .scene_walker import (
     AssetCache,
@@ -41,6 +49,7 @@ from .scene_walker import (
     render_scene,
 )
 from .shader_stock import (
+    DEPTH_ONLY_WGSL,
     LINE_3D_WGSL,
     PHONG_3D_WGSL,
     SPRITE_2D_WGSL,
@@ -59,6 +68,15 @@ from .shadows import (
     find_cascade_for_world_pos,
     pack_cascade_ubo,
 )
+from .skybox import (
+    ALL_FACES,
+    CubeFace,
+    CubemapData,
+    SKYBOX_WGSL,
+    Skybox,
+    procedural_gradient_sky,
+    sample_direction_from_cubemap,
+)
 from .transform import Transform2D, Transform3D
 
 __all__ = [
@@ -67,24 +85,36 @@ __all__ = [
     "Camera2D",
     "Camera3D",
     "CascadeSplit",
+    "DEPTH_ONLY_WGSL",
+    "DepthPrepass",
     "DrawCall",
+    "EarlyZPass",
     "EntityDrawInfo",
     "Frustum",
     "Light",
     "LINE_3D_WGSL",
     "MAX_LIGHTS",
+    "MSAAResolvePass",
     "Material",
     "Mesh",
     "MeshHandle",
     "NullRenderer",
     "PHONG_3D_WGSL",
+    "PassChain",
+    "RenderPass",
     "RenderStats",
     "Renderer",
     "SHADOW_DEPTH_ONLY_WGSL",
     "SHADOW_SAMPLE_WGSL_SNIPPET",
     "SHADOW_SAMPLER_DESC",
+    "SKYBOX_WGSL",
     "SPRITE_2D_WGSL",
     "STOCK_SHADERS",
+    "Skybox",
+    "CubeFace",
+    "CubemapData",
+    "procedural_gradient_sky",
+    "sample_direction_from_cubemap",
     "SceneWalker",
     "ShaderSource",
     "ShadowMapConfig",
@@ -96,6 +126,7 @@ __all__ = [
     "cube",
     "find_cascade_for_world_pos",
     "get_shader",
+    "install_default_passes",
     "is_unlit",
     "is_wgpu_available",
     "pack_cascade_ubo",

@@ -189,6 +189,33 @@ fn fs_main(in: VSOut) -> @location(0) vec4<f32> {
 """
 
 
+# ----------------------------------------------------------------------
+# Depth-only prepass — vertex-only, colour writes off at the pipeline level.
+# Reuses the same Camera / Model binding layout as unlit_3d so DepthPrepass
+# can share the renderer's camera UBO. JJ7's SHADOW_DEPTH_ONLY_WGSL exists
+# in shadows.py but binds its own ``ShadowCam.lvp``; we need the main
+# forward camera VP here.
+# ----------------------------------------------------------------------
+DEPTH_ONLY_WGSL = """// slappyengine depth_only
+struct Camera { view_proj: mat4x4<f32> };
+struct Model  { model: mat4x4<f32>, color: vec4<f32> };
+
+@group(0) @binding(0) var<uniform> cam: Camera;
+@group(1) @binding(0) var<uniform> mdl: Model;
+
+@vertex
+fn vs_main(@location(0) position: vec3<f32>) -> @builtin(position) vec4<f32> {
+    return cam.view_proj * (mdl.model * vec4<f32>(position, 1.0));
+}
+
+// API-validation layers reject depth-only pipelines with no fragment
+// entry point, so we emit a nominal stub that's masked off by the
+// pipeline's colour write mask.
+@fragment
+fn fs_main() -> @location(0) vec4<f32> { return vec4<f32>(0.0); }
+"""
+
+
 @dataclass(frozen=True)
 class ShaderSource:
     name: str
@@ -206,6 +233,7 @@ STOCK_SHADERS: dict[str, ShaderSource] = {
     "phong_3d":  ShaderSource("phong_3d",  PHONG_3D_WGSL),
     "sprite_2d": ShaderSource("sprite_2d", SPRITE_2D_WGSL),
     "line_3d":   ShaderSource("line_3d",   LINE_3D_WGSL),
+    "depth_only": ShaderSource("depth_only", DEPTH_ONLY_WGSL),
 }
 
 
