@@ -863,6 +863,43 @@ def _fb_repeat_last_batch(ctx: dict[str, Any]) -> Any:
     return repeat_last_batch(ctx)
 
 
+# ---------------------------------------------------------------------------
+# EE1 STUB-triage fallbacks (2026-07-05, round 8)
+#
+# Wire five more STUB rows: selection group / ungroup, random theme,
+# spawn-at-cursor arming, and snap-to-pixel-grid.
+# See :mod:`slappyengine.actions.edit_group_actions`,
+# :mod:`slappyengine.actions.theme_random_actions`,
+# :mod:`slappyengine.actions.spawn_cursor_actions`, and
+# :mod:`slappyengine.actions.edit_snap_pixel_actions`.
+# ---------------------------------------------------------------------------
+
+
+def _fb_group_selection(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_group_actions import group_selection
+    return group_selection(ctx)
+
+
+def _fb_ungroup_selection(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_group_actions import ungroup_selection
+    return ungroup_selection(ctx)
+
+
+def _fb_random_theme(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.theme_random_actions import random_theme
+    return random_theme(ctx)
+
+
+def _fb_spawn_at_cursor(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_cursor_actions import spawn_at_cursor
+    return spawn_at_cursor(ctx)
+
+
+def _fb_snap_to_pixel_grid(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_snap_pixel_actions import snap_to_pixel_grid
+    return snap_to_pixel_grid(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -1090,6 +1127,31 @@ def _default_actions() -> list[ToolAction]:
             label="Duplicate Layer",
             rust_backing=None,
             python_fallback=_fb_duplicate_layer,
+            required_args=[],
+            category="edit",
+        ),
+        # ── EE1 STUB-triage: group / ungroup / snap-to-pixel (round 8) ─
+        ToolAction(
+            action_id="edit.group_selection",
+            label="Group Selection",
+            rust_backing=None,
+            python_fallback=_fb_group_selection,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="edit.ungroup_selection",
+            label="Ungroup Selection",
+            rust_backing=None,
+            python_fallback=_fb_ungroup_selection,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="edit.snap_to_pixel_grid",
+            label="Snap to Pixel Grid",
+            rust_backing=None,
+            python_fallback=_fb_snap_to_pixel_grid,
             required_args=[],
             category="edit",
         ),
@@ -1357,6 +1419,15 @@ def _default_actions() -> list[ToolAction]:
             required_args=[],
             category="theme",
         ),
+        # ── EE1 STUB-triage: random-theme picker (round 8) ────────────
+        ToolAction(
+            action_id="theme.random",
+            label="Random Theme",
+            rust_backing=None,
+            python_fallback=_fb_random_theme,
+            required_args=[],
+            category="theme",
+        ),
         ToolAction(
             action_id="editor.toggle_hud",
             label="Toggle HUD",
@@ -1575,6 +1646,15 @@ def _default_actions() -> list[ToolAction]:
             label="Repeat Last Spawn (Batch)",
             rust_backing=None,
             python_fallback=_fb_repeat_last_batch,
+            required_args=[],
+            category="spawn",
+        ),
+        # ── EE1 STUB-triage: spawn-at-cursor arming (round 8) ─────────
+        ToolAction(
+            action_id="spawn.spawn_at_cursor",
+            label="Spawn at Cursor",
+            rust_backing=None,
+            python_fallback=_fb_spawn_at_cursor,
             required_args=[],
             category="spawn",
         ),

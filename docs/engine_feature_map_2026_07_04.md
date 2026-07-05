@@ -328,10 +328,15 @@ Status legend:
 | 279 | `panel.close_all` action | Router action id (DD1) | WIRED | `tool_router.py` → `_fb_close_all_panels` → `actions/panel_visibility_actions.py::close_all_panels` | Sweeps the canonical panel roster (`outliner`, `inspector`, `content_browser`, `code`, `layer_panel`, `behavior_panel`, `tag_painter`) and calls `shell.set_panel_visible(id, False)` (or the `toggle_panel` fallback) on every currently-visible entry. Pushes the closed batch onto `shell._hidden_panel_stack` so `panel.restore_last_hidden` can undo. Viewport panel is skipped (always-visible in the shell). |
 | 280 | `panel.restore_last_hidden` action | Router action id (DD1) | WIRED | `tool_router.py` → `_fb_restore_last_hidden_panel` → `actions/panel_visibility_actions.py::restore_last_hidden_panel` | Pops the top of `shell._hidden_panel_stack` and re-shows every panel id in it. Returns `empty_stack` when nothing has been hidden yet (legal on fresh editors). |
 | 281 | `spawn.repeat_last_batch` action | Router action id (DD1) | WIRED | `tool_router.py` → `_fb_repeat_last_batch` → `actions/spawn_batch_actions.py::repeat_last_batch` | Sibling to `spawn.repeat_last`. Reads the same `shell._last_spawn` slot, then lays down `count` copies (default 4) in a `ceil(sqrt(count))`-wide grid with per-cell offset `ctx["spacing"]` (default `(1.0, 1.0)`). Updates the last-spawn slot to the final cell so a follow-up `spawn.repeat_last` continues the grid. |
+| 282 | `edit.group_selection` action | Router action id (EE1) | WIRED | `tool_router.py` → `_fb_group_selection` → `actions/edit_group_actions.py::group_selection` | Wraps the current selection into a `_GroupEntity` (local stub — scene has no `GroupEntity` primitive yet) sitting at the selection centroid. Every child's position is rewritten as an offset from the centroid so the visual layout stays fixed. Removes originals from the scene, adds the wrapper, retargets shell selection at the group. |
+| 283 | `edit.ungroup_selection` action | Router action id (EE1) | WIRED | `tool_router.py` → `_fb_ungroup_selection` → `actions/edit_group_actions.py::ungroup_selection` | Flattens a selected group — each child gets `group.position + child.position` written back so absolute coordinates are restored. Removes the group and re-adds each child to the scene at top level. Returns `not_a_group` when the selection contains no groups. |
+| 284 | `theme.random` action | Router action id (EE1) | WIRED | `tool_router.py` → `_fb_random_theme` → `actions/theme_random_actions.py::random_theme` | Picks a random registered theme via `random.choice`; deterministic under `ctx["rng"]`. Excludes the current theme by default (`exclude_current=True`) so a click never lands on the theme already in use. Distinguishes `single_theme` (only one registered) from `no_themes` (empty registry). |
+| 285 | `spawn.spawn_at_cursor` action | Router action id (EE1) | WIRED | `tool_router.py` → `_fb_spawn_at_cursor` → `actions/spawn_cursor_actions.py::spawn_at_cursor` | Two-mode action. `mode="arm"` (default) stashes the resolved cursor coord on `shell._pending_spawn_position` for the next spawn-menu click. `mode="repeat"` re-fires `shell._last_spawn` centred on the cursor. Cursor probe walks `ctx["cursor"]` → `shell.get_cursor_world_position()` → `shell._cursor_world_position` → `shell._last_cursor`. |
+| 286 | `edit.snap_to_pixel_grid` action | Router action id (EE1) | WIRED | `tool_router.py` → `_fb_snap_to_pixel_grid` → `actions/edit_snap_pixel_actions.py::snap_to_pixel_grid` | Rounds selected entity positions to integer pixels (or an arbitrary `ctx["pixel_size"]` grid — 32 for tilemaps). Default axes are `xy` so 2D pixel-art work doesn't collapse fractional Z ordering; pass `ctx["axes"] = "xyz"` to include Z. `ctx["all"]=True` walks every scene entity instead of just the selection. |
 
-**Total rows: 281.** Status tally:
+**Total rows: 286.** Status tally:
 
-* **WIRED**: 263 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1 + 5 CC1 + 5 DD1; row 189 also flipped STUB -> WIRED)
+* **WIRED**: 268 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1 + 5 CC1 + 5 DD1 + 5 EE1; row 189 also flipped STUB -> WIRED)
 * **STUB**: 15 (rows 50, 78, 79, 94, 95, 191, 192, 193, 222, 224, 225, 226, 227, 228, 243 — row 189 dropped after W2 landing; row 243 added for X4 delete ctx handler)
 * **BROKEN**: 3 (rows 80, 223 code-paths — see previous note; dedupes to 2 real import/attribute defects)
 
@@ -711,3 +716,74 @@ covers 35 previously-absent router action ids across 7 category
 buckets (`file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`,
 `content`). Roll-up: **281 total, 263 WIRED (93.6%), 15 STUB (5.3%),
 3 BROKEN (1.1%)**.
+
+---
+
+## EE1 STUB-triage patch (2026-07-05, round 8 after X3 + Y1 + Z7 + AA1 + BB1 + CC1 + DD1)
+
+Five more action ids landed in this tick, moving 5 rows from STUB
+(implicit — the ids were not yet registered) to WIRED (rows 282-286):
+
+* `edit.group_selection` → `slappyengine.actions.edit_group_actions.group_selection`
+* `edit.ungroup_selection` → `slappyengine.actions.edit_group_actions.ungroup_selection`
+* `theme.random` → `slappyengine.actions.theme_random_actions.random_theme`
+* `spawn.spawn_at_cursor` → `slappyengine.actions.spawn_cursor_actions.spawn_at_cursor`
+* `edit.snap_to_pixel_grid` → `slappyengine.actions.edit_snap_pixel_actions.snap_to_pixel_grid`
+
+New subpackages: `python/slappyengine/actions/edit_group_actions.py`
++ `python/slappyengine/actions/theme_random_actions.py`
++ `python/slappyengine/actions/spawn_cursor_actions.py`
++ `python/slappyengine/actions/edit_snap_pixel_actions.py`.
+
+Behavioural notes for EE1:
+
+* **`edit.group_selection`** — wraps the selection into a local
+  `_GroupEntity` stub (the scene module ships no `GroupEntity`
+  primitive today, so this action owns its own duck-typed class with
+  `position` / `children` / `name` / `is_group=True`). Centroid is the
+  arithmetic mean of the child positions across whichever positional
+  field they carry (`position` / `origin` / `pos`). Children are
+  re-parented relative to the centroid so the visible layout stays
+  fixed when the group carries the offset. Removes originals from the
+  scene, adds the wrapper, retargets `shell._selected_entity` +
+  `_selected_entities` at the group.
+* **`edit.ungroup_selection`** — mirror of the above. Walks every
+  group in the current selection (non-group entries are ignored) and
+  for each child writes back `group.position + child.position` so
+  absolute coordinates are restored. Removes the group from the scene
+  and re-adds each child at top level. Returns `not_a_group` when the
+  selection contains no groups (distinguishing from `no_selection`).
+  Shell selection retargets at the released children.
+* **`theme.random`** — shares `_THEME_CURSOR` with `theme.cycle` /
+  `theme.cycle_reverse`. `ctx["rng"]` accepts a `random.Random`
+  instance for deterministic tests. Excludes the currently active
+  theme by default so a click never no-ops. Distinguishes
+  `{"status": "single_theme", "theme": name}` (only one registered
+  theme + exclude filter would leave the pool empty) from
+  `{"status": "no_themes"}` (empty registry) so the caller can render
+  a "no other themes available" toast without special-casing.
+* **`spawn.spawn_at_cursor`** — two-mode. `mode="arm"` (default)
+  stashes the resolved cursor coord on
+  `shell._pending_spawn_position` for the next spawn-menu click to
+  consume. `mode="repeat"` uses `_resolve_last_spawn` /
+  `record_last_spawn` from `spawn_history_actions` to re-fire
+  `shell._last_spawn` at the cursor immediately; falls back to `"arm"`
+  when no history exists (so the click isn't wasted). Cursor probe
+  walks `ctx["cursor"]` → `shell.get_cursor_world_position()` →
+  `shell._cursor_world_position` → `shell._last_cursor` in that order.
+* **`edit.snap_to_pixel_grid`** — rounds selected entity positions to
+  the nearest multiple of `ctx["pixel_size"]` (default 1.0). Default
+  axes are `"xy"` so 2D pixel-art work doesn't collapse fractional Z
+  layer ordering; pass `ctx["axes"] = "xyz"` to include Z. Custom
+  pixel sizes like 32 support tilemap workflows (32-unit snap).
+  `ctx["all"]=True` walks every entity in the scene instead of just
+  the selection (matches an "Edit → Snap All to Pixel Grid" menu
+  variant). Returns per-entity `(entity, before, after)` tuples in
+  `deltas` so the caller can wire an undo hook.
+
+Regression tests: `SlapPyEngineTests/tests/test_stub_triage_ee1.py`
+(40 tests, all passing). Combined X3+Y1+Z7+AA1+BB1+CC1+DD1+EE1 wiring
+now covers 40 previously-absent router action ids across 7 category
+buckets (`file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`,
+`content`). Roll-up: **286 total, 268 WIRED (93.7%), 15 STUB (5.2%),
+3 BROKEN (1.0%)**.
