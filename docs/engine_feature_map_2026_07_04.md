@@ -348,10 +348,15 @@ Status legend:
 | 299 | `edit.paste_at_original_position` action | Router action id (II5) | WIRED | `tool_router.py` → `_fb_paste_at_original_position` → `actions/edit_paste_original_actions.py::paste_at_original_position` | Illustrator `Cmd+Shift+V` / Photoshop `Shift+Ctrl+V` / Blender `Alt+V` semantics — pulls the clipboard snapshots but *does not* apply a cursor-relative offset. Default `name_suffix` is `" (copy)"` (pass `""` to preserve names); positions are always preserved. Best-effort `scene.add_entity` / `scene.add` walk. Distinct `pasted_at_original` status so the shell can toast "pasted at original position" instead of the generic "pasted". |
 | 300 | `spawn.spawn_batch_row` action | Router action id (II5) | WIRED | `tool_router.py` → `_fb_spawn_batch_row` → `actions/spawn_batch_row_actions.py::spawn_batch_row` | Sibling to DD1 `spawn.repeat_last_batch` — lays down `count` (default 5) copies in a single row instead of a grid. `direction="horizontal"` (default, +X) / `direction="vertical"` (+Y); `spacing` scalar picks the stride. `ctx["stride"]` 2/3-vec overrides direction+spacing for arbitrary diagonals. Retargets `shell._last_spawn` to the final cell so a follow-up `spawn.repeat_last` continues the row. |
 | 301 | `content.duplicate_asset` action | Router action id (II5) | WIRED | `tool_router.py` → `_fb_duplicate_asset` → `actions/content_duplicate_asset_actions.py::duplicate_asset` | Explorer / Finder style in-place duplicate. Files splice `_copy` before the extension (`hero.png` → `hero_copy.png`); directories append the suffix (`Sprites` → `Sprites_copy`) and copy recursively via `shutil.copytree`. Auto-uniquify on collision (`hero_copy.png` → `hero_copy_2.png` → `hero_copy_3.png`). `ctx["suffix"]` overrides the default. Best-effort `browser.refresh()` after the copy so the new entry shows up without an explicit reload. Returns `not_found` / `missing_path` / `error` alongside the success shape. |
+| 302 | `edit.hide_selection` action | Router action id (JJ6) | WIRED | `tool_router.py` → `_fb_hide_selection` → `actions/edit_hide_show_actions.py::hide_selection` | Blender `H` — marks every currently-selected entity as invisible. Writes both Nova3D (`entity.visible = False`) and Ochema legacy (`entity.hidden = True`) flags when either attribute is present. Returns `no_selection` (nothing to hide) vs `already_hidden` (selection was fully hidden) so the toast can differentiate. |
+| 303 | `edit.show_all` action | Router action id (JJ6) | WIRED | `tool_router.py` → `_fb_show_all` → `actions/edit_hide_show_actions.py::show_all` | Blender `Alt+H` — un-hides every entity in the scene. Walks `scene.entities` / `scene.get_entities()` / `scene.z_layers` (shared roster with GG1 `invert_selection`), reads `_is_hidden`, clears the flag on every hit. Returns `no_scene` / `empty_scene` / `all_visible` distinct from success `shown` (with `previous_hidden_count`) so the caller can render "nothing to show" toasts. |
+| 304 | `edit.lock_selection` action | Router action id (JJ6) | WIRED | `tool_router.py` → `_fb_lock_selection` → `actions/edit_lock_unlock_actions.py::lock_selection` | Sibling to hide_selection — marks selected entities uneditable. Writes both public (`entity.locked = True`) and legacy underscored (`entity._locked = True`) attributes when present. Locked entries are skipped by GG1 `invert_selection`, II5 Tab-through, and the JJ6 `select_by_prefab_kind` helper (unless `include_locked=True`) so locking effectively removes an entity from every selection flow. Returns `no_selection` / `already_locked` distinct from success `locked`. |
+| 305 | `edit.unlock_all` action | Router action id (JJ6) | WIRED | `tool_router.py` → `_fb_unlock_all` → `actions/edit_lock_unlock_actions.py::unlock_all` | Maya `Ctrl+Shift+L` — clears the lock flag scene-wide. Same roster walker + selection retarget as `show_all`. Returns `no_scene` / `empty_scene` / `all_unlocked` / `unlocked` (with `previous_locked_count`). |
+| 306 | `edit.select_by_prefab_kind` action | Router action id (JJ6) | WIRED | `tool_router.py` → `_fb_select_by_prefab_kind` → `actions/edit_select_by_kind_actions.py::select_by_prefab_kind` | Blender `Shift+G` "Select Similar" — swaps the selection for every entity whose `kind` / `prefab_kind` / `type` / `category` attribute matches the reference. Kind resolved from `ctx["kind"]` first (explicit override), else from the current selection's head entity. `mode="replace"` (default) / `mode="add"`. Locked / hidden entries filtered by default (`include_locked` / `include_hidden` opt back in). Returns `no_scene` / `empty_scene` / `no_selection` (kind unresolvable) / `no_kind_on_reference` (reference has no kind-like attribute) / `no_matches` / success `selected` (with `kind`, `count`, `previous_count`, `match_count`). |
 
-**Total rows: 301.** Status tally:
+**Total rows: 306.** Status tally:
 
-* **WIRED**: 284 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1 + 5 CC1 + 5 DD1 + 5 EE1 + 5 FF1 + 5 GG1 + 5 II5; rows 189 + 243 also flipped STUB -> WIRED)
+* **WIRED**: 289 (215 baseline + 18 delta + 5 Y1 + 5 Z7 + 5 AA1 + 5 BB1 + 5 CC1 + 5 DD1 + 5 EE1 + 5 FF1 + 5 GG1 + 5 II5 + 5 JJ6; rows 189 + 243 also flipped STUB -> WIRED)
 * **STUB**: 14 (rows 50, 78, 79, 94, 95, 191, 192, 193, 222, 224, 225, 226, 227, 228 — row 243 flipped to WIRED under GG1)
 * **BROKEN**: 3 (rows 80, 223 code-paths — see previous note; dedupes to 2 real import/attribute defects)
 
@@ -951,4 +956,80 @@ X3+Y1+Z7+AA1+BB1+CC1+DD1+EE1+FF1+GG1+II5 wiring now covers 55
 previously-absent router action ids across 8 category buckets
 (`file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`,
 `content`). Roll-up: **301 total, 284 WIRED (94.4%), 14 STUB (4.7%),
+3 BROKEN (1.0%)**.
+
+
+## JJ6 STUB-triage patch (2026-07-05, round 12 after X3 + Y1 + Z7 + AA1 + BB1 + CC1 + DD1 + EE1 + FF1 + GG1 + II5)
+
+Five more action ids landed in this tick, moving 5 rows from STUB
+(implicit — the ids were not yet registered) to WIRED (rows 302-306).
+Per II5's finding, the remaining 14 named STUBs are DPG-shell-dependent
+(HUD toggle, diary "Open…" file picker, inspector help popups, theming
+save-as-new / import / export modals). This round wires common QoL
+actions that don't need the DPG shell — hide/show/lock/unlock plus
+Blender-style "select similar":
+
+* `edit.hide_selection` → `slappyengine.actions.edit_hide_show_actions.hide_selection`
+* `edit.show_all` → `slappyengine.actions.edit_hide_show_actions.show_all`
+* `edit.lock_selection` → `slappyengine.actions.edit_lock_unlock_actions.lock_selection`
+* `edit.unlock_all` → `slappyengine.actions.edit_lock_unlock_actions.unlock_all`
+* `edit.select_by_prefab_kind` → `slappyengine.actions.edit_select_by_kind_actions.select_by_prefab_kind`
+
+New subpackages:
+`python/slappyengine/actions/edit_hide_show_actions.py`
++ `python/slappyengine/actions/edit_lock_unlock_actions.py`
++ `python/slappyengine/actions/edit_select_by_kind_actions.py`.
+
+Behavioural notes for JJ6:
+
+* **`edit.hide_selection`** — Blender `H` / Maya `Ctrl+H`. Marks every
+  entry in the current selection as invisible. Both Nova3D
+  (`entity.visible = False`) and Ochema legacy (`entity.hidden = True`)
+  conventions are honoured — if the entity carries `visible` we clear
+  it; if it carries `hidden` we set it. When neither attribute is
+  present the helper installs `hidden = True` so a subsequent
+  `show_all` can round-trip it. Distinguishes `no_selection` (nothing
+  to hide) from `already_hidden` (selection was fully hidden already)
+  so the caller can toast "already hidden" instead of "nothing
+  selected".
+* **`edit.show_all`** — Blender `Alt+H`. Walks the shared GG1
+  `_walk_scene_entities` roster (matches `select_all` / `invert_selection`
+  ordering), filters through `_is_hidden`, clears the flag on every hit.
+  Success payload includes `previous_hidden_count` so a follow-up undo
+  hook knows how many entities to re-hide.
+* **`edit.lock_selection`** — Padlock icon in Blender's outliner /
+  Maya's layer editor "R" toggle. Marks selected entities uneditable.
+  Writes both public `locked` and legacy `_locked` attributes so
+  downstream readers agree. Locked entries are already respected by
+  GG1 `invert_selection`, II5 `select_next` / `select_previous`, and
+  the JJ6 `select_by_prefab_kind` helper (unless the caller opts in
+  via `include_locked=True`), so locking effectively marks-as-uneditable
+  across the entire editor selection surface.
+* **`edit.unlock_all`** — Maya `Ctrl+Shift+L`. Scene-wide clear of the
+  lock flag. Same roster walker + selection retarget as `show_all`.
+  Distinguishes `no_scene` / `empty_scene` / `all_unlocked` from success
+  `unlocked` (with `previous_locked_count`).
+* **`edit.select_by_prefab_kind`** — Blender `Shift+G → Similar`, Maya
+  "Select Similar", AE right-click "Select same type". Swaps the
+  selection for every entity whose kind matches a reference. Kind is
+  resolved from `ctx["kind"]` first (explicit override — always wins),
+  else from the first entity in the current selection. Walks four
+  attribute names in order: `kind`, `prefab_kind`, `type`, `category`
+  — so both Nova3D (`kind`) and Ochema-legacy (`prefab_kind`) entities
+  match cleanly. Enum / class values are coerced via `str(value)` so a
+  `PrefabKind.ROPE` enum matches `"PrefabKind.ROPE"`. `mode="replace"`
+  (default) swaps the selection; `mode="add"` extends it with de-dup
+  on `id()`. Locked / hidden entries filtered by default; the
+  `include_locked` / `include_hidden` flags opt back in for
+  batch-fixing locked layers. Distinct `no_kind_on_reference` status
+  when the reference entity has none of the four attribute names — so
+  the caller can render "click a kinded entity first" instead of the
+  generic "nothing selected".
+
+Regression tests: `SlapPyEngineTests/tests/test_stub_triage_jj6.py`
+(40 tests, all passing). Combined
+X3+Y1+Z7+AA1+BB1+CC1+DD1+EE1+FF1+GG1+II5+JJ6 wiring now covers 60
+previously-absent router action ids across 8 category buckets
+(`file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`,
+`content`). Roll-up: **306 total, 289 WIRED (94.4%), 14 STUB (4.6%),
 3 BROKEN (1.0%)**.

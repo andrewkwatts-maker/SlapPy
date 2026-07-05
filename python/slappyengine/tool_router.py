@@ -1031,6 +1031,45 @@ def _fb_duplicate_asset(ctx: dict[str, Any]) -> Any:
     return duplicate_asset(ctx)
 
 
+# ---------------------------------------------------------------------------
+# JJ6 STUB-triage fallbacks (2026-07-05 — round 12 after X3 / Y1 / Z7 /
+# AA1 / BB1 / CC1 / DD1 / EE1 / FF1 / GG1 / II5)
+#
+# Five more action ids: hide/show pair, lock/unlock pair, and
+# select-by-prefab-kind. See
+# :mod:`slappyengine.actions.edit_hide_show_actions`,
+# :mod:`slappyengine.actions.edit_lock_unlock_actions`, and
+# :mod:`slappyengine.actions.edit_select_by_kind_actions`.
+# ---------------------------------------------------------------------------
+
+
+def _fb_hide_selection(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_hide_show_actions import hide_selection
+    return hide_selection(ctx)
+
+
+def _fb_show_all(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_hide_show_actions import show_all
+    return show_all(ctx)
+
+
+def _fb_lock_selection(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_lock_unlock_actions import lock_selection
+    return lock_selection(ctx)
+
+
+def _fb_unlock_all(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_lock_unlock_actions import unlock_all
+    return unlock_all(ctx)
+
+
+def _fb_select_by_prefab_kind(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_select_by_kind_actions import (
+        select_by_prefab_kind,
+    )
+    return select_by_prefab_kind(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -1957,6 +1996,48 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_duplicate_asset,
             required_args=["path"],
             category="content",
+        ),
+        # ── JJ6 STUB-triage: hide/show + lock/unlock + select-by-kind
+        #    (round 12) ────────────────────────────────────────────────
+        ToolAction(
+            action_id="edit.hide_selection",
+            label="Hide Selection",
+            rust_backing=None,
+            python_fallback=_fb_hide_selection,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="edit.show_all",
+            label="Show All",
+            rust_backing=None,
+            python_fallback=_fb_show_all,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="edit.lock_selection",
+            label="Lock Selection",
+            rust_backing=None,
+            python_fallback=_fb_lock_selection,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="edit.unlock_all",
+            label="Unlock All",
+            rust_backing=None,
+            python_fallback=_fb_unlock_all,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="edit.select_by_prefab_kind",
+            label="Select by Prefab Kind",
+            rust_backing=None,
+            python_fallback=_fb_select_by_prefab_kind,
+            required_args=[],
+            category="edit",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(
