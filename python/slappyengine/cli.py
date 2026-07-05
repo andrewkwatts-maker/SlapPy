@@ -185,6 +185,45 @@ def cmd_config(args: argparse.Namespace) -> None:
     print(f"{action} {cfg}")
 
 
+def cmd_export(args: argparse.Namespace) -> None:
+    """Bundle a project into a distributable ZIP or PyInstaller binary.
+
+    Dispatches on the ``--output`` extension: ``.zip`` triggers the ZIP
+    bundler; anything else routes to the PyInstaller binary exporter.
+    """
+    from slappyengine import exporter
+
+    proj = Path(args.path).resolve() if args.path else Path.cwd().resolve()
+    if not proj.is_dir():
+        _die(f"not a directory: {proj}")
+
+    output = Path(args.output).resolve()
+    result = exporter.export_project(
+        proj,
+        output,
+        platform=args.platform,
+        include_python=args.include_python,
+        icon=args.icon,
+        console=args.console,
+        dry_run=args.dry_run,
+    )
+
+    for w in result.warnings:
+        print(f"warning: {w}", file=sys.stderr)
+    for e in result.errors:
+        print(f"error: {e}", file=sys.stderr)
+
+    if result.errors:
+        sys.exit(1)
+
+    if result.path is not None:
+        size_kb = result.size_bytes / 1024.0
+        print(f"exported {result.kind} -> {result.path} ({size_kb:.1f} KiB)")
+    else:
+        # Binary export skipped (PyInstaller missing) - spec was still written
+        print("export produced no binary (see warnings above)")
+
+
 # ---------------------------------------------------------------------------
 # Argument parser
 # ---------------------------------------------------------------------------
@@ -264,6 +303,30 @@ def _build_parser() -> argparse.ArgumentParser:
     p_config.add_argument("--reset", action="store_true",
                           help="discard user values and write pristine defaults")
 
+    # slap export — bundle to zip or PyInstaller binary
+    p_export = sub.add_parser(
+        "export",
+        help="export a project to a distributable ZIP or standalone binary",
+    )
+    p_export.add_argument("path", nargs="?", default=None,
+                          help="project directory (default: cwd)")
+    p_export.add_argument("--output", required=True, metavar="PATH",
+                          help="output file (.zip) or directory (binary export)")
+    p_export.add_argument(
+        "--platform",
+        default="auto",
+        choices=["auto", "windows", "linux", "macos"],
+        help="target platform (default: auto = host OS)",
+    )
+    p_export.add_argument("--include-python", action="store_true",
+                          help="bundle a launcher script (and interpreter if available)")
+    p_export.add_argument("--icon", default=None, metavar="PATH",
+                          help="path to icon file for binary export")
+    p_export.add_argument("--console", action="store_true",
+                          help="binary export: attach a console window (default: off)")
+    p_export.add_argument("--dry-run", action="store_true",
+                          help="binary export: write spec file but skip PyInstaller invocation")
+
     return parser
 
 
@@ -281,6 +344,7 @@ _COMMANDS = {
     "launch": cmd_launch,
     "dev":    cmd_dev,
     "config": cmd_config,
+    "export": cmd_export,
 }
 
 
