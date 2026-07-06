@@ -530,6 +530,11 @@ class App:
         self._elapsed = 0.0
         self._id_counter = 0
 
+        # MM2 HUD overlay — populated by :meth:`enable_hud` when the
+        # caller opts in. Guaranteed to exist so downstream tooling
+        # can duck-check with ``getattr(app, "_hud_overlay", None)``.
+        self._hud_overlay: Any = None
+
         logger.debug("App initialised (renderer=%s)", type(self._renderer).__name__)
 
     # ------------------------------------------------------------------
@@ -975,6 +980,48 @@ class App:
     def is_headless(self) -> bool:
         """``True`` when the render backend is the stub."""
         return isinstance(self._renderer, _StubRenderer)
+
+    # ------------------------------------------------------------------
+    # MM2 — HUD integration (delegates to slappyengine.hud_bridge).
+    # ------------------------------------------------------------------
+    def enable_hud(
+        self,
+        widgets: Iterable[Any] | None = None,
+        layout: str = "default",
+    ) -> Any:
+        """Mount an :class:`HUDOverlay` on this app and return it.
+
+        A thin one-liner around :func:`slappyengine.hud_bridge.mount_hud`
+        that stashes the overlay on ``self._hud_overlay`` and wires the
+        HUD's begin/end/submit calls into the tick loop.
+
+        Parameters
+        ----------
+        widgets:
+            Iterable of pre-instantiated HUD widgets. When ``None`` the
+            default game HUD (HealthBar / StaminaBar / AmmoCounter /
+            Compass / Crosshair) is used.
+        layout:
+            Reserved for future named-layout dispatch (e.g. ``"minimal"``
+            / ``"combat"``). Currently only ``"default"`` is honoured;
+            other values are accepted and ignored so callers can pin the
+            argument now and populate it later.
+
+        Returns
+        -------
+        HUDOverlay
+            The mounted overlay — also accessible via
+            ``self._hud_overlay``.
+        """
+        from slappyengine.hud_bridge import mount_hud
+
+        # ``layout`` is a forward-compat argument. Log a debug when an
+        # unknown layout is requested so callers see it without spamming.
+        if layout not in ("default", None):
+            logger.debug("App.enable_hud: unknown layout %r; using default", layout)
+
+        self._hud_overlay = mount_hud(self, widgets=widgets)
+        return self._hud_overlay
 
 
 # ---------------------------------------------------------------------------

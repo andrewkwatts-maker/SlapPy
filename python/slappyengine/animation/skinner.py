@@ -187,9 +187,19 @@ class Animator:
     # ------------------------------------------------------------------
 
     def add_clip(self, clip: AnimationClip) -> None:
+        if not isinstance(clip, AnimationClip):
+            raise TypeError(
+                "Animator.add_clip: clip must be AnimationClip; "
+                f"got {type(clip).__name__}"
+            )
         self.clips[clip.name] = clip
 
     def play(self, clip_name: str, loop: bool = True) -> None:
+        if not isinstance(clip_name, str) or not clip_name:
+            raise ValueError(
+                "Animator.play: clip_name must be a non-empty str; "
+                f"got {clip_name!r}"
+            )
         if clip_name not in self.clips:
             raise KeyError(
                 f"unknown clip {clip_name!r}; known: {sorted(self.clips)}"
@@ -207,7 +217,15 @@ class Animator:
         self._current_name = None
 
     def set_time(self, t: float) -> None:
-        self._time = float(t)
+        if not isinstance(t, (int, float)):
+            raise TypeError(
+                f"Animator.set_time: t must be numeric; got {type(t).__name__}"
+            )
+        import math as _math
+        tf = float(t)
+        if _math.isnan(tf) or _math.isinf(tf):
+            raise ValueError(f"Animator.set_time: t must be finite; got {t!r}")
+        self._time = tf
 
     @property
     def is_playing(self) -> bool:

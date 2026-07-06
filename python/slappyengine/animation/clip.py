@@ -202,7 +202,22 @@ class AnimationClip:
         Handles loop wrap when ``loop=True``; clamps otherwise. Every
         channel is applied; joints not covered by the clip retain
         whatever value they had going in.
+
+        Raises
+        ------
+        TypeError
+            If ``pose_state`` is ``None`` or lacks the required
+            ``joint_translations`` / ``joint_rotations`` /
+            ``joint_scales`` attributes.
         """
+        if pose_state is None:
+            raise TypeError("AnimationClip.sample: pose_state must not be None")
+        for attr in ("joint_translations", "joint_rotations", "joint_scales"):
+            if not hasattr(pose_state, attr):
+                raise TypeError(
+                    "AnimationClip.sample: pose_state must expose "
+                    f"'{attr}'; got {type(pose_state).__name__}"
+                )
         if not self.channels:
             return
         t = float(time_sec)
