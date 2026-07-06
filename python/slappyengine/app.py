@@ -1023,6 +1023,233 @@ class App:
         self._hud_overlay = mount_hud(self, widgets=widgets)
         return self._hud_overlay
 
+    # ------------------------------------------------------------------
+    # NN3 — Capture + render-toggle façade.
+    #
+    # Each method is a thin single-call surface over the LL2 / MM6 action
+    # helpers so a user can ``pip install slappyengine`` and record /
+    # screenshot / toggle SSAO / toggle shadows with one line, no ctx
+    # dict, no router boilerplate. Callers wanting to bypass this
+    # convenience layer (custom ctx, non-default renderer target, etc.)
+    # can call the ``_core`` action helpers directly:
+    # :mod:`slappyengine.actions.capture_actions` /
+    # :mod:`slappyengine.actions.render_toggle_actions`.
+    # ------------------------------------------------------------------
+    def start_recording(
+        self,
+        path: str | None = None,
+        fps: int = 60,
+        resolution: tuple[int, int] | None = None,
+    ) -> dict[str, Any]:
+        """Start an MP4 recording of the current renderer.
+
+        One-liner over
+        :func:`slappyengine.actions.capture_actions.start_recording`.
+        Recording state is stashed on ``self._capture_state`` so a
+        subsequent :meth:`stop_recording` closes it out.
+
+        Parameters
+        ----------
+        path:
+            Optional output MP4 path. Default:
+            ``recordings/capture_<timestamp>.mp4`` under the project root.
+        fps:
+            Playback frame rate for the encoded video. Defaults to 60.
+        resolution:
+            Optional ``(width, height)`` override. Falls back to the
+            renderer's declared size and then ``(1280, 720)``.
+
+        Returns
+        -------
+        dict
+            Router-style status dict — see the ``start_recording``
+            return contract in :mod:`capture_actions`.
+
+        Notes
+        -----
+        Bypass hint: call
+        ``slappyengine.actions.capture_actions.start_recording(ctx)``
+        directly (``_core`` surface) when you need a custom renderer /
+        codec / bitrate.
+        """
+        from slappyengine.actions.capture_actions import (
+            start_recording as _core,
+        )
+
+        ctx: dict[str, Any] = {"shell": self, "renderer": self._renderer}
+        if path is not None:
+            ctx["path"] = path
+        if fps is not None:
+            ctx["fps"] = int(fps)
+        if resolution is not None:
+            ctx["resolution"] = resolution
+        return _core(ctx)
+
+    def stop_recording(self) -> dict[str, Any]:
+        """Stop the MP4 recording session started by :meth:`start_recording`.
+
+        One-liner over
+        :func:`slappyengine.actions.capture_actions.stop_recording`.
+        Safe to call when nothing is recording — returns
+        ``{"status": "not_recording"}``.
+
+        Returns
+        -------
+        dict
+            Router-style status dict — see the ``stop_recording`` return
+            contract in :mod:`capture_actions`.
+
+        Notes
+        -----
+        Bypass hint: call
+        ``slappyengine.actions.capture_actions.stop_recording(ctx)``
+        directly (``_core`` surface) to close a session belonging to a
+        different shell.
+        """
+        from slappyengine.actions.capture_actions import (
+            stop_recording as _core,
+        )
+
+        return _core({"shell": self, "renderer": self._renderer})
+
+    def take_screenshot(
+        self,
+        path: str | None = None,
+        format: str = "png",
+    ) -> dict[str, Any]:
+        """Capture a one-shot screenshot of the current renderer.
+
+        One-liner over
+        :func:`slappyengine.actions.capture_actions.screenshot`. Does
+        not touch any live recording session.
+
+        Parameters
+        ----------
+        path:
+            Optional output image path. Default:
+            ``screenshots/capture_<timestamp>.png`` under the project
+            root.
+        format:
+            Output image format (``"png"`` / ``"jpg"``). Only consulted
+            when ``path`` is ``None`` — an explicit ``path`` picks the
+            format from its suffix. Defaults to ``"png"``.
+
+        Returns
+        -------
+        dict
+            Router-style status dict — see the ``screenshot`` return
+            contract in :mod:`capture_actions`.
+
+        Notes
+        -----
+        Bypass hint: call
+        ``slappyengine.actions.capture_actions.screenshot(ctx)``
+        directly (``_core`` surface) for custom resolution / renderer.
+        """
+        from slappyengine.actions.capture_actions import (
+            screenshot as _core,
+        )
+
+        ctx: dict[str, Any] = {"shell": self, "renderer": self._renderer}
+        if path is not None:
+            ctx["path"] = path
+        elif format is not None:
+            # Honour a bare ``format=`` when the caller didn't pass an
+            # explicit path: mint a default under the project root with
+            # the requested extension.
+            ext = str(format).lower().lstrip(".")
+            if ext and ext != "png":
+                import time as _time
+                from pathlib import Path as _Path
+
+                stamp = _time.strftime("%Y%m%d_%H%M%S")
+                root = getattr(self, "_project_root", None) or getattr(
+                    self, "project_root", None,
+                )
+                base = _Path(root) if root is not None else _Path(".").resolve()
+                ctx["path"] = str(
+                    base / "screenshots" / f"capture_{stamp}.{ext}"
+                )
+        return _core(ctx)
+
+    def enable_ssao(self, enabled: bool = True) -> dict[str, Any]:
+        """Toggle the SSAO pass on the current renderer.
+
+        One-liner over
+        :func:`slappyengine.actions.render_toggle_actions.enable_ssao`.
+        Headless-safe: when no renderer is bound, the flag is stored on
+        the shell (``self._ssao_enabled``) so subsequent calls still
+        round-trip.
+
+        Parameters
+        ----------
+        enabled:
+            The new state. Defaults to ``True`` so the common
+            "just turn it on" call site is a bare
+            ``app.enable_ssao()``.
+
+        Returns
+        -------
+        dict
+            Router-style status dict — see the ``enable_ssao`` return
+            contract in :mod:`render_toggle_actions`.
+
+        Notes
+        -----
+        Bypass hint: call
+        ``slappyengine.actions.render_toggle_actions.enable_ssao(ctx)``
+        directly (``_core`` surface) to omit ``enabled`` (i.e. flip
+        the flag).
+        """
+        from slappyengine.actions.render_toggle_actions import (
+            enable_ssao as _core,
+        )
+
+        return _core(
+            {
+                "shell": self,
+                "renderer": self._renderer,
+                "enabled": bool(enabled),
+            }
+        )
+
+    def enable_shadows(self, enabled: bool = True) -> dict[str, Any]:
+        """Toggle the CSM shadow-map pass on the current renderer.
+
+        One-liner over
+        :func:`slappyengine.actions.render_toggle_actions.enable_shadows`.
+        Same headless-safe fallback as :meth:`enable_ssao`.
+
+        Parameters
+        ----------
+        enabled:
+            The new state. Defaults to ``True``.
+
+        Returns
+        -------
+        dict
+            Router-style status dict — see the ``enable_shadows`` return
+            contract in :mod:`render_toggle_actions`.
+
+        Notes
+        -----
+        Bypass hint: call
+        ``slappyengine.actions.render_toggle_actions.enable_shadows(ctx)``
+        directly (``_core`` surface) to omit ``enabled`` (i.e. flip
+        the flag).
+        """
+        from slappyengine.actions.render_toggle_actions import (
+            enable_shadows as _core,
+        )
+
+        return _core(
+            {
+                "shell": self,
+                "renderer": self._renderer,
+                "enabled": bool(enabled),
+            }
+        )
+
 
 # ---------------------------------------------------------------------------
 # Module-level convenience API
