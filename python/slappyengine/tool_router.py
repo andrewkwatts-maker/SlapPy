@@ -1142,6 +1142,41 @@ def _fb_theme_hot_swap(ctx: dict[str, Any]) -> Any:
     return hot_swap(ctx)
 
 
+# ---------------------------------------------------------------------------
+# OO1 STUB-triage (round 16 after NN2 round 15) — 5 more unwired action ids
+# spanning layer / selection / snap categories. See
+# ``docs/feature_map_delta_2026_07_07.md`` for the per-id rationale; each
+# Python fallback lives in ``slappyengine.actions.layer_solo_actions``,
+# ``layer_merge_down_actions``, ``selection_grow_actions``, and
+# ``snap_grid_size_actions``.
+# ---------------------------------------------------------------------------
+
+
+def _fb_layer_solo(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_solo_actions import solo_layer
+    return solo_layer(ctx)
+
+
+def _fb_layer_merge_down(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_merge_down_actions import merge_down
+    return merge_down(ctx)
+
+
+def _fb_selection_grow(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.selection_grow_actions import grow_selection
+    return grow_selection(ctx)
+
+
+def _fb_snap_increase_grid_size(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.snap_grid_size_actions import increase_grid_size
+    return increase_grid_size(ctx)
+
+
+def _fb_snap_decrease_grid_size(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.snap_grid_size_actions import decrease_grid_size
+    return decrease_grid_size(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -2194,6 +2229,48 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_theme_hot_swap,
             required_args=["theme"],
             category="theme",
+        ),
+        # ── OO1 STUB-triage: layer solo + merge-down + selection grow +
+        #    snap grid-size increment / decrement (round 16) ────────────
+        ToolAction(
+            action_id="layer.solo",
+            label="Solo Layer",
+            rust_backing=None,
+            python_fallback=_fb_layer_solo,
+            required_args=[],
+            category="layer",
+        ),
+        ToolAction(
+            action_id="layer.merge_down",
+            label="Merge Layer Down",
+            rust_backing=None,
+            python_fallback=_fb_layer_merge_down,
+            required_args=[],
+            category="layer",
+        ),
+        ToolAction(
+            action_id="selection.grow",
+            label="Grow Selection",
+            rust_backing=None,
+            python_fallback=_fb_selection_grow,
+            required_args=[],
+            category="selection",
+        ),
+        ToolAction(
+            action_id="snap.increase_grid_size",
+            label="Increase Grid Size",
+            rust_backing=None,
+            python_fallback=_fb_snap_increase_grid_size,
+            required_args=[],
+            category="snap",
+        ),
+        ToolAction(
+            action_id="snap.decrease_grid_size",
+            label="Decrease Grid Size",
+            rust_backing=None,
+            python_fallback=_fb_snap_decrease_grid_size,
+            required_args=[],
+            category="snap",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(

@@ -121,6 +121,19 @@ from .panel_dock_actions import (
 from .theme_hot_swap_actions import (
     hot_swap as hot_swap_theme,
 )
+from .layer_solo_actions import (
+    solo_layer as solo_layer,
+)
+from .layer_merge_down_actions import (
+    merge_down as merge_down_layer,
+)
+from .selection_grow_actions import (
+    grow_selection as grow_selection,
+)
+from .snap_grid_size_actions import (
+    increase_grid_size as increase_grid_size,
+    decrease_grid_size as decrease_grid_size,
+)
 
 
 __all__ = [
@@ -171,4 +184,9 @@ __all__ = [
     "dock_left",
     "dock_right",
     "hot_swap_theme",
+    "solo_layer",
+    "merge_down_layer",
+    "grow_selection",
+    "increase_grid_size",
+    "decrease_grid_size",
 ]
