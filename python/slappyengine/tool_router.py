@@ -1106,6 +1106,42 @@ def _fb_top_down_view(ctx: dict[str, Any]) -> Any:
     return top_down_view(ctx)
 
 
+# ---------------------------------------------------------------------------
+# NN2 STUB-triage (round 15 after r14 [capture + render_toggle]) — 5 more
+# unwired action ids. See ``docs/feature_map_delta_2026_07_05.md`` for the
+# per-id rationale; each Python fallback lives in
+# :mod:`slappyengine.actions.view_frame_selected_actions`,
+# :mod:`slappyengine.actions.view_reset_view_actions`,
+# :mod:`slappyengine.actions.panel_dock_actions`, and
+# :mod:`slappyengine.actions.theme_hot_swap_actions`.
+# ---------------------------------------------------------------------------
+
+
+def _fb_frame_selected(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_frame_selected_actions import frame_selected
+    return frame_selected(ctx)
+
+
+def _fb_reset_view(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_reset_view_actions import reset_view
+    return reset_view(ctx)
+
+
+def _fb_dock_left(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.panel_dock_actions import dock_left
+    return dock_left(ctx)
+
+
+def _fb_dock_right(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.panel_dock_actions import dock_right
+    return dock_right(ctx)
+
+
+def _fb_theme_hot_swap(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.theme_hot_swap_actions import hot_swap
+    return hot_swap(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -2116,6 +2152,48 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_top_down_view,
             required_args=[],
             category="view",
+        ),
+        # ── NN2 STUB-triage: frame-selected + reset-view + panel dock
+        #    L/R + theme hot-swap (round 15) ───────────────────────────
+        ToolAction(
+            action_id="view.frame_selected",
+            label="Frame Selected",
+            rust_backing=None,
+            python_fallback=_fb_frame_selected,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="view.reset_view",
+            label="Reset View",
+            rust_backing=None,
+            python_fallback=_fb_reset_view,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="panel.dock_left",
+            label="Dock Panel Left",
+            rust_backing=None,
+            python_fallback=_fb_dock_left,
+            required_args=["panel_id"],
+            category="panel",
+        ),
+        ToolAction(
+            action_id="panel.dock_right",
+            label="Dock Panel Right",
+            rust_backing=None,
+            python_fallback=_fb_dock_right,
+            required_args=["panel_id"],
+            category="panel",
+        ),
+        ToolAction(
+            action_id="theme.hot_swap",
+            label="Hot-Swap Theme",
+            rust_backing=None,
+            python_fallback=_fb_theme_hot_swap,
+            required_args=["theme"],
+            category="theme",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(

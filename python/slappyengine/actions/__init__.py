@@ -108,6 +108,19 @@ from .render_toggle_actions import (
     enable_ssao as enable_ssao,
     enable_shadows as enable_shadows,
 )
+from .view_frame_selected_actions import (
+    frame_selected as frame_selected,
+)
+from .view_reset_view_actions import (
+    reset_view as reset_view,
+)
+from .panel_dock_actions import (
+    dock_left as dock_left,
+    dock_right as dock_right,
+)
+from .theme_hot_swap_actions import (
+    hot_swap as hot_swap_theme,
+)
 
 
 __all__ = [
@@ -153,4 +166,9 @@ __all__ = [
     "screenshot",
     "enable_ssao",
     "enable_shadows",
+    "frame_selected",
+    "reset_view",
+    "dock_left",
+    "dock_right",
+    "hot_swap_theme",
 ]
