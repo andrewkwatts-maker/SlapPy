@@ -13,10 +13,13 @@ own AO stage without going through the post-process executor.
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+
+_LOG = logging.getLogger(__name__)
 
 
 # ----------------------------------------------------------------------
@@ -318,7 +321,18 @@ fn fs_blur(@location(0) uv: vec2<f32>) -> @location(0) f32 {
         the caller should supply a compatible ``upload_texture`` /
         ``draw_log`` API — we thread everything through the renderer's
         public methods so the null path is identical to the wgpu one.
+
+        Raises
+        ------
+        TypeError
+            If *renderer*, *depth_texture*, or *normal_texture* is ``None``.
         """
+        if renderer is None:
+            raise TypeError("SSAOPass.execute: renderer must not be None")
+        if depth_texture is None:
+            raise TypeError("SSAOPass.execute: depth_texture must not be None")
+        if normal_texture is None:
+            raise TypeError("SSAOPass.execute: normal_texture must not be None")
         w, h = self.screen_size
         # Build a placeholder AO buffer at framebuffer resolution. Real
         # GPU execution would render the SSAO WGSL into this texture; the

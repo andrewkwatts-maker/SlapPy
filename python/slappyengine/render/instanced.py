@@ -383,9 +383,22 @@ def render_instanced(
 
     ``camera`` is optional; when provided the renderer's camera state is
     updated via :meth:`set_camera` before submission.
+
+    Raises
+    ------
+    TypeError
+        If *renderer* is ``None`` or *instanced_mesh* is not an
+        :class:`InstancedMesh`.
     """
     from .null_renderer import DrawCall  # local import to avoid cycles
 
+    if renderer is None:
+        raise TypeError("render_instanced: renderer must not be None")
+    if not isinstance(instanced_mesh, InstancedMesh):
+        raise TypeError(
+            "render_instanced: instanced_mesh must be InstancedMesh; "
+            f"got {type(instanced_mesh).__name__}"
+        )
     if camera is not None and hasattr(renderer, "set_camera"):
         if hasattr(camera, "view_matrix") and hasattr(camera, "projection_matrix"):
             renderer.set_camera(camera.view_matrix(), camera.projection_matrix())

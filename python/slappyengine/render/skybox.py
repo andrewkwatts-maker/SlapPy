@@ -40,10 +40,14 @@ components by that axis to get UV in [0, 1].
 from __future__ import annotations
 
 import enum
+import logging
 from dataclasses import dataclass, field
 from typing import Optional
 
 import numpy as np
+
+_LOG = logging.getLogger(__name__)
+_SKYBOX_SUBMIT_WARNED: set[int] = set()
 
 
 # ----------------------------------------------------------------------
@@ -410,7 +414,14 @@ class Skybox:
         for the null path (recorded in :attr:`NullRenderer.draw_log` as a
         ``"skybox"`` entry) so tests can assert the pass happened without
         needing a real cubemap binding.
+
+        Raises
+        ------
+        TypeError
+            If *renderer* is ``None``.
         """
+        if renderer is None:
+            raise TypeError("Skybox.render: renderer must not be None")
         cam = camera or self.camera
         view_no_trans = self.view_matrix_no_translation(cam)
 
@@ -442,9 +453,17 @@ class Skybox:
                 fn(self.cubemap, view_no_trans)
                 return
 
-        # Last-ditch fallback: nothing to do (renderer doesn't support
-        # skyboxes yet). Silent no-op is fine — the world will render
-        # against the clear colour.
+        # Last-ditch fallback: renderer doesn't support skyboxes yet.
+        # Warn once per renderer instance so the caller can trace missed
+        # submissions but the warning doesn't spam the log per-frame.
+        r_id = id(renderer)
+        if r_id not in _SKYBOX_SUBMIT_WARNED:
+            _SKYBOX_SUBMIT_WARNED.add(r_id)
+            _LOG.warning(
+                "Skybox.render: renderer %s exposes no draw_log / submit_skybox "
+                "/ draw_skybox; skipping skybox pass",
+                type(renderer).__name__,
+            )
 
 
 __all__ = [

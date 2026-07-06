@@ -36,11 +36,14 @@ Usage
 """
 from __future__ import annotations
 
+import logging
 import math
 from dataclasses import dataclass, field
 from typing import Optional
 
 from . import audio as _audio
+
+_LOG = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -164,10 +167,21 @@ class SoundBank:
             raise ValueError("SoundBank.load: `name` must be a non-empty string")
         if not isinstance(path, str) or not path:
             raise ValueError("SoundBank.load: `path` must be a non-empty string")
-        handle = self._manager.load(path)
+        try:
+            handle = self._manager.load(path)
+        except OSError as exc:
+            _LOG.warning(
+                "SoundBank.load: OSError loading %r for %r (%s); using stub handle",
+                path, name, exc,
+            )
+            handle = None
         # Fall back to a placeholder so `.get()` still returns something
         # non-None for tests that don't stage real .wav fixtures.
         if handle is None:
+            _LOG.warning(
+                "SoundBank.load: manager returned None for %r (path=%r); "
+                "registering stub handle", name, path,
+            )
             handle = {"_stub": True, "path": path}
         self._handles[name] = handle
         return handle

@@ -125,6 +125,13 @@ class VideoCapture:
         *,
         pixel_format: str = "yuv420p",
     ) -> None:
+        if output_path is None or (isinstance(output_path, str) and not output_path):
+            raise ValueError("VideoCapture: output_path must be a non-empty path")
+        if not isinstance(output_path, (str, Path)):
+            raise TypeError(
+                f"VideoCapture: output_path must be str or Path; "
+                f"got {type(output_path).__name__}"
+            )
         if not isinstance(resolution, tuple) or len(resolution) != 2:
             raise TypeError(
                 f"VideoCapture: resolution must be (width, height); got {resolution!r}"
@@ -226,6 +233,8 @@ class VideoCapture:
             raise RuntimeError("VideoCapture.write_frame: begin() not called")
         if self._closed:
             raise RuntimeError("VideoCapture.write_frame: capture already closed")
+        if pixels is None:
+            raise TypeError("VideoCapture.write_frame: pixels must not be None")
 
         arr = np.asarray(pixels)
         if arr.ndim != 3 or arr.shape[2] != 4:

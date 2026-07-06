@@ -359,7 +359,14 @@ class World3D:
         *aabb* may be an :class:`AABB3D` (KK1), or any ``(min, max)``
         pair of 3-tuples. Uses the fallback SAP even when the WIP
         backend is online — good enough for editor-side picking.
+
+        Raises
+        ------
+        TypeError
+            If *aabb* is ``None``.
         """
+        if aabb is None:
+            raise TypeError("World3D.query_aabb: aabb must not be None")
         mn, mx = _aabb_bounds(aabb)
         hits: list[int] = []
         for h, body in self.bodies.items():

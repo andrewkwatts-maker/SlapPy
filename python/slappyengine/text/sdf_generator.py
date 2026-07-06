@@ -160,8 +160,24 @@ def pack_glyphs_into_atlas(
     (all glyphs must share dtype) and ``positions`` is a list of
     ``(x, y, w, h)`` tuples in the same order as ``glyphs``.
     """
+    if max_side <= 0:
+        raise ValueError(f"max_side must be > 0; got {max_side}")
+    if padding < 0:
+        raise ValueError(f"padding must be >= 0; got {padding}")
     if not glyphs:
         return np.zeros((1, 1), dtype=np.float32), []
+
+    for i, g in enumerate(glyphs):
+        if not isinstance(g, np.ndarray):
+            raise TypeError(
+                f"pack_glyphs_into_atlas: glyph[{i}] must be ndarray; "
+                f"got {type(g).__name__}"
+            )
+        if g.ndim != 2:
+            raise ValueError(
+                f"pack_glyphs_into_atlas: glyph[{i}] must be 2D; "
+                f"got shape {g.shape}"
+            )
 
     dtype = glyphs[0].dtype
     if any(g.dtype != dtype for g in glyphs):

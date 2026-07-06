@@ -118,6 +118,24 @@ class ZipBundler:
         exclude_patterns: Iterable[str] | None = None,
         main_script: str = "main.py",
     ) -> BundleResult:
+        if not isinstance(project_dir, (str, Path)):
+            raise TypeError(
+                "ZipBundler.bundle: project_dir must be str or Path; "
+                f"got {type(project_dir).__name__}"
+            )
+        if isinstance(project_dir, str) and not project_dir:
+            raise ValueError("ZipBundler.bundle: project_dir must be non-empty")
+        if not isinstance(output_zip, (str, Path)):
+            raise TypeError(
+                "ZipBundler.bundle: output_zip must be str or Path; "
+                f"got {type(output_zip).__name__}"
+            )
+        if isinstance(output_zip, str) and not output_zip:
+            raise ValueError("ZipBundler.bundle: output_zip must be non-empty")
+        if not isinstance(main_script, str) or not main_script:
+            raise ValueError(
+                "ZipBundler.bundle: main_script must be a non-empty str"
+            )
         project_dir = Path(project_dir).resolve()
         output_zip = Path(output_zip).resolve()
 

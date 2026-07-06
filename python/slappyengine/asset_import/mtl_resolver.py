@@ -180,9 +180,23 @@ def parse_mtl(path: str | Path) -> dict[str, MtlMaterialDef]:
         Empty if the file is empty or has no ``newmtl`` blocks.
         Malformed lines emit warnings and are skipped; a partial dict is
         still returned so downstream code can proceed.
+
+    Raises
+    ------
+    TypeError
+        If *path* is not a ``str`` / :class:`pathlib.Path`.
+    ValueError
+        If *path* is an empty string.
     """
+    if not isinstance(path, (str, Path)):
+        raise TypeError(
+            f"parse_mtl: path must be str or Path; got {type(path).__name__}"
+        )
+    if isinstance(path, str) and not path:
+        raise ValueError("parse_mtl: path must be a non-empty string")
     path = Path(path)
     if not path.exists():
+        _LOG.warning("parse_mtl: mtl file not found: %s", path)
         warnings.warn(f"mtl file not found: {path}", stacklevel=2)
         return {}
 
@@ -509,7 +523,21 @@ def import_obj_with_materials(path: str | Path) -> ImportResult:
     * ``metadata["materials_by_name"]`` — dict view for random access.
     * ``metadata["resolved_material_count"]`` — count of real materials
       produced.
+
+    Raises
+    ------
+    TypeError
+        If *path* is not a ``str`` / :class:`pathlib.Path`.
+    ValueError
+        If *path* is empty.
     """
+    if not isinstance(path, (str, Path)):
+        raise TypeError(
+            f"import_obj_with_materials: path must be str or Path; "
+            f"got {type(path).__name__}"
+        )
+    if isinstance(path, str) and not path:
+        raise ValueError("import_obj_with_materials: path must be non-empty")
     path = Path(path)
     result = import_obj(path)
 

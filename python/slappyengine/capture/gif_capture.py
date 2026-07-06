@@ -64,6 +64,13 @@ class GIFCapture:
             raise RuntimeError(
                 "GIFCapture: Pillow (PIL) is required. Install with `pip install pillow`."
             )
+        if output_path is None or (isinstance(output_path, str) and not output_path):
+            raise ValueError("GIFCapture: output_path must be a non-empty path")
+        if not isinstance(output_path, (str, Path)):
+            raise TypeError(
+                f"GIFCapture: output_path must be str or Path; "
+                f"got {type(output_path).__name__}"
+            )
         if not isinstance(resolution, tuple) or len(resolution) != 2:
             raise TypeError(
                 f"GIFCapture: resolution must be (width, height); got {resolution!r}"
@@ -122,6 +129,8 @@ class GIFCapture:
             raise RuntimeError("GIFCapture.write_frame: begin() not called")
         if self._closed:
             raise RuntimeError("GIFCapture.write_frame: capture already closed")
+        if pixels is None:
+            raise TypeError("GIFCapture.write_frame: pixels must not be None")
         arr = np.asarray(pixels)
         if arr.ndim != 3 or arr.shape[2] != 4:
             raise ValueError(

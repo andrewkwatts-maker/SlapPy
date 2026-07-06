@@ -99,6 +99,15 @@ from .panel_visibility_actions import (
 from .spawn_batch_actions import (
     repeat_last_batch as repeat_last_batch,
 )
+from .capture_actions import (
+    start_recording as start_recording,
+    stop_recording as stop_recording,
+    screenshot as screenshot,
+)
+from .render_toggle_actions import (
+    enable_ssao as enable_ssao,
+    enable_shadows as enable_shadows,
+)
 
 
 __all__ = [
@@ -139,4 +148,9 @@ __all__ = [
     "close_all_panels",
     "restore_last_hidden_panel",
     "repeat_last_batch",
+    "start_recording",
+    "stop_recording",
+    "screenshot",
+    "enable_ssao",
+    "enable_shadows",
 ]

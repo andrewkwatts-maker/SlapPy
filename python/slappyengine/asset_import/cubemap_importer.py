@@ -27,9 +27,12 @@ gradient sky so downstream code never crashes.
 """
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import numpy as np
+
+_LOG = logging.getLogger(__name__)
 
 from ..render.skybox import (
     ALL_FACES,
@@ -146,6 +149,13 @@ def import_cubemap(dir_or_yaml_path: str | Path) -> CubemapData:
         If any face is missing, non-square, or a different resolution
         than the others.
     """
+    if not isinstance(dir_or_yaml_path, (str, Path)):
+        raise TypeError(
+            "import_cubemap: dir_or_yaml_path must be str or Path; "
+            f"got {type(dir_or_yaml_path).__name__}"
+        )
+    if isinstance(dir_or_yaml_path, str) and not dir_or_yaml_path:
+        raise ValueError("import_cubemap: dir_or_yaml_path must be non-empty")
     path = Path(dir_or_yaml_path)
     if not path.exists():
         raise FileNotFoundError(f"Cubemap source not found: {path}")
@@ -187,6 +197,12 @@ def import_hdr_cubemap(path: str | Path) -> CubemapData:
     parsed) we fall back to a :func:`procedural_gradient_sky` so scenes
     keep rendering.
     """
+    if not isinstance(path, (str, Path)):
+        raise TypeError(
+            f"import_hdr_cubemap: path must be str or Path; got {type(path).__name__}"
+        )
+    if isinstance(path, str) and not path:
+        raise ValueError("import_hdr_cubemap: path must be non-empty")
     p = Path(path)
     if not p.exists():
         raise FileNotFoundError(f"HDR cubemap source not found: {p}")

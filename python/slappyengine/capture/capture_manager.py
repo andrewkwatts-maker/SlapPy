@@ -159,6 +159,20 @@ class CaptureManager:
             each frame is written. Exceptions in the callback are captured
             as :attr:`CaptureResult.warnings` — they do not stop capture.
         """
+        if renderer is None:
+            raise TypeError("CaptureManager.record: renderer must not be None")
+        if not hasattr(renderer, "read_pixels"):
+            raise TypeError(
+                "CaptureManager.record: renderer must expose read_pixels(); "
+                f"got {type(renderer).__name__}"
+            )
+        if output_path is None or (isinstance(output_path, str) and not output_path):
+            raise ValueError("CaptureManager.record: output_path must be non-empty")
+        if on_frame_written is not None and not callable(on_frame_written):
+            raise TypeError(
+                "CaptureManager.record: on_frame_written must be callable; "
+                f"got {type(on_frame_written).__name__}"
+            )
         if frames is None and seconds is None:
             raise ValueError(
                 "CaptureManager.record: must pass frames= or seconds="
@@ -256,6 +270,19 @@ class CaptureManager:
         resolution: Optional[Tuple[int, int]] = None,
     ) -> CaptureResult:
         """Render a single frame and save it as a PNG (or JPEG/BMP)."""
+        if renderer is None:
+            raise TypeError(
+                "CaptureManager.capture_screenshot: renderer must not be None"
+            )
+        if not hasattr(renderer, "read_pixels"):
+            raise TypeError(
+                "CaptureManager.capture_screenshot: renderer must expose "
+                f"read_pixels(); got {type(renderer).__name__}"
+            )
+        if output_path is None or (isinstance(output_path, str) and not output_path):
+            raise ValueError(
+                "CaptureManager.capture_screenshot: output_path must be non-empty"
+            )
         try:
             from PIL import Image
         except Exception as exc:  # noqa: BLE001

@@ -93,7 +93,35 @@ class SDFTextRenderer:
         A :class:`TextMesh` with 4 vertices per character (missing glyphs
         emit a zero-area quad so the vertex count invariant tested by
         the suite always holds).
+
+        Raises
+        ------
+        TypeError
+            If *text* is not a ``str`` or *atlas* is ``None``.
+        ValueError
+            If *size_px* is not positive or *position_px* is not a
+            2-sequence.
         """
+        if not isinstance(text, str):
+            raise TypeError(
+                f"build_text_mesh: text must be str; got {type(text).__name__}"
+            )
+        if atlas is None:
+            raise TypeError("build_text_mesh: atlas must not be None")
+        if not hasattr(atlas, "generate") or not hasattr(atlas, "get_glyph"):
+            raise TypeError(
+                "build_text_mesh: atlas must expose generate() and "
+                f"get_glyph(); got {type(atlas).__name__}"
+            )
+        if not hasattr(position_px, "__len__") or len(position_px) != 2:
+            raise ValueError(
+                f"build_text_mesh: position_px must be a 2-sequence; "
+                f"got {position_px!r}"
+            )
+        if not isinstance(size_px, (int, float)) or size_px <= 0:
+            raise ValueError(
+                f"build_text_mesh: size_px must be > 0; got {size_px!r}"
+            )
         if not text:
             return TextMesh(
                 positions=np.zeros((0, 2), dtype=np.float32),
