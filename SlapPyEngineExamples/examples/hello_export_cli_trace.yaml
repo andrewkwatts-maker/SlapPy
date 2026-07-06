@@ -1,0 +1,6 @@
+dry_run_file_count: 5
+exclusion_count: 2
+manifest_engine_version: 0.3.0b0
+sha256_count: 5
+target_list:
+- all
