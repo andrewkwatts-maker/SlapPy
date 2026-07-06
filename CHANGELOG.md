@@ -5,6 +5,186 @@ All notable changes to SlapPyEngine (`slappy-engine` on PyPI).
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] — YYYY-MM-DD (UNRELEASED)
+
+v0.4 lands the **Nova3D parity milestone** — SlapPyEngine graduates from a
+2D-first physics + post-process rig into a real forward 3D renderer with
+skinned glTF, animation, CSM shadows, IBL, SSAO, skybox, SDF text, HUD,
+capture, positional audio, instanced rendering, BVH culling, and a
+cross-platform game exporter. On top of that: a diary-themed notebook
+editor with 20+ panels, a `slappyengine.actions` 20-action subpackage
+plus router, six diary themes, three 15-shader WGSL libraries, six
+baked prefabs, and an autosave / crash-recovery layer.
+
+Status per [OO7 release-readiness audit](docs/v0_4_release_readiness_2026_07_06.md):
+**YELLOW** — WIP subpackages (`softbody/`, `fluid/`, `physics/`,
+`physics2/`) are frozen, 13-row STUB backlog needs a triage pass, and
+the version bump is gated on the PP tag-prep sprints. Draft entry — the
+version string in `pyproject.toml`, `Cargo.toml`, and
+`python/slappyengine/__init__.py` is **still `0.3.0b0`** and this
+section is not yet tagged.
+
+### Nova3D parity milestone
+
+Twenty agent-scoped sprints (JJ1–LL7) translating the
+[HH3 Nova3D gap audit](docs/nova3d_gap_audit_2026_07_05.md) and
+[II7 sprint plan](docs/nova3d_parity_sprint_plan_2026_07_05.md) into
+shipped surfaces:
+
+- **JJ1** — real wgpu forward pipeline (`slappyengine.render`).
+- **JJ2** — MTL material resolution for the OBJ importer.
+- **JJ3** — skinned-mesh support in the glTF importer.
+- **JJ4** — skeleton runtime + `AnimationClip` + `Skinner`.
+- **JJ5** — `SceneWalker` — Scene → drawcall traversal with frustum culling.
+- **KK1** — 3D BVH broadphase for frustum culling.
+- **KK2** — `DepthPrepass` + `MSAAResolvePass` + `PassChain`.
+- **KK3** — SSAO screen-space ambient occlusion pass.
+- **KK4** — skybox + cubemap import + procedural gradient sky.
+- **KK5** — IBL prefilter chain (GGX importance-sampled cubemap mips).
+- **KK6** — SDF text glyph atlas + WGSL renderer.
+- **LL1** — runtime HUD overlay + registry + 3 widget primitives.
+- **LL2** — video / GIF / frame capture subsystem (`_core.capture`).
+- **LL3** — instanced rendering + factory helpers.
+- **LL4** — 3D positional audio + Doppler + stereo panning
+  (`_core.audio_3d`).
+- **LL5** — `hello_gltf_character` — rigged glTF + skinning + CSM harness.
+- **LL6** — cross-platform game exporter + `slap export` CLI.
+- **LL7** — `physics3_bridge` — soft-import 3D physics with SAP fallback.
+
+### Added
+
+**New subpackages / top-level API:**
+
+- `slappyengine.render` — wgpu-based 2D + 3D forward renderer (HH4).
+- `slappyengine.projects` — multi-project management + registry +
+  scaffolder + CLI (`slappyengine.projects`, HH2 + M6 + F).
+- `slappyengine.actions` — 20-action subpackage + `ToolRouter` +
+  `slappyengine.tool_router` formal editor tool-routing contract.
+- `slappyengine.math` — Formula / `evaluate` / `compile_formula` backed
+  by Arithma when `[math]` extra is installed, with locked-down Python
+  eval sandbox fallback + `Vec2`/`Vec3`/`Vec4` + animation curves.
+- `slappyengine.visual_scripting` — Node + NodePort + `NodeRegistry` +
+  `NodeGraph` + YAML round-trip + `graph_to_python` codegen +
+  `BUILTIN_NODES` 20-prototype starter palette.
+- `slappyengine.scenes` — YAML scene serialization (FF3).
+- `slappyengine.diagnostics` aggregator + HUD widget (OO6).
+- `slappyengine.exporter` + `slap export` CLI with dry-run + manifest +
+  exclude (LL6 + NN7).
+- `slappyengine.residency` — GPU/RAM/DISK three-tier asset residency.
+- `slappyengine.ui.editor` — diary-themed notebook editor + 20+ panels
+  (see below); `slappyengine.ui.theme` primitive infrastructure
+  (nine-slice / SVG / procedural shader); `slappyengine.ui.widgets`
+  Dear PyGui notebook primitives; `slappyengine.ui.runtime`.
+- `App` + `launch()` + `load_model()` ergonomic top-level API (HH1).
+
+**Notebook editor + diary theme family (V, W, X, Y, Z, AA, BB, CC, DD,
+EE, FF, GG batches):**
+
+- `NotebookOutliner` / `NotebookInspector` / `NotebookGizmoOverlay` /
+  `NotebookSpawnMenu` / `NotebookMaterialEditor` / `NotebookCodePanel`
+  / `NotebookWelcome` / `NotebookMenuBar` / `NotebookCommandPalette` /
+  `NotebookAssetInspector` / `NotebookToastManager` / `NotebookMinimap`
+  / `NotebookMessageLog` / `NotebookTelemetryDashboard` /
+  `NotebookAutosavePanel` / `NotebookHotkeyHelp` /
+  `NotebookThemingEditor` / `NotebookPPPreviewPanel` /
+  `NotebookNodeEditor` / `NotebookDiaryPage` /
+  `NotebookContentBrowser` / `NotebookPrefabMenu` /
+  `NotebookCurveEditor` / `DiaryShell` book-of-pages workspace.
+- Six diary themes (`teengirl_notebook`, `scrapbook_summer`,
+  `cozy_diary`, `bullet_journal`, `cottagecore_garden`,
+  `kawaii_planner`) + `ThemeSwitcherPanel` live hot-swap +
+  `DeclarativeTheme` CSS-like theme parser + `UserThemeStore`.
+- Three 15-shader WGSL libraries: `washi_tape_shaders`,
+  `page_lining_shaders`, `edge_stroke_shaders`.
+- 12 cuddly-creature builtins on top of the woodland roster (cat,
+  golden, red panda, raccoon, panda, porcupine, hedgehog, butterflies).
+- Prefab library (`.prefab.yaml`) + preview icon baker + 6 baked
+  prefabs + `PrefabLibrary.spawn`; autosave + crash-recovery subsystem;
+  hotkey remap layer + 3 baked style presets; `LayoutBaker` + 6 baked
+  layout presets; camera animation tweens; scene diff / apply / merge;
+  plugin registry + sample plugin; shader hot-reload watcher; live-reload
+  watcher on `UserOverrideLoader`; file-drop OS routing;
+  `ProjectSceneBridge` bridging FF3 scenes with V2 projects.
+
+**Demos & docs (52+ new):**
+
+- `hello_render`, `hello_render_real`, `hello_render_real_hud`,
+  `hello_full_editor`, `hello_v2_showcase`, `hello_showcase_v3`,
+  `hello_gltf_character`, `hello_positional_audio`, `hello_hud`,
+  `hello_integrated_notebook`, `hello_prefab`, `hello_autosave`,
+  `hello_scene_reg`, `hello_material_graph`, `hello_toast_animation`,
+  `hello_export_cli`.
+- API references for `math`, `render`, `projects`, `visual_scripting`,
+  `residency`, `compute`, `animation`, `ui_editor`, `ui_theme`,
+  `ui_widgets`, `washi_tape_shaders`, `page_lining_shaders`,
+  `edge_stroke_shaders`, `theme_declarative`.
+- Design docs: Nova3D gap audit + parity sprint plan, big-picture
+  status report, feature maps + deltas, sprint rollups, quickstart,
+  pip-extras guide, rust-bypass docs, rust-migration audit,
+  UI-nesting/pattern/lessons audits, diary theme docs, notebook editor
+  manual, sprint-plan for v0.4.
+
+### Changed
+
+- **MM1 hardening** — input validation added across 13 files (salvaged
+  from rate-limited agents in `1e584e4`), extending the v0.3 hardening
+  campaign into the new v0.4 surface.
+- **Lighting polish rounds 3–4 (W-batch):** TAA YCoCg variance clip +
+  Halton(2,3)-8 + velocity blend + rejection heuristics; Bloom Karis
+  13-tap downsample + tent upsample + firefly filter.
+- **W2** hardening across notebook material / theming / spawn / diary
+  panels.
+- Editor promoted from Nova3D-legacy DPG to exclusive notebook UI
+  (`759a2fd`, `1d785bf`); legacy Nova3D panels wrapped in
+  `MovablePanelWindow` for the transition period.
+- Snap / dock / resize / status-bar subsystems wired into the live
+  editor; layout presets + window-management hotkeys.
+- `_core` PyO3 surface grown to 55 symbols (see
+  [rust_bypass_2026_07_05.md](docs/rust_bypass_2026_07_05.md)).
+- Notebook editor usability polish — tooltips, right-click menus,
+  breadcrumbs, multi-select.
+- `slappyengine.residency` / `slappyengine.exporter` / `slappyengine.render`
+  wired into HH1 App → HH4 Renderer → HH5 asset-importer end-to-end.
+- 13 rounds of STUB action triage across the ToolRouter (65+ new WIRED
+  action ids across rounds 2–16: X3, Y1, Z7, AA1, BB1, CC1, GG1, II5,
+  JJ6, KK7, MM6, NN2, OO1).
+
+### Deprecated
+
+- Nova3D-legacy editor panel family (still wrapped in
+  `MovablePanelWindow` shims but scheduled for removal alongside the
+  Phase D strip once downstream games (Ochema Circuit, Bullet Strata,
+  Stone Keep) land the notebook-panel migration.
+
+### Removed
+
+- Legacy Nova3D banner from the notebook editor (`38e455c`).
+- Consolidated notebook editor path (`38e455c` — inspector + spawn menu
+  split into notebook-native panels; old paths removed).
+
+### Fixed
+
+- **OO4** — 2 upstream bugs in `hello_showcase_v3` + test unskipped.
+- **X2** — `hello_rope` over-damping + regression tests.
+- **Y2** — `hello_joint` over-damping + regression tests.
+- **W1** — `hello_ragdoll` over-damping + regression tests.
+- **Z1** — `NotebookMessageLog` Windows-headless DPG segfault.
+- **AA3** — diary softbody import shim
+  (`slappyengine.softbody` → `slappyengine.dynamics.SoftBodyWorld`
+  fallback path).
+- Editor DPG lifecycle: dock-on-release actually resizes / repositions,
+  status-bar tick gated on `_running` to avoid `get_delta_time`
+  segfault, `toggle_panel` / `toggle_fullscreen` gated on `_running`.
+- `NotebookCodePanel` legacy-contract compatibility (`load_script`
+  alias + per-frame `update()`).
+- DPG callback lambdas accept extra positional args.
+
+### Security
+
+- No known security-relevant changes in this window. `path-traversal`
+  guard in `assert_scene_matches` (from v0.3 hardening) continues to
+  apply.
+
 ## [0.3.0] — 2026-05-31
 
 v0.3 widens the public engine surface from physics + render kernels to a full

@@ -1,0 +1,65 @@
+has_native: true
+submodule_count: 11
+submodules:
+  hull:
+  - convex_hull
+  - bounding_box
+  - pixel_edge_points
+  ik_solver:
+  - solve_ik
+  - compute_bone_lengths
+  math:
+  - Vec2
+  - AABB
+  node_compiler:
+  - compile_node_graph
+  slap_format:
+  - lz4_compress
+  - lz4_decompress
+  struct_layout:
+  - compute_layout
+  - generate_wgsl_struct
+  tile_cache:
+  - TileCache
+  physics:
+  - BodyType
+  - RigidBody
+  - PhysicsWorld
+  sdf_collision:
+  - SdfCollider
+  math_3d:
+  - Vec3
+  - Vec4
+  - Mat4x4
+  - Quaternion
+  sdf:
+  - SdfPrimitive
+  - SdfScene
+timings:
+- name: convex_hull
+  rust_module: hull
+  input_size: 512
+  repeats: 200
+  bypass_seconds: 2.2099993657320738e-05
+  wrapper_seconds: 0.00024399999529123306
+  speedup: 11.040726937512346
+- name: compute_bone_lengths
+  rust_module: ik_solver
+  input_size: 64
+  repeats: 500
+  bypass_seconds: 1.1999800335615873e-06
+  wrapper_seconds: 6.599992047995329e-06
+  speedup: 5.500084887584585
+- name: lz4_compress
+  rust_module: slap_format
+  input_size: 4096
+  repeats: 200
+  bypass_seconds: 6.00004568696022e-07
+  wrapper_seconds: 1.1200027074664831e-05
+  speedup: 18.666569654637176
+notes:
+- 'Bypass path: `from slappyengine import _core` then call the kernel directly on
+  the same argument tuple/list.'
+- 'Wrapper path: pure-Python reference implementation matching what slappyengine falls
+  back to when _core is missing.'
+- Speedup > 1.0 means the Rust kernel is faster than the equivalent Python fallback.
