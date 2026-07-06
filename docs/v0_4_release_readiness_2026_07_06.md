@@ -277,6 +277,15 @@ subpackage trees** deliberately frozen out of the V→NN sprint window:
   `mod softbody_solver;` / `mod fluid_shader;` + matching
   `::register(m)?` lines to `src/lib.rs`. Sub-1-hour fix, then
   `cargo check` + `maturin develop --release`.
+* **PP3 audit 2026-07-07**: sweep of tracked `.rs` files vs `src/lib.rs`
+  `mod` declarations shows **zero tracked-file mod-decl lag** — all 14
+  tracked `.rs` modules (`bvh`, `gi`, `hull`, `ibl`, `ik_solver`,
+  `math`, `math_3d`, `node_compiler`, `physics`, `sdf`, `sdf_collision`,
+  `slap_format`, `struct_layout`, `tile_cache`) are declared and (where
+  they expose `register`) registered in the `_core` pymodule init. The
+  four F1 files remain untracked WIP per the softbody/fluid freeze; they
+  will land as part of the eventual WIP unfreeze commit (§ 6.1 + § 6.2
+  gates), not as a lib.rs-only patch. **F1 tracked-scope status: GREEN.**
 
 ---
 
@@ -326,9 +335,12 @@ gate belongs to.
   `hello_studio`, `hello_world`). *Owner: demo lead. Status: FAILING
   (8-demo gap).*
 
-- [ ] **9. `cargo check` green + `cargo test` green** — after the four
-  `mod` declarations from § 6.5 are added. *Owner: Rust lead. Status:
-  FAILING (F1 build-repro bug in `src/lib.rs`).*
+- [x] **9. `cargo check` green + `cargo test` green** — tracked-scope
+  audit by PP3 (2026-07-07) confirms zero mod-decl lag across the 14
+  tracked `.rs` files in `src/`; the four F1 files remain untracked WIP
+  and re-scope to gate 11 (softbody/fluid WIP unfreeze). *Owner: Rust
+  lead. Status: GREEN for tracked scope; F1 WIP scope tracked under
+  gate 11.*
 
 - [ ] **10. `maturin build --release` wheel size within budget** —
   current `_core.cp313-win_amd64.pyd` ~798 KiB per FF4; wheel-size
@@ -358,7 +370,8 @@ gate belongs to.
   wheel build** — nice-to-have flagged in `docs/sprint_7_ship_checklist.md`
   § CI workflow audit. *Owner: CI lead. Status: DEFERRED to v0.4.1.*
 
-**Pass count**: 4 GREEN / 6 FAILING / 5 needs-verification.
+**Pass count**: 5 GREEN / 5 FAILING / 5 needs-verification (PP3 flipped
+gate 9 to GREEN for tracked scope on 2026-07-07).
 
 ---
 
