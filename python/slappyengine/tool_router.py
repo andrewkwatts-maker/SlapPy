@@ -1177,6 +1177,47 @@ def _fb_snap_decrease_grid_size(ctx: dict[str, Any]) -> Any:
     return decrease_grid_size(ctx)
 
 
+# ---------------------------------------------------------------------------
+# PP1 STUB-triage (round 17 after OO1 round 16) — 5 more unwired action ids
+# spanning selection / view / edit categories. See
+# ``docs/feature_map_delta_2026_07_08.md`` for the per-id rationale; each
+# Python fallback lives in ``slappyengine.actions.selection_shrink_actions``,
+# ``selection_invert_by_type_actions``, ``view_toggle_wireframe_actions``,
+# ``edit_rename_actions``, and ``edit_duplicate_at_cursor_actions``.
+# ---------------------------------------------------------------------------
+
+
+def _fb_selection_shrink(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.selection_shrink_actions import shrink_selection
+    return shrink_selection(ctx)
+
+
+def _fb_selection_invert_by_type(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.selection_invert_by_type_actions import (
+        invert_by_type,
+    )
+    return invert_by_type(ctx)
+
+
+def _fb_view_toggle_wireframe(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_toggle_wireframe_actions import (
+        toggle_wireframe,
+    )
+    return toggle_wireframe(ctx)
+
+
+def _fb_edit_rename(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_rename_actions import rename_entity
+    return rename_entity(ctx)
+
+
+def _fb_edit_duplicate_at_cursor(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_duplicate_at_cursor_actions import (
+        duplicate_at_cursor,
+    )
+    return duplicate_at_cursor(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -2271,6 +2312,48 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_snap_decrease_grid_size,
             required_args=[],
             category="snap",
+        ),
+        # ── PP1 STUB-triage: selection shrink / invert-by-type + view
+        #    wireframe + edit rename / duplicate-at-cursor (round 17) ──
+        ToolAction(
+            action_id="selection.shrink",
+            label="Shrink Selection",
+            rust_backing=None,
+            python_fallback=_fb_selection_shrink,
+            required_args=[],
+            category="selection",
+        ),
+        ToolAction(
+            action_id="selection.invert_by_type",
+            label="Invert Selection by Type",
+            rust_backing=None,
+            python_fallback=_fb_selection_invert_by_type,
+            required_args=[],
+            category="selection",
+        ),
+        ToolAction(
+            action_id="view.toggle_wireframe",
+            label="Toggle Wireframe",
+            rust_backing=None,
+            python_fallback=_fb_view_toggle_wireframe,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="edit.rename",
+            label="Rename Entity",
+            rust_backing=None,
+            python_fallback=_fb_edit_rename,
+            required_args=["new_name"],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="edit.duplicate_at_cursor",
+            label="Duplicate at Cursor",
+            rust_backing=None,
+            python_fallback=_fb_edit_duplicate_at_cursor,
+            required_args=[],
+            category="edit",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(

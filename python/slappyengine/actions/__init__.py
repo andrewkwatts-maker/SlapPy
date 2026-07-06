@@ -134,6 +134,21 @@ from .snap_grid_size_actions import (
     increase_grid_size as increase_grid_size,
     decrease_grid_size as decrease_grid_size,
 )
+from .selection_shrink_actions import (
+    shrink_selection as shrink_selection,
+)
+from .selection_invert_by_type_actions import (
+    invert_by_type as invert_by_type,
+)
+from .view_toggle_wireframe_actions import (
+    toggle_wireframe as toggle_wireframe,
+)
+from .edit_rename_actions import (
+    rename_entity as rename_entity,
+)
+from .edit_duplicate_at_cursor_actions import (
+    duplicate_at_cursor as duplicate_at_cursor,
+)
 
 
 __all__ = [
@@ -189,4 +204,9 @@ __all__ = [
     "grow_selection",
     "increase_grid_size",
     "decrease_grid_size",
+    "shrink_selection",
+    "invert_by_type",
+    "toggle_wireframe",
+    "rename_entity",
+    "duplicate_at_cursor",
 ]
