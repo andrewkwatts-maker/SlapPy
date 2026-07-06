@@ -173,33 +173,15 @@ def test_hello_showcase_v3_run_demo_invocable(demo, tmp_path):
 def test_hello_showcase_v3_run_demo_writes_yaml_when_completes(demo, tmp_path):
     """When ``run_demo`` completes, the trace YAML lands on disk.
 
-    Uses a monkeypatched ``_step_skybox`` to sidestep the upstream
-    Cubemap.is_power_of_two drift; if that patch fails (e.g. attribute
-    renamed), the test is skipped rather than reporting a false failure.
+    OO4 sprint (2026-07-06): upstream drift bugs in ``_step_skybox``
+    (Cubemap.is_power_of_two attribute-vs-method) and ``_step_exporter``
+    (``kind`` kwarg collision with ``DemoTrace.record``) are now fixed,
+    so the walkthrough can reach ``demo_end`` without a monkeypatch.
     """
     trace_path = tmp_path / "trace.yaml"
     gif_path = tmp_path / "showcase.gif"
 
-    # Neutralise the skybox step so the walkthrough can reach demo_end.
-    original = getattr(demo, "_step_skybox", None)
-    if original is None:  # pragma: no cover — API drift
-        pytest.skip("demo lacks _step_skybox to monkeypatch")
-
-    def _noop_skybox(trace):
-        trace.record("skybox_neutralised_for_smoke_test")
-        return [
-            demo.SubsystemStatus("skybox", True, reason="neutralised"),
-            demo.SubsystemStatus("skybox_sampler", True, reason="neutralised"),
-        ]
-
-    demo._step_skybox = _noop_skybox
-    try:
-        try:
-            demo.run_demo(trace_path=trace_path, gif_path=gif_path)
-        except Exception as exc:  # pragma: no cover — further drift
-            pytest.skip(f"demo raised past monkeypatch: {exc}")
-    finally:
-        demo._step_skybox = original
+    demo.run_demo(trace_path=trace_path, gif_path=gif_path)
 
     assert trace_path.exists()
     text = trace_path.read_text(encoding="utf-8")

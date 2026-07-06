@@ -807,7 +807,7 @@ def _step_skybox(trace: DemoTrace) -> list[SubsystemStatus]:
         "skybox",
         resolution=cubemap.resolution,
         face_count=6,
-        pow2=bool(cubemap.is_power_of_two()),
+        pow2=bool(cubemap.is_power_of_two),
     )
     statuses.append(SubsystemStatus("skybox", True))
 
@@ -1116,7 +1116,7 @@ def _step_exporter(trace: DemoTrace, tmp_root: Path) -> SubsystemStatus:
     trace.record(
         "exporter",
         project_dir=str(project_dir),
-        kind=result.kind,
+        export_kind=result.kind,
         succeeded=bool(result.succeeded or not result.errors),
         pyinstaller_available=bool(result.pyinstaller_available),
         warnings=len(result.warnings),
@@ -1320,23 +1320,6 @@ def run_demo(
         # 14. Heartbeats.
         _step_frame_loop(trace)
 
-        # ---- Trace YAML ----
-        out_trace = (
-            Path(trace_path)
-            if trace_path is not None
-            else Path(__file__).with_name(TRACE_NAME)
-        )
-        try:
-            out_trace.parent.mkdir(parents=True, exist_ok=True)
-            out_trace.write_text(trace.as_yaml(), encoding="utf-8")
-            trace.record(
-                "trace_written",
-                path=str(out_trace),
-                events=len(trace.events),
-            )
-        except Exception as exc:  # pragma: no cover — disk failure paths
-            trace.record("trace_write_failed", error=str(exc))
-
         # ---- Summary print ----
         # Any subsystem in ALL_SUBSYSTEMS that wasn't touched at all
         # counts as MISSING (no status record).
@@ -1382,6 +1365,24 @@ def run_demo(
             summary=summary,
             subsystems=rows,
         )
+
+        # ---- Trace YAML ----
+        # Written AFTER demo_end so the YAML file reflects the full run.
+        out_trace = (
+            Path(trace_path)
+            if trace_path is not None
+            else Path(__file__).with_name(TRACE_NAME)
+        )
+        try:
+            out_trace.parent.mkdir(parents=True, exist_ok=True)
+            out_trace.write_text(trace.as_yaml(), encoding="utf-8")
+            trace.record(
+                "trace_written",
+                path=str(out_trace),
+                events=len(trace.events),
+            )
+        except Exception as exc:  # pragma: no cover — disk failure paths
+            trace.record("trace_write_failed", error=str(exc))
         return trace
     finally:
         # tmp_root is best-effort cleanup — Windows can hold file locks.
