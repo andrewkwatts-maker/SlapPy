@@ -11,8 +11,8 @@ native; Python is glue, ergonomics, and config. Ships on PyPI as
 
 * Engine version (runtime): `0.3.0b0`
 * Native `_core` available: `True`
-* Top-level names in `__all__`: **75**
-* Declared subpackages: **21**
+* Top-level names in `__all__`: **88** (75 pre-HH1 + 13 HH1/HH5 ergonomic surface)
+* Declared subpackages: **22** (adds `asset_import` in HH5)
 
 
 ## Top-level surface (`import slappyengine`)
@@ -199,6 +199,33 @@ Every name below is reachable as `slappyengine.<Name>`. Module column is relativ
 | `OutlinePass` | function | `(top-level)` | `(color=(1.0, 0.0, 0.0, 1.0), threshold=0.1)` | Return a :class:`PostProcessPass` configured for outline rendering. |
 | `PixelatePass` | function | `(top-level)` | `(block_size: 'int' = 4)` | Return a :class:`PostProcessPass` configured for pixelation. |
 
+### Ergonomic top-level API (HH1)
+
+Added in HH1 (2026-07-05). The "2-line render" surface — `import slappyengine as slap; slap.launch().load_model("cube.gltf").run()`.
+
+| Name | Kind | Module | Signature | Description |
+|---|---|---|---|---|
+| `App` | class | `app` | `(config: 'AppConfig | None' = None)` | Coordinator that owns a `Renderer` + `Scene` + event loop. Exposes `.load_model`, `.enable_hud`, `.start_recording`, `.stop_recording`, `.take_screenshot`, `.enable_ssao`, `.enable_shadows`, `.run`. |
+| `AppConfig` | dataclass | `app` | `(title: 'str' = 'SlapPyEngine', size: 'tuple[int, int]' = (1280, 720), ...)` | Window / renderer / audio / physics config; every default merged from `config_defaults.yaml` (HH6). |
+| `ModelHandle` | dataclass | `app` | `(app: 'App', node: 'SceneNode', ...)` | Fluent transform wrapper returned by `App.load_model`. `.at(x,y,z)`, `.rotate(...)`, `.scale(...)`. |
+| `TextureHandle` | dataclass | `app` | `(app: 'App', texture_id: 'int')` | Wrapper around an imported texture returned by `App.load_texture`. |
+| `CameraHandle` | dataclass | `app` | `(app: 'App', node: 'SceneNode')` | Wrapper around the active scene camera; exposes `.look_at(...)`, `.fov(...)`. |
+| `LightHandle` | dataclass | `app` | `(app: 'App', light: 'Light')` | Wrapper around a scene light; exposes `.set_color(...)`, `.set_intensity(...)`. |
+| `launch` | function | `app` | `(title: 'str' = 'SlapPyEngine', size: 'tuple[int, int]' = (1280, 720), **kw) -> 'App'` | Convenience factory — build an `App` and return it ready to `.load_model(...)` and `.run()`. |
+| `load_model` | function | `app` | `(path: 'str | Path', **kw) -> 'ModelHandle'` | Module-level shortcut: launches a default `App` if none active, then loads the model. |
+| `load_texture` | function | `app` | `(path: 'str | Path', **kw) -> 'TextureHandle'` | Module-level shortcut: launches a default `App` if none active, then loads the texture. |
+
+### Asset import (HH5)
+
+Added in HH5 (2026-07-05). Re-exports the top-level names from `slappyengine.asset_import` (glTF / OBJ / MTL / cubemap / stub importers + dispatcher).
+
+| Name | Kind | Module | Signature | Description |
+|---|---|---|---|---|
+| `import_asset` | function | `asset_import.dispatcher` | `(path: 'str | Path', **kw) -> 'ImportResult'` | Dispatch by file extension to the right importer. |
+| `AssetImportDispatcher` | class | `asset_import.dispatcher` | `()` | Registry of extension → importer callable; wraps `import_asset` for engine wiring. |
+| `ImportResult` | dataclass | `asset_import.import_result` | `(meshes: 'list', materials: 'list', textures: 'list', ...)` | Carries meshes / materials / textures / skeletons / animations parsed from an asset file. |
+| `TextureData` | dataclass | `asset_import.import_result` | `(name: 'str', pixels: 'np.ndarray', format: 'str', ...)` | Raw texture buffer produced by an importer; consumed by `TextureHandle` / `PbrMaterial`. |
+
 ## Subpackages
 
 These are the modules exposed via `slappyengine.__getattr__` — accessing `slappyengine.<name>` lazy-imports them. Each row lists the public attributes currently exposed by the subpackage and its inner modules.
@@ -218,6 +245,14 @@ Animation subpackage — lazy-loaded.
 **Public attributes:** `graph`, `procedural`
 
 **Inner modules:** `graph`, `procedural`, `video_import`
+
+### `slappyengine.asset_import`
+
+Asset importer subpackage (HH5, 2026-07-05) — file-format aware importers for glTF / OBJ / MTL / cubemaps + a dispatcher that picks the right importer by extension. Consumed by `App.load_model` (HH1).
+
+**Public attributes:** `AssetImportDispatcher`, `ImportDependencyError`, `ImportResult`, `MtlMaterialDef`, `Skeleton`, `SkeletonNode`, `SkinnedMeshData`, `TextureData`, `import_asset`, `import_cubemap`, `import_fbx`, `import_gltf`, `import_hdr_cubemap`, `import_obj`, `import_obj_with_materials`, `import_ply`, `import_stl`, `import_texture`, `load_model`, `load_texture`, `mtl_to_material`, `parse_mtl`, `resolve_mtl_references`
+
+**Inner modules:** `dispatcher`, `gltf_importer`, `obj_importer`, `mtl_resolver`, `cubemap_importer`, `texture_importer`, `skinned_mesh`, `stub_importer`, `import_result`
 
 ### `slappyengine.assets`
 
@@ -393,8 +428,8 @@ slappyengine.zones — Generic zone primitives.
 
 ### Stable (v0.3 — committed contract)
 
-- The 75 top-level lazy exports listed above.
-- The 22 declared subpackages: `ai`, `animation`, `assets`, `audio_runtime`, `compute`, `dynamics`, `ext`, `gpu`, `input`, `iso`, `material`, `modules`, `numerics`, `post_process`, `projects`, `residency`, `telemetry`, `testing`, `thermal`, `tools`, `ui`, `zones`.
+- The 88 top-level lazy exports listed above (75 pre-HH1 + 13 HH1/HH5 additions).
+- The 22 declared subpackages: `ai`, `animation`, `asset_import`, `assets`, `audio_runtime`, `compute`, `dynamics`, `ext`, `gpu`, `input`, `iso`, `material`, `modules`, `numerics`, `post_process`, `projects`, `residency`, `telemetry`, `testing`, `thermal`, `tools`, `ui`, `zones`.
 
 ### Beta (may evolve)
 
@@ -407,6 +442,8 @@ slappyengine.zones — Generic zone primitives.
 
 ## Getting started
 
+Two entry points cover the v0.3 surface. The classic layer-driven engine is still supported for 2D scenes:
+
 ```python
 import slappyengine as sle
 
@@ -415,7 +452,14 @@ layer = engine.add_layer("world", sle.Layer2D(tile_size=16))
 engine.run()
 ```
 
-See the `SlapPyEngineExamples/examples/` directory for runnable scenes that exercise the surface above (hello world, lighting, physics, layered character, multiplayer, HUD, landscape, baking, 3D layers, editor).
+For 3D content, the HH1 ergonomic API is the "2-line render" recommended path:
+
+```python
+import slappyengine as slap
+slap.launch().load_model("bunny.gltf").run()
+```
+
+See the `SlapPyEngineExamples/examples/` directory for runnable scenes that exercise both surfaces (`hello_render.py` and `hello_gltf_character.py` for the HH1 path; the rest of the `hello_*` suite for the classic engine).
 
 ## Game integration tripwires
 
