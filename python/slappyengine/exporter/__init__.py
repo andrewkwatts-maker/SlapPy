@@ -25,7 +25,14 @@ from typing import Any
 from .binary_exporter import BinaryExporter, BinaryExportResult, pyinstaller_available
 from .manifest import MANIFEST_FILENAME, ProjectManifest, load_manifest
 from .platform_targets import TARGETS, detect_current_platform, get_target
-from .zip_bundler import BundleResult, DEFAULT_EXCLUDES, REQUIRED_FILES, ZipBundler
+from .zip_bundler import (
+    BundleResult,
+    DEFAULT_EXCLUDES,
+    MANIFEST_JSON_FILENAME,
+    REQUIRED_FILES,
+    ZipBundler,
+    build_bundle_manifest,
+)
 
 
 __all__ = [
@@ -35,10 +42,12 @@ __all__ = [
     "DEFAULT_EXCLUDES",
     "ExportResult",
     "MANIFEST_FILENAME",
+    "MANIFEST_JSON_FILENAME",
     "ProjectManifest",
     "REQUIRED_FILES",
     "TARGETS",
     "ZipBundler",
+    "build_bundle_manifest",
     "detect_current_platform",
     "export_project",
     "get_target",
@@ -75,6 +84,11 @@ def export_project(
     icon: str | Path | None = None,
     console: bool = False,
     dry_run: bool = False,
+    verbose: bool = False,
+    exclude_patterns: list[str] | None = None,
+    write_manifest_json: bool = True,
+    manifest_targets: list[str] | None = None,
+    verbose_stream=None,
 ) -> ExportResult:
     """Export *project_dir* to *output* — ZIP or PyInstaller binary.
 
@@ -85,6 +99,35 @@ def export_project(
     """
     project_dir = Path(project_dir)
     output = Path(output)
+
+    # Friendly error long before we try to load the manifest.
+    if not project_dir.exists():
+        return ExportResult(
+            path=None,
+            errors=[
+                f"project directory does not exist: {project_dir}",
+            ],
+        )
+    if not project_dir.is_dir():
+        return ExportResult(
+            path=None,
+            errors=[
+                f"project path is not a directory: {project_dir}",
+            ],
+        )
+    main_script_hint = "main.py"
+    manifest_path = project_dir / "slappyproject.yaml"
+    has_main = (project_dir / main_script_hint).is_file()
+    has_manifest = manifest_path.is_file()
+    if not has_main and not has_manifest:
+        return ExportResult(
+            path=None,
+            errors=[
+                f"not a SlapPyEngine project: {project_dir} "
+                f"(needs main.py or slappyproject.yaml)",
+            ],
+        )
+
     manifest = load_manifest(project_dir)
 
     result = ExportResult(
@@ -100,8 +143,14 @@ def export_project(
             output,
             include_python=include_python,
             main_script=manifest.main_script,
+            dry_run=dry_run,
+            verbose=verbose,
+            exclude_patterns=exclude_patterns,
+            write_manifest_json=write_manifest_json,
+            manifest_targets=manifest_targets,
+            verbose_stream=verbose_stream,
         )
-        result.path = bundle.zip_path
+        result.path = bundle.zip_path if not dry_run else None
         result.size_bytes = bundle.size_bytes
         result.warnings.extend(bundle.warnings)
         result.included_files = list(bundle.included_files)

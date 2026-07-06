@@ -33,7 +33,10 @@ the end user should install Python themselves.
 """
 from __future__ import annotations
 
+import datetime as _dt
 import fnmatch
+import hashlib
+import json
 import os
 import sys
 import zipfile
@@ -43,11 +46,16 @@ from string import Template
 from typing import Iterable
 
 
+MANIFEST_JSON_FILENAME = "manifest.json"
+
+
 __all__ = [
     "ZipBundler",
     "BundleResult",
     "DEFAULT_EXCLUDES",
     "REQUIRED_FILES",
+    "MANIFEST_JSON_FILENAME",
+    "build_bundle_manifest",
 ]
 
 
@@ -98,6 +106,8 @@ class BundleResult:
     excluded_files: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     python_bundled: bool = False
+    dry_run: bool = False
+    manifest: dict | None = None
 
 
 class ZipBundler:
@@ -117,6 +127,11 @@ class ZipBundler:
         include_python: bool = False,
         exclude_patterns: Iterable[str] | None = None,
         main_script: str = "main.py",
+        dry_run: bool = False,
+        verbose: bool = False,
+        write_manifest_json: bool = False,
+        manifest_targets: Iterable[str] | None = None,
+        verbose_stream=None,
     ) -> BundleResult:
         if not isinstance(project_dir, (str, Path)):
             raise TypeError(
@@ -146,9 +161,40 @@ class ZipBundler:
         if exclude_patterns:
             excludes.extend(exclude_patterns)
 
-        output_zip.parent.mkdir(parents=True, exist_ok=True)
+        result = BundleResult(zip_path=output_zip, dry_run=dry_run)
+        vstream = verbose_stream if verbose_stream is not None else sys.stdout
 
-        result = BundleResult(zip_path=output_zip)
+        # --- Dry run: walk + filter only; no zip writes ------------------
+        if dry_run:
+            for path in self._walk(project_dir):
+                rel = path.relative_to(project_dir)
+                posix_rel = rel.as_posix()
+                if _is_excluded(posix_rel, excludes):
+                    result.excluded_files.append(posix_rel)
+                    continue
+                result.included_files.append(posix_rel)
+                if verbose:
+                    print(f"[dry-run] would add: {posix_rel}", file=vstream)
+
+            existing = set(result.included_files)
+            for req in REQUIRED_FILES:
+                if req not in existing and not (project_dir / req).is_file():
+                    result.warnings.append(f"required file missing from project: {req}")
+
+            if write_manifest_json:
+                # In dry-run mode we can still preview the manifest (hashes
+                # computed off the on-disk files, no zip written).
+                result.manifest = build_bundle_manifest(
+                    project_dir,
+                    result.included_files,
+                    targets=list(manifest_targets or []),
+                )
+                if verbose:
+                    print(f"[dry-run] would add: {MANIFEST_JSON_FILENAME}", file=vstream)
+            return result
+
+        # --- Real bundle ------------------------------------------------
+        output_zip.parent.mkdir(parents=True, exist_ok=True)
 
         with zipfile.ZipFile(output_zip, "w", self.compression) as zf:
             for path in self._walk(project_dir):
@@ -159,6 +205,8 @@ class ZipBundler:
                     continue
                 zf.write(path, arcname=posix_rel)
                 result.included_files.append(posix_rel)
+                if verbose:
+                    print(f"adding: {posix_rel}", file=vstream)
 
             # Sanity check — warn (do not fail) if required files missing
             existing = set(result.included_files)
@@ -174,6 +222,17 @@ class ZipBundler:
                         "include_python=True but no embeddable interpreter found; "
                         "wrote PYTHON_SETUP.txt with install instructions instead"
                     )
+
+            if write_manifest_json:
+                manifest = build_bundle_manifest(
+                    project_dir,
+                    result.included_files,
+                    targets=list(manifest_targets or []),
+                )
+                zf.writestr(MANIFEST_JSON_FILENAME, json.dumps(manifest, indent=2, sort_keys=True))
+                result.manifest = manifest
+                if verbose:
+                    print(f"adding: {MANIFEST_JSON_FILENAME}", file=vstream)
 
         result.size_bytes = output_zip.stat().st_size
         return result
@@ -233,6 +292,48 @@ class ZipBundler:
             ),
         )
         return False
+
+
+def build_bundle_manifest(
+    project_dir: Path,
+    included_files: Iterable[str],
+    *,
+    targets: Iterable[str] | None = None,
+) -> dict:
+    """Return a JSON-serialisable manifest for the bundle.
+
+    The manifest records the engine version, bundle timestamp, the target
+    platform list, and a list of ``{path, sha256, size}`` entries so
+    end-users (and the exporter's own tests) can verify tamper-freeness.
+    """
+    try:
+        from slappyengine import __version__ as engine_version
+    except Exception:  # pragma: no cover — version import must succeed
+        engine_version = "unknown"
+
+    entries: list[dict] = []
+    for rel in included_files:
+        src = project_dir / rel
+        if not src.is_file():
+            continue
+        h = hashlib.sha256()
+        with src.open("rb") as fh:
+            for chunk in iter(lambda: fh.read(65536), b""):
+                h.update(chunk)
+        entries.append({
+            "path": rel,
+            "sha256": h.hexdigest(),
+            "size": src.stat().st_size,
+        })
+
+    resolved_targets = sorted({t.lower() for t in (targets or [])}) or ["all"]
+
+    return {
+        "engine_version": engine_version,
+        "bundled_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+        "targets": resolved_targets,
+        "files": entries,
+    }
 
 
 def _is_excluded(posix_rel: str, patterns: Iterable[str]) -> bool:

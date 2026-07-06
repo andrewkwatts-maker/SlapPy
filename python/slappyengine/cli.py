@@ -193,11 +193,29 @@ def cmd_export(args: argparse.Namespace) -> None:
     """
     from slappyengine import exporter
 
-    proj = Path(args.path).resolve() if args.path else Path.cwd().resolve()
-    if not proj.is_dir():
-        _die(f"not a directory: {proj}")
+    proj_raw = Path(args.path).resolve() if args.path else Path.cwd().resolve()
+    if not proj_raw.exists():
+        _die(f"project directory does not exist: {proj_raw}")
+    if not proj_raw.is_dir():
+        _die(f"project path is not a directory: {proj_raw}")
+    has_main = (proj_raw / "main.py").is_file()
+    has_manifest = (proj_raw / "slappyproject.yaml").is_file()
+    if not has_main and not has_manifest:
+        _die(
+            f"not a SlapPyEngine project: {proj_raw} "
+            f"(needs main.py or slappyproject.yaml)"
+        )
+    proj = proj_raw
 
     output = Path(args.output).resolve()
+
+    # Resolve --target -> concrete list for the manifest.  ``all`` fans
+    # out to every known target so downstream tooling can see the intent.
+    if args.target == "all":
+        manifest_targets = list(exporter.TARGETS.keys())
+    else:
+        manifest_targets = [args.target]
+
     result = exporter.export_project(
         proj,
         output,
@@ -206,6 +224,9 @@ def cmd_export(args: argparse.Namespace) -> None:
         icon=args.icon,
         console=args.console,
         dry_run=args.dry_run,
+        verbose=args.verbose,
+        exclude_patterns=list(args.exclude or []),
+        manifest_targets=manifest_targets,
     )
 
     for w in result.warnings:
@@ -215,6 +236,11 @@ def cmd_export(args: argparse.Namespace) -> None:
 
     if result.errors:
         sys.exit(1)
+
+    if args.dry_run and result.kind == "zip":
+        print(f"[dry-run] would export zip -> {output}")
+        print(f"[dry-run] {len(result.included_files)} files would be bundled")
+        return
 
     if result.path is not None:
         size_kb = result.size_bytes / 1024.0
@@ -325,7 +351,17 @@ def _build_parser() -> argparse.ArgumentParser:
     p_export.add_argument("--console", action="store_true",
                           help="binary export: attach a console window (default: off)")
     p_export.add_argument("--dry-run", action="store_true",
-                          help="binary export: write spec file but skip PyInstaller invocation")
+                          help="validate + list files without writing the zip (or, for binary "
+                               "export, write spec only and skip PyInstaller)")
+    p_export.add_argument("--verbose", "-v", action="store_true",
+                          help="print each file as it is added to the bundle")
+    p_export.add_argument("--exclude", action="append", metavar="PATTERN", default=None,
+                          help="extra fnmatch-style exclude pattern (repeatable) — added on top "
+                               "of built-in excludes (__pycache__, *.pyc, .git, *.log, ...)")
+    p_export.add_argument("--target", default="all",
+                          choices=["all", "windows", "linux", "macos"],
+                          help="platform target(s) recorded in the bundle manifest.json "
+                               "(default: all)")
 
     return parser
 
