@@ -114,6 +114,56 @@ def resolve_physics3_backend() -> str:
 
 
 # ---------------------------------------------------------------------------
+# Raycast / Sweep result dataclasses (NN4)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class RaycastHit:
+    """Single ray/AABB intersection result returned by :meth:`World3D.raycast`.
+
+    Attributes
+    ----------
+    body_id
+        Handle of the hit body (matches :attr:`World3D.bodies` key).
+    distance
+        Parametric distance ``t`` along the ray such that the hit point is
+        ``origin + t * direction``. Always ``>= 0``.
+    point
+        World-space hit position.
+    normal
+        Surface normal at the hit point — for AABB intersections this is
+        the axis-aligned normal of the slab face the ray entered through.
+    """
+
+    body_id: int
+    distance: float
+    point: tuple[float, float, float]
+    normal: tuple[float, float, float]
+
+
+@dataclass(frozen=True)
+class SweepHit:
+    """Single AABB-sweep result returned by :meth:`World3D.sweep_aabb`.
+
+    Attributes
+    ----------
+    body_id
+        Handle of the static body the sweep hit.
+    time_of_impact
+        Parameter ``t`` in ``[0, 1]`` — ``0`` means the swept box already
+        overlaps the target at start, ``1`` means the hit is at the far
+        end of the sweep.
+    contact_normal
+        Axis-aligned normal of the target's slab face that was contacted.
+    """
+
+    body_id: int
+    time_of_impact: float
+    contact_normal: tuple[float, float, float]
+
+
+# ---------------------------------------------------------------------------
 # Body3D
 # ---------------------------------------------------------------------------
 
@@ -409,6 +459,197 @@ class World3D:
         return out
 
     # ------------------------------------------------------------------
+    # NN4 — first-hit raycast + AABB sweep
+    # ------------------------------------------------------------------
+    def raycast(
+        self,
+        origin: tuple[float, float, float],
+        direction: tuple[float, float, float],
+        max_distance: float = float("inf"),
+    ) -> "RaycastHit | None":
+        """Return the first :class:`RaycastHit` along the ray, or ``None``.
+
+        The ray is defined as ``P(t) = origin + t * direction`` for
+        ``t >= 0``. Each body's AABB is slab-tested; the closest
+        forward-facing hit within ``max_distance`` is returned.
+
+        Parameters
+        ----------
+        origin
+            Ray origin ``(x, y, z)``.
+        direction
+            Ray direction ``(dx, dy, dz)``. Need not be normalised —
+            ``distance`` on the returned hit is in units of ``|direction|``.
+        max_distance
+            Upper bound on the returned hit distance. Defaults to +infinity.
+            Must be ``>= 0``.
+
+        Raises
+        ------
+        TypeError
+            If *origin* or *direction* is ``None`` or not a 3-sequence.
+        ValueError
+            If *max_distance* is negative or *direction* has zero length.
+        """
+        if origin is None:
+            raise TypeError("World3D.raycast: origin must not be None")
+        if direction is None:
+            raise TypeError("World3D.raycast: direction must not be None")
+        o = _coerce3(origin, "origin")
+        d = _coerce3(direction, "direction")
+        if max_distance < 0.0:
+            raise ValueError(
+                f"World3D.raycast: max_distance must be >= 0; got {max_distance}"
+            )
+        d_len_sq = d[0] * d[0] + d[1] * d[1] + d[2] * d[2]
+        if d_len_sq <= 0.0:
+            raise ValueError("World3D.raycast: direction must be non-zero")
+        if not self.bodies:
+            return None
+
+        best_t: float = math.inf
+        best_handle: int | None = None
+        best_axis: int = 0
+        best_sign: float = 1.0  # sign of direction component on hit axis
+        for h, body in self.bodies.items():
+            mn, mx = body.aabb()
+            hit = _ray_aabb_full(o, d, mn, mx)
+            if hit is None:
+                continue
+            t, axis, entered_from_min = hit
+            if t < 0.0 or t > max_distance:
+                continue
+            if t < best_t:
+                best_t = t
+                best_handle = h
+                best_axis = axis
+                # Normal points from the box outward on the entered face.
+                best_sign = 1.0 if entered_from_min else -1.0
+        if best_handle is None:
+            return None
+        point = (
+            o[0] + best_t * d[0],
+            o[1] + best_t * d[1],
+            o[2] + best_t * d[2],
+        )
+        normal = [0.0, 0.0, 0.0]
+        normal[best_axis] = -best_sign
+        # If the ray started inside the AABB, best_t == 0 and axis == 0 with
+        # entered_from_min=True — the returned normal is still a legal
+        # axis-aligned unit vector.
+        return RaycastHit(
+            body_id=best_handle,
+            distance=float(best_t),
+            point=(float(point[0]), float(point[1]), float(point[2])),
+            normal=(float(normal[0]), float(normal[1]), float(normal[2])),
+        )
+
+    def sweep_aabb(
+        self,
+        aabb_min: tuple[float, float, float],
+        aabb_max: tuple[float, float, float],
+        direction: tuple[float, float, float],
+        distance: float,
+    ) -> list["SweepHit"]:
+        """Sweep an AABB along *direction* by *distance* and return hits.
+
+        Uses the classic Minkowski trick: expand each static body's AABB by
+        the moving box's half-extents, then do a ray-vs-expanded-AABB slab
+        test using the moving box's centroid as the ray origin. The TOI is
+        normalised to ``[0, 1]`` — ``0`` = already overlapping, ``1`` = at
+        the far end of the sweep.
+
+        Parameters
+        ----------
+        aabb_min, aabb_max
+            Corners of the moving AABB in world space at ``t=0``.
+        direction
+            Sweep direction; the box moves ``distance * direction`` over
+            the sweep. Need not be normalised.
+        distance
+            Non-negative scalar. ``0`` is legal (returns bodies already
+            overlapping the moving AABB with TOI 0).
+
+        Returns
+        -------
+        list[SweepHit]
+            One entry per hit body, sorted by ascending
+            ``time_of_impact``. Empty when the sweep clears every body.
+
+        Raises
+        ------
+        TypeError
+            If any of *aabb_min*, *aabb_max*, or *direction* is ``None`` or
+            not a 3-sequence.
+        ValueError
+            If *distance* is negative or *aabb_min* > *aabb_max* on any
+            axis.
+        """
+        if aabb_min is None:
+            raise TypeError("World3D.sweep_aabb: aabb_min must not be None")
+        if aabb_max is None:
+            raise TypeError("World3D.sweep_aabb: aabb_max must not be None")
+        if direction is None:
+            raise TypeError("World3D.sweep_aabb: direction must not be None")
+        mn = _coerce3(aabb_min, "aabb_min")
+        mx = _coerce3(aabb_max, "aabb_max")
+        d = _coerce3(direction, "direction")
+        if distance < 0.0:
+            raise ValueError(
+                f"World3D.sweep_aabb: distance must be >= 0; got {distance}"
+            )
+        for axis in range(3):
+            if mn[axis] > mx[axis]:
+                raise ValueError(
+                    f"World3D.sweep_aabb: aabb_min[{axis}]={mn[axis]} >"
+                    f" aabb_max[{axis}]={mx[axis]}"
+                )
+        # Moving box centroid + half-extents.
+        cx = (mn[0] + mx[0]) * 0.5
+        cy = (mn[1] + mx[1]) * 0.5
+        cz = (mn[2] + mx[2]) * 0.5
+        hx = (mx[0] - mn[0]) * 0.5
+        hy = (mx[1] - mn[1]) * 0.5
+        hz = (mx[2] - mn[2]) * 0.5
+        # Sweep displacement.
+        dx = d[0] * distance
+        dy = d[1] * distance
+        dz = d[2] * distance
+        out: list[SweepHit] = []
+        for handle, body in self.bodies.items():
+            bmn, bmx = body.aabb()
+            # Expand static AABB by moving-box half-extents (Minkowski sum).
+            emn = (bmn[0] - hx, bmn[1] - hy, bmn[2] - hz)
+            emx = (bmx[0] + hx, bmx[1] + hy, bmx[2] + hz)
+            hit = _sweep_ray_aabb(
+                (cx, cy, cz), (dx, dy, dz), emn, emx
+            )
+            if hit is None:
+                continue
+            toi, axis, entered_from_min = hit
+            if toi < 0.0 or toi > 1.0:
+                continue
+            normal = [0.0, 0.0, 0.0]
+            # Outward normal on the contacted face: -axis if the sweep
+            # entered through the min face (moving toward +axis), +axis
+            # otherwise. This points from the static body outward toward
+            # the moving box at the moment of contact.
+            normal[axis] = -1.0 if entered_from_min else 1.0
+            out.append(
+                SweepHit(
+                    body_id=handle,
+                    time_of_impact=float(toi),
+                    contact_normal=(
+                        float(normal[0]),
+                        float(normal[1]),
+                        float(normal[2]),
+                    ),
+                )
+            )
+        out.sort(key=lambda s: s.time_of_impact)
+        return out
+
+    # ------------------------------------------------------------------
     # SAP broadphase — used by the fallback integrator and exposed for
     # testing.
     # ------------------------------------------------------------------
@@ -644,10 +885,96 @@ def _ray_aabb(
     return max(tmin, 0.0)
 
 
+def _ray_aabb_full(
+    origin: tuple[float, float, float],
+    direction: tuple[float, float, float],
+    mn: tuple[float, float, float],
+    mx: tuple[float, float, float],
+) -> tuple[float, int, bool] | None:
+    """Slab-test variant returning ``(t, axis, entered_from_min)``.
+
+    ``axis`` is the axis of the slab whose entry plane the ray crossed
+    last (the one determining the hit); ``entered_from_min`` is ``True``
+    when the entry plane was the ``mn[axis]`` face — i.e. the ray was
+    moving toward +axis at hit time.
+    """
+    tmin = -math.inf
+    tmax = math.inf
+    hit_axis = 0
+    hit_from_min = True
+    for axis in range(3):
+        o = origin[axis]
+        d = direction[axis]
+        lo = mn[axis]
+        hi = mx[axis]
+        if abs(d) < 1e-12:
+            if o < lo or o > hi:
+                return None
+            continue
+        inv_d = 1.0 / d
+        t0 = (lo - o) * inv_d
+        t1 = (hi - o) * inv_d
+        # Track which face is the entry face on this axis.
+        entered_from_min_this = d > 0.0
+        if t0 > t1:
+            t0, t1 = t1, t0
+            entered_from_min_this = not entered_from_min_this
+        if t0 > tmin:
+            tmin = t0
+            hit_axis = axis
+            hit_from_min = entered_from_min_this
+        if t1 < tmax:
+            tmax = t1
+        if tmin > tmax:
+            return None
+    if tmax < 0.0:
+        return None
+    if tmin < 0.0:
+        # Origin is inside the box — treat as an immediate hit at t=0.
+        return 0.0, hit_axis, hit_from_min
+    return tmin, hit_axis, hit_from_min
+
+
+def _sweep_ray_aabb(
+    origin: tuple[float, float, float],
+    displacement: tuple[float, float, float],
+    mn: tuple[float, float, float],
+    mx: tuple[float, float, float],
+) -> tuple[float, int, bool] | None:
+    """AABB-sweep helper: ray *origin* → *origin + displacement*.
+
+    Returns ``(toi, axis, entered_from_min)`` with ``toi`` in ``[0, 1]``
+    when the swept ray hits *(mn, mx)*, or ``None`` when it misses.
+
+    Handles the zero-displacement case by returning ``(0.0, ...)`` when
+    the origin already lies inside the (Minkowski-expanded) AABB.
+    """
+    # Zero-displacement fast path: overlap iff origin ∈ [mn, mx].
+    disp_len_sq = (
+        displacement[0] * displacement[0]
+        + displacement[1] * displacement[1]
+        + displacement[2] * displacement[2]
+    )
+    if disp_len_sq <= 0.0:
+        inside = all(mn[a] <= origin[a] <= mx[a] for a in range(3))
+        if inside:
+            return 0.0, 0, True
+        return None
+    hit = _ray_aabb_full(origin, displacement, mn, mx)
+    if hit is None:
+        return None
+    toi, axis, entered_from_min = hit
+    if toi > 1.0:
+        return None
+    return toi, axis, entered_from_min
+
+
 __all__ = [
     "AABB3D",
     "Body3D",
     "PhysicsBackendError",
+    "RaycastHit",
+    "SweepHit",
     "World3D",
     "resolve_physics3_backend",
 ]
