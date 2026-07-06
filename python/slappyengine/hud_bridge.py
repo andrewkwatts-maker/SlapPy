@@ -290,10 +290,129 @@ def unmount_hud(app: Any) -> bool:
     return True
 
 
+# ---------------------------------------------------------------------------
+# Diagnostics widget (OO6)
+# ---------------------------------------------------------------------------
+
+
+class _DiagnosticsHUDWidget:
+    """Compact HUD widget that surfaces the diagnostics collector state.
+
+    Renders one summary line (``ERROR: n | WARN: m``) plus up to three
+    most-recent event messages beneath it, each prefixed with the level
+    initial + subsystem. Widget is deliberately minimal — the goal is
+    to make regression noise visible in-viewport without opening a full
+    log console.
+
+    The widget queries the collector lazily inside :meth:`build`, so the
+    displayed counts always reflect the current buffer state (no need to
+    poll or push updates from the collector side).
+
+    Public attributes (read/write) let games place the widget anywhere:
+
+    * ``position`` — top-left screen coord of the summary line.
+    * ``line_height`` — vertical spacing between summary + event lines.
+    * ``max_recent`` — how many recent events to show (default 3).
+    """
+
+    def __init__(
+        self,
+        collector: Any,
+        *,
+        position: tuple[float, float] = (16.0, 640.0),
+        line_height: float = 16.0,
+        max_recent: int = 3,
+    ) -> None:
+        if collector is None:
+            raise ValueError("DiagnosticsHUDWidget: collector must not be None")
+        self.collector = collector
+        self.position = position
+        self.line_height = float(line_height)
+        self.max_recent = int(max_recent)
+        # Colors chosen to read against a dark HUD background.
+        self._color_summary = (1.0, 0.85, 0.30, 1.0)   # amber
+        self._color_error   = (1.0, 0.35, 0.35, 1.0)   # red
+        self._color_warn    = (1.0, 0.80, 0.30, 1.0)   # amber
+        self._color_default = (0.85, 0.85, 0.85, 1.0)  # light grey
+
+    def _color_for(self, level: str) -> tuple[float, float, float, float]:
+        if level == "ERROR" or level == "CRITICAL":
+            return self._color_error
+        if level == "WARNING":
+            return self._color_warn
+        return self._color_default
+
+    def summary_text(self) -> str:
+        """Return the ``ERROR: n | WARN: m`` summary line."""
+        stats = self.collector.stats()
+        errors = int(stats.get("level:ERROR", 0)) + int(stats.get("level:CRITICAL", 0))
+        warns = int(stats.get("level:WARNING", 0))
+        return f"ERROR: {errors} | WARN: {warns}"
+
+    def build(self, ui: Any) -> None:
+        """HUDOverlay contract — emit label DrawCommands."""
+        x, y = self.position
+        # Summary line.
+        try:
+            ui.label(
+                "hud_diagnostics_summary",
+                self.summary_text(),
+                (x, y),
+                self._color_summary,
+            )
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.debug("diagnostics widget: summary label failed: %s", exc)
+            return
+        # Recent events beneath the summary.
+        events = self.collector.events()
+        recent = events[-self.max_recent :] if self.max_recent > 0 else []
+        for i, evt in enumerate(recent, start=1):
+            level_letter = (evt.level[:1] if evt.level else "?").upper()
+            text = f"[{level_letter}][{evt.subsystem}] {evt.message}"
+            try:
+                ui.label(
+                    f"hud_diagnostics_evt_{i}",
+                    text,
+                    (x, y + self.line_height * i),
+                    self._color_for(evt.level),
+                )
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.debug("diagnostics widget: event label failed: %s", exc)
+                return
+
+
+def add_diagnostics_widget(app: Any, collector: Any | None = None) -> Any:
+    """Attach a diagnostics readout widget to *app*'s HUD.
+
+    Mounts an HUDOverlay (via :func:`mount_hud`) if none is present,
+    then attaches a :class:`_DiagnosticsHUDWidget` bound to *collector*
+    (or the module-level singleton if ``None``).
+
+    Returns the created widget so the caller can tweak
+    ``position`` / ``max_recent`` post-attach.
+    """
+    if app is None:
+        raise ValueError("add_diagnostics_widget: app must not be None")
+
+    if collector is None:
+        from slappyengine.diagnostics import get_global_collector
+        collector = get_global_collector()
+
+    overlay = getattr(app, "_hud_overlay", None)
+    if overlay is None:
+        overlay = mount_hud(app)
+
+    widget = _DiagnosticsHUDWidget(collector)
+    overlay.attach(widget)
+    return widget
+
+
 __all__ = [
     "mount_hud",
     "unmount_hud",
     "default_game_hud_widgets",
+    "add_diagnostics_widget",
     "_HUDStubRenderer",
     "_HUDStubCamera2D",
+    "_DiagnosticsHUDWidget",
 ]

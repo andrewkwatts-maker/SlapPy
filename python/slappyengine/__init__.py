@@ -511,3 +511,19 @@ __all__ = list(__all__) + [
     "load_model",
     "load_texture",
 ]
+
+# ---------------------------------------------------------------------------
+# Diagnostics aggregator (OO6) — subsystem warning/error surface for the HUD.
+# Lightweight import: pure Python, stdlib only.
+# ---------------------------------------------------------------------------
+from slappyengine.diagnostics import (  # noqa: E402
+    DiagnosticEvent,
+    DiagnosticsCollector,
+    get_global_collector,
+)
+
+__all__ = list(__all__) + [
+    "DiagnosticEvent",
+    "DiagnosticsCollector",
+    "get_global_collector",
+]
