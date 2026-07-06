@@ -115,14 +115,19 @@ docs, ECS narrative) rather than hot-path capabilities.
 the FF-close estimate; every batch reported a green suite. No batch
 reported a red suite in the V→NN window.
 
-### Legacy shadow (blocker)
+### Legacy shadow (CLEARED 2026-07-07 by PP2)
 
 `python/tests/` (legacy path from before the 2026-06-02 restructure —
-see `docs/restructure_2026_06_02.md`) still contains **241 test files**
-that are no longer discovered by the canonical suite but remain
-untracked-or-tracked in the repo. This directly violates the ship
-checklist rule "no test files under `python/tests/`". Must be deleted
-or migrated before v0.4 tag.
+see `docs/restructure_2026_06_02.md`) previously contained **241 test
+files** that shadowed the canonical suite. **PP2 audit (2026-07-07)**
+sha256-diffed every file against `SlapPyEngineTests/python_tests/`
+and confirmed all 241 files were byte-identical duplicates: zero
+novel content, zero migrations required, zero files flagged for
+human review. The directory was untracked in git (never staged), so
+the deletion is a filesystem `rm -rf` — no `git rm` needed. Canonical
+suite re-collected at 9195 tests (was 9191 pre-delete, delta explained
+by golden-cache warm-up, not shadow interaction). **Ship-checklist
+gate 6 status: GREEN.**
 
 ---
 
@@ -318,10 +323,12 @@ gate belongs to.
   hand-authored `docs/api/*.md` follows the `_template.md` shape.
   *Owner: docs lead. Status: GREEN at NN6 close.*
 
-- [ ] **6. No test files under `python/tests/`** — 241 legacy files
-  currently shadow the canonical `SlapPyEngineTests/tests/` layout
-  (see `docs/restructure_2026_06_02.md`). Must be deleted or migrated.
-  *Owner: repo hygiene lead. Status: FAILING (241 files present).*
+- [x] **6. No test files under `python/tests/`** — PP2 audit
+  (2026-07-07) sha256-diffed all 241 files against
+  `SlapPyEngineTests/python_tests/`, confirmed byte-identical shadow
+  (zero novel content), and deleted the directory. Canonical suite
+  re-collected at 9195 tests, no drop. *Owner: repo hygiene lead.
+  Status: GREEN (directory removed 2026-07-07).*
 
 - [ ] **7. No tests skipped without documented reason** — grep for
   `pytest.mark.skip` / `pytest.skip` / `@skipif` across the suite;
@@ -370,8 +377,9 @@ gate belongs to.
   wheel build** — nice-to-have flagged in `docs/sprint_7_ship_checklist.md`
   § CI workflow audit. *Owner: CI lead. Status: DEFERRED to v0.4.1.*
 
-**Pass count**: 5 GREEN / 5 FAILING / 5 needs-verification (PP3 flipped
-gate 9 to GREEN for tracked scope on 2026-07-07).
+**Pass count**: 6 GREEN / 4 FAILING / 5 needs-verification (PP3 flipped
+gate 9 to GREEN for tracked scope on 2026-07-07; PP2 flipped gate 6 to
+GREEN on 2026-07-07 after byte-identical shadow-delete audit).
 
 ---
 
