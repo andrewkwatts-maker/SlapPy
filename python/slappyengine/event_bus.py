@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, Any
+from typing import Callable, Any, Iterator
 
 from slappyengine._event_bus_validation import (
     validate_event_type,
@@ -9,13 +9,89 @@ from slappyengine._event_bus_validation import (
 )
 
 
+class EventPayload(dict):
+    """Dual-shape event payload — behaves as BOTH object AND dict.
+
+    Downstream games (Ochema Circuit, Bullet Strata) index event payloads
+    through attribute access:
+
+        def _on_speed(self, evt):
+            if evt.publisher is not self._vehicle:  # ← attribute access
+                return
+            self._speed = float(evt.value)          # ← ad-hoc kwarg attr
+
+    Internal engine callers use dict indexing:
+
+        bus.subscribe("topic", lambda p: p.get("v", 0))
+
+    ``EventPayload`` unifies both patterns by subclassing ``dict`` (so
+    ``p["k"]``, ``p.get(...)``, ``"k" in p``, ``p.keys()`` all work) while
+    also promoting every kwarg to an attribute (so ``p.publisher``,
+    ``p.value``, ``p.lap`` etc. resolve).
+
+    Standard shape (set for every published event):
+
+    * ``name`` — event type string (mirrors legacy ``evt.name``)
+    * ``label`` — alias for ``name`` (matches YY1 spec)
+    * ``publisher`` — kwarg promoted to attribute (``None`` if absent)
+    * ``data`` — same as ``payload`` (the raw kwargs dict)
+    * ``payload`` — nested dict of the kwargs (Ochema ``evt.payload.get(...)``)
+    * ``timestamp`` — float wall-clock seconds when the event fired
+
+    Every additional kwarg passed to :meth:`EventBus.publish` is promoted
+    to both a dict key AND an attribute — so ``publish("t", value=7)``
+    yields ``evt.value == evt["value"] == 7``.
+    """
+
+    __slots__ = ()
+
+    def __init__(
+        self,
+        name: str = "",
+        publisher: Any = None,
+        payload: dict | None = None,
+        timestamp: float = 0.0,
+        **extra: Any,
+    ) -> None:
+        # Build the underlying dict — start from payload kwargs then overlay
+        # the reserved keys so publisher/name/etc. always resolve.
+        payload_dict = dict(payload) if payload else {}
+        payload_dict.update(extra)
+        super().__init__(payload_dict)
+        # Reserved keys are set via dict assignment so __getitem__ finds
+        # them without needing a fallback in the lookup path.
+        self["name"] = name
+        self["label"] = name  # YY1-spec alias
+        self["publisher"] = publisher
+        self["data"] = payload_dict
+        self["payload"] = payload_dict
+        self["timestamp"] = float(timestamp)
+
+    # ---- attribute access ------------------------------------------------
+    def __getattr__(self, key: str) -> Any:
+        # Only reached when normal attribute lookup fails — fall back to
+        # the dict. Raise AttributeError (not KeyError) to keep ``hasattr``
+        # and ``getattr(evt, k, default)`` working.
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key) from None
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        # Support ``evt.progress = 0.65`` mutation pattern seen in
+        # Ochema's test_q8_garage_polish.py — write to the dict so both
+        # attribute and item access observe the update.
+        self[key] = value
+
+
 # Backwards-compat: ``EventDetails`` was the legacy alias for the event
 # payload dict handed to subscribers. Ochema Circuit's HUD entity type-hints
 # every callback with ``evt: EventDetails`` and imports it from
-# ``slappyengine.event_bus``. Kept as an alias for ``dict[str, Any]`` so the
-# import path resolves and type hints remain valid.
+# ``slappyengine.event_bus``. Kept as an alias for the new ``EventPayload``
+# class so the import path resolves, type hints remain valid, and the alias
+# still behaves as a ``dict`` for any legacy ``isinstance(evt, dict)`` check.
 # DO NOT REMOVE without a v1.0 deprecation cycle.
-EventDetails = dict  # type alias — dict[str, Any] payload passed to subscribers
+EventDetails = EventPayload  # type alias — dual-shape payload passed to subscribers
 
 
 class EventBus:
@@ -157,8 +233,17 @@ class EventBus:
             return fn
         return decorator
 
-    def publish(self, event_type: str, **payload: Any) -> None:
-        """Fire all subscribers for ``event_type`` with payload as a dict.
+    def publish(self, event_type: str, **payload: Any) -> "EventPayload":
+        """Fire all subscribers for ``event_type`` with a dual-shape payload.
+
+        Returns
+        -------
+        EventPayload
+            The event object handed to every subscriber. Supports both
+            attribute access (``evt.publisher``, ``evt.value``) and dict
+            access (``evt["publisher"]``, ``evt.get("value", default)``).
+            Downstream games (Ochema Circuit's HUD/audio systems, Bullet
+            Strata's reactive HUD) rely on the attribute-access shape.
 
         Raises
         ------
@@ -175,11 +260,23 @@ class EventBus:
             validate_event_type("event_type", "EventBus.publish", event_type)
         elif not event_type:
             validate_event_type("event_type", "EventBus.publish", event_type)
+        publisher = payload.pop("publisher", None)
+        # Lazy timestamp — only paid when someone actually reads it,
+        # but populate eagerly so callbacks that inspect ``evt.timestamp``
+        # see a real value rather than 0.0.
+        import time as _time
+        evt = EventPayload(
+            name=event_type,
+            publisher=publisher,
+            payload=payload,
+            timestamp=_time.time(),
+        )
         for cb in list(self._listeners.get(event_type, [])):
             try:
-                cb(payload)
+                cb(evt)
             except Exception:
                 pass
+        return evt
 
     def clear(self, event_type: str | None = None) -> None:
         """Drop all listeners for ``event_type`` (or every type when ``None``).
@@ -222,9 +319,14 @@ class EventBus:
 _DEFAULT_BUS = EventBus()
 
 
-def publish(event_type: str, **payload) -> None:
-    """Publish to the module-level default :class:`EventBus`."""
-    _DEFAULT_BUS.publish(event_type, **payload)
+def publish(event_type: str, **payload) -> "EventPayload":
+    """Publish to the module-level default :class:`EventBus`.
+
+    Returns the :class:`EventPayload` handed to subscribers so callers
+    that assign ``event = publish(...)`` can inspect it (dual attribute
+    and dict access — see :class:`EventPayload`).
+    """
+    return _DEFAULT_BUS.publish(event_type, **payload)
 
 
 def subscribe(event_type: str, listener) -> None:
@@ -286,9 +388,15 @@ class Observable:
             # mixin peer with a mandatory positional signature.
             pass
 
-    def notify(self, **payload) -> None:
-        """Publish ``self._observable_topic`` on the bus with the given payload."""
-        self._bus.publish(self._observable_topic, **payload)
+    def notify(self, **payload) -> "EventPayload":
+        """Publish ``self._observable_topic`` on the bus with the given payload.
+
+        Auto-sets ``publisher=self`` if the caller did not supply one — matches
+        the Observable contract that games (Bullet Strata's reactive HUD)
+        rely on when they filter events via ``evt.publisher is self._scene``.
+        """
+        payload.setdefault("publisher", self)
+        return self._bus.publish(self._observable_topic, **payload)
 
     def subscribe(self, listener) -> None:
         """Subscribe ``listener`` to this observable's topic."""

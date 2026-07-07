@@ -141,7 +141,10 @@ def test_observable_construct_and_publish() -> None:
             "publish pattern would break."
         )
 
-    assert captured == [{"strata_layer": 0}]
+    # Payload is now an ``EventPayload`` (dual attr/dict shape — YY1); verify
+    # the kwarg round-trips via item access rather than strict dict equality.
+    assert len(captured) == 1
+    assert captured[0]["strata_layer"] == 0
 
 
 # ── CacheMode — Phase C enum on ResidencyManager ─────────────────────────────

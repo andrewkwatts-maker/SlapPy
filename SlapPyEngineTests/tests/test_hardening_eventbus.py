@@ -210,11 +210,18 @@ def test_observable_rejects_int_topic():
 
 def test_observable_default_construction_still_works():
     # None bus + default "changed" topic must round-trip.
+    # Payload is now an ``EventPayload`` (dual attr/dict shape — YY1); check
+    # via item lookup + attribute lookup rather than strict dict equality
+    # so the reserved keys (label/publisher/data/timestamp) don't confuse
+    # the assertion.
     obs = Observable()
     captured = []
     obs.subscribe(lambda payload: captured.append(payload))
     obs.notify(value=1)
-    assert captured == [{"value": 1}]
+    assert len(captured) == 1
+    assert captured[0]["value"] == 1
+    assert captured[0].value == 1
+    assert captured[0].publisher is obs  # notify() auto-sets publisher=self
 
 
 # ---------------------------------------------------------------------------
@@ -222,11 +229,17 @@ def test_observable_default_construction_still_works():
 # ---------------------------------------------------------------------------
 
 def test_subscribe_publish_round_trip_still_works():
+    # Payload is now an ``EventPayload`` (dual attr/dict shape — YY1); check
+    # each kwarg individually so the reserved keys don't collide.
     bus = EventBus()
     captured = []
     bus.subscribe("entity:spawn", lambda payload: captured.append(payload))
     bus.publish("entity:spawn", entity_id=7, position=(1, 2))
-    assert captured == [{"entity_id": 7, "position": (1, 2)}]
+    assert len(captured) == 1
+    assert captured[0]["entity_id"] == 7
+    assert captured[0]["position"] == (1, 2)
+    assert captured[0].entity_id == 7
+    assert captured[0].position == (1, 2)
 
 
 def test_listener_count_works_after_subscribe():
