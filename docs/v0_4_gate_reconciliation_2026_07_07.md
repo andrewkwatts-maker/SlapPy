@@ -123,25 +123,28 @@ violate). Full residual fingerprints + fix-stack in
 landing impact: ~150-200 pass recoveries pushing combined to ~75-80%
 YELLOW threshold.
 
-**Post-ZZ re-verify update (2026-07-08 +1) — YELLOW SUSTAINED, ZZ1/ZZ2
-did NOT land**: ZZ3 re-ran the tripwire against HEAD `c5b00e1` (YY3's
-own commit). The projected ZZ1 (Observable kwarg shim, +14-18 sites)
-and ZZ2 (3-5 more backcompat items) siblings did NOT land as commits
-between YY3's baseline and ZZ3's walk — `git log --oneline -15` shows
-zero engine-side commits post-YY3. ZZ3 re-run results are identical to
-YY3: Ochema **1032/77/17** (±0), Bullet Strata **50/4/0** (±0),
-combined **1082 passes** (F1 recovery **91.8%**). Gate #12 verdict:
-**YELLOW sustained** — projected GREEN crossing (+37 combined passes)
-does not happen this tick because upstream commits are absent. Sprint
-plan integrity intact; ship posture unchanged (VV7 § 8 Option E
-SHIP-AT-YELLOW still recommended, now formalised as Option F
-"SHIP-AT-YELLOW-NOW" per refreshed ship-decision doc). Next-tick
-guidance: re-dispatch ZZ1 target as **AA1** (Observable kwarg shim,
-~11 pass leverage) + ZZ2 as **AA2** (DeformableLayerComponent method
-aliases, ~7 pass leverage) + AA3 (EventBus __slots__ + debug_listeners,
-~4 pass leverage) = combined ~22 pass recovery projected; still ~15
-short of GREEN threshold. Full ZZ3 analysis in
-`docs/game_compat_2026_07_07.md` § 13.
+**Post-ZZ re-verify update (2026-07-08 +1/+2) — YELLOW at 92.4% F1
+after late-landing ZZ1**: ZZ3's initial walk against HEAD `c5b00e1`
+(YY3's own commit) measured ZZ1/ZZ2 as absent and reported no delta
+vs YY3 (Ochema 1032, Bullet 50, combined 1082 = 91.8% F1). During
+commit-race with sibling ZZ5's rollup, ZZ1 (`7990501` — "Fix Observable
+kwarg-swallow") landed on master; ZZ3's post-race re-run against
+HEAD `4e4c2dd` measured **Ochema 1039/70/17 (+7 vs YY3)**, Bullet
+Strata **50/4/0** (±0), combined **1089/1178 = 92.4% F1** (up 0.6 pp
+from YY3). Gate #12 verdict: **YELLOW sustained at 92.4%** — still
+27-30 passes short of GREEN's 1119 threshold. ZZ1's +7 pass delta
+addressed Observable constructor kwarg drift; the 4 Bullet Strata
+Observable dispatch counters (Quality-tier, strata_layer_change,
+current_weapon_change, teardown-unsubscribes) plus 3 new Ochema
+`test_q8_results_polish.py` `handle_unsubscribed_on_destroy` failures
+persist as the AA-batch residual. Ship posture unchanged (VV7 § 8
+Option E, formalised as Option F "SHIP-AT-YELLOW-NOW" per refreshed
+ship-decision doc § 9). Next-tick guidance: re-dispatch AA1 (Observable
+dispatch payload-shape / str-vs-enum for remaining 7 sites) + AA2
+(DeformableLayerComponent repair/method surface, ~7 sites) + AA3
+(EventBus __slots__ + debug_listeners, ~4 sites) = combined ~18 more
+passes projected → ~1107/1178 = 94% (just shy of GREEN). Full ZZ3
+analysis + § 13.7 addendum in `docs/game_compat_2026_07_07.md`.
 
 **Post-YY1 update (2026-07-08) — YELLOW CROSSED**: YY3 re-verified
 gate #12 against HEAD `86e57f9`. YY1 (`4ea51da`, "Restore EventPayload

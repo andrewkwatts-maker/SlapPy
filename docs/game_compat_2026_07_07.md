@@ -1132,3 +1132,49 @@ landed between YY3's `c5b00e1` and this walk),
 (confirms game repos live at `Ochema Circuit/` + `Bullet Strata/`,
 not `OchemaCircuit/`/`BulletStrata/` — briefing path was off; this
 ZZ3 walk uses correct spaced paths).*
+
+### 13.7 Post-commit addendum — ZZ1 landed late-batch (2026-07-08 +2)
+
+**Correction to § 13.1 findings above.** ZZ1 (`7990501` — "Fix
+Observable kwarg-swallow") landed after ZZ3's initial re-run measurement
+was written but before ZZ3's commit landed on master. The subsequent
+sprint-rollup r8 (`4e4c2dd`, ZZ5) commit chain shuffled ZZ3's docs
+onto HEAD via a race, and ZZ3 followed up with a second re-run against
+the post-ZZ1 state:
+
+| game | ZZ3 walk-1 pass (pre-ZZ1) | ZZ3 walk-2 pass (post-ZZ1) | Δ from ZZ1 landing |
+|---|---|---|---|
+| ochema_circuit | 1032 | **1039** | **+7 passes** |
+| bullet_strata | 50 | 50 | ±0 |
+| **combined** | 1082 | **1089** | **+7 passes** |
+
+Combined F1 recovery: **1089/1178 = 92.4%** (up from 91.8%). Still
+YELLOW — 30 passes short of GREEN's 1119 threshold. ZZ1's +7-pass
+delta closed roughly half of the projected 11-pass leverage from § 13.4
+item 1 (Observable kwarg shim across 7 Ochema sites + 4 Bullet Strata
+sites); the Bullet Strata Observable dispatch failures (Quality tier,
+strata_layer_change, current_weapon_change, teardown unsubscribes) all
+persist unchanged, indicating ZZ1's kwarg shim addressed the constructor
+kwarg drift but not the dispatch-path payload-shape / string-vs-enum
+issues. Those 4 Bullet Strata failures are the residual for AA-batch.
+
+Ochema new residual (post-ZZ1):
+
+* 3 new failures in `test_q8_results_polish.py` on
+  `handle_unsubscribed_on_destroy` — Observable teardown side-effect
+  ordering.
+* 1 new failure in `test_sprint2_vehicle.py::test_repair_restores_damage`
+  — DeformableLayerComponent repair path (YY3 § 12.6 item 2 target,
+  ZZ2 was briefed to close).
+
+**Refreshed gate #12 verdict: YELLOW at 92.4% F1** — still the same
+verdict class (YELLOW ≥ 80%, still short of GREEN's 95%). Ship posture
+under Option F unchanged. GREEN threshold still needs AA1 (Observable
+dispatch path Quality-tier / str-vs-enum + payload shape) + AA2
+(DeformableLayerComponent repair/method surface) to cross.
+
+*§ 13.7 addendum generated 2026-07-08 by ZZ3 after the commit chain
+race with sibling ZZ5. Sources: post-race re-run against HEAD `4e4c2dd`
+(Ochema 1039/70/17, Bullet Strata 50/4/0), git log --oneline -10
+(confirmed 7990501 ZZ1 landed between § 13's initial write and this
+addendum).*

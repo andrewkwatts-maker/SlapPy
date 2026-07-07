@@ -458,3 +458,36 @@ Sources: `git log --oneline -15` (identified zero engine commits
 between YY3 and ZZ3), live tripwire against HEAD `c5b00e1` (Ochema
 1032/77/17, Bullet Strata 50/4/0), combined F1 recovery unchanged
 at 1082/1178 = 91.8%. Docs-only — no Python source touched.*
+
+### 9.5 Post-commit addendum — ZZ1 late-landed with +7 pass delta
+
+After § 9 was written, ZZ1 (`7990501` — "Fix Observable kwarg-swallow")
+landed on master during a commit-race with sibling ZZ5. ZZ3's post-race
+re-run against HEAD `4e4c2dd` measured:
+
+* Ochema Circuit: **1039 pass / 70 fail / 17 skip** (+7 vs YY3, 92.4%
+  of F1).
+* Bullet Strata: **50 pass / 4 fail / 0 err** (±0, 92.6% of F1).
+* Combined: **1089 / 1178 = 92.4% F1 recovery** (up +0.6 pp from § 9's
+  91.8%).
+
+**Verdict unchanged: YELLOW.** Still 30 passes short of GREEN's 1119
+threshold. The +7 pass delta closed roughly half of § 13.4 item 1's
+projected 11-pass Observable-kwarg leverage; ZZ1's constructor kwarg
+shim was correct but the dispatch-path payload-shape / string-vs-enum
+issue on Bullet Strata's 4 Observable dispatch counters (Quality-tier
++ strata_layer_change + current_weapon_change + teardown-unsubscribes)
+persists.
+
+**Option F recommendation strengthened, not weakened.** The +0.6 pp
+uptick from a single late-landing slot demonstrates the residual gap
+is closable at ~1 slot per 0.5-1.0 pp; another 2-3 AA-batch slots could
+push near 94-95%. But the ship-decision arithmetic is unchanged: 92.4%
+is materially the same as 91.8% for downstream user-facing quality,
+and Option F remains the primary recommendation. Update Q1 wording:
+"Ship-at-**92.4%**-compat with v0.4.1 followup for residual **11-14
+sites**?".
+
+*§ 9.5 addendum generated 2026-07-08 by ZZ3 after commit-race with
+ZZ5 sprint-rollup r8. Post-race re-run against HEAD `4e4c2dd`. Full
+analysis in `docs/game_compat_2026_07_07.md` § 13.7.*
