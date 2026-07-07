@@ -364,11 +364,36 @@ class Observable:
     Games (Bullet Strata's reactive HUD per project_bullet_strata.md)
     subscribe to ``"changed"`` to rebuild on dirty state. ``notify(**payload)``
     forwards to the bus; ``subscribe(listener)`` is a thin proxy.
+
+    Backwards-compat kwarg swallow (ZZ1, 2026-07):
+    Downstream games (Ochema Circuit's ``VehicleEntity(Observable, Asset)``,
+    Bullet Strata's ``PlayerEntity(Observable, Asset)``) call
+    ``super().__init__(name=..., position=..., size=..., spline=..., ...)``
+    from subclass ``__init__`` bodies. Prior signature only accepted
+    ``bus`` and ``topic``, so ``Observable`` sat in the MRO and rejected
+    every game kwarg with ``TypeError: got an unexpected keyword argument
+    'name'``. We now accept ``bus``/``topic`` as the two reserved kwargs
+    AND forward every other kwarg down the cooperative MRO chain
+    (Observable -> Asset -> RenderTarget -> Entity -> object) so downstream
+    peers still receive their expected ``name``/``position``/``size``/
+    ``spline``/etc. arguments. If the peer chain rejects a kwarg we then
+    stash the remaining kwargs as instance attributes so ``self.name`` etc.
+    still resolve for downstream getattr users. DO NOT tighten this
+    signature without a v1.0 deprecation cycle.
     """
 
-    __slots__ = ("_bus", "_observable_topic")
+    # NOTE: __slots__ intentionally REMOVED (was ("_bus", "_observable_topic"))
+    # so the kwarg-swallow fallback can setattr() arbitrary game-supplied
+    # attributes on ``self``. Slots would raise AttributeError for any kwarg
+    # not pre-declared, defeating the shim. Restoring slots requires
+    # exhaustively enumerating every game kwarg — punt to v1.0.
 
-    def __init__(self, bus: "EventBus | None" = None, topic: str = "changed") -> None:
+    def __init__(
+        self,
+        bus: "EventBus | None" = None,
+        topic: str = "changed",
+        **kwargs: Any,
+    ) -> None:
         validate_bus_or_none("bus", "Observable.__init__", bus)
         validate_event_type("topic", "Observable.__init__", topic)
         self._bus = bus if bus is not None else EventBus()
@@ -379,14 +404,30 @@ class Observable:
         # RenderTarget.__init__ unrun — self.layers never gets initialised, so
         # the first add_layer() call in the subclass __init__ raises
         # AttributeError.
+        #
+        # Strategy: try to forward every non-Observable kwarg down the MRO
+        # first (so Asset gets its name/position/size), and fall back to
+        # attribute-stashing if the peer signature rejects them.
         try:
-            super().__init__()
+            super().__init__(**kwargs)
         except TypeError:
-            # Peer __init__ requires positional args we cannot supply blindly.
-            # Standalone Observable(...) usage (super resolves to object) is
-            # unaffected by this except; it only guards the rare case of a
-            # mixin peer with a mandatory positional signature.
-            pass
+            # Peer __init__ rejected one or more kwargs (or requires
+            # positional args we cannot supply blindly). Try a bare
+            # super().__init__() so at least the MRO chain runs, then
+            # stash every kwarg on self so downstream attribute access
+            # (``self.name``, ``self.id``, ``self.tags``) still resolves.
+            try:
+                super().__init__()
+            except TypeError:
+                pass
+            for k, v in kwargs.items():
+                try:
+                    setattr(self, k, v)
+                except AttributeError:
+                    # A __slots__-restricted subclass may reject a stray
+                    # kwarg. Silently ignore — the alternative is breaking
+                    # every game construction site.
+                    pass
 
     def notify(self, **payload) -> "EventPayload":
         """Publish ``self._observable_topic`` on the bus with the given payload.
