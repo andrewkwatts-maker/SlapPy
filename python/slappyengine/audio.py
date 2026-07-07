@@ -40,6 +40,31 @@ class SoundHandle:
         self.samplerate = samplerate
 
 
+# Backwards-compat: legacy loop registry record used by
+# `AudioManager.play_loop` / `stop_loop` / `set_loop_volume` /
+# `set_loop_pitch`. Ochema Circuit's Sprint P3 tests introspect
+# `am._loops[loop_id].volume` / `.pitch` directly, so the fields must
+# be plain attributes not properties.
+# DO NOT REMOVE without a v1.0 deprecation cycle.
+class _AudioLoopHandle:
+    """Bookkeeping record for a tracked looping playback."""
+
+    __slots__ = ("loop_id", "handle", "volume", "pitch", "stopped")
+
+    def __init__(
+        self,
+        loop_id: int,
+        handle: "SoundHandle | None",
+        volume: float = 1.0,
+        pitch: float = 1.0,
+    ) -> None:
+        self.loop_id: int = int(loop_id)
+        self.handle: "SoundHandle | None" = handle
+        self.volume: float = float(volume)
+        self.pitch: float = float(pitch)
+        self.stopped: bool = False
+
+
 class AudioManager:
     """
     Thin wrapper around sounddevice for one-shot and spatial audio.
@@ -63,6 +88,16 @@ class AudioManager:
         self._available = (self._sf is not None) and backend.is_real()
         self._cache: dict[str, SoundHandle] = {}
         self._master_volume: float = 1.0
+        # Backwards-compat: legacy loop-management state used by
+        # `AudioManager.play_loop` / `stop_loop` / `set_loop_volume` /
+        # `set_loop_pitch`. Ochema Circuit's Sprint P3 audio system
+        # (systems/audio_system.py + tests/test_p3_audio.py) tracks
+        # long-running loops by integer id. Kept alongside the modern
+        # fire-and-forget `play(loop=True)` path so both APIs coexist.
+        # DO NOT REMOVE without a v1.0 deprecation cycle.
+        self._loops: dict[int, _AudioLoopHandle] = {}
+        self._loop_id_counter: int = 0
+        self._loop_lock: threading.Lock = threading.Lock()
 
     @property
     def available(self) -> bool:
@@ -165,7 +200,99 @@ class AudioManager:
         t.start()
 
     def stop_all(self) -> None:
+        # Backwards-compat: also mark every registered loop as stopped so
+        # loop-tracking tests observe the `_loops` dict empty after this
+        # call. Real playback shutdown is handled by the backend.
+        with self._loop_lock:
+            for loop in list(self._loops.values()):
+                loop.stopped = True
+            self._loops.clear()
         audio_runtime.get_backend().stop_all()
+
+    # ------------------------------------------------------------------ loop mgmt
+
+    # Backwards-compat: Ochema Circuit's Sprint P3 audio system tracks
+    # long-running engine / screech / music loops by integer id. Modern
+    # `play(loop=True)` is fire-and-forget; the legacy API wants a
+    # returned int handle plus per-loop volume + pitch mutation. Kept as
+    # a thin registry over an inner thread; no-op-safe when the backend
+    # is missing (still hands back a valid int id so caller `.stop_loop`
+    # patterns don't crash).
+    # DO NOT REMOVE without a v1.0 deprecation cycle.
+    def play_loop(
+        self,
+        handle: "SoundHandle | None",
+        volume: float = 1.0,
+        pitch: float = 1.0,
+    ) -> int:
+        """Start a tracked looping playback. Returns an integer loop id."""
+        with self._loop_lock:
+            self._loop_id_counter += 1
+            loop_id = self._loop_id_counter
+            loop = _AudioLoopHandle(
+                loop_id=loop_id,
+                handle=handle,
+                volume=max(0.0, min(1.0, float(volume))),
+                pitch=max(0.1, min(4.0, float(pitch))),
+            )
+            self._loops[loop_id] = loop
+
+        if handle is None:
+            return loop_id
+
+        # Prefer a caller-injected `_sd` (mocked sounddevice) — Ochema
+        # Circuit's tests substitute a MagicMock there so tracked-loop
+        # tests remain headless. Fall back to `audio_runtime` only when
+        # `_sd` is absent AND `_available` is truthy so we never spawn a
+        # thread that hits a live audio backend from a test harness.
+        sd = getattr(self, "_sd", None)
+        if sd is None and not self._available:
+            return loop_id
+
+        def _run() -> None:
+            data = handle.data
+            sr = handle.samplerate
+            interval = max(len(data) / float(sr), 0.01)
+            import time
+            while not loop.stopped:
+                try:
+                    scaled = data * (loop.volume * self._master_volume)
+                    if sd is not None and hasattr(sd, "play"):
+                        sd.play(scaled, sr)
+                    else:
+                        audio_runtime.get_backend().play_buffer(scaled, sr)
+                except Exception:
+                    break
+                time.sleep(interval)
+            with self._loop_lock:
+                self._loops.pop(loop_id, None)
+
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
+        return loop_id
+
+    def stop_loop(self, loop_id: int) -> None:
+        """Mark a tracked loop stopped and drop it from the registry."""
+        with self._loop_lock:
+            loop = self._loops.pop(loop_id, None)
+        if loop is not None:
+            loop.stopped = True
+
+    def set_loop_volume(self, loop_id: int, volume: float) -> None:
+        """Clamp and update a tracked loop's per-loop volume in [0.0, 1.0]."""
+        clamped = max(0.0, min(1.0, float(volume)))
+        with self._loop_lock:
+            loop = self._loops.get(loop_id)
+        if loop is not None:
+            loop.volume = clamped
+
+    def set_loop_pitch(self, loop_id: int, pitch: float) -> None:
+        """Clamp and update a tracked loop's playback pitch to [0.1, 4.0]."""
+        clamped = max(0.1, min(4.0, float(pitch)))
+        with self._loop_lock:
+            loop = self._loops.get(loop_id)
+        if loop is not None:
+            loop.pitch = clamped
 
     @property
     def master_volume(self) -> float:

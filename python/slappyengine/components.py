@@ -290,6 +290,13 @@ class DeformableLayerComponent(ComponentBase):
         self.material_preset: str = str(legacy_kwargs.get("material_preset", "metal"))
         self.sim_mode: str = str(legacy_kwargs.get("sim_mode", "collision_triggered"))
         self.destroy_mode: str = str(legacy_kwargs.get("destroy_mode", "persist"))
+        # Backwards-compat: legacy Ochema Circuit tests (tests/test_gpu_deform.py
+        # and 20+ downstream vehicle-physics call sites) read
+        # ``comp._stress_strain_buf`` — an ``(H, W, 2)`` float32 array where
+        # channel 0 is per-pixel stress and channel 1 is per-pixel strain.
+        # F1 initialised the buffer lazily on the first ``update()`` call.
+        # DO NOT REMOVE without a v1.0 deprecation cycle.
+        self._stress_strain_buf = None
 
     @property
     def integrity(self) -> float:
@@ -316,22 +323,34 @@ class DeformableLayerComponent(ComponentBase):
         )
 
     def update(self, dt: float) -> None:
-        if not self._pending_impacts:
-            return
         try:
             import numpy as _np
         except ImportError:  # pragma: no cover — numpy is a core dep
             self._pending_impacts.clear()
             return
         img = getattr(self.layer, "_image_data", None)
+        # Backwards-compat: lazy-init `_stress_strain_buf` on first update
+        # even when no impacts are pending. Ochema Circuit's gpu-deform test
+        # suite (test_gpu_deform.py) asserts the buffer becomes non-None
+        # after a single update(dt) call, independent of whether any
+        # impacts were queued. Shape mirrors the layer's RGBA image
+        # (H, W, 2 float32 — channel 0 stress, channel 1 strain).
+        # DO NOT REMOVE without a v1.0 deprecation cycle.
+        if img is not None and self._stress_strain_buf is None:
+            h, w = img.shape[:2]
+            self._stress_strain_buf = _np.zeros((h, w, 2), dtype=_np.float32)
+        # Decay any existing stress/strain toward zero per tick (elastic
+        # spring-back model). Uses the `spring_decay` legacy attribute.
+        if self._stress_strain_buf is not None and self.spring_decay < 1.0:
+            self._stress_strain_buf *= self.spring_decay
+        if not self._pending_impacts:
+            return
         if img is None:
             self._pending_impacts.clear()
             return
         h, w = img.shape[:2]
         yy, xx = _np.ogrid[:h, :w]
         for impact in self._pending_impacts:
-            if impact["mode"] != "plastic":
-                continue  # elastic impacts don't permanently damage
             cx, cy = impact["pos"]
             r = max(impact["radius"], 1e-3)
             dist2 = (xx - cx) ** 2 + (yy - cy) ** 2
@@ -340,7 +359,20 @@ class DeformableLayerComponent(ComponentBase):
                 continue
             # Falloff: full force at centre, 0 at radius.
             falloff = _np.clip(1.0 - _np.sqrt(dist2) / r, 0.0, 1.0)
-            reduction = (impact["force"] * falloff * mask).astype(_np.int32)
+            force_field = (impact["force"] * falloff * mask).astype(_np.float32)
+            # Backwards-compat: mirror force into `_stress_strain_buf` so
+            # downstream tests can observe stress/strain per pixel. Elastic
+            # impacts write into channel 0 (stress, spring-back), plastic
+            # impacts write into channel 1 (strain, permanent).
+            # DO NOT REMOVE without a v1.0 deprecation cycle.
+            if self._stress_strain_buf is not None:
+                if impact["mode"] == "plastic":
+                    self._stress_strain_buf[:, :, 1] += force_field
+                else:
+                    self._stress_strain_buf[:, :, 0] += force_field
+            if impact["mode"] != "plastic":
+                continue  # elastic impacts don't permanently damage the alpha
+            reduction = force_field.astype(_np.int32)
             alpha = img[:, :, 3].astype(_np.int32)
             alpha = _np.clip(alpha - reduction, 0, 255)
             img[:, :, 3] = alpha.astype(_np.uint8)

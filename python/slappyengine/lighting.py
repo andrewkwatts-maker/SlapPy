@@ -62,6 +62,15 @@ class ConeLight:
     color: tuple[float, float, float] = (1.0, 0.95, 0.85)
     intensity: float = 2.0
     cast_shadows: bool = False
+    # Backwards-compat: Ochema Circuit's vehicle-headlight system
+    # (systems/vehicle_physics.py:296) constructs cone lights with
+    # `volumetric=True` to opt into fog-scatter beams. F1 supported the
+    # kwarg on the dataclass; the modern volumetric-fog path reads this
+    # flag through `LightingSystem._is_volumetric_cone`. Keep as a plain
+    # dataclass field so the constructor accepts the kwarg and downstream
+    # readers can query it.
+    # DO NOT REMOVE without a v1.0 deprecation cycle.
+    volumetric: bool = False
     tags: set = field(default_factory=set)
 
 
@@ -254,6 +263,53 @@ class LightingSystem:
 
     def set_radiance_config(self, cfg: RadianceCascadeConfig) -> None:
         self._radiance_config = cfg
+
+    # Backwards-compat: Ochema Circuit's Sprint 3 atmosphere system
+    # (scenes/race.py:1119 + tests/test_sprint3_atmosphere.py) applies
+    # named lighting presets via `lighting.load_profile("night_rally")`.
+    # F1 shipped `night_rally`, `day_rally`, `garage` presets; callers
+    # may also pass a custom `profiles=` dict. Unknown names silently
+    # no-op so downstream scene loaders don't crash on typos.
+    # DO NOT REMOVE without a v1.0 deprecation cycle.
+    _BUILTIN_PROFILES: dict = {
+        "night_rally": {
+            "ambient": (0.05, 0.06, 0.12),   # blue-tinted, dark
+            "ambient_intensity": 0.08,
+        },
+        "day_rally": {
+            "ambient": (0.55, 0.55, 0.50),
+            "ambient_intensity": 0.35,
+        },
+        "garage": {
+            "ambient": (0.30, 0.28, 0.24),
+            "ambient_intensity": 0.28,
+        },
+    }
+
+    def load_profile(self, name: str, profiles: dict | None = None) -> None:
+        """Apply a named lighting profile (ambient colour + intensity).
+
+        Parameters
+        ----------
+        name:
+            Profile key (``"night_rally"``, ``"day_rally"``, ``"garage"``,
+            or a key from ``profiles`` if supplied).
+        profiles:
+            Optional custom profile registry. When provided it is checked
+            before the built-in registry. Each value must be a dict with
+            optional ``ambient`` (rgb tuple) and ``ambient_intensity``
+            (float) keys.
+        """
+        registry = profiles if profiles is not None else self._BUILTIN_PROFILES
+        cfg = registry.get(name)
+        if cfg is None:
+            # Fall back to built-ins if a custom dict didn't have it.
+            cfg = self._BUILTIN_PROFILES.get(name)
+        if cfg is None:
+            return  # silent no-op — F1 semantics
+        color = cfg.get("ambient", self._ambient_color)
+        intensity = float(cfg.get("ambient_intensity", self._ambient_intensity))
+        self.set_ambient(color, intensity)
 
     def set_fluid_density(self, density_tex: "wgpu.GPUTexture | None") -> None:
         """Store a reference to the fluid density texture for god-ray scattering.

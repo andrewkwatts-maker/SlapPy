@@ -431,3 +431,43 @@ class CollisionManager(CollisionWorld):
     def on_collision(self, callback) -> None:
         """Register a callback(entity_a, entity_b) fired for every broad-phase hit."""
         self._callbacks.append(callback)
+
+    # Backwards-compat: Ochema Circuit's Sprint 1 combat system
+    # (systems/combat.py + tests/test_sprint1_combat.py) registers
+    # predicate-filtered overlap handlers via `cm.on_overlap(pred, cb)`.
+    # F1 wired this on CollisionManager; the modern refactor collapsed it
+    # into `on_collision(cb)` without a predicate. Restore the two-arg
+    # form as a filter wrapper — predicate is tried in both (a, b) and
+    # (b, a) orders so caller code that assumes projectile-first ordering
+    # keeps working even if broad-phase reports the pair reversed.
+    # DO NOT REMOVE without a v1.0 deprecation cycle.
+    def on_overlap(self, predicate, callback) -> None:
+        """Register `callback(a, b)` fired only when `predicate(a, b)` is true.
+
+        Predicate is also tried with the arguments reversed so a rule
+        expressed in one canonical order still fires when broad-phase
+        reports the pair with the participants swapped.
+        """
+        def _wrapped(a, b):
+            try:
+                if predicate(a, b):
+                    callback(a, b)
+                    return
+                if predicate(b, a):
+                    callback(b, a)
+            except Exception as exc:
+                print(f"[CollisionManager] on_overlap predicate error: {exc}")
+        self._callbacks.append(_wrapped)
+
+
+# Backwards-compat: Ochema Circuit's collision system (13 sites in
+# systems/ + tests/) imports `PixelCollisionPass` from
+# `slappyengine.collision` even though the class actually lives in
+# `slappyengine.collision_pixel`. Re-export it here so the legacy import
+# path resolves. Guard the import so a broken collision_pixel module
+# never breaks `import slappyengine.collision`.
+# DO NOT REMOVE without a v1.0 deprecation cycle.
+try:
+    from slappyengine.collision_pixel import PixelCollisionPass  # noqa: F401
+except Exception:  # pragma: no cover — soft-failure keeps import path alive
+    PixelCollisionPass = None  # type: ignore[assignment]
