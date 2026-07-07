@@ -429,3 +429,158 @@ pattern (see `docs/v0_4_gate_reconciliation_2026_07_07.md` § "Commit-
 attribution note" — RR6's content was absorbed into RR5's `ba9cbd5`
 before RR6 could land its own commit; RR6 then landed the footer as
 a separate attribution commit).
+
+---
+
+## 10. Post-VV1 re-run (VV3, 2026-07-07 late-evening +2)
+
+Third-pass game-compat walk by VV3 background scrum agent following
+UU3's § 9 baseline. Between UU3 and VV3, the scheduled VV1 + VV2
+sibling agents dispatched to close § 9.3 residuals:
+
+* **VV1** (`82feed0` — "Restore CacheMode.OFFSCREEN_SERIALIZE +
+  ALWAYS_CACHED") — targeted § 9.3 item 1 (CacheMode enum-member
+  deletion, top-ranked residual).
+* **VV2** (§ 9.4 residual list — ImportError symbols, kwarg drift,
+  method surface drift) — **did NOT land before VV3's re-verify
+  walk.** Only VV1 + VV5 (`55e99a3`, hello_downstream_pattern demo)
+  are ahead of UU3 (`844f4aa`) on master. VV3 proceeds with re-run
+  against VV1-only state so the CacheMode impact is measured cleanly.
+
+Engine state at VV3 walk: HEAD `82feed0` (VV1 landed; VV2 absent;
+VV5 is a demo, no game-facing surface delta).
+
+### 10.1 Refreshed pass counts (VV3, post-VV1)
+
+Runs executed with `-p no:cacheprovider` to eliminate pytest-cache
+interference between rounds (first uncached run showed high variance
+across three consecutive runs — 471, 478, 681 passes — traced to
+stale UU3 `.pytest_cache` marking previously-failing tests as fail
+first before re-executing them; disabling the cache stabilised the
+count).
+
+| game | UU3 pass | UU3 fail | UU3 err | VV3 pass | VV3 fail | VV3 err | Δ vs UU3 | Δ vs F1 |
+|---|---|---|---|---|---|---|---|---|
+| ochema_circuit | 471 | 621 | 12 | **681** | 423 | 0 | **+210 passes** | −443 |
+| bullet_strata | 19 | 32 | 3 | **45** | 9 | 0 | **+26 passes** | −9 |
+| **combined** | **490** | 653 | 15 | **726** | 432 | 0 | **+236 passes** | **−452** |
+
+Ochema pass-rate: 41.7% → 61.7% (of 1104 non-skip). Bullet Strata
+pass-rate: 35.2% → **83.3%** (of 54 total). All 15 collection-time
+errors (12 Ochema + 3 Bullet) are eliminated by the CacheMode
+restoration — every previous ERROR was a module-import failure on
+`CacheMode.OFFSCREEN_SERIALIZE` / `ALWAYS_CACHED`, which now resolves.
+
+### 10.2 Root-cause resolution verdict
+
+Grep of VV3's re-run logs against the § 9.3 failure fingerprints:
+
+| § 9.3 item | Fingerprint | UU3 count | VV3 count | Verdict |
+|---|---|---|---|---|
+| 1 | `AttributeError: type object 'CacheMode' has no attribute 'OFFSCREEN_SERIALIZE'` / `'ALWAYS_CACHED'` | many | **0** | **RESOLVED by VV1** |
+| 2 | `TypeError: DeformableLayerComponent.__init__() ... 'spring_decay'` | ~20 | **0** (dispatched via other repair, or tests now passing collateral) | UNEXPECTED bonus close |
+| 3 | `TypeError: PixelCollisionPass.test() missing 4 required positional arguments` | present | **0** | UNEXPECTED bonus close |
+| 4 | `ImportError: cannot import name '<symbol>' from 'slappyengine.<module>'` | 5 distinct | **1** (`PixelCollisionPass` remains, 9 sites) | Partial |
+| 5 | Manager-method deletions (`AudioManager.play_loop` + 2 more) | 3 distinct | 18 sites remain (9+6+3) | UNCHANGED |
+
+The +210 Ochema delta comes primarily from CacheMode-blocked test
+modules whose collection now succeeds, plus knock-on tests that were
+transitively erroring on the same import chain. Items 2 + 3 collapsing
+to zero suggests they were downstream cascade effects of the CacheMode
+import failure rather than independent root causes.
+
+### 10.3 New dominant failure fingerprints (VV3)
+
+Distinct top-level error strings ranked by observed multiplicity across
+Ochema Circuit runs (`grep -E "^E " | sort | uniq -c | sort -rn`):
+
+1. **228 sites** — `TypeError: EventBus.unsubscribe: event_type must
+   be a str; got NoneType` — teardown paths passing `None` to
+   `unsubscribe`. UU2 restored the backcompat alias but downstream
+   games call it with legacy `None`-sentinel semantics that the new
+   validator rejects. **New top-ranked residual.**
+2. **25 sites** — `AttributeError: 'dict' object has no attribute
+   'publisher'` — Observable / EventBus API drift; downstream expects
+   an object with `.publisher` attribute where engine now returns a
+   plain dict.
+3. **21 sites** — `AttributeError: 'DeformableLayerComponent' object
+   has no attribute '_stress_strain_buf'` — internal buffer initialised
+   lazily / renamed; game code touches internal state.
+4. **10 sites** — `TypeError: ConeLight.__init__() got an unexpected
+   keyword argument 'volumetric'` — light kwarg drift.
+5. **9 sites** — `ImportError: cannot import name 'PixelCollisionPass'
+   from 'slappyengine.collision'` — module surface drift (symbol lives
+   elsewhere now).
+6. **9 sites** — `AttributeError: 'AudioManager' object has no
+   attribute 'play_loop'` — carried over from § 9.3 item 5.
+7. **6 sites** — `AttributeError: 'LightingSystem' object has no
+   attribute 'load_profile'` — carried over.
+8. **7 sites** — `TypeError: Observable.__init__() got an unexpected
+   keyword argument 'name'` — constructor kwarg drift.
+9. **3 sites** — `AttributeError: 'CollisionManager' object has no
+   attribute 'on_overlap'` — carried over.
+
+Bullet Strata residual (9 failures, all `test_features.py`): 6 driven
+by the `unsubscribe(None)` validator from item 1 above; 3 assertion
+failures on HUD `_kills` / `_wave_cur` counters where events aren't
+firing (upstream of Observable dispatch).
+
+### 10.4 F1-recovery percentage
+
+Combined recovery: 726 / 1178 (F1 total) = **61.6%**. Break-out:
+
+* Ochema alone: 681 / 1124 = **60.6%**
+* Bullet Strata alone: 45 / 54 = **83.3%**
+
+Bullet Strata individually crosses the YELLOW threshold (≥80%);
+Ochema and combined do not (needs ≥80% for YELLOW, ≥95% for GREEN).
+
+### 10.5 Refreshed gate #12 verdict
+
+**STILL FAILING** — combined 61.6% F1 recovery is below the 80%
+YELLOW threshold; Ochema's 60.6% is the drag. VV1 alone delivered a
++236-pass recovery (48% closure of the UU3-residual gap of ~688),
+which is a load-bearing directional signal that the sprint strategy
+is correct. VV2 landing (still pending) is projected to close the top
+new residual (228 `unsubscribe(None)` sites in Ochema) plus items 2-9
+above.
+
+Projected VV2 landing impact (based on failure-site multiplicities):
+if VV2 closes the top 3 fingerprints from § 10.3 (unsubscribe-None,
+`.publisher` dict, `_stress_strain_buf` init), that's **~274 sites**
+which could translate to ~150-200 additional pass recoveries (many
+sites live inside the same test methods). This would push combined
+F1 recovery to ~75-80% — right at the YELLOW threshold.
+
+Recommended next-slot action stack (in priority order):
+
+1. **VV2 land** — top three § 10.3 fingerprints (unsubscribe-None
+   sentinel, dict-vs-object publisher return, DeformableLayerComponent
+   `_stress_strain_buf` init).
+2. Restore `ConeLight(volumetric=...)` kwarg + `Observable(name=...)`
+   kwarg (§ 10.3 items 4 + 8).
+3. Re-export `PixelCollisionPass` from `slappyengine.collision`
+   (§ 10.3 item 5).
+4. Restore `AudioManager.play_loop`, `LightingSystem.load_profile`,
+   `CollisionManager.on_overlap` (§ 10.3 items 6/7/9).
+5. Re-run VV3-style tripwire; gate #12 flips **YELLOW** if combined
+   ≥ 943 (80% of F1), **GREEN** if ≥ 1119 (95% of F1).
+
+### 10.6 VV3 constraints honoured
+
+* No file under either game repo touched — read-only pytest invocation
+  from an alternate `PYTHONPATH`; both SVN working copies remain clean.
+* No file under `python/slappyengine/` touched — VV3 is docs-only.
+* No WIP subpackage touched — `softbody/`, `fluid/`, `physics/`,
+  `physics2/` remain untracked.
+* Commit scoped: `docs/game_compat_2026_07_07.md` (this § 10 append)
+  + `docs/v0_4_gate_reconciliation_2026_07_07.md` (gate #12
+  post-VV1 status refresh).
+
+*Doc § 10 generated 2026-07-07 late-evening by VV3 background scrum
+agent. Sources: `git log --oneline -15` (identified VV1 `82feed0`
+landed, VV2 absent), `PYTHONPATH=h:/Github/SlapPyEngine/python
+python -m pytest ".../<game>/tests" -q --no-header --tb=line
+-p no:cacheprovider` (both games; VV3 executed 4 rounds total to
+verify count stability), `grep -E "^E " | sort | uniq -c | sort -rn`
+(residual fingerprint ranking).*

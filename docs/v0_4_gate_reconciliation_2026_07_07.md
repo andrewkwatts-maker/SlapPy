@@ -51,7 +51,7 @@ Evidence column: commit SHA, file path, or grep result.
 | 9 | `cargo check` + `cargo test` green (tracked scope) | **GREEN** | Flipped by PP3 | `git ls-files "src/*.rs"` = 14 files; `grep '^mod ' src/lib.rs` = 14 declarations; zero lag. F1 four untracked files re-scope to gate 11. |
 | 10 | `maturin build --release` wheel size within budget | **GREEN** | Maintained | ~1.45 MB (well under 50 MB) per `docs/wheel_size_audit_2026_06_02.md`. |
 | 11 | Softbody / fluid / physics / physics2 WIP dirs committed or deferred | **FAILING** | Unchanged | `git status` confirms `softbody/`, `fluid/`, `physics/`, `physics2/` untracked, plus 4 untracked Rust source files (`src/raster.rs`, `src/pbf_solver.rs`, `src/softbody_solver.rs`, `src/fluid_shader.rs`). User-gated. |
-| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | **STILL FAILING** (post UU1+UU2) | **Re-verified by UU3** (was TT1 FAILING) | Live re-tripwire executed 2026-07-07 by UU3 after UU2 (`b29e601`, event_bus backcompat) landed + UU1 (`render_target.py` MRO defensive fallback + `Observable.__init__` cooperative super chain) applied to working tree. Results vs TT1 baseline: Ochema **471 pass / 621 fail / 22 skip / 12 err** (+47 passes), Bullet Strata **19/32/3** (unchanged). Combined **+47 passes** (still −688 vs F1 baseline). UU1+UU2 grep-verified as effective: 0 occurrences of `layers`, `global_bus`, or `unsubscribe()`-missing-arg fingerprints. Residual dominated by 5 orthogonal breakage classes: `CacheMode.OFFSCREEN_SERIALIZE`/`ALWAYS_CACHED` enum-member deletions, `DeformableLayerComponent(spring_decay=...)` kwarg drift, `PixelCollisionPass.test()` signature drift, 5 further ImportError deletions (`DeformConfig`, `EventDetails`, `PixelCollisionPass`, `_parse_deform`, `debug_listeners`), and 3 manager-method deletions (`AudioManager.play_loop`, `LightingSystem.load_profile`, `CollisionManager.on_overlap`). See `docs/game_compat_2026_07_07.md` § 9 for full UU3 re-run analysis + fix-stack. **Still ship-blocker for v0.4.0** — needs 5-6 more targeted backcompat sprint slots to close residual gap. |
+| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | **STILL FAILING** (post VV1) | **Re-verified by VV3** (was UU3 STILL FAILING) | Live re-tripwire executed 2026-07-07 by VV3 after VV1 (`82feed0`, CacheMode.OFFSCREEN_SERIALIZE + ALWAYS_CACHED restoration) landed on top of UU3 (VV2 was scheduled but did NOT land before VV3 walk). Results vs UU3 baseline: Ochema **681 pass / 423 fail / 22 skip / 0 err** (+210 passes), Bullet Strata **45/9/0** (+26 passes). Combined **+236 passes** (recovery = **726/1178 = 61.6% of F1**; still −452 vs F1 baseline). Bullet Strata alone crosses 83.3% (would be YELLOW individually), Ochema stuck at 60.6%. VV1 grep-verified: 0 `CacheMode` fingerprints in VV3 log. All 15 collection-time errors eliminated (module-import success). Residual dominated by **228 sites** of `EventBus.unsubscribe: event_type must be a str; got NoneType` (legacy `unsubscribe(None)` sentinel semantics), plus `.publisher` dict-vs-object drift, `DeformableLayerComponent._stress_strain_buf` init, `ConeLight(volumetric=...)` kwarg drift, `Observable(name=...)` kwarg drift, `PixelCollisionPass` re-export gap, and 3 manager-method deletions. See `docs/game_compat_2026_07_07.md` § 10 for full VV3 re-run analysis + fix-stack. **Still ship-blocker for v0.4.0** — needs VV2 land + 2-3 more targeted backcompat slots to reach ≥80% YELLOW threshold. |
 | 13 | Perf dashboard no regression >10% | needs-verify | Unchanged | Baseline unchanged; re-run needed post-parity. |
 | 14 | CHANGELOG.md `[0.4.0]` section written | **DRAFT** | Flipped by PP7 | `CHANGELOG.md:8 = "## [0.4.0] — YYYY-MM-DD (UNRELEASED)"`. Date flip happens in tag sprint. |
 | 15 | `.github/workflows/publish.yml` runs test suite before wheel | **DEFERRED** | Unchanged | Punted to v0.4.1. |
@@ -99,6 +99,29 @@ the ≥ 95%-of-F1 threshold (Ochema ≥ 1068, Bullet Strata ≥ 51). Pass
 count unchanged at **9 GREEN + 1 DRAFT + 3 FAILING + 1 needs-verify
 + 1 deferred** (Gate 12 remains FAILING; recovery direction is
 correct but insufficient magnitude to flip).
+
+**Post-VV1+VV3 (2026-07-07 late-evening +2) update**: VV1 (`82feed0`)
+landed CacheMode.OFFSCREEN_SERIALIZE + ALWAYS_CACHED restoration.
+VV2 was scheduled for the § 9.4 residual list but **did NOT land**
+before VV3's re-verify walk (only VV1 + VV5 demo are ahead of UU3
+on master). VV3 re-ran the tripwire against HEAD `82feed0` with
+`-p no:cacheprovider` (first uncached rounds showed high variance
+441→478→681 from stale pytest-cache; disabling cache stabilised):
+Ochema **681 pass / 423 fail / 22 skip / 0 err** (+210 vs UU3);
+Bullet Strata **45/9/0** (+26 vs UU3). Combined **+236 passes**;
+F1 recovery = **726/1178 = 61.6%**. Bullet Strata individually
+reaches **83.3%** (would be YELLOW alone); Ochema at **60.6%** is
+the drag. All 15 UU3 collection-time errors eliminated. VV1 grep-
+verified: 0 `CacheMode` fingerprints. New top residual: **228 sites**
+of `EventBus.unsubscribe: event_type must be a str; got NoneType`
+(legacy `unsubscribe(None)` sentinel semantics — UU2's backcompat
+alias added a str-required validator that downstream teardown paths
+violate). Full residual fingerprints + fix-stack in
+`docs/game_compat_2026_07_07.md` § 10.3-§ 10.5. Gate 12 verdict
+**STILL FAILING** (<80% combined). Pass count unchanged at **9 GREEN
++ 1 DRAFT + 3 FAILING + 1 needs-verify + 1 deferred**. Projected VV2
+landing impact: ~150-200 pass recoveries pushing combined to ~75-80%
+YELLOW threshold.
 
 ---
 
