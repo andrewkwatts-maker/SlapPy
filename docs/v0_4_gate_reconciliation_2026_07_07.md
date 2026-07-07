@@ -51,7 +51,7 @@ Evidence column: commit SHA, file path, or grep result.
 | 9 | `cargo check` + `cargo test` green (tracked scope) | **GREEN** | Flipped by PP3 | `git ls-files "src/*.rs"` = 14 files; `grep '^mod ' src/lib.rs` = 14 declarations; zero lag. F1 four untracked files re-scope to gate 11. |
 | 10 | `maturin build --release` wheel size within budget | **GREEN** | Maintained | ~1.45 MB (well under 50 MB) per `docs/wheel_size_audit_2026_06_02.md`. |
 | 11 | Softbody / fluid / physics / physics2 WIP dirs committed or deferred | **FAILING** | Unchanged | `git status` confirms `softbody/`, `fluid/`, `physics/`, `physics2/` untracked, plus 4 untracked Rust source files (`src/raster.rs`, `src/pbf_solver.rs`, `src/softbody_solver.rs`, `src/fluid_shader.rs`). User-gated. |
-| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | **YELLOW — MAJOR MILESTONE** (post YY1) | **Threshold crossed by YY3** (was WW3 STILL FAILING) | Live re-tripwire executed 2026-07-08 by YY3 against HEAD `86e57f9` (YY4 STUB r25). YY1 (`4ea51da`, "Restore EventPayload dual-shape returns") is the load-bearing commit; landed mid-YY3-walk. YY2 (backcompat stack) did NOT land as a discrete commit; that work is effectively covered by WW2 (`19d00a0`, "Restore 3-5 more backcompat symbols") + `2e8cb8d` (WW1 salvage — unsubscribe(None) explicit close) which arrived between WW3's baseline and YY3's walk. YY3 results vs WW3 baseline: Ochema **1032 pass / 77 fail / 17 skip / 0 err** (+194 passes), Bullet Strata **50/4/0** (+4 passes). Combined **+198 passes** (recovery = **1082/1178 = 91.8% of F1**; only −96 vs F1 baseline). Ochema alone 91.8%, Bullet Strata alone **92.6%** (both individually YELLOW; both above 90%). YY3 grep-verified: **0** `'dict' object has no attribute` fingerprints (was 84 in WW3 — collapsed by YY1). All § 11.4 top residuals eliminated or reduced except Observable-kwarg drift (7 sites remain) and DeformableLayerComponent method surface (7 sites). YY1 alone contributed **+198 passes / +16.8 pp** — the largest single-slot delta of the recovery arc. Full YY3 analysis in `docs/game_compat_2026_07_07.md` § 12. **Ship-blocker status LIFTED to YELLOW** — v0.4.0 can now ship-at-YELLOW per refreshed `docs/v0_4_ship_decision_2026_07_07.md` § 8; one more targeted slot (Observable kwarg shim + 3 DeformableLayerComponent method aliases = ~18 sites) could push to ~93-94% (near-GREEN). Combined recovery arc: TT1 37.6% → UU3 41.7% → VV3 61.6% → WW3 75.0% → **YY3 91.8%** across 6 backcompat slots (UU1/UU2/VV1/VV2/WW1-salvage+WW2/YY1). |
+| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | **YELLOW — MAJOR MILESTONE** (post YY1; reaffirmed by ZZ3 2026-07-08 +1) | **Threshold crossed by YY3** (was WW3 STILL FAILING); ZZ3 re-verify ±0 (ZZ1/ZZ2 did not land) | Live re-tripwire executed 2026-07-08 by YY3 against HEAD `86e57f9` (YY4 STUB r25). YY1 (`4ea51da`, "Restore EventPayload dual-shape returns") is the load-bearing commit; landed mid-YY3-walk. YY2 (backcompat stack) did NOT land as a discrete commit; that work is effectively covered by WW2 (`19d00a0`, "Restore 3-5 more backcompat symbols") + `2e8cb8d` (WW1 salvage — unsubscribe(None) explicit close) which arrived between WW3's baseline and YY3's walk. YY3 results vs WW3 baseline: Ochema **1032 pass / 77 fail / 17 skip / 0 err** (+194 passes), Bullet Strata **50/4/0** (+4 passes). Combined **+198 passes** (recovery = **1082/1178 = 91.8% of F1**; only −96 vs F1 baseline). Ochema alone 91.8%, Bullet Strata alone **92.6%** (both individually YELLOW; both above 90%). YY3 grep-verified: **0** `'dict' object has no attribute` fingerprints (was 84 in WW3 — collapsed by YY1). All § 11.4 top residuals eliminated or reduced except Observable-kwarg drift (7 sites remain) and DeformableLayerComponent method surface (7 sites). YY1 alone contributed **+198 passes / +16.8 pp** — the largest single-slot delta of the recovery arc. Full YY3 analysis in `docs/game_compat_2026_07_07.md` § 12. **Ship-blocker status LIFTED to YELLOW** — v0.4.0 can now ship-at-YELLOW per refreshed `docs/v0_4_ship_decision_2026_07_07.md` § 8; one more targeted slot (Observable kwarg shim + 3 DeformableLayerComponent method aliases = ~18 sites) could push to ~93-94% (near-GREEN). Combined recovery arc: TT1 37.6% → UU3 41.7% → VV3 61.6% → WW3 75.0% → **YY3 91.8%** across 6 backcompat slots (UU1/UU2/VV1/VV2/WW1-salvage+WW2/YY1). |
 | 13 | Perf dashboard no regression >10% | needs-verify | Unchanged | Baseline unchanged; re-run needed post-parity. |
 | 14 | CHANGELOG.md `[0.4.0]` section written | **DRAFT** | Flipped by PP7 | `CHANGELOG.md:8 = "## [0.4.0] — YYYY-MM-DD (UNRELEASED)"`. Date flip happens in tag sprint. |
 | 15 | `.github/workflows/publish.yml` runs test suite before wheel | **DEFERRED** | Unchanged | Punted to v0.4.1. |
@@ -122,6 +122,26 @@ violate). Full residual fingerprints + fix-stack in
 + 1 DRAFT + 3 FAILING + 1 needs-verify + 1 deferred**. Projected VV2
 landing impact: ~150-200 pass recoveries pushing combined to ~75-80%
 YELLOW threshold.
+
+**Post-ZZ re-verify update (2026-07-08 +1) — YELLOW SUSTAINED, ZZ1/ZZ2
+did NOT land**: ZZ3 re-ran the tripwire against HEAD `c5b00e1` (YY3's
+own commit). The projected ZZ1 (Observable kwarg shim, +14-18 sites)
+and ZZ2 (3-5 more backcompat items) siblings did NOT land as commits
+between YY3's baseline and ZZ3's walk — `git log --oneline -15` shows
+zero engine-side commits post-YY3. ZZ3 re-run results are identical to
+YY3: Ochema **1032/77/17** (±0), Bullet Strata **50/4/0** (±0),
+combined **1082 passes** (F1 recovery **91.8%**). Gate #12 verdict:
+**YELLOW sustained** — projected GREEN crossing (+37 combined passes)
+does not happen this tick because upstream commits are absent. Sprint
+plan integrity intact; ship posture unchanged (VV7 § 8 Option E
+SHIP-AT-YELLOW still recommended, now formalised as Option F
+"SHIP-AT-YELLOW-NOW" per refreshed ship-decision doc). Next-tick
+guidance: re-dispatch ZZ1 target as **AA1** (Observable kwarg shim,
+~11 pass leverage) + ZZ2 as **AA2** (DeformableLayerComponent method
+aliases, ~7 pass leverage) + AA3 (EventBus __slots__ + debug_listeners,
+~4 pass leverage) = combined ~22 pass recovery projected; still ~15
+short of GREEN threshold. Full ZZ3 analysis in
+`docs/game_compat_2026_07_07.md` § 13.
 
 **Post-YY1 update (2026-07-08) — YELLOW CROSSED**: YY3 re-verified
 gate #12 against HEAD `86e57f9`. YY1 (`4ea51da`, "Restore EventPayload

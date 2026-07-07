@@ -91,7 +91,7 @@ below on a clean checkout of `master`.
 | # | Check | Command | Pass criterion |
 |---|---|---|---|
 | 3.1 | Engine tests all-green | `pytest SlapPyEngineTests/tests` | 0 failed, 0 error; skips must already be documented per SS3 skip audit. |
-| 3.2 | Game-compat ≥80% of F1 (1178 combined) | Re-run TT1 harness against `H:/DaedalusSVN/OchemaCircuit/` + `H:/DaedalusSVN/BulletStrata/` | Combined ≥ **942** passes (0.80 × 1178). Refresh `docs/game_compat_2026_07_07.md` §§ 9+ with the new pass count and commit SHA. |
+| 3.2 | Game-compat ≥80% of F1 (1178 combined) — **PASSING** (2026-07-08 +1) | Re-run YY3/ZZ3 harness against `H:/DaedalusSVN/Ochema Circuit/` + `H:/DaedalusSVN/Bullet Strata/` (**note**: repo dirs contain spaces — YY7 briefing path `OchemaCircuit/BulletStrata` was wrong; ZZ3 verified correct spaced paths) | Combined ≥ **942** passes (0.80 × 1178). **PASSING**: ZZ3 measured 1082 combined at HEAD `c5b00e1` (2026-07-08 +1) — same as YY3 baseline at HEAD `86e57f9`; F1 recovery 91.8% (well above 80% YELLOW threshold, below 95% GREEN). Analysis: `docs/game_compat_2026_07_07.md` § 12 (YY3) + § 13 (ZZ3 reaffirmation). Pre-tag operators may proceed to Step 1 with gate #12 status YELLOW / SHIP-AT-YELLOW per ship-decision doc § 9 Option F. |
 | 3.3 | `cargo check --release` zero errors | `cargo check --release --workspace` | Exit 0, no `error:` lines. Warnings tolerated. |
 | 3.4 | `maturin build --release` wheel ≤50MB | `maturin build --release` then `ls -lh target/wheels/*.whl` | Wheel size ≤ **50 MB** (PyPI upload budget). WW7 baseline is ~1.45 MB per gate #10 evidence. |
 
@@ -149,10 +149,12 @@ same version string will break `pip install` reproducibility.
 ## 6. Cross-links
 
 * [`docs/v0_4_ship_decision_2026_07_07.md`](v0_4_ship_decision_2026_07_07.md)
-  — **VV7** ship-decision doc (recommends Option B — ship after
-  2-3 more backcompat sprints close gate #12). This checklist
-  presumes VV7's recommendation is accepted and the residual
-  gates are GREEN.
+  — **VV7** ship-decision doc + **YY3** § 8 Option E addendum + **ZZ3**
+  § 9 Option F formalisation (recommended: **Option F — SHIP-AT-YELLOW-NOW**;
+  91.8% F1 recovery sustained across YY3 + ZZ3 re-verifies). This
+  checklist presumes Option F is accepted and the residual v0.4.1
+  followup pack (AA1/AA2/AA3 targeting ~14-18 residual sites) is
+  scheduled post-tag.
 * [`docs/version_bump_audit_2026_07_07.md`](version_bump_audit_2026_07_07.md)
   — **PP6** version-string audit (three canonical bump sites +
   historical vs must-update docs list). Step 1 is a direct

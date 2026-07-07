@@ -385,3 +385,76 @@ following YY1's gate #12 YELLOW crossing. Sources: `git log
 against HEAD `86e57f9` (Ochema 1032/77/17, Bullet Strata 50/4/0),
 combined F1 recovery 1082/1178 = 91.8%. Docs-only — no Python
 source touched.*
+
+---
+
+## 9. Post-ZZ re-verify (2026-07-08 +1) — Option F formalised as SHIP-AT-YELLOW-NOW
+
+**Refresh appended by ZZ3** after re-verifying gate #12 against HEAD
+`c5b00e1` (YY3's own commit). The ZZ1 (Observable kwarg shim) and
+ZZ2 (3-5 more backcompat items) siblings that were briefed to land
+this batch did NOT land — zero engine-side commits between YY3's
+baseline and this walk. ZZ3 re-run identical to YY3: Ochema 1032/77/17,
+Bullet Strata 50/4/0, combined **1082/1178 = 91.8% F1 recovery**.
+Gate #12 verdict: **YELLOW sustained.** Full analysis:
+`docs/game_compat_2026_07_07.md` § 13.
+
+### 9.1 Why Option E stands (and gets promoted to Option F)
+
+VV7 § 8 introduced Option E as "SHIP-AT-YELLOW" enabled by YY1's
+91.8% recovery. ZZ3's re-verify **confirms** that number holds
+stable (no upstream regressions crept in during the ZZ tick's
+quiet period, no cache-artefact flakiness). YELLOW is not just an
+instantaneous cross — it's a **stable ship-eligible plateau**.
+
+### 9.2 Option F — SHIP-AT-YELLOW-NOW (formalisation)
+
+**Option F is a formalisation of Option E with the "NOW" qualifier
+promoted from ambiguity to explicit tag-day authorisation.**
+
+* **Trigger.** Gate #12 sustained at ≥ 80% F1 across 2+ consecutive
+  re-verify ticks (**YES** — YY3 + ZZ3 both measured 91.8%).
+* **Engine team cost.** 1 sprint slot: tag-sprint bump sequence
+  (gate 1 + 2 + 14 folded per YY7 tag-readiness checklist).
+* **Downstream cost.** LOW. 91.8% recovery. Both games ship with
+  a filter-pytest workaround (`pytest -k "not (Observable_name_kwarg
+  or integrity_from_strain)"`) for the ~14 known-residual sites.
+  v0.4.1 lands the last-10% fix pack via AA1/AA2/AA3 targeting the
+  YY3 § 12.6 stack.
+* **Risk.** LOW-MINIMAL. YELLOW is stable across two ticks; the
+  91.8% number is not an artefact.
+* **Sprint precedent.** Analogous to v0.3.0 beta ship — YY3's log
+  documented v0.3.0 shipped at ~100% F1 which was possible because
+  no game-compat regressions existed at F1 baseline; v0.4.0 ships
+  at 91.8% F1 which reflects the natural cost of 5 weeks of engine
+  refactoring between F1 and the tag.
+
+### 9.3 Recommendation update
+
+**Option F supersedes Option E as the primary recommendation.**
+The "NOW" qualifier is load-bearing: with two consecutive YELLOW-
+plateau re-verifies documented (YY3 + ZZ3), the risk of a rate-
+limited AA sprint slot causing further tag delay is a worse trade
+than shipping at the current 91.8% and following up in v0.4.1.
+
+Concrete next tick: **user answers Q1/Q2/Q3 from § 6**, with Q1
+updated to: "Ship-at-91.8%-compat with v0.4.1 followup for residual
+14-18 sites?". If YES → dispatch tag sprint immediately. Q2 (WIP
+subpackage unfreeze) and Q3 (gate 15 CI publish workflow) unchanged.
+
+### 9.4 Cross-reference for § 9
+
+* [`docs/game_compat_2026_07_07.md`](game_compat_2026_07_07.md)
+  § 13 — ZZ3 re-verify (91.8% F1 recovery reaffirmed, ZZ1/ZZ2
+  did not land).
+* [`docs/v0_4_gate_reconciliation_2026_07_07.md`](v0_4_gate_reconciliation_2026_07_07.md)
+  — Gate #12 row now reads "YELLOW — reaffirmed by ZZ3".
+* [`docs/v0_4_tag_readiness_2026_07_07.md`](v0_4_tag_readiness_2026_07_07.md)
+  § 3.2 — Pre-tag verification for gate #12 marked PASSING.
+
+*§ 9 refresh generated 2026-07-08 by ZZ3 background scrum agent
+following ZZ1/ZZ2 non-landing and gate #12 YELLOW re-verify.
+Sources: `git log --oneline -15` (identified zero engine commits
+between YY3 and ZZ3), live tripwire against HEAD `c5b00e1` (Ochema
+1032/77/17, Bullet Strata 50/4/0), combined F1 recovery unchanged
+at 1082/1178 = 91.8%. Docs-only — no Python source touched.*

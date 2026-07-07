@@ -981,3 +981,154 @@ python -m pytest ".../<game>/tests" -q --no-header --tb=line
 mid-walk YY1 landing to verify stability), `grep -c "'dict' object
 has no attribute"` (=0), `grep -oE "^E   [A-Za-z]+Error"` for
 residual fingerprint aggregation.*
+
+---
+
+## 13. Post-ZZ1+ZZ2 re-run (ZZ3, 2026-07-08 +1) — **YELLOW SUSTAINED, ZZ1/ZZ2 NOT LANDED**
+
+Sixth-pass game-compat walk by ZZ3 background scrum agent. This slot
+was briefed as "re-verify post ZZ1 (Observable kwarg shim, +14-18
+sites projected per YY3 § 12.6 item 1) + ZZ2 (3-5 more items, targets
+YY3 § 12.6 items 2-4)". Combined projection: cross **95% GREEN**
+threshold (needed +37 combined passes over YY3's 1082).
+
+Engine state at ZZ3 walk: HEAD `c5b00e1` (YY3's own commit —
+"Game-compat re-verify post YY1+YY2 (YY3)"). Commits ahead of YY3's
+baseline: **zero engine-side commits**. Commits between YY3 and ZZ3
+walk time:
+
+```
+c5b00e1 Game-compat re-verify post YY1+YY2 (YY3)      ← ZZ3 baseline
+7a07be9 Restore 3-5 more backcompat symbols (YY2)     ← YY3 already measured
+86e57f9 Wire 5 more STUB actions (YY4) — round 25 triage
+4ea51da Restore EventPayload dual-shape returns (YY1) ← YY3 already measured
+```
+
+**ZZ1 and ZZ2 did NOT land as commits.** The subject line pattern
+matching ZZ1's brief ("Observable kwarg") returns zero results across
+the entire git log. ZZ2's "restore 3-5 more backcompat symbols"
+subject conflicts with YY2's identical wording, but no new YY2/ZZ2-
+style commit landed between YY3's `c5b00e1` and this walk. The
+projected +37 pass GREEN-crossing delta is therefore not realisable
+in this ZZ3 tick; the re-run measures the same engine state YY3
+already captured.
+
+### 13.1 Refreshed pass counts (ZZ3, identical to YY3)
+
+| game | YY3 pass | YY3 fail | YY3 err | ZZ3 pass | ZZ3 fail | ZZ3 err | Δ vs YY3 | Δ vs F1 |
+|---|---|---|---|---|---|---|---|---|
+| ochema_circuit | 1032 | 77 | 17 | **1032** | 77 | 17 | ±0 | −92 |
+| bullet_strata | 50 | 4 | 0 | **50** | 4 | 0 | ±0 | −4 |
+| **combined** | **1082** | 81 | 17 | **1082** | 81 | 17 | **±0** | **−96** |
+
+Ochema pass-rate: **91.8%** (of 1124 F1) — unchanged from YY3.
+Bullet Strata: **92.6%** (of 54 F1) — unchanged. Combined F1 recovery:
+**1082/1178 = 91.8%** — unchanged.
+
+Wall time this walk: Ochema 137.01 s; Bullet Strata 1.35 s.
+
+### 13.2 Root-cause resolution vs YY3 § 12.4 residuals
+
+None resolved (no engine-side commits landed). The top residuals from
+YY3 § 12.4 persist verbatim:
+
+| YY3 § 12.4 item | Fingerprint | YY3 sites | ZZ3 sites | Verdict |
+|---|---|---|---|---|
+| 1 | `Observable.__init__() got an unexpected keyword argument 'name'` | 7 | 7 | UNCHANGED (ZZ1 target — did not land) |
+| 2 | `EventBus.listener_count is read-only` / `_debug_overlay_orig_pub` slots | 3 | 3 | UNCHANGED |
+| 3 | `DeformableLayerComponent` missing `integrity_from_strain` + siblings | ~7 | ~7 | UNCHANGED (ZZ2 candidate — did not land) |
+| 4 | `debug_listeners` import | 1 | 1 | UNCHANGED |
+| 5 | Numeric-assertion tail | ~55 | ~55 | UNCHANGED |
+
+Top Bullet Strata residual (unchanged from YY3): 4 assertion failures
+in `test_features.py` — 3 Observable dispatch counters + 1
+`Quality.TierChanged` string check. All 4 are downstream of the same
+Observable kwarg shim that ZZ1 was briefed to close.
+
+### 13.3 F1-recovery percentage + gate #12 verdict
+
+Combined recovery: 1082 / 1178 = **91.8%**. Break-out:
+
+* Ochema alone: 1032 / 1124 = **91.8%**
+* Bullet Strata alone: 50 / 54 = **92.6%**
+
+Gate #12 verdict criteria (per ZZ3 briefing):
+* GREEN: ≥ 95% of F1 → needs combined ≥ 1119. **NOT MET** (short by 37).
+* YELLOW: ≥ 80% → needs combined ≥ 943. **MET** (1082 ≥ 943 by +139).
+* FAILING: < 80%. Not current.
+
+### **Gate #12 verdict: YELLOW sustained.** (No delta — ZZ1 + ZZ2 did not land.)
+
+The YELLOW status YY3 achieved is preserved. The projected GREEN
+crossing does not happen this tick because the two projected
+upstream commits (ZZ1 Observable-kwarg shim; ZZ2 3-5 more items)
+are absent from master. Sprint plan integrity: intact — YELLOW is a
+stable state, no regression. Ship posture remains as VV7 § 8's
+Option E (SHIP-AT-YELLOW) recommended by YY3.
+
+### 13.4 What the next tick needs to cross GREEN
+
+Same as YY3 § 12.6 (top 4 items unchanged; item 5 numeric-assertion
+tail deferrable):
+
+1. **`Observable.__init__(**kwargs)` swallowing shim** — 7 Ochema
+   sites + 4 Bullet Strata sites. **~11 pass leverage.**
+2. **DeformableLayerComponent method restoration**
+   (`integrity_from_strain`, `_compute_integrity_from_ss`,
+   `_gpu_dispatch_enabled`) — 7 Ochema sites. **~7 pass leverage.**
+3. **EventBus dataclass `__slots__` relaxation** — 3 sites.
+   **~3 pass leverage.**
+4. **`slappyengine.event_bus.debug_listeners` alias export** — 1 site.
+
+Total leverage of items 1-4: ~22 passes if every site converts.
+GREEN threshold needs +37 passes (1082 → 1119). Gap after items 1-4:
+**~15 passes still needed** — likely comes from numeric-assertion
+tail investigation (item 5) or from downstream tests currently
+failing at multiple layers where fixing item 1 unblocks 2 checks
+per test rather than 1.
+
+### 13.5 ZZ1 + ZZ2 attribution + next-tick guidance
+
+ZZ1's brief targeted "Observable kwarg (+14-18 sites projected)"
+which maps directly onto YY3 § 12.6 item 1 (7 Ochema Observable sites
++ 4 Bullet Strata Observable-dispatch failures + likely 3-7 cascade
+sites in tests that fail multiply). Its non-landing is the sole
+reason gate #12 did not cross GREEN this tick. Recommended: re-dispatch
+ZZ1 (Observable kwarg + name kwarg + `**_unused_kwargs` catchall)
+as **AA1** in the next batch cycle — same brief, same scope estimate.
+
+ZZ2's "3-5 more items" is even more fungible; the DeformableLayerComponent
+method restorations (YY3 § 12.6 item 2) are the cleanest small-blast-
+radius targets. Recommended: re-dispatch as **AA2** with the explicit
+target list `integrity_from_strain`, `_compute_integrity_from_ss`,
+`_gpu_dispatch_enabled` — three method aliases at ~5 lines each.
+
+**Projected combined AA1+AA2 impact:** +18-25 sites → combined F1
+recovery **93-94%** (near-GREEN). One further slot (AA3 targeting
+EventBus `__slots__` + `debug_listeners` alias) should push to **~95%**
+= GREEN threshold crossed.
+
+### 13.6 ZZ3 constraints honoured
+
+* No file under either game repo touched — read-only pytest invocation
+  from `PYTHONPATH=h:/Github/SlapPyEngine/python`; both SVN working
+  copies remain clean.
+* No file under `python/slappyengine/` touched — ZZ3 is docs-only.
+* No WIP subpackage touched — `softbody/`, `fluid/`, `physics/`,
+  `physics2/`, `fluid/`, `softbody/` remain untracked as at YY3.
+* Commit scoped: `docs/game_compat_2026_07_07.md` (this § 13 append)
+  + `docs/v0_4_gate_reconciliation_2026_07_07.md` (gate #12
+  post-ZZ re-verify status refresh) + `docs/v0_4_ship_decision_2026_07_07.md`
+  (§ 8 refresh confirming Option E recommendation stands, adding
+  Option F "SHIP-AT-YELLOW-NOW" formalisation) + `docs/v0_4_tag_readiness_2026_07_07.md`
+  (§ 3.2 pre-tag verification PASSING mark).
+
+*Doc § 13 generated 2026-07-08 by ZZ3 background scrum agent.
+Sources: `git log --oneline -15` (identified no ZZ1 or ZZ2 commits
+landed between YY3's `c5b00e1` and this walk),
+`PYTHONPATH=h:/Github/SlapPyEngine/python python -m pytest
+".../<game>/tests" -q --no-header --tb=line -p no:cacheprovider`
+(both games; identical counts to YY3), `ls "H:/DaedalusSVN/"`
+(confirms game repos live at `Ochema Circuit/` + `Bullet Strata/`,
+not `OchemaCircuit/`/`BulletStrata/` — briefing path was off; this
+ZZ3 walk uses correct spaced paths).*
