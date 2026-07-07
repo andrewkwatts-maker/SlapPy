@@ -283,3 +283,24 @@ reaches PyPI installers.
 --no-header --tb=line` for each game, `git rev-parse HEAD` = `fc5d94f`,
 `pyproject.toml:7 = 0.3.0b0`, `Cargo.toml:3 = 0.3.0-beta.0`,
 `project_beta_2026_05.md` baseline.*
+
+---
+
+## Commit-attribution note
+
+Content of this game-compat doc (plus its inventory-row description
+refresh and the gate #12 flip in
+`docs/v0_4_gate_reconciliation_2026_07_07.md`) was authored by TT1
+background scrum agent as part of the SS5 re-dispatch
+(2026-07-07 late-evening). Due to a working-tree race with TT7's
+sprint-rollup r6 commit sweep, the initial file writes were absorbed
+into TT7's `7f4b93b` commit. This attribution footer is the
+load-bearing TT1-attributed commit; the technical content of § 1-§ 8
+above was written by TT1 and is identical between the TT7-swept copy
+and this footer commit.
+
+Pattern precedent: RR6 landed under the same race-and-attribution-footer
+pattern (see `docs/v0_4_gate_reconciliation_2026_07_07.md` § "Commit-
+attribution note" — RR6's content was absorbed into RR5's `ba9cbd5`
+before RR6 could land its own commit; RR6 then landed the footer as
+a separate attribution commit).
