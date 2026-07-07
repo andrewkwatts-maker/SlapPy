@@ -220,6 +220,19 @@ from .layer_reorder_actions import (
     move_layer_up as move_layer_up,
     move_layer_down as move_layer_down,
 )
+from .layer_lifecycle_actions import (
+    create_layer as create_layer,
+    delete_layer as delete_layer,
+)
+from .snap_set_grid_size_actions import (
+    set_grid_size as set_snap_grid_size,
+)
+from .view_toggle_ruler_actions import (
+    toggle_ruler as toggle_ruler,
+)
+from .spawn_last_position_actions import (
+    spawn_at_last_position as spawn_at_last_position,
+)
 
 
 __all__ = [
@@ -305,4 +318,9 @@ __all__ = [
     "set_angle_snap",
     "move_layer_up",
     "move_layer_down",
+    "create_layer",
+    "delete_layer",
+    "set_snap_grid_size",
+    "toggle_ruler",
+    "spawn_at_last_position",
 ]

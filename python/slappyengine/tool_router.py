@@ -1461,6 +1461,62 @@ def _fb_layer_move_down(ctx: dict[str, Any]) -> Any:
     return move_layer_down(ctx)
 
 
+# ---------------------------------------------------------------------------
+# VV4 STUB-triage fallbacks (2026-07-14 — round 23 after UU4)
+#
+# Five more STUB rows flipped to WIRED:
+#   * layer.new                — insert a fresh Z-layer (Photoshop
+#     Ctrl+Shift+N). Distinct from DD1 edit.duplicate_layer (clones an
+#     existing layer).
+#   * layer.delete             — remove the active Z-layer (Photoshop
+#     trash-can). Distinct from OO1 layer.merge_down (collapses into
+#     neighbour) — this discards. Refuses to delete the last layer.
+#   * snap.set_grid_size       — absolute grid-size setter. Distinct
+#     from OO1 snap.increase_grid_size / snap.decrease_grid_size (which
+#     walk the geometric ladder rung-by-rung) + UU4 snap.set_angle_snap
+#     (which sets the rotation-gizmo step, not the positional grid).
+#   * view.toggle_ruler        — toggle the viewport ruler overlay
+#     (Photoshop Ctrl+R). Distinct from CC1 view.toggle_grid /
+#     view.toggle_gizmos, QQ1 view.toggle_stats, PP1
+#     view.toggle_wireframe.
+#   * spawn.at_last_position   — arm (don't fire) the next spawn at the
+#     previous drop coordinate. Distinct from CC1 spawn.repeat_last
+#     which fires immediately + QQ1 spawn.at_origin + TT2
+#     spawn.at_view_center + UU4 spawn.at_origin_offset.
+# Python fallbacks live in
+# ``slappyengine.actions.layer_lifecycle_actions``,
+# ``snap_set_grid_size_actions``, ``view_toggle_ruler_actions``, and
+# ``spawn_last_position_actions``.
+# ---------------------------------------------------------------------------
+
+
+def _fb_layer_new(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_lifecycle_actions import create_layer
+    return create_layer(ctx)
+
+
+def _fb_layer_delete(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_lifecycle_actions import delete_layer
+    return delete_layer(ctx)
+
+
+def _fb_snap_set_grid_size(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.snap_set_grid_size_actions import set_grid_size
+    return set_grid_size(ctx)
+
+
+def _fb_view_toggle_ruler(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_toggle_ruler_actions import toggle_ruler
+    return toggle_ruler(ctx)
+
+
+def _fb_spawn_at_last_position(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_last_position_actions import (
+        spawn_at_last_position,
+    )
+    return spawn_at_last_position(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -2810,6 +2866,49 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_layer_move_down,
             required_args=[],
             category="layer",
+        ),
+        # ── VV4 STUB-triage: layer.new, layer.delete,
+        #    snap.set_grid_size, view.toggle_ruler,
+        #    spawn.at_last_position (round 23) ─────────────────────────
+        ToolAction(
+            action_id="layer.new",
+            label="New Layer",
+            rust_backing=None,
+            python_fallback=_fb_layer_new,
+            required_args=[],
+            category="layer",
+        ),
+        ToolAction(
+            action_id="layer.delete",
+            label="Delete Layer",
+            rust_backing=None,
+            python_fallback=_fb_layer_delete,
+            required_args=[],
+            category="layer",
+        ),
+        ToolAction(
+            action_id="snap.set_grid_size",
+            label="Set Grid Size",
+            rust_backing=None,
+            python_fallback=_fb_snap_set_grid_size,
+            required_args=["size"],
+            category="snap",
+        ),
+        ToolAction(
+            action_id="view.toggle_ruler",
+            label="Toggle Ruler",
+            rust_backing=None,
+            python_fallback=_fb_view_toggle_ruler,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="spawn.at_last_position",
+            label="Spawn at Last Position",
+            rust_backing=None,
+            python_fallback=_fb_spawn_at_last_position,
+            required_args=[],
+            category="spawn",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(
