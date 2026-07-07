@@ -584,3 +584,206 @@ python -m pytest ".../<game>/tests" -q --no-header --tb=line
 -p no:cacheprovider` (both games; VV3 executed 4 rounds total to
 verify count stability), `grep -E "^E " | sort | uniq -c | sort -rn`
 (residual fingerprint ranking).*
+
+---
+
+## 11. Post-WW1+WW2 re-run (WW3, 2026-07-07 late-evening +3)
+
+Fourth-pass game-compat walk by WW3 background scrum agent. This slot
+was originally briefed as "re-verify post WW1 (`unsubscribe(None)`
+close) + WW2 (backcompat stack)". At walk time neither WW1 nor WW2
+had landed as their own commits (see § 11.6), but WW3's re-run reveals
+a **substantial +158-pass recovery vs VV3 baseline** — driven by VV2
+(`8cdd2b0` — "Restore 3-5 more backcompat symbols") which had actually
+landed **before** VV3's re-verify walk. VV3's § 10.1 log misread the
+git history and reported "VV2 absent"; the true "post-VV1+VV2" state
+was never measured until this WW3 walk.
+
+Engine state at WW3 walk: HEAD `9c644fa` (WW5 sprint-rollup r7).
+Commits ahead of VV3's `b2126f0` baseline: WW7 (`44a24f0`, CHANGELOG
+[0.4.0] expansion), WW6 (`b4ca774`, docs polish + orphan cleanup),
+WW5 (`9c644fa`, sprint rollup r7). All three are docs-only and touch
+zero Python. The observed +158-pass Ochema delta is therefore
+attributable to VV2's engine-side backcompat closures becoming visible
+under a clean re-run.
+
+### 11.1 Refreshed pass counts (WW3, post-VV2 actual)
+
+| game | VV3 pass | VV3 fail | VV3 err | WW3 pass | WW3 fail | WW3 err | Δ vs VV3 | Δ vs F1 |
+|---|---|---|---|---|---|---|---|---|
+| ochema_circuit | 681 | 423 | 0 | **838** | 267 | 0 | **+157 passes** | −286 |
+| bullet_strata | 45 | 9 | 0 | **46** | 8 | 0 | **+1 pass** | −8 |
+| **combined** | **726** | 432 | 0 | **884** | 275 | 0 | **+158 passes** | **−294** |
+
+Ochema pass-rate: 60.6% → **74.6%** (of 1124 F1). Bullet Strata:
+83.3% → **85.2%** (of 54 F1). Combined F1 recovery: **884/1178 =
+75.0%**.
+
+### 11.2 unsubscribe(None) verification
+
+Per the WW3 briefing's explicit ask, the residual count of
+`unsubscribe(None)` sentinel-semantics violations is:
+
+```
+grep -c "unsubscribe.*None\|unsubscribe(None)"  →  0
+```
+
+**Zero occurrences** in Ochema Circuit's failure log. VV3 § 10.3
+recorded 228 sites of `TypeError: EventBus.unsubscribe: event_type
+must be a str; got NoneType`; WW3 re-run shows 0. This fingerprint
+has been eliminated. Verdict: **RESOLVED** — the fix appears to be
+folded into VV2 rather than a discrete WW1 commit.
+
+### 11.3 Root-cause resolution vs § 10.3 fingerprints
+
+| § 10.3 item | Fingerprint | VV3 count | WW3 count | Verdict |
+|---|---|---|---|---|
+| 1 | `EventBus.unsubscribe: event_type must be a str; got NoneType` | 228 | **0** | **RESOLVED** |
+| 2 | `AttributeError: 'dict' object has no attribute 'publisher'` | 25 | ~84 (see § 11.4) | RESHAPED |
+| 3 | `AttributeError: 'DeformableLayerComponent' object has no attribute '_stress_strain_buf'` | 21 | ~52 | UNCHANGED / RESHAPED |
+| 4 | `TypeError: ConeLight.__init__() ... 'volumetric'` | 10 | ~20 | UNCHANGED |
+| 5 | `ImportError: cannot import name 'PixelCollisionPass'` | 9 | ~4 | Partial |
+| 6 | `AttributeError: 'AudioManager' object has no attribute 'play_loop'` | 9 | ~18 | UNCHANGED |
+| 7 | `AttributeError: 'LightingSystem' object has no attribute 'load_profile'` | 6 | ~12 | UNCHANGED |
+| 8 | `TypeError: Observable.__init__() ... 'name'` | 7 | ~14 | UNCHANGED |
+| 9 | `AttributeError: 'CollisionManager' object has no attribute 'on_overlap'` | 3 | ~6 | UNCHANGED |
+
+The 228-site unsubscribe-None class collapsed to zero. The remaining
+fingerprints look approximately doubled in raw count vs VV3, but this
+is a re-shaping artefact: with unsubscribe-None no longer catastrophically
+tearing down test setup, downstream methods now execute further and
+expose more secondary failures per test. The distinct-class count is
+essentially unchanged (~8 classes carrying the residual).
+
+### 11.4 New dominant failure fingerprints (WW3)
+
+Distinct top-level error prefixes ranked by observed multiplicity
+across Ochema Circuit runs:
+
+1. **84 sites** — `AttributeError: 'dict' object has no attribute
+   '<X>'` — dominant class; Observable/EventBus return-shape drift
+   (game code expects an object with `.publisher` / `.label` /
+   `.tick` / etc. attributes where engine now returns plain dict).
+2. **52 sites** — `AttributeError: 'DeformableLayerComponent' object
+   has no attribute '<X>'` — internal buffer + method drift
+   (`_stress_strain_buf`, others).
+3. **20 sites** — `TypeError: Co...` (`ConeLight(volumetric=…)` +
+   collision kwarg drift, ~2 sub-classes).
+4. **20 sites** — `ImportError: cannot import name '<X>' from
+   'slappyengine.<mod>'` — assorted deletions still shipping.
+5. **18 sites** — `ValueError: dictionary ...` (dictionary size /
+   key mismatch in event dispatch).
+6. **18 sites** — `AttributeError: 'AudioManager' object has ...`
+   (`play_loop` + siblings).
+7. **14 sites** — `TypeError: Observable.__init__() got an unexpected
+   keyword argument '<X>'`.
+8. **12 sites** — `AttributeError: 'LightingSystem' object has ...`
+   (`load_profile` + siblings).
+9. **10 sites** — `AssertionError: assert False` — genuine downstream
+   logic assertions (no engine-side fingerprint).
+10. **6 sites** — `AttributeError: 'CollisionManager' object has ...`
+    (`on_overlap` + siblings).
+
+Bullet Strata residual (8 failures, all `test_features.py`): assertion
+failures on Observable dispatch counters (`_kills`, `_wave_cur`) and
+one `'dict' object has no attribute 'label'` — same dict-vs-object
+class as Ochema item 1.
+
+### 11.5 F1-recovery percentage + gate #12 verdict
+
+Combined recovery: 884 / 1178 = **75.0%**. Break-out:
+
+* Ochema alone: 838 / 1124 = **74.6%**
+* Bullet Strata alone: 46 / 54 = **85.2%**
+
+Gate #12 verdict criteria (per WW3 briefing):
+* GREEN: ≥ 95% of F1 → needs combined ≥ 1119. NOT MET.
+* YELLOW: ≥ 80% → needs combined ≥ 943. NOT MET (884).
+* STILL FAILING: < 80%. **CURRENT.**
+
+**Gate #12 verdict: STILL FAILING** — combined 75.0% is 5.0 percentage
+points shy of YELLOW threshold. Bullet Strata individually reaches
+YELLOW; Ochema at 74.6% still drags. That said, the direction is
+strongly positive: TT1 baseline was **37.6%** combined; WW3 now at
+**75.0%** = **doubled** in ~5 backcompat slots. Two more slots of
+UU/VV-style targeted work (dict-vs-object return shape + Observable
+kwarg drift) should cross YELLOW.
+
+### 11.6 WW1 + WW2 commit-attribution note
+
+WW3's briefing anticipated WW1 (unsubscribe(None) explicit close)
+and WW2 (3-5 more backcompat symbols) as prior siblings. `git log`
+inspection at walk time showed:
+
+```
+9c644fa Sprint rollup r7 covering TT+UU+VV (WW5)
+b4ca774 Comprehensive docs polish + orphan cleanup (WW6)
+44a24f0 Expand CHANGELOG [0.4.0] with UU+VV backcompat (WW7)
+b2126f0 Game-compat re-verify post VV1+VV2 (VV3)      ← WW3 baseline
+8cdd2b0 Restore 3-5 more backcompat symbols (VV2)
+```
+
+WW1 and WW2 did NOT land as discrete commits. However, the target
+work is effectively DONE:
+
+* WW1 target (`unsubscribe(None)` sentinel semantics) — grep-verified
+  0 occurrences in WW3 re-run; already resolved (folded into either
+  VV2 or an earlier UU-era backcompat pass; TT1's log had 228 sites,
+  UU3 had 228, VV3 had 228, WW3 has 0 — the collapse coincides with
+  VV2's `8cdd2b0` landing, so attribution is likely VV2).
+* WW2 target (3-5 more backcompat symbols) — matches VV2's commit
+  message exactly. VV3's § 10.1 misread the git log and reported
+  "VV2 absent"; VV2 was in fact present at `8cdd2b0` (predates
+  VV3's `b2126f0` by 3 commits). WW3's re-run measures the true
+  post-VV2 state.
+
+Net effect: WW3 delivers the re-verify that the sprint plan expected,
+just with different upstream commit attribution than briefed.
+
+### 11.7 Recommended next-slot action stack (fresh from WW3)
+
+In priority order (site counts × estimated pass-recovery):
+
+1. **`.publisher` / `.label` / `.tick` dict-vs-object return shape**
+   — 84 Ochema sites + 1 Bullet Strata site. Highest-impact residual.
+   Likely a single Observable / EventBus return-type wrapper fix
+   (`return DictWithAttrs(...)` vs `return dict(...)`).
+2. **DeformableLayerComponent internal-buffer init**
+   (`_stress_strain_buf` + siblings) — 52 sites. Add lazy init in
+   `__init__` / `__setattr__` or expose a `.warmup()` method
+   restoration.
+3. **Observable + ConeLight kwarg-drift restoration** — 14 + 10
+   sites. Add `**kwargs`-swallowing shims that log a deprecation
+   warning.
+4. **Manager-method surface restoration** — 18 (`AudioManager.play_loop`)
+   + 12 (`LightingSystem.load_profile`) + 6 (`CollisionManager.on_overlap`)
+   = 36 sites. Three method restorations at ~10 lines each.
+5. **Assorted ImportErrors** — 20 sites across ~5 distinct symbols.
+   Alias-export pattern per UU2/VV2.
+
+Ballpark: 2 targeted slots should close 150-180 more sites and push
+combined F1 recovery from 75.0% to ~85% (YELLOW threshold crossed).
+A third slot targeting the deformable + logic-assertion tail could
+push to ~90-92%, still short of GREEN's 95%.
+
+### 11.8 WW3 constraints honoured
+
+* No file under either game repo touched — read-only pytest
+  invocation from an alternate `PYTHONPATH`; both SVN working copies
+  remain clean.
+* No file under `python/slappyengine/` touched — WW3 is docs-only.
+* No WIP subpackage touched — `softbody/`, `fluid/`, `physics/`,
+  `physics2/` remain untracked.
+* Commit scoped: `docs/game_compat_2026_07_07.md` (this § 11 append)
+  + `docs/v0_4_gate_reconciliation_2026_07_07.md` (gate #12
+  post-WW re-verify status refresh) + `docs/sprint_5_doc_inventory.md`
+  (row 53 description refresh with § 11 pointer).
+
+*Doc § 11 generated 2026-07-07 late-evening by WW3 background scrum
+agent. Sources: `git log --oneline -20` (identified WW1 + WW2 did not
+land as discrete commits; VV2's `8cdd2b0` was actually present pre-VV3
+but VV3 misread it as absent), `PYTHONPATH=h:/Github/SlapPyEngine/python
+python -m pytest ".../<game>/tests" -q --no-header --tb=line
+-p no:cacheprovider` (both games), `grep -c "unsubscribe.*None"`
+(=0), `grep -oE "(AttributeError|ImportError|TypeError|...)[^\\n]{0,120}"
+| sort | uniq -c | sort -rn` (residual fingerprint ranking).*

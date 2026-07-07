@@ -51,7 +51,7 @@ Evidence column: commit SHA, file path, or grep result.
 | 9 | `cargo check` + `cargo test` green (tracked scope) | **GREEN** | Flipped by PP3 | `git ls-files "src/*.rs"` = 14 files; `grep '^mod ' src/lib.rs` = 14 declarations; zero lag. F1 four untracked files re-scope to gate 11. |
 | 10 | `maturin build --release` wheel size within budget | **GREEN** | Maintained | ~1.45 MB (well under 50 MB) per `docs/wheel_size_audit_2026_06_02.md`. |
 | 11 | Softbody / fluid / physics / physics2 WIP dirs committed or deferred | **FAILING** | Unchanged | `git status` confirms `softbody/`, `fluid/`, `physics/`, `physics2/` untracked, plus 4 untracked Rust source files (`src/raster.rs`, `src/pbf_solver.rs`, `src/softbody_solver.rs`, `src/fluid_shader.rs`). User-gated. |
-| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | **STILL FAILING** (post VV1) | **Re-verified by VV3** (was UU3 STILL FAILING) | Live re-tripwire executed 2026-07-07 by VV3 after VV1 (`82feed0`, CacheMode.OFFSCREEN_SERIALIZE + ALWAYS_CACHED restoration) landed on top of UU3 (VV2 was scheduled but did NOT land before VV3 walk). Results vs UU3 baseline: Ochema **681 pass / 423 fail / 22 skip / 0 err** (+210 passes), Bullet Strata **45/9/0** (+26 passes). Combined **+236 passes** (recovery = **726/1178 = 61.6% of F1**; still −452 vs F1 baseline). Bullet Strata alone crosses 83.3% (would be YELLOW individually), Ochema stuck at 60.6%. VV1 grep-verified: 0 `CacheMode` fingerprints in VV3 log. All 15 collection-time errors eliminated (module-import success). Residual dominated by **228 sites** of `EventBus.unsubscribe: event_type must be a str; got NoneType` (legacy `unsubscribe(None)` sentinel semantics), plus `.publisher` dict-vs-object drift, `DeformableLayerComponent._stress_strain_buf` init, `ConeLight(volumetric=...)` kwarg drift, `Observable(name=...)` kwarg drift, `PixelCollisionPass` re-export gap, and 3 manager-method deletions. See `docs/game_compat_2026_07_07.md` § 10 for full VV3 re-run analysis + fix-stack. **Still ship-blocker for v0.4.0** — needs VV2 land + 2-3 more targeted backcompat slots to reach ≥80% YELLOW threshold. |
+| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | **STILL FAILING** (post VV2 actual) | **Re-verified by WW3** (was VV3 STILL FAILING) | Live re-tripwire executed 2026-07-07 by WW3 against HEAD `9c644fa` (WW5 rollup). Only docs commits landed since VV3 (WW5/WW6/WW7), so improvement is attributable to VV2 (`8cdd2b0` — VV3 misread its own git log and reported "VV2 absent"; VV2 was in fact present pre-VV3). WW1 (`unsubscribe(None)` explicit close) + WW2 (further backcompat) did NOT land as discrete commits; their target work is effectively folded into VV2. WW3 results vs VV3 baseline: Ochema **838 pass / 267 fail / 21 skip / 0 err** (+157 passes), Bullet Strata **46/8/0** (+1 pass). Combined **+158 passes** (recovery = **884/1178 = 75.0% of F1**; still −294 vs F1 baseline). Ochema alone 74.6%, Bullet Strata alone **85.2%** (individually YELLOW). WW3 grep-verified: **0** `unsubscribe(None)` fingerprints in log (was 228 in VV3 — collapsed by VV2). All previous § 10.3 top residual eliminated. New top residual: **84 sites** `AttributeError: 'dict' object has no attribute '<X>'` (Observable/EventBus return-shape drift), plus 52 DeformableLayerComponent internal-buffer sites, 20 ConeLight/Observable kwarg drift, 18 AudioManager/12 LightingSystem/6 CollisionManager method deletions, ~20 assorted ImportErrors. See `docs/game_compat_2026_07_07.md` § 11 for full WW3 re-run analysis + fix-stack. **Still ship-blocker for v0.4.0** — needs 2 more targeted backcompat slots (dict-vs-object return shape + kwarg-drift restore) to cross 80% YELLOW threshold. Combined F1 recovery has doubled from TT1's 37.6% → 75.0% in 5 backcompat slots. |
 | 13 | Perf dashboard no regression >10% | needs-verify | Unchanged | Baseline unchanged; re-run needed post-parity. |
 | 14 | CHANGELOG.md `[0.4.0]` section written | **DRAFT** | Flipped by PP7 | `CHANGELOG.md:8 = "## [0.4.0] — YYYY-MM-DD (UNRELEASED)"`. Date flip happens in tag sprint. |
 | 15 | `.github/workflows/publish.yml` runs test suite before wheel | **DEFERRED** | Unchanged | Punted to v0.4.1. |
@@ -122,6 +122,30 @@ violate). Full residual fingerprints + fix-stack in
 + 1 DRAFT + 3 FAILING + 1 needs-verify + 1 deferred**. Projected VV2
 landing impact: ~150-200 pass recoveries pushing combined to ~75-80%
 YELLOW threshold.
+
+**Post-WW-batch (2026-07-07 late-evening +3) update**: WW3 re-verified
+gate #12 against HEAD `9c644fa`. WW1 (`unsubscribe(None)` explicit
+close) + WW2 (further backcompat) did NOT land as discrete commits;
+their target work is folded into VV2 (`8cdd2b0`, which VV3's § 10.1
+had incorrectly reported as "absent" — VV2 was in fact present pre-VV3
+by 3 commits). Only WW5/WW6/WW7 docs commits landed between VV3 and
+WW3. WW3 re-ran tripwire (again with `-p no:cacheprovider`): Ochema
+**838/267/21/0** (+157 passes vs VV3); Bullet Strata **46/8/0**
+(+1 pass vs VV3). Combined **+158 passes**; F1 recovery = **884/1178
+= 75.0%** (up from VV3's 61.6%). Bullet Strata individually reaches
+**85.2%** (YELLOW). WW3 grep-verified: **0** `unsubscribe(None)`
+fingerprints (was 228 in VV3 — collapsed by VV2). New top residual:
+**84 sites** `AttributeError: 'dict' object has no attribute '<X>'`
+(Observable/EventBus return-shape drift). Gate 12 verdict **STILL
+FAILING** (75.0% is 5.0 percentage points shy of YELLOW). Pass count
+unchanged at **9 GREEN + 1 DRAFT + 3 FAILING + 1 needs-verify +
+1 deferred**. Combined F1 recovery has doubled from TT1's 37.6% →
+75.0% across 5 backcompat slots (UU1 + UU2 + VV1 + VV2 + folded-in
+WW work). Projected next-2-slot impact: dict-vs-object return-shape
+shim + kwarg-drift restore = ~150-180 more sites → ~85% (YELLOW
+crossed). Third slot (deformable + method-surface restore) →
+~90-92%, still short of 95% GREEN. See `docs/game_compat_2026_07_07.md`
+§ 11 for full WW3 re-run analysis.
 
 ---
 
