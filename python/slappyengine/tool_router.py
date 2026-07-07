@@ -1218,6 +1218,45 @@ def _fb_edit_duplicate_at_cursor(ctx: dict[str, Any]) -> Any:
     return duplicate_at_cursor(ctx)
 
 
+# ---------------------------------------------------------------------------
+# QQ1 STUB-triage (round 18 after PP1 round 17) — 5 more unwired action ids
+# spanning spawn / selection / view categories. See
+# ``docs/feature_map_delta_2026_07_09.md`` for the per-id rationale; each
+# Python fallback lives in ``slappyengine.actions.spawn_origin_actions``,
+# ``selection_by_type_actions``, ``selection_by_layer_actions``,
+# ``selection_same_material_actions``, and ``view_toggle_stats_actions``.
+# ---------------------------------------------------------------------------
+
+
+def _fb_spawn_at_origin(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_origin_actions import spawn_at_origin
+    return spawn_at_origin(ctx)
+
+
+def _fb_selection_by_type(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.selection_by_type_actions import select_by_type
+    return select_by_type(ctx)
+
+
+def _fb_selection_by_layer(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.selection_by_layer_actions import (
+        select_by_layer,
+    )
+    return select_by_layer(ctx)
+
+
+def _fb_selection_same_material(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.selection_same_material_actions import (
+        select_same_material,
+    )
+    return select_same_material(ctx)
+
+
+def _fb_view_toggle_stats(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_toggle_stats_actions import toggle_stats
+    return toggle_stats(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -2354,6 +2393,48 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_edit_duplicate_at_cursor,
             required_args=[],
             category="edit",
+        ),
+        # ── QQ1 STUB-triage: spawn-at-origin, selection by type / layer /
+        #    material, view toggle-stats overlay (round 18) ──
+        ToolAction(
+            action_id="spawn.at_origin",
+            label="Spawn at Origin",
+            rust_backing=None,
+            python_fallback=_fb_spawn_at_origin,
+            required_args=[],
+            category="spawn",
+        ),
+        ToolAction(
+            action_id="selection.by_type",
+            label="Select All by Type",
+            rust_backing=None,
+            python_fallback=_fb_selection_by_type,
+            required_args=[],
+            category="selection",
+        ),
+        ToolAction(
+            action_id="selection.by_layer",
+            label="Select All on Layer",
+            rust_backing=None,
+            python_fallback=_fb_selection_by_layer,
+            required_args=[],
+            category="selection",
+        ),
+        ToolAction(
+            action_id="selection.same_material",
+            label="Select Same Material",
+            rust_backing=None,
+            python_fallback=_fb_selection_same_material,
+            required_args=[],
+            category="selection",
+        ),
+        ToolAction(
+            action_id="view.toggle_stats",
+            label="Toggle Stats Overlay",
+            rust_backing=None,
+            python_fallback=_fb_view_toggle_stats,
+            required_args=[],
+            category="view",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(

@@ -149,6 +149,21 @@ from .edit_rename_actions import (
 from .edit_duplicate_at_cursor_actions import (
     duplicate_at_cursor as duplicate_at_cursor,
 )
+from .spawn_origin_actions import (
+    spawn_at_origin as spawn_at_origin,
+)
+from .selection_by_type_actions import (
+    select_by_type as select_by_type,
+)
+from .selection_by_layer_actions import (
+    select_by_layer as select_by_layer,
+)
+from .selection_same_material_actions import (
+    select_same_material as select_same_material,
+)
+from .view_toggle_stats_actions import (
+    toggle_stats as toggle_stats,
+)
 
 
 __all__ = [
@@ -209,4 +224,9 @@ __all__ = [
     "toggle_wireframe",
     "rename_entity",
     "duplicate_at_cursor",
+    "spawn_at_origin",
+    "select_by_type",
+    "select_by_layer",
+    "select_same_material",
+    "toggle_stats",
 ]
