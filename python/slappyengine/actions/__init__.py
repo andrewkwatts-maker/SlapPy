@@ -164,6 +164,21 @@ from .selection_same_material_actions import (
 from .view_toggle_stats_actions import (
     toggle_stats as toggle_stats,
 )
+from .edit_select_similar_actions import (
+    select_similar as select_similar,
+)
+from .theme_reset_default_actions import (
+    reset_to_default as reset_theme_to_default,
+)
+from .layer_hide_others_actions import (
+    hide_others as hide_others_layers,
+)
+from .layer_isolate_actions import (
+    isolate as isolate_selection,
+)
+from .snap_toggle_incremental_actions import (
+    toggle_incremental as toggle_snap_incremental,
+)
 
 
 __all__ = [
@@ -229,4 +244,9 @@ __all__ = [
     "select_by_layer",
     "select_same_material",
     "toggle_stats",
+    "select_similar",
+    "reset_theme_to_default",
+    "hide_others_layers",
+    "isolate_selection",
+    "toggle_snap_incremental",
 ]

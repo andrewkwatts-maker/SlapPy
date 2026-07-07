@@ -1257,6 +1257,53 @@ def _fb_view_toggle_stats(ctx: dict[str, Any]) -> Any:
     return toggle_stats(ctx)
 
 
+# ---------------------------------------------------------------------------
+# RR1 STUB-triage fallbacks (2026-07-10 — round 19 after MM6 / NN2 / OO1 /
+# PP1 / QQ1)
+#
+# Five more STUB rows flipped to WIRED: edit.select_similar (combined
+# kind+material signature), theme.reset_to_default (snap active theme
+# back to shipped baseline), layer.hide_others (one-shot hide-others,
+# no snapshot), layer.isolate (entity-level Blender Numpad-/ isolate
+# with toggle-restore), snap.toggle_incremental (numeric-step vs
+# freeform snap mode toggle). Python fallback lives in
+# ``slappyengine.actions.edit_select_similar_actions``,
+# ``theme_reset_default_actions``, ``layer_hide_others_actions``,
+# ``layer_isolate_actions``, and ``snap_toggle_incremental_actions``.
+# ---------------------------------------------------------------------------
+
+
+def _fb_edit_select_similar(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_select_similar_actions import (
+        select_similar,
+    )
+    return select_similar(ctx)
+
+
+def _fb_theme_reset_to_default(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.theme_reset_default_actions import (
+        reset_to_default,
+    )
+    return reset_to_default(ctx)
+
+
+def _fb_layer_hide_others(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_hide_others_actions import hide_others
+    return hide_others(ctx)
+
+
+def _fb_layer_isolate(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_isolate_actions import isolate
+    return isolate(ctx)
+
+
+def _fb_snap_toggle_incremental(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.snap_toggle_incremental_actions import (
+        toggle_incremental,
+    )
+    return toggle_incremental(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -2435,6 +2482,49 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_view_toggle_stats,
             required_args=[],
             category="view",
+        ),
+        # ── RR1 STUB-triage: select-similar, theme reset-to-default,
+        #    layer hide-others + isolate, snap toggle-incremental
+        #    (round 19) ──
+        ToolAction(
+            action_id="edit.select_similar",
+            label="Select Similar",
+            rust_backing=None,
+            python_fallback=_fb_edit_select_similar,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="theme.reset_to_default",
+            label="Reset Theme to Default",
+            rust_backing=None,
+            python_fallback=_fb_theme_reset_to_default,
+            required_args=[],
+            category="theme",
+        ),
+        ToolAction(
+            action_id="layer.hide_others",
+            label="Hide Other Layers",
+            rust_backing=None,
+            python_fallback=_fb_layer_hide_others,
+            required_args=[],
+            category="layer",
+        ),
+        ToolAction(
+            action_id="layer.isolate",
+            label="Isolate Selection",
+            rust_backing=None,
+            python_fallback=_fb_layer_isolate,
+            required_args=[],
+            category="layer",
+        ),
+        ToolAction(
+            action_id="snap.toggle_incremental",
+            label="Toggle Incremental Snap",
+            rust_backing=None,
+            python_fallback=_fb_snap_toggle_incremental,
+            required_args=[],
+            category="snap",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(
