@@ -61,8 +61,13 @@ class EventBus:
         validate_callback("callback", "EventBus.subscribe", callback)
         self._listeners.setdefault(event_type, []).append(callback)
 
-    def unsubscribe(self, event_type: str, callback: Callable) -> None:
+    def unsubscribe(self, event_type: str, callback: Callable | None = None) -> None:
         """Remove a previously-registered ``callback`` from ``event_type``.
+
+        Backwards-compat: ``callback=None`` (single-arg form) removes ALL
+        listeners for the topic. Downstream games (Ochema Circuit, Bullet
+        Strata) rely on the legacy ``bus.unsubscribe("topic")`` shape.
+        DO NOT tighten this signature without a v1.0 deprecation cycle.
 
         Raises
         ------
@@ -72,6 +77,10 @@ class EventBus:
             If ``event_type`` is the empty string.
         """
         validate_event_type("event_type", "EventBus.unsubscribe", event_type)
+        if callback is None:
+            # Legacy 1-arg form: drop every listener bound to this topic.
+            self._listeners.pop(event_type, None)
+            return
         lst = self._listeners.get(event_type, [])
         try:
             lst.remove(callback)
@@ -188,14 +197,26 @@ def subscribe(event_type: str, listener) -> None:
     _DEFAULT_BUS.subscribe(event_type, listener)
 
 
-def unsubscribe(event_type: str, listener) -> None:
-    """Unsubscribe from the module-level default :class:`EventBus`."""
+def unsubscribe(event_type: str, listener=None) -> None:
+    """Unsubscribe from the module-level default :class:`EventBus`.
+
+    Backwards-compat: ``listener=None`` (single-arg form) drops all
+    listeners for the topic — matches the legacy games' API expectation.
+    """
     _DEFAULT_BUS.unsubscribe(event_type, listener)
 
 
 def get_default_bus() -> EventBus:
     """Return the module-level default :class:`EventBus` singleton."""
     return _DEFAULT_BUS
+
+
+# Backwards-compat: legacy ``global_bus`` symbol used by downstream games
+# (Ochema Circuit, Bullet Strata) and by internal modules (debug_overlay,
+# compute.library, compute.hull). Points at the same singleton as
+# ``get_default_bus()`` / ``publish`` / ``subscribe`` module-level helpers.
+# DO NOT REMOVE without a v1.0 deprecation cycle.
+global_bus = _DEFAULT_BUS
 
 
 class Observable:
