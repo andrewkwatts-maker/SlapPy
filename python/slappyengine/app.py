@@ -535,6 +535,11 @@ class App:
         # can duck-check with ``getattr(app, "_hud_overlay", None)``.
         self._hud_overlay: Any = None
 
+        # OO6/QQ4 diagnostics collector — populated by
+        # :meth:`enable_diagnostics`. ``None`` until opted in so
+        # ``getattr(app, "_diagnostics", None)`` reflects state.
+        self._diagnostics: Any = None
+
         logger.debug("App initialised (renderer=%s)", type(self._renderer).__name__)
 
     # ------------------------------------------------------------------
@@ -1249,6 +1254,153 @@ class App:
                 "enabled": bool(enabled),
             }
         )
+
+    # ------------------------------------------------------------------
+    # QQ4 — diagnostics collector façade (OO6).
+    #
+    # Thin one-liners over :mod:`slappyengine.diagnostics`. Users wanting
+    # to bypass this convenience layer (custom min_level per subsystem,
+    # collector attached to a non-``slappyengine`` logger, etc.) can call
+    # :func:`slappyengine.diagnostics.get_global_collector` directly
+    # (the ``_core`` surface) and manage ``install()`` themselves.
+    # ------------------------------------------------------------------
+    def enable_diagnostics(
+        self,
+        min_level: str = "WARNING",
+        max_events: int = 500,
+    ) -> Any:
+        """Install a :class:`DiagnosticsCollector` on this app.
+
+        Instantiates a fresh collector, calls
+        :meth:`~slappyengine.diagnostics.DiagnosticsCollector.install`
+        so it subscribes to the ``slappyengine`` root logger, and stashes
+        it on ``self._diagnostics``. Subsequent calls are idempotent and
+        return the same collector.
+
+        When a HUD is already mounted (``self._hud_overlay`` is not
+        ``None``), a compact diagnostics readout widget is attached via
+        :func:`slappyengine.hud_bridge.add_diagnostics_widget` so
+        warnings + errors surface in-viewport without further wiring.
+
+        Parameters
+        ----------
+        min_level:
+            Minimum log level captured. Defaults to ``"WARNING"``.
+        max_events:
+            Ring-buffer capacity. Defaults to 500.
+
+        Returns
+        -------
+        DiagnosticsCollector
+            The installed collector — also accessible via
+            :meth:`get_diagnostics`.
+
+        Notes
+        -----
+        Bypass hint: call
+        ``slappyengine.diagnostics.get_global_collector()`` directly
+        (``_core`` surface) to share one collector across multiple apps
+        or to manage ``install()`` timing yourself.
+        """
+        if self._diagnostics is not None:
+            return self._diagnostics
+
+        from slappyengine.diagnostics import DiagnosticsCollector
+
+        collector = DiagnosticsCollector(
+            max_events=int(max_events),
+            min_level=str(min_level),
+        )
+        collector.install()
+        self._diagnostics = collector
+
+        # Mount the HUD widget when a HUD is already up.
+        if getattr(self, "_hud_overlay", None) is not None:
+            try:
+                from slappyengine.hud_bridge import add_diagnostics_widget
+
+                add_diagnostics_widget(self, collector)
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.debug(
+                    "enable_diagnostics: add_diagnostics_widget failed: %s", exc
+                )
+
+        return collector
+
+    def disable_diagnostics(self) -> dict[str, Any]:
+        """Uninstall the diagnostics collector if one is bound.
+
+        Calls
+        :meth:`~slappyengine.diagnostics.DiagnosticsCollector.uninstall`
+        on ``self._diagnostics`` and clears the slot.
+
+        Returns
+        -------
+        dict
+            ``{"status": "disabled"}`` when a collector was detached, or
+            ``{"status": "not_enabled"}`` when nothing was bound.
+
+        Notes
+        -----
+        Bypass hint: call the collector's
+        :meth:`~slappyengine.diagnostics.DiagnosticsCollector.uninstall`
+        directly (``_core`` surface) if you want to keep the collector
+        for later inspection.
+        """
+        if self._diagnostics is None:
+            return {"status": "not_enabled"}
+        try:
+            self._diagnostics.uninstall()
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.warning("disable_diagnostics: uninstall raised %s", exc)
+        self._diagnostics = None
+        return {"status": "disabled"}
+
+    def get_diagnostics(self) -> Any:
+        """Return the bound :class:`DiagnosticsCollector` or ``None``.
+
+        Convenience accessor — equivalent to
+        ``getattr(app, "_diagnostics", None)`` but explicit.
+
+        Notes
+        -----
+        Bypass hint: use
+        :func:`slappyengine.diagnostics.get_global_collector`
+        (``_core`` surface) to reach the process-wide singleton
+        instead of this app's collector.
+        """
+        return self._diagnostics
+
+    def diagnostics_events(self) -> list[Any]:
+        """Return the collector's buffered events (or ``[]`` when disabled).
+
+        Convenience shim over
+        :meth:`DiagnosticsCollector.events`.
+
+        Notes
+        -----
+        Bypass hint: call ``collector.events()`` directly (``_core``
+        surface) — this method just guards the ``None`` case.
+        """
+        if self._diagnostics is None:
+            return []
+        return self._diagnostics.events()
+
+    def diagnostics_stats(self) -> dict[str, int]:
+        """Return the collector's per-level/per-subsystem counts.
+
+        Convenience shim over
+        :meth:`DiagnosticsCollector.stats`. Returns an empty dict when
+        diagnostics have not been enabled.
+
+        Notes
+        -----
+        Bypass hint: call ``collector.stats()`` directly (``_core``
+        surface) — this method just guards the ``None`` case.
+        """
+        if self._diagnostics is None:
+            return {}
+        return self._diagnostics.stats()
 
 
 # ---------------------------------------------------------------------------
