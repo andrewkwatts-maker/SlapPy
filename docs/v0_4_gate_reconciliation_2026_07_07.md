@@ -51,7 +51,7 @@ Evidence column: commit SHA, file path, or grep result.
 | 9 | `cargo check` + `cargo test` green (tracked scope) | **GREEN** | Flipped by PP3 | `git ls-files "src/*.rs"` = 14 files; `grep '^mod ' src/lib.rs` = 14 declarations; zero lag. F1 four untracked files re-scope to gate 11. |
 | 10 | `maturin build --release` wheel size within budget | **GREEN** | Maintained | ~1.45 MB (well under 50 MB) per `docs/wheel_size_audit_2026_06_02.md`. |
 | 11 | Softbody / fluid / physics / physics2 WIP dirs committed or deferred | **FAILING** | Unchanged | `git status` confirms `softbody/`, `fluid/`, `physics/`, `physics2/` untracked, plus 4 untracked Rust source files (`src/raster.rs`, `src/pbf_solver.rs`, `src/softbody_solver.rs`, `src/fluid_shader.rs`). User-gated. |
-| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | needs-verify (SS5 BLOCKED) | Attempted 2026-07-07 by SS5; both game repos absent from `H:/Github/` (top-level walk = 51 entries, zero `ochema`/`bullet`/`strata`/`circuit` matches). See `docs/game_compat_2026_07_07.md`. Follow-up: clone game repos then re-dispatch, or sign v0.4.1 deferral. |
+| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | **FAILING** | **Flipped by TT1** (was SS5 BLOCKED) | Live tripwire executed 2026-07-07 by TT1 (re-dispatch of rate-limited SS5). Both game repos located at `H:/DaedalusSVN/` (SVN, not `H:/Github/` as SS5 assumed). Results vs F1 baseline: Ochema **424 pass / 665 fail / 25 skip / 15 err** (baseline 1124/2), Bullet Strata **19 pass / 32 fail / 3 err** (baseline 54/0). **Delta: −735 total passes.** Two dominant breakage classes: (a) `AttributeError: '<Entity subclass>' object has no attribute 'layers'` (RenderTarget MRO / `__init__` call order regression), (b) `ImportError: cannot import name 'global_bus' from 'slappyengine.event_bus'` (public-API symbol deletion). See `docs/game_compat_2026_07_07.md` § 4 for full root-cause analysis and § 6 for fix prescription. **Ship-blocker for v0.4.0.** |
 | 13 | Perf dashboard no regression >10% | needs-verify | Unchanged | Baseline unchanged; re-run needed post-parity. |
 | 14 | CHANGELOG.md `[0.4.0]` section written | **DRAFT** | Flipped by PP7 | `CHANGELOG.md:8 = "## [0.4.0] — YYYY-MM-DD (UNRELEASED)"`. Date flip happens in tag sprint. |
 | 15 | `.github/workflows/publish.yml` runs test suite before wheel | **DEFERRED** | Unchanged | Punted to v0.4.1. |
@@ -65,9 +65,20 @@ demo).
 
 **Post-TT5 (2026-07-07) update**: Gate 2 flipped from `needs-verify` to
 **GREEN** after TT5 regenerated `engine_surface_v030.md` and confirmed
-9 tripwire tests pass. Refreshed pass count is **9 GREEN + 1 DRAFT +
-2 FAILING + 2 needs-verify + 1 deferred**. Gates 12 (game-compat) and
-13 (perf dashboard) remain the only two open verification passes.
+9 tripwire tests pass. Refreshed pass count was **9 GREEN + 1 DRAFT +
+2 FAILING + 2 needs-verify + 1 deferred**.
+
+**Post-TT1 (2026-07-07) update**: Gate 12 flipped from `needs-verify`
+(SS5 BLOCKED) to **FAILING** after TT1 located both game repos under
+`H:/DaedalusSVN/` and ran the live tripwire against engine HEAD
+`fc5d94f`. Ochema regressed from 1124/1126 to **424/1129** and Bullet
+Strata regressed from 54/54 to **19/54**; the two dominant breakage
+classes are enumerated in `docs/game_compat_2026_07_07.md` § 4 and
+are real engine-side regressions, not test-harness artefacts.
+Refreshed pass count is **9 GREEN + 1 DRAFT + 3 FAILING +
+1 needs-verify + 1 deferred**. Gate 12 is now a ship-blocker for
+v0.4.0 alongside gates 1 (version bump) and 11 (WIP unfreeze). Only
+gate 13 (perf dashboard) remains open verification.
 
 ---
 
