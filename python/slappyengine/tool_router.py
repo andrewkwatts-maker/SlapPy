@@ -1613,6 +1613,44 @@ def _fb_snap_reset_defaults(ctx: dict[str, Any]) -> Any:
     return reset_snap_defaults(ctx)
 
 
+# ---------------------------------------------------------------------------
+# ZZ4 STUB-triage — round 26 fallbacks
+# ---------------------------------------------------------------------------
+
+
+def _fb_view_toggle_safe_area(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_toggle_safe_area_actions import (
+        toggle_safe_area,
+    )
+    return toggle_safe_area(ctx)
+
+
+def _fb_edit_select_root(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_select_root_actions import select_root
+    return select_root(ctx)
+
+
+def _fb_spawn_at_last_click(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_at_last_click_actions import (
+        spawn_at_last_click,
+    )
+    return spawn_at_last_click(ctx)
+
+
+def _fb_layer_unlock_all(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_unlock_all_actions import (
+        unlock_all_layers,
+    )
+    return unlock_all_layers(ctx)
+
+
+def _fb_snap_cycle_grid_size(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.snap_cycle_grid_size_actions import (
+        cycle_grid_size,
+    )
+    return cycle_grid_size(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -3088,6 +3126,49 @@ def _default_actions() -> list[ToolAction]:
             label="Reset Snap Defaults",
             rust_backing=None,
             python_fallback=_fb_snap_reset_defaults,
+            required_args=[],
+            category="snap",
+        ),
+        # ── ZZ4 STUB-triage: view.toggle_safe_area,
+        #    edit.select_root, spawn.at_last_click, layer.unlock_all,
+        #    snap.cycle_grid_size (round 26) ──
+        ToolAction(
+            action_id="view.toggle_safe_area",
+            label="Toggle Safe Area",
+            rust_backing=None,
+            python_fallback=_fb_view_toggle_safe_area,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="edit.select_root",
+            label="Select Root",
+            rust_backing=None,
+            python_fallback=_fb_edit_select_root,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="spawn.at_last_click",
+            label="Spawn at Last Click",
+            rust_backing=None,
+            python_fallback=_fb_spawn_at_last_click,
+            required_args=[],
+            category="spawn",
+        ),
+        ToolAction(
+            action_id="layer.unlock_all",
+            label="Unlock All Layers",
+            rust_backing=None,
+            python_fallback=_fb_layer_unlock_all,
+            required_args=[],
+            category="layer",
+        ),
+        ToolAction(
+            action_id="snap.cycle_grid_size",
+            label="Cycle Grid Size",
+            rust_backing=None,
+            python_fallback=_fb_snap_cycle_grid_size,
             required_args=[],
             category="snap",
         ),
