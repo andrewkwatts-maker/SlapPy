@@ -24,6 +24,12 @@ version string in `pyproject.toml`, `Cargo.toml`, and
 `python/slappyengine/__init__.py` is **still `0.3.0b0`** and this
 section is not yet tagged.
 
+Ship-path decision recorded in
+[VV7 v0.4 ship-decision doc](docs/v0_4_ship_decision_2026_07_07.md) —
+**Option B** (ship-after-full-recovery) recommended; gate #12 game-compat
+currently at **61.6%** F1 recovery post-VV1 (Ochema 681/1126 + Bullet
+Strata 45/54); downstream games need v0.4.1 for full compat.
+
 ### Nova3D parity milestone
 
 Twenty agent-scoped sprints (JJ1–LL7) translating the
@@ -124,6 +130,49 @@ EE, FF, GG batches):**
   UI-nesting/pattern/lessons audits, diary theme docs, notebook editor
   manual, sprint-plan for v0.4.
 
+**QQ+RR+SS+TT+UU+VV batch additions (post-PP6 draft):**
+
+- `hello_diagnostics_hud` demo (QQ5 `03ac323`) — HUD-wired diagnostics
+  aggregator smoke.
+- `hello_full_lifecycle` flagship demo (RR5 `ba9cbd5`) — end-to-end App
+  lifecycle harness combining diagnostics, HUD, capture, and export.
+- `hello_downstream_pattern` demo (VV5 `55e99a3`) — reference downstream
+  game-consumer pattern demonstrating the restored backcompat surface.
+- `World3D.draw_debug` + `debug_stats` accessors (QQ7 `7b8fd2c`).
+- App-lifecycle diagnostics wiring (QQ4 `6427a78`) —
+  `DiagnosticsCollector` auto-installs on `App.__init__`.
+- Diagnostics filter / aggregate / serialise surface (RR4 `65d49a0`).
+- `DiagnosticsCollector.render_markdown_report` (SS6 `60bb55a`).
+- Diagnostics `filter_by_message` + widget summary (TT6 `fc5d94f`).
+- App lifecycle stress test suite (RR7 `7b85ded`).
+- API refs: `topology` + `numerics` rewrites (SS7 `7c0da9f`);
+  `ai` + `net` + `modules` (TT4 `e6cf530`);
+  `iso` + `telemetry` + `gi` (UU6 `6849bb2`);
+  `assets` + `input` (VV6 `d058e25`);
+  `exporter` + `hud_overlay` + `diagnostics` (RR3 `60bbdf0`);
+  and QQ3 `953e53f` MM/NN/OO landings (4 refs).
+- API backcompat harness + `api_surface_snapshot.json` 338-symbol
+  lockfile + `test_backcompat_api_surface.py` +
+  `test_backcompat_subclass_patterns.py` +
+  `scripts/refresh_api_surface_snapshot.py` (UU7 `1b494cf`); companion
+  doc [`api_stability_2026_07_07.md`](docs/api_stability_2026_07_07.md).
+- STUB triage rounds 18–23 — 30 new WIRED action ids across QQ1
+  `336263c`, RR1 `085a14e`, TT2 `949a03e`, UU4 `8fe678a`, VV4 `23a5618`
+  (round 20 salvaged via SS-batch `40695fb`).
+- Demo test-smoke gap closure — 20 more tests unskipped across QQ2
+  `9d57e81`, RR2 `7369070`, SS2 `796cbb2`, TT3 `41a6a31`, UU5
+  `1192ea9`.
+- Doc landings: [`v0_4_gate_reconciliation_2026_07_07.md`](docs/v0_4_gate_reconciliation_2026_07_07.md)
+  (RR6 `f86def2`); [`sprint_rollup_2026_07_07_r6.md`](docs/sprint_rollup_2026_07_07_r6.md)
+  (TT7 `7f4b93b`); [`skip_audit_2026_07_07.md`](docs/skip_audit_2026_07_07.md)
+  + [`perf_baseline_2026_07_07.md`](docs/perf_baseline_2026_07_07.md)
+  (SS3+SS4 salvaged `40695fb`); [`game_compat_2026_07_07.md`](docs/game_compat_2026_07_07.md)
+  (TT1 `5c18eb0` + UU3 `844f4aa` + VV3 `b2126f0` re-run appends);
+  [`v0_4_ship_decision_2026_07_07.md`](docs/v0_4_ship_decision_2026_07_07.md)
+  (VV7 `647998e`); feature-map deltas 2026-07-09 through 2026-07-14.
+- Engine surface v0.3 doc regenerated to 91-symbol tally (TT5 `b4fc933`,
+  gate #2 verify).
+
 ### Changed
 
 - **MM1 hardening** — input validation added across 13 files (salvaged
@@ -148,6 +197,17 @@ EE, FF, GG batches):**
 - 13 rounds of STUB action triage across the ToolRouter (65+ new WIRED
   action ids across rounds 2–16: X3, Y1, Z7, AA1, BB1, CC1, GG1, II5,
   JJ6, KK7, MM6, NN2, OO1).
+- **UU1 `Observable.__init__`** — now issues a cooperative
+  `super().__init__()` call so downstream subclasses that also inherit
+  from other mixin bases initialise cleanly; unblocks the Ochema
+  Circuit `RenderTarget` MRO chain (`ee732fd`).
+- **UU2 `EventBus.unsubscribe`** — 1-arg form
+  `unsubscribe(callback)` restored alongside the current 2-arg
+  `unsubscribe(topic, callback)`; downstream unsubscribe(None)
+  sentinel-semantics kept as a follow-up for v0.4.1 (`b29e601`).
+- **VV1 `CacheMode`** — enum shape restored to include
+  `OFFSCREEN_SERIALIZE`, `ALWAYS_CACHED`, and `USER_DRIVEN` members
+  after PP's Phase-D flip inadvertently pruned them (`82feed0`).
 
 ### Deprecated
 
@@ -178,6 +238,71 @@ EE, FF, GG batches):**
 - `NotebookCodePanel` legacy-contract compatibility (`load_script`
   alias + per-frame `update()`).
 - DPG callback lambdas accept extra positional args.
+- **UU1** — `RenderTarget` MRO regression (Ochema Circuit downstream
+  crash): `Observable.__init__` now cooperates with sibling bases via a
+  `super().__init__()` call (`ee732fd`).
+- **VV2** — 3–5 more backcompat symbols restored end-to-end so the
+  downstream stack loads cleanly: `event_bus.EventDetails` type alias,
+  `config.DeformConfig` dataclass + parser, `DeformableLayerComponent`
+  legacy kwargs (`stiffness_x`/`stiffness_y`/`initial_temperature`),
+  and `collision_pixel.PixelCollisionPass.test(a, b)` class-level
+  dispatch that forwards to the instance overload (`8cdd2b0`).
+
+### Backwards-compatibility notes
+
+The UU + VV rounds restore public symbols that the PP + earlier
+Phase-D flips inadvertently pruned. All entries below are load-bearing
+for at least one of Ochema Circuit / Bullet Strata / Stone Keep and
+remain part of the public API for v0.4:
+
+- `Observable.__init__` cooperative `super().__init__()` call — UU1
+  `ee732fd`; restores mixin composability for downstream `RenderTarget`
+  subclasses.
+- `event_bus.global_bus` module-level singleton — UU2 `b29e601`;
+  restores the pre-v0.4 zero-arg publish/subscribe convenience.
+- `EventBus.unsubscribe(callback)` 1-arg form — UU2 `b29e601`;
+  overload alongside the current 2-arg `unsubscribe(topic, callback)`.
+- `CacheMode.OFFSCREEN_SERIALIZE` / `CacheMode.ALWAYS_CACHED` /
+  `CacheMode.USER_DRIVEN` — VV1 `82feed0`; three enum members
+  reinstated after a Phase-D over-prune.
+- `event_bus.EventDetails` type alias — VV2 `8cdd2b0`; downstream type
+  hints resolve without `# type: ignore`.
+- `config.DeformConfig` dataclass + parser — VV2 `8cdd2b0`; downstream
+  config loaders re-mount without adapter shims.
+- `components.DeformableLayerComponent` legacy kwargs — VV2 `8cdd2b0`;
+  accepts `stiffness_x` / `stiffness_y` / `initial_temperature`
+  alongside the current kwargs.
+- `collision_pixel.PixelCollisionPass.test(a, b)` class-level dispatch
+  — VV2 `8cdd2b0`; forwards to the instance overload so downstream
+  callers using the class-level form load cleanly.
+
+Coverage tracked by
+[`api_stability_2026_07_07.md`](docs/api_stability_2026_07_07.md) —
+UU7's 338-symbol pinned surface snapshot
+(`SlapPyEngineTests/tests/data/api_surface_snapshot.json`) plus the
+`test_backcompat_api_surface.py` + `test_backcompat_subclass_patterns.py`
+tripwires now guard the restored surface.
+
+### Known issues
+
+- **Gate #12 (game-compat)** — currently **FAILING** at 61.6% F1
+  recovery post-VV1+VV2:
+  [`game_compat_2026_07_07.md`](docs/game_compat_2026_07_07.md) § 10
+  records Ochema Circuit **681/1126 (60.6%)** and Bullet Strata
+  **45/54 (83.3%)** against baselines of 1124/1126 and 54/54; the top
+  residual class is **228 sites of `unsubscribe(None)`
+  sentinel-semantics violation** in the downstream games. Downstream
+  games will need v0.4.1 for full compat; per VV7 the recommended
+  ship path is **Option B — ship-after-full-recovery**.
+- **WIP subpackages** — `softbody/`, `fluid/`, `physics/`, `physics2/`
+  remain frozen for this release; the 2D physics substrate ships
+  through `slappyengine.dynamics` (which the studio stages and Rust
+  `_core` kernels back).
+- **Version strings** — `pyproject.toml`, `Cargo.toml`, and
+  `python/slappyengine/__init__.py` still read `0.3.0b0` /
+  `0.3.0-beta.0`; see the
+  [PP6 version-bump audit](docs/version_bump_audit_2026_07_07.md) for
+  the 8-step atomic tag sequence deferred to the release commit.
 
 ### Security
 
