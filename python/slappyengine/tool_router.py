@@ -1408,6 +1408,59 @@ def _fb_layer_rename(ctx: dict[str, Any]) -> Any:
     return rename_layer(ctx)
 
 
+# ---------------------------------------------------------------------------
+# UU4 STUB-triage fallbacks (2026-07-13 — round 22 after TT2)
+#
+# Five more STUB rows flipped to WIRED:
+#   * spawn.at_origin_offset — arm/repeat spawn at (0,0,0)+offset
+#     (distinct from QQ1 spawn.at_origin's forced zero drop + TT2
+#     spawn.at_view_center's camera-focus drop).
+#   * edit.flatten_selection — deep-flatten group hierarchies in one
+#     gesture (distinct from EE1 edit.ungroup_selection which only
+#     peels a single nesting level).
+#   * snap.set_angle_snap — set rotation-gizmo snap step in degrees
+#     (distinct from OO1's positional grid-size steps + RR1's
+#     snap.toggle_incremental boolean gate).
+#   * layer.move_up / layer.move_down — swap the active layer with its
+#     immediate Z-neighbour (distinct from OO1 layer.merge_down which
+#     collapses two layers into one, + TT2 layer.rename which touches
+#     names not order).
+# Python fallbacks live in
+# ``slappyengine.actions.spawn_origin_offset_actions``,
+# ``edit_flatten_selection_actions``, ``snap_angle_snap_actions``, and
+# ``layer_reorder_actions``.
+# ---------------------------------------------------------------------------
+
+
+def _fb_spawn_at_origin_offset(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_origin_offset_actions import (
+        spawn_at_origin_offset,
+    )
+    return spawn_at_origin_offset(ctx)
+
+
+def _fb_edit_flatten_selection(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_flatten_selection_actions import (
+        flatten_selection,
+    )
+    return flatten_selection(ctx)
+
+
+def _fb_snap_set_angle_snap(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.snap_angle_snap_actions import set_angle_snap
+    return set_angle_snap(ctx)
+
+
+def _fb_layer_move_up(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_reorder_actions import move_layer_up
+    return move_layer_up(ctx)
+
+
+def _fb_layer_move_down(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_reorder_actions import move_layer_down
+    return move_layer_down(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -2713,6 +2766,49 @@ def _default_actions() -> list[ToolAction]:
             rust_backing=None,
             python_fallback=_fb_layer_rename,
             required_args=["new_name"],
+            category="layer",
+        ),
+        # ── UU4 STUB-triage: spawn.at_origin_offset,
+        #    edit.flatten_selection, snap.set_angle_snap,
+        #    layer.move_up, layer.move_down (round 22) ─────────────────
+        ToolAction(
+            action_id="spawn.at_origin_offset",
+            label="Spawn at Origin + Offset",
+            rust_backing=None,
+            python_fallback=_fb_spawn_at_origin_offset,
+            required_args=[],
+            category="spawn",
+        ),
+        ToolAction(
+            action_id="edit.flatten_selection",
+            label="Flatten Selection (Deep Ungroup)",
+            rust_backing=None,
+            python_fallback=_fb_edit_flatten_selection,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="snap.set_angle_snap",
+            label="Set Angle Snap",
+            rust_backing=None,
+            python_fallback=_fb_snap_set_angle_snap,
+            required_args=["degrees"],
+            category="snap",
+        ),
+        ToolAction(
+            action_id="layer.move_up",
+            label="Move Layer Up",
+            rust_backing=None,
+            python_fallback=_fb_layer_move_up,
+            required_args=[],
+            category="layer",
+        ),
+        ToolAction(
+            action_id="layer.move_down",
+            label="Move Layer Down",
+            rust_backing=None,
+            python_fallback=_fb_layer_move_down,
+            required_args=[],
             category="layer",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────

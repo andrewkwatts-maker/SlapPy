@@ -207,6 +207,19 @@ from .theme_reload_from_disk_actions import (
 from .layer_rename_actions import (
     rename_layer as rename_layer,
 )
+from .spawn_origin_offset_actions import (
+    spawn_at_origin_offset as spawn_at_origin_offset,
+)
+from .edit_flatten_selection_actions import (
+    flatten_selection as flatten_selection,
+)
+from .snap_angle_snap_actions import (
+    set_angle_snap as set_angle_snap,
+)
+from .layer_reorder_actions import (
+    move_layer_up as move_layer_up,
+    move_layer_down as move_layer_down,
+)
 
 
 __all__ = [
@@ -287,4 +300,9 @@ __all__ = [
     "stamp_random_spawn",
     "reload_theme_from_disk",
     "rename_layer",
+    "spawn_at_origin_offset",
+    "flatten_selection",
+    "set_angle_snap",
+    "move_layer_up",
+    "move_layer_down",
 ]
