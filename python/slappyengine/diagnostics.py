@@ -28,12 +28,14 @@ so the running frame surfaces the last few warnings/errors in-viewport.
 """
 from __future__ import annotations
 
+import json
 import logging
 import threading
 import time
 import traceback
 from collections import Counter, deque
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from typing import Optional
 
 
@@ -247,6 +249,195 @@ class DiagnosticsCollector:
         """
         with self._lock:
             return [e for e in self._events if e.subsystem.startswith(name)]
+
+    # ------------------------------------------------------------------
+    # RR4 extensions — filter / aggregate / serialise
+    # ------------------------------------------------------------------
+
+    def filter_by_level(self, level: str) -> list[DiagnosticEvent]:
+        """Return events at exactly *level* (case-insensitive).
+
+        Parameters
+        ----------
+        level:
+            Level name (``"WARNING"``, ``"ERROR"``, ``"CRITICAL"``,
+            ``"INFO"``, ``"DEBUG"``). Match is case-insensitive.
+
+        Raises
+        ------
+        ValueError
+            If *level* is not a recognised logging level name.
+        """
+        if not isinstance(level, str):
+            raise ValueError(
+                f"DiagnosticsCollector.filter_by_level: level must be str; got {level!r}"
+            )
+        upper = level.upper()
+        # Validate via _coerce_level — raises ValueError on unknown.
+        num = logging.getLevelName(upper)
+        if not isinstance(num, int):
+            raise ValueError(
+                f"DiagnosticsCollector.filter_by_level: unknown level {level!r}"
+            )
+        with self._lock:
+            return [e for e in self._events if e.level == upper]
+
+    def top_subsystems(self, n: int = 5) -> list[tuple[str, int]]:
+        """Return the top-*n* subsystems by event count, descending.
+
+        ``n <= 0`` returns an empty list.
+        """
+        if n <= 0:
+            return []
+        with self._lock:
+            counts: Counter[str] = Counter(e.subsystem for e in self._events)
+        return counts.most_common(n)
+
+    def since(self, timestamp: float) -> list[DiagnosticEvent]:
+        """Return events with ``event.timestamp >= timestamp``."""
+        with self._lock:
+            return [e for e in self._events if e.timestamp >= timestamp]
+
+    def clear_by_subsystem(self, name: str) -> int:
+        """Remove events whose ``subsystem`` starts with *name*.
+
+        Returns the number of events removed. Prefix match mirrors
+        :meth:`filter_by_subsystem`.
+        """
+        with self._lock:
+            before = len(self._events)
+            kept = [e for e in self._events if not e.subsystem.startswith(name)]
+            removed = before - len(kept)
+            if removed:
+                self._events.clear()
+                self._events.extend(kept)
+            return removed
+
+    def to_json(self, indent: Optional[int] = None) -> str:
+        """Serialise current events + stats to a JSON string.
+
+        Format::
+
+            {
+              "events": [ {level, subsystem, message, timestamp, exc_info}, ... ],
+              "stats":  { "total": N, "level:WARNING": ..., ... },
+              "meta":   { "max_events": int, "min_level": str, "captured_at": iso8601 }
+            }
+
+        *indent* is forwarded to :func:`json.dumps`.
+        """
+        with self._lock:
+            events_payload = [asdict(e) for e in self._events]
+            stats_payload = self._stats_locked()
+            min_level_name = logging.getLevelName(self._min_level_num)
+            meta_payload = {
+                "max_events": int(self._max_events),
+                "min_level": str(min_level_name),
+                "captured_at": datetime.now(timezone.utc).isoformat(),
+            }
+        payload = {
+            "events": events_payload,
+            "stats": stats_payload,
+            "meta": meta_payload,
+        }
+        return json.dumps(payload, indent=indent)
+
+    @classmethod
+    def from_json(cls, data: str) -> "DiagnosticsCollector":
+        """Load a JSON dump; return a fresh (uninstalled) collector.
+
+        The returned collector is populated with the serialised events
+        and its ``max_events`` / ``min_level`` come from the ``meta``
+        block. It is *not* installed on any logger — the caller must
+        call :meth:`install` explicitly if live capture is wanted.
+
+        Raises
+        ------
+        ValueError
+            If the JSON is malformed, or required top-level keys
+            (``events``, ``meta``) are missing / mis-shaped.
+        """
+        try:
+            payload = json.loads(data)
+        except (TypeError, json.JSONDecodeError) as exc:
+            raise ValueError(
+                f"DiagnosticsCollector.from_json: malformed JSON ({exc})"
+            ) from exc
+        if not isinstance(payload, dict):
+            raise ValueError(
+                "DiagnosticsCollector.from_json: top-level must be an object"
+            )
+        for key in ("events", "meta"):
+            if key not in payload:
+                raise ValueError(
+                    f"DiagnosticsCollector.from_json: missing key {key!r}"
+                )
+        meta = payload["meta"]
+        if not isinstance(meta, dict):
+            raise ValueError(
+                "DiagnosticsCollector.from_json: 'meta' must be an object"
+            )
+        events_raw = payload["events"]
+        if not isinstance(events_raw, list):
+            raise ValueError(
+                "DiagnosticsCollector.from_json: 'events' must be a list"
+            )
+        max_events = meta.get("max_events", 500)
+        min_level = meta.get("min_level", "WARNING")
+        try:
+            max_events_int = int(max_events)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"DiagnosticsCollector.from_json: bad max_events {max_events!r}"
+            ) from exc
+        try:
+            collector = cls(max_events=max_events_int, min_level=min_level)
+        except ValueError as exc:
+            raise ValueError(
+                f"DiagnosticsCollector.from_json: bad meta ({exc})"
+            ) from exc
+        rebuilt: list[DiagnosticEvent] = []
+        required_fields = {"level", "subsystem", "message", "timestamp", "exc_info"}
+        for i, raw in enumerate(events_raw):
+            if not isinstance(raw, dict):
+                raise ValueError(
+                    f"DiagnosticsCollector.from_json: event #{i} is not an object"
+                )
+            missing = required_fields - raw.keys()
+            if missing:
+                raise ValueError(
+                    f"DiagnosticsCollector.from_json: event #{i} missing {sorted(missing)}"
+                )
+            try:
+                rebuilt.append(
+                    DiagnosticEvent(
+                        level=str(raw["level"]),
+                        subsystem=str(raw["subsystem"]),
+                        message=str(raw["message"]),
+                        timestamp=float(raw["timestamp"]),
+                        exc_info=(
+                            None if raw["exc_info"] is None else str(raw["exc_info"])
+                        ),
+                    )
+                )
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"DiagnosticsCollector.from_json: event #{i} bad field ({exc})"
+                ) from exc
+        with collector._lock:
+            collector._events.extend(rebuilt)
+        return collector
+
+    def _stats_locked(self) -> dict[str, int]:
+        """Internal :meth:`stats` body assuming the lock is already held."""
+        level_counts: Counter[str] = Counter(e.level for e in self._events)
+        subsys_counts: Counter[str] = Counter(e.subsystem for e in self._events)
+        out: dict[str, int] = {"total": len(self._events)}
+        for lvl, n in level_counts.items():
+            out[f"level:{lvl}"] = int(n)
+        for sub, n in subsys_counts.items():
+            out[f"subsystem:{sub}"] = int(n)
+        return out
 
     # ------------------------------------------------------------------
     # Internal capture path
