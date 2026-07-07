@@ -179,6 +179,19 @@ from .layer_isolate_actions import (
 from .snap_toggle_incremental_actions import (
     toggle_incremental as toggle_snap_incremental,
 )
+from .content_reveal_explorer_actions import (
+    reveal_in_explorer as reveal_asset_in_explorer,
+)
+from .content_duplicate_folder_actions import (
+    duplicate_folder as duplicate_content_folder,
+)
+from .view_pixel_scale_actions import (
+    increase_pixel_scale as increase_pixel_scale,
+    decrease_pixel_scale as decrease_pixel_scale,
+)
+from .spawn_stamp_repeat_actions import (
+    stamp_repeat as stamp_repeat_spawn,
+)
 
 
 __all__ = [
@@ -249,4 +262,9 @@ __all__ = [
     "hide_others_layers",
     "isolate_selection",
     "toggle_snap_incremental",
+    "reveal_asset_in_explorer",
+    "duplicate_content_folder",
+    "increase_pixel_scale",
+    "decrease_pixel_scale",
+    "stamp_repeat_spawn",
 ]

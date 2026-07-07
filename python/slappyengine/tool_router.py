@@ -1304,6 +1304,59 @@ def _fb_snap_toggle_incremental(ctx: dict[str, Any]) -> Any:
     return toggle_incremental(ctx)
 
 
+# ---------------------------------------------------------------------------
+# SS1 STUB-triage fallbacks (2026-07-11 — round 20 after RR1)
+#
+# Five more STUB rows flipped to WIRED: content.reveal_in_explorer
+# (selects the item inside the OS explorer — distinct from FF1's
+# content.reveal_in_folder which just opens the parent path),
+# content.duplicate_folder (folder-only variant of
+# content.duplicate_asset), view.increase_pixel_scale /
+# view.decrease_pixel_scale (integer framebuffer scale step —
+# distinct from Z7's continuous view.zoom_*), and
+# spawn.stamp_repeat (hold-and-stamp N copies; distinct from
+# spawn.spawn_batch_row + spawn.repeat_last). Python fallbacks live
+# in ``slappyengine.actions.content_reveal_explorer_actions``,
+# ``content_duplicate_folder_actions``, ``view_pixel_scale_actions``,
+# and ``spawn_stamp_repeat_actions``.
+# ---------------------------------------------------------------------------
+
+
+def _fb_content_reveal_in_explorer(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.content_reveal_explorer_actions import (
+        reveal_in_explorer,
+    )
+    return reveal_in_explorer(ctx)
+
+
+def _fb_content_duplicate_folder(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.content_duplicate_folder_actions import (
+        duplicate_folder,
+    )
+    return duplicate_folder(ctx)
+
+
+def _fb_view_increase_pixel_scale(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_pixel_scale_actions import (
+        increase_pixel_scale,
+    )
+    return increase_pixel_scale(ctx)
+
+
+def _fb_view_decrease_pixel_scale(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_pixel_scale_actions import (
+        decrease_pixel_scale,
+    )
+    return decrease_pixel_scale(ctx)
+
+
+def _fb_spawn_stamp_repeat(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_stamp_repeat_actions import (
+        stamp_repeat,
+    )
+    return stamp_repeat(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -2525,6 +2578,48 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_snap_toggle_incremental,
             required_args=[],
             category="snap",
+        ),
+        # ── SS1 STUB-triage: content reveal-in-explorer / duplicate-folder,
+        #    view pixel-scale up/down, spawn stamp-repeat (round 20) ──
+        ToolAction(
+            action_id="content.reveal_in_explorer",
+            label="Reveal in Explorer",
+            rust_backing=None,
+            python_fallback=_fb_content_reveal_in_explorer,
+            required_args=["path"],
+            category="content",
+        ),
+        ToolAction(
+            action_id="content.duplicate_folder",
+            label="Duplicate Folder",
+            rust_backing=None,
+            python_fallback=_fb_content_duplicate_folder,
+            required_args=["path"],
+            category="content",
+        ),
+        ToolAction(
+            action_id="view.increase_pixel_scale",
+            label="Increase Pixel Scale",
+            rust_backing=None,
+            python_fallback=_fb_view_increase_pixel_scale,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="view.decrease_pixel_scale",
+            label="Decrease Pixel Scale",
+            rust_backing=None,
+            python_fallback=_fb_view_decrease_pixel_scale,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="spawn.stamp_repeat",
+            label="Stamp Repeat Spawn",
+            rust_backing=None,
+            python_fallback=_fb_spawn_stamp_repeat,
+            required_args=[],
+            category="spawn",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(

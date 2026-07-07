@@ -62,6 +62,7 @@ Regenerate after adding or removing any doc.
 | [`particle_field_gpu_port.md`](particle_field_gpu_port.md) | ParticleField GPU port — 7-sprint architecture for migrating `particle_field` onto WGSL compute shaders. |
 | [`particle_field_v2_summary.md`](particle_field_v2_summary.md) | ParticleField v2 sprint summary — what landed in the multi-hour refactor sprint, in commit order. |
 | [`per_pixel_sim_audit_2026_05_31.md`](per_pixel_sim_audit_2026_05_31.md) | Branch-reachability audit of `per_pixel_sim.wgsl` ahead of the Phase D strip (Sprint 3E, 2026-05-31). |
+| [`perf_baseline_2026_07_07.md`](perf_baseline_2026_07_07.md) | Perf re-baseline (SS4 landing 2026-07-07) — six-hot-path measurement (raster.line_batch / raster.circle_batch / _core.hull.convex_hull / _core.ik_solver.solve / World3D.raycast BVH+linear / DiagnosticsCollector.install) closing v0.4 ship gate #13 (`needs-verify` → GREEN); harness `benchmarks/perf_baseline_2026_07_07.py`; no regression > 20% vs prior baseline; BVH 13.7× vs linear at 500 bodies. |
 | [`perf_dashboard.md`](perf_dashboard.md) | One-page perf tripwire across the six v0.3 hot paths (dynamics, numerics, thermal, topology, telemetry, zones) with bound classifications. |
 | [`perf_dashboard_prev.md`](perf_dashboard_prev.md) | Prior perf dashboard snapshot (2026-05-29) preserved for trend comparison. |
 | [`phase_d_strip_plan_2026_05_31.md`](phase_d_strip_plan_2026_05_31.md) | Phase D strip-pass execution plan (Sprint F, 2026-05-31) — gated on Ochema CI greenness. |
@@ -73,6 +74,7 @@ Regenerate after adding or removing any doc.
 | [`rust_migration_plan.md`](rust_migration_plan.md) | Rust migration plan — staged path to 1000 fps via Rust-backed hot-path migration. |
 | [`rust_port_audit_2026_06_02.md`](rust_port_audit_2026_06_02.md) | Rust port audit — classification of every per-frame Python kernel by Rust-migration status, ROI-ranked (2026-06-02). |
 | [`rust_port_plan_dynamics.md`](rust_port_plan_dynamics.md) | Phase 1 MVP Rust-port plan for `slappyengine.dynamics`: `_project_distance` first, 3-4x estimated speedup (4/4 green). |
+| [`skip_audit_2026_07_07.md`](skip_audit_2026_07_07.md) | Skip-audit sweep (SS3 landing 2026-07-07) — verifies OO7's v0.4 ship-checklist gate #7 ("no tests skipped without documented reason"); enumerates 291 skip sites across `SlapPyEngineTests/tests/**/*.py` (230 `pytest.skip` + 45 `importorskip` + 11 `skipif` + 4 `mark.skip` + 1 `mark.xfail`), categorises each as legit-env / legit-dep / legit-upstream-drift / legit-locked-sibling / legit-roadmap-gap / legit-baseline-write; reports **zero silent-acceptance** hits and flips gate #7 to GREEN. |
 | [`softbody_design.md`](softbody_design.md) | Design reference for the BeamNG-style soft-body lattice XPBD simulator (`slappyengine.softbody`). |
 | [`sprint_1_game_compat_2026_05_30.md`](sprint_1_game_compat_2026_05_30.md) | Sprint 1 game-integration verification — engine surface contract honoured for Ochema Circuit / Bullet Strata / Stone Keep. |
 | [`sprint_1_retrospective.md`](sprint_1_retrospective.md) | Sprint 1 retrospective — ParticleField GPU port (compute scaffolding and SoA upload). |
