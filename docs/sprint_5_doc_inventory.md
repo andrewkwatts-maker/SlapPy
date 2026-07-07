@@ -41,6 +41,7 @@ Regenerate after adding or removing any doc.
 | [`sprint_rollup_2026_07_06.md`](sprint_rollup_2026_07_06.md) | Sprint rollup r4 — MM salvage batch + NN dispatch batch covering post-parity hardening (MM1 13-file input validation), MM2 HUD bridge + hello_hud, MM3 feature-map audit (rows 312-330), MM5 hello_showcase_v3, MM6 STUB triage round 14 (5 new capture/render action ids), MM7 hello_render_real + procedural bunny, NN salvage + NN6 docs consolidation (NN6 landing 2026-07-06). |
 | [`sprint_rollup_2026_07_07_r5.md`](sprint_rollup_2026_07_07_r5.md) | Sprint rollup r5 — OO batch (v0.4 stabilisation: r16 STUB triage, BVH raycast, combined demos, showcase-v3 fixes, export CLI demo, diagnostics aggregator, OO7 YELLOW readiness audit) + PP batch (v0.4 tag-prep: r17 STUB triage, 241-file python/tests/ shadow delete, F1 Rust mod-decl audit, 8-demo test-smoke gap closure, 6 API refs, CHANGELOG draft, diagnostics stress + Rust-bypass demo); flipped 4 of OO7's ship gates, feature map 350 rows / 333 WIRED (~95.4%), 9288 tests collected (QQ6 landing 2026-07-07). |
 | [`sprint_rollup_2026_07_07_r6.md`](sprint_rollup_2026_07_07_r6.md) | Sprint rollup r6 — QQ batch (v0.4 gate closer round 1: r18 STUB triage, batch-2 demo smoke, 4 API refs, App-lifecycle diagnostics wiring, hello_diagnostics_hud, r5 rollup itself, World3D.draw_debug + debug_stats) + RR batch (round 2: r19 STUB triage, batch-3 demo smoke, 3 API refs, diagnostics filter/aggregate/serialise, hello_full_lifecycle flagship, RR6 gate reconciliation, App lifecycle stress harness) + SS batch (round 3 partial + salvage: r20 STUB triage, batch-4 demo smoke, SS3 skip audit — gate 7 flip, SS4 perf re-baseline — gate 13 flip, SS5 game-compat BLOCKED / re-dispatched as TT1, SS6 diagnostics markdown report, SS7 topology + numerics API-ref rewrites); verdict advances PALE-YELLOW → possibly GREEN pending TT1 gate 12; feature map 365 rows / 348 WIRED (~95.6%); 9547 tests collected (TT7 landing 2026-07-07). |
+| [`sprint_rollup_2026_07_07_r7.md`](sprint_rollup_2026_07_07_r7.md) | Sprint rollup r7 — TT + UU + VV batches covering the game-compat backslide + backcompat recovery arc (TT1 gate #12 re-run flip, UU1+UU2+UU6 backcompat fix waves, VV1+VV2 residual sentinel-semantics recovery, VV5 downstream multi-inherit pattern, VV6 input+assets API refs, VV7 ship-decision doc); refreshes 15-gate table and feature-map delta; landed 2026-07-07. |
 | [`feature_map_delta_2026_07_06.md`](feature_map_delta_2026_07_06.md) | Feature-map delta v3 — 54 new rows + 55 new WIRED across EE/FF/GG/HH/II/JJ/KK/LL/MM batches (triage rounds 8-14, MM3 audit, MM1 hardening); refreshed STUB/BROKEN rosters; roll-up progression across v1/v2/v3 (NN6 landing 2026-07-06). |
 | [`feature_map_delta_2026_07_08.md`](feature_map_delta_2026_07_08.md) | Feature-map delta — PP1 STUB-triage round 17 (5 new WIRED action ids: selection.shrink / selection.invert_by_type / view.toggle_wireframe / edit.rename / edit.duplicate_at_cursor). |
 | [`feature_map_delta_2026_07_09.md`](feature_map_delta_2026_07_09.md) | Feature-map delta — QQ1 STUB-triage round 18 (5 new WIRED action ids: spawn.at_origin / selection.by_type / selection.by_layer / selection.same_material / view.toggle_stats). |
@@ -125,6 +126,7 @@ and are skipped by the generator.
 
 | Path | Description |
 |---|---|
+| [`api/README.md`](api/README.md) | API-ref index + gap tracker (WW6 landing 2026-07-07) — catalog of every `docs/api/*.md` reference, list of shipped subpackages currently missing a dedicated ref (`build` / `render` root / `scenes` / `text` / `ui` root), and WIP-frozen subpackage roster (softbody / fluid / physics / physics2). Index-only; no per-symbol content. |
 | [`api/_template.md`](api/_template.md) | Meta-template documenting the canonical structure every hand-authored `docs/api/*.md` reference follows. Asserted by `SlapPyEngineTests/tests/test_docs_api_template_conformance.py`. |
 | [`api/actions.md`](api/actions.md) | Hand-authored API reference for `slappyengine.actions` — headless-safe `ctx: dict -> dict | None` callbacks (~75 helpers across project / layout / selection / theme / view / history / spawn / capture / layer / content topics) backing every `ToolRouter` fallback action; single canonical `ctx` rejection point via `_ctx.ensure_ctx` (UU6 landing). |
 | [`api/ai.md`](api/ai.md) | Hand-authored API reference for `slappyengine.ai` — LLM-backed authoring surface (Ollama REST client, entity-script generator, prompt/code bidirectional sync watcher, backend Protocol) covering the free-text "describe it and let the model write it" authoring path (sibling to `visual_scripting.md`'s deterministic node-graph path). |
@@ -182,3 +184,13 @@ and are skipped by the generator.
 | [`missing_ui_audit_2026_06_07.md`](missing_ui_audit_2026_06_07.md) | Missing-UI audit — gaps between Nova3D reference and notebook editor coverage (2026-06-07). |
 | [`tool_routing_2026_06_07.md`](tool_routing_2026_06_07.md) | Tool-routing audit — 51-action ToolRouter registry vs `_core` PyO3 exposure (2026-06-07). |
 | [`user_customization_2026_06_07.md`](user_customization_2026_06_07.md) | User-customization guide — `~/.slappyengine/ui/` panel/hotkey/shader override folders and load order (U7 landing 2026-06-07). |
+
+## Tutorials TOC (`docs/tutorials/`)
+
+Curated table of contents for every runnable `hello_*` demo shipped under
+`SlapPyEngineExamples/examples/`; links each demo to its smoke-test tripwire
+and the primary design / API ref doc(s) it exercises.
+
+| Path | Description |
+|---|---|
+| [`tutorials/README.md`](tutorials/README.md) | Tutorials TOC — 43 `hello_*` runnable demo entries grouped into Flagship / Rendering-HUD-capture / Physics-dynamics / Subsystem-primer sections; each row links the demo source, its `SlapPyEngineTests/tests/test_demo_hello_*.py` smoke tripwire, and the paired design / API-ref doc where one exists (WW6 landing 2026-07-07). |
