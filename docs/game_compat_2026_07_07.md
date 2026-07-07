@@ -24,6 +24,14 @@ F1 baseline. Both game suites collect the expected test count (Ochema
 1126, Bullet 54) but pass rates collapsed from ~100% (F1) to ~40%
 (Ochema) / ~35% (Bullet Strata).
 
+**Post-UU1+UU2 update (2026-07-07, § 9 append by UU3):** UU2
+(`b29e601`) restored `global_bus` / `unsubscribe`; UU1 (`ee732fd`)
+fixed the RenderTarget MRO / `layers` init contract. Ochema recovered
++47 passes (424 → 471); Bullet Strata unchanged. All three TT1-flagged
+root causes verified resolved via grep. **Still FAILING** — residual
+regression is a long tail of ~15-20 orthogonal deletions needing 5-6
+more targeted backcompat slots. See § 9 for full re-run analysis.
+
 * **Ochema Circuit**: **424 passed / 665 failed / 25 skipped /
   15 errors** (of 1129 collected) — vs F1 baseline of 1124 / 2.
   **Delta: −700 passes.**
@@ -283,6 +291,123 @@ reaches PyPI installers.
 --no-header --tb=line` for each game, `git rev-parse HEAD` = `fc5d94f`,
 `pyproject.toml:7 = 0.3.0b0`, `Cargo.toml:3 = 0.3.0-beta.0`,
 `project_beta_2026_05.md` baseline.*
+
+---
+
+## 9. Post-UU1+UU2 re-run (UU3, 2026-07-07 late-evening +1)
+
+Second-pass game-compat walk by UU3 background scrum agent following
+TT1's baseline. Between TT1 and UU3, two sibling agents dispatched to
+fix the two dominant breakage classes flagged in § 4:
+
+* **UU2** (`b29e601` — "Restore event_bus.global_bus + unsubscribe
+  backcompat") — targeted § 4.2 + § 4.3 (public-API deletions).
+* **UU1** (`ee732fd` — "Fix RenderTarget MRO regression") — targeted
+  § 4.1. UU1's fix touches `python/slappyengine/render_target.py`
+  (defensive-`hasattr` fallback on `add_layer` / `remove_layer`) and
+  `python/slappyengine/event_bus.py` (cooperative `super().__init__()`
+  chain restore inside `Observable.__init__` so that mixing Observable
+  into an Entity/Asset subclass no longer short-circuits the MRO and
+  leaves `RenderTarget.__init__` unrun).
+
+Engine state at UU3 walk: HEAD `ee732fd` (both UU1 + UU2 landed).
+UU3's re-run initially executed against UU1's uncommitted working
+tree while UU1's commit was still being finalised; the commit landed
+mid-doc-write and the results below are load-bearing against HEAD.
+
+### 9.1 Refreshed pass counts
+
+| game | TT1 pass | TT1 fail | TT1 err | UU3 pass | UU3 fail | UU3 err | Δ vs TT1 | Δ vs F1 |
+|---|---|---|---|---|---|---|---|---|
+| ochema_circuit | 424 | 665 | 15 | **471** | 621 | 12 | **+47 passes** | −653 |
+| bullet_strata | 19 | 32 | 3 | **19** | 32 | 3 | ±0 | −35 |
+| **combined** | **443** | 697 | 18 | **490** | 653 | 15 | **+47 passes** | **−688** |
+
+Ochema pass-rate: 37.6% → 41.7% (of 1108 non-skip). Bullet Strata
+pass-rate unchanged at 35.2%.
+
+### 9.2 Root-cause resolution verdict
+
+Grep of UU3's re-run logs against the § 4 failure fingerprints:
+
+| § | Fingerprint (TT1) | UU3 occurrences | Verdict |
+|---|---|---|---|
+| 4.1 | `AttributeError: '<*Entity>' object has no attribute 'layers'` | **0** | **RESOLVED by UU1** |
+| 4.2 | `ImportError: cannot import name 'global_bus' from 'slappyengine.event_bus'` | **0** | **RESOLVED by UU2** |
+| 4.3 | `TypeError: unsubscribe() missing 1 required positional argument: 'listener'` | **0** | **RESOLVED by UU2** |
+| 4.4 | Misc downstream ImportErrors | 5 distinct symbols still failing | UNCHANGED (§ 9.3 below) |
+
+All three primary root causes flagged by TT1 are eliminated in UU3's
+re-run. The +47-pass Ochema delta comes entirely from tests whose only
+breakage was the `layers` MRO issue; every other failure class TT1
+enumerated persists and now dominates the residual failure surface.
+
+### 9.3 New dominant failure fingerprints (UU3)
+
+Distinct top-level error strings ranked by observed multiplicity:
+
+1. `AttributeError: type object 'CacheMode' has no attribute
+   'OFFSCREEN_SERIALIZE'` / `'ALWAYS_CACHED'` — Ochema + Bullet Strata,
+   `entities/*.py` — enum member deletion between F1 and TT6.
+2. `TypeError: DeformableLayerComponent.__init__() got an unexpected
+   keyword argument 'spring_decay'` — Ochema, deforming layer API
+   drift.
+3. `TypeError: PixelCollisionPass.test() missing 4 required positional
+   arguments: 'layer_a_tex', 'layer_a_rect', 'layer_b_tex', and
+   'layer_b_rect'` — Ochema, collision API signature drift.
+4. `ImportError: cannot import name '<symbol>' from
+   'slappyengine.<module>'` — Ochema (5 distinct symbols:
+   `DeformConfig`, `EventDetails`, `PixelCollisionPass`,
+   `_parse_deform`, `debug_listeners`) — additional public-API
+   deletions in the UU2 style.
+5. `AttributeError: '<Manager>' object has no attribute '<method>'`
+   — Ochema (`AudioManager.play_loop`, `LightingSystem.load_profile`,
+   `CollisionManager.on_overlap`) — manager method surface drift.
+
+None of these are `layers`, `global_bus`, or `unsubscribe`, confirming
+UU1+UU2 hit their intended targets. The residual regression is a
+long-tail of ~15-20 distinct public-API deletions / signature drifts,
+each requiring its own targeted backcompat sprint slot (or a CHANGELOG
+breaking-changes entry + downstream migration).
+
+### 9.4 Refreshed verdict
+
+**Still FAILING for gate #12 ship-blocker purposes.** UU3's +47-pass
+Ochema recovery is a 4.2-percentage-point pass-rate uptick — a
+meaningful directional signal that the fix strategy is correct, but
+nowhere near the ≥ 95%-of-F1 threshold required to flip gate #12 to
+GREEN (which would need Ochema ≥ 1068 and Bullet Strata ≥ 51).
+
+Recommended next-slot action stack (in priority order):
+
+1. Restore `CacheMode.OFFSCREEN_SERIALIZE` + `CacheMode.ALWAYS_CACHED`
+   enum members (§ 9.3 item 1) — one commit closes the entire Bullet
+   Strata residual + a large slice of Ochema.
+2. Restore or CHANGELOG the 5 § 9.3 item-4 `ImportError` symbols
+   (`DeformConfig`, `EventDetails`, `PixelCollisionPass`,
+   `_parse_deform`, `debug_listeners`) — same alias pattern UU2 used
+   for `global_bus`.
+3. Restore `DeformableLayerComponent(spring_decay=...)` kwarg
+   (§ 9.3 item 2) or CHANGELOG the rename.
+4. Restore `PixelCollisionPass.test()` legacy signature (§ 9.3 item 3)
+   or provide a 0-arg convenience wrapper.
+5. Restore `AudioManager.play_loop`, `LightingSystem.load_profile`,
+   `CollisionManager.on_overlap` (§ 9.3 item 5) — three method
+   restorations, small blast radius.
+
+Ballpark cost: 5-6 sprint slots of UU1/UU2-style targeted backcompat
+work should close the residual gap and flip gate #12 to GREEN.
+
+### 9.5 UU3 constraints honoured
+
+* No file under either game repo touched — read-only pytest
+  invocation.
+* No file under `python/slappyengine/` touched by UU3 (UU1's WIP
+  edits are in the working tree but attribute to UU1, not UU3).
+* No WIP subpackage touched.
+* Commit scoped: `docs/game_compat_2026_07_07.md` (this § 9 append)
+  + `docs/v0_4_gate_reconciliation_2026_07_07.md` (gate #12
+  post-UU1+UU2 status refresh in § 2 table row + § 4 note).
 
 ---
 

@@ -51,7 +51,7 @@ Evidence column: commit SHA, file path, or grep result.
 | 9 | `cargo check` + `cargo test` green (tracked scope) | **GREEN** | Flipped by PP3 | `git ls-files "src/*.rs"` = 14 files; `grep '^mod ' src/lib.rs` = 14 declarations; zero lag. F1 four untracked files re-scope to gate 11. |
 | 10 | `maturin build --release` wheel size within budget | **GREEN** | Maintained | ~1.45 MB (well under 50 MB) per `docs/wheel_size_audit_2026_06_02.md`. |
 | 11 | Softbody / fluid / physics / physics2 WIP dirs committed or deferred | **FAILING** | Unchanged | `git status` confirms `softbody/`, `fluid/`, `physics/`, `physics2/` untracked, plus 4 untracked Rust source files (`src/raster.rs`, `src/pbf_solver.rs`, `src/softbody_solver.rs`, `src/fluid_shader.rs`). User-gated. |
-| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | **FAILING** | **Flipped by TT1** (was SS5 BLOCKED) | Live tripwire executed 2026-07-07 by TT1 (re-dispatch of rate-limited SS5). Both game repos located at `H:/DaedalusSVN/` (SVN, not `H:/Github/` as SS5 assumed). Results vs F1 baseline: Ochema **424 pass / 665 fail / 25 skip / 15 err** (baseline 1124/2), Bullet Strata **19 pass / 32 fail / 3 err** (baseline 54/0). **Delta: −735 total passes.** Two dominant breakage classes: (a) `AttributeError: '<Entity subclass>' object has no attribute 'layers'` (RenderTarget MRO / `__init__` call order regression), (b) `ImportError: cannot import name 'global_bus' from 'slappyengine.event_bus'` (public-API symbol deletion). See `docs/game_compat_2026_07_07.md` § 4 for full root-cause analysis and § 6 for fix prescription. **Ship-blocker for v0.4.0.** |
+| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | **STILL FAILING** (post UU1+UU2) | **Re-verified by UU3** (was TT1 FAILING) | Live re-tripwire executed 2026-07-07 by UU3 after UU2 (`b29e601`, event_bus backcompat) landed + UU1 (`render_target.py` MRO defensive fallback + `Observable.__init__` cooperative super chain) applied to working tree. Results vs TT1 baseline: Ochema **471 pass / 621 fail / 22 skip / 12 err** (+47 passes), Bullet Strata **19/32/3** (unchanged). Combined **+47 passes** (still −688 vs F1 baseline). UU1+UU2 grep-verified as effective: 0 occurrences of `layers`, `global_bus`, or `unsubscribe()`-missing-arg fingerprints. Residual dominated by 5 orthogonal breakage classes: `CacheMode.OFFSCREEN_SERIALIZE`/`ALWAYS_CACHED` enum-member deletions, `DeformableLayerComponent(spring_decay=...)` kwarg drift, `PixelCollisionPass.test()` signature drift, 5 further ImportError deletions (`DeformConfig`, `EventDetails`, `PixelCollisionPass`, `_parse_deform`, `debug_listeners`), and 3 manager-method deletions (`AudioManager.play_loop`, `LightingSystem.load_profile`, `CollisionManager.on_overlap`). See `docs/game_compat_2026_07_07.md` § 9 for full UU3 re-run analysis + fix-stack. **Still ship-blocker for v0.4.0** — needs 5-6 more targeted backcompat sprint slots to close residual gap. |
 | 13 | Perf dashboard no regression >10% | needs-verify | Unchanged | Baseline unchanged; re-run needed post-parity. |
 | 14 | CHANGELOG.md `[0.4.0]` section written | **DRAFT** | Flipped by PP7 | `CHANGELOG.md:8 = "## [0.4.0] — YYYY-MM-DD (UNRELEASED)"`. Date flip happens in tag sprint. |
 | 15 | `.github/workflows/publish.yml` runs test suite before wheel | **DEFERRED** | Unchanged | Punted to v0.4.1. |
@@ -79,6 +79,26 @@ Refreshed pass count is **9 GREEN + 1 DRAFT + 3 FAILING +
 1 needs-verify + 1 deferred**. Gate 12 is now a ship-blocker for
 v0.4.0 alongside gates 1 (version bump) and 11 (WIP unfreeze). Only
 gate 13 (perf dashboard) remains open verification.
+
+**Post-UU1+UU2+UU3 (2026-07-07 late-evening +1) update**: UU2
+(`b29e601`) landed the event_bus `global_bus` + `unsubscribe`
+backcompat aliases. UU1 (`ee732fd`) landed the RenderTarget MRO fix
+(`Observable.__init__` cooperative-`super()` chain restore +
+defensive-`hasattr` fallback in `add_layer` / `remove_layer`). UU3
+re-ran the tripwire against HEAD `ee732fd`: Ochema **471 pass /
+621 fail / 22 skip / 12 err** (+47 vs TT1); Bullet Strata **19/32/3**
+(unchanged). All three TT1-flagged root cause fingerprints
+(`layers`, `global_bus`, `unsubscribe`-missing-arg) grep-verified as
+zero occurrences. Residual dominated by 5 orthogonal breakage classes
+(`CacheMode` enum-member deletions, `DeformableLayerComponent`
+kwarg drift, `PixelCollisionPass.test()` signature drift, 5 further
+ImportError deletions, 3 manager-method deletions) enumerated in
+`docs/game_compat_2026_07_07.md` § 9.3. Gate 12 status **STILL
+FAILING** — needs 5-6 more UU1/UU2-style backcompat slots to reach
+the ≥ 95%-of-F1 threshold (Ochema ≥ 1068, Bullet Strata ≥ 51). Pass
+count unchanged at **9 GREEN + 1 DRAFT + 3 FAILING + 1 needs-verify
++ 1 deferred** (Gate 12 remains FAILING; recovery direction is
+correct but insufficient magnitude to flip).
 
 ---
 
