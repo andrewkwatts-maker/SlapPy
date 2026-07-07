@@ -1517,6 +1517,66 @@ def _fb_spawn_at_last_position(ctx: dict[str, Any]) -> Any:
     return spawn_at_last_position(ctx)
 
 
+# ---------------------------------------------------------------------------
+# WW4 STUB-triage fallbacks (2026-07-15 — round 24 after VV4)
+#
+# Five more STUB rows flipped to WIRED:
+#   * view.toggle_axes         — flip the viewport world-axes overlay
+#     (Blender numpad axis widget / Unity scene view "Axes"). Distinct
+#     from CC1 view.toggle_gizmos (transform gizmo — object-owned) +
+#     CC1 view.toggle_grid + VV4 view.toggle_ruler + QQ1
+#     view.toggle_stats + PP1 view.toggle_wireframe.
+#   * view.toggle_background   — flip the viewport checker background
+#     layer (Photoshop / Aseprite transparency board). Distinct from
+#     CC1 view.toggle_grid (grid lines *on top of* the background) +
+#     VV4 view.toggle_ruler.
+#   * edit.select_by_tag       — select every entity carrying a given
+#     tag (Unity CompareTag / Godot is_in_group). Distinct from QQ1
+#     selection.by_type (kind-based) + selection.by_layer (Z-layer) +
+#     selection.same_material.
+#   * spawn.at_grid            — arm the next spawn at the nearest
+#     grid cell (Blender Shift+S → 1). Distinct from QQ1
+#     spawn.at_origin (world zero, no snap) + TT2 spawn.at_view_center
+#     (camera focal point) + UU4 spawn.at_origin_offset + VV4
+#     spawn.at_last_position (previous drop) + CC1 spawn.spawn_at_cursor.
+#   * layer.clear              — remove every entity on the active
+#     Z-layer, preserving the layer entry itself. Distinct from VV4
+#     layer.delete (removes the entry too), OO1 layer.merge_down
+#     (moves entities into the neighbour), and DD1 edit.duplicate_layer.
+# Python fallbacks live in
+# ``slappyengine.actions.view_toggle_axes_actions``,
+# ``view_toggle_background_actions``, ``selection_by_tag_actions``,
+# ``spawn_at_grid_actions``, and ``layer_clear_actions``.
+# ---------------------------------------------------------------------------
+
+
+def _fb_view_toggle_axes(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_toggle_axes_actions import toggle_axes
+    return toggle_axes(ctx)
+
+
+def _fb_view_toggle_background(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_toggle_background_actions import (
+        toggle_background,
+    )
+    return toggle_background(ctx)
+
+
+def _fb_edit_select_by_tag(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.selection_by_tag_actions import select_by_tag
+    return select_by_tag(ctx)
+
+
+def _fb_spawn_at_grid(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_at_grid_actions import spawn_at_grid
+    return spawn_at_grid(ctx)
+
+
+def _fb_layer_clear(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_clear_actions import clear_layer
+    return clear_layer(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -2909,6 +2969,48 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_spawn_at_last_position,
             required_args=[],
             category="spawn",
+        ),
+        # ── WW4 STUB-triage: view.toggle_axes, view.toggle_background,
+        #    edit.select_by_tag, spawn.at_grid, layer.clear (round 24) ──
+        ToolAction(
+            action_id="view.toggle_axes",
+            label="Toggle World Axes",
+            rust_backing=None,
+            python_fallback=_fb_view_toggle_axes,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="view.toggle_background",
+            label="Toggle Background",
+            rust_backing=None,
+            python_fallback=_fb_view_toggle_background,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="edit.select_by_tag",
+            label="Select By Tag",
+            rust_backing=None,
+            python_fallback=_fb_edit_select_by_tag,
+            required_args=["tag"],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="spawn.at_grid",
+            label="Spawn at Grid",
+            rust_backing=None,
+            python_fallback=_fb_spawn_at_grid,
+            required_args=[],
+            category="spawn",
+        ),
+        ToolAction(
+            action_id="layer.clear",
+            label="Clear Layer",
+            rust_backing=None,
+            python_fallback=_fb_layer_clear,
+            required_args=[],
+            category="layer",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(
