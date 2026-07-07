@@ -161,6 +161,47 @@ class SplitScreenConfig:
     border_color: tuple[int, int, int] = field(default_factory=lambda: (30, 30, 30))
 
 
+# Backwards-compat: ``DeformConfig`` was the legacy per-frame deform block on
+# the root Config. Ochema Circuit's ``tests/test_deform_config.py`` asserts
+# every field, and ``vehicle.py`` reads ``engine_config().deform`` at scene
+# init. Defaults mirror the legacy YAML block that shipped with the F1 beta.
+# DO NOT REMOVE without a v1.0 deprecation cycle.
+@dataclass
+class DeformConfig:
+    sim_mode: str = "collision_triggered"
+    decay_mode: str = "curve"
+    spring_decay: float = 0.94
+    decay_curve: list = field(default_factory=lambda: [
+        [0.0, 0.94],
+        [0.25, 0.97],
+        [0.5, 0.99],
+        [1.0, 1.0],
+    ])
+    settle_threshold: float = 0.5
+    settling_ramp_rate: float = 4.0
+    material_preset: str = "metal"
+    crack_mode: str = "none"
+    crack_count: int = 6
+    crack_length_px: float = 40.0
+    crack_jitter: float = 0.3
+    destroy_mode: str = "persist"
+    physics_coupling: str = "isolated"
+    repair_mode: str = "event_only"
+    repair_rate: float = 1.0
+    sim_frequency: str = "every_frame"
+    n_frames_skip: int = 4
+    budget_ms_per_frame: float = 2.0
+    emit_events: list = field(default_factory=lambda: [
+        "Deform.Impact",
+        "Deform.Destroyed",
+        "Deform.CrackAdded",
+        "Deform.Repair",
+        "Deform.Settled",
+        "Deform.CriticalDamage",
+    ])
+    critical_damage_threshold: float = 0.3
+
+
 @dataclass
 class Config:
     """Root configuration object loaded from ``engine.yml``."""
@@ -179,6 +220,8 @@ class Config:
     lighting: LightingConfig = field(default_factory=LightingConfig)
     input: InputConfig = field(default_factory=InputConfig)
     split_screen: SplitScreenConfig = field(default_factory=SplitScreenConfig)
+    # Backwards-compat: legacy deform block, see ``DeformConfig`` above.
+    deform: DeformConfig = field(default_factory=DeformConfig)
 
 
 # ---------------------------------------------------------------------------
@@ -377,6 +420,40 @@ def _parse_input(raw: dict) -> InputConfig:
     )
 
 
+def _parse_deform(raw: dict) -> DeformConfig:
+    """Backwards-compat: parse a raw deform: YAML block into a :class:`DeformConfig`.
+
+    Missing keys fall back to :class:`DeformConfig` field defaults. Used by
+    downstream game code (Ochema Circuit's per-vehicle deform config loader)
+    to hydrate a DeformConfig from a plain dict without reaching for
+    ``dataclasses.replace``.
+    DO NOT REMOVE without a v1.0 deprecation cycle.
+    """
+    defaults = DeformConfig()
+    return DeformConfig(
+        sim_mode=str(raw.get("sim_mode", defaults.sim_mode)),
+        decay_mode=str(raw.get("decay_mode", defaults.decay_mode)),
+        spring_decay=float(raw.get("spring_decay", defaults.spring_decay)),
+        decay_curve=list(raw.get("decay_curve", defaults.decay_curve)),
+        settle_threshold=float(raw.get("settle_threshold", defaults.settle_threshold)),
+        settling_ramp_rate=float(raw.get("settling_ramp_rate", defaults.settling_ramp_rate)),
+        material_preset=str(raw.get("material_preset", defaults.material_preset)),
+        crack_mode=str(raw.get("crack_mode", defaults.crack_mode)),
+        crack_count=int(raw.get("crack_count", defaults.crack_count)),
+        crack_length_px=float(raw.get("crack_length_px", defaults.crack_length_px)),
+        crack_jitter=float(raw.get("crack_jitter", defaults.crack_jitter)),
+        destroy_mode=str(raw.get("destroy_mode", defaults.destroy_mode)),
+        physics_coupling=str(raw.get("physics_coupling", defaults.physics_coupling)),
+        repair_mode=str(raw.get("repair_mode", defaults.repair_mode)),
+        repair_rate=float(raw.get("repair_rate", defaults.repair_rate)),
+        sim_frequency=str(raw.get("sim_frequency", defaults.sim_frequency)),
+        n_frames_skip=int(raw.get("n_frames_skip", defaults.n_frames_skip)),
+        budget_ms_per_frame=float(raw.get("budget_ms_per_frame", defaults.budget_ms_per_frame)),
+        emit_events=list(raw.get("emit_events", defaults.emit_events)),
+        critical_damage_threshold=float(raw.get("critical_damage_threshold", defaults.critical_damage_threshold)),
+    )
+
+
 def _parse_split_screen(raw: dict) -> SplitScreenConfig:
     bc = raw.get("border_color", [30, 30, 30])
     return SplitScreenConfig(
@@ -423,6 +500,7 @@ def load_config(path: str | None = None) -> Config:
         lighting=_parse_lighting(raw["lighting"]) if "lighting" in raw else LightingConfig(),
         input=_parse_input(raw["input"]) if "input" in raw else InputConfig(),
         split_screen=_parse_split_screen(raw["split_screen"]) if "split_screen" in raw else SplitScreenConfig(),
+        deform=_parse_deform(raw["deform"]) if "deform" in raw else DeformConfig(),
     )
 
 

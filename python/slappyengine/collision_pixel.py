@@ -142,7 +142,108 @@ class PixelCollisionPass:
     # Public API
     # ------------------------------------------------------------------
 
-    def test(
+    # Backwards-compat: Ochema Circuit calls ``PixelCollisionPass.test(a, b)``
+    # unbound (class-level) with only two entity arguments. The legacy form
+    # inspects ``entity.layers[0]._image_data`` alpha overlap at the current
+    # position — no GPU context needed. The modern GPU form remains the
+    # primary implementation via ``self._test_gpu(...)``. See
+    # ``_test_entities_cpu`` below for the fallback.
+    # DO NOT REMOVE without a v1.0 deprecation cycle.
+
+    @staticmethod
+    def _test_entities_cpu(entity_a, entity_b, alpha_threshold: int = 128) -> PixelContactResult:
+        """Backwards-compat: 2-entity alpha-overlap contact test.
+
+        Returns ``PixelContactResult`` with the same shape as the GPU form.
+        Position is read from ``entity.position`` (top-left of the sprite);
+        alpha channel is read from ``entity.layers[0]._image_data``.
+        """
+        try:
+            import numpy as _np
+        except ImportError:  # pragma: no cover — numpy is a core dep
+            return _NO_CONTACT
+        try:
+            layer_a = entity_a.layers[0]
+            layer_b = entity_b.layers[0]
+            img_a = layer_a._image_data
+            img_b = layer_b._image_data
+        except (AttributeError, IndexError, TypeError):
+            return _NO_CONTACT
+        if img_a is None or img_b is None:
+            return _NO_CONTACT
+        if img_a.ndim != 3 or img_a.shape[2] < 4:
+            return _NO_CONTACT
+        if img_b.ndim != 3 or img_b.shape[2] < 4:
+            return _NO_CONTACT
+
+        ah, aw = img_a.shape[:2]
+        bh, bw = img_b.shape[:2]
+        try:
+            ax = int(round(float(entity_a.position[0])))
+            ay = int(round(float(entity_a.position[1])))
+            bx = int(round(float(entity_b.position[0])))
+            by = int(round(float(entity_b.position[1])))
+        except (AttributeError, IndexError, TypeError, ValueError):
+            return _NO_CONTACT
+
+        # Overlap rect in world coords.
+        ox0 = max(ax, bx)
+        oy0 = max(ay, by)
+        ox1 = min(ax + aw, bx + bw)
+        oy1 = min(ay + ah, by + bh)
+        if ox1 <= ox0 or oy1 <= oy0:
+            return _NO_CONTACT
+
+        # Slice each sprite's alpha channel to the overlap rect.
+        alpha_a = img_a[oy0 - ay:oy1 - ay, ox0 - ax:ox1 - ax, 3]
+        alpha_b = img_b[oy0 - by:oy1 - by, ox0 - bx:ox1 - bx, 3]
+
+        thr = int(alpha_threshold) & 0xFF
+        solid_a = alpha_a > thr
+        solid_b = alpha_b > thr
+        contact_mask = solid_a & solid_b
+        contact_px = int(contact_mask.sum())
+        if contact_px == 0:
+            return _NO_CONTACT
+
+        # Contact normal: vector from B's centroid to A's centroid, normalised.
+        acx = ax + aw * 0.5
+        acy = ay + ah * 0.5
+        bcx = bx + bw * 0.5
+        bcy = by + bh * 0.5
+        nx = acx - bcx
+        ny = acy - bcy
+        mag = math.sqrt(nx * nx + ny * ny)
+        if mag > 1e-9:
+            normal = (nx / mag, ny / mag)
+        else:
+            normal = (1.0, 0.0)
+
+        return PixelContactResult(hit=True, contact_pixels=contact_px, normal=normal)
+
+    class _TestDispatcher:
+        """Backwards-compat descriptor that routes ``.test(...)`` calls.
+
+        * ``PixelCollisionPass.test(entity_a, entity_b)`` — 2-arg legacy form,
+          delegates to :meth:`_test_entities_cpu` (CPU alpha overlap).
+        * ``pass_.test(gpu, layer_a_tex, layer_a_rect, layer_b_tex, layer_b_rect, ...)``
+          — modern GPU form, delegates to bound :meth:`_test_gpu`.
+        DO NOT REMOVE without a v1.0 deprecation cycle.
+        """
+
+        def __get__(self, instance, owner):
+            if instance is None:
+                # Class-level access — legacy 2-arg CPU form.
+                def _cpu_dispatch(entity_a, entity_b, alpha_threshold=128):
+                    return owner._test_entities_cpu(entity_a, entity_b, alpha_threshold)
+                _cpu_dispatch.__name__ = "test"
+                return _cpu_dispatch
+            # Instance-level access — modern GPU form.
+            return instance._test_gpu
+
+    test = _TestDispatcher()
+
+    def _test_gpu(
         self,
         gpu: "GPUContext",
         layer_a_tex: object,

@@ -273,11 +273,23 @@ class DeformableLayerComponent(ComponentBase):
         self,
         layer,
         elastic_threshold: float = 80.0,
+        **legacy_kwargs,
     ) -> None:
         self.layer = layer
         self.elastic_threshold: float = float(elastic_threshold)
         self._pending_impacts: list[dict] = []
         self._integrity: float = 1.0
+        # Backwards-compat: legacy Ochema Circuit vehicle.py passes a bag of
+        # per-class deform config kwargs (`spring_decay`, `strength_map`,
+        # `material_preset`, `sim_mode`, `destroy_mode`). The modern component
+        # collapsed these into runtime config; retain them as plain attributes
+        # so downstream code that reads them post-construction still works.
+        # DO NOT REMOVE without a v1.0 deprecation cycle.
+        self.spring_decay: float = float(legacy_kwargs.get("spring_decay", 0.94))
+        self.strength_map = legacy_kwargs.get("strength_map", None)
+        self.material_preset: str = str(legacy_kwargs.get("material_preset", "metal"))
+        self.sim_mode: str = str(legacy_kwargs.get("sim_mode", "collision_triggered"))
+        self.destroy_mode: str = str(legacy_kwargs.get("destroy_mode", "persist"))
 
     @property
     def integrity(self) -> float:

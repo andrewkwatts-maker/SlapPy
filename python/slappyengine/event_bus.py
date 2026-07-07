@@ -9,6 +9,15 @@ from slappyengine._event_bus_validation import (
 )
 
 
+# Backwards-compat: ``EventDetails`` was the legacy alias for the event
+# payload dict handed to subscribers. Ochema Circuit's HUD entity type-hints
+# every callback with ``evt: EventDetails`` and imports it from
+# ``slappyengine.event_bus``. Kept as an alias for ``dict[str, Any]`` so the
+# import path resolves and type hints remain valid.
+# DO NOT REMOVE without a v1.0 deprecation cycle.
+EventDetails = dict  # type alias — dict[str, Any] payload passed to subscribers
+
+
 class EventBus:
     """
     Lightweight synchronous pub-sub event bus.
