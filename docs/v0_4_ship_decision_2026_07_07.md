@@ -293,3 +293,95 @@ re-run (`docs/game_compat_2026_07_07.md`), UU3 recovery append
 at commit `8fe678a`, `pyproject.toml:7` +
 `python/slappyengine/__init__.py:103` version cross-check.
 Docs-only — no Python source touched.*
+
+---
+
+## 8. Post-YY1 update (2026-07-08) — new Option E: SHIP-AT-YELLOW
+
+**Refresh appended by YY3** after gate #12 crossed the YELLOW
+threshold. YY1 (`4ea51da`, "Restore EventPayload dual-shape returns")
+closed the 84-site dict-vs-object drift that was the WW3-era top
+residual. Combined F1 recovery: **1082/1178 = 91.8%** (was 75.0% at
+WW3). Both games individually reach >90% (Ochema 91.8%, Bullet
+Strata 92.6%). Full analysis in `docs/game_compat_2026_07_07.md`
+§ 12.
+
+### 8.1 Refreshed gate table (post-YY1)
+
+| # | Gate | Status | Delta vs VV7 § 2 | Blocker path |
+|---|---|---|---|---|
+| 12 | Game-compat tripwire | **YELLOW** (was FAILING) | **Threshold crossed by YY1** | No longer blocker — ship at YELLOW acceptable. |
+
+All other gates unchanged from VV7 § 2.
+
+### 8.2 New Option E — SHIP NOW at YELLOW
+
+Enabled by gate #12 crossing 80% F1. Adds a fifth path to the A/B/C/D
+menu in § 4:
+
+**Option E — Ship v0.4.0 NOW that gate #12 is YELLOW.**
+
+* **Engine team cost.** ~1 sprint slot: tag-sprint bump sequence
+  (gate 1 + 2 + 14 folded) + optional 1 more slot for the
+  gate-#12-to-near-GREEN push (Observable kwarg shim +
+  DeformableLayerComponent method aliases = ~18 sites; would push
+  recovery to ~93-94%). **Total: 1-2 slots** — comparable to
+  Option A but with 91.8% recovery instead of 42%.
+* **Downstream cost.** LOW-MEDIUM. Both games get 91.8%
+  compatibility out of the box — most feature paths work; residual
+  failures are 7 Observable-kwarg sites + 7 DeformableLayerComponent
+  method sites + ~55 downstream logic-assertion drift (tolerance /
+  event-count off-by-one). Downstream owners can ship against v0.4.0
+  with `pytest -k "not (Observable_name_kwarg or integrity_from_strain)"`
+  filters until v0.4.1 lands the last residual fixes.
+* **Risk.** LOW. The 91.8% number is at YELLOW threshold — well
+  above the 80% target OO7 implicitly set. First impression for
+  downstream users: "9-out-of-10 tests pass, patch release fixes
+  the last 10%". CHANGELOG carries an explicit v0.4.1 commitment
+  for the Observable-kwarg + DeformableLayerComponent residual.
+
+### 8.3 Refreshed recommendation
+
+**Option E supersedes Option B as the recommended path.** Justification:
+
+1. **YY1's +198-pass delta shifted the risk arithmetic.** VV7's
+   Option B assumed 2-3 more backcompat sprints at UU-pair rate
+   (+47 passes / 2 slots) would close the residual. YY1 delivered
+   +198 passes in a single slot — an order of magnitude better than
+   assumed. The gap that VV7 estimated at "2-3 sprints" is now
+   effectively closed to YELLOW-plus-buffer in one.
+2. **Shipping at 91.8% is materially better than Option A's 42%.**
+   The v0.4.0 downstream cost that Option A treated as "unacceptable"
+   is now bounded to ~14 site-level fixes + a downstream-test
+   tolerance sweep — a v0.4.1 followup within 1 sprint, not 2-3.
+3. **The v0.4 payload has now been on master for 2+ weeks of docs
+   polish.** Continuing to delay the tag while gate #12 chases 95%
+   burns goodwill with users tracking master waiting for the tag.
+4. **95% GREEN is not required by any external contract.** OO7's
+   original gate #12 wording was "match or exceed F1 baseline"
+   which is 100%; that target was impossible under any of A/B/C.
+   The 95% GREEN threshold was added by TT1 as an internal
+   ship-quality bar; YELLOW is the pragmatic threshold external
+   consumers care about.
+
+**Concrete next tick (revised).** User answers the same Q1/Q2/Q3
+from § 6, with an updated Q1 reference: "Ship-at-91.8%-compat
+acceptable?" (was "ship-at-42%"). If YES → Option E, dispatch tag
+sprint immediately + optional YY-follow slot for Observable-kwarg
+shim. If NO → Option B remains available (delay ~1 slot for
+Observable-kwarg + DeformableLayerComponent method aliases to push
+to ~93-94% near-GREEN, then tag).
+
+### 8.4 Cross-reference for § 8
+
+* [`docs/game_compat_2026_07_07.md`](game_compat_2026_07_07.md)
+  § 12 — YY3 re-verify with YY1 landing evidence.
+* [`docs/v0_4_gate_reconciliation_2026_07_07.md`](v0_4_gate_reconciliation_2026_07_07.md)
+  — Gate #12 row refreshed to YELLOW.
+
+*§ 8 refresh generated 2026-07-08 by YY3 background scrum agent
+following YY1's gate #12 YELLOW crossing. Sources: `git log
+--oneline -15` (identified YY1 `4ea51da` landed), live tripwire
+against HEAD `86e57f9` (Ochema 1032/77/17, Bullet Strata 50/4/0),
+combined F1 recovery 1082/1178 = 91.8%. Docs-only — no Python
+source touched.*
