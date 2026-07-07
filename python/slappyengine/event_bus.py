@@ -70,21 +70,47 @@ class EventBus:
         validate_callback("callback", "EventBus.subscribe", callback)
         self._listeners.setdefault(event_type, []).append(callback)
 
-    def unsubscribe(self, event_type: str, callback: Callable | None = None) -> None:
+    def unsubscribe(
+        self,
+        event_type: str | None = None,
+        callback: Callable | None = None,
+    ) -> None:
         """Remove a previously-registered ``callback`` from ``event_type``.
 
-        Backwards-compat: ``callback=None`` (single-arg form) removes ALL
-        listeners for the topic. Downstream games (Ochema Circuit, Bullet
-        Strata) rely on the legacy ``bus.unsubscribe("topic")`` shape.
+        Legacy semantics preserved for downstream games (Ochema Circuit,
+        Bullet Strata):
+
+        * ``unsubscribe(topic)`` — remove ALL listeners for ``topic``.
+        * ``unsubscribe(topic, listener)`` — remove specific listener from
+          ``topic``.
+        * ``unsubscribe(None, listener)`` — remove ``listener`` from EVERY
+          topic (teardown/cleanup pattern).
+        * ``unsubscribe()`` or ``unsubscribe(None, None)`` — no-op.
+
         DO NOT tighten this signature without a v1.0 deprecation cycle.
 
         Raises
         ------
         TypeError
-            If ``event_type`` is not a ``str``.
+            If ``event_type`` is neither ``None`` nor a ``str``.
         ValueError
             If ``event_type`` is the empty string.
         """
+        # Case 1: no-op — nothing supplied to remove.
+        if event_type is None and callback is None:
+            return
+
+        # Case 2: teardown pattern — drop this callback from every topic.
+        if event_type is None:
+            for topic in list(self._listeners.keys()):
+                self._listeners[topic] = [
+                    l for l in self._listeners[topic] if l is not callback
+                ]
+                if not self._listeners[topic]:
+                    del self._listeners[topic]
+            return
+
+        # Case 3 & 4: topic-scoped. event_type must now be a valid str.
         validate_event_type("event_type", "EventBus.unsubscribe", event_type)
         if callback is None:
             # Legacy 1-arg form: drop every listener bound to this topic.
@@ -206,11 +232,13 @@ def subscribe(event_type: str, listener) -> None:
     _DEFAULT_BUS.subscribe(event_type, listener)
 
 
-def unsubscribe(event_type: str, listener=None) -> None:
+def unsubscribe(event_type: str | None = None, listener=None) -> None:
     """Unsubscribe from the module-level default :class:`EventBus`.
 
-    Backwards-compat: ``listener=None`` (single-arg form) drops all
-    listeners for the topic — matches the legacy games' API expectation.
+    Backwards-compat: mirrors :meth:`EventBus.unsubscribe` — supports the
+    legacy 1-arg ``unsubscribe("topic")`` shape AND the teardown pattern
+    ``unsubscribe(None, listener)`` which drops ``listener`` from every
+    topic. ``unsubscribe()`` is a no-op.
     """
     _DEFAULT_BUS.unsubscribe(event_type, listener)
 
