@@ -11,8 +11,64 @@ native; Python is glue, ergonomics, and config. Ships on PyPI as
 
 * Engine version (runtime): `0.3.0b0`
 * Native `_core` available: `True`
-* Top-level names in `__all__`: **88** (75 pre-HH1 + 13 HH1/HH5 ergonomic surface)
-* Declared subpackages: **22** (adds `asset_import` in HH5)
+* Top-level names in `__all__`: **91**
+* Declared subpackages: **25**
+
+## Update 2026-07-07 (TT5)
+
+Re-ran `scripts/gen_engine_surface_doc.py` to close v0.4 gate #2
+("engine surface doc matches `__all__`"). This is the second refresh
+after the NN6 pass (2026-07-06). Delta since NN6:
+
+* **+3 top-level names** (88 -> 91): `DiagnosticEvent`,
+  `DiagnosticsCollector`, `get_global_collector` — the OO6 diagnostics
+  aggregator surface + RR4/SS6 extensions.
+* **+3 declared subpackages** (22 -> 25): `math`, `visual_scripting`,
+  and the `zones` / `math` set literals in `_subpackages` — the
+  script's live parse now reports 25 (previous hand-authored count of
+  22 was stale; no set-literal edits since NN6, only the doc counter).
+* No removals — every pre-NN6 name is still present in `__all__`.
+* `App` gained ten new methods since NN6 (introspected via
+  `dir(App)`): `start_recording`, `stop_recording`,
+  `take_screenshot`, `enable_ssao`, `enable_shadows` (NN3);
+  `enable_diagnostics`, `disable_diagnostics`, `get_diagnostics`,
+  `diagnostics_events`, `diagnostics_stats` (QQ4); plus
+  `diagnostics_report` (SS6). See the **App runtime surface** callout
+  below for the full method list.
+* `World3D` gained raycast + sweep + BVH + debug helpers
+  (NN4 / OO2 / QQ7): `raycast`, `sweep_aabb`, `RaycastHit`,
+  `SweepHit`, `build_bvh`, `draw_debug`, `debug_stats`. These live on
+  `slappyengine.gpu` / render-side objects and are surfaced through
+  `App.spawn_camera(...).world` in application code — not directly in
+  `slappyengine.__all__`.
+
+Gate #2 verdict: **GREEN** — the generator ran clean, produced
+9 passing tripwire tests
+(`SlapPyEngineTests/tests/test_docs_engine_surface_complete.py` +
+`test_docs_inventory.py`), and the runtime-introspected counts match
+the doc's stated counts. Regeneration is now a one-command loop:
+`PYTHONPATH=python python scripts/gen_engine_surface_doc.py`.
+
+### App runtime surface (HH1 + NN3 + QQ4 + SS6)
+
+`App` is the ergonomic 2-line render entry (`launch().load_model(...).run()`),
+but it also exposes a broader lifecycle + recording + diagnostics API.
+Introspected via `dir(App)` at TT5-time:
+
+| Method | Origin | Purpose |
+|---|---|---|
+| `load_model`, `load_texture` | HH1 | Import asset -> handle. |
+| `spawn_camera`, `spawn_light` | HH1 | Scene helpers. |
+| `enable_hud` | HH1 | Toggle overlay HUD. |
+| `run`, `stop`, `close`, `render_frame` | HH1 | Loop control. |
+| `is_running`, `is_closed`, `is_headless`, `elapsed`, `frame_count` | HH1 | Introspection. |
+| `add_before_tick`, `add_after_tick`, `add_before_frame_render` | HH1 | Lifecycle hooks. |
+| `get_bounding_box_of_all_models` | HH1 | Scene extent query. |
+| `start_recording`, `stop_recording`, `take_screenshot` | NN3 | Capture surface. |
+| `enable_ssao`, `enable_shadows` | NN3 | Post-process toggles. |
+| `enable_diagnostics`, `disable_diagnostics` | QQ4 | Diagnostics on/off. |
+| `get_diagnostics`, `diagnostics_events`, `diagnostics_stats` | QQ4 | Query aggregator. |
+| `diagnostics_report` | SS6 | Save Markdown diagnostics report. |
 
 
 ## Top-level surface (`import slappyengine`)
@@ -107,6 +163,10 @@ Every name below is reachable as `slappyengine.<Name>`. Module column is relativ
 |---|---|---|---|---|
 | `Asset` | class | `asset` | `(name: 'str' = '', position=(0.0, 0.0), size=(64, 64))` |  |
 | `AssetDatabase` | class | `assets.database` | `()` | Singleton asset registry. Call AssetDatabase.instance() to get the shared instance. |
+| `AssetImportDispatcher` | class | `asset_import.dispatcher` | `() -> 'None'` | Dispatch an asset path to the correct importer by extension. |
+| `ImportResult` | dataclass | `asset_import.import_result` | `(kind: 'str', meshes: 'list[Any]' = <factory>, textures: 'list[TextureData]' = <factory...` | Uniform return type from every asset importer. |
+| `TextureData` | dataclass | `asset_import.import_result` | `(pixels: 'np.ndarray', width: 'int', height: 'int', channels: 'int', format: 'str' = 'R...` | CPU-side texture buffer. |
+| `import_asset` | function | `asset_import.dispatcher` | `(path: 'str | Path') -> 'ImportResult'` | Free-function dispatch — uses a lazy shared dispatcher instance. |
 
 ### Rendering
 
@@ -194,37 +254,22 @@ Every name below is reachable as `slappyengine.<Name>`. Module column is relativ
 
 | Name | Kind | Module | Signature | Description |
 |---|---|---|---|---|
+| `App` | class | `app` | `(config: 'AppConfig | None' = None, *, config_path: 'str | Path | None' = None) -> 'None'` | Runtime shell: window + tick loop + hooks + asset handles. |
+| `AppConfig` | dataclass | `app` | `(window_title: 'str' = 'SlapPyEngine', window_size: 'tuple[int, int]' = (1280, 720), fu...` | Runtime configuration for :class:`App`. |
 | `BlurPass` | function | `(top-level)` | `(radius: 'int' = 2)` | Return a :class:`PostProcessPass` configured for blur. |
+| `CameraHandle` | dataclass | `app` | `(position: 'tuple[float, float, float]' = (0.0, 0.0, 5.0), look_at: 'tuple[float, float...` | Active-camera handle. |
+| `DiagnosticEvent` | dataclass | `diagnostics` | `(level: 'str', subsystem: 'str', message: 'str', timestamp: 'float', exc_info: 'Optiona...` | One captured logging record, distilled for HUD / tooling display. |
+| `DiagnosticsCollector` | class | `diagnostics` | `(max_events: 'int' = 500, min_level: 'str' = 'WARNING') -> 'None'` | Rolling-buffer aggregator for ``slappyengine.*`` log records. |
 | `HAS_NATIVE` | constant |  |  | Returns True when the argument is true, False otherwise. |
+| `LightHandle` | dataclass | `app` | `(position: 'tuple[float, float, float]' = (0.0, 0.0, 0.0), color: 'tuple[float, float, ...` | Spawned light entity handle. |
+| `ModelHandle` | dataclass | `app` | `(path: 'str' = '', position: 'tuple[float, float, float]' = (0.0, 0.0, 0.0), rotation: ...` | Mutable transform + trace log for a loaded model. |
 | `OutlinePass` | function | `(top-level)` | `(color=(1.0, 0.0, 0.0, 1.0), threshold=0.1)` | Return a :class:`PostProcessPass` configured for outline rendering. |
 | `PixelatePass` | function | `(top-level)` | `(block_size: 'int' = 4)` | Return a :class:`PostProcessPass` configured for pixelation. |
-
-### Ergonomic top-level API (HH1)
-
-Added in HH1 (2026-07-05). The "2-line render" surface — `import slappyengine as slap; slap.launch().load_model("cube.gltf").run()`.
-
-| Name | Kind | Module | Signature | Description |
-|---|---|---|---|---|
-| `App` | class | `app` | `(config: 'AppConfig | None' = None)` | Coordinator that owns a `Renderer` + `Scene` + event loop. Exposes `.load_model`, `.enable_hud`, `.start_recording`, `.stop_recording`, `.take_screenshot`, `.enable_ssao`, `.enable_shadows`, `.run`. |
-| `AppConfig` | dataclass | `app` | `(title: 'str' = 'SlapPyEngine', size: 'tuple[int, int]' = (1280, 720), ...)` | Window / renderer / audio / physics config; every default merged from `config_defaults.yaml` (HH6). |
-| `ModelHandle` | dataclass | `app` | `(app: 'App', node: 'SceneNode', ...)` | Fluent transform wrapper returned by `App.load_model`. `.at(x,y,z)`, `.rotate(...)`, `.scale(...)`. |
-| `TextureHandle` | dataclass | `app` | `(app: 'App', texture_id: 'int')` | Wrapper around an imported texture returned by `App.load_texture`. |
-| `CameraHandle` | dataclass | `app` | `(app: 'App', node: 'SceneNode')` | Wrapper around the active scene camera; exposes `.look_at(...)`, `.fov(...)`. |
-| `LightHandle` | dataclass | `app` | `(app: 'App', light: 'Light')` | Wrapper around a scene light; exposes `.set_color(...)`, `.set_intensity(...)`. |
-| `launch` | function | `app` | `(title: 'str' = 'SlapPyEngine', size: 'tuple[int, int]' = (1280, 720), **kw) -> 'App'` | Convenience factory — build an `App` and return it ready to `.load_model(...)` and `.run()`. |
-| `load_model` | function | `app` | `(path: 'str | Path', **kw) -> 'ModelHandle'` | Module-level shortcut: launches a default `App` if none active, then loads the model. |
-| `load_texture` | function | `app` | `(path: 'str | Path', **kw) -> 'TextureHandle'` | Module-level shortcut: launches a default `App` if none active, then loads the texture. |
-
-### Asset import (HH5)
-
-Added in HH5 (2026-07-05). Re-exports the top-level names from `slappyengine.asset_import` (glTF / OBJ / MTL / cubemap / stub importers + dispatcher).
-
-| Name | Kind | Module | Signature | Description |
-|---|---|---|---|---|
-| `import_asset` | function | `asset_import.dispatcher` | `(path: 'str | Path', **kw) -> 'ImportResult'` | Dispatch by file extension to the right importer. |
-| `AssetImportDispatcher` | class | `asset_import.dispatcher` | `()` | Registry of extension → importer callable; wraps `import_asset` for engine wiring. |
-| `ImportResult` | dataclass | `asset_import.import_result` | `(meshes: 'list', materials: 'list', textures: 'list', ...)` | Carries meshes / materials / textures / skeletons / animations parsed from an asset file. |
-| `TextureData` | dataclass | `asset_import.import_result` | `(name: 'str', pixels: 'np.ndarray', format: 'str', ...)` | Raw texture buffer produced by an importer; consumed by `TextureHandle` / `PbrMaterial`. |
+| `TextureHandle` | dataclass | `app` | `(path: 'str' = '', id: 'int' = -1, width: 'int' = 0, height: 'int' = 0, channels: 'int'...` | Handle to a loaded texture / bitmap asset. |
+| `get_global_collector` | function | `diagnostics` | `() -> 'DiagnosticsCollector'` | Return the process-wide :class:`DiagnosticsCollector` (lazy init). |
+| `launch` | function | `app` | `(on_begin: 'Callable[[App], None] | None' = None, on_tick: 'Callable[[App, float], None...` | One-shot launcher for the 2-line render pattern. |
+| `load_model` | function | `app` | `(path: 'str | Path') -> 'ModelHandle'` | Load a model into the implicit global app (creates one if absent). |
+| `load_texture` | function | `app` | `(path: 'str | Path') -> 'TextureHandle'` | Load a texture into the implicit global app (creates one if absent). |
 
 ## Subpackages
 
@@ -234,9 +279,9 @@ These are the modules exposed via `slappyengine.__getattr__` — accessing `slap
 
 AI subpackage — lazy-loaded (requires [ai] extra: httpx).
 
-**Public attributes:** _(none exposed at package level)_
+**Public attributes:** `LLMBackendProtocol`
 
-**Inner modules:** `code_sync`, `llm_client`, `ollama_manager`, `script_gen`
+**Inner modules:** `_protocol`, `code_sync`, `llm_client`, `ollama_manager`, `script_gen`
 
 ### `slappyengine.animation`
 
@@ -244,15 +289,15 @@ Animation subpackage — lazy-loaded.
 
 **Public attributes:** `graph`, `procedural`
 
-**Inner modules:** `graph`, `procedural`, `video_import`
+**Inner modules:** `clip`, `graph`, `procedural`, `skeleton_runtime`, `skinner`, `video_import`
 
 ### `slappyengine.asset_import`
 
-Asset importer subpackage (HH5, 2026-07-05) — file-format aware importers for glTF / OBJ / MTL / cubemaps + a dispatcher that picks the right importer by extension. Consumed by `App.load_model` (HH1).
+slappyengine.asset_import — 3D-asset / texture importer subpackage.
 
-**Public attributes:** `AssetImportDispatcher`, `ImportDependencyError`, `ImportResult`, `MtlMaterialDef`, `Skeleton`, `SkeletonNode`, `SkinnedMeshData`, `TextureData`, `import_asset`, `import_cubemap`, `import_fbx`, `import_gltf`, `import_hdr_cubemap`, `import_obj`, `import_obj_with_materials`, `import_ply`, `import_stl`, `import_texture`, `load_model`, `load_texture`, `mtl_to_material`, `parse_mtl`, `resolve_mtl_references`
+**Public attributes:** `AssetImportDispatcher`, `ImportDependencyError`, `ImportResult`, `MtlMaterialDef`, `Skeleton`, `SkeletonNode`, `SkinnedMeshData`, `TextureData`, `cubemap_importer`, `dispatcher`, `gltf_importer`, `import_asset`, `import_cubemap`, `import_fbx`, `import_gltf`, `import_hdr_cubemap`, `import_obj`, `import_obj_with_materials`, `import_ply`, `import_result`, `import_stl`, `import_texture`, `load_model`, `load_texture`, `mtl_resolver`, `mtl_to_material`, `obj_importer`, `parse_mtl`, `resolve_mtl_references`, `skinned_mesh`, `stub_importer`, `texture_importer`
 
-**Inner modules:** `dispatcher`, `gltf_importer`, `obj_importer`, `mtl_resolver`, `cubemap_importer`, `texture_importer`, `skinned_mesh`, `stub_importer`, `import_result`
+**Inner modules:** `cubemap_importer`, `dispatcher`, `gltf_importer`, `import_result`, `mtl_resolver`, `obj_importer`, `samples`, `skinned_mesh`, `stub_importer`, `texture_importer`
 
 ### `slappyengine.assets`
 
@@ -270,15 +315,15 @@ audio_runtime — internal plumbing around the `sounddevice` backend.
 
 Compute subpackage — lazy-loaded to avoid eager wgpu/numpy imports.
 
-**Public attributes:** `asset_compute`, `mutator`, `pipeline`, `readback`, `spatial`, `stats`
+**Public attributes:** `ComputeKernelProtocol`, `asset_compute`, `mutator`, `pipeline`, `readback`, `spatial`, `stats`
 
-**Inner modules:** `asset_compute`, `ast_compiler`, `effect`, `hull`, `library`, `mutator`, `pipeline`, `readback`, `shader_cache`, `spatial`, `stats`, `wgsl_chunks`
+**Inner modules:** `_protocol`, `_validation`, `asset_compute`, `ast_compiler`, `effect`, `hull`, `library`, `mutator`, `pipeline`, `readback`, `shader_cache`, `spatial`, `stats`, `wgsl_chunks`
 
 ### `slappyengine.dynamics`
 
 Unified dynamics primitives layered on top of the XPBD substrate.
 
-**Public attributes:** `Body`, `BoneSpec`, `Humanoid`, `IKChainSpec`, `JointSpec`, `KIND_PARAM_KEYS`, `LAYER_BONE`, `LAYER_MUSCLE`, `LAYER_SKIN`, `Material`, `MotorSpec`, `OVERDAMPING_THRESHOLD`, `RagdollSpec`, `RopeSpec`, `SCHEMA_VERSION`, `SoftBodyWorld`, `SpringSpec`, `World`, `body`, `build_ragdoll`, `build_rope`, `estimate_effective_damping`, `humanoid`, `ik`, `joint`, `load_world`, `make_humanoid`, `make_motor`, `make_spring`, `material`, `motor`, `place_feet_on_terrain`, `ragdoll`, `resolve_joint`, `rope`, `save_world`, `serialize`, `solve_ik`, `spring`, `world`, `world_from_dict`, `world_to_dict`, `wrap_in_flesh`
+**Public attributes:** `Body`, `BoneSpec`, `DynamicsWorldLike`, `Humanoid`, `IKChainSpec`, `JointSpec`, `KIND_PARAM_KEYS`, `LAYER_BONE`, `LAYER_MUSCLE`, `LAYER_SKIN`, `Material`, `MotorSpec`, `OVERDAMPING_THRESHOLD`, `RagdollSpec`, `RopeSpec`, `SCHEMA_VERSION`, `SoftBodyWorld`, `SpringSpec`, `World`, `WorldLike`, `body`, `body_from_dict`, `body_to_dict`, `bone_spec_from_dict`, `bone_spec_to_dict`, `build_flesh_wrap`, `build_humanoid`, `build_ragdoll`, `build_rope`, `estimate_effective_damping`, `humanoid`, `humanoid_from_dict`, `humanoid_to_dict`, `ik`, `ik_chain_from_dict`, `ik_chain_to_dict`, `joint`, `joint_from_dict`, `joint_to_dict`, `load_world`, `make_distance`, `make_humanoid`, `make_motor`, `make_spring`, `material`, `material_from_dict`, `material_to_dict`, `motor`, `motor_from_dict`, `motor_to_dict`, `place_feet_on_terrain`, `ragdoll`, `ragdoll_spec_from_dict`, `ragdoll_spec_to_dict`, `resolve_joint`, `resolve_joint_specs`, `rope`, `rope_spec_from_dict`, `rope_spec_to_dict`, `save_world`, `serialize`, `solve_ik`, `spring`, `spring_from_dict`, `spring_to_dict`, `world`, `world_from_dict`, `world_to_dict`, `wrap_in_flesh`
 
 **Inner modules:** `_validation`, `body`, `humanoid`, `ik`, `joint`, `material`, `motor`, `ragdoll`, `rope`, `serialize`, `spring`, `world`
 
@@ -296,7 +341,7 @@ GPU subpackage — lazy-loaded to avoid eager wgpu imports.
 
 **Public attributes:** `buffer_manager`, `context`, `entity_renderer`, `pbr_material`, `render_pipeline`, `sdf_extruder`, `texture_manager`
 
-**Inner modules:** `adaptive_quality`, `buffer_manager`, `cluster_3d`, `cluster_pipeline`, `context`, `entity_renderer`, `ibl`, `material_buffer`, `mesh`, `mesh_pipeline`, `mesh_renderer`, `pbr_material`, `render_pipeline`, `sdf_extruder`, `sdf_renderer`, `texture_manager`
+**Inner modules:** `_validation`, `adaptive_quality`, `buffer_manager`, `cluster_3d`, `cluster_pipeline`, `context`, `entity_renderer`, `ibl`, `ibl_prefilter`, `material_buffer`, `mesh`, `mesh_pipeline`, `mesh_renderer`, `pbr_material`, `render_pipeline`, `sdf_extruder`, `sdf_renderer`, `texture_manager`
 
 ### `slappyengine.input`
 
@@ -304,7 +349,7 @@ SlapPyEngine.input
 
 **Public attributes:** `ActionMap`, `InputManager`, `action_map`
 
-**Inner modules:** `_manager`, `_validation`, `action_map`
+**Inner modules:** `_manager`, `_manager_validation`, `_validation`, `action_map`
 
 ### `slappyengine.iso`
 
@@ -318,9 +363,17 @@ SlapPyEngine.iso — Isometric 2D-grid-with-Z rendering subsystem.
 
 Material subpackage — lazy-loaded.
 
-**Public attributes:** `map`, `node_material`
+**Public attributes:** `NodeProtocol`, `graph_schema`, `map`, `node_material`
 
-**Inner modules:** `graph_schema`, `map`, `node_material`
+**Inner modules:** `_node_validation`, `_protocol`, `graph_schema`, `map`, `node_material`
+
+### `slappyengine.math`
+
+slappyengine.math — Symbolic + numeric formula evaluation.
+
+**Public attributes:** `AnimationCurve`, `Bezier`, `Catmull`, `Expression`, `Formula`, `Integer`, `Keyframe`, `Variable`, `Vec2`, `Vec3`, `Vec4`, `compile_formula`, `curves`, `ease`, `evaluate`, `formula`, `vector`
+
+**Inner modules:** `_validation`, `curves`, `formula`, `vector`
 
 ### `slappyengine.modules`
 
@@ -344,15 +397,15 @@ Post-process subpackage — lazy-loaded to avoid eager wgpu imports.
 
 **Public attributes:** `chain`
 
-**Inner modules:** `_validation`, `auto_exposure`, `bloom`, `chain`, `dof`, `executor`, `gtao`, `motion_blur`, `outline`, `preset_chains`, `shadow_csm`, `ssr`, `taa`, `tonemap`, `vignette`, `volumetric_fog`
+**Inner modules:** `_pass_base`, `_protocol`, `_ubo`, `_validation`, `auto_exposure`, `bloom`, `chain`, `chain_baker`, `chain_manifest`, `contact_shadows`, `dof`, `executor`, `gtao`, `motion_blur`, `outline`, `preset_chains`, `shadow_csm`, `ssr`, `taa`, `tonemap`, `vignette`, `volumetric_fog`
 
 ### `slappyengine.projects`
 
-slappyengine.projects — Nova3D-style multi-project management with persistent recents storage.
+slappyengine.projects — Nova3D-style multi-project management.
 
-**Public attributes:** `Project`, `ProjectMetadata`, `ProjectRegistry`, `get_default_registry`, `read_project`, `write_project`, `is_project_dir`, `find_project_root`, `ProjectFormatError`, `PROJECT_FILE_NAME`, `scaffold_project`
+**Public attributes:** `PROJECT_FILE_NAME`, `Project`, `ProjectFormatError`, `ProjectMetadata`, `ProjectRegistry`, `find_project_root`, `format`, `get_default_registry`, `is_project_dir`, `project`, `read_project`, `registry`, `scaffold_project`, `scaffolding`, `write_project`
 
-**Inner modules:** `project`, `format`, `registry`, `scaffolding`
+**Inner modules:** `format`, `project`, `registry`, `scaffolding`
 
 ### `slappyengine.residency`
 
@@ -366,9 +419,9 @@ Residency subpackage — lazy-loaded to avoid eager imports.
 
 slappyengine.telemetry
 
-**Public attributes:** `Any`, `Callable`, `Deque`, `Dict`, `List`, `Optional`, `TelemetryEvent`, `Tuple`, `clear_history`, `dataclass`, `deque`, `emit`, `enable_pattern_index`, `field`, `fnmatch`, `get_event_history`, `is_pattern_index_enabled`, `set_history_capacity`, `subscribe`, `threading`, `time`, `unsubscribe`, `validate_bool`, `validate_callable`, `validate_non_negative_int`, `validate_str`
+**Public attributes:** `Any`, `Callable`, `Deque`, `Dict`, `EventEmitterProtocol`, `EventSubscriberProtocol`, `List`, `Optional`, `TelemetryEvent`, `Tuple`, `clear_history`, `dataclass`, `deque`, `emit`, `enable_pattern_index`, `field`, `fnmatch`, `get_event_history`, `is_pattern_index_enabled`, `set_history_capacity`, `subscribe`, `threading`, `time`, `unsubscribe`, `validate_bool`, `validate_callable`, `validate_non_negative_int`, `validate_positive_int`, `validate_str`
 
-**Inner modules:** `_validation`
+**Inner modules:** `_protocol`, `_validation`, `sink`
 
 ### `slappyengine.testing`
 
@@ -382,9 +435,9 @@ slappyengine.testing — visual regression harness.
 
 Heat diffusion + pairwise heat exchange — Phase B public surface.
 
-**Public attributes:** `HeatField`, `Iterable`, `Tuple`, `exchange_two_regions`, `math`, `np`, `validate_diffusivity`, `validate_finite_float`, `validate_grid_2d_float`, `validate_non_negative_float`, `validate_positive_float`, `validate_positive_int`
+**Public attributes:** `HeatField`, `HeatSourceProtocol`, `Iterable`, `Tuple`, `exchange_two_regions`, `math`, `np`, `validate_diffusivity`, `validate_finite_float`, `validate_grid_2d_float`, `validate_non_negative_float`, `validate_positive_float`, `validate_positive_int`
 
-**Inner modules:** `_validation`
+**Inner modules:** `_protocol`, `_validation`
 
 ### `slappyengine.tools`
 
@@ -398,38 +451,30 @@ UI subpackage — lazy-loaded to avoid eager numpy/wgpu imports.
 
 **Public attributes:** `hud_widgets`, `scene_ui`
 
-**Inner modules:** `debug_overlay`, `editor`, `html_overlay`, `hud_widgets`, `project_manager`, `scene_ui`, `widgets`
-
-### `slappyengine.math`
-
-slappyengine.math — symbolic + numeric formula evaluation backed by the Arithma extra when installed, with an in-process fallback when it is not.
-
-**Public attributes:** `Formula`, `evaluate`
-
-**Inner modules:** `_arithma_backend`
+**Inner modules:** `debug_overlay`, `editor`, `hotkey_conflicts`, `hotkey_remap`, `html_overlay`, `hud_widgets`, `plugin_registry`, `plugin_samples`, `project_manager`, `runtime`, `scene_ui`, `theme`, `user_overrides`, `widgets`
 
 ### `slappyengine.visual_scripting`
 
-slappyengine.visual_scripting — headless visual-scripting graph data model + 20-node starter palette + Python code generator. Editor UI for the system ships in a follow-up sprint.
+Visual scripting — graph data model + Python code generation.
 
-**Public attributes:** `BUILTIN_NODES`, `BUILTIN_REGISTRY`, `Edge`, `GraphValidationError`, `NODE_KINDS`, `Node`, `NodeGraph`, `NodeKind`, `NodePort`, `NodeRegistry`, `PORT_KINDS`, `PortKind`, `get_node`, `graph_to_python`, `list_nodes`, `ports_compatible`, `python_to_graph`
+**Public attributes:** `AbsNode`, `AddNode`, `BUILTIN_NODES`, `BUILTIN_REGISTRY`, `ClampNode`, `CrossNode`, `DefaultWgslEmitContext`, `DotNode`, `Edge`, `FresnelNode`, `GradientRampNode`, `GraphValidationError`, `LerpNode`, `MATERIAL_CATEGORY`, `MATERIAL_NODE_TYPES`, `MaterialNode`, `MaterialOutputNode`, `MultiplyNode`, `NODE_KINDS`, `Node`, `NodeGraph`, `NodeKind`, `NodePort`, `NodeRegistry`, `NormalizeNode`, `PORT_KINDS`, `PerlinNoiseNode`, `PortKind`, `PowerNode`, `SaturateNode`, `SqrtNode`, `TextureSampleNode`, `TimeNode`, `UVOffsetNode`, `WgslEmitContext`, `WorleyNoiseNode`, `codegen_python`, `get_node`, `graph`, `graph_to_python`, `list_nodes`, `material_nodes`, `node`, `palette`, `ports_compatible`, `python_to_graph`, `register_material_nodes`
 
-**Inner modules:** `codegen_python`, `graph`, `node`, `palette`
+**Inner modules:** `codegen`, `codegen_python`, `golden_utils`, `graph`, `material_nodes`, `node`, `palette`
 
 ### `slappyengine.zones`
 
 slappyengine.zones — Generic zone primitives.
 
-**Public attributes:** `Any`, `Callable`, `EnterExitCallback`, `EntityId`, `Hashable`, `Iterable`, `Position`, `RectZone`, `ThresholdCallback`, `ThresholdZone`, `ZoneManager`, `dataclasses`, `validate_finite_float`, `validate_non_negative_float`, `validate_positive_float`
+**Public attributes:** `Any`, `Callable`, `EnterExitCallback`, `EntityId`, `Hashable`, `Iterable`, `Position`, `RectZone`, `ThresholdCallback`, `ThresholdZone`, `ZoneManager`, `ZoneProtocol`, `dataclasses`, `validate_finite_float`, `validate_non_negative_float`, `validate_positive_float`
 
-**Inner modules:** `_validation`
+**Inner modules:** `_protocol`, `_validation`
 
 ## Stability notes
 
 ### Stable (v0.3 — committed contract)
 
-- The 88 top-level lazy exports listed above (75 pre-HH1 + 13 HH1/HH5 additions).
-- The 22 declared subpackages: `ai`, `animation`, `asset_import`, `assets`, `audio_runtime`, `compute`, `dynamics`, `ext`, `gpu`, `input`, `iso`, `material`, `modules`, `numerics`, `post_process`, `projects`, `residency`, `telemetry`, `testing`, `thermal`, `tools`, `ui`, `zones`.
+- The 91 top-level lazy exports listed above.
+- The 25 declared subpackages: `ai`, `animation`, `asset_import`, `assets`, `audio_runtime`, `compute`, `dynamics`, `ext`, `gpu`, `input`, `iso`, `material`, `math`, `modules`, `numerics`, `post_process`, `projects`, `residency`, `telemetry`, `testing`, `thermal`, `tools`, `ui`, `visual_scripting`, `zones`.
 
 ### Beta (may evolve)
 
@@ -442,8 +487,6 @@ slappyengine.zones — Generic zone primitives.
 
 ## Getting started
 
-Two entry points cover the v0.3 surface. The classic layer-driven engine is still supported for 2D scenes:
-
 ```python
 import slappyengine as sle
 
@@ -452,14 +495,7 @@ layer = engine.add_layer("world", sle.Layer2D(tile_size=16))
 engine.run()
 ```
 
-For 3D content, the HH1 ergonomic API is the "2-line render" recommended path:
-
-```python
-import slappyengine as slap
-slap.launch().load_model("bunny.gltf").run()
-```
-
-See the `SlapPyEngineExamples/examples/` directory for runnable scenes that exercise both surfaces (`hello_render.py` and `hello_gltf_character.py` for the HH1 path; the rest of the `hello_*` suite for the classic engine).
+See the `examples/` directory for runnable scenes that exercise the surface above (hello world, lighting, physics, layered character, multiplayer, HUD, landscape, baking, 3D layers, editor).
 
 ## Game integration tripwires
 

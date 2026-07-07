@@ -41,7 +41,7 @@ Evidence column: commit SHA, file path, or grep result.
 | # | Gate | Status (RR6) | Delta vs OO7 | Evidence |
 |---|---|---|---|---|
 | 1 | Version constants aligned | **FAILING** | Unchanged | `pyproject.toml:7 = "0.3.0b0"`, `Cargo.toml:3 = "0.3.0-beta.0"`, `python/slappyengine/__init__.py:103 = "0.3.0b0"`. Bump audit `docs/version_bump_audit_2026_07_07.md` enumerates the 8-step commit sequence but has not been executed. |
-| 2 | Engine surface doc matches `__all__` | needs-verify | Unchanged | `docs/engine_surface_v030.md` refreshed 2026-07-06 (NN6). Regenerate after gate 1 flip. |
+| 2 | Engine surface doc matches `__all__` | **GREEN** | **Flipped by TT5** | `docs/engine_surface_v030.md` re-generated 2026-07-07 via `scripts/gen_engine_surface_doc.py`; 91 top-level names + 25 subpackages; 9 tripwire tests pass (`test_docs_engine_surface_complete.py` + `test_docs_inventory.py`). Delta since NN6: +3 top-level (`DiagnosticEvent`, `DiagnosticsCollector`, `get_global_collector`) + 3 subpackage-set entries (`math`, `visual_scripting`, live-parse count). App runtime surface documented for NN3/QQ4/SS6 additions. Re-regen needed after gate 1 tag-sprint version bump but is a one-command loop. |
 | 3 | `test_docs_inventory.py` green | **GREEN** | Maintained | Every new r5 doc indexed via `40a79bd` (RR6 will add this doc). |
 | 4 | `test_docs_links_resolve_all.py` green | **GREEN** | Maintained | Last confirmed at NN6 close. |
 | 5 | `test_docs_api_template_conformance.py` green | **GREEN** | Maintained | PP5 (6 refs) + QQ3 (4 refs) both follow `_template.md`. |
@@ -62,6 +62,12 @@ needs-verify + 1 deferred` because gate 8 is now confirmed live-GREEN
 (QQ6 had it as GREEN in table but noted 8-count gap in text — the QQ
 batches OO3/OO5/PP4/PP7/QQ2/QQ5 closed every remaining runner-less
 demo).
+
+**Post-TT5 (2026-07-07) update**: Gate 2 flipped from `needs-verify` to
+**GREEN** after TT5 regenerated `engine_surface_v030.md` and confirmed
+9 tripwire tests pass. Refreshed pass count is **9 GREEN + 1 DRAFT +
+2 FAILING + 2 needs-verify + 1 deferred**. Gates 12 (game-compat) and
+13 (perf dashboard) remain the only two open verification passes.
 
 ---
 
