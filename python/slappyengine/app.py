@@ -1426,6 +1426,54 @@ class App:
             return ""
         return self._diagnostics.render_markdown_report(**kwargs)
 
+    def diagnostics_widget_summary(self) -> dict[str, Any]:
+        """Return a small summary dict suitable for HUD label rendering.
+
+        The result has the shape::
+
+            {
+                "total": int,
+                "warnings": int,
+                "errors": int,        # ERROR + CRITICAL
+                "top_subsystem": str | None,
+                "last_message": str | None,
+            }
+
+        Sourced from :meth:`DiagnosticsCollector.stats`,
+        :meth:`DiagnosticsCollector.top_subsystems` (top 1) and the last
+        buffered event's ``.message``. When diagnostics have not been
+        enabled, returns empty defaults with ``total``/``warnings``/
+        ``errors`` at ``0`` and both string slots ``None``.
+
+        Notes
+        -----
+        Bypass hint: call ``collector.stats()`` + ``top_subsystems(1)``
+        directly (``_core`` surface) — this method just packages them
+        for a single HUD label.
+        """
+        empty: dict[str, Any] = {
+            "total": 0,
+            "warnings": 0,
+            "errors": 0,
+            "top_subsystem": None,
+            "last_message": None,
+        }
+        if self._diagnostics is None:
+            return empty
+        stats = self._diagnostics.stats()
+        top = self._diagnostics.top_subsystems(1)
+        top_name: str | None = top[0][0] if top else None
+        events = self._diagnostics.events()
+        last_message: str | None = events[-1].message if events else None
+        return {
+            "total": int(stats.get("total", 0)),
+            "warnings": int(stats.get("level:WARNING", 0)),
+            "errors": int(stats.get("level:ERROR", 0))
+            + int(stats.get("level:CRITICAL", 0)),
+            "top_subsystem": top_name,
+            "last_message": last_message,
+        }
+
 
 # ---------------------------------------------------------------------------
 # Module-level convenience API

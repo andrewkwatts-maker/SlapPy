@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import threading
 import time
 import traceback
@@ -571,6 +572,62 @@ class DiagnosticsCollector:
         content = self.render_markdown_report(**kwargs)
         out.write_text(content, encoding="utf-8")
         return out
+
+    # ------------------------------------------------------------------
+    # TT6 extension — message-substring / regex filter + time-window count
+    # ------------------------------------------------------------------
+
+    def filter_by_message(
+        self, pattern: str, *, regex: bool = False
+    ) -> list[DiagnosticEvent]:
+        """Return events whose ``.message`` matches *pattern*.
+
+        Parameters
+        ----------
+        pattern:
+            Substring to look for in ``event.message`` (default), or a
+            regex pattern when ``regex=True``.
+        regex:
+            When ``True`` treat *pattern* as a regex compiled via
+            :func:`re.compile` and match with :meth:`re.Pattern.search`.
+
+        Raises
+        ------
+        ValueError
+            When ``regex=True`` and *pattern* is not a valid regex.
+        """
+        if regex:
+            try:
+                compiled = re.compile(pattern)
+            except re.error as exc:
+                raise ValueError(
+                    "DiagnosticsCollector.filter_by_message: "
+                    f"invalid regex {pattern!r} ({exc})"
+                ) from exc
+            with self._lock:
+                return [e for e in self._events if compiled.search(e.message)]
+        with self._lock:
+            return [e for e in self._events if pattern in e.message]
+
+    def count_by_time_window(self, seconds: float) -> int:
+        """Return the number of events captured in the last *seconds*.
+
+        Uses :func:`time.time` as the reference clock and counts events
+        with ``event.timestamp >= time.time() - seconds``.
+
+        Raises
+        ------
+        ValueError
+            If *seconds* is negative.
+        """
+        if seconds < 0:
+            raise ValueError(
+                "DiagnosticsCollector.count_by_time_window: "
+                f"seconds must be >= 0; got {seconds!r}"
+            )
+        cutoff = time.time() - float(seconds)
+        with self._lock:
+            return sum(1 for e in self._events if e.timestamp >= cutoff)
 
     def _stats_locked(self) -> dict[str, int]:
         """Internal :meth:`stats` body assuming the lock is already held."""
