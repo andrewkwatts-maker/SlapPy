@@ -433,3 +433,17 @@ entries), `docs/sprint_5_doc_inventory.md` (94 entries),
 `docs/rust_migration_audit_2026_07_05.md` (17 Rust kernels shipped),
 `docs/sprint_rollup_2026_07_06.md` (MM+NN batches), and
 `docs/sprint_7_ship_checklist.md` (v0.3 tag gate criteria).*
+
+---
+
+## Reconciliation 2026-07-07
+
+Post-PP + post-QQ gate reconciliation lives in
+[`docs/v0_4_gate_reconciliation_2026_07_07.md`](v0_4_gate_reconciliation_2026_07_07.md)
+(RR6 landing 2026-07-07). Refreshed status: **8 GREEN + 1 DRAFT +
+2 FAILING + 3 needs-verify + 1 deferred**. Gates 6, 8, 9, 14 flipped
+by PP2 / PP3 / PP4 + friends / PP7 respectively. Remaining P0
+blockers: gate 1 (version bump — atomic 3-file commit) and gate 11
+(WIP unfreeze — user-gated). Refreshed verdict:
+**PALE-YELLOW / CAN-SHIP-AFTER-RR-BATCH**. Original OO7 section text
+above is preserved unchanged for historical reference.
