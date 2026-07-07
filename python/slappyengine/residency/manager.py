@@ -27,6 +27,18 @@ class CacheMode(enum.Enum):
     GPU = "gpu"
     RAM = "ram"
     DISK = "disk"
+    # Backwards-compat aliases used by downstream games (Ochema Circuit,
+    # Bullet Strata). These predate the GPU/RAM/DISK tier vocabulary and
+    # are surfaced on `Asset.cache_mode` as hint tags — the residency
+    # manager itself only interprets the GPU/RAM/DISK values above; games
+    # read these tags to drive their own eviction/serialize policies.
+    # DO NOT REMOVE without a v1.0 deprecation cycle — deleting these
+    # broke the Bullet Strata `test_scene` suite (all 3 errors) and a
+    # large slice of Ochema Circuit `test_asset_caching` (see
+    # docs/game_compat_2026_07_07.md § 9.3 item 1).
+    OFFSCREEN_SERIALIZE = "offscreen_serialize"  # legacy: serialize offscreen renders
+    ALWAYS_CACHED = "always_cached"  # legacy: force cache-always semantics
+    USER_DRIVEN = "user_driven"  # legacy: game code drives eviction manually
 
 
 class ResidencyManager:
