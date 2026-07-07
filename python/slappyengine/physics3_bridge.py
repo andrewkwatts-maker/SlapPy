@@ -799,6 +799,130 @@ class World3D:
         return out
 
     # ------------------------------------------------------------------
+    # QQ7 — debug visualisation + diagnostics
+    # ------------------------------------------------------------------
+    def draw_debug(
+        self,
+        renderer: Any,
+        *,
+        show_aabbs: bool = True,
+        show_bvh_nodes: bool = False,
+        aabb_color: tuple = (0.2, 1.0, 0.2, 1.0),
+        bvh_color: tuple = (1.0, 0.7, 0.2, 0.5),
+        max_bvh_depth: int | None = None,
+    ) -> dict:
+        """Emit a headless-safe debug wireframe of the world to *renderer*.
+
+        Walks each body's AABB (when ``show_aabbs``) and, when
+        ``show_bvh_nodes`` and the BVH has been built, every BVH node's
+        bounds respecting ``max_bvh_depth``. Each box turns into 12 line
+        segments (one per cube edge).
+
+        The renderer is duck-typed:
+
+        * If it exposes ``draw_line(p0, p1, color)`` we call that.
+        * Otherwise if it exposes ``draw_log`` (list-like) we append a
+          ``{"kind": "debug_line", "p0", "p1", "color"}`` dict — this is
+          the null-renderer path used by tests.
+
+        Parameters
+        ----------
+        renderer
+            The target renderer. Must not be ``None``.
+        show_aabbs
+            When True, emit one box wireframe per body.
+        show_bvh_nodes
+            When True and the BVH is built, emit one box wireframe per
+            node visited (respecting ``max_bvh_depth``). No-op if the
+            BVH is missing / dirty — call :meth:`build_bvh` first.
+        aabb_color, bvh_color
+            RGBA tuples passed through to ``draw_line``.
+        max_bvh_depth
+            Optional cap on BVH traversal depth. ``None`` means walk
+            the whole tree. ``0`` emits only the root.
+
+        Returns
+        -------
+        dict
+            ``{"aabbs_drawn": int, "bvh_nodes_drawn": int, "line_count": int}``.
+            ``line_count == 12 * (aabbs_drawn + bvh_nodes_drawn)``.
+
+        Raises
+        ------
+        TypeError
+            If *renderer* is ``None``.
+        """
+        if renderer is None:
+            raise TypeError("World3D.draw_debug: renderer must not be None")
+
+        emit = _make_line_emitter(renderer)
+        aabbs_drawn = 0
+        bvh_nodes_drawn = 0
+
+        if show_aabbs:
+            for body in self.bodies.values():
+                mn, mx = body.aabb()
+                _emit_box_edges(emit, mn, mx, aabb_color)
+                aabbs_drawn += 1
+
+        if show_bvh_nodes:
+            bvh = self._raycast_bvh
+            if bvh is not None and not self._raycast_bvh_dirty:
+                # Iterative DFS with depth tracking — matches BVH3D's own
+                # _compute_depth() convention (root is depth 0).
+                nodes = bvh.nodes
+                root = bvh.root
+                if root is not None and nodes:
+                    stack: list[tuple[int, int]] = [(root, 0)]
+                    while stack:
+                        idx, depth = stack.pop()
+                        node = nodes[idx]
+                        nb = node.bounds
+                        _emit_box_edges(emit, nb.min, nb.max, bvh_color)
+                        bvh_nodes_drawn += 1
+                        if max_bvh_depth is not None and depth >= max_bvh_depth:
+                            continue
+                        if node.left is not None:
+                            stack.append((node.left, depth + 1))
+                        if node.right is not None:
+                            stack.append((node.right, depth + 1))
+
+        line_count = 12 * (aabbs_drawn + bvh_nodes_drawn)
+        return {
+            "aabbs_drawn": aabbs_drawn,
+            "bvh_nodes_drawn": bvh_nodes_drawn,
+            "line_count": line_count,
+        }
+
+    def debug_stats(self) -> dict:
+        """Return a compact diagnostic dict for HUD / tooling.
+
+        Keys:
+
+        * ``body_count`` — number of bodies currently in the world.
+        * ``bvh_built`` — ``True`` iff a BVH has been built and cached.
+        * ``bvh_dirty`` — ``True`` iff the cached BVH is stale w.r.t.
+          the current body set (i.e. an add/remove happened since the
+          last :meth:`build_bvh`).
+        * ``bvh_depth`` — depth of the cached BVH (``None`` when not
+          built or unavailable).
+        """
+        bvh = self._raycast_bvh
+        bvh_built = bvh is not None
+        bvh_depth: int | None = None
+        if bvh_built:
+            try:
+                bvh_depth = int(bvh.stats().get("depth"))
+            except Exception:  # pragma: no cover - defensive; stats() may vary
+                bvh_depth = None
+        return {
+            "body_count": len(self.bodies),
+            "bvh_built": bvh_built,
+            "bvh_dirty": bool(self._raycast_bvh_dirty),
+            "bvh_depth": bvh_depth,
+        }
+
+    # ------------------------------------------------------------------
     # SAP broadphase — used by the fallback integrator and exposed for
     # testing.
     # ------------------------------------------------------------------
@@ -1082,6 +1206,72 @@ def _ray_aabb_full(
         # Origin is inside the box — treat as an immediate hit at t=0.
         return 0.0, hit_axis, hit_from_min
     return tmin, hit_axis, hit_from_min
+
+
+def _make_line_emitter(renderer: Any):
+    """Return a callable ``emit(p0, p1, color)`` bound to *renderer*.
+
+    Prefers a real ``draw_line`` method; falls back on appending a
+    ``debug_line`` record to ``draw_log`` for the null-renderer path
+    used by headless tests. Raises :class:`TypeError` if the renderer
+    exposes neither surface.
+    """
+    draw_line = getattr(renderer, "draw_line", None)
+    if callable(draw_line):
+        def emit(p0, p1, color):
+            draw_line(p0, p1, color)
+        return emit
+    draw_log = getattr(renderer, "draw_log", None)
+    if draw_log is not None and hasattr(draw_log, "append"):
+        def emit(p0, p1, color):
+            draw_log.append(
+                {"kind": "debug_line", "p0": p0, "p1": p1, "color": color}
+            )
+        return emit
+    raise TypeError(
+        "World3D.draw_debug: renderer must expose either draw_line(p0,p1,color)"
+        f" or a draw_log list; got {type(renderer).__name__}"
+    )
+
+
+def _emit_box_edges(
+    emit,
+    mn: tuple[float, float, float],
+    mx: tuple[float, float, float],
+    color: tuple,
+) -> None:
+    """Emit the 12 edges of an axis-aligned box ``[mn, mx]`` via *emit*.
+
+    Vertex numbering follows the standard cube layout: bits ``(x,y,z)``
+    of an index in ``[0, 7]`` select ``mx`` on the corresponding axis
+    when set, ``mn`` otherwise.
+    """
+    x0, y0, z0 = float(mn[0]), float(mn[1]), float(mn[2])
+    x1, y1, z1 = float(mx[0]), float(mx[1]), float(mx[2])
+    # 8 corners
+    c000 = (x0, y0, z0)
+    c100 = (x1, y0, z0)
+    c010 = (x0, y1, z0)
+    c110 = (x1, y1, z0)
+    c001 = (x0, y0, z1)
+    c101 = (x1, y0, z1)
+    c011 = (x0, y1, z1)
+    c111 = (x1, y1, z1)
+    # 4 X-parallel edges
+    emit(c000, c100, color)
+    emit(c010, c110, color)
+    emit(c001, c101, color)
+    emit(c011, c111, color)
+    # 4 Y-parallel edges
+    emit(c000, c010, color)
+    emit(c100, c110, color)
+    emit(c001, c011, color)
+    emit(c101, c111, color)
+    # 4 Z-parallel edges
+    emit(c000, c001, color)
+    emit(c100, c101, color)
+    emit(c010, c011, color)
+    emit(c110, c111, color)
 
 
 def _sweep_ray_aabb(
