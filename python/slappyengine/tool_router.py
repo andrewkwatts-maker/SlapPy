@@ -1577,6 +1577,42 @@ def _fb_layer_clear(ctx: dict[str, Any]) -> Any:
     return clear_layer(ctx)
 
 
+# ---------------------------------------------------------------------------
+# YY4 STUB-triage — round 25 fallbacks
+# ---------------------------------------------------------------------------
+
+
+def _fb_view_toggle_snap_indicator(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_toggle_snap_indicator_actions import (
+        toggle_snap_indicator,
+    )
+    return toggle_snap_indicator(ctx)
+
+
+def _fb_edit_select_parent(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_select_parent_actions import select_parent
+    return select_parent(ctx)
+
+
+def _fb_spawn_at_selection_center(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_at_selection_center_actions import (
+        spawn_at_selection_center,
+    )
+    return spawn_at_selection_center(ctx)
+
+
+def _fb_layer_lock(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_lock_actions import toggle_layer_lock
+    return toggle_layer_lock(ctx)
+
+
+def _fb_snap_reset_defaults(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.snap_reset_defaults_actions import (
+        reset_snap_defaults,
+    )
+    return reset_snap_defaults(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -3011,6 +3047,49 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_layer_clear,
             required_args=[],
             category="layer",
+        ),
+        # ── YY4 STUB-triage: view.toggle_snap_indicator,
+        #    edit.select_parent, spawn.at_selection_center, layer.lock,
+        #    snap.reset_defaults (round 25) ──
+        ToolAction(
+            action_id="view.toggle_snap_indicator",
+            label="Toggle Snap Indicator",
+            rust_backing=None,
+            python_fallback=_fb_view_toggle_snap_indicator,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="edit.select_parent",
+            label="Select Parent",
+            rust_backing=None,
+            python_fallback=_fb_edit_select_parent,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="spawn.at_selection_center",
+            label="Spawn at Selection Center",
+            rust_backing=None,
+            python_fallback=_fb_spawn_at_selection_center,
+            required_args=[],
+            category="spawn",
+        ),
+        ToolAction(
+            action_id="layer.lock",
+            label="Toggle Layer Lock",
+            rust_backing=None,
+            python_fallback=_fb_layer_lock,
+            required_args=[],
+            category="layer",
+        ),
+        ToolAction(
+            action_id="snap.reset_defaults",
+            label="Reset Snap Defaults",
+            rust_backing=None,
+            python_fallback=_fb_snap_reset_defaults,
+            required_args=[],
+            category="snap",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(
