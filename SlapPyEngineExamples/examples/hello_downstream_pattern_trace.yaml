@@ -1,0 +1,21 @@
+mro:
+- PlayerVehicle
+- Observable
+- Asset
+- RenderTarget
+- Entity
+- object
+layers_added:
+- chassis
+- weapon
+- hud
+layer_count: 3
+events_published: 150
+events_delivered: 150
+events_per_frame: 5
+attribute_errors: 0
+attribute_error_notes: []
+cache_mode_value: offscreen_serialize
+frame_count: 30
+max_frames: 30
+launch_used: true
