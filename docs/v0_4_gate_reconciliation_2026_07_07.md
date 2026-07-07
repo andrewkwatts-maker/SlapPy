@@ -199,3 +199,19 @@ live `git status` + `git log --oneline -30` + `git ls-files "src/*.rs"`
 (14 tracked) + `grep '^mod ' src/lib.rs` (14 declarations) +
 `pyproject.toml:7` + `Cargo.toml:3` + `python/slappyengine/__init__.py:103`
 + demo/test cross-count (41 ↔ 41) at commit `40a79bd`.*
+
+---
+
+## Commit-attribution note
+
+Content of this reconciliation doc was authored by RR6 background scrum
+agent as part of the RR-batch dispatch (2026-07-07 late evening). Due
+to a working-tree race with RR5's `hello_full_lifecycle` demo landing,
+the initial file additions (this doc + `sprint_5_doc_inventory.md`
+index row + `v0_4_release_readiness_2026_07_06.md` cross-link
+appendix) were absorbed into RR5's `ba9cbd5` commit. This footer
+addendum is the load-bearing RR6-attributed commit; RR3's `60bbdf0`
+concurrently supplied the three orphan API refs (`api/diagnostics.md`,
+`api/exporter.md`, `api/hud_overlay.md`) that RR6's inventory rows
+depend on, so `test_docs_inventory.py` stays 4/4 green after all
+three commits land.
