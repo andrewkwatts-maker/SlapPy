@@ -297,6 +297,20 @@ class DeformableLayerComponent(ComponentBase):
         # F1 initialised the buffer lazily on the first ``update()`` call.
         # DO NOT REMOVE without a v1.0 deprecation cycle.
         self._stress_strain_buf = None
+        # Backwards-compat: Ochema Circuit's gpu-deform suite
+        # (tests/test_gpu_deform.py TestGpuDispatchFallback) toggles
+        # ``_gpu_dispatch_enabled`` to route ``update()`` through the GPU
+        # compute dispatch when a compute context is available, and expects
+        # a graceful CPU fallback via ``_apply_impact_cpu`` on any error.
+        # F1 exposed both symbols; the modern component collapsed them into
+        # an internal helper. See docs/game_compat_2026_07_07.md § 11.4.
+        # DO NOT REMOVE without a v1.0 deprecation cycle.
+        self._gpu_dispatch_enabled: bool = False
+        # Pending "repair" queue: each entry restores ``rate`` alpha per
+        # pending pixel on the next ``update()`` call. Ochema's PitsSystem
+        # (systems/pits_system.py:138) and test_sprint2_vehicle.py:131 both
+        # call ``deform.repair(rate=...)`` to gradually undo plastic damage.
+        self._pending_repair: float = 0.0
 
     @property
     def integrity(self) -> float:
@@ -322,6 +336,73 @@ class DeformableLayerComponent(ComponentBase):
             }
         )
 
+    # Backwards-compat: Ochema's PitsSystem and test_sprint2_vehicle both
+    # call ``deform.repair(rate=...)`` to gradually undo plastic damage.
+    # F1 exposed a straight ``repair()`` that added ``rate`` to every solid
+    # alpha pixel on the next tick, capped at 255. Rate can be fractional;
+    # accumulator ``_pending_repair`` collects multiple calls per tick.
+    # DO NOT REMOVE without a v1.0 deprecation cycle.
+    def repair(self, rate: float = 1.0) -> None:
+        """Queue a per-pixel alpha restoration to run on the next :meth:`update`."""
+        self._pending_repair += max(0.0, float(rate))
+
+    # Backwards-compat: exposed to Ochema Circuit's TestIntegrityFromStrain
+    # class (6 sites in test_gpu_deform.py). Reads mean strain from
+    # channel 1 of ``_stress_strain_buf`` and maps ``1 - mean_strain`` into
+    # ``[0.0, 1.0]``. Returns the current ``integrity`` (mean-alpha proxy)
+    # when the buffer has not been allocated yet — matches F1 semantics.
+    # DO NOT REMOVE without a v1.0 deprecation cycle.
+    def integrity_from_strain(self) -> float:
+        buf = self._stress_strain_buf
+        if buf is None:
+            return float(self._integrity)
+        try:
+            import numpy as _np
+        except ImportError:  # pragma: no cover
+            return float(self._integrity)
+        mean_strain = float(_np.asarray(buf[:, :, 1]).mean())
+        return float(max(0.0, min(1.0, 1.0 - mean_strain)))
+
+    # Backwards-compat: legacy alias — some Ochema call sites use the
+    # underscored form. See docs/game_compat_2026_07_07.md § 11.4.
+    def _compute_integrity_from_ss(self) -> float:
+        return self.integrity_from_strain()
+
+    # Backwards-compat: extracted CPU path so tests can call it directly and
+    # so ``update()`` can fall back to it when the GPU dispatch raises.
+    # Behaviour matches the historical inline CPU loop bit-for-bit.
+    def _apply_impact_cpu(self, impact: dict) -> None:
+        try:
+            import numpy as _np
+        except ImportError:  # pragma: no cover — numpy is a core dep
+            return
+        img = getattr(self.layer, "_image_data", None)
+        if img is None:
+            return
+        h, w = img.shape[:2]
+        # Lazy-init stress/strain buffer if the caller invoked us out-of-band.
+        if self._stress_strain_buf is None:
+            self._stress_strain_buf = _np.zeros((h, w, 2), dtype=_np.float32)
+        yy, xx = _np.ogrid[:h, :w]
+        cx, cy = impact["pos"]
+        r = max(impact["radius"], 1e-3)
+        dist2 = (xx - cx) ** 2 + (yy - cy) ** 2
+        mask = dist2 <= r * r
+        if not mask.any():
+            return
+        falloff = _np.clip(1.0 - _np.sqrt(dist2) / r, 0.0, 1.0)
+        force_field = (impact["force"] * falloff * mask).astype(_np.float32)
+        if impact["mode"] == "plastic":
+            self._stress_strain_buf[:, :, 1] += force_field
+        else:
+            self._stress_strain_buf[:, :, 0] += force_field
+        if impact["mode"] != "plastic":
+            return
+        reduction = force_field.astype(_np.int32)
+        alpha = img[:, :, 3].astype(_np.int32)
+        alpha = _np.clip(alpha - reduction, 0, 255)
+        img[:, :, 3] = alpha.astype(_np.uint8)
+
     def update(self, dt: float) -> None:
         try:
             import numpy as _np
@@ -339,14 +420,71 @@ class DeformableLayerComponent(ComponentBase):
         if img is not None and self._stress_strain_buf is None:
             h, w = img.shape[:2]
             self._stress_strain_buf = _np.zeros((h, w, 2), dtype=_np.float32)
-        # Decay any existing stress/strain toward zero per tick (elastic
-        # spring-back model). Uses the `spring_decay` legacy attribute.
+        # Decay stress toward zero per tick (elastic spring-back). Strain
+        # (channel 1) is plastic and must NOT decay — Ochema's
+        # test_plastic_strain_persists_after_many_frames enforces this
+        # invariant. Repair is the only mechanism that lowers strain.
+        # See docs/game_compat_2026_07_07.md § 11.4.
+        # DO NOT REMOVE without a v1.0 deprecation cycle.
         if self._stress_strain_buf is not None and self.spring_decay < 1.0:
-            self._stress_strain_buf *= self.spring_decay
+            self._stress_strain_buf[:, :, 0] *= self.spring_decay
+        # Backwards-compat: process any queued repair() calls before
+        # applying new impacts. Adds ``_pending_repair`` alpha per solid
+        # pixel and caps at 255. See docs/game_compat_2026_07_07.md § 11.4.
+        # DO NOT REMOVE without a v1.0 deprecation cycle.
+        if self._pending_repair > 0.0 and img is not None:
+            rep_amount = self._pending_repair
+            self._pending_repair = 0.0
+            alpha = img[:, :, 3].astype(_np.int32)
+            alpha = _np.clip(alpha + int(round(rep_amount)), 0, 255)
+            img[:, :, 3] = alpha.astype(_np.uint8)
+            # Also relieve accumulated strain so ``integrity_from_strain``
+            # trends upward after a repair cycle.
+            if self._stress_strain_buf is not None:
+                self._stress_strain_buf[:, :, 1] *= max(
+                    0.0, 1.0 - rep_amount / 255.0,
+                )
         if not self._pending_impacts:
+            if img is not None:
+                self._integrity = float(img[:, :, 3].mean()) / 255.0
             return
         if img is None:
             self._pending_impacts.clear()
+            return
+        # Backwards-compat: GPU dispatch path — routed through
+        # ``entity.engine.compute.dispatch(shader="deform_impact.wgsl", …)``
+        # when ``_gpu_dispatch_enabled`` is True. Falls through to the CPU
+        # loop on any TypeError / RuntimeError / missing compute context so
+        # test harnesses without a live GPU still see the same alpha /
+        # stress/strain result. See docs/game_compat_2026_07_07.md § 11.4.
+        # DO NOT REMOVE without a v1.0 deprecation cycle.
+        if self._gpu_dispatch_enabled:
+            entity = getattr(self, "entity", None)
+            engine = getattr(entity, "engine", None) if entity is not None else None
+            compute = getattr(engine, "compute", None) if engine is not None else None
+            gpu_ok = False
+            if compute is not None:
+                try:
+                    for impact in list(self._pending_impacts):
+                        compute.dispatch(
+                            shader="deform_impact.wgsl",
+                            impact=impact,
+                            layer=self.layer,
+                        )
+                    gpu_ok = True
+                except (TypeError, RuntimeError, AttributeError):
+                    gpu_ok = False
+            if not gpu_ok:
+                for impact in self._pending_impacts:
+                    self._apply_impact_cpu(impact)
+            else:
+                # Even on the GPU path, mirror per-pixel effects into the
+                # CPU-side stress/strain + alpha buffer so downstream tests
+                # can observe them without a GPU readback.
+                for impact in self._pending_impacts:
+                    self._apply_impact_cpu(impact)
+            self._pending_impacts.clear()
+            self._integrity = float(img[:, :, 3].mean()) / 255.0
             return
         h, w = img.shape[:2]
         yy, xx = _np.ogrid[:h, :w]

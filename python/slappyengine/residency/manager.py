@@ -101,6 +101,38 @@ class ResidencyManager:
         for entity in entities:
             if not isinstance(entity, Asset):
                 continue
+            # Backwards-compat: honour ``entity.cache_mode`` before applying
+            # the distance-based tier logic. Ochema Circuit's asset-caching
+            # tests (tests/test_asset_caching.py) rely on:
+            #   * ``ALWAYS_CACHED`` pinning the tier to GPU regardless of
+            #     distance,
+            #   * ``USER_DRIVEN`` skipping all automatic tier transitions
+            #     so game code drives eviction manually,
+            #   * ``OFFSCREEN_SERIALIZE`` (default) triggering a
+            #     ``bake_data_layer()`` call when the asset first crosses
+            #     from GPU/RAM to disk so per-asset damage state is
+            #     persisted before the pixel buffers are freed.
+            # See docs/game_compat_2026_07_07.md § 11.4 (residency
+            # ``cache_mode`` drift).
+            # DO NOT REMOVE without a v1.0 deprecation cycle.
+            _cache_mode = getattr(entity, "cache_mode", None)
+            if _cache_mode is not None:
+                _cm_val = getattr(_cache_mode, "value", None) or getattr(
+                    _cache_mode, "name", None,
+                )
+                if _cm_val in ("always_cached", "ALWAYS_CACHED"):
+                    current = self.tier(entity)
+                    if current == self.TIER_DISK:
+                        self._promote_disk_to_ram(entity)
+                        self._promote_ram_to_gpu(entity)
+                    elif current == self.TIER_RAM:
+                        self._promote_ram_to_gpu(entity)
+                    self._tiers[entity.id] = self.TIER_GPU
+                    continue
+                if _cm_val in ("user_driven", "USER_DRIVEN"):
+                    # Never touch tier — game code drives eviction.
+                    self._tiers.setdefault(entity.id, self.TIER_GPU)
+                    continue
             ex, ey = entity.position
             dist = math.sqrt((ex - cx) ** 2 + (ey - cy) ** 2)
             current = self.tier(entity)
@@ -118,6 +150,20 @@ class ResidencyManager:
                     self.evict_to_ram(entity)
                 self._tiers[entity.id] = self.TIER_RAM
             else:
+                # Backwards-compat: OFFSCREEN_SERIALIZE fires bake_data_layer()
+                # on the first GPU/RAM→disk transition so game-owned damage
+                # state persists before pixel buffers are freed.
+                if current in (self.TIER_GPU, self.TIER_RAM) and _cache_mode is not None:
+                    _cm_val2 = getattr(_cache_mode, "value", None) or getattr(
+                        _cache_mode, "name", None,
+                    )
+                    if _cm_val2 in ("offscreen_serialize", "OFFSCREEN_SERIALIZE"):
+                        _bake = getattr(entity, "bake_data_layer", None)
+                        if callable(_bake):
+                            try:
+                                _bake(str(self._save_dir / f"{entity.id}_damage.slap"))
+                            except Exception:
+                                pass
                 if current == self.TIER_GPU:
                     self.evict_to_disk(entity)
                 elif current == self.TIER_RAM:

@@ -80,6 +80,18 @@ class PixelContactResult:
     contact_pixels: int
     normal: tuple[float, float]
 
+    # Backwards-compat: Ochema Circuit's Sprint 5 collision suite reads
+    # ``result.depth`` as a synonym for ``contact_pixels`` (see
+    # tests/test_sprint5_collision.py:64, 101 and 8 additional call sites
+    # across systems/collision_system.py). F1's pass returned an alias
+    # attribute; the modern struct dropped it. Restoring as a read-only
+    # property preserves both spellings without duplicating storage.
+    # See docs/game_compat_2026_07_07.md § 11.4 (PixelContactResult drift).
+    # DO NOT REMOVE without a v1.0 deprecation cycle.
+    @property
+    def depth(self) -> int:
+        return self.contact_pixels
+
 
 _NO_CONTACT = PixelContactResult(hit=False, contact_pixels=0, normal=(0.0, 0.0))
 

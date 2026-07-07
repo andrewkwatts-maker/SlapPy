@@ -35,6 +35,20 @@ class Asset(RenderTarget):
         self.compute: "AssetComputeAPI | None" = None
         self.effects: list["NodeMaterial"] = []
         self._residency_mgr = None
+        # Backwards-compat: Ochema Circuit's asset-caching tests
+        # (tests/test_asset_caching.py:107-118) and scenes/race.py:111
+        # rely on ``Asset.cache_mode`` defaulting to
+        # ``CacheMode.OFFSCREEN_SERIALIZE`` and being freely reassignable to
+        # other ``CacheMode`` values. F1's Asset carried the attribute
+        # inline; the modern residency manager pushed the concept behind
+        # the tier() API but downstream games still reach for the field
+        # directly. Import is deferred to avoid a residency-manager circular
+        # (CacheMode lives in residency/manager.py, which imports
+        # ``engine_config`` which imports ``slappyengine`` which imports
+        # ``asset``). See docs/game_compat_2026_07_07.md § 11.4.
+        # DO NOT REMOVE without a v1.0 deprecation cycle.
+        from slappyengine.residency.manager import CacheMode as _CacheMode
+        self.cache_mode = _CacheMode.OFFSCREEN_SERIALIZE
 
     def add_effect(self, mat: "NodeMaterial", blend: str = "normal") -> None:
         mat = validate_node_material("mat", "Asset.add_effect", mat)
