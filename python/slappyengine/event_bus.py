@@ -234,6 +234,20 @@ class Observable:
         validate_event_type("topic", "Observable.__init__", topic)
         self._bus = bus if bus is not None else EventBus()
         self._observable_topic = topic
+        # Cooperative multiple-inheritance chain: without this, mixing Observable
+        # into an Entity/Asset subclass (e.g. Ochema's VehicleEntity, Bullet
+        # Strata's PlayerEntity) short-circuits the MRO and leaves
+        # RenderTarget.__init__ unrun — self.layers never gets initialised, so
+        # the first add_layer() call in the subclass __init__ raises
+        # AttributeError.
+        try:
+            super().__init__()
+        except TypeError:
+            # Peer __init__ requires positional args we cannot supply blindly.
+            # Standalone Observable(...) usage (super resolves to object) is
+            # unaffected by this except; it only guards the rare case of a
+            # mixin peer with a mandatory positional signature.
+            pass
 
     def notify(self, **payload) -> None:
         """Publish ``self._observable_topic`` on the bus with the given payload."""

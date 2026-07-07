@@ -14,11 +14,19 @@ class RenderTarget(Entity):
         self.post_process: "PostProcessChain | None" = None
 
     def add_layer(self, layer: "Layer") -> "Layer":
+        # Defensive: if a subclass with an unusual MRO (e.g. Observable mixin
+        # short-circuiting the cooperative chain in older engine builds) skips
+        # RenderTarget.__init__ but still calls add_layer, materialise the
+        # backing list on first touch rather than raising AttributeError.
+        if not hasattr(self, "layers"):
+            self.layers = []
         layer.entity = self
         self.layers.append(layer)
         return layer
 
     def remove_layer(self, layer: "Layer") -> None:
+        if not hasattr(self, "layers"):
+            self.layers = []
         self.layers.remove(layer)
 
     def tick(self, dt: float) -> None:
