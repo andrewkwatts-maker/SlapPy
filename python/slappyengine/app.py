@@ -1402,6 +1402,30 @@ class App:
             return {}
         return self._diagnostics.stats()
 
+    def diagnostics_report(self, **kwargs: Any) -> str:
+        """Render a Markdown problem-panel report for the current buffer.
+
+        Convenience shim over
+        :meth:`DiagnosticsCollector.render_markdown_report`. Returns an
+        empty string when diagnostics have not been enabled.
+
+        Parameters
+        ----------
+        **kwargs:
+            Forwarded to
+            :meth:`DiagnosticsCollector.render_markdown_report`
+            (``max_events``, ``group_by``).
+
+        Notes
+        -----
+        Bypass hint: call ``collector.render_markdown_report(...)``
+        directly (``_core`` surface) — this method just guards the
+        ``None`` case.
+        """
+        if self._diagnostics is None:
+            return ""
+        return self._diagnostics.render_markdown_report(**kwargs)
+
 
 # ---------------------------------------------------------------------------
 # Module-level convenience API

@@ -51,7 +51,7 @@ Evidence column: commit SHA, file path, or grep result.
 | 9 | `cargo check` + `cargo test` green (tracked scope) | **GREEN** | Flipped by PP3 | `git ls-files "src/*.rs"` = 14 files; `grep '^mod ' src/lib.rs` = 14 declarations; zero lag. F1 four untracked files re-scope to gate 11. |
 | 10 | `maturin build --release` wheel size within budget | **GREEN** | Maintained | ~1.45 MB (well under 50 MB) per `docs/wheel_size_audit_2026_06_02.md`. |
 | 11 | Softbody / fluid / physics / physics2 WIP dirs committed or deferred | **FAILING** | Unchanged | `git status` confirms `softbody/`, `fluid/`, `physics/`, `physics2/` untracked, plus 4 untracked Rust source files (`src/raster.rs`, `src/pbf_solver.rs`, `src/softbody_solver.rs`, `src/fluid_shader.rs`). User-gated. |
-| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | needs-verify | Unchanged | Last verified pre-Nova3D parity per `project_beta_2026_05.md`. |
+| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | needs-verify (SS5 BLOCKED) | Attempted 2026-07-07 by SS5; both game repos absent from `H:/Github/` (top-level walk = 51 entries, zero `ochema`/`bullet`/`strata`/`circuit` matches). See `docs/game_compat_2026_07_07.md`. Follow-up: clone game repos then re-dispatch, or sign v0.4.1 deferral. |
 | 13 | Perf dashboard no regression >10% | needs-verify | Unchanged | Baseline unchanged; re-run needed post-parity. |
 | 14 | CHANGELOG.md `[0.4.0]` section written | **DRAFT** | Flipped by PP7 | `CHANGELOG.md:8 = "## [0.4.0] — YYYY-MM-DD (UNRELEASED)"`. Date flip happens in tag sprint. |
 | 15 | `.github/workflows/publish.yml` runs test suite before wheel | **DEFERRED** | Unchanged | Punted to v0.4.1. |
@@ -146,10 +146,12 @@ capability gaps.
 
 Downstream posture: after gate 1 flips, gates 2 (engine-surface
 regen) + 14 (CHANGELOG date flip) fall together in the same tag-sprint
-commit; gates 7 (skip audit), 12 (game-compat re-run), and 13 (perf
-dashboard re-baseline) each need a one-slot verification pass but are
-not FAILING under any evidence RR6 collected. Gate 15 remains
-DEFERRED to v0.4.1 by design.
+commit; gates 7 (skip audit), 12 (game-compat re-run — SS5 walked
+2026-07-07 late-evening, found both game repos absent from disk, doc
+at `game_compat_2026_07_07.md`, unblock via clone or sign v0.4.1
+deferral), and 13 (perf dashboard re-baseline) each need a one-slot
+verification pass but are not FAILING under any evidence RR6 + SS5
+collected. Gate 15 remains DEFERRED to v0.4.1 by design.
 
 Do **NOT** ship v0.4 as-is: the version drift (gate 1) would embarrass
 a first-time installer, and shipping without an explicit WIP-tree
@@ -170,7 +172,9 @@ re-run `test_version_consistency.py` — closes gates 1, 2, 14.
 Slot 2: skip audit sweep (`grep -rn "pytest.mark.skip\|pytest.skip\|
 @skipif" SlapPyEngineTests/tests/`) → docs entry per hit → closes
 gate 7. Slot 3: game-compat tripwire re-run (Ochema 1124/1126 + Bullet
-54/54) → closes gate 12. Slot 4: perf-dashboard re-baseline via
+54/54) → closes gate 12. **Prerequisite** (per SS5 walk 2026-07-07):
+clone both game repos onto the workstation first; see
+`docs/game_compat_2026_07_07.md` § 5 for the two follow-up paths. Slot 4: perf-dashboard re-baseline via
 6-hot-path harness → closes gate 13. Slot 5: user decision on gate 11
 (either WIP unfreeze landing sprint OR docs deferral note). After all
 five slots land: **`git tag v0.4.0`** and push to PyPI.

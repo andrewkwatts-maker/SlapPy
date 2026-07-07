@@ -36,7 +36,8 @@ import traceback
 from collections import Counter, deque
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 
 
 # ---------------------------------------------------------------------------
@@ -428,6 +429,149 @@ class DiagnosticsCollector:
             collector._events.extend(rebuilt)
         return collector
 
+    # ------------------------------------------------------------------
+    # SS6 extension — Markdown report generator
+    # ------------------------------------------------------------------
+
+    def render_markdown_report(
+        self, max_events: int = 50, group_by: str = "subsystem"
+    ) -> str:
+        """Render a one-shot Markdown problem panel for dev / QA workflow.
+
+        Parameters
+        ----------
+        max_events:
+            Maximum number of rows in the "Recent events" table. Older
+            events beyond this cap are dropped from the rendered table
+            (but summary + top-subsystem totals still reflect the full
+            buffer).
+        group_by:
+            Row ordering for the recent-events table.
+
+            * ``"subsystem"`` — group by subsystem, then oldest-first
+              within each subsystem.
+            * ``"time"`` — pure descending timestamp (newest first).
+            * ``"level"`` — descending severity (CRITICAL > ERROR >
+              WARNING > INFO > DEBUG), then newest-first within a level.
+
+        Returns
+        -------
+        str
+            Markdown document with sections:
+            ``# Diagnostics Report`` (with ISO-8601 timestamp),
+            ``## Summary`` (totals + warning/error counts), ``## Top
+            subsystems`` (aggregated table), ``## Recent events``.
+
+        Raises
+        ------
+        ValueError
+            If *group_by* is not one of the recognised keys.
+        """
+        if group_by not in ("subsystem", "time", "level"):
+            raise ValueError(
+                "DiagnosticsCollector.render_markdown_report: "
+                f"group_by must be 'subsystem', 'time', or 'level'; got {group_by!r}"
+            )
+        if max_events < 0:
+            raise ValueError(
+                "DiagnosticsCollector.render_markdown_report: "
+                f"max_events must be >= 0; got {max_events!r}"
+            )
+
+        with self._lock:
+            events_snapshot = list(self._events)
+            stats_snapshot = self._stats_locked()
+
+        now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        total = int(stats_snapshot.get("total", 0))
+        warn_count = int(stats_snapshot.get("level:WARNING", 0))
+        error_count = int(stats_snapshot.get("level:ERROR", 0)) + int(
+            stats_snapshot.get("level:CRITICAL", 0)
+        )
+        subsystems_affected = sum(
+            1 for k in stats_snapshot if k.startswith("subsystem:")
+        )
+
+        lines: list[str] = []
+        lines.append(f"# Diagnostics Report — {now_iso}")
+        lines.append("")
+        lines.append("## Summary")
+        lines.append(f"- **Total events:** {total}")
+        lines.append(f"- **Warnings:** {warn_count}, **Errors:** {error_count}")
+        lines.append(f"- **Subsystems affected:** {subsystems_affected}")
+        lines.append("")
+
+        # Top subsystems table (top 10 by count).
+        top_subs = Counter(e.subsystem for e in events_snapshot).most_common(10)
+        lines.append("## Top subsystems")
+        if not top_subs:
+            lines.append("_No subsystems recorded._")
+        else:
+            lines.append("| Subsystem | Events |")
+            lines.append("|---|---|")
+            for sub, count in top_subs:
+                lines.append(f"| {_md_escape(sub)} | {count} |")
+        lines.append("")
+
+        # Order the recent events.
+        if group_by == "time":
+            ordered = sorted(events_snapshot, key=lambda e: e.timestamp, reverse=True)
+        elif group_by == "level":
+            ordered = sorted(
+                events_snapshot,
+                key=lambda e: (_level_rank(e.level), e.timestamp),
+                reverse=True,
+            )
+        else:  # subsystem
+            ordered = sorted(
+                events_snapshot, key=lambda e: (e.subsystem, e.timestamp)
+            )
+
+        truncated = ordered[:max_events]
+        lines.append(f"## Recent events (last {max_events})")
+        if not truncated:
+            lines.append("_0 events recorded._")
+        else:
+            lines.append("| Time | Level | Subsystem | Message |")
+            lines.append("|---|---|---|---|")
+            for evt in truncated:
+                # HH:MM:SS in local time — matches the sample in the spec.
+                t_str = datetime.fromtimestamp(evt.timestamp).strftime("%H:%M:%S")
+                lines.append(
+                    "| {t} | {lvl} | {sub} | {msg} |".format(
+                        t=t_str,
+                        lvl=_md_escape(evt.level),
+                        sub=_md_escape(evt.subsystem),
+                        msg=_md_escape(evt.message),
+                    )
+                )
+        lines.append("")
+
+        return "\n".join(lines)
+
+    def save_report(
+        self, path: Union[str, Path], **kwargs
+    ) -> Path:
+        """Render the markdown report and write it to *path*.
+
+        Parameters
+        ----------
+        path:
+            Destination file path. Parent directory must exist.
+        **kwargs:
+            Forwarded to :meth:`render_markdown_report` (``max_events``,
+            ``group_by``).
+
+        Returns
+        -------
+        Path
+            The resolved output path (as :class:`pathlib.Path`).
+        """
+        out = Path(path)
+        content = self.render_markdown_report(**kwargs)
+        out.write_text(content, encoding="utf-8")
+        return out
+
     def _stats_locked(self) -> dict[str, int]:
         """Internal :meth:`stats` body assuming the lock is already held."""
         level_counts: Counter[str] = Counter(e.level for e in self._events)
@@ -464,6 +608,39 @@ class DiagnosticsCollector:
         )
         with self._lock:
             self._events.append(evt)
+
+
+# ---------------------------------------------------------------------------
+# Markdown-report helpers (SS6)
+# ---------------------------------------------------------------------------
+
+
+_LEVEL_RANK = {
+    "DEBUG": 10,
+    "INFO": 20,
+    "WARNING": 30,
+    "ERROR": 40,
+    "CRITICAL": 50,
+}
+
+
+def _level_rank(level: str) -> int:
+    """Return a numeric severity for sorting; unknown levels map to 0."""
+    return _LEVEL_RANK.get(level.upper(), 0)
+
+
+def _md_escape(text: str) -> str:
+    """Escape characters that would break a Markdown table row.
+
+    Replaces ``|`` with ``\\|`` and collapses newlines to a space so a
+    multi-line message stays on one row.
+    """
+    if text is None:
+        return ""
+    s = str(text)
+    s = s.replace("\\", "\\\\").replace("|", "\\|")
+    s = s.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+    return s
 
 
 def _coerce_level(level: str | int) -> int:
