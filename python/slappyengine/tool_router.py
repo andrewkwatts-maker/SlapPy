@@ -1357,6 +1357,57 @@ def _fb_spawn_stamp_repeat(ctx: dict[str, Any]) -> Any:
     return stamp_repeat(ctx)
 
 
+# ---------------------------------------------------------------------------
+# TT2 STUB-triage fallbacks (2026-07-12 — round 21 after SS1)
+#
+# Five more STUB rows flipped to WIRED: view.set_zoom (absolute-zoom
+# setter — distinct from Z7's zoom_in/zoom_out steps + SS1's integer
+# pixel-scale steps), spawn.at_view_center (drop next spawn at the
+# viewport focus — distinct from EE1's spawn_at_cursor + QQ1's
+# spawn.at_origin), spawn.stamp_random (hold-and-stamp with random
+# card selection from the stamp history — distinct from SS1's
+# deterministic spawn.stamp_repeat), theme.reload_from_disk
+# (targeted single-theme hot-reload — distinct from FF1's whole-
+# registry theme.reload_all + RR1's theme.reset_to_default), and
+# layer.rename (rename a Z-layer — distinct from PP1's edit.rename for
+# entities + FF1's content.rename_asset for files). Python fallbacks
+# live in ``slappyengine.actions.view_set_zoom_actions``,
+# ``spawn_view_center_actions``, ``spawn_stamp_random_actions``,
+# ``theme_reload_from_disk_actions``, and ``layer_rename_actions``.
+# ---------------------------------------------------------------------------
+
+
+def _fb_view_set_zoom(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_set_zoom_actions import set_zoom
+    return set_zoom(ctx)
+
+
+def _fb_spawn_at_view_center(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_view_center_actions import (
+        spawn_at_view_center,
+    )
+    return spawn_at_view_center(ctx)
+
+
+def _fb_spawn_stamp_random(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_stamp_random_actions import (
+        stamp_random,
+    )
+    return stamp_random(ctx)
+
+
+def _fb_theme_reload_from_disk(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.theme_reload_from_disk_actions import (
+        reload_from_disk,
+    )
+    return reload_from_disk(ctx)
+
+
+def _fb_layer_rename(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_rename_actions import rename_layer
+    return rename_layer(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -2620,6 +2671,49 @@ def _default_actions() -> list[ToolAction]:
             python_fallback=_fb_spawn_stamp_repeat,
             required_args=[],
             category="spawn",
+        ),
+        # ── TT2 STUB-triage: view.set_zoom, spawn.at_view_center,
+        #    spawn.stamp_random, theme.reload_from_disk, layer.rename
+        #    (round 21) ──
+        ToolAction(
+            action_id="view.set_zoom",
+            label="Set Zoom",
+            rust_backing=None,
+            python_fallback=_fb_view_set_zoom,
+            required_args=["distance"],
+            category="view",
+        ),
+        ToolAction(
+            action_id="spawn.at_view_center",
+            label="Spawn at View Center",
+            rust_backing=None,
+            python_fallback=_fb_spawn_at_view_center,
+            required_args=[],
+            category="spawn",
+        ),
+        ToolAction(
+            action_id="spawn.stamp_random",
+            label="Stamp Random Spawn",
+            rust_backing=None,
+            python_fallback=_fb_spawn_stamp_random,
+            required_args=[],
+            category="spawn",
+        ),
+        ToolAction(
+            action_id="theme.reload_from_disk",
+            label="Reload Theme from Disk",
+            rust_backing=None,
+            python_fallback=_fb_theme_reload_from_disk,
+            required_args=[],
+            category="theme",
+        ),
+        ToolAction(
+            action_id="layer.rename",
+            label="Rename Layer",
+            rust_backing=None,
+            python_fallback=_fb_layer_rename,
+            required_args=["new_name"],
+            category="layer",
         ),
         # ── Easter eggs (creature triggers) ──────────────────────────
         ToolAction(

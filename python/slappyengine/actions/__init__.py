@@ -192,6 +192,21 @@ from .view_pixel_scale_actions import (
 from .spawn_stamp_repeat_actions import (
     stamp_repeat as stamp_repeat_spawn,
 )
+from .view_set_zoom_actions import (
+    set_zoom as set_view_zoom,
+)
+from .spawn_view_center_actions import (
+    spawn_at_view_center as spawn_at_view_center,
+)
+from .spawn_stamp_random_actions import (
+    stamp_random as stamp_random_spawn,
+)
+from .theme_reload_from_disk_actions import (
+    reload_from_disk as reload_theme_from_disk,
+)
+from .layer_rename_actions import (
+    rename_layer as rename_layer,
+)
 
 
 __all__ = [
@@ -267,4 +282,9 @@ __all__ = [
     "increase_pixel_scale",
     "decrease_pixel_scale",
     "stamp_repeat_spawn",
+    "set_view_zoom",
+    "spawn_at_view_center",
+    "stamp_random_spawn",
+    "reload_theme_from_disk",
+    "rename_layer",
 ]
