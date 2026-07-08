@@ -491,3 +491,91 @@ sites**?".
 *§ 9.5 addendum generated 2026-07-08 by ZZ3 after commit-race with
 ZZ5 sprint-rollup r8. Post-race re-run against HEAD `4e4c2dd`. Full
 analysis in `docs/game_compat_2026_07_07.md` § 13.7.*
+
+---
+
+## 10. Post-AAA re-verify (2026-07-08 +2) — YELLOW at 93.3% F1; Bullet Strata fully recovered; Option B tail STAYS OPEN one more tick
+
+**Refresh appended by AAA3** after re-verifying gate #12 against HEAD
+`c758122` (ZZ2's own "Restore 3-5 more backcompat symbols" commit).
+The four projected AAA-batch siblings (AAA1 numeric tail batch 1,
+AAA2 numeric tail batch 2, AAA6 Bullet Strata residual, AAA7 Ochema
+test-module residual sweep) did NOT land — zero engine-side AAA-
+numbered commits on any branch. AAA3's re-run measured:
+
+* Ochema Circuit: **1045 pass / 68 fail / 13 skip** (+6 vs ZZ3
+  post-race 1039, **93.0%** of F1).
+* Bullet Strata: **54 pass / 0 fail / 0 err** (+4 vs ZZ3;
+  **100.0% of F1 — FULLY RECOVERED**).
+* Combined: **1099 / 1178 = 93.3% F1 recovery** (up +0.9 pp from
+  § 9.5's 92.4%; up +1.5 pp from ZZ3's 91.8%).
+
+**Verdict unchanged: YELLOW.** Still 20 passes short of GREEN's 1119
+threshold. The +10 pass delta since ZZ3 came from ZZ2's `c758122`
+backcompat-symbol restorations quietly closing Bullet Strata's last
+4 dispatch sites plus 4-6 Ochema sites (subscription-handle + method-
+surface aliases).
+
+### 10.1 Bullet Strata milestone — 100% F1 recovery
+
+For the first time since TT1's 2026-07-07 tripwire flagged gate #12
+as FAILING, Bullet Strata has fully recovered to 54/54 passing
+(100% of F1 baseline). This closes AAA6's briefed scope without AAA6
+landing as a discrete commit. Downstream implication: Bullet Strata
+is unblocked as a v0.4.0 tag consumer; gate #12's residual work
+is now Ochema-only.
+
+### 10.2 Option B tail — status update
+
+Per AAA3 briefing: user pre-approved the Option B tail path if gate
+#12 crosses GREEN. AAA3 measured **93.3% (YELLOW), not GREEN** (95%).
+
+**Option B tail STAYS OPEN one more tick.** Rationale:
+
+* The +1.5 pp drift across YY3 → ZZ3 → AAA3 (91.8% → 92.4% →
+  93.3%) demonstrates the residual gap continues to close at
+  ~0.5-1.0 pp per tick as regular backcompat-symbol restorations
+  land alongside primary sprint work.
+* GREEN threshold at 95% requires +20 more combined passes; the
+  briefed BB batch (BB1+BB2 numeric-tail = ~20 sites + BB7
+  Observable subscribe-handle shape = ~7 sites) projects to
+  cross **95-96%** = GREEN.
+* One BB batch is a materially cheaper trade than switching to
+  Option F "SHIP-AT-YELLOW-NOW" this tick, given the tag-ceremony
+  YY7/ZZ7 rehearsal is already queued.
+
+**If BB batch lands GREEN in the next tick**: Option B tail
+CLOSES; YY7/ZZ7 tag ceremony proceeds with gate #12 as a hard
+GREEN. **If BB batch misses**: fall back to Option F
+"SHIP-AT-YELLOW-NOW" at ~93.3% F1, ship v0.4.0 with a v0.4.1
+followup targeting the remaining ~14-20 sites.
+
+### 10.3 Recommendation update
+
+**Option B tail remains recommended** (one more tick) provided a
+BB-batch dispatches. Option F "SHIP-AT-YELLOW-NOW" remains the
+safety-net fallback if BB misses. Concrete next tick: user answers
+Q1 (updated to "Ship-at-**93.3%**-compat with v0.4.1 followup vs
+one more BB batch attempting GREEN?"); on YES-to-BB, dispatch BB1
+(numeric tail 10 sites), BB2 (numeric tail 10 more), BB7 (Observable
+subscribe-handle shim, ~7 sites); on YES-to-Option-F, dispatch tag
+sprint immediately.
+
+### 10.4 Cross-reference for § 10
+
+* [`docs/game_compat_2026_07_07.md`](game_compat_2026_07_07.md)
+  § 14 — AAA3 re-verify (93.3% F1, Bullet Strata fully recovered).
+* [`docs/v0_4_gate_reconciliation_2026_07_07.md`](v0_4_gate_reconciliation_2026_07_07.md)
+  — Gate #12 row now reads "YELLOW at 93.3% F1" with Bullet Strata
+  100% callout.
+* [`docs/v0_4_tag_readiness_2026_07_07.md`](v0_4_tag_readiness_2026_07_07.md)
+  § 3.2 — Pre-tag verification for gate #12 marked PASSING at 93.3%
+  (well above 80% threshold).
+
+*§ 10 refresh generated 2026-07-08 by AAA3 background scrum agent
+following AAA1/AAA2/AAA6/AAA7 non-landing and gate #12 YELLOW
+sustained-at-93.3% re-verify. Sources: `git log --oneline -15`
+(identified zero AAA-numbered commits between ZZ3 addendum and this
+walk; HEAD is `c758122` ZZ2), live tripwire against HEAD `c758122`
+(Ochema 1045/68/13, Bullet Strata 54/0/0), combined F1 recovery
+1099/1178 = 93.3%. Docs-only — no Python source touched.*

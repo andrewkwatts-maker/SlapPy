@@ -51,7 +51,7 @@ Evidence column: commit SHA, file path, or grep result.
 | 9 | `cargo check` + `cargo test` green (tracked scope) | **GREEN** | Flipped by PP3 | `git ls-files "src/*.rs"` = 14 files; `grep '^mod ' src/lib.rs` = 14 declarations; zero lag. F1 four untracked files re-scope to gate 11. |
 | 10 | `maturin build --release` wheel size within budget | **GREEN** | Maintained | ~1.45 MB (well under 50 MB) per `docs/wheel_size_audit_2026_06_02.md`. |
 | 11 | Softbody / fluid / physics / physics2 WIP dirs committed or deferred | **DEFERRED** | **Flipped by AAA5** 2026-07-08 | User answered VV7 Q3 verbatim: "Keep frozen with docs deferral." Formalised in [`docs/wip_subpackages_deferral_2026_07_08.md`](wip_subpackages_deferral_2026_07_08.md). WIP trees + 4 Rust source files remain untracked and out of the v0.4.0 wheel; roadmap for un-freeze targets v0.5 (softbody + fluid), v0.6 (physics2), v1.0 (physics — marked for removal). Gate #11 no longer blocks the v0.4.0 tag. |
-| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | **YELLOW — MAJOR MILESTONE** (post YY1; reaffirmed by ZZ3 2026-07-08 +1) | **Threshold crossed by YY3** (was WW3 STILL FAILING); ZZ3 re-verify ±0 (ZZ1/ZZ2 did not land) | Live re-tripwire executed 2026-07-08 by YY3 against HEAD `86e57f9` (YY4 STUB r25). YY1 (`4ea51da`, "Restore EventPayload dual-shape returns") is the load-bearing commit; landed mid-YY3-walk. YY2 (backcompat stack) did NOT land as a discrete commit; that work is effectively covered by WW2 (`19d00a0`, "Restore 3-5 more backcompat symbols") + `2e8cb8d` (WW1 salvage — unsubscribe(None) explicit close) which arrived between WW3's baseline and YY3's walk. YY3 results vs WW3 baseline: Ochema **1032 pass / 77 fail / 17 skip / 0 err** (+194 passes), Bullet Strata **50/4/0** (+4 passes). Combined **+198 passes** (recovery = **1082/1178 = 91.8% of F1**; only −96 vs F1 baseline). Ochema alone 91.8%, Bullet Strata alone **92.6%** (both individually YELLOW; both above 90%). YY3 grep-verified: **0** `'dict' object has no attribute` fingerprints (was 84 in WW3 — collapsed by YY1). All § 11.4 top residuals eliminated or reduced except Observable-kwarg drift (7 sites remain) and DeformableLayerComponent method surface (7 sites). YY1 alone contributed **+198 passes / +16.8 pp** — the largest single-slot delta of the recovery arc. Full YY3 analysis in `docs/game_compat_2026_07_07.md` § 12. **Ship-blocker status LIFTED to YELLOW** — v0.4.0 can now ship-at-YELLOW per refreshed `docs/v0_4_ship_decision_2026_07_07.md` § 8; one more targeted slot (Observable kwarg shim + 3 DeformableLayerComponent method aliases = ~18 sites) could push to ~93-94% (near-GREEN). Combined recovery arc: TT1 37.6% → UU3 41.7% → VV3 61.6% → WW3 75.0% → **YY3 91.8%** across 6 backcompat slots (UU1/UU2/VV1/VV2/WW1-salvage+WW2/YY1). |
+| 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | **YELLOW at 93.3% F1** (Bullet Strata **100%** fully recovered; reaffirmed by AAA3 2026-07-08 +2) | **YELLOW sustained across 3 re-verify ticks** (YY3 91.8% → ZZ3 92.4% → **AAA3 93.3%**); AAA1/AAA2/AAA6/AAA7 did not land, but ZZ2 (`c758122`) quietly closed Bullet Strata's last 4 sites → Bullet Strata now 54/54. AAA3 Ochema 1045/68/13 (93.0% F1); combined 1099/1178 = 93.3% F1. Full AAA3 analysis: `docs/game_compat_2026_07_07.md` § 14. Gap to GREEN (95%) = 20 passes; one BB batch (BB1+BB2 numeric-tail + BB7 Observable subscribe-handle) projects to cross. | Live re-tripwire executed 2026-07-08 by YY3 against HEAD `86e57f9` (YY4 STUB r25). YY1 (`4ea51da`, "Restore EventPayload dual-shape returns") is the load-bearing commit; landed mid-YY3-walk. YY2 (backcompat stack) did NOT land as a discrete commit; that work is effectively covered by WW2 (`19d00a0`, "Restore 3-5 more backcompat symbols") + `2e8cb8d` (WW1 salvage — unsubscribe(None) explicit close) which arrived between WW3's baseline and YY3's walk. YY3 results vs WW3 baseline: Ochema **1032 pass / 77 fail / 17 skip / 0 err** (+194 passes), Bullet Strata **50/4/0** (+4 passes). Combined **+198 passes** (recovery = **1082/1178 = 91.8% of F1**; only −96 vs F1 baseline). Ochema alone 91.8%, Bullet Strata alone **92.6%** (both individually YELLOW; both above 90%). YY3 grep-verified: **0** `'dict' object has no attribute` fingerprints (was 84 in WW3 — collapsed by YY1). All § 11.4 top residuals eliminated or reduced except Observable-kwarg drift (7 sites remain) and DeformableLayerComponent method surface (7 sites). YY1 alone contributed **+198 passes / +16.8 pp** — the largest single-slot delta of the recovery arc. Full YY3 analysis in `docs/game_compat_2026_07_07.md` § 12. **Ship-blocker status LIFTED to YELLOW** — v0.4.0 can now ship-at-YELLOW per refreshed `docs/v0_4_ship_decision_2026_07_07.md` § 8; one more targeted slot (Observable kwarg shim + 3 DeformableLayerComponent method aliases = ~18 sites) could push to ~93-94% (near-GREEN). Combined recovery arc: TT1 37.6% → UU3 41.7% → VV3 61.6% → WW3 75.0% → **YY3 91.8%** across 6 backcompat slots (UU1/UU2/VV1/VV2/WW1-salvage+WW2/YY1). |
 | 13 | Perf dashboard no regression >10% | needs-verify | Unchanged | Baseline unchanged; re-run needed post-parity. |
 | 14 | CHANGELOG.md `[0.4.0]` section written | **DRAFT** | Flipped by PP7 | `CHANGELOG.md:8 = "## [0.4.0] — YYYY-MM-DD (UNRELEASED)"`. Date flip happens in tag sprint. |
 | 15 | `.github/workflows/publish.yml` runs test suite before wheel | **DEFERRED** | Unchanged | Punted to v0.4.1. |
@@ -139,6 +139,29 @@ FAILING among P0 blockers. Gate #12 (game-compat) ships-at-YELLOW per
 VV7 Option E/F. Practical effect: tag ceremony pre-flight in
 `docs/v0_4_tag_rehearsal_2026_07_08.md` § 3 can proceed on gate #1
 + gate #12 threshold alone.
+
+**Post-AAA re-verify update (2026-07-08 +2) — YELLOW at 93.3% F1,
+Bullet Strata FULLY RECOVERED**: AAA3 re-verified gate #12 against
+HEAD `c758122` (ZZ2's own "Restore 3-5 more backcompat symbols"
+commit). None of the four projected AAA-batch commits (AAA1 numeric
+tail batch 1, AAA2 numeric tail batch 2, AAA6 Bullet Strata residual,
+AAA7 Ochema test-module residual sweep) landed as discrete commits;
+`git log --oneline --all -30 | grep AAA` returns zero AAA-numbered
+sprint hits. However, ZZ2's `c758122` (which landed after ZZ3's
+addendum) quietly closed Bullet Strata's last 4 residuals plus several
+Ochema sites. AAA3 re-run: Ochema **1045/68/13** (+6 vs ZZ3 post-race
+1039); Bullet Strata **54/0/0** (+4 vs ZZ3; **fully recovered — 100%
+of F1**). Combined **1099/1178 = 93.3% F1 recovery** (+10 vs ZZ3
+post-race 1089; +1 vs brief-cited ZZ2 baseline 1098). Gate #12 verdict:
+**YELLOW sustained across 3 re-verify ticks** (YY3 91.8% → ZZ3 92.4%
+→ AAA3 93.3%) with mild upward drift. Ochema at **93.0%** individually
+(20 passes from GREEN); Bullet Strata **100.0%** individually (fully
+green). Ship posture: Option F "SHIP-AT-YELLOW-NOW" recommendation
+strengthened, not weakened. AAA6 briefed scope is now moot — Bullet
+Strata is 54/54. GREEN threshold (95% = 1119 combined) still needs +20
+passes; projected BB1+BB2 (numeric tail, ~20 sites) + BB7 (Observable
+subscribe-handle shape, ~7 sites) closes gate #12 at GREEN next tick.
+Full AAA3 analysis in `docs/game_compat_2026_07_07.md` § 14.
 
 **Post-ZZ re-verify update (2026-07-08 +1/+2) — YELLOW at 92.4% F1
 after late-landing ZZ1**: ZZ3's initial walk against HEAD `c5b00e1`

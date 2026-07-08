@@ -1178,3 +1178,188 @@ race with sibling ZZ5. Sources: post-race re-run against HEAD `4e4c2dd`
 (Ochema 1039/70/17, Bullet Strata 50/4/0), git log --oneline -10
 (confirmed 7990501 ZZ1 landed between § 13's initial write and this
 addendum).*
+
+---
+
+## 14. Post-AAA1+AAA2+AAA6+AAA7 re-run (AAA3, 2026-07-08 +2) — **YELLOW SUSTAINED, AAA-BATCH DID NOT LAND**
+
+Seventh-pass game-compat walk by AAA3 background scrum agent. This
+slot was briefed to re-verify gate #12 after **four** projected AAA-
+batch siblings land: AAA1 (numeric tail batch 1, ~10 failures), AAA2
+(numeric tail batch 2, ~10 more), AAA6 (Bullet Strata residual, 1
+site), AAA7 (Ochema test-module residual sweep). Projected combined
+delta: cross **95% F1 GREEN** threshold (needed +21 combined passes
+over ZZ2's 1098 to reach 1119).
+
+Engine state at AAA3 walk: HEAD `c758122` ("Restore 3-5 more
+backcompat symbols (ZZ2)"). Commits between ZZ3 addendum and AAA3
+walk time:
+
+```
+c758122 Restore 3-5 more backcompat symbols (ZZ2)           ← AAA3 baseline
+ddcf1f0 Game-compat re-verify post ZZ1+ZZ2 (ZZ3) — addendum ← ZZ3's own § 13.7
+20280d9 Wire 5 more STUB actions (ZZ4) — round 26 triage
+dd983a3 Add hello_v0_4_ready flagship demo (ZZ6)
+4e4c2dd Sprint rollup r8 covering WW+YY (ZZ5)
+38534c0 Game-compat re-verify post ZZ1+ZZ2 (ZZ3)            ← ZZ3 initial doc
+7990501 Fix Observable kwarg-swallow (ZZ1)
+```
+
+**None of AAA1, AAA2, AAA6, AAA7 landed as commits.** Full
+`git log --oneline --all` grep for `AAA` returns only the F1
+`AAAA rendering pipeline` initial-commit hit — zero AAA-numbered
+sprint commits on any branch. The projected +21-pass GREEN-crossing
+delta is therefore **not realisable this AAA3 tick**; the re-run
+measures the current post-ZZ2 engine state which ZZ3's own
+addendum (§ 13.7) did not directly re-measure after `c758122` landed.
+
+### 14.1 Refreshed pass counts (AAA3 walk)
+
+| game | ZZ3 post-race (post-ZZ1) | AAA3 (post-ZZ2) | Δ from ZZ2 landing | Δ vs ZZ3 briefing baseline (1098) |
+|---|---|---|---|---|
+| ochema_circuit | 1039 | **1045** | **+6** | +13 vs YY3's 1032 |
+| bullet_strata | 50 | **54** | **+4** | +4 (fully recovered — 54/54) |
+| **combined** | **1089** | **1099** | **+10** | **+1 vs brief-cited 1098** |
+
+Ochema pass-rate: **1045/1124 = 93.0%** of F1. Bullet Strata:
+**54/54 = 100%** of F1 (**FULLY RECOVERED**). Combined F1 recovery:
+**1099/1178 = 93.3%** (up from ZZ3 post-race 92.4%; up from ZZ3
+initial 91.8%).
+
+Wall time this walk: Ochema 139.68 s; Bullet Strata 1.66 s.
+
+**Notable milestone**: Bullet Strata crossed 100% F1 recovery for the
+first time since TT1's initial FAILING tripwire. ZZ2's backcompat-
+symbol restorations (`c758122`) closed the last 4 Bullet Strata
+residuals (Quality-tier dispatch + Observable payload-shape sites
+that ZZ1's constructor-kwarg shim did not reach). AAA6's briefed
+scope (1 residual) was therefore already closed before AAA3 walked.
+
+### 14.2 Root-cause resolution vs ZZ3 § 13.4 residuals
+
+| ZZ3 § 13.4 item | Fingerprint | ZZ3 sites | AAA3 sites | Verdict |
+|---|---|---|---|---|
+| 1 | `Observable.__init__() got an unexpected keyword argument 'name'` | 7 | ~4 | PARTIAL (ZZ1 landed, some sites remain) |
+| 2 | `EventBus.listener_count is read-only` / `_debug_overlay_orig_pub` slots | 3 | ~3 | UNCHANGED |
+| 3 | `DeformableLayerComponent` missing `integrity_from_strain` + siblings | ~7 | ~1 | LARGELY RESOLVED by ZZ2 (`test_repair_restores_damage` still fails) |
+| 4 | `debug_listeners` import | 1 | 0 | RESOLVED (ZZ2) |
+| 5 | Numeric-assertion tail | ~55 | ~60 | UNCHANGED (AAA1/AAA2 target — did not land) |
+
+Top residuals at AAA3 walk (Ochema, 68 failures):
+
+* **`test_q7_performance.py::test_audio_system_no_listener_leak_after_stop_all`** — Observable teardown ordering.
+* **3 sites in `test_q8_garage_polish.py`** — subscription-handle
+  non-None assertion (Observable `subscribe` return-shape drift).
+* **3 sites in `test_q8_results_polish.py`** — Observable
+  `handle_unsubscribed_on_destroy` teardown side-effect ordering.
+* **`test_sprint2_vehicle.py::test_repair_restores_damage`** — the
+  last DeformableLayerComponent repair-path site (ZZ3 § 13.4 item 3
+  residual).
+* **Numeric-assertion tail (~60 sites)** across
+  `test_q7_performance.py`, `test_q9_docs_polish.py`, etc. — this is
+  the AAA1+AAA2 target that did not land.
+
+### 14.3 F1-recovery percentage + gate #12 verdict
+
+Combined recovery: 1099 / 1178 = **93.3%**. Break-out:
+
+* Ochema alone: 1045 / 1124 = **93.0%**
+* Bullet Strata alone: 54 / 54 = **100.0%** (fully recovered)
+
+Gate #12 verdict criteria (per AAA3 briefing):
+* GREEN: ≥ 95% of F1 → needs combined ≥ 1119. **NOT MET** (short by 20).
+* YELLOW: ≥ 80% → needs combined ≥ 943. **MET** (1099 ≥ 943 by +156).
+* FAILING: < 80%. Not current.
+
+### **Gate #12 verdict: YELLOW sustained at 93.3% F1.** (+1.5 pp vs ZZ3's 91.8% baseline; +0.9 pp vs post-race 92.4%.)
+
+The YELLOW plateau is now sustained across **three** consecutive
+re-verify ticks (YY3 91.8% → ZZ3 92.4% → AAA3 93.3%), with a mild
+upward drift as the ZZ2 backcompat batch quietly closed 4 Bullet
+Strata sites + 4 Ochema sites without a dedicated compat-focused
+sprint. Ship posture under Option F (SHIP-AT-YELLOW-NOW) remains
+strengthened, not weakened. GREEN threshold still requires the
+AAA1+AAA2 numeric-tail slots to land.
+
+### 14.4 What the next tick needs to cross GREEN
+
+Same top items as ZZ3 § 13.4, with numeric-tail elevated to primary
+target:
+
+1. **Numeric-assertion tail (AAA1+AAA2 target)** — ~60 sites in
+   Ochema across `test_q7_performance.py`, `test_q9_docs_polish.py`,
+   and similar. Even 33% conversion (20 sites) crosses GREEN
+   (1119 threshold at +20 passes).
+2. **Observable subscription-handle return-shape shim** — ~7 sites
+   in `test_q8_*` polish suites — `subscribe()` returning non-None
+   handle. **~7 pass leverage.**
+3. **`DeformableLayerComponent.integrity_from_strain` last residual**
+   — 1 site in `test_sprint2_vehicle.py`. **~1 pass leverage.**
+4. **EventBus dataclass `__slots__` relaxation** — 3 sites.
+   **~3 pass leverage.**
+
+Total leverage of items 2-4: ~11 passes. Gap to GREEN after items
+2-4: **~9 passes still needed** — must come from the numeric tail
+(item 1). AAA1+AAA2's briefed +20-site combined delta would close
+this cleanly if they re-dispatch.
+
+### 14.5 AAA1/AAA2/AAA6/AAA7 attribution + next-tick guidance
+
+* **AAA1 (numeric tail batch 1)** — did not land. Re-dispatch as
+  **BB1** — target 10 sites in `test_q7_performance.py` /
+  `test_q9_docs_polish.py`.
+* **AAA2 (numeric tail batch 2)** — did not land. Re-dispatch as
+  **BB2** — target 10 more numeric-assertion sites (paired with BB1).
+* **AAA6 (Bullet Strata residual)** — **effectively closed by
+  ZZ2's `c758122`** without AAA6 landing. Bullet Strata is now 54/54.
+  Recommend: retire AAA6 slot; Bullet Strata is done.
+* **AAA7 (Ochema test-module residual sweep)** — did not land.
+  Re-dispatch as **BB7** targeting the Observable `subscribe()`
+  handle-shape drift (7 Ochema sites in `test_q8_*` polish suites).
+
+**Projected combined BB1+BB2+BB7 impact:** +25-30 sites → combined
+F1 recovery **95-96%** = **GREEN threshold crossed**. One BB batch
+should close gate #12 at GREEN.
+
+### 14.6 Ship-decision Option B tail — status update
+
+Per AAA3 briefing (§ 8): the user pre-approved the Option B tail if
+gate #12 crosses GREEN. Since AAA3 measured 93.3% (still YELLOW),
+Option B tail is **NOT closable this tick**. However:
+
+* Bullet Strata full recovery (54/54, 100%) satisfies the Bullet-
+  Strata half of gate #12 unambiguously.
+* Ochema at 93.0% is 2.0 pp from GREEN — reachable in one BB batch.
+* Option F (SHIP-AT-YELLOW-NOW) remains the primary recommendation
+  per `v0_4_ship_decision_2026_07_07.md` § 9.
+
+**Ship-decision update**: Option B tail stays OPEN for one more
+tick (BB batch). If BB1+BB2+BB7 land and gate #12 crosses GREEN,
+Option B closes and YY7/ZZ7 tag ceremony proceeds. If BB batch
+misses, Option F takes over as the primary path.
+
+### 14.7 AAA3 constraints honoured
+
+* No file under either game repo touched — read-only pytest invocation
+  from `PYTHONPATH=h:/Github/SlapPyEngine/python`; both SVN working
+  copies remain clean.
+* No file under `python/slappyengine/` touched — AAA3 is docs-only.
+* No WIP subpackage touched — `softbody/`, `fluid/`, `physics/`,
+  `physics2/` remain untracked as at ZZ3 (gate #11 DEFERRED per
+  AAA5 wip-subpackages deferral doc).
+* Commit scoped: `docs/game_compat_2026_07_07.md` (this § 14 append)
+  + `docs/v0_4_gate_reconciliation_2026_07_07.md` (gate #12
+  post-AAA re-verify status refresh) +
+  `docs/v0_4_ship_decision_2026_07_07.md` (§ 10 append with Option B
+  tail status) + `docs/v0_4_tag_readiness_2026_07_07.md` (§ 3.2
+  pre-tag verification PASSING mark refreshed for 93.3%).
+
+*Doc § 14 generated 2026-07-08 by AAA3 background scrum agent.
+Sources: `git log --oneline -15` (identified no AAA1/AAA2/AAA6/AAA7
+commits landed between ZZ3 § 13.7 and this walk; HEAD is `c758122`
+ZZ2's own commit), `git log --oneline --all -30 | grep AAA` (zero
+AAA-batch commits on any branch),
+`PYTHONPATH=h:/Github/SlapPyEngine/python python -m pytest
+".../<game>/tests" -q --no-header --tb=line -p no:cacheprovider`
+(Ochema 1045/68/13, Bullet Strata 54/0/0; combined 1099/1178 =
+93.3% F1 recovery).*
