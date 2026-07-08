@@ -9,6 +9,35 @@ from slappyengine._event_bus_validation import (
 )
 
 
+# Backwards-compat (ZZ2, 2026-07): sentinel for "attribute not previously
+# set" in Observable.__setattr__ auto-publish. Distinct from ``None`` because
+# ``None`` is a valid attribute value (``player.current_target = None``
+# should still publish the "cleared" transition).
+_MISSING = object()
+
+
+def _values_equal(a: Any, b: Any) -> bool:
+    """Safe idempotency check for Observable auto-publish.
+
+    ``a == b`` on numpy arrays returns an array, not a bool — coerce to
+    ``bool`` via ``bool()`` when possible; when it can't (multi-element
+    arrays), treat as "not equal" so we always publish. Also handles the
+    common list/tuple mutable-value case (``[50.0, 0.0] == [50.0, 0.0]``
+    is True) without special-casing.
+    """
+    if a is b:
+        return True
+    try:
+        result = a == b
+        if isinstance(result, bool):
+            return result
+        # numpy array — treat any array-valued comparison as "not equal"
+        # (games mutate arrays in-place; auto-publish should fire).
+        return False
+    except Exception:
+        return False
+
+
 class EventPayload(dict):
     """Dual-shape event payload — behaves as BOTH object AND dict.
 
@@ -61,7 +90,17 @@ class EventPayload(dict):
         # Reserved keys are set via dict assignment so __getitem__ finds
         # them without needing a fallback in the lookup path.
         self["name"] = name
-        self["label"] = name  # YY1-spec alias
+        # Backwards-compat (ZZ2, 2026-07): ``label`` defaults to ``name``
+        # (YY1-spec alias) BUT only when the publisher did not pass an
+        # explicit ``label=`` kwarg. Bullet Strata's QualityManager fires
+        # ``publish("Quality.TierChanged", label="low", ...)`` and asserts
+        # ``evt.label == "low"``. Prior YY1 unconditionally clobbered
+        # ``self["label"] = name``, shadowing the caller's kwarg. Preserve
+        # the caller-supplied value when present; only fall back to the
+        # topic name when ``label`` was not explicitly provided.
+        # DO NOT REMOVE without a v1.0 deprecation cycle.
+        if "label" not in payload_dict:
+            self["label"] = name
         self["publisher"] = publisher
         self["data"] = payload_dict
         self["payload"] = payload_dict
@@ -127,7 +166,23 @@ class EventBus:
     "ui:button_pressed", "scene:transition").
     """
 
-    __slots__ = ("_listeners",)
+    # NOTE: __slots__ intentionally REMOVED (was ("_listeners",)) — Backwards-
+    # compat (ZZ2, 2026-07). Two downstream contracts break under __slots__:
+    #   1. ``slappyengine.ui.debug_overlay._sync_event_sub`` stashes the
+    #      original ``publish`` callable on the bus as
+    #      ``bus._debug_overlay_orig_pub`` before wrapping ``bus.publish``
+    #      for the F2 event-stream overlay. Slotted classes reject the
+    #      setattr with ``AttributeError: no __dict__``. Ochema Circuit's
+    #      test_q5_game_flow.TestDebugOverlayWiring.test_f2_toggles_event_stream
+    #      exercises this path.
+    #   2. Ochema's TestRaceManagerDeltaPublish uses
+    #      ``mock.patch.object(bus, "listener_count", return_value=0)`` to
+    #      simulate the "no subscribers" fast-path. mock.patch.object sets
+    #      an attribute on the target — slotted classes reject the assignment
+    #      with ``AttributeError: read-only``.
+    # Restoring slots requires exhaustively enumerating every downstream
+    # setattr site — punt to v1.0.
+    # DO NOT re-add __slots__ without a v1.0 deprecation cycle.
 
     def __init__(self) -> None:
         self._listeners: dict[str, list[Callable]] = {}
@@ -350,6 +405,25 @@ def get_default_bus() -> EventBus:
     return _DEFAULT_BUS
 
 
+# Backwards-compat (ZZ2, 2026-07): Ochema Circuit's Sprint 8 integration
+# suite (tests/test_p8_integration.py::TestGhostSystem::test_teardown_removes_subscriptions)
+# imports ``debug_listeners`` from ``slappyengine.event_bus`` and uses it
+# to sum the listener count across every topic on the default bus. It's
+# a debug/telemetry helper — returns a snapshot mapping ``{topic: count}``.
+# Games use it to write listener-leak sentinels around teardown paths
+# (``sum(debug_listeners().values())`` before/after teardown). DO NOT
+# REMOVE without a v1.0 deprecation cycle.
+def debug_listeners(bus: "EventBus | None" = None) -> dict[str, int]:
+    """Return ``{topic: listener_count}`` snapshot for a bus (default: global).
+
+    Designed for teardown leak-detection assertions. Snapshot is a plain
+    dict (not a live view) — safe to compare before/after teardown to
+    detect listeners that outlive their entity.
+    """
+    target = bus if bus is not None else _DEFAULT_BUS
+    return {topic: len(listeners) for topic, listeners in target._listeners.items()}
+
+
 # Backwards-compat: legacy ``global_bus`` symbol used by downstream games
 # (Ochema Circuit, Bullet Strata) and by internal modules (debug_overlay,
 # compute.library, compute.hull). Points at the same singleton as
@@ -428,6 +502,69 @@ class Observable:
                     # kwarg. Silently ignore — the alternative is breaking
                     # every game construction site.
                     pass
+
+    # Backwards-compat (ZZ2, 2026-07): auto-publish on public attribute set.
+    # Downstream games (Bullet Strata's PlayerEntity, Ochema Circuit's
+    # VehicleEntity subclasses) declare ``__no_publish__ = frozenset({...})``
+    # of hot-tick attrs that must NOT spam the global bus every frame, then
+    # rely on Observable to auto-publish ``{ClassName}.{attr}`` on the
+    # global bus for every OTHER public attribute assignment. Test coverage:
+    #   * Bullet Strata `tests/test_features.py::TestPlayerEntityObservable`
+    #     - test_strata_layer_change_fires_event
+    #     - test_current_weapon_change_fires_event
+    #     - test_hot_attrs_do_not_fire_events (must NOT publish for hot attrs)
+    # Rules (must all pass for a publish to fire):
+    #   1. Not a dunder or private attr (``name.startswith("_")`` skips).
+    #   2. Not in the subclass's ``__no_publish__`` frozenset.
+    #   3. Not one of the Observable-reserved names (``_bus``, ``_observable_topic``).
+    #   4. Bus must be initialised (``_bus`` on self) — early setattr from
+    #      ``__init__`` before ``super().__init__`` runs is silently skipped.
+    #   5. The value must have actually changed (avoids re-publish on no-op
+    #      writes; matches downstream ``player.strata_layer = 1`` idempotency
+    #      expectations across teardown fixtures).
+    # Topic name is ``{type(self).__name__}.{attr}`` — matches the string
+    # that downstream subscribers pass to ``subscribe("PlayerEntity.strata_layer",
+    # ...)``. Event payload carries ``publisher=self``, ``value=new_value``,
+    # ``old_value=previous_value``.
+    # DO NOT REMOVE without a v1.0 deprecation cycle.
+    _OBSERVABLE_RESERVED = frozenset(("_bus", "_observable_topic"))
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        # Fast paths: skip publishing for private/dunder attrs, reserved
+        # Observable-internal fields, and pre-init state (before _bus exists).
+        if key.startswith("_") or key in Observable._OBSERVABLE_RESERVED:
+            object.__setattr__(self, key, value)
+            return
+        no_pub = getattr(type(self), "__no_publish__", frozenset())
+        if key in no_pub:
+            object.__setattr__(self, key, value)
+            return
+        # Only publish if bus wiring has finished. During cooperative
+        # __init__ chains the peer Asset.__init__ may setattr before
+        # Observable.__init__ ran — silently skip those.
+        bus = self.__dict__.get("_bus", None)
+        if bus is None:
+            object.__setattr__(self, key, value)
+            return
+        old_value = getattr(self, key, _MISSING)
+        object.__setattr__(self, key, value)
+        # Idempotency: don't republish for no-op writes (fixes teardown
+        # fixture double-set patterns and matches downstream expectations).
+        if old_value is not _MISSING and _values_equal(old_value, value):
+            return
+        topic = f"{type(self).__name__}.{key}"
+        # Publish to BOTH the observable's private bus (if it differs from
+        # the global default) AND the module-level default bus. Downstream
+        # games subscribe via the module-level ``subscribe(...)`` helper,
+        # which routes to ``_DEFAULT_BUS`` — so the auto-publish MUST reach
+        # the global bus to be observable by downstream test suites.
+        try:
+            if bus is not _DEFAULT_BUS:
+                bus.publish(topic, publisher=self, value=value, old_value=old_value if old_value is not _MISSING else None)
+            _DEFAULT_BUS.publish(topic, publisher=self, value=value, old_value=old_value if old_value is not _MISSING else None)
+        except Exception:
+            # Never let a downstream subscriber exception break setattr.
+            pass
 
     def notify(self, **payload) -> "EventPayload":
         """Publish ``self._observable_topic`` on the bus with the given payload.
