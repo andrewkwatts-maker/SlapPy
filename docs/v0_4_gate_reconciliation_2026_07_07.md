@@ -50,7 +50,7 @@ Evidence column: commit SHA, file path, or grep result.
 | 8 | All demos have matching `test_demo_hello_*.py` | **GREEN** | **Upgraded** from OO7 FAILING + QQ6 GREEN | Live cross-check: 41 `hello_*.py` demos ↔ 41 `test_demo_hello_*.py` runners; **zero gap**. Closures: OO3 (`hello_render_real_hud`), OO5 (`hello_export_cli`), PP4 (8 legacy), PP7 (`hello_rust_bypass`), QQ2 (5 batch-2 closures), QQ5 (`hello_diagnostics_hud`). |
 | 9 | `cargo check` + `cargo test` green (tracked scope) | **GREEN** | Flipped by PP3 | `git ls-files "src/*.rs"` = 14 files; `grep '^mod ' src/lib.rs` = 14 declarations; zero lag. F1 four untracked files re-scope to gate 11. |
 | 10 | `maturin build --release` wheel size within budget | **GREEN** | Maintained | ~1.45 MB (well under 50 MB) per `docs/wheel_size_audit_2026_06_02.md`. |
-| 11 | Softbody / fluid / physics / physics2 WIP dirs committed or deferred | **FAILING** | Unchanged | `git status` confirms `softbody/`, `fluid/`, `physics/`, `physics2/` untracked, plus 4 untracked Rust source files (`src/raster.rs`, `src/pbf_solver.rs`, `src/softbody_solver.rs`, `src/fluid_shader.rs`). User-gated. |
+| 11 | Softbody / fluid / physics / physics2 WIP dirs committed or deferred | **DEFERRED** | **Flipped by AAA5** 2026-07-08 | User answered VV7 Q3 verbatim: "Keep frozen with docs deferral." Formalised in [`docs/wip_subpackages_deferral_2026_07_08.md`](wip_subpackages_deferral_2026_07_08.md). WIP trees + 4 Rust source files remain untracked and out of the v0.4.0 wheel; roadmap for un-freeze targets v0.5 (softbody + fluid), v0.6 (physics2), v1.0 (physics — marked for removal). Gate #11 no longer blocks the v0.4.0 tag. |
 | 12 | Game-compat tripwire (Ochema 1124/1126 + Bullet 54/54) | **YELLOW — MAJOR MILESTONE** (post YY1; reaffirmed by ZZ3 2026-07-08 +1) | **Threshold crossed by YY3** (was WW3 STILL FAILING); ZZ3 re-verify ±0 (ZZ1/ZZ2 did not land) | Live re-tripwire executed 2026-07-08 by YY3 against HEAD `86e57f9` (YY4 STUB r25). YY1 (`4ea51da`, "Restore EventPayload dual-shape returns") is the load-bearing commit; landed mid-YY3-walk. YY2 (backcompat stack) did NOT land as a discrete commit; that work is effectively covered by WW2 (`19d00a0`, "Restore 3-5 more backcompat symbols") + `2e8cb8d` (WW1 salvage — unsubscribe(None) explicit close) which arrived between WW3's baseline and YY3's walk. YY3 results vs WW3 baseline: Ochema **1032 pass / 77 fail / 17 skip / 0 err** (+194 passes), Bullet Strata **50/4/0** (+4 passes). Combined **+198 passes** (recovery = **1082/1178 = 91.8% of F1**; only −96 vs F1 baseline). Ochema alone 91.8%, Bullet Strata alone **92.6%** (both individually YELLOW; both above 90%). YY3 grep-verified: **0** `'dict' object has no attribute` fingerprints (was 84 in WW3 — collapsed by YY1). All § 11.4 top residuals eliminated or reduced except Observable-kwarg drift (7 sites remain) and DeformableLayerComponent method surface (7 sites). YY1 alone contributed **+198 passes / +16.8 pp** — the largest single-slot delta of the recovery arc. Full YY3 analysis in `docs/game_compat_2026_07_07.md` § 12. **Ship-blocker status LIFTED to YELLOW** — v0.4.0 can now ship-at-YELLOW per refreshed `docs/v0_4_ship_decision_2026_07_07.md` § 8; one more targeted slot (Observable kwarg shim + 3 DeformableLayerComponent method aliases = ~18 sites) could push to ~93-94% (near-GREEN). Combined recovery arc: TT1 37.6% → UU3 41.7% → VV3 61.6% → WW3 75.0% → **YY3 91.8%** across 6 backcompat slots (UU1/UU2/VV1/VV2/WW1-salvage+WW2/YY1). |
 | 13 | Perf dashboard no regression >10% | needs-verify | Unchanged | Baseline unchanged; re-run needed post-parity. |
 | 14 | CHANGELOG.md `[0.4.0]` section written | **DRAFT** | Flipped by PP7 | `CHANGELOG.md:8 = "## [0.4.0] — YYYY-MM-DD (UNRELEASED)"`. Date flip happens in tag sprint. |
@@ -122,6 +122,23 @@ violate). Full residual fingerprints + fix-stack in
 + 1 DRAFT + 3 FAILING + 1 needs-verify + 1 deferred**. Projected VV2
 landing impact: ~150-200 pass recoveries pushing combined to ~75-80%
 YELLOW threshold.
+
+**Post-AAA5 (2026-07-08) update — gate #11 DEFERRED**: User answered
+VV7 Q3 verbatim: "Keep frozen with docs deferral." AAA5 landed the
+formal deferral doc `docs/wip_subpackages_deferral_2026_07_08.md`
+enumerating all four WIP subpackage trees (`softbody/`, `fluid/`,
+`physics/`, `physics2/`) + four Rust source modules (`src/raster.rs`,
+`src/pbf_solver.rs`, `src/softbody_solver.rs`, `src/fluid_shader.rs`)
+that are held out of the v0.4.0 wheel, plus a per-subpackage roadmap
+for un-freeze (softbody + fluid → v0.5 paired physics reconcile;
+physics2 → v0.6; physics → v1.0 marked for removal). Gate #11 row
+above flipped from **FAILING** to **DEFERRED**. Refreshed pass count
+after AAA5 land: **9 GREEN + 1 DRAFT + 1 FAILING + 1 YELLOW +
+1 needs-verify + 2 deferred** — only gate #1 (version bump) remains
+FAILING among P0 blockers. Gate #12 (game-compat) ships-at-YELLOW per
+VV7 Option E/F. Practical effect: tag ceremony pre-flight in
+`docs/v0_4_tag_rehearsal_2026_07_08.md` § 3 can proceed on gate #1
++ gate #12 threshold alone.
 
 **Post-ZZ re-verify update (2026-07-08 +1/+2) — YELLOW at 92.4% F1
 after late-landing ZZ1**: ZZ3's initial walk against HEAD `c5b00e1`
