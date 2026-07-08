@@ -187,8 +187,22 @@ class EventBus:
     def __init__(self) -> None:
         self._listeners: dict[str, list[Callable]] = {}
 
-    def subscribe(self, event_type: str, callback: Callable[[dict], None]) -> None:
+    def subscribe(self, event_type: str, callback: Callable[[dict], None]) -> Callable:
         """Register ``callback`` to fire on ``event_type``.
+
+        Returns
+        -------
+        Callable
+            The ``callback`` itself, usable as an opaque "handle" for
+            :meth:`unsubscribe`. Bullet Strata's ``ArenaInfoHUD`` (per
+            ``project_bullet_strata.md``) stashes the return value in
+            ``self._sub_handles`` and iterates ``unsubscribe(h)`` during
+            teardown. Ochema Circuit's Sprint P1 tests do the same
+            (``h = subscribe(...)``; ``unsubscribe(h)``). Returning the
+            callback keeps the ``h = subscribe(...); unsubscribe(h)``
+            pattern working without callers needing to know that the
+            handle IS the callback.
+            DO NOT change to ``-> None`` without a v1.0 deprecation cycle.
 
         Raises
         ------
@@ -200,6 +214,7 @@ class EventBus:
         validate_event_type("event_type", "EventBus.subscribe", event_type)
         validate_callback("callback", "EventBus.subscribe", callback)
         self._listeners.setdefault(event_type, []).append(callback)
+        return callback
 
     def unsubscribe(
         self,
@@ -216,6 +231,15 @@ class EventBus:
           ``topic``.
         * ``unsubscribe(None, listener)`` — remove ``listener`` from EVERY
           topic (teardown/cleanup pattern).
+        * ``unsubscribe(handle)`` where ``handle`` is a callable — treated
+          identically to ``unsubscribe(None, handle)``: drop ``handle``
+          from EVERY topic. Enables the ``h = subscribe(...)``;
+          ``unsubscribe(h)`` handle pattern used by Bullet Strata's
+          ``ArenaInfoHUD.teardown`` (see ``project_bullet_strata.md``)
+          and Ochema Circuit's Sprint P1 tests. Also matches the
+          ``slappyengine.ui.widgets.Widget.unbind_all`` pattern which
+          calls ``unsubscribe(h)`` for every handle in
+          ``self._event_handles``.
         * ``unsubscribe()`` or ``unsubscribe(None, None)`` — no-op.
 
         DO NOT tighten this signature without a v1.0 deprecation cycle.
@@ -223,7 +247,7 @@ class EventBus:
         Raises
         ------
         TypeError
-            If ``event_type`` is neither ``None`` nor a ``str``.
+            If ``event_type`` is neither ``None``, a ``str``, nor callable.
         ValueError
             If ``event_type`` is the empty string.
         """
@@ -236,6 +260,27 @@ class EventBus:
             for topic in list(self._listeners.keys()):
                 self._listeners[topic] = [
                     l for l in self._listeners[topic] if l is not callback
+                ]
+                if not self._listeners[topic]:
+                    del self._listeners[topic]
+            return
+
+        # Case 2b (handle-arity form): unsubscribe(callable) — the caller
+        # passed the value returned by ``subscribe`` as a positional
+        # "handle". Since ``subscribe`` now returns the callback itself,
+        # a callable in the ``event_type`` slot is unambiguously that
+        # handle — drop it from every topic. This keeps the
+        # ``h = subscribe(...); unsubscribe(h)`` idiom working without
+        # requiring callers to remember it's a two-arg call.
+        # Guard: str is also callable via ``str()`` — but we already
+        # dispatched string topics through the ``validate_event_type``
+        # path below, so callable() here can only mean "not a str, not
+        # None, but callable" ⇒ handle-arity.
+        if callback is None and not isinstance(event_type, str) and callable(event_type):
+            handle = event_type
+            for topic in list(self._listeners.keys()):
+                self._listeners[topic] = [
+                    l for l in self._listeners[topic] if l is not handle
                 ]
                 if not self._listeners[topic]:
                     del self._listeners[topic]
@@ -384,18 +429,24 @@ def publish(event_type: str, **payload) -> "EventPayload":
     return _DEFAULT_BUS.publish(event_type, **payload)
 
 
-def subscribe(event_type: str, listener) -> None:
-    """Subscribe on the module-level default :class:`EventBus`."""
-    _DEFAULT_BUS.subscribe(event_type, listener)
+def subscribe(event_type: str, listener) -> Callable:
+    """Subscribe on the module-level default :class:`EventBus`.
+
+    Returns the callback so the ``h = subscribe(...); unsubscribe(h)``
+    handle idiom works — Bullet Strata's ``ArenaInfoHUD.teardown``
+    and Ochema Circuit's Sprint P1 tests rely on this shape.
+    """
+    return _DEFAULT_BUS.subscribe(event_type, listener)
 
 
-def unsubscribe(event_type: str | None = None, listener=None) -> None:
+def unsubscribe(event_type=None, listener=None) -> None:
     """Unsubscribe from the module-level default :class:`EventBus`.
 
     Backwards-compat: mirrors :meth:`EventBus.unsubscribe` — supports the
     legacy 1-arg ``unsubscribe("topic")`` shape AND the teardown pattern
     ``unsubscribe(None, listener)`` which drops ``listener`` from every
-    topic. ``unsubscribe()`` is a no-op.
+    topic AND the handle-arity form ``unsubscribe(h)`` where ``h`` is a
+    callable returned by :func:`subscribe`. ``unsubscribe()`` is a no-op.
     """
     _DEFAULT_BUS.unsubscribe(event_type, listener)
 
