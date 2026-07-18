@@ -1651,6 +1651,44 @@ def _fb_snap_cycle_grid_size(ctx: dict[str, Any]) -> Any:
     return cycle_grid_size(ctx)
 
 
+# ---------------------------------------------------------------------------
+# AAA4 STUB-triage — round 27 fallbacks
+# ---------------------------------------------------------------------------
+
+
+def _fb_view_toggle_camera_bounds(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.view_toggle_camera_bounds_actions import (
+        toggle_camera_bounds,
+    )
+    return toggle_camera_bounds(ctx)
+
+
+def _fb_edit_select_last_spawned(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.edit_select_last_spawned_actions import (
+        select_last_spawned,
+    )
+    return select_last_spawned(ctx)
+
+
+def _fb_spawn_at_previous_click(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.spawn_at_previous_click_actions import (
+        spawn_at_previous_click,
+    )
+    return spawn_at_previous_click(ctx)
+
+
+def _fb_layer_sort_by_z(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.layer_sort_by_z_actions import sort_by_z
+    return sort_by_z(ctx)
+
+
+def _fb_snap_toggle_pixel_perfect(ctx: dict[str, Any]) -> Any:
+    from slappyengine.actions.snap_toggle_pixel_perfect_actions import (
+        toggle_pixel_perfect,
+    )
+    return toggle_pixel_perfect(ctx)
+
+
 def _fb_easter(ctx: dict[str, Any], creature_id: str, anim: str) -> Any:
     shell = ctx.get("shell")
     if shell is None:
@@ -3169,6 +3207,49 @@ def _default_actions() -> list[ToolAction]:
             label="Cycle Grid Size",
             rust_backing=None,
             python_fallback=_fb_snap_cycle_grid_size,
+            required_args=[],
+            category="snap",
+        ),
+        # ── AAA4 STUB-triage: view.toggle_camera_bounds,
+        #    edit.select_last_spawned, spawn.at_previous_click,
+        #    layer.sort_by_z, snap.toggle_pixel_perfect (round 27) ──
+        ToolAction(
+            action_id="view.toggle_camera_bounds",
+            label="Toggle Camera Bounds",
+            rust_backing=None,
+            python_fallback=_fb_view_toggle_camera_bounds,
+            required_args=[],
+            category="view",
+        ),
+        ToolAction(
+            action_id="edit.select_last_spawned",
+            label="Select Last Spawned",
+            rust_backing=None,
+            python_fallback=_fb_edit_select_last_spawned,
+            required_args=[],
+            category="edit",
+        ),
+        ToolAction(
+            action_id="spawn.at_previous_click",
+            label="Spawn at Previous Click",
+            rust_backing=None,
+            python_fallback=_fb_spawn_at_previous_click,
+            required_args=[],
+            category="spawn",
+        ),
+        ToolAction(
+            action_id="layer.sort_by_z",
+            label="Sort Layers by Z",
+            rust_backing=None,
+            python_fallback=_fb_layer_sort_by_z,
+            required_args=[],
+            category="layer",
+        ),
+        ToolAction(
+            action_id="snap.toggle_pixel_perfect",
+            label="Toggle Pixel-Perfect Snap",
+            rust_backing=None,
+            python_fallback=_fb_snap_toggle_pixel_perfect,
             required_args=[],
             category="snap",
         ),

@@ -376,6 +376,37 @@ class EventBus:
                 cb(evt)
             except Exception:
                 pass
+        # Backwards-compat (AAA1, 2026-07): hierarchical fan-out.
+        # Downstream games publish topic-key strings with either a ``|`` or
+        # ``.`` delimiter to encode instance / attribute qualifiers:
+        #
+        #   * ``"Race.CountdownTick|3"``  fires listeners of
+        #     ``"Race.CountdownTick"`` too (integer sub-topic — see
+        #     Ochema Circuit's TestCountdownTick3 suite).
+        #   * ``"Results.RowReady|0"``    fires listeners of
+        #     ``"Results.RowReady"`` too (per-rank fan-out).
+        #   * ``"VehicleEntity.speed"``   fires listeners of
+        #     ``"VehicleEntity"`` too (Observable class-level fan-out — see
+        #     Ochema Circuit's test_speed_publish_hierarchical_fanout).
+        #
+        # Split at BOTH delimiters, in that order (``|`` for enum-like
+        # sub-topics, ``.`` for attribute qualifiers). Each parent gets ONE
+        # additional dispatch. We stop at the shortest non-empty prefix so
+        # the fan-out chain terminates deterministically.
+        # DO NOT REMOVE without a v1.0 deprecation cycle.
+        for delim in ("|", "."):
+            idx = event_type.rfind(delim)
+            if idx <= 0:
+                continue
+            parent = event_type[:idx]
+            parent_listeners = self._listeners.get(parent)
+            if not parent_listeners:
+                continue
+            for cb in list(parent_listeners):
+                try:
+                    cb(evt)
+                except Exception:
+                    pass
         return evt
 
     def clear(self, event_type: str | None = None) -> None:
