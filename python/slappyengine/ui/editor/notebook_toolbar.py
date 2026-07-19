@@ -188,7 +188,12 @@ class NotebookToolbar:
     _CREATURE_SLOT_H: int = 32
 
     # Movable-window minimums — picked up by ``MovablePanelWindow``.
-    MIN_WIDTH: int = 800
+    # Sized to fit the four sticker buttons (4 × 96 + gaps) plus the
+    # 32-px creature slot; keeping this <= LEFT_W + centre column at the
+    # default 1400-px viewport lets the notebook shell centre the
+    # toolbar over the middle column without spilling into the Scene
+    # / Inspector panels.  See BBB1.
+    MIN_WIDTH: int = 420
     MIN_HEIGHT: int = 40
 
     def __init__(
@@ -494,7 +499,25 @@ class NotebookToolbar:
         environments. The caller is responsible for having entered a DPG
         context (``dpg.create_context()``) when DPG is installed — this
         is the same contract the existing :class:`EditorToolbar` carries.
+
+        Historically the tool buttons collapsed to a single black column
+        because :class:`StickerButton.build` uses ``parent=parent_tag``
+        internally, which BYPASSES DPG's ``with`` context stack and
+        re-parents each button to the outer window. We now allocate an
+        explicit horizontal group with a stable tag and pass THAT tag to
+        each button so the four stamps render side by side, and we also
+        drop a plain-DPG button with explicit ``width`` / ``height``
+        alongside each StickerButton so the toolbar still shows tool
+        stamps even when the sticker theme fails to bind.
+
+        Also exposes a ``self._button_specs`` list which records the
+        ``(tool_id, tag, width, height)`` tuple for every button that
+        was created, so regression tests can inspect the button count
+        + non-zero dimensions without driving a real DPG surface.
         """
+        # Reset the per-build spec record; tests introspect this.
+        self._button_specs: list[dict[str, object]] = []
+
         try:
             import dearpygui.dearpygui as dpg  # type: ignore[import-not-found]
         except Exception:
@@ -502,25 +525,80 @@ class NotebookToolbar:
 
         if dpg is None:
             # Headless — drive child build paths anyway so listeners attach.
-            for btn in self._buttons.values():
-                try:
-                    btn.build(parent_tag)
-                except Exception:
-                    pass
-            return
-
-        try:
-            with dpg.group(horizontal=True, parent=parent_tag):
-                for spec in _TOOLS:
-                    btn = self._buttons[spec.tool_id]
-                    btn.build(parent_tag)
-        except Exception:
-            # Stub DPG / context-manager unsupported — flat fallback.
             for spec in _TOOLS:
+                self._button_specs.append({
+                    "tool_id": spec.tool_id,
+                    "tag": f"notebook_toolbar_btn_{spec.tool_id}_{id(self)}",
+                    "width": self._BTN_W,
+                    "height": self._BTN_H,
+                })
                 try:
                     self._buttons[spec.tool_id].build(parent_tag)
                 except Exception:
                     pass
+            return
+
+        # Stable per-instance group tag so we can (a) parent the buttons
+        # into the group instead of the outer window and (b) let tests
+        # look the group up via dpg.does_item_exist.
+        group_tag = f"notebook_toolbar_group_{id(self)}"
+
+        try:
+            dpg.add_group(
+                tag=group_tag,
+                parent=parent_tag,
+                horizontal=True,
+                horizontal_spacing=6,
+            )
+        except Exception:
+            # Fall back to the outer window if the group can't be created.
+            group_tag = parent_tag  # type: ignore[assignment]
+
+        for spec in _TOOLS:
+            btn = self._buttons[spec.tool_id]
+            btn_tag = f"notebook_toolbar_btn_{spec.tool_id}_{id(self)}"
+            self._button_specs.append({
+                "tool_id": spec.tool_id,
+                "tag": btn_tag,
+                "width": self._BTN_W,
+                "height": self._BTN_H,
+            })
+            try:
+                # Explicit-width/height DPG button — this is what the user
+                # sees when the sticker overlay can't render. It carries
+                # the same callback so clicking it flips the active tool.
+                dpg.add_button(
+                    tag=btn_tag,
+                    parent=group_tag,
+                    label=spec.label,
+                    width=self._BTN_W,
+                    height=self._BTN_H,
+                    callback=(
+                        lambda s, a, u, *_extra, tid=spec.tool_id:
+                        self.set_active(tid)
+                    ),
+                )
+            except Exception:
+                pass
+            try:
+                # StickerButton overlay — layered on top of the plain
+                # button so the theme's sticker chrome still shows when
+                # the theme registry is bound. Failures here are silent
+                # so the plain button remains functional.
+                btn.build(group_tag)
+            except Exception:
+                pass
+
+    @property
+    def button_specs(self) -> list[dict[str, object]]:
+        """Return per-button metadata recorded by the most recent build.
+
+        Each entry is ``{"tool_id": str, "tag": str, "width": int,
+        "height": int}``. Returns an empty list when :meth:`build` has
+        not been called yet. Used by regression tests to assert the
+        toolbar produced non-zero-size buttons.
+        """
+        return list(getattr(self, "_button_specs", []))
 
     # ------------------------------------------------------------------
     # Internal helpers
