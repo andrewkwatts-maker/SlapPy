@@ -5,11 +5,15 @@ implemented in pure Python for the SlapPy PyPI wrapper. Constant folding and
 uniform baking are delegated to `_core.material_eval.bake_material_constants`
 when the Rust core is available.
 
-Baseline (DDD5): 10 core node types. The remaining ~20 Nova3D node types are
-follow-up sprints.
+Baseline (DDD5, 2026-07-19): 10 core node types. The remaining ~20 Nova3D
+node types are follow-up sprints.
 
 Not to be confused with `render/material.py::PbrMaterial` (a flat dataclass) —
 this module lives alongside it and extends its expressiveness.
+
+Public node types (10):
+    ConstFloatNode, ConstColorNode, UVNode, Texture2DNode, MultiplyNode,
+    AddNode, MixNode, NormalMapNode, FresnelNode, PBROutputNode.
 """
 from __future__ import annotations
 
