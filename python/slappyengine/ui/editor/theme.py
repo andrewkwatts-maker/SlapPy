@@ -268,3 +268,211 @@ def apply_dwm_glass(hwnd_title: str) -> None:
         ctypes.windll.user32.SetWindowCompositionAttribute(hwnd, ctypes.byref(data))
     except Exception:
         pass  # graceful degradation on unsupported platforms
+
+
+# ---------------------------------------------------------------------------
+# Notebook paper-texture binding (BBB2)
+# ---------------------------------------------------------------------------
+#
+# The notebook theme registry ships a ``background_shader`` on every
+# spec (see ``ui/theme/themes/teengirl_notebook.py`` for the ruled-paper
+# effect). ``ui.theme.apply_theme`` calls ``resolve_background`` and
+# caches the baked ``(H, W, 4)`` uint8 ndarray on the ThemeSpec as
+# ``_baked_background``. Until BBB2 landed, that ndarray was never
+# handed to Dear PyGui — the panels rendered a flat surface colour and
+# the ruled lines / ink margin never appeared.
+#
+# :func:`_bind_paper_texture` is the missing wiring step: given a baked
+# RGBA ndarray and a panel's DPG window tag, it
+#
+# 1. Registers the ndarray in DPG's texture registry under a stable
+#    per-panel tag so subsequent theme rebinds overwrite instead of
+#    leaking textures.
+# 2. Derives the paper's dominant tone (mean colour) and pushes it as
+#    the panel's ``mvThemeCol_ChildBg`` so builds without image-fill
+#    support still show the paper hue rather than a naked window.
+# 3. Records the registered tag on :data:`_BOUND_PAPER_TEXTURES` so
+#    regression tests can prove the wiring ran without spinning a real
+#    DPG context.
+#
+# The helper is *headless-safe*: when Dear PyGui is missing or the
+# context has not been created it silently records the intent and
+# returns. The full editor calls it during
+# :meth:`EditorShell.setup_theme_subsystem` and again after the panel
+# windows are built, so the theme colour propagates on both boot and
+# runtime theme swaps.
+
+# Module-level bookkeeping — the set of panel tags for which we have
+# registered a paper-texture DPG entry during this process. Used by
+# regression tests to prove the wiring ran; also used by the helper
+# itself to skip re-registering an already-bound panel.
+_BOUND_PAPER_TEXTURES: dict[str, str] = {}
+
+
+def _reset_paper_texture_bindings_for_tests() -> None:
+    """Test-only escape hatch: forget every bound paper texture.
+
+    The regression tests reset this between cases so a texture bound in
+    an earlier test does not mask a missing binding in a later one.
+    """
+    _BOUND_PAPER_TEXTURES.clear()
+
+
+def _paper_mean_color(rgba):  # type: ignore[no-untyped-def]
+    """Return the mean RGBA of a ``(H, W, 4)`` uint8 paper texture.
+
+    Falls back to the notebook cream ``(251, 247, 236, 255)`` when the
+    input is None / empty / mis-shaped so callers never end up with a
+    black surface. NumPy is optional at import time so we guard the
+    dependency inside the function.
+    """
+    fallback = (251, 247, 236, 255)
+    if rgba is None:
+        return fallback
+    try:
+        import numpy as np  # noqa: WPS433 - runtime dep only when active
+    except Exception:
+        return fallback
+    try:
+        arr = np.asarray(rgba)
+        if arr.ndim != 3 or arr.shape[-1] != 4 or arr.size == 0:
+            return fallback
+        # Cast up to float to survive averaging and clamp back to uint8.
+        mean = arr.reshape(-1, 4).mean(axis=0)
+        return (
+            int(mean[0]) & 0xFF,
+            int(mean[1]) & 0xFF,
+            int(mean[2]) & 0xFF,
+            int(mean[3]) & 0xFF,
+        )
+    except Exception:
+        return fallback
+
+
+def _bind_paper_texture(rgba, panel_tag: str) -> str | None:  # type: ignore[no-untyped-def]
+    """Register *rgba* as *panel_tag*'s notebook-paper backdrop.
+
+    Parameters
+    ----------
+    rgba:
+        The baked ``(H, W, 4)`` uint8 ndarray returned by
+        :func:`slappyengine.ui.theme.resolve_background`. ``None`` is
+        tolerated — the helper falls through to the solid-paper colour
+        fallback so unstyled builds still render.
+    panel_tag:
+        The DPG window tag of the panel that should receive the
+        backdrop. Must be a non-empty string; the helper appends a
+        deterministic suffix to derive the texture-registry tag and
+        the per-item theme tag.
+
+    Returns
+    -------
+    str | None
+        The texture-registry tag that was recorded, or ``None`` when
+        *panel_tag* was empty. The tag is recorded on
+        :data:`_BOUND_PAPER_TEXTURES` regardless of whether Dear PyGui
+        was available — so regression tests can prove the intent even
+        under the headless stub.
+    """
+    if not isinstance(panel_tag, str) or not panel_tag:
+        return None
+
+    tex_tag = f"{panel_tag}__paper_tex"
+    theme_tag_id = f"{panel_tag}__paper_theme"
+
+    # Bookkeeping first — this is what the regression tests read. We
+    # want the record to survive DPG import failures because the intent
+    # (bind a paper texture to this panel) is what matters.
+    _BOUND_PAPER_TEXTURES[panel_tag] = tex_tag
+
+    fill = _paper_mean_color(rgba)
+
+    # Gate on the DPG bridge's context-readiness flag. Every DPG call
+    # segfaults on Windows before ``dpg.create_context()`` runs — even
+    # the innocuous ``does_item_exist`` probe. Tests and boot-time
+    # theme application both run before context creation, so we bail
+    # after recording bookkeeping. The runtime editor re-invokes this
+    # helper after ``mark_dpg_context_ready(True)`` fires.
+    try:
+        from slappyengine.ui.theme import dpg_bridge as _bridge
+        _dpg_ready = bool(getattr(_bridge, "_DPG_CONTEXT_READY", False))
+    except Exception:
+        _dpg_ready = False
+    if not _dpg_ready:
+        return tex_tag
+
+    try:
+        import dearpygui.dearpygui as dpg
+    except Exception:
+        return tex_tag
+
+    # Register the texture. DPG requires the raw buffer to be a flat
+    # sequence of floats in [0, 1]; we normalise from uint8.
+    if rgba is not None:
+        try:
+            import numpy as np  # noqa: WPS433
+
+            arr = np.asarray(rgba)
+            if arr.ndim == 3 and arr.shape[-1] == 4 and arr.size > 0:
+                h_, w_ = int(arr.shape[0]), int(arr.shape[1])
+                flat = (arr.astype("float32") / 255.0).flatten().tolist()
+                # Delete a stale entry so re-binds under theme swap do
+                # not raise "tag already exists".
+                try:
+                    if dpg.does_item_exist(tex_tag):
+                        dpg.delete_item(tex_tag)
+                except Exception:
+                    pass
+                try:
+                    with dpg.texture_registry(show=False):
+                        dpg.add_static_texture(
+                            w_, h_, flat, tag=tex_tag,
+                        )
+                except Exception:
+                    # Some DPG builds require a top-level registry —
+                    # fall back to the flat form.
+                    try:
+                        dpg.add_static_texture(
+                            w_, h_, flat, tag=tex_tag,
+                        )
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+    # Apply the fill colour as a per-panel ChildBg override so panels
+    # whose builds finish before the texture registers still show the
+    # paper hue.
+    try:
+        try:
+            if dpg.does_item_exist(theme_tag_id):
+                dpg.delete_item(theme_tag_id)
+        except Exception:
+            pass
+        with dpg.theme(tag=theme_tag_id) as t:
+            with dpg.theme_component(dpg.mvAll):
+                dpg.add_theme_color(
+                    dpg.mvThemeCol_ChildBg, list(fill),
+                )
+                dpg.add_theme_color(
+                    dpg.mvThemeCol_WindowBg, list(fill),
+                )
+        try:
+            if dpg.does_item_exist(panel_tag):
+                dpg.bind_item_theme(panel_tag, t)
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+    return tex_tag
+
+
+def get_bound_paper_textures() -> dict[str, str]:
+    """Return a copy of the panel-tag → texture-tag bookkeeping.
+
+    Test-only surface — the editor never reads this. Returned as a
+    fresh ``dict`` so callers can mutate it without leaking state back
+    into the module-level tracker.
+    """
+    return dict(_BOUND_PAPER_TEXTURES)

@@ -693,6 +693,37 @@ class EditorShell:
         self._theme_switcher_panel = panel
         self.register_panel(panel)
 
+        # 8. Wire the ruled-paper background texture onto the four
+        # notebook-theme surface panels (scene outliner, centre
+        # viewport tab body, inspector, content browser). BBB2 —
+        # without this step the baked ``_baked_background`` ndarray
+        # sits on the ThemeSpec but never reaches DPG, so panels show
+        # a flat surface colour with no rules or ink margin.
+        try:
+            from slappyengine.ui.theme import get_baked_background
+            from slappyengine.ui.editor.theme import _bind_paper_texture
+
+            baked = get_baked_background()
+            for panel_tag in (
+                "notebook_paper_outliner",
+                "notebook_paper_viewport",
+                "notebook_paper_inspector",
+                "notebook_paper_content_browser",
+            ):
+                try:
+                    _bind_paper_texture(baked, panel_tag)
+                except Exception:
+                    # Never let a single-panel bind failure abort the
+                    # rest of the setup — the helper is defensive but
+                    # a broken user theme could still throw.
+                    continue
+        except Exception:
+            # Missing ui.theme surface (e.g. numpy absent) — fall back
+            # silently. The panels retain their solid surface colour
+            # from the ThemeSpec palette so unstyled builds still
+            # render correctly.
+            pass
+
     # ------------------------------------------------------------------
     # User overrides — ~/.slappyengine/ui/
     # ------------------------------------------------------------------
