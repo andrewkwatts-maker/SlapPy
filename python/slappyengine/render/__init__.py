@@ -26,6 +26,18 @@ Design notes
 from __future__ import annotations
 
 from .camera import Camera2D, Camera3D
+from .layer_sampling import (
+    BLEND_MODES,
+    LayerSampleBinding,
+    LayerTextureBinding,
+    PostProcessDescriptor,
+    apply_post_process_from,
+    bind_sampled_layers,
+    fallback_texture_view,
+    load_composite_shader,
+    make_layer_sample_binding,
+    use_layer_as_texture,
+)
 from .light import Light, MAX_LIGHTS, pack_lights_ubo, is_unlit
 from .material import Material, TextureHandle
 from .mesh import Mesh, MeshHandle, cube, quad
@@ -81,9 +93,19 @@ from .transform import Transform2D, Transform3D
 
 __all__ = [
     "AssetCache",
+    "BLEND_MODES",
     "CSMBuilder",
     "Camera2D",
     "Camera3D",
+    "LayerSampleBinding",
+    "LayerTextureBinding",
+    "PostProcessDescriptor",
+    "apply_post_process_from",
+    "bind_sampled_layers",
+    "fallback_texture_view",
+    "load_composite_shader",
+    "make_layer_sample_binding",
+    "use_layer_as_texture",
     "CascadeSplit",
     "DEPTH_ONLY_WGSL",
     "DepthPrepass",

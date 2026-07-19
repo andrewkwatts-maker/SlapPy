@@ -2,6 +2,7 @@ use pyo3::prelude::*;
 
 mod hull;
 mod ik_solver;
+mod material_eval;
 mod math;
 mod node_compiler;
 mod slap_format;
@@ -28,6 +29,7 @@ mod sdf_collision;
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     hull::register(m)?;
     ik_solver::register(m)?;
+    material_eval::register(m)?;
     math::register(m)?;
     node_compiler::register(m)?;
     slap_format::register(m)?;
