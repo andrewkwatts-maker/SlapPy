@@ -25,6 +25,9 @@ mod ibl;
 mod physics;
 mod sdf_collision;
 
+#[cfg(feature = "3d")]
+mod deferred_cluster;
+
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     hull::register(m)?;
@@ -45,5 +48,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     ibl::ibl::register(m)?;
     physics::physics::register(m)?;
     sdf_collision::sdf_collision::register(m)?;
+    #[cfg(feature = "3d")]
+    deferred_cluster::register(m)?;
     Ok(())
 }
