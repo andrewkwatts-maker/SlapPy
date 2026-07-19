@@ -92,6 +92,13 @@ class EditorShell:
         # in :meth:`setup` so tests that never call ``setup()`` don't
         # pay for it.
         self._repl_panel = None
+        # EEE3 — live WGSL shader editor + hot-reload panel. Sibling tab
+        # next to the REPL in the bottom dock; the wire-up lives in
+        # ``setup`` for parity with the REPL panel above.
+        self._wgsl_panel = None
+        # EEE4 — visual node-graph canvas for MaterialGraph. Constructed
+        # lazily in :meth:`setup` and docked as a bottom-area tab.
+        self._material_graph_canvas = None
         self._gizmo_overlay = None
         self._running = False
         self._play_mode: bool = False
@@ -626,6 +633,8 @@ class EditorShell:
             "BehaviorPanel": "_behavior_panel",
             "NotebookInspector": "_inspector",
             "NotebookMaterialEditor": "_material_editor",
+            "WGSLEditorPanel": "_wgsl_panel",
+            "MaterialGraphCanvas": "_material_graph_canvas",
         }
         slot = slot_map.get(cls_name)
         if slot is not None and getattr(self, slot, None) is None:
@@ -1090,6 +1099,38 @@ class EditorShell:
                 closable=False,
             )
 
+        # ── EEE3 WGSL editor panel — same bottom Y band so DPG tab-
+        # merges it beside the REPL. The panel drives its own compile
+        # + hot-reload cycle; the shell only owns the tick pump.
+        wgsl = getattr(self, "_wgsl_panel", None)
+        if wgsl is not None:
+            wgsl_y = max(0, h - BOTTOM_H - STATUS_H)
+            windows["wgsl_panel"] = MovablePanelWindow(
+                wgsl,
+                title=getattr(wgsl, "TITLE", "WGSL"),
+                kind="sidebar",
+                default_pos=(0, wgsl_y),
+                default_size=(max(320, w), BOTTOM_H),
+                min_size=(320, 180),
+                closable=False,
+            )
+
+        # ── EEE4 Material Graph canvas — bottom dock, sibling tab next
+        # to the REPL and WGSL editor. Same Y band so DPG tab-merges it
+        # into the bottom-area strip.
+        matgraph = getattr(self, "_material_graph_canvas", None)
+        if matgraph is not None:
+            mg_y = max(0, h - BOTTOM_H - STATUS_H)
+            windows["material_graph_canvas"] = MovablePanelWindow(
+                matgraph,
+                title=getattr(matgraph, "TITLE", "Material Graph"),
+                kind="sidebar",
+                default_pos=(0, mg_y),
+                default_size=(max(320, w), BOTTOM_H),
+                min_size=(320, 180),
+                closable=False,
+            )
+
         # ── Code panel — floating, hidden by default.
         if self._code_mode_panel is not None:
             cp = MovablePanelWindow(
@@ -1534,6 +1575,31 @@ class EditorShell:
                 self._repl_panel = REPLPanel(app=_app_ref, scene=None)
             except Exception:
                 self._repl_panel = None
+
+        # EEE3 — WGSL live-edit panel (bottom-area tab, sibling to REPL).
+        # Wraps the shared :class:`ShaderHotReloader` singleton so REPL
+        # ``reload_shader(path)`` calls surface in the panel's output.
+        if getattr(self, "_wgsl_panel", None) is None:
+            try:
+                from slappyengine.ui.editor.wgsl_editor_panel import (
+                    WGSLEditorPanel,
+                )
+                self._wgsl_panel = WGSLEditorPanel()
+            except Exception:
+                self._wgsl_panel = None
+
+        # EEE4 — Material Graph visual canvas (bottom-area tab, sibling
+        # to REPL / WGSL editor). Purely additive; the panel owns its
+        # own :class:`MaterialGraph` instance so it's decoupled from
+        # any implicit :class:`App` state.
+        if getattr(self, "_material_graph_canvas", None) is None:
+            try:
+                from slappyengine.ui.editor.material_graph_canvas import (
+                    MaterialGraphCanvas,
+                )
+                self._material_graph_canvas = MaterialGraphCanvas()
+            except Exception:
+                self._material_graph_canvas = None
 
         # ── DPG context — the notebook theme is the only theme path ───────
         # The Nova3D dark glass theme (``theme.apply_editor_theme``) is
@@ -2155,6 +2221,15 @@ class EditorShell:
         if self._viewport_3d_panel is not None:
             try:
                 self._viewport_3d_panel.tick(dt)
+            except Exception:
+                pass
+
+        # EEE3 — tick the WGSL editor's mtime-poll clock so on-disk
+        # shader edits are auto-reloaded at ~1 Hz. Guarded — a failing
+        # poll must never kill the shell tick.
+        if getattr(self, "_wgsl_panel", None) is not None:
+            try:
+                self._wgsl_panel.tick(dt)
             except Exception:
                 pass
 

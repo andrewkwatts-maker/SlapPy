@@ -225,6 +225,33 @@ def load_shader(path: str | Path, *, app: "App | None" = None) -> ShaderHandle:
     return handle
 
 
+def reload_shader(path: str | Path, *, app: "App | None" = None) -> Any:
+    """Hot-reload the WGSL shader at *path* through the default reloader.
+
+    Reads *path* off disk, hands the fresh source to the process-wide
+    :class:`ShaderHotReloader` (which validates + emits
+    ``shader.reloaded`` on the event bus), and returns the
+    :class:`CompileResult`. When the shader hasn't been registered yet
+    the reloader auto-registers a no-op callback so REPL callers don't
+    need to plumb one through.
+
+    Trace-logged on the resolved :class:`App` so headless tests can
+    assert on the reload.
+    """
+    from slappyengine.render.shader_hot_reload import get_default_reloader
+
+    p = Path(path)
+    source = p.read_text(encoding="utf-8")
+    reloader = get_default_reloader()
+    if str(p.resolve()) not in reloader.registered_paths():
+        reloader.register(str(p), lambda _src: None)
+    result = reloader.recompile(str(p), source)
+    _resolve_app(app).trace.append(
+        ("reload_shader", str(p), bool(result.ok)),
+    )
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Selection + introspection
 # ---------------------------------------------------------------------------
@@ -488,6 +515,65 @@ def record_gif(
 
 
 # ---------------------------------------------------------------------------
+# Editor panel focus
+# ---------------------------------------------------------------------------
+
+
+def open_material_graph(*, shell: Any = None) -> Any:
+    """Focus the Material Graph visual canvas in the editor shell.
+
+    Returns the :class:`MaterialGraphCanvas` instance so the caller can
+    interact with it directly from the REPL (e.g. ``mg = open_material_graph()``
+    then ``mg.place_node("ConstColor", 40, 40)``).
+
+    When no shell reference is given, tries to resolve one from the
+    running :class:`App`'s ``editor_shell`` attribute; falls back to
+    :attr:`EditorShell._implicit` when available.
+    """
+    from slappyengine.ui.editor.material_graph_canvas import (
+        MaterialGraphCanvas,
+    )
+    resolved = shell
+    if resolved is None:
+        try:
+            from slappyengine.app import App as _App
+            app = _App._get_implicit()
+            resolved = getattr(app, "editor_shell", None)
+        except Exception:
+            resolved = None
+    if resolved is None:
+        try:
+            from slappyengine.ui.editor.shell import EditorShell
+            resolved = getattr(EditorShell, "_implicit", None)
+        except Exception:
+            resolved = None
+    canvas = getattr(resolved, "_material_graph_canvas", None) if resolved else None
+    if canvas is None:
+        # No live shell — spin up a bare canvas so the REPL still has a
+        # target to bind. Callers that were expecting an editor tab
+        # will notice the returned instance isn't docked.
+        canvas = MaterialGraphCanvas()
+    # Best-effort focus: show the window / raise the tab. All DPG calls
+    # are guarded so a headless REPL still gets the canvas back.
+    try:
+        import dearpygui.dearpygui as dpg
+        wrapper = None
+        try:
+            wrapper = resolved._panel_windows.get("material_graph_canvas")  # type: ignore[union-attr]
+        except Exception:
+            wrapper = None
+        if wrapper is not None:
+            try:
+                wrapper.show()
+                dpg.focus_item(wrapper._window_tag)  # type: ignore[attr-defined]
+            except Exception:
+                pass
+    except Exception:
+        pass
+    return canvas
+
+
+# ---------------------------------------------------------------------------
 # Discovery
 # ---------------------------------------------------------------------------
 
@@ -527,6 +613,7 @@ __all__ = [
     "load_model",
     "load_texture",
     "load_shader",
+    "reload_shader",
     "list_entities",
     "select",
     "move",
@@ -539,6 +626,7 @@ __all__ = [
     "set_background",
     "screenshot",
     "record_gif",
+    "open_material_graph",
     "help",
     "ShaderHandle",
 ]
