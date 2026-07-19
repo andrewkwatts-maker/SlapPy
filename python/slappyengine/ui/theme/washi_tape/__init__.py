@@ -25,14 +25,24 @@ from __future__ import annotations
 
 from .library import WashiTapeStyle, WASHI_TAPES, get_tape, list_tapes
 from .renderer import render_tape, bake_tape_texture, has_wgpu
+from .presets import (
+    WASHI_TAPE_PRESETS,
+    WashiTapePreset,
+    render_washi_tape,
+    rotate_washi_tape,
+)
 
 
 __all__ = [
     "WASHI_TAPES",
+    "WASHI_TAPE_PRESETS",
+    "WashiTapePreset",
     "WashiTapeStyle",
     "bake_tape_texture",
     "get_tape",
     "has_wgpu",
     "list_tapes",
     "render_tape",
+    "render_washi_tape",
+    "rotate_washi_tape",
 ]

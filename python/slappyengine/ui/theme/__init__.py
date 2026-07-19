@@ -89,6 +89,12 @@ from .edge_strokes import (
 )
 from .edge_strokes import get_stroke as get_edge_stroke
 from .edge_strokes import list_strokes as list_edge_strokes
+from .washi_tape import (
+    WASHI_TAPE_PRESETS,
+    WashiTapePreset,
+    render_washi_tape,
+    rotate_washi_tape,
+)
 
 from slappyengine._validation import validate_non_empty_str
 
@@ -224,6 +230,8 @@ __all__ = [
     "TransitionScale",
     "UserThemeError",
     "UserThemeStore",
+    "WASHI_TAPE_PRESETS",
+    "WashiTapePreset",
     "WGSLBackgroundTicker",
     "WGSLShaderSpec",
     "ZIndexScale",
@@ -248,7 +256,9 @@ __all__ = [
     "parchment",
     "register_theme",
     "render_stroke_border",
+    "render_washi_tape",
     "resolve_background",
+    "rotate_washi_tape",
     "ruled_paper",
     "watercolor_wash",
 ]
