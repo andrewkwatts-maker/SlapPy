@@ -82,12 +82,16 @@ from .wgsl_backgrounds import (
     resolve_background,
 )
 from .edge_strokes import (
+    EDGE_STROKE_PRESETS,
     EDGE_STROKES,
+    EdgeStrokePreset,
     EdgeStrokeStyle,
     bake_stroke_texture,
+    render_edge_stroke,
     render_stroke_border,
 )
 from .edge_strokes import get_stroke as get_edge_stroke
+from .edge_strokes import list_presets as list_edge_stroke_presets
 from .edge_strokes import list_strokes as list_edge_strokes
 from .washi_tape import (
     WASHI_TAPE_PRESETS,
@@ -95,6 +99,7 @@ from .washi_tape import (
     render_washi_tape,
     rotate_washi_tape,
 )
+from .decorators import PanelDecorator
 
 from slappyengine._validation import validate_non_empty_str
 
@@ -211,7 +216,9 @@ __all__ = [
     "Color",
     "DeclarativeTheme",
     "DeclarativeThemeError",
+    "EDGE_STROKE_PRESETS",
     "EDGE_STROKES",
+    "EdgeStrokePreset",
     "EdgeStrokeStyle",
     "Font",
     "FrameStyle",
@@ -220,6 +227,7 @@ __all__ = [
     "NineSlice",
     "Palette",
     "PanelDecorConfig",
+    "PanelDecorator",
     "PanelFrameSet",
     "RadiusScale",
     "SemanticTokens",
@@ -248,6 +256,7 @@ __all__ = [
     "glass_blur",
     "has_wgpu",
     "highlighter_stroke",
+    "list_edge_stroke_presets",
     "list_edge_strokes",
     "list_registered_themes",
     "load_declarative",
@@ -255,6 +264,7 @@ __all__ = [
     "paper_shadow",
     "parchment",
     "register_theme",
+    "render_edge_stroke",
     "render_stroke_border",
     "render_washi_tape",
     "resolve_background",
