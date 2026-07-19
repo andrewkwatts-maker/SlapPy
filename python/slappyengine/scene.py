@@ -5,6 +5,7 @@ import numpy as np
 import wgpu
 from slappyengine.entity import Entity
 from slappyengine.event_bus import EventBus
+from slappyengine.scene_node import SceneNode
 
 if TYPE_CHECKING:
     from slappyengine.camera import Camera
@@ -36,6 +37,14 @@ class Scene:
         self.bus: EventBus = EventBus()
         # events is a public alias for bus (spec-compatible name)
         self.events: EventBus = self.bus
+        # Nova3D pillar 5: scene-graph root node for hierarchical transforms.
+        # Coexists with the flat _entities dict; backwards-compat preserved.
+        self.root_node: SceneNode = SceneNode(name="__scene_root__")
+
+    def add_node(self, node: SceneNode, parent: SceneNode | None = None) -> SceneNode:
+        """Add *node* to the scene graph under *parent* (or root)."""
+        (parent if parent is not None else self.root_node).add_child(node)
+        return node
 
     def add(self, entity: Entity) -> Entity:
         self._entities[entity.id] = entity

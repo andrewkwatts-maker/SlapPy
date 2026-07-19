@@ -28,6 +28,9 @@ mod sdf_collision;
 #[cfg(feature = "3d")]
 mod deferred_cluster;
 
+#[cfg(feature = "3d")]
+mod scene_walk;
+
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     hull::register(m)?;
@@ -50,5 +53,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     sdf_collision::sdf_collision::register(m)?;
     #[cfg(feature = "3d")]
     deferred_cluster::register(m)?;
+    #[cfg(feature = "3d")]
+    scene_walk::scene_walk::register(m)?;
     Ok(())
 }
