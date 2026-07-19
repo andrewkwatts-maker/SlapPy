@@ -2,12 +2,37 @@
 
 **Landed:** 2026-07-19
 **Author:** Nova3D-integration research agent (read-only walk of both codebases)
-**Nova3D HEAD walked:** `H:/Github/Nova3D/` (C++20 / OpenGL 4.6 / GLFW 3.4 / ImGui docking / Assimp / GLM)
+**Nova3D HEAD walked:** `H:/Github/Nova3D/` (C++20 / OpenGL 4.6 / GLFW / ImGui / Assimp / GLM) — used **only as a feature reference**, not as code we port verbatim
 **SlapPy HEAD walked:** `H:/Github/SlapPyEngine/` master (Python 3.13 + Rust `_core` PyO3 extension, wgpu-based 3D bridge, 2D-first `Layer` system)
 
-**Scope.** Nova3D is the reference AAA-grade 3D engine written in C++ with a full deferred renderer, SDF pipeline, radiance-cascade global illumination, ImGui docking editor, glTF/FBX import via Assimp, PBR material graph, cascaded shadow maps, TAA, GTAO, GPU particles, and a 100-file editor panel suite. SlapPy today is a 2D pixel-layer engine with a partial 3D bridge (`render/scene_walker.py`, `render/bvh_3d.py`, `asset_import/gltf_importer.py`, `render/shadows.py`, `render/skybox.py`, `render/instanced.py`, `animation/skeleton_runtime.py`). This report enumerates every Nova3D subsystem, maps each to a SlapPy equivalent (or `GAP`), estimates integration cost, and closes with a concrete **`Layer3D`** design that lets 2D and 3D layers coexist in a single `Scene`.
+---
 
-**Constraint.** Nova3D remains read-only. No SlapPy source is modified — docs only.
+### 🔴 Architectural directive — read this first
+
+**We are NOT adopting Nova3D's tech stack.** SlapPyEngine remains:
+
+> **A Python (PyPI-installable) wrapper on a Rust-accelerated Vulkan rendering engine.**
+
+Every "port" in this document lands as:
+
+| Layer | SlapPy stack | Nova3D source of truth used |
+|---|---|---|
+| **User API** | Python — `slappyengine.<subsystem>` on PyPI (`pip install slappy-engine`) | Reference — API shape lifted from Nova3D `*.hpp` headers, **retyped in Python** |
+| **Hot paths** | Rust `_core.<kernel>` via PyO3 + maturin | Reference — algorithm lifted from Nova3D `*.cpp` sources, **rewritten in Rust** |
+| **GPU** | wgpu (`wgpu-py` on the Python side, `wgpu` crate on the Rust side) → **Vulkan** on Windows/Linux, DX12 on Windows fallback, Metal on macOS | Reference — technique lifted from Nova3D OpenGL/GLSL, **shaders rewritten in WGSL** |
+| **Shaders** | WGSL sources under `python/slappyengine/render/shaders/` and `src/*.rs` inline strings | Reference — Nova3D `*.glsl` translated to WGSL by hand |
+
+**Not being adopted from Nova3D:** C++ codebase, CMake build, OpenGL 4.6, GLFW, ImGui, Assimp, GLM. These are Nova3D-only.
+
+**Being adopted from Nova3D:** feature list, API shape, algorithm choices, render-pass ordering, editor UX patterns, panel taxonomy, docking algorithm, material node taxonomy, prefab-override rules, asset-thumbnail lifecycle, gizmo behaviour, keyboard-shortcut catalogue.
+
+Every complexity estimate + sprint budget in this document is for the **Python+Rust+WGSL rewrite**, not for a code translation.
+
+---
+
+**Scope.** Nova3D is the reference AAA-grade 3D engine (deferred renderer, SDF pipeline, radiance-cascade GI, docking editor, glTF/FBX import, PBR material graph, cascaded shadow maps, TAA, GTAO, GPU particles, ~100-file editor panel suite). SlapPy today is a 2D pixel-layer engine with a partial 3D bridge (`render/scene_walker.py`, `render/bvh_3d.py`, `asset_import/gltf_importer.py`, `render/shadows.py`, `render/skybox.py`, `render/instanced.py`, `animation/skeleton_runtime.py`). This report enumerates every Nova3D subsystem, maps each to a SlapPy Python/Rust equivalent (or `GAP`), estimates the Python+Rust+WGSL rewrite cost, and closes with a concrete **`Layer3D`** design that lets 2D and 3D layers coexist in a single `Scene`.
+
+**Constraint.** Nova3D remains read-only. Both codebases were read-only for this audit. Every port is a fresh Python/Rust/WGSL write.
 
 ---
 
@@ -15,15 +40,17 @@
 
 ### Executive summary
 
-Nova3D contains **~44 top-level `engine/` subsystems** and ~200 files just under `engine/graphics/`. The bulk of the value we can port for SlapPy is concentrated in **five load-bearing pillars**:
+Nova3D contains **~44 top-level `engine/` subsystems** and ~200 files just under `engine/graphics/`. The bulk of the value we should adopt for SlapPy is concentrated in **five load-bearing pillars**. Each pillar's "Nova3D source" column below points at the C++ headers/GLSL we read as the **feature reference**; the "SlapPy target" column names the new Python/Rust/WGSL modules we write.
 
-1. **Docking editor UX** (`engine/ui/DockingSystem.hpp:142-793` + `engine/editor/EditorLayoutManager.hpp`) — SlapPy already has a `notebook_*` panel constellation and dockable widgets but no true tree-based dock model with drag-drop, split ratios, tabs, and JSON round-trip. Nova3D's `DockSpace` is a self-contained ~2.7 kloc reference implementation.
-2. **Deferred renderer + G-buffer** (`engine/graphics/DeferredRenderer.hpp`, `engine/graphics/GBuffer.hpp`, `engine/graphics/Renderer.hpp`) — SlapPy's `render/pipeline.py` is forward-only; porting the G-buffer + light accumulation split unlocks clustered lighting, CSM, TAA, SSAO, and every technique already listed in `project_nova3d_additions.md`.
-3. **PBR material graph** (`engine/materials/*.hpp`, `engine/graphics/Material.hpp`) — SlapPy has `render/material.py::PbrMaterial` as a struct only; Nova3D ships a full node graph (`MaterialGraphEditor.hpp:1-359`, ~30 node types under `engine/materials/`) with hot-swappable evaluation.
-4. **Asset browser + import pipeline** (`engine/editor/AssetBrowser.hpp:1220` lines + `engine/import/ModelImporter.hpp`, `TextureImporter.hpp`, `AnimationImporter.hpp`) — SlapPy has `asset_import/gltf_importer.py` and `notebook_content_browser.py` but no thumbnail cache, no async import outcome, no drag-drop-to-scene.
-5. **Prefab + scene graph** (`engine/editor/PrefabSystem.hpp:1155` lines, `engine/scene/SceneNode.hpp:298`, `engine/entity/Entity.hpp:213`) — SlapPy has `Entity` and `Scene` (`python/slappyengine/scene.py:14-90`) but flat, no scene-graph node parenting with transform inheritance, no prefab overrides / variants / hot-reload.
+1. **Docking editor UX** — feature ref: `engine/ui/DockingSystem.hpp:142-793` + `engine/editor/EditorLayoutManager.hpp` (~2.7 kloc C++ reference implementation). SlapPy target: pure-Python `slappyengine.ui.editor.dock.DockNode` / `DockSpace` / `DockLayout` classes reusing `movable_panel.py` + `dock_zones.py` primitives; JSON round-trip already handled by `layout_persistence.py`. **No Rust hot-path required** — dock math is drag-drop-driven and infrequent.
+2. **Deferred renderer + G-buffer** — feature ref: `engine/graphics/DeferredRenderer.hpp`, `GBuffer.hpp`, `Renderer.hpp` (OpenGL 4.6). SlapPy target: WGSL rewrite of the G-buffer + light accumulation shaders under `python/slappyengine/render/shaders/deferred/*.wgsl`; Python driver in `render/deferred.py`; **hot-path light-cluster culling ported to `_core.deferred_cluster`** in Rust for perf. Unlocks clustered lighting, CSM composition, TAA, SSAO — techniques already listed in `project_nova3d_additions.md`.
+3. **PBR material graph** — feature ref: `engine/graphics/Material.hpp:1-744`, `engine/materials/AdvancedMaterial.hpp`, `MaterialGraphEditor.hpp:1-359`, ~30 node types under `engine/materials/`. SlapPy target: extend `render/material.py::PbrMaterial` (Python) with `MaterialGraph` + `MaterialNode` classes; WGSL shader-fragment emission per node; **node-evaluation hot-path ported to `_core.material_eval`** in Rust for parameter-baking. Node taxonomy (30 node types) lifted 1:1 as Python subclasses.
+4. **Asset browser + import pipeline** — feature ref: `engine/editor/AssetBrowser.hpp:1220` lines, `AssetThumbnailCache.hpp`, `engine/import/ModelImporter.hpp`, `TextureImporter.hpp`, `AnimationImporter.hpp` (uses Assimp C library). SlapPy target: Python-side `slappyengine.asset_import.AssetBrowser` + `ThumbnailCache` on top of existing `gltf_importer.py`; FBX support via pure-Python `fbx-io` wheel or by writing a Rust FBX kernel (`_core.fbx_importer`). Thumbnail generation runs on **Python thread pool**, not a Rust kernel — it's I/O-bound.
+5. **Prefab + scene graph** — feature ref: `engine/editor/PrefabSystem.hpp:1155` lines, `engine/scene/SceneNode.hpp:298`, `engine/entity/Entity.hpp:213`. SlapPy target: extend `python/slappyengine/scene.py::Scene` with a `SceneNode` hierarchy (parent transform inheritance); YAML round-trip for prefab format; **transform propagation hot-path ported to `_core.scene_walk_transforms`** in Rust (walks the tree, accumulates 4x4 matrices) — perf-critical on scenes with thousands of nodes.
 
-The rest of Nova3D ships useful individual techniques (radiance cascades, SVGF, RTX path tracer, spectral renderer, SDF sculpting, procedural terrain, NavMesh, RTS systems) but these are either already ported (per `project_nova3d_additions.md`) or out-of-scope for a 2D-first engine.
+The rest of Nova3D ships useful individual techniques (radiance cascades, SVGF, RTX path tracer, spectral renderer, SDF sculpting, procedural terrain, NavMesh, RTS systems). Some are already ported (per `project_nova3d_additions.md`, all as **WGSL rewrites** of the original GLSL); others are out-of-scope for the current sprint plan.
+
+**Every "SLAPPY TARGET" module named above will follow the same architectural pattern**: user-facing Python class → optional Rust `_core.<name>` kernel for hot paths → WGSL shaders for GPU work. **No C++**. **No OpenGL**. **No CMake**. **Yes wgpu → Vulkan**.
 
 ### Subsystem inventory (17 rows)
 
