@@ -1466,6 +1466,29 @@ class EditorShell:
         )
         dpg.setup_dearpygui()
 
+        # ── Viewport resize handler — recompute panel layout so panels
+        # tile the entire viewport instead of only the initial rectangle.
+        def _on_viewport_resize(_sender=None, _data=None) -> None:
+            try:
+                vw = int(dpg.get_viewport_client_width())
+                vh = int(dpg.get_viewport_client_height())
+                # Update the shell's stored dims so subsequent layout
+                # queries see the real size.
+                self._width = vw
+                self._height = vh
+                # Re-invoke the layout composer so all wrappers reposition.
+                try:
+                    self.compose_default_panel_layout(vw, vh)
+                except Exception:
+                    pass
+            except Exception:
+                pass
+
+        try:
+            dpg.set_viewport_resize_callback(_on_viewport_resize)
+        except Exception:
+            pass
+
         # ── Menu bar (handled by viewport — sits above everything) ─────────
         with dpg.viewport_menu_bar():
             with dpg.menu(label="File"):

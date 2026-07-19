@@ -580,14 +580,13 @@ class NotebookToolbar:
                 )
             except Exception:
                 pass
-            try:
-                # StickerButton overlay — layered on top of the plain
-                # button so the theme's sticker chrome still shows when
-                # the theme registry is bound. Failures here are silent
-                # so the plain button remains functional.
-                btn.build(group_tag)
-            except Exception:
-                pass
+            # Note: the StickerButton overlay was previously layered on
+            # top of the plain button so the "sticker" chrome could show.
+            # In practice the overlay is what's covering the tool label
+            # with an unlabelled pink pill (the sticker theme renders no
+            # text). Disabled until BBB3's washi-tape decor can supply
+            # per-tool sticker art. The plain button above is fully
+            # functional on its own.
 
     @property
     def button_specs(self) -> list[dict[str, object]]:

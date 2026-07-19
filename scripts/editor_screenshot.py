@@ -17,14 +17,23 @@ import time
 from pathlib import Path
 
 
-def _boot_editor():
+def _boot_editor(width: int = 1920, height: int = 1080):
     import dearpygui.dearpygui as dpg
     from slappyengine.engine import Engine
     from slappyengine.ui.editor.shell import EditorShell
 
     engine = Engine()
-    shell = EditorShell(engine)
+    shell = EditorShell(engine, width=width, height=height)
+    # Suppress first-run welcome overlay for clean screenshots.
+    try:
+        shell._maybe_show_first_run_welcome = lambda: None  # type: ignore[assignment]
+    except Exception:
+        pass
     shell.setup()
+    try:
+        dpg.maximize_viewport()
+    except Exception:
+        pass
     return shell, dpg
 
 
