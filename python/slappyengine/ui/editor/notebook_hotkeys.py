@@ -283,12 +283,16 @@ class NotebookHotkeys:
         except Exception:
             return
         try:
+            # DPG 2.x renamed mvKey_Control/Shift/Alt → mvKey_Mod{Ctrl,Shift,Alt}
+            _ctrl = getattr(dpg, "mvKey_ModCtrl", None) or getattr(dpg, "mvKey_Control", None)
+            _shift = getattr(dpg, "mvKey_ModShift", None) or getattr(dpg, "mvKey_Shift", None)
+            _alt = getattr(dpg, "mvKey_ModAlt", None) or getattr(dpg, "mvKey_Alt", None)
             mods: list[str] = []
-            if dpg.is_key_down(dpg.mvKey_Control):
+            if _ctrl is not None and dpg.is_key_down(_ctrl):
                 mods.append("ctrl")
-            if dpg.is_key_down(dpg.mvKey_Shift):
+            if _shift is not None and dpg.is_key_down(_shift):
                 mods.append("shift")
-            if dpg.is_key_down(dpg.mvKey_Alt):
+            if _alt is not None and dpg.is_key_down(_alt):
                 mods.append("alt")
             # Translate the integer key code via the dpg constants by
             # consulting the lower-case binding table — anything we can't

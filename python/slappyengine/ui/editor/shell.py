@@ -2363,8 +2363,12 @@ class EditorShell:
                     advance()
 
             # ── Keyboard shortcuts ─────────────────────────────────────────
+            # DPG 2.x renamed mvKey_Control → mvKey_ModCtrl; support both.
             any_input = False
-            if dpg.is_key_down(dpg.mvKey_Control):
+            _ctrl_key = getattr(dpg, "mvKey_ModCtrl", None) or getattr(
+                dpg, "mvKey_Control", None
+            )
+            if _ctrl_key is not None and dpg.is_key_down(_ctrl_key):
                 if dpg.is_key_pressed(dpg.mvKey_S):
                     self._save_project()
                     any_input = True

@@ -1209,14 +1209,14 @@ class NotebookContentBrowser:
         ink = list(self._theme.color("ink", (40, 40, 60, 255)))
         try:
             dpg.add_text(
-                "Project is empty - drop a creature into the scene to start",
+                "No assets yet — drop files here or use Import",
                 color=ink,
                 tag=self._EMPTY_TAG,
             )
         except Exception:
             try:
                 dpg.add_text(
-                    "Project is empty - drop a creature into the scene to start",
+                    "No assets yet — drop files here or use Import",
                 )
             except Exception:
                 pass

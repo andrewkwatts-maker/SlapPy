@@ -395,7 +395,7 @@ class NotebookWelcome:
                     pass
                 try:
                     dpg.add_button(
-                        label="<3 Start drawing!",
+                        label="+ New Scene",
                         width=-1,
                         height=36,
                         callback=self._on_start_blank_clicked,

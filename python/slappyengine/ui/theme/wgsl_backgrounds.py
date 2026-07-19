@@ -549,8 +549,23 @@ def resolve_background(spec_or_effect: Any) -> np.ndarray | None:
                 spec_or_effect.name,
             )
             return None
+        # Many numpy-side shader effects require positional ``width`` /
+        # ``height`` arguments (`ruled_paper`, `dot_grid`, `parchment` …).
+        # ``ShaderEffect.params`` typically only carries the *stylistic*
+        # knobs, not the size, so we inject a sensible tile default when
+        # the callee wants those args and the params dict is silent.
+        import inspect
+        params = dict(spec_or_effect.params or {})
         try:
-            return fn(**spec_or_effect.params)
+            sig = inspect.signature(fn)
+            if "width" in sig.parameters and "width" not in params:
+                params["width"] = 512
+            if "height" in sig.parameters and "height" not in params:
+                params["height"] = 512
+        except (TypeError, ValueError):
+            pass
+        try:
+            return fn(**params)
         except Exception as exc:
             logger.warning(
                 "resolve_background: %r failed (%s)",

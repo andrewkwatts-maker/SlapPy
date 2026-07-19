@@ -426,20 +426,99 @@ class _StubRenderer:
         self.log.append(("close", None))
 
 
-def _try_real_renderer(config: AppConfig):  # pragma: no cover
-    """Soft-import the real renderer, fall back to stub on any failure.
+class _PygameWindowRenderer:
+    """Pygame-backed windowing renderer.
 
-    HH4 will wire the wgpu context here. Until then this always returns
-    ``None`` and the caller uses :class:`_StubRenderer`.
+    Opens a real OS window sized to :attr:`AppConfig.window_size` /
+    ``resolution``. Presents a solid clear-colour fill every frame plus a
+    tiny HUD line so the user can see the engine is alive. Handles the
+    OS event loop each :meth:`begin_frame` so the window stays
+    responsive and closes cleanly when the user hits the close button.
+    """
+
+    def __init__(self, config: AppConfig, pygame_mod) -> None:
+        self.config = config
+        self.pg = pygame_mod
+        self.frame_index = 0
+        self.log: list[tuple[str, Any]] = []
+        self._closed_by_user = False
+
+        w, h = getattr(config, "window_size", None) or getattr(
+            config, "resolution", None
+        ) or (1280, 720)
+        title = getattr(config, "window_title", None) or "SlapPyEngine"
+
+        pygame_mod.init()
+        pygame_mod.display.set_caption(title)
+        self._surface = pygame_mod.display.set_mode((int(w), int(h)))
+        self._font = pygame_mod.font.SysFont("Consolas", 18)
+        cc = getattr(config, "clear_color", (0.05, 0.06, 0.09, 1.0))
+        self._clear_rgb = tuple(int(max(0.0, min(1.0, c)) * 255) for c in cc[:3])
+
+    @property
+    def closed_by_user(self) -> bool:
+        return self._closed_by_user
+
+    def begin_frame(self) -> None:
+        self.log.append(("begin_frame", self.frame_index))
+        for ev in self.pg.event.get():
+            if ev.type == self.pg.QUIT:
+                self._closed_by_user = True
+            elif ev.type == self.pg.KEYDOWN and ev.key == self.pg.K_ESCAPE:
+                self._closed_by_user = True
+        self._surface.fill(self._clear_rgb)
+
+    def draw_model(self, handle: ModelHandle) -> None:
+        self.log.append(
+            (
+                "draw_model",
+                {
+                    "id": handle.id,
+                    "path": handle.path,
+                    "position": handle.position,
+                    "visible": handle.visible,
+                },
+            )
+        )
+
+    def end_frame(self) -> None:
+        try:
+            hud = self._font.render(
+                f"SlapPyEngine — frame {self.frame_index}",
+                True,
+                (200, 210, 220),
+            )
+            self._surface.blit(hud, (12, 12))
+            self.pg.display.flip()
+        except Exception:  # pragma: no cover
+            pass
+        self.log.append(("end_frame", self.frame_index))
+        self.frame_index += 1
+
+    def close(self) -> None:
+        self.log.append(("close", None))
+        try:
+            self.pg.display.quit()
+            self.pg.quit()
+        except Exception:  # pragma: no cover
+            pass
+
+
+def _try_real_renderer(config: AppConfig):  # pragma: no cover
+    """Soft-import a real windowing renderer, fall back to stub on any failure.
+
+    Tries pygame first (the most portable windowing lib in the
+    dependency graph). If unavailable, returns ``None`` and the caller
+    uses :class:`_StubRenderer` — matches the historical HH4-deferred
+    behaviour used by every headless test.
     """
     if not config.enable_gpu:
         return None
     if config.renderer_backend in ("stub", "headless"):
         return None
     try:
-        # Intentional soft-fail: the real backend is not yet wired.
-        # HH4 will replace this with a real wgpu import.
-        return None
+        import pygame
+        return _PygameWindowRenderer(config, pygame)
     except Exception as exc:  # pragma: no cover
         logger.info("real renderer unavailable (%s); falling back to stub", exc)
         return None
@@ -818,6 +897,12 @@ class App:
 
                 self._elapsed += dt
                 frame += 1
+
+                # Windowed renderers can request early exit (user hit close
+                # button, ESC, etc.). Honour it before the frame cap check.
+                if getattr(self._renderer, "closed_by_user", False):
+                    self._running = False
+                    break
 
                 if cap and frame >= cap:
                     self._running = False

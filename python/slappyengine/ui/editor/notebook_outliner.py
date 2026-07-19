@@ -700,7 +700,7 @@ class NotebookOutliner:
                 washi = list(self._theme.color("washi", (180, 200, 230, 255)))
                 try:
                     dpg.add_input_text(
-                        hint="Search the bestiary…",
+                        hint="Search entities…",
                         tag=self._SEARCH_TAG,
                         callback=self._on_search_changed,
                         width=-1,
@@ -879,14 +879,14 @@ class NotebookOutliner:
         ink = list(self._theme.color("ink", (40, 40, 60, 255)))
         try:
             dpg.add_text(
-                "No entries yet — drop a creature in from the spawn menu",
+                "Scene is empty — use + Add to spawn an entity",
                 color=ink,
                 tag=self._EMPTY_TAG,
             )
         except Exception:
             try:
                 dpg.add_text(
-                    "No entries yet — drop a creature in from the spawn menu",
+                    "Scene is empty — use + Add to spawn an entity",
                 )
             except Exception:
                 pass

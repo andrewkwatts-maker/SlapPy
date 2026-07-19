@@ -68,8 +68,8 @@ from slappyengine.ui.editor.notebook_inspector_dispatch import (
 # ---------------------------------------------------------------------------
 
 # Empty-state copy.
-_EMPTY_HINT = "Pick a critter to view its journal entry"
-_EMPTY_STICKER = "[badger]"
+_EMPTY_HINT = "Select an entity to inspect its properties"
+_EMPTY_STICKER = ""
 
 # Notebook ink palette — matches ``notebook_theme.NotebookTheme.PALETTE['ink']``
 # so the empty state stays on-theme without importing the theme module at
@@ -320,14 +320,14 @@ class NotebookInspector(InspectorDispatchMixin):
             ):
                 # Hand-written title row — the theme picks the font.
                 try:
-                    dpg.add_text("Field Journal", color=[40, 40, 60, 255])
+                    dpg.add_text("Properties", color=[40, 40, 60, 255])
                 except Exception:
                     pass
         except Exception:
             # Stub-DPG without context-manager support — flat path.
             try:
                 dpg.add_text(
-                    "Field Journal",
+                    "Properties",
                     parent=parent_tag,
                     tag=self._panel_tag,
                 )
