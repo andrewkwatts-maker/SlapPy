@@ -27,6 +27,10 @@ class Scene:
         self.collision: CollisionManager = CollisionManager()
         self.strata: "StrataWorld | None" = None
         self._z_layers: list = []  # list[ZLayer], ordered by z ascending
+        # DDD1  Hybrid 2D+3D layers.  Populated via add_layer(); iteration
+        # (see `layers`) returns them sorted by z_order (stable / insertion
+        # order preserved among ties).
+        self._layers: list = []
         # Fluid simulation reference — set by engine.enable_fluid_sim()
         self.fluid: "GlobalFluidSim | None" = None  # type: ignore[name-defined]
         self.bus: EventBus = EventBus()
@@ -78,6 +82,35 @@ class Scene:
     @property
     def z_layers(self) -> list:
         return self._z_layers
+
+    # ------------------------------------------------------------------
+    # DDD1  Hybrid Layer2D + Layer3D stack
+    # ------------------------------------------------------------------
+
+    def add_layer(self, layer) -> None:
+        """Add a :class:`~slappyengine.layer.Layer` (Layer2D or Layer3D).
+
+        Duplicates are ignored.  Insertion order among layers with equal
+        ``z_order`` is preserved by ``layers`` (stable sort).
+        """
+        from slappyengine.layer import Layer
+        if not isinstance(layer, Layer):
+            raise TypeError(
+                f"Scene.add_layer: layer must be a Layer/Layer2D/Layer3D; "
+                f"got {type(layer).__name__}"
+            )
+        if layer in self._layers:
+            return
+        self._layers.append(layer)
+
+    def remove_layer(self, layer) -> None:
+        if layer in self._layers:
+            self._layers.remove(layer)
+
+    @property
+    def layers(self) -> list:
+        """Return layers sorted by ``z_order`` (ascending, stable)."""
+        return sorted(self._layers, key=lambda l: l.z_order)
 
     def _tick(self, dt: float) -> None:
         for entity in list(self._entities.values()):
