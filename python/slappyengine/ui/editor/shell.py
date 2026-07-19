@@ -25,9 +25,14 @@ except ImportError:
     NotebookGizmoOverlay = None  # type: ignore[assignment,misc]
 
 # ── Layout constants ───────────────────────────────────────────────────────────
-TOOLBAR_H = 36
+# LEFT_W / RIGHT_W deliberately match (or exceed) the ``MIN_WIDTH`` on
+# :class:`NotebookOutliner` (240) and :class:`NotebookInspector` (280) so
+# the movable-panel min_size clamp never pushes the columns wider than
+# the centre-column math expects.  ``TOOLBAR_H`` matches
+# ``NotebookToolbar.MIN_HEIGHT`` for the same reason.  See BBB1.
+TOOLBAR_H = 40
 BOTTOM_H  = 220
-LEFT_W    = 200
+LEFT_W    = 260
 RIGHT_W   = 300
 
 
@@ -948,45 +953,69 @@ class EditorShell:
         # The notebook-themed status bar sits a fixed 24 px tall.
         STATUS_H = 24
 
-        # ── Toolbar — top edge, full width.
+        # ── Layout math — tile the columns without overlap (BBB1).
+        #
+        #   +----------+---------------------+------------+
+        #   | Scene    | TOOLBAR (TOOLBAR_H) | Inspector  |
+        #   | (LEFT_W) +---------------------+ (RIGHT_W)  |
+        #   |          |  Center tabs        |            |
+        #   +----------+---------------------+------------+
+        #   |  Content Browser (BOTTOM_H)                  |
+        #   +----------------------------------------------+
+        #   |  Status bar (STATUS_H)                       |
+        #   +----------------------------------------------+
+        #
+        # Every dimension is derived from the module-level constants at
+        # the top of the file so the regression test
+        # ``test_notebook_editor_layout`` can walk the wrappers and prove
+        # there is no overlap.
+        sidebar_top    = TITLEBAR_H
+        sidebar_bottom = max(0, h - BOTTOM_H - STATUS_H)
+        sidebar_h      = max(200, sidebar_bottom - sidebar_top)
+        center_x       = LEFT_W
+        center_w       = max(320, w - LEFT_W - RIGHT_W)
+        center_tabs_y  = TITLEBAR_H + TOOLBAR_H
+        center_tabs_h  = max(200, sidebar_bottom - center_tabs_y)
+        right_x        = max(LEFT_W + center_w, w - RIGHT_W)
+
+        # ── Toolbar — sits ABOVE the centre column only; Scene +
+        # ── Inspector span the full sidebar height alongside it.
+        # ── ``min_size`` is (1, TOOLBAR_H) so the wrapper clamp uses
+        # ── the panel's own MIN_WIDTH (see ``NotebookToolbar.MIN_WIDTH``,
+        # ── kept <= center_w for the default 1400-px viewport).
         if self._toolbar is not None:
             windows["toolbar"] = MovablePanelWindow(
                 self._toolbar,
                 title="Toolbar",
                 kind="toolbar",
-                default_pos=(0, TITLEBAR_H),
-                default_size=(max(800, w), TOOLBAR_H),
-                min_size=(800, TOOLBAR_H),
+                default_pos=(center_x, TITLEBAR_H),
+                default_size=(center_w, TOOLBAR_H),
+                min_size=(1, TOOLBAR_H),
                 closable=False,
                 no_resize=True,  # fixed height
             )
 
-        # ── Outliner — left dock.
+        # ── Outliner — LEFT column, full sidebar height.
         if self._scene_outliner is not None:
-            outliner_y = TITLEBAR_H + TOOLBAR_H
-            outliner_h = max(300, h - outliner_y - BOTTOM_H - STATUS_H)
             windows["outliner"] = MovablePanelWindow(
                 self._scene_outliner,
                 title="Scene",
                 kind="sidebar",
-                default_pos=(0, outliner_y),
-                default_size=(max(240, LEFT_W), outliner_h),
-                min_size=(240, 300),
+                default_pos=(0, sidebar_top),
+                default_size=(LEFT_W, sidebar_h),
+                min_size=(1, 200),
                 closable=False,
             )
 
-        # ── Inspector — right dock.
+        # ── Inspector — RIGHT column, full sidebar height.
         if self._inspector is not None:
-            insp_x = max(0, w - RIGHT_W)
-            insp_y = TITLEBAR_H + TOOLBAR_H
-            insp_h = max(400, h - insp_y - BOTTOM_H - STATUS_H)
             windows["inspector"] = MovablePanelWindow(
                 self._inspector,
                 title="Inspector",
                 kind="sidebar",
-                default_pos=(insp_x, insp_y),
-                default_size=(max(280, RIGHT_W), insp_h),
-                min_size=(280, 400),
+                default_pos=(right_x, sidebar_top),
+                default_size=(RIGHT_W, sidebar_h),
+                min_size=(1, 200),
                 closable=False,
             )
 
@@ -1177,10 +1206,11 @@ class EditorShell:
         # behaviour like the notebook panels. Each is opt-in via the
         # View menu (or hotkey toggle); only the viewport is shown by
         # default because the GPU surface always needs an anchor.
-        top_y = TITLEBAR_H + TOOLBAR_H
-        sidebar_height = max(400, h - top_y - BOTTOM_H - STATUS_H)
-        # The center column lives between the left + right docks.
-        center_width = max(320, w - max(240, LEFT_W) - max(280, RIGHT_W) - 16)
+        # The centre column sits directly under the toolbar row and
+        # spans the same width so viewport tabs don't clip.  See BBB1.
+        top_y          = center_tabs_y
+        sidebar_height = center_tabs_h
+        center_width   = center_w
 
         # Layer panel — narrow side-strip below the outliner; hidden by
         # default because the layer stack is niche compared to the
@@ -1200,15 +1230,17 @@ class EditorShell:
 
         # Viewport — the GPU canvas, anchored centre-stage. Always
         # visible; the close button is suppressed so users can't
-        # accidentally dismiss the world view.
+        # accidentally dismiss the world view.  Position + size track
+        # the same math the toolbar / Scene / Inspector use so
+        # ``test_notebook_editor_layout`` proves the panels tile.
         if self._viewport_panel is not None:
             vp = MovablePanelWindow(
                 self._viewport_panel,
                 title="Viewport",
                 kind="viewport",
-                default_pos=(max(240, LEFT_W) + 8, top_y),
+                default_pos=(center_x, top_y),
                 default_size=(center_width, sidebar_height),
-                min_size=(320, 320),
+                min_size=(1, 1),
                 closable=False,
             )
             windows["viewport_panel"] = vp
@@ -1556,8 +1588,19 @@ class EditorShell:
             no_scrollbar=True,
             no_scroll_with_mouse=True,
         ):
-            dpg.add_group(tag="custom_titlebar")
-            dpg.add_text("Ready", tag="status_bar", color=(150, 150, 150))
+            # Compat shims — external code (Nova3D-era plugins, tests)
+            # looks up the ``custom_titlebar`` group and ``status_bar``
+            # text tags.  We keep the tags alive but ``show=False`` so
+            # they don't paint the garbled strip that used to sit in
+            # the upper-left corner (the notebook status bar owns the
+            # visible status message).  See BBB1.
+            dpg.add_group(tag="custom_titlebar", show=False)
+            dpg.add_text(
+                "Ready",
+                tag="status_bar",
+                color=(150, 150, 150),
+                show=False,
+            )
 
         # ── Lazy code-mode-panel construction (needs the engine handle).
         if self._code_mode_panel is None:

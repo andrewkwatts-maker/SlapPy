@@ -538,12 +538,17 @@ class TestDefaultLayout:
         assert "status_bar" in windows
 
     def test_toolbar_position_pinned_to_top(self, shell_with_panels):
+        # Post-BBB1: the toolbar sits over the CENTRE column only —
+        # its x is ``LEFT_W`` and Scene / Inspector span the full
+        # sidebar height either side of it.  Keep the y-anchor check
+        # so a regression that dropped the toolbar into the workspace
+        # would still catch here.
+        from slappyengine.ui.editor.shell import LEFT_W
+
         windows = shell_with_panels.compose_default_panel_layout()
         tb = windows["toolbar"]
-        # Top edge — y close to the OS title bar.
         x, y = tb.get_position()
-        assert x == 0
-        # Below the OS title bar but above the rest.
+        assert x == LEFT_W
         assert y < 100
 
     def test_outliner_position_is_left_dock(self, shell_with_panels):
