@@ -32,6 +32,7 @@ rather than a bare ``dict[...]`` miss.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Iterable
 
 
@@ -64,6 +65,108 @@ class LiningStyle:
     default_paper: tuple[int, int, int]
     default_ink: tuple[int, int, int]
     description: str
+
+
+# ---------------------------------------------------------------------------
+# AAA-quality preset — controls how much post-process paper realism the
+# numpy fallbacks bake into each rendered lining texture.
+# ---------------------------------------------------------------------------
+
+
+class _QualityTier(str, Enum):
+    """Marker for the three AAA quality tiers."""
+
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+@dataclass(frozen=True)
+class AAAShaderQualityPreset:
+    """Bundle of post-process knobs applied per-preset by the renderer.
+
+    Three factory presets ship as module-level constants (also exposed as
+    ``AAAShaderQualityPreset.LOW`` / ``.MEDIUM`` / ``.HIGH`` after class
+    definition):
+
+    * ``LOW`` — flat, deterministic. Matches pre-BBB5 behaviour so
+      legacy screenshots keep byte-for-byte parity.
+    * ``MEDIUM`` — grain + line anti-aliasing. Cheap uplift.
+    * ``HIGH`` — grain + AA + subtle line jitter + warm sun-lit tint.
+      New default for the editor's pattern picker.
+
+    Fields
+    ------
+    tier:
+        Human-readable tier name; used by docs generator + tests.
+    grain_intensity:
+        Perlin-ish luma noise amplitude in ``[0, 1]``. ``0.015`` is the
+        AAA sweet spot — ±3-4 luma variance, breaks flatness without
+        looking noisy.
+    line_aa_px:
+        Anti-alias half-width in pixels for every ruled / grid line.
+        ``0.0`` = crisp 1-pixel line. ``1.5`` = soft AAA line.
+    jitter_px:
+        Row-wobble amplitude for ruled lines in pixels ``[0, 4]``. Mimics
+        real ruled-paper printing tolerance.
+    warm_tint:
+        Warm sun-lit gradient strength in ``[0, 1]``. Adds a subtle
+        top-left warm / bottom-right cool bias to the paper colour.
+    dot_alpha_variance:
+        Per-dot alpha jitter for dot-grid patterns in ``[0, 1]``. ``0.12``
+        gives ±30 of 255-range variance for organic-feeling dots.
+    ink_bleed:
+        Gaussian-ish ink spread strength for graph-paper style patterns
+        in ``[0, 1]``. Simulates slight blue-ink bleed into paper fibres.
+    """
+
+    tier: str
+    grain_intensity: float
+    line_aa_px: float
+    jitter_px: float
+    warm_tint: float
+    dot_alpha_variance: float
+    ink_bleed: float
+
+
+# Populate the three factory presets after the dataclass is defined and
+# expose them both as module constants and as class-level attributes.
+_LOW_PRESET = AAAShaderQualityPreset(
+    tier=_QualityTier.LOW.value,
+    grain_intensity=0.0,
+    line_aa_px=0.0,
+    jitter_px=0.0,
+    warm_tint=0.0,
+    dot_alpha_variance=0.0,
+    ink_bleed=0.0,
+)
+_MEDIUM_PRESET = AAAShaderQualityPreset(
+    tier=_QualityTier.MEDIUM.value,
+    grain_intensity=0.012,
+    line_aa_px=1.0,
+    jitter_px=0.0,
+    warm_tint=0.0,
+    dot_alpha_variance=0.08,
+    ink_bleed=0.15,
+)
+_HIGH_PRESET = AAAShaderQualityPreset(
+    tier=_QualityTier.HIGH.value,
+    grain_intensity=0.017,
+    line_aa_px=1.4,
+    jitter_px=0.45,
+    warm_tint=0.045,
+    dot_alpha_variance=0.12,
+    ink_bleed=0.22,
+)
+
+# Attach the three tiers to the class for `AAAShaderQualityPreset.HIGH` sugar.
+# (frozen=True only guards instance mutation, not class attribute assignment.)
+AAAShaderQualityPreset.LOW = _LOW_PRESET  # type: ignore[attr-defined]
+AAAShaderQualityPreset.MEDIUM = _MEDIUM_PRESET  # type: ignore[attr-defined]
+AAAShaderQualityPreset.HIGH = _HIGH_PRESET  # type: ignore[attr-defined]
+
+
+DEFAULT_AAA_PRESET: AAAShaderQualityPreset = _HIGH_PRESET
 
 
 # ---------------------------------------------------------------------------
@@ -471,6 +574,8 @@ def iter_linings() -> Iterable[LiningStyle]:
 
 
 __all__ = [
+    "AAAShaderQualityPreset",
+    "DEFAULT_AAA_PRESET",
     "LiningStyle",
     "PAGE_LININGS",
     "get_lining",

@@ -24,6 +24,8 @@ See ``docs/api/page_lining_shaders.md`` for the full catalogue.
 from __future__ import annotations
 
 from .library import (
+    AAAShaderQualityPreset,
+    DEFAULT_AAA_PRESET,
     LiningStyle,
     PAGE_LININGS,
     get_lining,
@@ -38,6 +40,8 @@ from .renderer import (
 
 
 __all__ = [
+    "AAAShaderQualityPreset",
+    "DEFAULT_AAA_PRESET",
     "LiningStyle",
     "PAGE_LININGS",
     "bake_lining_texture",

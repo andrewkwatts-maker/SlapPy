@@ -127,6 +127,9 @@ def ruled_paper(
     margin_color: tuple[int, int, int, int] = (240, 120, 120, 255),
     margin_x: int = 32,
     paper_color: tuple[int, int, int, int] = (252, 250, 240, 255),
+    grain_intensity: float = 0.0,
+    jitter_px: float = 0.0,
+    warm_tint: float = 0.0,
 ) -> np.ndarray:
     """Generate a ruled-notebook background texture.
 
@@ -145,6 +148,19 @@ def ruled_paper(
         Horizontal pixel offset of the margin rule. Set ``< 0`` to omit.
     paper_color:
         Background fill colour.
+    grain_intensity:
+        AAA-quality paper grain amplitude in ``[0, 1]``. ``0.0`` (the
+        default) preserves the flat legacy look. Values ~0.015 introduce
+        the ±3-4 luma Perlin-style noise that breaks up the flatness of
+        printed paper.
+    jitter_px:
+        AAA-quality horizontal rule row-wobble in pixels ``[0, 4]``.
+        ``0.0`` (the default) keeps the crisp 1-pixel rule. Values ~0.5
+        mimic real ruled-paper printing tolerance.
+    warm_tint:
+        AAA-quality warm sun-lit gradient strength in ``[0, 1]``. ``0.0``
+        (the default) leaves the paper colour untouched. Values ~0.05
+        add a subtle top-left warm / bottom-right cool bias.
     """
     fn = "ruled_paper"
     w, h = _validate_size("size", fn, width, height)
@@ -152,17 +168,81 @@ def ruled_paper(
     margin_rgba = _validate_rgba("margin_color", fn, margin_color)
     paper_rgba = _validate_rgba("paper_color", fn, paper_color)
     spacing = validate_positive_int("line_spacing", fn, line_spacing)
+    grain = validate_unit_float("grain_intensity", fn, grain_intensity)
+    warm = validate_unit_float("warm_tint", fn, warm_tint)
+    jitter = validate_finite_float("jitter_px", fn, jitter_px)
+    if jitter < 0.0 or jitter > 4.0:
+        raise ValueError(
+            f"{fn}: jitter_px must be in [0.0, 4.0]; got {jitter}"
+        )
     # margin_x = -1 disables; otherwise non-negative
     if not isinstance(margin_x, int) or isinstance(margin_x, bool):
         raise TypeError(f"{fn}: margin_x must be int; got {type(margin_x).__name__}")
     out = np.empty((h, w, 4), dtype=np.uint8)
     out[:, :, :] = paper_rgba
-    # Horizontal rules
+    # Fast path — no AAA extras, preserve exact legacy pixels.
+    if grain == 0.0 and warm == 0.0 and jitter == 0.0:
+        for y in range(spacing, h, spacing):
+            out[y, :, :] = line_rgba
+        if 0 <= margin_x < w and margin_rgba[3] > 0:
+            out[:, margin_x, :] = margin_rgba
+        return out
+    # ------------------------------------------------------------------
+    # AAA-quality path — grain + jitter + warm tint + anti-aliased lines.
+    # ------------------------------------------------------------------
+    paper_f = np.array(paper_rgba[:3], dtype=np.float32)
+    line_f = np.array(line_rgba[:3], dtype=np.float32)
+    canvas = np.tile(paper_f, (h, w, 1)).astype(np.float32)
+    # Warm sun-lit gradient — top-left warm (+R, +G), bottom-right cool.
+    if warm > 0.0:
+        yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+        grad = 1.0 - ((xx / max(w - 1, 1) + yy / max(h - 1, 1)) * 0.5)
+        # grad = 1 top-left, 0 bottom-right.
+        warm_shift = grad[..., None] * warm * np.array(
+            [12.0, 6.0, -6.0], dtype=np.float32
+        )
+        canvas = canvas + warm_shift
+    # Paper grain — deterministic Perlin-ish noise via seeded RNG.
+    if grain > 0.0:
+        rng = np.random.default_rng(0xA11A ^ (w * 1009 + h))
+        # Two-octave sum for a Perlin-ish feel at ~1px + ~4px scale.
+        n1 = rng.uniform(-1.0, 1.0, size=(h, w)).astype(np.float32)
+        # Downsample-then-upsample for low-freq octave.
+        hs = max(1, h // 4)
+        ws = max(1, w // 4)
+        low = rng.uniform(-1.0, 1.0, size=(hs, ws)).astype(np.float32)
+        # Nearest-upsample low back to (h, w).
+        yi = np.minimum((np.arange(h) * hs) // max(h, 1), hs - 1)
+        xi = np.minimum((np.arange(w) * ws) // max(w, 1), ws - 1)
+        n2 = low[yi[:, None], xi[None, :]]
+        noise = (0.65 * n1 + 0.35 * n2) * (grain * 255.0)
+        canvas = canvas + noise[..., None]
+    # Horizontal rules with anti-aliasing + optional jitter.
+    if jitter > 0.0:
+        rng2 = np.random.default_rng(0xB22B ^ (w * 7919 + h))
+        wobble = rng2.uniform(-jitter, jitter, size=w).astype(np.float32)
+        # Light smoothing so wobble is coherent along x.
+        k = np.ones(5, dtype=np.float32) / 5.0
+        wobble = np.convolve(wobble, k, mode="same")
+    else:
+        wobble = np.zeros(w, dtype=np.float32)
+    yy = np.arange(h, dtype=np.float32).reshape(-1, 1)
     for y in range(spacing, h, spacing):
-        out[y, :, :] = line_rgba
-    # Margin rule
+        # Signed distance in pixels from ideal rule y.
+        d = np.abs(yy - (float(y) + wobble.reshape(1, -1)))
+        # 2-pixel AA falloff.
+        alpha = np.clip(1.0 - d / 1.5, 0.0, 1.0)
+        # Composite line over canvas.
+        canvas = canvas * (1.0 - alpha[..., None]) + line_f[None, None, :] * alpha[..., None]
+    # Margin rule with 2-pixel AA (kept crisp at margin_x for visibility).
     if 0 <= margin_x < w and margin_rgba[3] > 0:
-        out[:, margin_x, :] = margin_rgba
+        margin_f = np.array(margin_rgba[:3], dtype=np.float32)
+        xx = np.arange(w, dtype=np.float32).reshape(1, -1)
+        dm = np.abs(xx - float(margin_x))
+        am = np.clip(1.0 - dm / 1.5, 0.0, 1.0)
+        canvas = canvas * (1.0 - am[..., None]) + margin_f[None, None, :] * am[..., None]
+    out[:, :, :3] = np.clip(canvas, 0.0, 255.0).astype(np.uint8)
+    out[:, :, 3] = paper_rgba[3]
     return out
 
 

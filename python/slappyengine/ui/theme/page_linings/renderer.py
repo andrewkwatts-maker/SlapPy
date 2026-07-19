@@ -13,6 +13,22 @@ Follows the same WGSL-first / numpy-fallback pattern used by
   a hand-written fallback that respects its ``tile_size`` so
   :func:`render_lining` output is tileable.
 
+BBB5 (2026-07-19) AAA-quality upgrade
+--------------------------------------
+The four "default" presets (``ruled_paper``, ``dot_grid``,
+``graph_grid``, ``blank_cream``) accept an ``AAAShaderQualityPreset``
+via the renderer's ``quality`` kwarg. The three tiers layer paper
+grain, line anti-aliasing, rule jitter, warm sun-lit tint,
+per-dot alpha variance, and ink bleed on top of the base pattern.
+The ``LOW`` tier restores byte-for-byte parity with the pre-upgrade
+fallback so existing golden textures keep passing.
+
+Rust migration
+--------------
+The per-preset fallback bodies are hot enough that per the architectural
+directive ("Python = wrapper, Rust = engine") they are marked as
+Rust-port candidates. See ``docs/aaa_theme_shaders_2026_07_19.md``.
+
 Every public helper returns ``(H, W, 4)`` ``uint8`` RGBA arrays.
 """
 from __future__ import annotations
@@ -22,7 +38,12 @@ from typing import Any
 
 import numpy as np
 
-from .library import LiningStyle, get_lining
+from .library import (
+    AAAShaderQualityPreset,
+    DEFAULT_AAA_PRESET,
+    LiningStyle,
+    get_lining,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -104,35 +125,174 @@ def _make_grid(width: int, height: int) -> tuple[np.ndarray, np.ndarray]:
     return np.meshgrid(x, y)  # returns (X, Y)
 
 
-def _fp_ruled_paper(w: int, h: int, paper: np.ndarray, ink: np.ndarray) -> np.ndarray:
+# ---------------------------------------------------------------------------
+# AAA post-process helpers — small, deterministic, Rust-port candidates.
+# ---------------------------------------------------------------------------
+
+
+def _paper_grain(w: int, h: int, intensity: float, seed_salt: int) -> np.ndarray:
+    """Return an ``(H, W)`` float32 array of Perlin-ish paper grain.
+
+    Two octaves — 1-pixel white noise (65%) + a 4× downsampled octave
+    upsampled with nearest neighbour (35%). Amplitude is scaled so that
+    ``intensity=0.015`` yields ±3-4 luma variance in [0, 1] space.
+    """
+    if intensity <= 0.0:
+        return np.zeros((h, w), dtype=np.float32)
+    rng = np.random.default_rng(seed_salt ^ (w * 1009 + h))
+    n1 = rng.uniform(-1.0, 1.0, size=(h, w)).astype(np.float32)
+    hs = max(1, h // 4)
+    ws = max(1, w // 4)
+    low = rng.uniform(-1.0, 1.0, size=(hs, ws)).astype(np.float32)
+    yi = np.minimum((np.arange(h) * hs) // max(h, 1), hs - 1)
+    xi = np.minimum((np.arange(w) * ws) // max(w, 1), ws - 1)
+    n2 = low[yi[:, None], xi[None, :]]
+    return (0.65 * n1 + 0.35 * n2) * intensity
+
+
+def _row_wobble(w: int, amp_px: float, seed_salt: int) -> np.ndarray:
+    """Deterministic 5-tap-smoothed row wobble curve of length *w*."""
+    if amp_px <= 0.0:
+        return np.zeros(w, dtype=np.float32)
+    rng = np.random.default_rng(seed_salt ^ (w * 7919))
+    wob = rng.uniform(-amp_px, amp_px, size=w).astype(np.float32)
+    k = np.ones(5, dtype=np.float32) / 5.0
+    return np.convolve(wob, k, mode="same")
+
+
+def _fp_ruled_paper(
+    w: int,
+    h: int,
+    paper: np.ndarray,
+    ink: np.ndarray,
+    quality: AAAShaderQualityPreset | None = None,
+) -> np.ndarray:
     _, Y = _make_grid(w, h)
     X, _ = _make_grid(w, h)
-    line = (Y % 24.0 >= 23.0).astype(np.float32)
-    margin = ((X >= 32.0) & (X < 33.0)).astype(np.float32)
     red = np.array([1.0, 0.44, 0.71], dtype=np.float32)
-    out = paper[None, None, :] * (1.0 - line[..., None]) + ink[None, None, :] * line[..., None]
-    out = out * (1.0 - margin[..., None]) + red[None, None, :] * margin[..., None]
-    return out
+    q = quality
+    if q is None or (q.grain_intensity == 0.0 and q.line_aa_px == 0.0
+                     and q.jitter_px == 0.0 and q.warm_tint == 0.0):
+        # LOW tier — original pixel-perfect path (unchanged).
+        line = (Y % 24.0 >= 23.0).astype(np.float32)
+        margin = ((X >= 32.0) & (X < 33.0)).astype(np.float32)
+        out = paper[None, None, :] * (1.0 - line[..., None]) + ink[None, None, :] * line[..., None]
+        out = out * (1.0 - margin[..., None]) + red[None, None, :] * margin[..., None]
+        return out
+    # AAA-quality path — build the canvas in float, layer AA + grain +
+    # warm tint + optional row jitter.
+    canvas = np.tile(paper[None, None, :], (h, w, 1)).astype(np.float32)
+    # Warm sun-lit gradient.
+    if q.warm_tint > 0.0:
+        grad = 1.0 - ((X / max(w - 1, 1) + Y / max(h - 1, 1)) * 0.5)
+        warm_shift = grad[..., None] * q.warm_tint * np.array(
+            [0.05, 0.025, -0.025], dtype=np.float32
+        )
+        canvas = canvas + warm_shift
+    # Perlin-ish paper grain.
+    if q.grain_intensity > 0.0:
+        canvas = canvas + _paper_grain(w, h, q.grain_intensity, seed_salt=0xA11A)[..., None]
+    # Ruled lines with optional row jitter.
+    wobble = _row_wobble(w, q.jitter_px, seed_salt=0xB22B)
+    aa = max(q.line_aa_px, 0.5)
+    for y0 in range(23, h, 24):
+        d = np.abs(Y - (float(y0) + wobble.reshape(1, -1)))
+        alpha = np.clip(1.0 - d / aa, 0.0, 1.0)
+        canvas = canvas * (1.0 - alpha[..., None]) + ink[None, None, :] * alpha[..., None]
+    # Margin rule (crisp).
+    dm = np.abs(X - 32.0)
+    am = np.clip(1.0 - dm / max(aa, 0.5), 0.0, 1.0)
+    canvas = canvas * (1.0 - am[..., None]) + red[None, None, :] * am[..., None]
+    return canvas
 
 
-def _fp_dot_grid(w: int, h: int, paper: np.ndarray, ink: np.ndarray) -> np.ndarray:
+def _fp_dot_grid(
+    w: int,
+    h: int,
+    paper: np.ndarray,
+    ink: np.ndarray,
+    quality: AAAShaderQualityPreset | None = None,
+) -> np.ndarray:
     X, Y = _make_grid(w, h)
     s = 24.0
-    r = 1.5
+    q = quality
+    if q is None or (q.grain_intensity == 0.0 and q.line_aa_px == 0.0
+                     and q.dot_alpha_variance == 0.0 and q.warm_tint == 0.0):
+        # LOW tier — legacy 1.5-radius crisp dot.
+        r = 1.5
+        cx = (X % s) - s * 0.5
+        cy = (Y % s) - s * 0.5
+        d = np.sqrt(cx * cx + cy * cy)
+        dot = np.clip(1.0 - (d - r) / 0.5, 0.0, 1.0) * 0.6
+        return paper[None, None, :] * (1.0 - dot[..., None]) + ink[None, None, :] * dot[..., None]
+    # AAA — bigger dots (2-3px), soft AA edge, per-dot alpha variance, grain.
+    r = 2.4
+    aa = max(q.line_aa_px, 0.6)
+    canvas = np.tile(paper[None, None, :], (h, w, 1)).astype(np.float32)
+    if q.warm_tint > 0.0:
+        grad = 1.0 - ((X / max(w - 1, 1) + Y / max(h - 1, 1)) * 0.5)
+        canvas = canvas + grad[..., None] * q.warm_tint * np.array(
+            [0.05, 0.025, -0.025], dtype=np.float32
+        )
+    if q.grain_intensity > 0.0:
+        canvas = canvas + _paper_grain(w, h, q.grain_intensity, seed_salt=0xC33C)[..., None]
     cx = (X % s) - s * 0.5
     cy = (Y % s) - s * 0.5
     d = np.sqrt(cx * cx + cy * cy)
-    dot = np.clip(1.0 - (d - r) / 0.5, 0.0, 1.0) * 0.6
-    return paper[None, None, :] * (1.0 - dot[..., None]) + ink[None, None, :] * dot[..., None]
+    dot_mask = np.clip(1.0 - (d - r) / aa, 0.0, 1.0)
+    # Per-dot alpha variance — hash the dot-cell index deterministically.
+    if q.dot_alpha_variance > 0.0:
+        col_idx = np.floor(X / s).astype(np.int32)
+        row_idx = np.floor(Y / s).astype(np.int32)
+        # Deterministic hash: sin-based, matches WGSL fract(sin()) idiom.
+        h_ = np.mod(np.sin(col_idx * 12.9898 + row_idx * 78.233) * 43758.5453, 1.0)
+        variance = (h_ * 2.0 - 1.0) * q.dot_alpha_variance
+        dot_mask = np.clip(dot_mask * (1.0 + variance), 0.0, 1.0)
+    dot = dot_mask * 0.7
+    canvas = canvas * (1.0 - dot[..., None]) + ink[None, None, :] * dot[..., None]
+    return canvas
 
 
-def _fp_graph_grid(w: int, h: int, paper: np.ndarray, ink: np.ndarray) -> np.ndarray:
+def _fp_graph_grid(
+    w: int,
+    h: int,
+    paper: np.ndarray,
+    ink: np.ndarray,
+    quality: AAAShaderQualityPreset | None = None,
+) -> np.ndarray:
     X, Y = _make_grid(w, h)
     s = 10.0
-    gx = (X % s < 1.0).astype(np.float32)
-    gy = (Y % s < 1.0).astype(np.float32)
-    line = np.clip(gx + gy, 0.0, 1.0) * 0.5
-    return paper[None, None, :] * (1.0 - line[..., None]) + ink[None, None, :] * line[..., None]
+    q = quality
+    if q is None or (q.grain_intensity == 0.0 and q.line_aa_px == 0.0
+                     and q.ink_bleed == 0.0 and q.warm_tint == 0.0):
+        gx = (X % s < 1.0).astype(np.float32)
+        gy = (Y % s < 1.0).astype(np.float32)
+        line = np.clip(gx + gy, 0.0, 1.0) * 0.5
+        return paper[None, None, :] * (1.0 - line[..., None]) + ink[None, None, :] * line[..., None]
+    canvas = np.tile(paper[None, None, :], (h, w, 1)).astype(np.float32)
+    if q.warm_tint > 0.0:
+        grad = 1.0 - ((X / max(w - 1, 1) + Y / max(h - 1, 1)) * 0.5)
+        canvas = canvas + grad[..., None] * q.warm_tint * np.array(
+            [0.05, 0.025, -0.025], dtype=np.float32
+        )
+    if q.grain_intensity > 0.0:
+        canvas = canvas + _paper_grain(w, h, q.grain_intensity, seed_salt=0xD44D)[..., None]
+    aa = max(q.line_aa_px, 0.6)
+    # Dual-line AA — signed distance to nearest grid line.
+    dx = np.minimum(X % s, s - (X % s))
+    dy = np.minimum(Y % s, s - (Y % s))
+    lx = np.clip(1.0 - dx / aa, 0.0, 1.0)
+    ly = np.clip(1.0 - dy / aa, 0.0, 1.0)
+    line = np.clip(lx + ly, 0.0, 1.0)
+    # Slight blue-ink bleed — widen the effective line footprint.
+    if q.ink_bleed > 0.0:
+        bleed_x = np.clip(1.0 - dx / (aa * (1.0 + 3.0 * q.ink_bleed)), 0.0, 1.0)
+        bleed_y = np.clip(1.0 - dy / (aa * (1.0 + 3.0 * q.ink_bleed)), 0.0, 1.0)
+        bleed = np.clip(bleed_x + bleed_y, 0.0, 1.0) * (0.25 * q.ink_bleed)
+        line = np.clip(line + bleed, 0.0, 1.0)
+    line = line * 0.55
+    canvas = canvas * (1.0 - line[..., None]) + ink[None, None, :] * line[..., None]
+    return canvas
 
 
 def _fp_isometric_grid(w: int, h: int, paper: np.ndarray, ink: np.ndarray) -> np.ndarray:
@@ -164,12 +324,33 @@ def _fp_music_staff(w: int, h: int, paper: np.ndarray, ink: np.ndarray) -> np.nd
     return paper[None, None, :] * (1.0 - line[..., None]) + ink[None, None, :] * line[..., None]
 
 
-def _fp_blank_cream(w: int, h: int, paper: np.ndarray, ink: np.ndarray) -> np.ndarray:
+def _fp_blank_cream(
+    w: int,
+    h: int,
+    paper: np.ndarray,
+    ink: np.ndarray,
+    quality: AAAShaderQualityPreset | None = None,
+) -> np.ndarray:
     X, Y = _make_grid(w, h)
     # Match WGSL fract(sin(x*12.9898 + y*78.233) * 43758.5453)
     n = np.mod(np.sin(X * 12.9898 + Y * 78.233) * 43758.5453, 1.0)
     noise = (n - 0.5) * 0.02
     base = paper[None, None, :] + noise[..., None]
+    q = quality
+    if q is None or (q.grain_intensity == 0.0 and q.warm_tint == 0.0):
+        return base
+    # AAA — layer Perlin-ish grain + warm sun-lit tint on top of the
+    # existing high-frequency noise. blank_cream has no line contrast so
+    # we boost the grain 2× to make it visibly break flatness.
+    if q.grain_intensity > 0.0:
+        base = base + _paper_grain(
+            w, h, q.grain_intensity * 2.0, seed_salt=0xE55E,
+        )[..., None]
+    if q.warm_tint > 0.0:
+        grad = 1.0 - ((X / max(w - 1, 1) + Y / max(h - 1, 1)) * 0.5)
+        base = base + grad[..., None] * q.warm_tint * np.array(
+            [0.05, 0.025, -0.025], dtype=np.float32
+        )
     return base
 
 
@@ -284,6 +465,13 @@ _FALLBACKS = {
 }
 
 
+# Style IDs whose fallbacks accept an ``AAAShaderQualityPreset`` via the
+# ``quality`` kwarg (BBB5 upgrade). Other IDs silently ignore the arg.
+AAA_QUALITY_AWARE_STYLES: frozenset[str] = frozenset(
+    {"ruled_paper", "dot_grid", "graph_grid", "blank_cream"}
+)
+
+
 # ---------------------------------------------------------------------------
 # Public entry points
 # ---------------------------------------------------------------------------
@@ -296,6 +484,7 @@ def render_lining(
     line_color: tuple[int, int, int] | None = None,
     *,
     force_fallback: bool = False,
+    quality: AAAShaderQualityPreset | None = None,
 ) -> np.ndarray:
     """Bake a page-lining style to an RGBA texture.
 
@@ -318,6 +507,12 @@ def render_lining(
     force_fallback:
         When ``True`` skip the GPU dispatch attempt and go straight to
         the numpy fallback. Used by tests + the numpy CI matrix.
+    quality:
+        Optional :class:`~slappyengine.ui.theme.page_linings.library.AAAShaderQualityPreset`
+        controlling how much AAA-quality post-process the four "default"
+        presets (``ruled_paper``, ``dot_grid``, ``graph_grid``,
+        ``blank_cream``) apply. ``None`` (the default) preserves the
+        pre-BBB5 flat look so existing golden textures stay stable.
 
     Returns
     -------
@@ -334,7 +529,7 @@ def render_lining(
         if gpu is not None:
             return gpu
 
-    return _dispatch_fallback(style, w, h, paper_rgb, ink_rgb)
+    return _dispatch_fallback(style, w, h, paper_rgb, ink_rgb, quality=quality)
 
 
 def bake_lining_texture(
@@ -357,6 +552,7 @@ def bake_lining_texture(
     paper = uniforms.pop("paper_color", None)
     line = uniforms.pop("line_color", None)
     force_fallback = bool(uniforms.pop("force_fallback", False))
+    quality = uniforms.pop("quality", None)
     for extra in uniforms:
         logger.debug("bake_lining_texture: ignoring unknown uniform %r", extra)
     return render_lining(
@@ -365,6 +561,7 @@ def bake_lining_texture(
         paper_color=paper,
         line_color=line,
         force_fallback=force_fallback,
+        quality=quality,
     )
 
 
@@ -379,6 +576,7 @@ def _dispatch_fallback(
     h: int,
     paper_rgb: tuple[int, int, int],
     ink_rgb: tuple[int, int, int],
+    quality: AAAShaderQualityPreset | None = None,
 ) -> np.ndarray:
     fn = _FALLBACKS.get(style.style_id)
     if fn is None:  # pragma: no cover - registry misalignment safeguard
@@ -387,7 +585,12 @@ def _dispatch_fallback(
         )
     paper = _rgb_to_float(paper_rgb)
     ink = _rgb_to_float(ink_rgb)
-    rgb = fn(w, h, paper, ink)
+    # Only the AAA-aware fallbacks accept the quality kwarg; other styles
+    # pass through untouched so their signature stays clean.
+    if quality is not None and style.style_id in AAA_QUALITY_AWARE_STYLES:
+        rgb = fn(w, h, paper, ink, quality=quality)
+    else:
+        rgb = fn(w, h, paper, ink)
     rgb = np.clip(rgb, 0.0, 1.0)
     out = np.empty((h, w, 4), dtype=np.uint8)
     out[..., :3] = (rgb * 255.0 + 0.5).astype(np.uint8)
