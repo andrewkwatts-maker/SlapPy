@@ -85,6 +85,13 @@ class EditorShell:
         self._scene_outliner: "NotebookOutliner | None" = None
         self._inspector: "NotebookInspector | None" = None
         self._content_browser: "ContentBrowser | None" = None
+        # CCC3 — asset import drop panel (lazy).
+        self._asset_import_panel = None
+        # CCC2 — Python REPL panel wired into the bottom tab strip
+        # alongside the Notebook / Content Browser. Instantiated lazily
+        # in :meth:`setup` so tests that never call ``setup()`` don't
+        # pay for it.
+        self._repl_panel = None
         self._gizmo_overlay = None
         self._running = False
         self._play_mode: bool = False
@@ -104,6 +111,11 @@ class EditorShell:
         self._post_process_panel = None
         self._animation_panel = None
         self._theming_editor = None
+        # CCC1 — real 3D wgpu viewport that renders a live cube into the
+        # centre tab strip. Lazily constructed in
+        # :meth:`setup_notebook_panels`; ``None`` until then so tests
+        # that never call ``setup()`` don't pay the wgpu bring-up cost.
+        self._viewport_3d_panel = None
 
         # ── User-override layer (loaded on setup) ──────────────────────────
         # Populated by :meth:`load_user_overrides`; consumers should treat
@@ -609,6 +621,7 @@ class EditorShell:
         slot_map = {
             "LayerPanel": "_layer_panel",
             "ViewportPanel": "_viewport_panel",
+            "Viewport3DPanel": "_viewport_3d_panel",
             "TagPainter": "_tag_painter",
             "BehaviorPanel": "_behavior_panel",
             "NotebookInspector": "_inspector",
@@ -917,6 +930,19 @@ class EditorShell:
             except Exception:
                 self._theming_editor = None
 
+        # CCC1 — 3D wgpu viewport. Kept in a try/except because wgpu can
+        # be absent on stripped CI wheels; the panel itself also has an
+        # internal placeholder fallback but constructing it should still
+        # be resilient to import errors on the shell side.
+        if self._viewport_3d_panel is None:
+            try:
+                from slappyengine.ui.editor.viewport_3d_panel import (
+                    Viewport3DPanel,
+                )
+                self._viewport_3d_panel = Viewport3DPanel()
+            except Exception:
+                self._viewport_3d_panel = None
+
     def compose_default_panel_layout(self) -> dict[str, "MovablePanelWindow"]:
         """Build the default :class:`MovablePanelWindow` set + sensible dock positions.
 
@@ -1027,6 +1053,38 @@ class EditorShell:
                 title="Notebook",
                 kind="sidebar",
                 default_pos=(0, cb_y),
+                default_size=(max(320, w), BOTTOM_H),
+                min_size=(320, 180),
+                closable=False,
+            )
+
+        # ── CCC3 asset import panel — bottom dock, sibling to content
+        # browser. Rides at the same Y so the user can move / dock it
+        # into a tab next to the notebook browser.
+        aip = getattr(self, "_asset_import_panel", None)
+        if aip is not None:
+            aip_y = max(0, h - BOTTOM_H - STATUS_H)
+            windows["asset_import_panel"] = MovablePanelWindow(
+                aip,
+                title=getattr(aip, "TITLE", "Asset Import"),
+                kind="sidebar",
+                default_pos=(0, aip_y),
+                default_size=(max(320, w), BOTTOM_H),
+                min_size=(320, 180),
+                closable=False,
+            )
+
+        # ── CCC2 REPL panel — bottom dock, sibling tab next to the
+        # Notebook / Content Browser. Same Y band so DPG's tab merging
+        # groups it into the bottom-area tab strip.
+        repl = getattr(self, "_repl_panel", None)
+        if repl is not None:
+            repl_y = max(0, h - BOTTOM_H - STATUS_H)
+            windows["repl_panel"] = MovablePanelWindow(
+                repl,
+                title=getattr(repl, "TITLE", "REPL"),
+                kind="sidebar",
+                default_pos=(0, repl_y),
                 default_size=(max(320, w), BOTTOM_H),
                 min_size=(320, 180),
                 closable=False,
@@ -1245,6 +1303,26 @@ class EditorShell:
             )
             windows["viewport_panel"] = vp
 
+        # CCC1 — the 3D wgpu viewport panel. Lives in the centre-tab
+        # column alongside the 2D viewport; sized to match so the two
+        # tile without gaps. Offset by 40 px so the movable-panel
+        # titlebar reveals both tabs on first boot until the user
+        # docks/hides one.
+        if self._viewport_3d_panel is not None:
+            vp3d = MovablePanelWindow(
+                self._viewport_3d_panel,
+                title="3D Viewport",
+                kind="viewport",
+                default_pos=(center_x + 40, top_y + 40),
+                default_size=(
+                    max(320, center_width - 80),
+                    max(240, sidebar_height - 80),
+                ),
+                min_size=(320, 240),
+                closable=True,
+            )
+            windows["viewport_3d_panel"] = vp3d
+
         # Tag painter — opt-in tool; tucked to the right-ish edge under
         # the inspector and hidden until requested.
         if self._tag_painter is not None:
@@ -1425,6 +1503,37 @@ class EditorShell:
             self._content_browser.set_on_open_script(
                 self._code_mode_panel.load_script
             )
+
+        # CCC3 — asset import drop panel (bottom-area tab). Constructed
+        # lazily so tests that skip the shell can still exercise the
+        # panel in isolation. Never raises — the panel is soft-import
+        # tolerant and builds under a DPG stub too.
+        if getattr(self, "_asset_import_panel", None) is None:
+            try:
+                from slappyengine.ui.editor.asset_import_panel import (
+                    AssetImportPanel,
+                )
+                self._asset_import_panel = AssetImportPanel()
+            except Exception:
+                self._asset_import_panel = None
+
+        # CCC2 — Python REPL panel (bottom-area tab). Same lazy pattern
+        # as the asset import panel above. Bound to the current implicit
+        # :class:`App` so a bare ``spawn_cube()`` from the prompt hits
+        # the running editor.
+        if getattr(self, "_repl_panel", None) is None:
+            try:
+                from slappyengine.ui.editor.repl_panel import REPLPanel
+
+                _app_ref = None
+                try:
+                    from slappyengine.app import App as _AppCls
+                    _app_ref = _AppCls._implicit
+                except Exception:
+                    _app_ref = None
+                self._repl_panel = REPLPanel(app=_app_ref, scene=None)
+            except Exception:
+                self._repl_panel = None
 
         # ── DPG context — the notebook theme is the only theme path ───────
         # The Nova3D dark glass theme (``theme.apply_editor_theme``) is
@@ -2036,6 +2145,16 @@ class EditorShell:
         if self._idle_emitter is not None:
             try:
                 self._idle_emitter.tick(dt)
+            except Exception:
+                pass
+
+        # CCC1 — pump the 3D wgpu viewport once per frame. The panel
+        # advances its own rotation state and re-uploads the readback
+        # into the DPG dynamic texture. Guarded so a wgpu / DPG hiccup
+        # never kills the shell tick.
+        if self._viewport_3d_panel is not None:
+            try:
+                self._viewport_3d_panel.tick(dt)
             except Exception:
                 pass
 
