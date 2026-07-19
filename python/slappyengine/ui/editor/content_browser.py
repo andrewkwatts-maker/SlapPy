@@ -9,12 +9,32 @@ Features
 - Double-click image → show basic info popup (TODO: full asset editor)
 - Drag source on each card (future: drop into scene outliner)
 
+Polish (BBB7, 2026-07-19)
+- Wider tree column (200 px) + text truncation with hover tooltip on long
+  folder names so ``temp_20260719_140xxx`` no longer clips off-panel.
+- Empty-state message with paper-note graphic when the current folder is
+  empty ("Drop assets here to begin").
+- Alternating row shading in the asset grid for readability.
+
 Protocol: build(parent_tag) -> None
 """
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Callable
+
+
+# Maximum characters shown in the tree label before we ellipsise and attach
+# a tooltip with the full name. Tuned for the widened 200-px tree column.
+_TREE_LABEL_MAX_CHARS: int = 22
+
+# Alternating grid-row background tint (very subtle paper-shade variance).
+_GRID_ROW_TINT_A: tuple[int, int, int, int] = (250, 246, 235, 0)   # transparent
+_GRID_ROW_TINT_B: tuple[int, int, int, int] = (232, 226, 210, 40)  # +tint
+
+# Empty-state copy shown when the current folder has no entries.
+_EMPTY_STATE_STICKER: str = "[note]"
+_EMPTY_STATE_HINT: str = "Drop assets here to begin"
 
 
 class ContentBrowser:
@@ -31,6 +51,10 @@ class ContentBrowser:
         "folder": ( 80, 160, 220, 255),   # blue
         "other":  (140, 140, 140, 255),   # grey
     }
+
+    # Tree column width — widened from 150 to 200 so long timestamped
+    # folder names (``temp_20260719_140xxx``) fit with ellipsis + tooltip.
+    TREE_WIDTH: int = 200
 
     def __init__(self, root_path: str | Path | None = None) -> None:
         self._root: Path = Path(root_path) if root_path else Path.cwd()
@@ -82,10 +106,12 @@ class ContentBrowser:
             panel_h = 165  # leaves room for header + separator
 
             with dpg.group(horizontal=True):
-                # Folder tree (150 px wide)
+                # Folder tree — 220 px wide so timestamped scratch dir
+                # names ("temp_20260719_140...") don't clip at the
+                # child-window border.  See BBB1.
                 with dpg.child_window(
                     tag=self._tree_tag,
-                    width=150,
+                    width=220,
                     height=panel_h,
                     border=True,
                 ):
@@ -115,10 +141,39 @@ class ContentBrowser:
     def _build_tree(self, parent: str) -> None:
         self._add_folder_node(self._root, parent, depth=0)
 
+    @staticmethod
+    def _truncate_label(name: str, max_chars: int = _TREE_LABEL_MAX_CHARS) -> str:
+        """Return *name* truncated with an ellipsis when longer than *max_chars*.
+
+        The tree column is fixed-width; without truncation, long folder
+        names such as ``temp_20260719_140xxx`` clip off-panel and become
+        unreadable.  Callers pair this with :meth:`_attach_full_name_tooltip`
+        so the full name is still discoverable on hover.
+        """
+        if len(name) <= max_chars:
+            return name
+        # Reserve one glyph for the ellipsis to avoid off-by-one clipping.
+        return name[: max_chars - 1] + "…"
+
+    def _attach_full_name_tooltip(self, item_tag: str, full_name: str) -> None:
+        """Attach a hover tooltip showing *full_name* to *item_tag*.
+
+        Best-effort: if DPG is stubbed or ``add_tooltip`` is unavailable
+        we silently skip — the truncated label alone remains readable.
+        """
+        try:
+            import dearpygui.dearpygui as dpg
+            with dpg.tooltip(parent=item_tag):
+                dpg.add_text(full_name)
+        except Exception:
+            pass
+
     def _add_folder_node(self, path: Path, parent: str, depth: int) -> None:
         import dearpygui.dearpygui as dpg
 
-        label = path.name or str(path)
+        full_label = path.name or str(path)
+        label = self._truncate_label(full_label)
+        needs_tooltip = label != full_label
         tag = f"cb_tree_{abs(hash(str(path)))}_{depth}"
 
         try:
@@ -137,19 +192,29 @@ class ContentBrowser:
                 parent=parent,
                 default_open=(depth == 0),
             ):
+                if needs_tooltip:
+                    self._attach_full_name_tooltip(tag, full_label)
                 # Selectable for navigating to this folder itself
+                sel_tag = f"{tag}_sel"
                 dpg.add_selectable(
                     label=f"  {label}",
+                    tag=sel_tag,
                     callback=lambda s, d, fp=path: self._navigate(fp),
                 )
+                if needs_tooltip:
+                    self._attach_full_name_tooltip(sel_tag, full_label)
                 for sub in subdirs:
                     self._add_folder_node(sub, tag, depth + 1)
         else:
+            sel_tag = f"{tag}_leaf_sel"
             dpg.add_selectable(
                 label=f"  {label}",
                 parent=parent,
+                tag=sel_tag,
                 callback=lambda s, d, fp=path: self._navigate(fp),
             )
+            if needs_tooltip:
+                self._attach_full_name_tooltip(sel_tag, full_label)
 
     # ------------------------------------------------------------------
     # Grid
@@ -173,6 +238,12 @@ class ContentBrowser:
             )
             return
 
+        # Empty folder — render a paper-note style hint instead of an empty
+        # table.  Keeps the panel from looking broken on a fresh project.
+        if not entries:
+            self._render_empty_state(dpg)
+            return
+
         # Calculate number of columns; fall back to 6 if width not yet known.
         raw_w = dpg.get_item_width(self._grid_tag) if dpg.does_item_exist(self._grid_tag) else 0
         cols = max(1, (raw_w or 600) // 100)
@@ -184,30 +255,100 @@ class ContentBrowser:
             borders_innerV=False,
             borders_outerH=False,
             borders_outerV=False,
+            # Alternating row backgrounds for readability — DPG toggles
+            # between ImGuiCol_TableRowBg and ImGuiCol_TableRowBgAlt.
+            row_background=True,
         ):
             for _ in range(cols):
                 dpg.add_table_column(width_fixed=True, init_width_or_weight=96)
 
-            for row_start in range(0, max(1, len(entries)), cols):
+            for row_idx, row_start in enumerate(
+                range(0, max(1, len(entries)), cols)
+            ):
                 row_entries = entries[row_start:row_start + cols]
                 with dpg.table_row():
                     for entry in row_entries:
                         with dpg.table_cell():
-                            self._add_asset_card(entry)
+                            # Row parity is encoded in the card group's
+                            # background tint so alternating stripes are
+                            # visible even with DPG's row-bg disabled.
+                            self._add_asset_card(entry, row_idx=row_idx)
 
-    def _add_asset_card(self, path: Path) -> None:
-        """One card: coloured icon drawlist + filename label below it."""
+    def _render_empty_state(self, dpg) -> None:
+        """Render the paper-note "Drop assets here to begin" hint."""
+        empty_tag = f"{self._grid_tag}_empty"
+        try:
+            with dpg.group(parent=self._grid_tag, tag=empty_tag):
+                # Ink-colored notebook copy — matches the field-journal
+                # theme used by NotebookInspector's empty state.
+                dpg.add_text(_EMPTY_STATE_STICKER, color=(120, 80, 40, 255))
+                dpg.add_text(
+                    _EMPTY_STATE_HINT, color=(40, 40, 60, 255), wrap=280,
+                )
+                # Simple paper-note graphic — 96x64 washi-taped square.
+                try:
+                    with dpg.drawlist(width=96, height=64):
+                        dpg.draw_rectangle(
+                            (4, 4), (92, 60),
+                            color=(200, 190, 160, 200),
+                            fill=(248, 244, 230, 220),
+                            rounding=4,
+                        )
+                        # Washi-tape strip across the top.
+                        dpg.draw_rectangle(
+                            (18, 0), (78, 8),
+                            color=(220, 170, 140, 200),
+                            fill=(230, 180, 150, 180),
+                        )
+                except Exception:
+                    pass
+        except Exception:
+            # Stub-DPG flat path — at least emit the copy so tests
+            # can assert the empty-state message appears.
+            try:
+                dpg.add_text(
+                    f"{_EMPTY_STATE_STICKER} {_EMPTY_STATE_HINT}",
+                    parent=self._grid_tag,
+                    tag=empty_tag,
+                )
+            except Exception:
+                pass
+
+    def _add_asset_card(self, path: Path, *, row_idx: int = 0) -> None:
+        """One card: coloured icon drawlist + filename label below it.
+
+        Parameters
+        ----------
+        path:
+            Filesystem entry the card represents.
+        row_idx:
+            Grid-row index used to alternate the card background tint —
+            even rows get :data:`_GRID_ROW_TINT_A`, odd rows get
+            :data:`_GRID_ROW_TINT_B`.  Subtle enough to remain paper-shade
+            without competing with the icon colour.
+        """
         import dearpygui.dearpygui as dpg
 
         ext = path.suffix.lower() if path.is_file() else "folder"
         color = self.ICON_COLORS.get(ext, self.ICON_COLORS["other"])
-        short_name = path.name[:12] + ("…" if len(path.name) > 12 else "")
+        full_name = path.name
+        short_name = full_name[:12] + ("…" if len(full_name) > 12 else "")
+        needs_tooltip = short_name != full_name
 
         # Use a stable tag derived from the absolute path hash
         card_tag = f"cb_card_{abs(hash(str(path)))}"
+        row_tint = _GRID_ROW_TINT_B if (row_idx % 2) else _GRID_ROW_TINT_A
 
         with dpg.group(tag=card_tag):
-            with dpg.drawlist(width=72, height=56):
+            with dpg.drawlist(width=88, height=64):
+                # Row-alternating background tint (very subtle — paper
+                # shade variance rather than banded stripes).
+                if row_tint[3] > 0:
+                    dpg.draw_rectangle(
+                        (0, 0), (88, 64),
+                        color=row_tint,
+                        fill=row_tint,
+                    )
                 dpg.draw_rectangle(
                     (2, 2), (70, 54),
                     color=color[:3] + (80,),
@@ -218,6 +359,8 @@ class ContentBrowser:
                 dpg.draw_text((10, 20), ext_label, color=(220, 220, 220), size=16)
 
             dpg.add_text(short_name, wrap=80)
+            if needs_tooltip:
+                self._attach_full_name_tooltip(card_tag, full_name)
 
         # Click / double-click handlers bound to the group
         with dpg.item_handler_registry() as reg:

@@ -71,6 +71,134 @@ from slappyengine.ui.editor.notebook_inspector_dispatch import (
 _EMPTY_HINT = "Pick a critter to view its journal entry"
 _EMPTY_STICKER = "[badger]"
 
+# Notebook ink palette — matches ``notebook_theme.NotebookTheme.PALETTE['ink']``
+# so the empty state stays on-theme without importing the theme module at
+# top-level (would trigger a soft-import cycle in headless tests).
+_INK_COLOR: tuple[int, int, int, int] = (40, 40, 60, 255)
+_STICKER_COLOR: tuple[int, int, int, int] = (120, 80, 40, 255)
+_MUTED_INK: tuple[int, int, int, int] = (90, 90, 110, 255)
+
+# Empty-state banner labels — polished BBB7 version now shows engine +
+# project info instead of only the "pick a critter" placeholder.
+_ENGINE_BANNER_LABEL = "SlapPyEngine"
+_PROJECT_BANNER_LABEL = "Project"
+_RECENT_ACTIVITY_LABEL = "Recent activity"
+_RECENT_ACTIVITY_EMPTY = "(no events yet — start the sim!)"
+_RECENT_ACTIVITY_MAX = 5
+
+
+def _resolve_engine_version() -> str:
+    """Return the running engine ``__version__`` (best-effort).
+
+    Isolated so tests can monkeypatch a stable value instead of coupling
+    the empty-state text to the actual release string.
+    """
+    try:
+        from slappyengine import __version__ as _v
+        return str(_v)
+    except Exception:
+        return "?"
+
+
+# Module-level override slot so the editor shell can register the
+# currently-open project without the inspector needing a two-way import.
+_project_context_override: tuple[str, str] | None = None
+
+
+def set_project_context(name: str | None, version: str = "") -> None:
+    """Register (or clear) the project banner shown in the empty state.
+
+    Passing ``name=None`` clears the override so the banner disappears
+    on the next empty-state render.  The editor shell should call this
+    on project-open/close; the inspector re-reads the value each time
+    it rebuilds the empty state (no listener needed).
+    """
+    global _project_context_override
+    if name is None:
+        _project_context_override = None
+    else:
+        _project_context_override = (str(name), str(version or ""))
+
+
+def _resolve_project_banner() -> tuple[str, str] | None:
+    """Return ``(name, version)`` for the currently-active project, if any.
+
+    Uses the module-level override first (set via
+    :func:`set_project_context`); falls back to a best-effort lookup on
+    :mod:`slappyengine.projects` and finally returns ``None`` so the
+    banner is suppressed rather than showing "Unknown Project".
+    """
+    if _project_context_override is not None:
+        return _project_context_override
+    try:
+        from slappyengine.projects import get_active_project  # type: ignore[attr-defined]
+        proj = get_active_project()
+        if proj is None:
+            return None
+        name = getattr(getattr(proj, "metadata", proj), "name", None)
+        version = getattr(getattr(proj, "metadata", proj), "version", None)
+        if not name:
+            return None
+        return str(name), str(version) if version else ""
+    except Exception:
+        return None
+
+
+def _resolve_recent_activity(limit: int = _RECENT_ACTIVITY_MAX) -> list[str]:
+    """Return up to *limit* recent event labels from ``event_bus.global_bus``.
+
+    The event bus doesn't store history by default, so the inspector
+    lazily attaches a bounded ring-buffer subscriber on first read. This
+    keeps the empty state useful without leaking listeners across
+    inspector instances (the buffer is a module-level singleton).
+    """
+    buf = _ensure_recent_activity_buffer()
+    return list(buf)[-limit:]
+
+
+# Module-level ring buffer + one-shot subscriber flag so we don't stack
+# listeners every time the inspector rebuilds.
+_recent_activity_buffer: list[str] = []
+_recent_activity_installed: bool = False
+
+
+def _ensure_recent_activity_buffer() -> list[str]:
+    """Install a bounded activity buffer on the global bus, once."""
+    global _recent_activity_installed
+    if _recent_activity_installed:
+        return _recent_activity_buffer
+    try:
+        from slappyengine.event_bus import global_bus  # type: ignore[attr-defined]
+
+        def _record(evt: Any) -> None:
+            try:
+                label = getattr(evt, "name", None) or getattr(evt, "label", None) or "event"
+            except Exception:
+                label = "event"
+            _recent_activity_buffer.append(str(label))
+            if len(_recent_activity_buffer) > 32:
+                # Trim aggressively so long editor sessions don't grow.
+                del _recent_activity_buffer[: len(_recent_activity_buffer) - 32]
+
+        # Tap the bus's publish path so every event is recorded.  We
+        # wrap the existing ``publish`` rather than subscribing per-topic
+        # because we don't know the topic vocabulary in advance.
+        _orig_publish = global_bus.publish
+
+        def _tap_publish(event_type: str, **payload: Any):
+            evt = _orig_publish(event_type, **payload)
+            _record(evt)
+            return evt
+
+        # Only install once — the flag guards against re-wrap.
+        global_bus.publish = _tap_publish  # type: ignore[assignment]
+        _recent_activity_installed = True
+    except Exception:
+        # Bus missing / unpatchable — silent fallback keeps the empty
+        # state working with an empty list.
+        pass
+    return _recent_activity_buffer
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -315,17 +443,81 @@ class NotebookInspector(InspectorDispatchMixin):
         )
 
     def _render_empty_state(self, dpg: Any) -> None:
-        """Render the "(no critter selected)" hint with badger sticker."""
+        """Render the polished empty state.
+
+        Instead of the bare "pick a critter" placeholder, we now show:
+
+        1. Engine version banner (``SlapPyEngine v0.3.0b0``).
+        2. Project banner (``Project: MyGame v0.3.0b0``) — suppressed
+           when no project is active.
+        3. Recent-activity mini-log (last 5 events from ``global_bus``).
+        4. The classic badger sticker hint at the bottom so the
+           whimsical theme stays intact.
+
+        All copy uses the notebook ink palette (not gray) so the empty
+        state reads as intentional design rather than a stub.
+        """
+        engine_version = _resolve_engine_version()
+        project_banner = _resolve_project_banner()
+        recent = _resolve_recent_activity()
+
         try:
             with dpg.group(parent=self._panel_tag, tag=self._empty_tag):
-                dpg.add_text(_EMPTY_STICKER, color=[120, 80, 40, 255])
-                dpg.add_text(_EMPTY_HINT, color=[120, 120, 140, 255])
+                # 1. Engine banner.
+                dpg.add_text(
+                    f"{_ENGINE_BANNER_LABEL} v{engine_version}",
+                    color=list(_INK_COLOR),
+                )
+                # 2. Project banner (best-effort — suppressed if no proj).
+                if project_banner is not None:
+                    name, version = project_banner
+                    label = f"{_PROJECT_BANNER_LABEL}: {name}"
+                    if version:
+                        label = f"{label} v{version}"
+                    dpg.add_text(label, color=list(_MUTED_INK))
+                try:
+                    dpg.add_separator()
+                except Exception:
+                    pass
+                # 3. Recent-activity mini-log.
+                dpg.add_text(
+                    _RECENT_ACTIVITY_LABEL, color=list(_INK_COLOR),
+                )
+                if recent:
+                    for item in recent:
+                        dpg.add_text(f"  - {item}", color=list(_MUTED_INK))
+                else:
+                    dpg.add_text(
+                        _RECENT_ACTIVITY_EMPTY, color=list(_MUTED_INK),
+                    )
+                try:
+                    dpg.add_separator()
+                except Exception:
+                    pass
+                # 4. Whimsy tail — kept so the field-journal vibe stays.
+                dpg.add_text(_EMPTY_STICKER, color=list(_STICKER_COLOR))
+                dpg.add_text(_EMPTY_HINT, color=list(_INK_COLOR))
         except Exception:
             try:
                 dpg.add_text(
-                    f"{_EMPTY_STICKER} {_EMPTY_HINT}",
+                    f"{_ENGINE_BANNER_LABEL} v{engine_version}",
                     parent=self._panel_tag,
                     tag=self._empty_tag,
+                )
+                if project_banner is not None:
+                    name, version = project_banner
+                    dpg.add_text(
+                        f"{_PROJECT_BANNER_LABEL}: {name} v{version}".rstrip(),
+                        parent=self._panel_tag,
+                    )
+                dpg.add_text(
+                    _RECENT_ACTIVITY_LABEL, parent=self._panel_tag,
+                )
+                for item in (recent or [_RECENT_ACTIVITY_EMPTY]):
+                    dpg.add_text(f"  - {item}", parent=self._panel_tag)
+                dpg.add_text(
+                    f"{_EMPTY_STICKER} {_EMPTY_HINT}",
+                    parent=self._panel_tag,
                 )
             except Exception:
                 pass
@@ -808,4 +1000,4 @@ class NotebookInspector(InspectorDispatchMixin):
                 self.call_log.append(("on_field_changed_error", name))
 
 
-__all__ = ["NotebookInspector"]
+__all__ = ["NotebookInspector", "set_project_context"]
