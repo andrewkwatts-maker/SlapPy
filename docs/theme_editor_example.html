@@ -1,0 +1,92 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Pharos remote theme picker</title>
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    max-width: 640px;
+    margin: 32px auto;
+    padding: 0 16px;
+  }
+  h1 { color: #58a6ff; }
+  code { background: #161b22; padding: 2px 6px; border-radius: 4px; }
+  input, select, button {
+    padding: 6px;
+    margin: 4px 4px 4px 0;
+  }
+  input.wide { width: 100%; box-sizing: border-box; }
+  #log {
+    background: #010409;
+    border: 1px solid #30363d;
+    padding: 8px;
+    font-family: monospace;
+    height: 160px;
+    overflow-y: auto;
+  }
+</style>
+<h1>Pharos remote theme picker</h1>
+<p>Sends <code>{"name":"set_theme","args":{"name":"..."}}</code> to
+<code>POST /api/command</code> so the running editor hot-swaps themes.</p>
+
+<label>Server URL <input class="wide" id="url" value="http://localhost:8787"></label>
+<label>Bearer token <input class="wide" id="token" placeholder="paste from ~/.pharos/http_token"></label>
+<div>
+  <label>Theme
+    <select id="theme">
+      <option value="teengirl_notebook">teengirl_notebook</option>
+      <option value="dark_studio">dark_studio</option>
+      <option value="high_contrast">high_contrast</option>
+      <option value="pastel_soft">pastel_soft</option>
+      <option value="colorblind_safe">colorblind_safe</option>
+    </select>
+  </label>
+  <button onclick="apply()">Apply</button>
+  <button onclick="refresh()">Refresh list</button>
+</div>
+
+<h2>Response log</h2>
+<div id="log"></div>
+
+<script>
+function log(msg) {
+  const el = document.getElementById('log');
+  el.textContent += msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+
+async function apply() {
+  const base = document.getElementById('url').value.trim();
+  const token = document.getElementById('token').value.trim();
+  const theme = document.getElementById('theme').value;
+  const r = await fetch(base + '/api/command', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token,
+    },
+    body: JSON.stringify({ name: 'set_theme', args: { name: theme } }),
+  });
+  log('POST /api/command -> ' + r.status);
+  log(await r.text());
+}
+
+async function refresh() {
+  const base = document.getElementById('url').value.trim();
+  const token = document.getElementById('token').value.trim();
+  const r = await fetch(base + '/api/themes', {
+    headers: { 'Authorization': 'Bearer ' + token },
+  });
+  log('GET /api/themes -> ' + r.status);
+  const data = await r.json();
+  log(JSON.stringify(data));
+  const sel = document.getElementById('theme');
+  sel.innerHTML = '';
+  for (const t of (data.themes || [])) {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    sel.appendChild(opt);
+  }
+}
+</script>

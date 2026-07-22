@@ -1,0 +1,68 @@
+# Pharos theme — pastel_soft
+#
+# Very soft cream-and-lilac palette with sparse washi accents. Feels
+# like a museum sketchbook page.
+
+name: pastel_soft
+display_name: Pastel Soft
+description: >
+  Cream-and-lilac pastel palette with sparse animated washi accents
+  and a delicate dot-grid page lining.
+tags: [pastel, soft, diary]
+
+palette:
+  bg:              [252, 246, 250, 255]
+  bg_alt:          [246, 236, 246, 255]
+  panel_bg:        [250, 240, 248, 240]
+  panel_border:    [220, 205, 220, 255]
+
+  text:            [82, 60, 80, 255]
+  text_secondary:  [150, 120, 145, 255]
+  text_disabled:   [200, 185, 200, 255]
+
+  accent_pink:     [245, 180, 205, 255]
+  accent_teal:     [175, 220, 220, 255]
+  accent_yellow:   [250, 225, 175, 255]
+  accent_purple:   [205, 185, 235, 255]
+
+  ok:              [175, 220, 200, 255]
+  warn:            [250, 220, 165, 255]
+  error:           [235, 155, 165, 255]
+
+  selection_bg:    [235, 220, 240, 220]
+  selection_edge:  [205, 175, 220, 255]
+
+typography:
+  base_family: Handwritten Sans
+  base_size_px: 14
+  header_family: Handwritten Sans
+  header_size_px: 18
+  mono_family: JetBrains Mono
+  mono_size_px: 13
+
+geometry:
+  window_rounding: 16
+  frame_rounding: 12
+  child_rounding: 14
+  border_size: 1
+  padding_x: 12
+  padding_y: 10
+  spacing_x: 8
+  spacing_y: 6
+
+washi_tape:
+  variant: floral
+  density: high
+
+page_lining:
+  style: dot_grid
+  density: low
+
+edge_stroke:
+  width: 0.75
+  style: pencil
+
+accessibility:
+  colorblind_safe: true
+  contrast_ratio_body_text: 5.1
+  supports_large_text_mode: true

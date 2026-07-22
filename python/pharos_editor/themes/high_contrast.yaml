@@ -1,0 +1,70 @@
+# Pharos theme — high_contrast
+#
+# WCAG-AAA-friendly palette: pure black/white with saturated primaries
+# for accents. Every washi/lining/edge decoration switches off so the
+# editor stays legible for low-vision users.
+
+name: high_contrast
+display_name: High Contrast
+description: >
+  Accessibility-first theme with WCAG-AAA-passing text contrast and
+  no decorative overlays.
+tags: [accessibility, high-contrast, no-decor]
+
+palette:
+  bg:              [0, 0, 0, 255]
+  bg_alt:          [8, 8, 8, 255]
+  panel_bg:        [12, 12, 12, 255]
+  panel_border:    [255, 255, 255, 255]
+
+  text:            [255, 255, 255, 255]
+  text_secondary:  [255, 255, 0, 255]
+  text_disabled:   [140, 140, 140, 255]
+
+  accent_pink:     [255, 90, 180, 255]
+  accent_teal:     [90, 235, 255, 255]
+  accent_yellow:   [255, 240, 90, 255]
+  accent_purple:   [200, 140, 255, 255]
+
+  ok:              [0, 220, 90, 255]
+  warn:            [255, 200, 0, 255]
+  error:           [255, 60, 60, 255]
+
+  selection_bg:    [80, 80, 200, 220]
+  selection_edge:  [255, 255, 0, 255]
+
+typography:
+  base_family: Atkinson Hyperlegible
+  base_size_px: 16
+  header_family: Atkinson Hyperlegible
+  header_size_px: 22
+  mono_family: JetBrains Mono
+  mono_size_px: 15
+
+geometry:
+  window_rounding: 0
+  frame_rounding: 0
+  child_rounding: 0
+  border_size: 2
+  padding_x: 12
+  padding_y: 10
+  spacing_x: 8
+  spacing_y: 6
+
+washi_tape:
+  variant: off
+  density: none
+
+page_lining:
+  style: off
+  density: none
+
+edge_stroke:
+  width: 2.0
+  style: crisp
+
+accessibility:
+  colorblind_safe: true
+  contrast_ratio_body_text: 21.0
+  supports_large_text_mode: true
+  large_text_default: true

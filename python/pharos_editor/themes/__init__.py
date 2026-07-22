@@ -23,6 +23,11 @@ class Theme:
     typography: dict[str, Any]
     geometry: dict[str, int]
     accessibility: dict[str, Any] = field(default_factory=dict)
+    # Sprint 9 additions: notebook-specific decor knobs. All optional so
+    # older theme YAMLs still parse without change.
+    washi_tape: dict[str, Any] = field(default_factory=dict)
+    page_lining: dict[str, Any] = field(default_factory=dict)
+    edge_stroke: dict[str, Any] = field(default_factory=dict)
 
 
 class ThemeCatalog:
@@ -76,6 +81,9 @@ class ThemeCatalog:
                     typography=raw.get("typography", {}),
                     geometry=raw.get("geometry", {}),
                     accessibility=raw.get("accessibility", {}),
+                    washi_tape=raw.get("washi_tape", {}),
+                    page_lining=raw.get("page_lining", {}),
+                    edge_stroke=raw.get("edge_stroke", {}),
                 )
 
         _load_dir(self._dir)
