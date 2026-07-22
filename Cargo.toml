@@ -14,7 +14,13 @@ license = "MIT"
 repository = "https://github.com/andrewkwatts-maker/SlapPyEngine"
 
 [workspace.dependencies]
-pyo3 = { version = "0.22", features = ["extension-module"] }
+# pyo3 without extension-module by default. Only pharos_py (the final
+# cdylib) enables extension-module; pharos_core takes pyo3 unfeatured
+# so it can host #[pyfunction] / #[pyclass] without triggering the
+# Python-embed link path. Cargo feature unification propagates
+# extension-module to pharos_core at build time when pharos_py is in
+# the graph.
+pyo3 = { version = "0.22" }
 lz4 = "1.25"
 rayon = "1.10"
 serde = { version = "1", features = ["derive"] }
@@ -23,6 +29,7 @@ serde_yaml = "0.9"
 bytemuck = { version = "1", features = ["derive"] }
 rand = "0.8"
 half = "2"
+wide = "0.7"
 # GPU backend crates reserved for Sprint 4 / Sprint 6 landings.
 # wgpu = "0.20"
 # ash  = "0.38"

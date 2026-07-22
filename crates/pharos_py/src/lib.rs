@@ -1,35 +1,38 @@
+//! Pharos PyO3 bindings — the `_core` cdylib Python imports.
+//!
+//! Thin wrapper: hosts the `#[pymodule]` entry point and a few
+//! pyo3-heavy helpers (math, node_compiler, struct_layout, tile_cache).
+//! Every physics/geometry kernel lives in `pharos_core`. Render/GPU
+//! kernels (raster, fluid_shader, gi, ibl, scene_walk, deferred_cluster)
+//! stay here for now — Sprint 4 migrates them to `pharos_render`.
+
 use pyo3::prelude::*;
 
-mod hull;
-mod ik_solver;
-mod material_eval;
+// pyo3-adjacent helpers that stay in pharos_py for now.
 mod math;
 mod node_compiler;
-mod slap_format;
 mod struct_layout;
 mod tile_cache;
 
+// Render/GPU kernels — pending Sprint 4 migration to pharos_render.
+mod raster;
+mod fluid_shader;
 #[cfg(feature = "3d")]
-mod math_3d;
+mod deferred_cluster;
 #[cfg(feature = "3d")]
-mod bvh;
-#[cfg(feature = "3d")]
-mod sdf;
-
+mod scene_walk;
 #[cfg(feature = "gi")]
 mod gi;
-
 #[cfg(feature = "ibl")]
 mod ibl;
 
-mod physics;
-mod sdf_collision;
+// Kernels have been migrated to pharos_core (Sprint 3). Bring their
+// register() entry points into scope so the #[pymodule] init below
+// stays byte-for-byte identical to the pre-Sprint-3 shape.
+use pharos_core::{hull, ik_solver, material_eval, slap_format, physics, sdf_collision, pbf_solver, softbody_solver};
 
 #[cfg(feature = "3d")]
-mod deferred_cluster;
-
-#[cfg(feature = "3d")]
-mod scene_walk;
+use pharos_core::{math_3d, bvh, sdf};
 
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -51,6 +54,10 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     ibl::ibl::register(m)?;
     physics::physics::register(m)?;
     sdf_collision::sdf_collision::register(m)?;
+    pbf_solver::register(m)?;
+    softbody_solver::register(m)?;
+    raster::register(m)?;
+    fluid_shader::register(m)?;
     #[cfg(feature = "3d")]
     deferred_cluster::register(m)?;
     #[cfg(feature = "3d")]
