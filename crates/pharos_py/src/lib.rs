@@ -2,29 +2,26 @@
 //!
 //! Thin wrapper: hosts the `#[pymodule]` entry point and a few
 //! pyo3-heavy helpers (math, node_compiler, struct_layout, tile_cache).
-//! Every physics/geometry kernel lives in `pharos_core`. Render/GPU
-//! kernels (raster, fluid_shader, gi, ibl, scene_walk, deferred_cluster)
-//! stay here for now — Sprint 4 migrates them to `pharos_render`.
+//! Every physics/geometry kernel lives in `pharos_core`.
+//!
+//! Sprint 2: the CPU-side render kernels (raster, fluid_shader,
+//! deferred_cluster, scene_walk, gi, ibl) moved to
+//! `pharos_render::legacy` behind the `cpu-fallback` feature. This
+//! crate now depends on `pharos_render` and re-registers the legacy
+//! kernels through its `register` entry point. The new GPU render
+//! surface (Renderer / RenderScene / Camera3D / VcrPipeline) is
+//! exposed via `render_bindings`.
 
 use pyo3::prelude::*;
 
-// pyo3-adjacent helpers that stay in pharos_py for now.
+// pyo3-adjacent helpers that stay in pharos_py.
 mod math;
 mod node_compiler;
 mod struct_layout;
 mod tile_cache;
 
-// Render/GPU kernels — pending Sprint 4 migration to pharos_render.
-mod raster;
-mod fluid_shader;
-#[cfg(feature = "3d")]
-mod deferred_cluster;
-#[cfg(feature = "3d")]
-mod scene_walk;
-#[cfg(feature = "gi")]
-mod gi;
-#[cfg(feature = "ibl")]
-mod ibl;
+// GPU render surface — thin PyO3 wrappers over pharos_render types.
+mod render_bindings;
 
 // Kernels have been migrated to pharos_core (Sprint 3). Bring their
 // register() entry points into scope so the #[pymodule] init below
@@ -33,9 +30,6 @@ use pharos_core::{hull, ik_solver, material_eval, slap_format, physics, sdf_coll
 
 #[cfg(feature = "3d")]
 use pharos_core::{math_3d, sdf};
-// `pharos_core::bvh` is re-exportable but not yet wired through _core
-// (no `pub fn register` needed by Python). Sprint 11 exposes it when
-// the scene_walker path in pharos_render pulls it in as a dep.
 
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -49,21 +43,17 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     tile_cache::register(m)?;
     #[cfg(feature = "3d")]
     math_3d::math_3d::register(m)?;
-    #[cfg(feature = "gi")]
-    gi::gi::register(m)?;
     #[cfg(feature = "3d")]
     sdf::sdf::register(m)?;
-    #[cfg(feature = "ibl")]
-    ibl::ibl::register(m)?;
     physics::physics::register(m)?;
     sdf_collision::sdf_collision::register(m)?;
     pbf_solver::register(m)?;
     softbody_solver::register(m)?;
-    raster::register(m)?;
-    fluid_shader::register(m)?;
-    #[cfg(feature = "3d")]
-    deferred_cluster::register(m)?;
-    #[cfg(feature = "3d")]
-    scene_walk::scene_walk::register(m)?;
+
+    // Sprint 2: legacy CPU render kernels now live in pharos_render.
+    pharos_render::legacy::register(m)?;
+
+    // GPU render bindings — Renderer / RenderScene / Camera3D / VcrPipeline.
+    render_bindings::register(m)?;
     Ok(())
 }

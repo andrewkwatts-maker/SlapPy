@@ -26,10 +26,28 @@ serde_yaml.workspace = true
 # Sprint 6+.
 ash = { workspace = true, optional = true }
 
+# Sprint 2 migration: legacy CPU kernels + their PyO3 wrappers moved
+# in from pharos_py. Only compiled under the `cpu-fallback` feature so
+# GPU-only builds stay lean.
+pyo3 = { workspace = true, features = ["extension-module"], optional = true }
+rayon = { workspace = true, optional = true }
+rand = { workspace = true, optional = true }
+
 [features]
 default = []
 vulkan = ["dep:ash"]
-# Software-raster fallback for headless CI runners with no GPU access.
-# Ports raster.rs into pharos_render::backend::cpu_fallback; not the
-# default path.
+# `cpu-fallback` is reserved for the future software-raster backend in
+# `backend::cpu_fallback` (headless CI runners with no GPU access). It
+# does not yet compile any code; keeping the feature stub reserves the
+# name.
 cpu-fallback = []
+# Legacy CPU render kernels + PyO3 wrappers migrated from pharos_py in
+# Sprint 2. Enable to compile raster.rs / fluid_shader.rs / etc. into
+# pharos_render::legacy and expose their `register` entry points to
+# pharos_py.
+legacy-cpu = ["dep:pyo3", "dep:rayon", "dep:rand"]
+# Downstream toggles mirrored from the pharos_py feature set so gi/ibl
+# submodules of `legacy` compile correctly.
+3d = []
+gi = ["3d"]
+ibl = ["3d"]

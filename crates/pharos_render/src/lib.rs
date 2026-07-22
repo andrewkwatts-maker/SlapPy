@@ -32,6 +32,11 @@ pub mod shadow;
 pub mod skinning;
 pub mod vcr;
 
+// Sprint 2: CPU-side render kernels moved out of pharos_py.
+// Feature-gated so headless-only builds skip the pyo3 dep entirely.
+#[cfg(feature = "legacy-cpu")]
+pub mod legacy;
+
 pub use backend::{Backend, BackendKind, WgpuBackend};
 pub use pipeline::{ForwardPass, GBufferPass};
 pub use scene::{Camera3D, DrawItem, Mesh, RenderScene, Vertex};

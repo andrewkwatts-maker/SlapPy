@@ -25,9 +25,15 @@ half.workspace = true
 # and #[pyclass]es. pharos_py re-registers them under the _core module
 # via each kernel's `pub fn register(m)` entry point.
 pharos_core = { path = "../pharos_core" }
+# Sprint 2: render surface (Renderer / RenderScene / VcrPipeline) +
+# legacy CPU kernels (raster / fluid_shader / etc.) live here now.
+# `legacy-cpu` gates the pyo3 wrappers for the moved kernels so the
+# default build still ships them (existing games depend on the
+# pyfunctions).
+pharos_render = { path = "../pharos_render", features = ["legacy-cpu"] }
 
 [features]
 default = ["3d"]
-3d = ["pharos_core/3d"]
-gi = ["3d", "pharos_core/gi"]
-ibl = ["3d", "pharos_core/ibl"]
+3d = ["pharos_core/3d", "pharos_render/3d"]
+gi = ["3d", "pharos_core/gi", "pharos_render/gi"]
+ibl = ["3d", "pharos_core/ibl", "pharos_render/ibl"]
