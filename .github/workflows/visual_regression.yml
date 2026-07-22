@@ -1,0 +1,59 @@
+name: Visual Regression
+
+on:
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+jobs:
+  visual-diff:
+    name: Visual capture + diff (smoke suite)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML
+        run: python -m pip install pyyaml
+
+      - name: Capture current
+        run: |
+          python tools/visual_capture/run.py --suite smoke --out tests/visual_current
+
+      - name: Ensure baseline exists
+        run: |
+          test -d tests/visual_baseline || (
+            echo "no baseline directory — capture one on master first" && exit 1
+          )
+
+      - name: Diff against master baseline
+        id: diff
+        run: |
+          python tools/visual_diff.py \
+            tests/visual_baseline/ tests/visual_current/ \
+            --threshold 1.5 \
+            --report visual_diff_report.html
+        continue-on-error: true
+
+      - name: Upload diff report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff-report
+          path: |
+            visual_diff_report.html
+            tests/visual_current/
+          retention-days: 14
+
+      - name: Fail if diff step regressed
+        if: steps.diff.outcome != 'success'
+        run: |
+          echo "Visual regression detected — download the visual-diff-report artifact."
+          exit 1

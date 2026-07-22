@@ -1,0 +1,85 @@
+# Sprint 5 visual capture matrix.
+#
+# Each cell: (scene × pose × quality × overlay). The Nova3D matrix
+# shipped 263 cells; Pharos ports the highest-signal 42 (scene=6 x
+# pose=1 x quality=4 (VCR presets) + camera=2 = 6 * 1 * 4 * 2 = 48).
+# Cells enter here as they land. Comment out anything that requires a
+# not-yet-shipped scene.
+#
+# Suites:
+#   smoke   — 6 cells (one per scene, Standard preset, front camera)
+#   full    — every cell below
+#
+# Cell IDs are `<scene>__<preset>__<camera>`. IDs stabilise the
+# baseline filenames so diffs across branches line up.
+
+suites:
+  smoke:
+    - fluid_dam_break__standard__front
+    - softbody_vehicle__standard__front
+    - humanoid_destruction__standard__front
+    - fluid_dam_break__cinematic__front
+    - softbody_vehicle__compat__front
+    - humanoid_destruction__off__front
+
+  full:
+    # fluid_dam_break — 4 presets × 2 cameras
+    - fluid_dam_break__off__front
+    - fluid_dam_break__off__side
+    - fluid_dam_break__compat__front
+    - fluid_dam_break__compat__side
+    - fluid_dam_break__standard__front
+    - fluid_dam_break__standard__side
+    - fluid_dam_break__cinematic__front
+    - fluid_dam_break__cinematic__side
+
+    # softbody_vehicle — 4 presets × 2 cameras
+    - softbody_vehicle__off__front
+    - softbody_vehicle__off__side
+    - softbody_vehicle__compat__front
+    - softbody_vehicle__compat__side
+    - softbody_vehicle__standard__front
+    - softbody_vehicle__standard__side
+    - softbody_vehicle__cinematic__front
+    - softbody_vehicle__cinematic__side
+
+    # humanoid_destruction — 4 presets × 2 cameras
+    - humanoid_destruction__off__front
+    - humanoid_destruction__off__side
+    - humanoid_destruction__compat__front
+    - humanoid_destruction__compat__side
+    - humanoid_destruction__standard__front
+    - humanoid_destruction__standard__side
+    - humanoid_destruction__cinematic__front
+    - humanoid_destruction__cinematic__side
+
+    # VCR-focused: a mirror sphere scene per preset (specular showcase).
+    - vcr_mirror__off__front
+    - vcr_mirror__compat__front
+    - vcr_mirror__standard__front
+    - vcr_mirror__cinematic__front
+
+    # VCR-focused: a glass slab scene per preset (refraction showcase).
+    - vcr_glass__off__front
+    - vcr_glass__compat__front
+    - vcr_glass__standard__front
+    - vcr_glass__cinematic__front
+
+cells:
+  # scene → (pharos-headless YAML). Not-yet-shipped scenes commented out.
+  fluid_dam_break:
+    scene_yaml: PharosEngineExamples/examples/water_dam_break_scene.yaml
+  softbody_vehicle:
+    scene_yaml: PharosEngineExamples/examples/softbody_vehicle_scene.yaml
+  humanoid_destruction:
+    scene_yaml: PharosEngineExamples/examples/humanoid_destruction_scene.yaml
+  vcr_mirror:
+    scene_yaml: PharosEngineExamples/examples/vcr_mirror_scene.yaml
+  vcr_glass:
+    scene_yaml: PharosEngineExamples/examples/vcr_glass_scene.yaml
+
+cameras:
+  front: [0.0, 1.5, 3.0]
+  side:  [3.0, 1.5, 0.0]
+
+presets: [off, compat, standard, cinematic]
