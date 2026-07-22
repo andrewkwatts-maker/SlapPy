@@ -30,9 +30,12 @@ bytemuck = { version = "1", features = ["derive"] }
 rand = "0.8"
 half = "2"
 wide = "0.7"
-# GPU backend crates reserved for Sprint 4 / Sprint 6 landings.
-# wgpu = "0.20"
-# ash  = "0.38"
+# GPU backend + math + async + image IO — landed Sprint 4.
+wgpu = "0.20"
+ash = "0.38"
+pollster = "0.3"
+glam = { version = "0.29", features = ["bytemuck", "serde"] }
+image = { version = "0.25", default-features = false, features = ["png"] }
 
 [profile.release]
 opt-level = 3

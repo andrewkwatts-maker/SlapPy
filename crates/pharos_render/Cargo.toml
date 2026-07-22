@@ -13,11 +13,23 @@ crate-type = ["rlib"]
 [dependencies]
 bytemuck.workspace = true
 half.workspace = true
-# Sprint 4 lands the wgpu backend; Sprint 6 the Vulkan/ash path.
-# wgpu = { workspace = true }
-# ash  = { workspace = true, optional = true }
+glam.workspace = true
+wgpu.workspace = true
+pollster.workspace = true
+image.workspace = true
+serde.workspace = true
+serde_yaml.workspace = true
+# Vulkan via ash: opt-in through the `vulkan` feature. wgpu's own
+# Vulkan backend runs by default; the `vulkan` feature here is for
+# low-level ash paths (compute submission, raw command buffer control)
+# that VCR's overflow buffer + async compute queues will need in
+# Sprint 6+.
+ash = { workspace = true, optional = true }
 
 [features]
 default = []
-vulkan = []
+vulkan = ["dep:ash"]
+# Software-raster fallback for headless CI runners with no GPU access.
+# Ports raster.rs into pharos_render::backend::cpu_fallback; not the
+# default path.
 cpu-fallback = []

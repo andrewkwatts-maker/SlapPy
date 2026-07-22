@@ -4,11 +4,16 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "Pharos headless: standalone Rust+Vulkan runtime, no Python required."
+description = "Pharos headless: standalone Rust+wgpu runtime, no Python required."
 
 [[bin]]
 name = "pharos-headless"
 path = "src/main.rs"
 
 [dependencies]
-# Sprint 4 wires this to pharos_core + pharos_render.
+pharos_render = { path = "../pharos_render" }
+pharos_core = { path = "../pharos_core" }
+serde.workspace = true
+serde_yaml.workspace = true
+image.workspace = true
+glam.workspace = true
