@@ -24,6 +24,7 @@
 //! Sprint 7 wires PBF / softbody compute onto the GPU.
 
 pub mod backend;
+pub mod compute;
 pub mod pipeline;
 pub mod resource;
 pub mod scene;
