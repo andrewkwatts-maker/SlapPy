@@ -15,18 +15,18 @@ from __future__ import annotations
 import pytest
 
 try:
-    from pharos_engine.ui.editor.notebook_status_bar import (
+    from pharos_editor.ui.editor.notebook_status_bar import (
         NotebookStatusBar,
         _TransientMessage,
         _FALLBACK_INK,
     )
-    from pharos_engine.ui.editor.notebook_window_title import (
+    from pharos_editor.ui.editor.notebook_window_title import (
         format_window_title,
         parse_window_title,
         saved_glyph,
         unsaved_glyph,
     )
-    from pharos_engine.ui.theme import (
+    from pharos_editor.ui.theme import (
         Color,
         Gradient,
         SemanticTokens,

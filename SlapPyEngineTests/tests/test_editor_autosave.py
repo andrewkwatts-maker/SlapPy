@@ -1,4 +1,4 @@
-"""Tripwire suite for ``pharos_engine.ui.editor.editor_autosave`` — sprint Z6.
+"""Tripwire suite for ``pharos_editor.ui.editor.editor_autosave`` — sprint Z6.
 
 Covers :class:`EditorAutosaveIntegration` end-to-end:
 
@@ -32,7 +32,7 @@ from pharos_engine.autosave import (
     RecoveryChoice,
     RecoveryOffer,
 )
-from pharos_engine.ui.editor.editor_autosave import (
+from pharos_editor.ui.editor.editor_autosave import (
     EditorAutosaveIntegration,
     default_dirty_state_provider,
     default_restore_handler,
@@ -537,7 +537,7 @@ def test_project_defaults_to_anonymous_when_none(tmp_path):
 
 
 def test_integration_exports_expected_symbols():
-    from pharos_engine.ui.editor import editor_autosave as mod
+    from pharos_editor.ui.editor import editor_autosave as mod
     for sym in ("EditorAutosaveIntegration",
                 "default_dirty_state_provider",
                 "default_restore_handler"):

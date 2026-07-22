@@ -9,7 +9,7 @@ OO1's round-16 ``layer.solo`` / ``layer.merge_down`` / ``selection.grow``
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_editor.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `selection.shrink`          | `selection_shrink_actions.shrink_selection`               | selection |
 | `selection.invert_by_type`  | `selection_invert_by_type_actions.invert_by_type`         | selection |

@@ -5,7 +5,7 @@ Covers:
 - pharos_engine.net.peer         (PeerState, Peer)
 - pharos_engine.net.room         (RoomCode)
 - pharos_engine.net.sync         (InputFrame, LockstepSync)
-- pharos_engine.ui.editor.code_mode_panel (_fmt_age, _now_str, CodeModePanel)
+- pharos_editor.ui.editor.code_mode_panel (_fmt_age, _now_str, CodeModePanel)
 
 DPG guard: installed so code_mode_panel doesn't segfault on import.
 """
@@ -359,30 +359,30 @@ class TestLockstepSync:
 
 class TestFmtAge:
     def test_zero_ts_returns_never(self):
-        from pharos_engine.ui.editor.code_mode_panel import _fmt_age
+        from pharos_editor.ui.editor.code_mode_panel import _fmt_age
         assert _fmt_age(0.0) == "never"
 
     def test_recent_ts_seconds(self):
-        from pharos_engine.ui.editor.code_mode_panel import _fmt_age
+        from pharos_editor.ui.editor.code_mode_panel import _fmt_age
         ts = time.monotonic() - 5
         result = _fmt_age(ts)
         assert result.endswith("s ago")
         assert result[0].isdigit()
 
     def test_old_ts_minutes(self):
-        from pharos_engine.ui.editor.code_mode_panel import _fmt_age
+        from pharos_editor.ui.editor.code_mode_panel import _fmt_age
         ts = time.monotonic() - 120
         result = _fmt_age(ts)
         assert "m ago" in result
 
     def test_just_under_minute_shows_seconds(self):
-        from pharos_engine.ui.editor.code_mode_panel import _fmt_age
+        from pharos_editor.ui.editor.code_mode_panel import _fmt_age
         ts = time.monotonic() - 59
         result = _fmt_age(ts)
         assert "s ago" in result
 
     def test_just_over_minute_shows_minutes(self):
-        from pharos_engine.ui.editor.code_mode_panel import _fmt_age
+        from pharos_editor.ui.editor.code_mode_panel import _fmt_age
         ts = time.monotonic() - 61
         result = _fmt_age(ts)
         assert "m ago" in result
@@ -390,31 +390,31 @@ class TestFmtAge:
 
 class TestNowStr:
     def test_returns_string(self):
-        from pharos_engine.ui.editor.code_mode_panel import _now_str
+        from pharos_editor.ui.editor.code_mode_panel import _now_str
         result = _now_str()
         assert isinstance(result, str)
 
     def test_format_hh_mm_ss(self):
-        from pharos_engine.ui.editor.code_mode_panel import _now_str
+        from pharos_editor.ui.editor.code_mode_panel import _now_str
         result = _now_str()
         parts = result.split(":")
         assert len(parts) == 3
         assert all(p.isdigit() for p in parts)
 
     def test_hours_in_range(self):
-        from pharos_engine.ui.editor.code_mode_panel import _now_str
+        from pharos_editor.ui.editor.code_mode_panel import _now_str
         result = _now_str()
         hours = int(result.split(":")[0])
         assert 0 <= hours <= 23
 
     def test_minutes_in_range(self):
-        from pharos_engine.ui.editor.code_mode_panel import _now_str
+        from pharos_editor.ui.editor.code_mode_panel import _now_str
         result = _now_str()
         mins = int(result.split(":")[1])
         assert 0 <= mins <= 59
 
     def test_seconds_in_range(self):
-        from pharos_engine.ui.editor.code_mode_panel import _now_str
+        from pharos_editor.ui.editor.code_mode_panel import _now_str
         result = _now_str()
         secs = int(result.split(":")[2])
         assert 0 <= secs <= 59
@@ -426,107 +426,107 @@ class TestNowStr:
 
 class TestCodeModePanelInit:
     def test_instantiates(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         assert p is not None
 
     def test_prompt_text_empty(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         assert p._prompt_text == ""
 
     def test_code_text_empty(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         assert p._code_text == ""
 
     def test_prompt_mtime_zero(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         assert p._prompt_mtime == 0.0
 
     def test_code_mtime_zero(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         assert p._code_mtime == 0.0
 
     def test_ai_busy_false(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         assert p._ai_busy is False
 
     def test_script_path_none(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         assert p._script_path is None
 
     def test_watcher_none(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         assert p._watcher is None
 
     def test_status_is_string(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         assert isinstance(p._status, str)
         assert len(p._status) > 0
 
     def test_engine_stored(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         assert p._engine is None
 
 
 class TestCodeModePanelCallbacks:
     def test_on_prompt_edited_updates_text(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         p._on_prompt_edited(None, "hello world")
         assert p._prompt_text == "hello world"
 
     def test_on_prompt_edited_updates_mtime(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         before = time.monotonic()
         p._on_prompt_edited(None, "hello")
         assert p._prompt_mtime >= before
 
     def test_on_code_edited_updates_text(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         p._on_code_edited(None, "def foo(): pass")
         assert p._code_text == "def foo(): pass"
 
     def test_on_code_edited_updates_mtime(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         before = time.monotonic()
         p._on_code_edited(None, "x = 1")
         assert p._code_mtime >= before
 
     def test_set_status_updates_status(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         p._set_status("Test message")
         assert p._status == "Test message"
 
     def test_toggle_auto_sync_no_crash_without_watcher(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         p._toggle_auto_sync(None, True)  # should not raise
 
     def test_sync_prompt_to_code_no_crash_without_llm(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         p._sync_prompt_to_code()  # llm is None → returns immediately
 
     def test_sync_code_to_prompt_no_crash_without_llm(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         p._sync_code_to_prompt()  # llm is None → returns immediately
 
     def test_prompt_after_code_mtime_ordering(self):
-        from pharos_engine.ui.editor.code_mode_panel import CodeModePanel
+        from pharos_editor.ui.editor.code_mode_panel import CodeModePanel
         p = CodeModePanel(engine=None)
         p._on_code_edited(None, "code")
         time.sleep(0.01)

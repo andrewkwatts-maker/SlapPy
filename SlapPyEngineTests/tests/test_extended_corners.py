@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.ui.editor.panel_extras`.
+"""Tests for :mod:`pharos_editor.ui.editor.panel_extras`.
 
 Covers the :class:`ExtendedCornerSpec` validation surface, the
 attach / detach / render lifecycle on :class:`ExtendedPanelDecorator`,
@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.ui.editor.panel_extras import (
+from pharos_editor.ui.editor.panel_extras import (
     ExtendedCornerSpec,
     ExtendedPanelDecorator,
     default_extended_corners_for_theme,
@@ -434,7 +434,7 @@ class TestThemeDefaults:
 
 class TestMovablePanelIntegration:
     def test_movable_panel_has_extended_corners_slot(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         class _Stub:
             def build(self, parent_tag: Any) -> None:
@@ -445,7 +445,7 @@ class TestMovablePanelIntegration:
         assert mp.extended_corners == []
 
     def test_attach_populates_movable_panel_slot(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         class _Stub:
             def build(self, parent_tag: Any) -> None:
@@ -458,7 +458,7 @@ class TestMovablePanelIntegration:
         assert mp.extended_corners == specs
 
     def test_docked_movable_panel_skipped(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         class _Stub:
             def build(self, parent_tag: Any) -> None:

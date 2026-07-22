@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.ui.editor.diary_softbody_bridge`.
+"""Tests for :mod:`pharos_editor.ui.editor.diary_softbody_bridge`.
 
 Covers the AA3 shim that closes rows 80 + 223 in
 ``docs/engine_feature_map_2026_07_04.md`` — the diary tick's
@@ -37,7 +37,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.ui.editor.diary_softbody_bridge import (
+from pharos_editor.ui.editor.diary_softbody_bridge import (
     _MISSING_MESSAGE,
     import_softbody_file,
     resolve_softbody_class,

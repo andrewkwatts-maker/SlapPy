@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from pharos_engine.ui.theme import (
+from pharos_editor.ui.theme import (
     Color,
     DeclarativeTheme,
     DeclarativeThemeError,
@@ -29,7 +29,7 @@ from pharos_engine.ui.theme import (
     list_registered_themes,
     load_declarative,
 )
-from pharos_engine.ui.theme.themes import (
+from pharos_editor.ui.theme.themes import (
     BULLET_JOURNAL,
     COZY_DIARY,
     TEENGIRL_NOTEBOOK,

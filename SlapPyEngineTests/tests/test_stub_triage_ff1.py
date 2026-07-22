@@ -15,7 +15,7 @@ Covers the five new action ids added by the 2026-07-05 FF1 sprint tick
 * ``theme.reload_all`` — clear + re-bake + re-scan the process-wide
   theme registry; re-applies the previously-active theme.
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up (``action_id`` -> Python fallback) is exercised
 end-to-end. No DPG context is required — the fixtures use
 :class:`SimpleNamespace` stand-ins for the shell / scene / browser
@@ -29,7 +29,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -415,7 +415,7 @@ class TestReloadThemes:
         # captures the active name before flushing. We poke the module
         # registry directly rather than construct a full ThemeSpec so
         # this test stays independent of ThemeSpec's ctor signature.
-        import pharos_engine.ui.theme as theme_pkg
+        import pharos_editor.ui.theme as theme_pkg
 
         class _FakeTheme:
             name = "reload-test"
@@ -456,7 +456,7 @@ class TestReloadThemes:
     def test_reload_resets_theme_cursor(
         self, router: ToolRouter,
     ) -> None:
-        from pharos_engine.actions import theme_actions
+        from pharos_editor.actions import theme_actions
         theme_actions._THEME_CURSOR = "some-old-cursor"
         router.dispatch("theme.reload_all", {"skip_bake": True})
         assert theme_actions._THEME_CURSOR is None

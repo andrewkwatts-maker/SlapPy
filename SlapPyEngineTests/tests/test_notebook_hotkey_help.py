@@ -20,8 +20,8 @@ import types
 
 import pytest
 
-from pharos_engine.tool_router import REGISTRY, ToolAction, ToolRouter
-from pharos_engine.ui.hotkey_remap import (
+from pharos_editor.tool_router import REGISTRY, ToolAction, ToolRouter
+from pharos_editor.ui.hotkey_remap import (
     HotkeyBinding,
     HotkeyMap,
     default_hotkey_map,
@@ -148,7 +148,7 @@ def _make_map(*rows: tuple[str, str, str]) -> HotkeyMap:
 
 
 def _make_panel(**kwargs):
-    from pharos_engine.ui.editor.notebook_hotkey_help import NotebookHotkeyHelp
+    from pharos_editor.ui.editor.notebook_hotkey_help import NotebookHotkeyHelp
     return NotebookHotkeyHelp(**kwargs)
 
 
@@ -200,13 +200,13 @@ class TestConstruction:
             _make_panel(initial_category="")
 
     def test_title_constant(self):
-        from pharos_engine.ui.editor.notebook_hotkey_help import (
+        from pharos_editor.ui.editor.notebook_hotkey_help import (
             NotebookHotkeyHelp,
         )
         assert NotebookHotkeyHelp.TITLE == "Hotkey Help"
 
     def test_min_size_constants(self):
-        from pharos_engine.ui.editor.notebook_hotkey_help import (
+        from pharos_editor.ui.editor.notebook_hotkey_help import (
             NotebookHotkeyHelp,
         )
         assert NotebookHotkeyHelp.MIN_WIDTH >= 200
@@ -220,12 +220,12 @@ class TestConstruction:
 
 class TestEditorRegistration:
     def test_lazy_import_via_editor_init(self):
-        from pharos_engine.ui.editor import NotebookHotkeyHelp
+        from pharos_editor.ui.editor import NotebookHotkeyHelp
         panel = NotebookHotkeyHelp(hotkey_map=HotkeyMap())
         assert panel.hotkey_map is not None
 
     def test_all_contains_hotkey_help_alphabetically(self):
-        import pharos_engine.ui.editor as ed
+        import pharos_editor.ui.editor as ed
         assert "NotebookHotkeyHelp" in ed.__all__
         # __all__ ordering: NotebookHotkeyHelp between NotebookDiaryPage
         # and NotebookInspector.
@@ -235,7 +235,7 @@ class TestEditorRegistration:
         assert i_dp < i_hh < i_in
 
     def test_lazy_map_contains_module_path(self):
-        from pharos_engine.ui.editor import _LAZY_MAP
+        from pharos_editor.ui.editor import _LAZY_MAP
         assert _LAZY_MAP["NotebookHotkeyHelp"] == ".notebook_hotkey_help"
 
 
@@ -314,7 +314,7 @@ class TestCategoryFilter:
         assert rows[0].action_id == "editor.cycle_theme"
 
     def test_category_options_include_all_required(self):
-        from pharos_engine.ui.editor.notebook_hotkey_help import (
+        from pharos_editor.ui.editor.notebook_hotkey_help import (
             CATEGORY_OPTIONS,
         )
         assert CATEGORY_OPTIONS[0] == "All"
@@ -416,7 +416,7 @@ class TestPreset:
         assert panel.preset == "Emacs"
 
     def test_preset_options_are_three(self):
-        from pharos_engine.ui.editor.notebook_hotkey_help import PRESET_OPTIONS
+        from pharos_editor.ui.editor.notebook_hotkey_help import PRESET_OPTIONS
         assert PRESET_OPTIONS == ("Default", "Vim", "Emacs")
 
     def test_set_preset_rejects_unknown(self):
@@ -700,31 +700,31 @@ class TestBuild:
 
 class TestKeycaps:
     def test_render_simple_combo(self):
-        from pharos_engine.ui.editor.notebook_hotkey_help import render_keycaps
+        from pharos_editor.ui.editor.notebook_hotkey_help import render_keycaps
         assert render_keycaps("ctrl+s") == "[Ctrl] + [S]"
 
     def test_render_multi_modifier(self):
-        from pharos_engine.ui.editor.notebook_hotkey_help import render_keycaps
+        from pharos_editor.ui.editor.notebook_hotkey_help import render_keycaps
         out = render_keycaps("ctrl+shift+t")
         assert "[Ctrl]" in out and "[Shift]" in out and "[T]" in out
 
     def test_render_function_key(self):
-        from pharos_engine.ui.editor.notebook_hotkey_help import render_keycaps
+        from pharos_editor.ui.editor.notebook_hotkey_help import render_keycaps
         assert render_keycaps("f5") == "[F5]"
 
     def test_render_multi_chord(self):
-        from pharos_engine.ui.editor.notebook_hotkey_help import render_keycaps
+        from pharos_editor.ui.editor.notebook_hotkey_help import render_keycaps
         out = render_keycaps("ctrl+x ctrl+s")
         # Chord separator: comma-space between the two chords.
         assert "," in out
         assert out.count("[Ctrl]") == 2
 
     def test_empty_combo_returns_empty(self):
-        from pharos_engine.ui.editor.notebook_hotkey_help import render_keycaps
+        from pharos_editor.ui.editor.notebook_hotkey_help import render_keycaps
         assert render_keycaps("") == ""
 
     def test_non_string_returns_empty(self):
-        from pharos_engine.ui.editor.notebook_hotkey_help import render_keycaps
+        from pharos_editor.ui.editor.notebook_hotkey_help import render_keycaps
         assert render_keycaps(None) == ""  # type: ignore[arg-type]
 
     def test_row_keycaps_reflects_binding(self):

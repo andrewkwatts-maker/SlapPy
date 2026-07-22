@@ -175,8 +175,8 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def clear_theme():
     """Reset the active theme + sticker registry between tests."""
-    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
-    from pharos_engine.ui.widgets.sticker_corner import _active_stickers
+    from pharos_editor.ui.widgets.notebook_theme import set_active_theme
+    from pharos_editor.ui.widgets.sticker_corner import _active_stickers
 
     set_active_theme(None)
     _active_stickers.clear()
@@ -191,7 +191,7 @@ def clear_theme():
 
 class TestGlitterProgressBar:
     def test_instantiates_and_mounts(self, stub_dpg):
-        from pharos_engine.ui.widgets import GlitterProgressBar
+        from pharos_editor.ui.widgets import GlitterProgressBar
 
         bar = GlitterProgressBar("HP", 0.4, intensity="medium")
         assert bar.value == 0.4
@@ -201,7 +201,7 @@ class TestGlitterProgressBar:
         assert "add_progress_bar" in stub_dpg.calls
 
     def test_set_theme_rebinds_palette(self):
-        from pharos_engine.ui.widgets import (
+        from pharos_editor.ui.widgets import (
             GlitterProgressBar,
             NotebookTheme,
         )
@@ -217,7 +217,7 @@ class TestGlitterProgressBar:
         assert bar.accent_color != original
 
     def test_set_enabled_toggles_state(self, stub_dpg):
-        from pharos_engine.ui.widgets import GlitterProgressBar
+        from pharos_editor.ui.widgets import GlitterProgressBar
 
         bar = GlitterProgressBar("HP", 0.4)
         bar.mount("parent")
@@ -233,7 +233,7 @@ class TestGlitterProgressBar:
         assert bar.enabled is True
 
     def test_on_change_fires_on_set_value(self):
-        from pharos_engine.ui.widgets import GlitterProgressBar
+        from pharos_editor.ui.widgets import GlitterProgressBar
 
         seen: list[float] = []
         bar = GlitterProgressBar(
@@ -244,7 +244,7 @@ class TestGlitterProgressBar:
         assert bar.value == 0.75
 
     def test_intensity_change_resizes_emitter(self):
-        from pharos_engine.ui.widgets import GlitterProgressBar
+        from pharos_editor.ui.widgets import GlitterProgressBar
 
         bar = GlitterProgressBar("HP", 0.0, intensity="low")
         assert bar.particle_count == 5
@@ -252,7 +252,7 @@ class TestGlitterProgressBar:
         assert bar.particle_count == 20
 
     def test_pickle_roundtrip_drops_live_tags(self, stub_dpg):
-        from pharos_engine.ui.widgets import GlitterProgressBar
+        from pharos_editor.ui.widgets import GlitterProgressBar
 
         bar = GlitterProgressBar("HP", 0.5, intensity="medium")
         bar.mount("parent")
@@ -269,7 +269,7 @@ class TestGlitterProgressBar:
 
 class TestRibbonTab:
     def test_instantiates_and_mounts(self, stub_dpg):
-        from pharos_engine.ui.widgets import RibbonTab
+        from pharos_editor.ui.widgets import RibbonTab
 
         tab = RibbonTab("Overview")
         tab.mount("parent")
@@ -277,7 +277,7 @@ class TestRibbonTab:
         assert "add_selectable" in stub_dpg.calls
 
     def test_set_theme_rebinds_palette(self):
-        from pharos_engine.ui.widgets import (
+        from pharos_editor.ui.widgets import (
             NotebookTheme,
             RibbonTab,
         )
@@ -291,7 +291,7 @@ class TestRibbonTab:
         assert tab.accent_color != original
 
     def test_set_enabled_toggles_state(self):
-        from pharos_engine.ui.widgets import RibbonTab
+        from pharos_editor.ui.widgets import RibbonTab
 
         tab = RibbonTab("Overview")
         assert tab.enabled is True
@@ -300,7 +300,7 @@ class TestRibbonTab:
         assert tab.state == "disabled"
 
     def test_on_click_fires_via_stub(self):
-        from pharos_engine.ui.widgets import RibbonTab
+        from pharos_editor.ui.widgets import RibbonTab
 
         seen: list[str] = []
         tab = RibbonTab(
@@ -312,7 +312,7 @@ class TestRibbonTab:
         assert tab.selected is True
 
     def test_on_change_fires_when_state_changes(self):
-        from pharos_engine.ui.widgets import RibbonTab
+        from pharos_editor.ui.widgets import RibbonTab
 
         changes: list[tuple] = []
         tab = RibbonTab(
@@ -331,7 +331,7 @@ class TestRibbonTab:
 
 class TestPaperClipAttachment:
     def test_instantiates_and_mounts(self, stub_dpg):
-        from pharos_engine.ui.widgets import PaperClipAttachment
+        from pharos_editor.ui.widgets import PaperClipAttachment
 
         pc = PaperClipAttachment("Notes", [lambda: None])
         assert pc.expanded is False
@@ -345,7 +345,7 @@ class TestPaperClipAttachment:
         )
 
     def test_set_theme_rebinds_palette(self):
-        from pharos_engine.ui.widgets import (
+        from pharos_editor.ui.widgets import (
             NotebookTheme,
             PaperClipAttachment,
         )
@@ -359,7 +359,7 @@ class TestPaperClipAttachment:
         assert pc.paper_color != original
 
     def test_set_enabled_gates_toggle(self):
-        from pharos_engine.ui.widgets import PaperClipAttachment
+        from pharos_editor.ui.widgets import PaperClipAttachment
 
         pc = PaperClipAttachment("Notes")
         pc.set_enabled(False)
@@ -371,7 +371,7 @@ class TestPaperClipAttachment:
         assert pc.expanded is True
 
     def test_toggle_fires_callbacks(self):
-        from pharos_engine.ui.widgets import PaperClipAttachment
+        from pharos_editor.ui.widgets import PaperClipAttachment
 
         clicks: list[bool] = []
         changes: list[bool] = []
@@ -385,7 +385,7 @@ class TestPaperClipAttachment:
         assert changes == [True]
 
     def test_add_child_appends(self):
-        from pharos_engine.ui.widgets import PaperClipAttachment
+        from pharos_editor.ui.widgets import PaperClipAttachment
 
         pc = PaperClipAttachment("Notes")
         pc.add_child(lambda: None)
@@ -399,7 +399,7 @@ class TestPaperClipAttachment:
 
 class TestWashiTapeDivider:
     def test_instantiates_and_mounts(self, stub_dpg):
-        from pharos_engine.ui.widgets import WashiTapeDivider
+        from pharos_editor.ui.widgets import WashiTapeDivider
 
         w = WashiTapeDivider("tape_pink_dots", length_px=100)
         w.mount("parent")
@@ -407,7 +407,7 @@ class TestWashiTapeDivider:
         assert "add_text" in stub_dpg.calls or "add_separator" in stub_dpg.calls
 
     def test_set_theme_rebinds_palette(self):
-        from pharos_engine.ui.widgets import (
+        from pharos_editor.ui.widgets import (
             NotebookTheme,
             WashiTapeDivider,
         )
@@ -421,7 +421,7 @@ class TestWashiTapeDivider:
         assert w.washi_color != original
 
     def test_set_enabled_toggles_state(self, stub_dpg):
-        from pharos_engine.ui.widgets import WashiTapeDivider
+        from pharos_editor.ui.widgets import WashiTapeDivider
 
         w = WashiTapeDivider("tape_pink_dots", length_px=100)
         w.mount("parent")
@@ -431,7 +431,7 @@ class TestWashiTapeDivider:
         assert w.enabled is True
 
     def test_tape_style_resolves_via_soft_import(self):
-        from pharos_engine.ui.widgets import WashiTapeDivider
+        from pharos_editor.ui.widgets import WashiTapeDivider
 
         w = WashiTapeDivider("tape_pink_dots", length_px=100)
         # T2 library ships this id.
@@ -439,14 +439,14 @@ class TestWashiTapeDivider:
         assert w.tape_display_name != "tape_pink_dots"
 
     def test_unknown_tape_id_falls_back(self):
-        from pharos_engine.ui.widgets import WashiTapeDivider
+        from pharos_editor.ui.widgets import WashiTapeDivider
 
         w = WashiTapeDivider("tape_does_not_exist", length_px=100)
         assert w.tape_resolved is False
         assert w.tape_display_name == "tape_does_not_exist"
 
     def test_rotation_clamped(self):
-        from pharos_engine.ui.widgets import WashiTapeDivider
+        from pharos_editor.ui.widgets import WashiTapeDivider
 
         w = WashiTapeDivider(
             "tape_pink_dots", length_px=100, rotation_deg=180.0,
@@ -462,7 +462,7 @@ class TestWashiTapeDivider:
 
 class TestSketchButton:
     def test_instantiates_and_mounts(self, stub_dpg):
-        from pharos_engine.ui.widgets import SketchButton
+        from pharos_editor.ui.widgets import SketchButton
 
         sb = SketchButton("OK", lambda *a: None)
         sb.mount("parent")
@@ -470,7 +470,7 @@ class TestSketchButton:
         assert "add_button" in stub_dpg.calls
 
     def test_set_theme_rebinds_palette(self):
-        from pharos_engine.ui.widgets import (
+        from pharos_editor.ui.widgets import (
             NotebookTheme,
             SketchButton,
         )
@@ -484,7 +484,7 @@ class TestSketchButton:
         assert sb.accent_color != original
 
     def test_set_enabled_gates_click(self):
-        from pharos_engine.ui.widgets import SketchButton
+        from pharos_editor.ui.widgets import SketchButton
 
         clicks: list = []
         sb = SketchButton("OK", lambda *a: clicks.append(1))
@@ -496,7 +496,7 @@ class TestSketchButton:
         assert clicks == [1]
 
     def test_hover_ramps_wobble(self):
-        from pharos_engine.ui.widgets import SketchButton
+        from pharos_editor.ui.widgets import SketchButton
 
         sb = SketchButton("OK", lambda *a: None, wobble_amount=4.0)
         assert sb.wobble_scale == 1.0
@@ -506,7 +506,7 @@ class TestSketchButton:
         assert sb.wobble_scale == 1.0
 
     def test_wobble_polyline_length_matches_segments(self):
-        from pharos_engine.ui.widgets import SketchButton
+        from pharos_editor.ui.widgets import SketchButton
 
         sb = SketchButton("OK", lambda *a: None, segments=16)
         pts = sb.wobble_polyline()
@@ -521,7 +521,7 @@ class TestSketchButton:
 
 class TestInkStampBadge:
     def test_instantiates_and_mounts(self, stub_dpg):
-        from pharos_engine.ui.widgets import InkStampBadge
+        from pharos_editor.ui.widgets import InkStampBadge
 
         badge = InkStampBadge("DONE", icon="*")
         badge.mount("parent")
@@ -529,7 +529,7 @@ class TestInkStampBadge:
         assert "add_button" in stub_dpg.calls
 
     def test_set_theme_rebinds_palette(self):
-        from pharos_engine.ui.widgets import (
+        from pharos_editor.ui.widgets import (
             InkStampBadge,
             NotebookTheme,
         )
@@ -545,7 +545,7 @@ class TestInkStampBadge:
         assert badge.rim_color[0] < badge.stamp_color[0] or badge.stamp_color[0] == 0
 
     def test_set_enabled_gates_click(self):
-        from pharos_engine.ui.widgets import InkStampBadge
+        from pharos_editor.ui.widgets import InkStampBadge
 
         clicks: list = []
         badge = InkStampBadge(
@@ -559,7 +559,7 @@ class TestInkStampBadge:
         assert clicks == ["DONE"]
 
     def test_color_slot_swap(self):
-        from pharos_engine.ui.widgets import (
+        from pharos_editor.ui.widgets import (
             InkStampBadge,
             NotebookTheme,
             set_active_theme,
@@ -579,7 +579,7 @@ class TestInkStampBadge:
         assert badge.stamp_color == (255, 30, 60, 255)
 
     def test_rejects_bad_color_slot(self):
-        from pharos_engine.ui.widgets import InkStampBadge
+        from pharos_editor.ui.widgets import InkStampBadge
 
         with pytest.raises(ValueError):
             InkStampBadge("DONE", color_slot="bogus")
@@ -591,7 +591,7 @@ class TestInkStampBadge:
 
 class TestPublicSurface:
     def test_all_widgets_reachable_from_package(self):
-        import pharos_engine.ui.widgets as pkg
+        import pharos_editor.ui.widgets as pkg
 
         for name in (
             "GlitterProgressBar",
@@ -605,7 +605,7 @@ class TestPublicSurface:
             assert hasattr(pkg, name), name
 
     def test_all_widgets_share_notebook_widget_base(self):
-        from pharos_engine.ui.widgets import (
+        from pharos_editor.ui.widgets import (
             GlitterProgressBar,
             InkStampBadge,
             PaperClipAttachment,
@@ -613,7 +613,7 @@ class TestPublicSurface:
             SketchButton,
             WashiTapeDivider,
         )
-        from pharos_engine.ui.widgets._dpg_base import _NotebookWidget
+        from pharos_editor.ui.widgets._dpg_base import _NotebookWidget
 
         classes = [
             GlitterProgressBar,

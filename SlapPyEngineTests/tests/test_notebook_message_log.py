@@ -138,7 +138,7 @@ def _clear_telemetry():
 
 
 def _make_panel(**kwargs):
-    from pharos_engine.ui.editor.notebook_message_log import NotebookMessageLog
+    from pharos_editor.ui.editor.notebook_message_log import NotebookMessageLog
     return NotebookMessageLog(**kwargs)
 
 
@@ -168,7 +168,7 @@ class TestConstruction:
             _make_panel(max_rows=-5)
 
     def test_all_levels_visible_by_default(self):
-        from pharos_engine.ui.editor.notebook_message_log import LEVELS
+        from pharos_editor.ui.editor.notebook_message_log import LEVELS
         panel = _make_panel()
         for lv in LEVELS:
             assert panel.is_level_visible(lv)
@@ -181,14 +181,14 @@ class TestConstruction:
 
 class TestLevelNormalisation:
     def test_string_levels_round_trip(self):
-        from pharos_engine.ui.editor.notebook_message_log import normalise_level
+        from pharos_editor.ui.editor.notebook_message_log import normalise_level
         assert normalise_level("DEBUG") == "DEBUG"
         assert normalise_level("info") == "INFO"
         assert normalise_level("Warn") == "WARN"
         assert normalise_level("ERROR") == "ERROR"
 
     def test_stdlib_int_levels(self):
-        from pharos_engine.ui.editor.notebook_message_log import normalise_level
+        from pharos_editor.ui.editor.notebook_message_log import normalise_level
         assert normalise_level(logging.DEBUG) == "DEBUG"
         assert normalise_level(logging.INFO) == "INFO"
         assert normalise_level(logging.WARNING) == "WARN"
@@ -196,18 +196,18 @@ class TestLevelNormalisation:
         assert normalise_level(logging.CRITICAL) == "ERROR"
 
     def test_string_aliases(self):
-        from pharos_engine.ui.editor.notebook_message_log import normalise_level
+        from pharos_editor.ui.editor.notebook_message_log import normalise_level
         assert normalise_level("WARNING") == "WARN"
         assert normalise_level("FATAL") == "ERROR"
         assert normalise_level("CRITICAL") == "ERROR"
         assert normalise_level("trace") == "DEBUG"
 
     def test_unknown_falls_back_to_info(self):
-        from pharos_engine.ui.editor.notebook_message_log import normalise_level
+        from pharos_editor.ui.editor.notebook_message_log import normalise_level
         assert normalise_level("HYPE") == "INFO"
 
     def test_bool_refused(self):
-        from pharos_engine.ui.editor.notebook_message_log import normalise_level
+        from pharos_editor.ui.editor.notebook_message_log import normalise_level
         with pytest.raises(TypeError):
             normalise_level(True)
 
@@ -719,13 +719,13 @@ class TestBuild:
 class TestLazyRegistration:
     def test_lazy_import_works(self):
         # Force-remove the cached module so we hit the __getattr__ path.
-        import pharos_engine.ui.editor as editor_pkg
+        import pharos_editor.ui.editor as editor_pkg
         assert "NotebookMessageLog" in editor_pkg.__all__
         cls = editor_pkg.NotebookMessageLog
         assert cls.__name__ == "NotebookMessageLog"
 
     def test_all_alphabetically_ordered_neighbors(self):
-        import pharos_engine.ui.editor as editor_pkg
+        import pharos_editor.ui.editor as editor_pkg
         idx = editor_pkg.__all__.index("NotebookMessageLog")
         # Neighbours are the alphabetically-adjacent entries.
         # Verify at least the immediate ordering.

@@ -89,15 +89,15 @@ from pharos_engine.project_registry import (
     ProjectRegistry,
     RegisteredProject,
 )
-from pharos_engine.ui.hotkey_remap import (
+from pharos_editor.ui.hotkey_remap import (
     bake_defaults as bake_hotkey_defaults,
     load_user_hotkeys,
 )
-from pharos_engine.ui.theme import apply_theme, get_active_theme
-from pharos_engine.ui.theme.shader_lint import lint_wgsl
-from pharos_engine.ui.theme.themes import register_all_themes
-from pharos_engine.ui.theme.user_themes import UserThemeStore
-from pharos_engine.ui.user_overrides import UserOverrideLoader
+from pharos_editor.ui.theme import apply_theme, get_active_theme
+from pharos_editor.ui.theme.shader_lint import lint_wgsl
+from pharos_editor.ui.theme.themes import register_all_themes
+from pharos_editor.ui.theme.user_themes import UserThemeStore
+from pharos_editor.ui.user_overrides import UserOverrideLoader
 from pharos_engine.visual_scripting.graph import NodeGraph
 from pharos_engine.visual_scripting.material_nodes import (
     AddNode,
@@ -520,7 +520,7 @@ def _step_material_bridge(trace: DemoTrace) -> str:
     used_bridge = False
     uniforms: list[str] = []
     try:
-        from pharos_engine.ui.editor.material_graph_bridge import (
+        from pharos_editor.ui.editor.material_graph_bridge import (
             MaterialGraphBridge,
         )
     except Exception as exc:
@@ -600,7 +600,7 @@ def _step_hotkey_remap(trace: DemoTrace, tmp_root: Path) -> list[str]:
 def _step_camera_tweens(trace: DemoTrace) -> int:
     """Step 11 — schedule 2 camera tweens + tick until both complete."""
     try:
-        from pharos_engine.actions.camera_animation_actions import (
+        from pharos_editor.actions.camera_animation_actions import (
             CameraAnimator,
         )
     except Exception as exc:
@@ -664,7 +664,7 @@ def _step_camera_tweens(trace: DemoTrace) -> int:
 def _step_toast_manager(trace: DemoTrace) -> int:
     """Step 12 — push 5 toasts + inspect live queue."""
     try:
-        from pharos_engine.ui.editor.notebook_toast_manager import (
+        from pharos_editor.ui.editor.notebook_toast_manager import (
             NotebookToastManager,
             ToastLevel,
         )
@@ -691,7 +691,7 @@ def _step_toast_manager(trace: DemoTrace) -> int:
 def _step_command_palette(trace: DemoTrace) -> int:
     """Step 13 — open the palette + fuzzy-search "spawn"."""
     try:
-        from pharos_engine.ui.editor.notebook_command_palette import (
+        from pharos_editor.ui.editor.notebook_command_palette import (
             NotebookCommandPalette,
         )
     except Exception as exc:
@@ -714,7 +714,7 @@ def _step_command_palette(trace: DemoTrace) -> int:
 def _step_layout_baker(trace: DemoTrace, tmp_root: Path) -> str:
     """Step 14 — bake layouts + load the "debugging" preset."""
     try:
-        from pharos_engine.ui.editor.layout_baker import LayoutBaker
+        from pharos_editor.ui.editor.layout_baker import LayoutBaker
     except Exception as exc:
         trace.record("layout_baker_missing", error=str(exc))
         return ""
@@ -745,7 +745,7 @@ def _step_layout_baker(trace: DemoTrace, tmp_root: Path) -> str:
 def _step_timeline_editor(trace: DemoTrace) -> int:
     """Step 15 — build a Timeline with 2 tracks + 3 keyframes each."""
     try:
-        from pharos_engine.ui.editor.notebook_timeline_editor import Timeline
+        from pharos_editor.ui.editor.notebook_timeline_editor import Timeline
     except Exception as exc:
         trace.record("timeline_missing", error=str(exc))
         return 0

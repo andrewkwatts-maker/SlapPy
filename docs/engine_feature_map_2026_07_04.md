@@ -371,7 +371,7 @@ Status legend:
 | 322 | IBL prefilter chain (KK5) | `pharos_engine.gpu.ibl_prefilter` | WIRED | `gpu/ibl_prefilter.py:212` (`prefilter_cubemap`), `gpu/ibl_prefilter.py:147` (`PrefilteredCubemap`), `gpu/ibl_prefilter.py:107` (`importance_sample_ggx`), `gpu/ibl_prefilter.wgsl` | Nova3D parity Sprint 12 (commit `bb7392a`). GGX importance-sampled cubemap mip chain — Hammersley sequence, roughness-per-mip, TBN construction. WGSL shader ships alongside CPU reference path. Consumed by the KK4 `Skybox` for image-based lighting probes. 220-test suite. |
 | 323 | SDF text rendering (KK6) | `pharos_engine.text` subpackage | WIRED | `text/atlas.py`, `text/sdf_generator.py`, `text/sdf_glyph.py`, `text/text_render.py:67` (`SDFTextRenderer`) | Nova3D parity Sprint 13 (commit `27f9c88`). Signed-distance-field text renderer — glyph atlas builder, per-glyph SDF generator, `SDFTextRenderer` emits a `TextMesh` for the KK2 pass chain. Backs both HUD (`LL1`) and in-world text quads. 240-test suite. |
 | 324 | Instanced rendering + factory helpers (LL3) | `pharos_engine.render.InstancedMesh` | WIRED | `render/instanced.py:76` (`InstancedMesh`), `render/instanced.py:36` (`InstanceData`), `render/instanced.py:140` (`grid`), `render/instanced.py:164` (`random_scatter`), `render/instanced.py:193` (`circle`), `render/instanced.py:332` (`pack_instance_ubo`) | Nova3D parity Sprint 16 (commit `bdb9547`). GPU instancing for `Mesh` — per-instance transform + colour tint packed into an SSBO/UBO, `grid` / `random_scatter` / `circle` / `from_transforms` factories for common layouts. Bounding-box precompute so instanced draws still frustum-cull cleanly. 344-test suite. |
-| 325 | Runtime HUD overlay (LL1) | `pharos_engine.ui.runtime.HUDOverlay` | WIRED | `ui/runtime/hud_overlay.py:152` (`HUDOverlay`), `ui/runtime/hud_registry.py:95` (`HUDRegistry`), `ui/runtime/hud_kit_extra.py` | Nova3D parity Sprint 14 (commit `6afa7d6`). In-game HUD layer distinct from the DPG editor. `HUDOverlay` accepts draw-command batches, routes text through the KK6 SDF renderer, sprites through the KK2 pass chain. `HUDRegistry` catalogues named widgets (health bar, minimap, crosshair, ...) with 3 new widgets in `hud_kit_extra`. Flips row 50 (`H` hotkey Toggle HUD) into a real reader. 644-test suite. |
+| 325 | Runtime HUD overlay (LL1) | `pharos_editor.ui.runtime.HUDOverlay` | WIRED | `ui/runtime/hud_overlay.py:152` (`HUDOverlay`), `ui/runtime/hud_registry.py:95` (`HUDRegistry`), `ui/runtime/hud_kit_extra.py` | Nova3D parity Sprint 14 (commit `6afa7d6`). In-game HUD layer distinct from the DPG editor. `HUDOverlay` accepts draw-command batches, routes text through the KK6 SDF renderer, sprites through the KK2 pass chain. `HUDRegistry` catalogues named widgets (health bar, minimap, crosshair, ...) with 3 new widgets in `hud_kit_extra`. Flips row 50 (`H` hotkey Toggle HUD) into a real reader. 644-test suite. |
 | 326 | Video/GIF/frame capture (LL2) | `pharos_engine.capture.CaptureManager` | WIRED | `capture/capture_manager.py:56` (`CaptureManager`), `capture/video_capture.py`, `capture/gif_capture.py`, `capture/frame_dump.py` | Nova3D parity Sprint 15 (commit `47bc7f0`). Runtime capture — MP4 via `imageio-ffmpeg`, GIF via Pillow, raw PNG frame dump fallback. `CaptureManager.start/stop/tick` cooperates with the LL6 exporter's replay bundler. 428-test suite covering fallback chain + duration/limit contracts. |
 | 327 | 3D positional audio + doppler (LL4) | `pharos_engine.audio_3d.Audio3DEngine` | WIRED | `audio_3d.py:366` (`Audio3DEngine`), `audio_3d.py:110` (`Audio3DSource`), `audio_3d.py:93` (`AudioListener`), `audio_3d.py:145` (`SoundBank`), `audio_3d.py:198` (`attenuation`) | Nova3D parity Sprint 17 (commit `8300cd8`). Full 3D audio — listener orientation vectors, source position + velocity, distance attenuation (`_vlen`+`attenuation`), doppler shift via listener/source velocity delta, stereo panning from listener-space azimuth. Soft-imports `sounddevice`; silent stub when the `[audio]` extra is absent. 523-test suite. |
 | 328 | hello_gltf_character parity harness (LL5) | `SlapPyEngineExamples/examples/hello_gltf_character.py` | WIRED | `SlapPyEngineExamples/examples/hello_gltf_character.py`, `SlapPyEngineExamples/examples/assets/skinned_two_bone.gltf`, `SlapPyEngineExamples/tests/test_demo_hello_gltf_character.py` | Nova3D parity Sprint 20 (commit `670d91c`). End-to-end 3D demo — imports a rigged glTF (JJ3), poses via the JJ4 skeleton runtime, walks through JJ5 `SceneWalker`, shades under JJ7 CSM shadows, renders via the JJ1 wgpu forward pipeline. 958-line demo + trace YAML + PNG baseline + 283-line demo regression. |
@@ -439,11 +439,11 @@ Deduplicated broken count: **2** import/attribute paths.
 Five new action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED:
 
-* `editor.save_project` → `pharos_engine.actions.project_actions.save_project`
-* `editor.new_project` → `pharos_engine.actions.project_actions.new_project`
-* `editor.open_recent` → `pharos_engine.actions.project_actions.open_recent`
-* `view.reset_layout` → `pharos_engine.actions.view_actions.reset_layout`
-* `edit.duplicate_selection` → `pharos_engine.actions.edit_actions.duplicate_selection`
+* `editor.save_project` → `pharos_editor.actions.project_actions.save_project`
+* `editor.new_project` → `pharos_editor.actions.project_actions.new_project`
+* `editor.open_recent` → `pharos_editor.actions.project_actions.open_recent`
+* `view.reset_layout` → `pharos_editor.actions.view_actions.reset_layout`
+* `edit.duplicate_selection` → `pharos_editor.actions.edit_actions.duplicate_selection`
 
 Regression tests: `SlapPyEngineTests/tests/test_stub_triage_x3.py`
 (25 tests, all passing).
@@ -474,11 +474,11 @@ Highest-impact remaining STUBs after Y7:
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 252-256):
 
-* `tool.select_all` → `pharos_engine.actions.selection_actions.select_all`
-* `tool.deselect_all` → `pharos_engine.actions.selection_actions.deselect_all`
-* `editor.copy_selection` → `pharos_engine.actions.selection_actions.copy_selection`
-* `editor.paste_selection` → `pharos_engine.actions.selection_actions.paste_selection`
-* `theme.cycle` → `pharos_engine.actions.theme_actions.cycle_theme`
+* `tool.select_all` → `pharos_editor.actions.selection_actions.select_all`
+* `tool.deselect_all` → `pharos_editor.actions.selection_actions.deselect_all`
+* `editor.copy_selection` → `pharos_editor.actions.selection_actions.copy_selection`
+* `editor.paste_selection` → `pharos_editor.actions.selection_actions.paste_selection`
+* `theme.cycle` → `pharos_editor.actions.theme_actions.cycle_theme`
 
 New subpackages: `python/pharos_engine/actions/selection_actions.py`
 + `python/pharos_engine/actions/theme_actions.py`.
@@ -496,11 +496,11 @@ absent router action ids across 5 category buckets (`file`, `edit`,
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 257-261):
 
-* `tool.snap_to_grid` → `pharos_engine.actions.tool_settings_actions.toggle_snap_to_grid`
-* `view.zoom_in` → `pharos_engine.actions.camera_actions.zoom_in`
-* `view.zoom_out` → `pharos_engine.actions.camera_actions.zoom_out`
-* `view.zoom_reset` → `pharos_engine.actions.camera_actions.zoom_reset`
-* `theme.export_current` → `pharos_engine.actions.theme_io_actions.export_current_theme`
+* `tool.snap_to_grid` → `pharos_editor.actions.tool_settings_actions.toggle_snap_to_grid`
+* `view.zoom_in` → `pharos_editor.actions.camera_actions.zoom_in`
+* `view.zoom_out` → `pharos_editor.actions.camera_actions.zoom_out`
+* `view.zoom_reset` → `pharos_editor.actions.camera_actions.zoom_reset`
+* `theme.export_current` → `pharos_editor.actions.theme_io_actions.export_current_theme`
 
 New subpackages: `python/pharos_engine/actions/tool_settings_actions.py`
 + `python/pharos_engine/actions/camera_actions.py` +
@@ -540,11 +540,11 @@ previously-absent router action ids across 5 category buckets
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 262-266):
 
-* `edit.cut_selection` → `pharos_engine.actions.destructive_edit_actions.cut_selection`
-* `edit.delete_selection` → `pharos_engine.actions.destructive_edit_actions.delete_selection`
-* `view.center_on_selection` → `pharos_engine.actions.viewport_framing_actions.center_on_selection`
-* `view.frame_all` → `pharos_engine.actions.viewport_framing_actions.frame_all`
-* `tool.pan` → `pharos_engine.actions.tool_mode_actions.activate_pan_tool`
+* `edit.cut_selection` → `pharos_editor.actions.destructive_edit_actions.cut_selection`
+* `edit.delete_selection` → `pharos_editor.actions.destructive_edit_actions.delete_selection`
+* `view.center_on_selection` → `pharos_editor.actions.viewport_framing_actions.center_on_selection`
+* `view.frame_all` → `pharos_editor.actions.viewport_framing_actions.frame_all`
+* `tool.pan` → `pharos_editor.actions.tool_mode_actions.activate_pan_tool`
 
 New subpackages: `python/pharos_engine/actions/destructive_edit_actions.py`
 + `python/pharos_engine/actions/viewport_framing_actions.py` +
@@ -589,11 +589,11 @@ previously-absent router action ids across 5 category buckets
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 267-271):
 
-* `theme.import_from_file` → `pharos_engine.actions.theme_import_actions.import_from_file`
-* `file.save_layout_as` → `pharos_engine.actions.layout_io_actions.save_layout_as`
-* `file.load_layout_from_file` → `pharos_engine.actions.layout_io_actions.load_layout_from_file`
-* `edit.undo` → `pharos_engine.actions.history_actions.undo`
-* `edit.redo` → `pharos_engine.actions.history_actions.redo`
+* `theme.import_from_file` → `pharos_editor.actions.theme_import_actions.import_from_file`
+* `file.save_layout_as` → `pharos_editor.actions.layout_io_actions.save_layout_as`
+* `file.load_layout_from_file` → `pharos_editor.actions.layout_io_actions.load_layout_from_file`
+* `edit.undo` → `pharos_editor.actions.history_actions.undo`
+* `edit.redo` → `pharos_editor.actions.history_actions.redo`
 
 New subpackages: `python/pharos_engine/actions/theme_import_actions.py`
 + `python/pharos_engine/actions/layout_io_actions.py`
@@ -648,11 +648,11 @@ Regression tests: `SlapPyEngineTests/tests/test_stub_triage_bb1.py`
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 272-276):
 
-* `edit.select_by_name` → `pharos_engine.actions.edit_by_name_actions.select_by_name`
-* `spawn.repeat_last` → `pharos_engine.actions.spawn_history_actions.repeat_last`
-* `view.toggle_grid` → `pharos_engine.actions.view_toggle_actions.toggle_grid`
-* `view.toggle_gizmos` → `pharos_engine.actions.view_toggle_actions.toggle_gizmos`
-* `content.copy_asset_path` → `pharos_engine.actions.content_shell_actions.copy_asset_path`
+* `edit.select_by_name` → `pharos_editor.actions.edit_by_name_actions.select_by_name`
+* `spawn.repeat_last` → `pharos_editor.actions.spawn_history_actions.repeat_last`
+* `view.toggle_grid` → `pharos_editor.actions.view_toggle_actions.toggle_grid`
+* `view.toggle_gizmos` → `pharos_editor.actions.view_toggle_actions.toggle_gizmos`
+* `content.copy_asset_path` → `pharos_editor.actions.content_shell_actions.copy_asset_path`
 
 New subpackages: `python/pharos_engine/actions/edit_by_name_actions.py`
 + `python/pharos_engine/actions/spawn_history_actions.py`
@@ -704,11 +704,11 @@ buckets (`file`, `edit`, `tool`, `view`, `theme`, `spawn`,
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 277-281):
 
-* `edit.duplicate_layer` → `pharos_engine.actions.layer_duplicate_actions.duplicate_layer`
-* `theme.cycle_reverse` → `pharos_engine.actions.theme_cycle_reverse_actions.cycle_theme_reverse`
-* `panel.close_all` → `pharos_engine.actions.panel_visibility_actions.close_all_panels`
-* `panel.restore_last_hidden` → `pharos_engine.actions.panel_visibility_actions.restore_last_hidden_panel`
-* `spawn.repeat_last_batch` → `pharos_engine.actions.spawn_batch_actions.repeat_last_batch`
+* `edit.duplicate_layer` → `pharos_editor.actions.layer_duplicate_actions.duplicate_layer`
+* `theme.cycle_reverse` → `pharos_editor.actions.theme_cycle_reverse_actions.cycle_theme_reverse`
+* `panel.close_all` → `pharos_editor.actions.panel_visibility_actions.close_all_panels`
+* `panel.restore_last_hidden` → `pharos_editor.actions.panel_visibility_actions.restore_last_hidden_panel`
+* `spawn.repeat_last_batch` → `pharos_editor.actions.spawn_batch_actions.repeat_last_batch`
 
 New subpackages: `python/pharos_engine/actions/layer_duplicate_actions.py`
 + `python/pharos_engine/actions/theme_cycle_reverse_actions.py`
@@ -768,11 +768,11 @@ buckets (`file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`,
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 282-286):
 
-* `edit.group_selection` → `pharos_engine.actions.edit_group_actions.group_selection`
-* `edit.ungroup_selection` → `pharos_engine.actions.edit_group_actions.ungroup_selection`
-* `theme.random` → `pharos_engine.actions.theme_random_actions.random_theme`
-* `spawn.spawn_at_cursor` → `pharos_engine.actions.spawn_cursor_actions.spawn_at_cursor`
-* `edit.snap_to_pixel_grid` → `pharos_engine.actions.edit_snap_pixel_actions.snap_to_pixel_grid`
+* `edit.group_selection` → `pharos_editor.actions.edit_group_actions.group_selection`
+* `edit.ungroup_selection` → `pharos_editor.actions.edit_group_actions.ungroup_selection`
+* `theme.random` → `pharos_editor.actions.theme_random_actions.random_theme`
+* `spawn.spawn_at_cursor` → `pharos_editor.actions.spawn_cursor_actions.spawn_at_cursor`
+* `edit.snap_to_pixel_grid` → `pharos_editor.actions.edit_snap_pixel_actions.snap_to_pixel_grid`
 
 New subpackages: `python/pharos_engine/actions/edit_group_actions.py`
 + `python/pharos_engine/actions/theme_random_actions.py`
@@ -839,11 +839,11 @@ buckets (`file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`,
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 287-291):
 
-* `content.new_folder` → `pharos_engine.actions.content_folder_actions.new_folder`
-* `content.rename_asset` → `pharos_engine.actions.content_rename_actions.rename_asset`
-* `panel.close_others` → `pharos_engine.actions.panel_close_others_actions.close_other_panels`
-* `edit.select_children` → `pharos_engine.actions.edit_select_children_actions.select_children`
-* `theme.reload_all` → `pharos_engine.actions.theme_reload_actions.reload_all_themes`
+* `content.new_folder` → `pharos_editor.actions.content_folder_actions.new_folder`
+* `content.rename_asset` → `pharos_editor.actions.content_rename_actions.rename_asset`
+* `panel.close_others` → `pharos_editor.actions.panel_close_others_actions.close_other_panels`
+* `edit.select_children` → `pharos_editor.actions.edit_select_children_actions.select_children`
+* `theme.reload_all` → `pharos_editor.actions.theme_reload_actions.reload_all_themes`
 
 New subpackages: `python/pharos_engine/actions/content_folder_actions.py`
 + `python/pharos_engine/actions/content_rename_actions.py`
@@ -918,11 +918,11 @@ absent router action ids across 7 category buckets (`file`, `edit`,
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 297-301):
 
-* `edit.select_next` → `pharos_engine.actions.edit_select_next_actions.select_next`
-* `edit.select_previous` → `pharos_engine.actions.edit_select_next_actions.select_previous`
-* `edit.paste_at_original_position` → `pharos_engine.actions.edit_paste_original_actions.paste_at_original_position`
-* `spawn.spawn_batch_row` → `pharos_engine.actions.spawn_batch_row_actions.spawn_batch_row`
-* `content.duplicate_asset` → `pharos_engine.actions.content_duplicate_asset_actions.duplicate_asset`
+* `edit.select_next` → `pharos_editor.actions.edit_select_next_actions.select_next`
+* `edit.select_previous` → `pharos_editor.actions.edit_select_next_actions.select_previous`
+* `edit.paste_at_original_position` → `pharos_editor.actions.edit_paste_original_actions.paste_at_original_position`
+* `spawn.spawn_batch_row` → `pharos_editor.actions.spawn_batch_row_actions.spawn_batch_row`
+* `content.duplicate_asset` → `pharos_editor.actions.content_duplicate_asset_actions.duplicate_asset`
 
 New subpackages:
 `python/pharos_engine/actions/edit_select_next_actions.py`
@@ -993,11 +993,11 @@ save-as-new / import / export modals). This round wires common QoL
 actions that don't need the DPG shell — hide/show/lock/unlock plus
 Blender-style "select similar":
 
-* `edit.hide_selection` → `pharos_engine.actions.edit_hide_show_actions.hide_selection`
-* `edit.show_all` → `pharos_engine.actions.edit_hide_show_actions.show_all`
-* `edit.lock_selection` → `pharos_engine.actions.edit_lock_unlock_actions.lock_selection`
-* `edit.unlock_all` → `pharos_engine.actions.edit_lock_unlock_actions.unlock_all`
-* `edit.select_by_prefab_kind` → `pharos_engine.actions.edit_select_by_kind_actions.select_by_prefab_kind`
+* `edit.hide_selection` → `pharos_editor.actions.edit_hide_show_actions.hide_selection`
+* `edit.show_all` → `pharos_editor.actions.edit_hide_show_actions.show_all`
+* `edit.lock_selection` → `pharos_editor.actions.edit_lock_unlock_actions.lock_selection`
+* `edit.unlock_all` → `pharos_editor.actions.edit_lock_unlock_actions.unlock_all`
+* `edit.select_by_prefab_kind` → `pharos_editor.actions.edit_select_by_kind_actions.select_by_prefab_kind`
 
 New subpackages:
 `python/pharos_engine/actions/edit_hide_show_actions.py`
@@ -1069,11 +1069,11 @@ save-as-new / import / export modals). This round wires the last set of
 common DCC QoL actions that don't need the DPG shell — the mirror-X/Y/Z
 trio plus two camera-orientation snaps:
 
-* `edit.mirror_selection_x` → `pharos_engine.actions.edit_mirror_actions.mirror_selection_x`
-* `edit.mirror_selection_y` → `pharos_engine.actions.edit_mirror_actions.mirror_selection_y`
-* `edit.mirror_selection_z` → `pharos_engine.actions.edit_mirror_actions.mirror_selection_z`
-* `view.orbit_selection` → `pharos_engine.actions.view_orbit_actions.orbit_selection`
-* `view.top_down_view` → `pharos_engine.actions.view_snap_actions.top_down_view`
+* `edit.mirror_selection_x` → `pharos_editor.actions.edit_mirror_actions.mirror_selection_x`
+* `edit.mirror_selection_y` → `pharos_editor.actions.edit_mirror_actions.mirror_selection_y`
+* `edit.mirror_selection_z` → `pharos_editor.actions.edit_mirror_actions.mirror_selection_z`
+* `view.orbit_selection` → `pharos_editor.actions.view_orbit_actions.orbit_selection`
+* `view.top_down_view` → `pharos_editor.actions.view_snap_actions.top_down_view`
 
 New subpackages:
 `python/pharos_engine/actions/edit_mirror_actions.py`

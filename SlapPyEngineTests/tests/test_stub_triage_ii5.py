@@ -15,7 +15,7 @@ Covers the five new action ids added by the 2026-07-05 II5 sprint tick
   duplicate; handles files (extension-preserving) and directories
   (recursive via ``shutil.copytree``).
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up (``action_id`` -> Python fallback) is exercised
 end-to-end. No DPG context is required — the fixtures use
 :class:`SimpleNamespace` stand-ins for shell / scene / browser handles.
@@ -28,12 +28,12 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
 )
-from pharos_engine.ui.editor.entity_clipboard import (
+from pharos_editor.ui.editor.entity_clipboard import (
     get_active_clipboard,
     reset_active_clipboard,
 )

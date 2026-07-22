@@ -10,7 +10,7 @@ SS1's round-20 ``content.reveal_in_explorer`` /
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_editor.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `view.set_zoom`            | `view_set_zoom_actions.set_zoom`                          | view |
 | `spawn.at_view_center`     | `spawn_view_center_actions.spawn_at_view_center`          | spawn |

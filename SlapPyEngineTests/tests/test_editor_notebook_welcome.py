@@ -123,9 +123,9 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def clear_state(stub_dpg):
     """Reset theme + sticker registry between tests."""
-    from pharos_engine.ui.widgets import notebook_theme
-    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
-    from pharos_engine.ui.widgets.sticker_corner import _active_stickers
+    from pharos_editor.ui.widgets import notebook_theme
+    from pharos_editor.ui.widgets.notebook_theme import set_active_theme
+    from pharos_editor.ui.widgets.sticker_corner import _active_stickers
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -143,7 +143,7 @@ def clear_state(stub_dpg):
 
 def _make_settings(**overrides):
     """Build a fresh :class:`UISettings` with optional field overrides."""
-    from pharos_engine.ui.editor.settings import UISettings
+    from pharos_editor.ui.editor.settings import UISettings
 
     return UISettings(**overrides)
 
@@ -166,7 +166,7 @@ class _CallbackRecorder:
 
 def _make_welcome(settings=None, callbacks=None):
     """Construct a :class:`NotebookWelcome` with sensible defaults."""
-    from pharos_engine.ui.editor.notebook_welcome import NotebookWelcome
+    from pharos_editor.ui.editor.notebook_welcome import NotebookWelcome
 
     settings = settings or _make_settings()
     callbacks = callbacks or _CallbackRecorder()
@@ -192,7 +192,7 @@ class TestConstruction:
         assert welcome.HEIGHT == 500
 
     def test_rejects_non_callable_on_start_blank(self):
-        from pharos_engine.ui.editor.notebook_welcome import NotebookWelcome
+        from pharos_editor.ui.editor.notebook_welcome import NotebookWelcome
 
         with pytest.raises(TypeError):
             NotebookWelcome(
@@ -203,7 +203,7 @@ class TestConstruction:
             )
 
     def test_rejects_non_callable_on_open_demo(self):
-        from pharos_engine.ui.editor.notebook_welcome import NotebookWelcome
+        from pharos_editor.ui.editor.notebook_welcome import NotebookWelcome
 
         with pytest.raises(TypeError):
             NotebookWelcome(
@@ -214,7 +214,7 @@ class TestConstruction:
             )
 
     def test_rejects_non_callable_on_dismiss(self):
-        from pharos_engine.ui.editor.notebook_welcome import NotebookWelcome
+        from pharos_editor.ui.editor.notebook_welcome import NotebookWelcome
 
         with pytest.raises(TypeError):
             NotebookWelcome(
@@ -329,11 +329,11 @@ class TestThemeSwatches:
 
     def test_click_swatch_applies_theme_and_dismisses(self):
         # Register starter themes so apply_theme can resolve the id.
-        from pharos_engine.ui.theme import (
+        from pharos_editor.ui.theme import (
             _reset_registry_for_tests,
             get_active_theme,
         )
-        from pharos_engine.ui.theme.themes import register_starter_themes
+        from pharos_editor.ui.theme.themes import register_starter_themes
 
         _reset_registry_for_tests()
         register_starter_themes()
@@ -368,7 +368,7 @@ class TestStartDrawing:
 
 class TestHideCheckbox:
     def test_hide_checkbox_is_heart_checkbox(self):
-        from pharos_engine.ui.widgets.heart_checkbox import HeartCheckbox
+        from pharos_editor.ui.widgets.heart_checkbox import HeartCheckbox
 
         welcome, _, _ = _make_welcome()
         assert isinstance(welcome.hide_checkbox, HeartCheckbox)
@@ -394,8 +394,8 @@ class TestHideCheckbox:
 
 class TestSparkleCreature:
     def test_sparkle_in_builtin_roster(self):
-        from pharos_engine.ui.theme.creatures import CreatureScheduler
-        from pharos_engine.ui.theme.creatures.builtin import register_builtins
+        from pharos_editor.ui.theme.creatures import CreatureScheduler
+        from pharos_editor.ui.theme.creatures.builtin import register_builtins
 
         scheduler = CreatureScheduler()
         register_builtins(scheduler)
@@ -407,8 +407,8 @@ class TestSparkleCreature:
         assert welcome.sparkle_trigger_count == 0
 
     def test_tick_sparkle_routes_through_bound_scheduler(self):
-        from pharos_engine.ui.theme.creatures import CreatureScheduler
-        from pharos_engine.ui.theme.creatures.builtin import register_builtins
+        from pharos_editor.ui.theme.creatures import CreatureScheduler
+        from pharos_editor.ui.theme.creatures.builtin import register_builtins
 
         scheduler = CreatureScheduler()
         register_builtins(scheduler)
@@ -451,7 +451,7 @@ class TestDismissAndDestroy:
         assert callbacks.dismiss_calls == 1
 
     def test_dismiss_removes_sticker_corners(self, stub_dpg):
-        from pharos_engine.ui.widgets.sticker_corner import list_sticker_corners
+        from pharos_editor.ui.widgets.sticker_corner import list_sticker_corners
 
         welcome, _, _ = _make_welcome()
         welcome.build("editor_root")
@@ -480,13 +480,13 @@ class TestDismissAndDestroy:
 
 class TestExports:
     def test_demo_cards_exported(self):
-        from pharos_engine.ui.editor.notebook_welcome import DEMO_CARDS
+        from pharos_editor.ui.editor.notebook_welcome import DEMO_CARDS
 
         assert isinstance(DEMO_CARDS, tuple)
         assert len(DEMO_CARDS) == 3
 
     def test_theme_swatches_exported(self):
-        from pharos_engine.ui.editor.notebook_welcome import THEME_SWATCHES
+        from pharos_editor.ui.editor.notebook_welcome import THEME_SWATCHES
 
         assert isinstance(THEME_SWATCHES, tuple)
         assert len(THEME_SWATCHES) == 6

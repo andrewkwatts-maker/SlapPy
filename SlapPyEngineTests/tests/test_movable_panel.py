@@ -117,7 +117,7 @@ class _PanelWithTitle:
 
 class TestConstruction:
     def test_construct_with_simple_panel(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         panel = _SimplePanel()
         win = MovablePanelWindow(panel, title="Hello", kind="sidebar")
@@ -127,19 +127,19 @@ class TestConstruction:
         assert win.is_built is False
 
     def test_title_falls_back_to_panel_TITLE(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_PanelWithTitle())
         assert win.title == "Reticulated Splines"
 
     def test_title_falls_back_to_class_name_when_unset(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel())
         assert win.title == "_SimplePanel"
 
     def test_rejects_panel_without_build(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         class _NoBuild:
             pass
@@ -148,26 +148,26 @@ class TestConstruction:
             MovablePanelWindow(_NoBuild())
 
     def test_rejects_none_panel(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         with pytest.raises(TypeError):
             MovablePanelWindow(None)
 
     def test_rejects_empty_kind(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         with pytest.raises(ValueError):
             MovablePanelWindow(_SimplePanel(), kind="")
 
     def test_unique_window_tags(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         a = MovablePanelWindow(_SimplePanel())
         b = MovablePanelWindow(_SimplePanel())
         assert a.get_window_tag() != b.get_window_tag()
 
     def test_explicit_window_tag_honored(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel(), window_tag="my_panel")
         assert win.get_window_tag() == "my_panel"
@@ -180,33 +180,33 @@ class TestConstruction:
 
 class TestPositionAndSize:
     def test_default_position(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel(), default_pos=(40, 80))
         assert win.get_position() == (40, 80)
 
     def test_set_position_roundtrip(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel())
         win.set_position(120, 240)
         assert win.get_position() == (120, 240)
 
     def test_set_position_rejects_non_int(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel())
         with pytest.raises(TypeError):
             win.set_position(1.5, 2)  # type: ignore[arg-type]
 
     def test_default_size(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel(), default_size=(640, 480))
         assert win.get_size() == (640, 480)
 
     def test_set_size_roundtrip(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel())
         win.set_size(500, 360)
@@ -214,7 +214,7 @@ class TestPositionAndSize:
 
     def test_set_size_respects_min(self):
         """``set_size`` clamps to ``min_size``."""
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(
             _SimplePanel(),
@@ -227,7 +227,7 @@ class TestPositionAndSize:
 
     def test_panel_MIN_WIDTH_overrides_constructor_min(self):
         """A panel declaring ``MIN_WIDTH`` raises the effective minimum."""
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(
             _PanelWithMin(),
@@ -238,7 +238,7 @@ class TestPositionAndSize:
         assert win.min_size == (400, 320)
 
     def test_default_size_clamped_to_min(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(
             _SimplePanel(),
@@ -248,7 +248,7 @@ class TestPositionAndSize:
         assert win.get_size() == (200, 150)
 
     def test_set_size_rejects_zero(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel())
         with pytest.raises(ValueError):
@@ -262,13 +262,13 @@ class TestPositionAndSize:
 
 class TestVisibility:
     def test_visible_by_default(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel())
         assert win.is_visible() is True
 
     def test_hide_then_show(self):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel())
         win.hide()
@@ -284,7 +284,7 @@ class TestVisibility:
 
 class TestBuild:
     def test_build_marks_built(self, stub_dpg):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         panel = _SimplePanel()
         win = MovablePanelWindow(panel)
@@ -292,7 +292,7 @@ class TestBuild:
         assert win.is_built is True
 
     def test_build_invokes_panel_build(self, stub_dpg):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         panel = _SimplePanel()
         win = MovablePanelWindow(panel)
@@ -303,7 +303,7 @@ class TestBuild:
 
     def test_build_window_kwargs(self, stub_dpg):
         """``dpg.window`` is called with the expected movable-window flags."""
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(
             _SimplePanel(),
@@ -332,7 +332,7 @@ class TestBuild:
 
     def test_build_with_no_resize_flag(self, stub_dpg):
         """``no_resize=True`` propagates to ``dpg.window``."""
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(
             _SimplePanel(),
@@ -346,7 +346,7 @@ class TestBuild:
         assert kwargs["no_move"] is False
 
     def test_closable_false_marks_no_close_true(self, stub_dpg):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel(), closable=False)
         win.build()
@@ -354,7 +354,7 @@ class TestBuild:
         assert kwargs["no_close"] is True
 
     def test_modal_propagates(self, stub_dpg):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel(), modal=True)
         win.build()
@@ -363,7 +363,7 @@ class TestBuild:
 
     def test_set_position_propagates_after_build(self, stub_dpg):
         """``set_position`` after build issues ``configure_item``."""
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel())
         win.build()
@@ -379,7 +379,7 @@ class TestBuild:
 
     def test_build_headless_without_dpg(self, monkeypatch):
         """When DPG is absent, build still flips ``is_built``."""
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         # Force the import to fail by removing the module from sys.modules
         # and shadowing it with an unimportable placeholder.
@@ -404,7 +404,7 @@ class TestBuild:
 @pytest.fixture
 def reset_theme_registry():
     """Drop the registry + active theme between tests."""
-    from pharos_engine.ui.theme import _reset_registry_for_tests
+    from pharos_editor.ui.theme import _reset_registry_for_tests
 
     _reset_registry_for_tests()
     yield
@@ -413,7 +413,7 @@ def reset_theme_registry():
 
 def _make_test_theme(name: str = "frame_test"):
     """Build a minimal :class:`ThemeSpec` with a recognisable sidebar frame."""
-    from pharos_engine.ui.theme import (
+    from pharos_editor.ui.theme import (
         Color,
         FrameStyle,
         Gradient,
@@ -462,8 +462,8 @@ def _make_test_theme(name: str = "frame_test"):
 
 class TestThemeIntegration:
     def test_get_frame_style_pulls_from_theme(self, reset_theme_registry):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
-        from pharos_engine.ui.theme import apply_theme, register_theme
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.theme import apply_theme, register_theme
 
         register_theme(_make_test_theme("sidebar_test"))
         apply_theme("sidebar_test")
@@ -476,8 +476,8 @@ class TestThemeIntegration:
         assert frame.rounding == 12.0
 
     def test_unknown_kind_falls_back_to_default(self, reset_theme_registry):
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
-        from pharos_engine.ui.theme import apply_theme, register_theme
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.theme import apply_theme, register_theme
 
         register_theme(_make_test_theme("default_test"))
         apply_theme("default_test")
@@ -490,7 +490,7 @@ class TestThemeIntegration:
 
     def test_get_frame_style_none_when_no_theme(self, reset_theme_registry):
         """Without an active theme, ``get_frame_style`` returns ``None``."""
-        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
         win = MovablePanelWindow(_SimplePanel(), kind="sidebar")
         # No apply_theme call — registry empty.
@@ -505,7 +505,7 @@ class TestThemeIntegration:
 @pytest.fixture
 def shell_with_panels(reset_theme_registry):
     """Build a notebook-panel-wired :class:`EditorShell`."""
-    from pharos_engine.ui.editor.shell import EditorShell
+    from pharos_editor.ui.editor.shell import EditorShell
 
     class _StubEngine:
         def __init__(self):
@@ -516,7 +516,7 @@ def shell_with_panels(reset_theme_registry):
     shell.setup_notebook_panels()
     # Content browser is built lazily by setup() — wire one manually
     # so the default layout has something to position there.
-    from pharos_engine.ui.editor.notebook_content_browser import (
+    from pharos_editor.ui.editor.notebook_content_browser import (
         NotebookContentBrowser,
     )
     shell._content_browser = NotebookContentBrowser(
@@ -543,7 +543,7 @@ class TestDefaultLayout:
         # sidebar height either side of it.  Keep the y-anchor check
         # so a regression that dropped the toolbar into the workspace
         # would still catch here.
-        from pharos_engine.ui.editor.shell import LEFT_W
+        from pharos_editor.ui.editor.shell import LEFT_W
 
         windows = shell_with_panels.compose_default_panel_layout()
         tb = windows["toolbar"]

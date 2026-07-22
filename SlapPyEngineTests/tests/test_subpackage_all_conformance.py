@@ -54,9 +54,9 @@ _SUBPACKAGES_WITH_ALL: tuple[str, ...] = (
     "pharos_engine.testing",
     "pharos_engine.thermal",
     "pharos_engine.topology",
-    "pharos_engine.ui",
-    "pharos_engine.ui.editor",
-    "pharos_engine.ui.widgets",
+    "pharos_editor.ui",
+    "pharos_editor.ui.editor",
+    "pharos_editor.ui.widgets",
     "pharos_engine.zones",
 )
 
@@ -196,7 +196,7 @@ def test_ext_shim_inherits_canonical_all() -> None:
         ("pharos_engine.ext.input", "pharos_engine.input"),
         ("pharos_engine.ext.iso", "pharos_engine.iso"),
         ("pharos_engine.ext.net", "pharos_engine.net"),
-        ("pharos_engine.ext.ui", "pharos_engine.ui"),
+        ("pharos_engine.ext.ui", "pharos_editor.ui"),
     )
     for shim_name, canonical_name in pairs:
         shim = _import(shim_name)

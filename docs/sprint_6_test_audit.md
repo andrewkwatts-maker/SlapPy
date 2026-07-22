@@ -62,7 +62,7 @@ These guard against missing optional dependencies / hardware. Keep as-is.
 | `test_postprocess.py:10,86,100,111,125,142` | RenderTarget / SceneUIEntity not importable | **keep skip** |
 | `test_node_material.py` (14 entries) | `pharos_engine.material.node_material` / `graph_schema` not available on this checkout | **keep skip** — modules are optional and module-import-guarded |
 | `test_material.py:110,128,149` | materials.yml absent in repo | **keep skip** |
-| `test_scene_ui.py:18,342,352,368,378,391,400,412,426,428,442,444,459,461,475,477` | `pharos_engine.ui` not importable on minimal install, or `handle_keyboard` / `set_key_callback` not yet implemented | **mixed** — the 1 import-level skip should stay; the 15 "not yet implemented" skips inside test bodies should be **resolved** by implementing the keyboard plumbing or **deleted** if the methods are abandoned. Flag for UI sprint. |
+| `test_scene_ui.py:18,342,352,368,378,391,400,412,426,428,442,444,459,461,475,477` | `pharos_editor.ui` not importable on minimal install, or `handle_keyboard` / `set_key_callback` not yet implemented | **mixed** — the 1 import-level skip should stay; the 15 "not yet implemented" skips inside test bodies should be **resolved** by implementing the keyboard plumbing or **deleted** if the methods are abandoned. Flag for UI sprint. |
 | `test_tools_run_examples.py:140` | hello_rope.py / hello_motor.py not present | **keep skip** — present in current checkout, so this skip never fires here; guard exists for partial checkouts |
 
 ---

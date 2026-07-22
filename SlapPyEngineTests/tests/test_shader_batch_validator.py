@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.ui.theme.shader_batch_validator` (DD6).
+"""Tests for :mod:`pharos_editor.ui.theme.shader_batch_validator` (DD6).
 
 Covers:
 
@@ -25,8 +25,8 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.ui.theme import shader_batch_validator as sbv
-from pharos_engine.ui.theme.shader_batch_validator import (
+from pharos_editor.ui.theme import shader_batch_validator as sbv
+from pharos_editor.ui.theme.shader_batch_validator import (
     ValidationSummary,
     _collect_wgsl_manifest_entries,
     _iter_theme_library_sources,
@@ -37,7 +37,7 @@ from pharos_engine.ui.theme.shader_batch_validator import (
     validate_all_shaders,
     write_report,
 )
-from pharos_engine.ui.theme.shader_lint import WGSLLintResult
+from pharos_editor.ui.theme.shader_lint import WGSLLintResult
 
 
 # ---------------------------------------------------------------------------

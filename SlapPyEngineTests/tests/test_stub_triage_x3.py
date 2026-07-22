@@ -8,12 +8,12 @@ Covers the five action ids added in the 2026-07-04 sprint tick:
 * ``editor.open_recent`` — opens (by index or path) an entry from the
   :class:`~pharos_engine.projects.ProjectRegistry` recents list.
 * ``view.reset_layout`` — restores the DEFAULT preset via
-  :func:`~pharos_engine.ui.editor.layout_presets.apply_preset`.
+  :func:`~pharos_editor.ui.editor.layout_presets.apply_preset`.
 * ``edit.duplicate_selection`` — clones the current selection through
-  :class:`~pharos_engine.ui.editor.entity_clipboard.EntityClipboard`.
+  :class:`~pharos_editor.ui.editor.entity_clipboard.EntityClipboard`.
 
 Every test dispatches through
-:class:`~pharos_engine.tool_router.ToolRouter` so the wire-up (action_id
+:class:`~pharos_editor.tool_router.ToolRouter` so the wire-up (action_id
 → Python fallback) is exercised end-to-end. Filesystem side effects use
 :func:`pathlib.Path` + ``tmp_path``; no DPG context is required so the
 suite is headless.
@@ -27,7 +27,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.tool_router import REGISTRY, ToolRouter, register_default_actions
+from pharos_editor.tool_router import REGISTRY, ToolRouter, register_default_actions
 
 
 # ---------------------------------------------------------------------------
@@ -296,7 +296,7 @@ def test_reset_layout_headless_fallback_populates_state(
     The layout_presets fallback populates ``shell._panel_layout_state``
     with every panel id in the DEFAULT preset.
     """
-    from pharos_engine.ui.editor.layout_presets import PANEL_IDS
+    from pharos_editor.ui.editor.layout_presets import PANEL_IDS
 
     shell = SimpleNamespace(_running=False)
     result = router.dispatch("view.reset_layout", {"shell": shell})
@@ -317,7 +317,7 @@ def test_reset_layout_headless_fallback_populates_state(
 def test_duplicate_selection_no_selection_returns_status(
     router: ToolRouter,
 ) -> None:
-    from pharos_engine.ui.editor.entity_clipboard import (
+    from pharos_editor.ui.editor.entity_clipboard import (
         reset_active_clipboard,
     )
     reset_active_clipboard()
@@ -326,7 +326,7 @@ def test_duplicate_selection_no_selection_returns_status(
 
 
 def test_duplicate_selection_from_explicit_ctx(router: ToolRouter) -> None:
-    from pharos_engine.ui.editor.entity_clipboard import (
+    from pharos_editor.ui.editor.entity_clipboard import (
         reset_active_clipboard,
     )
     reset_active_clipboard()
@@ -346,7 +346,7 @@ def test_duplicate_selection_from_explicit_ctx(router: ToolRouter) -> None:
 def test_duplicate_selection_bumps_clipboard_generation(
     router: ToolRouter,
 ) -> None:
-    from pharos_engine.ui.editor.entity_clipboard import (
+    from pharos_editor.ui.editor.entity_clipboard import (
         get_active_clipboard,
         reset_active_clipboard,
     )
@@ -362,7 +362,7 @@ def test_duplicate_selection_bumps_clipboard_generation(
 def test_duplicate_selection_reads_from_shell_selected_entity(
     router: ToolRouter,
 ) -> None:
-    from pharos_engine.ui.editor.entity_clipboard import (
+    from pharos_editor.ui.editor.entity_clipboard import (
         reset_active_clipboard,
     )
     reset_active_clipboard()

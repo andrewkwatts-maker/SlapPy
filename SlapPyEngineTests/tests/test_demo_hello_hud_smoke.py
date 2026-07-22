@@ -123,7 +123,7 @@ def test_app_enable_hud_mounts_default_lineup():
 
 def test_app_enable_hud_accepts_custom_widgets():
     pytest.importorskip("pharos_engine")
-    from pharos_engine.ui.runtime.hud_kit import HealthBar
+    from pharos_editor.ui.runtime.hud_kit import HealthBar
 
     app = _headless_app()
     custom = [HealthBar(position=(8.0, 8.0), value=42.0, max_value=100.0, label="HP")]

@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.ui.editor.dock_zones`.
+"""Tests for :mod:`pharos_editor.ui.editor.dock_zones`.
 
 The dock zone manager owns three concerns: zone geometry, drag-lifecycle
 state, and DPG overlay rendering. The first two are pure Python and the
@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.ui.editor.dock_zones import (
+from pharos_editor.ui.editor.dock_zones import (
     DockZone,
     DockZoneManager,
     DockZoneTarget,
@@ -344,15 +344,15 @@ def test_theme_switch_updates_preview_color(
         )
     )
 
-    from pharos_engine.ui.editor import dock_zones as dz_mod
+    from pharos_editor.ui.editor import dock_zones as dz_mod
 
     monkeypatch.setattr(
-        "pharos_engine.ui.theme.get_active_theme",
+        "pharos_editor.ui.theme.get_active_theme",
         lambda: fake_theme,
         raising=False,
     )
     # Ensure the module-level import path also resolves to the patched fn.
-    import pharos_engine.ui.theme as theme_pkg
+    import pharos_editor.ui.theme as theme_pkg
     monkeypatch.setattr(theme_pkg, "get_active_theme", lambda: fake_theme)
 
     zones = manager.compute_zones()

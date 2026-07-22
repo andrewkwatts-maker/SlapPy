@@ -318,7 +318,7 @@ deletion of any other file.
    inspector wired against `softbody.Body` and `pharos_engine.zones`,
    tracked under the editor sprint (`project_editor_sprint.md`).
 2. Audit/migrate the editor wiring that *constructs* `DeformPanel` /
-   `ZoneEditorPanel` (search: `from pharos_engine.ui.editor.deform_panel
+   `ZoneEditorPanel` (search: `from pharos_editor.ui.editor.deform_panel
    import` and `DeformPanel(` / `ZoneEditorPanel(` — held for the next
    sprint to keep this sprint read-only on engine code).
 3. Co-delete `python/tests/test_editor_deform_panel.py` if present
@@ -477,7 +477,7 @@ re-ordering, not from any test going green that was previously red
    decommissioning and pointing at the property inspector as the
    replacement. Importing the module now raises:
    ```
-   ImportError: pharos_engine.ui.editor.deform_panel was decommissioned
+   ImportError: pharos_editor.ui.editor.deform_panel was decommissioned
    in Phase D step 6 (2026-06-01). ...
    ```
 2. No `git rm` was issued for the four `deform_*.py` modules — they

@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.actions.camera_animation_actions` (CC6).
+"""Tests for :mod:`pharos_editor.actions.camera_animation_actions` (CC6).
 
 Covers all six easing curves (endpoints, monotonicity where applicable,
 and the deliberate overshoot / oscillation of ``back`` / ``bounce``),
@@ -17,7 +17,7 @@ sys.path.insert(
     0, str(Path(__file__).resolve().parent.parent.parent / "python"),
 )
 
-from pharos_engine.actions.camera_animation_actions import (  # noqa: E402
+from pharos_editor.actions.camera_animation_actions import (  # noqa: E402
     CameraAnimator,
     CameraTweenState,
     EasingCurves,
@@ -25,7 +25,7 @@ from pharos_engine.actions.camera_animation_actions import (  # noqa: E402
     frame_all_animated,
     get_module_animator,
 )
-from pharos_engine.tool_router import REGISTRY  # noqa: E402
+from pharos_editor.tool_router import REGISTRY  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

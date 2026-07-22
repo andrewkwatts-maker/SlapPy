@@ -12,9 +12,9 @@ creature animations: module surface, event bindings, performance
 contract, theme integration, accessibility settings, and the test
 plan that locks the contract.
 
-## 1. Module surface — `pharos_engine.ui.theme.creatures`
+## 1. Module surface — `pharos_editor.ui.theme.creatures`
 
-The subsystem lives at `pharos_engine.ui.theme.creatures` (sibling to
+The subsystem lives at `pharos_editor.ui.theme.creatures` (sibling to
 the existing `theme_spec` module).
 
 ### 1.1 Public dataclasses
@@ -98,7 +98,7 @@ class CreatureScheduler:
 
 ### 1.3 Helpers — event-binding wiring
 
-A separate `pharos_engine.ui.theme.creature_bindings` module wires the
+A separate `pharos_editor.ui.theme.creature_bindings` module wires the
 default event-to-creature mapping. The bindings module is the **only**
 place that knows about engine event types — `Creature` itself is
 event-agnostic.

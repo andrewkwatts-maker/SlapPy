@@ -10,7 +10,7 @@ QQ1's round-18 ``spawn.at_origin`` / ``selection.by_type`` /
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_editor.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `edit.select_similar`      | `edit_select_similar_actions.select_similar`              | edit |
 | `theme.reset_to_default`   | `theme_reset_default_actions.reset_to_default`            | theme |

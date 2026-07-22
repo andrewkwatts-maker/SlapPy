@@ -9,7 +9,7 @@ after NN2's round-15 view / panel / theme batch):
 * ``snap.increase_grid_size`` — Blender numpad ``+`` (snap active).
 * ``snap.decrease_grid_size`` — Blender numpad ``-`` (snap active).
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up is exercised end-to-end. No DPG context — fixtures use
 :class:`SimpleNamespace` stand-ins for shell / scene / layer handles.
 """
@@ -20,7 +20,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,

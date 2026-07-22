@@ -7,7 +7,7 @@ import pytest
 
 from pharos_engine.fluid import FluidWorld
 from pharos_engine.softbody import SoftBodyWorld
-from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+from pharos_editor.ui.editor.scene_outliner import SceneOutliner
 
 
 @pytest.fixture(autouse=True)

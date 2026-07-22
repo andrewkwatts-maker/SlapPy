@@ -58,7 +58,7 @@ class MockNodeEditor:
 
 @pytest.fixture
 def bridge():
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     return MaterialGraphBridge()
@@ -107,7 +107,7 @@ def five_node_graph():
 
 
 def test_bridge_exports_public_surface() -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge, MaterialGraphError,
         KEY_WGSL_SOURCE, KEY_UNIFORMS, KEY_OUTPUT_TYPE, RAW_WGSL_NODE_TYPE,
     )
@@ -120,7 +120,7 @@ def test_bridge_exports_public_surface() -> None:
 
 
 def test_bridge_re_exported_from_editor_package() -> None:
-    from pharos_engine.ui.editor import (
+    from pharos_editor.ui.editor import (
         MaterialGraphBridge, MaterialGraphError,
     )
     assert MaterialGraphBridge is not None
@@ -128,7 +128,7 @@ def test_bridge_re_exported_from_editor_package() -> None:
 
 
 def test_bridge_accepts_none_arguments() -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     b = MaterialGraphBridge(None, None)
@@ -165,7 +165,7 @@ def test_to_material_empty_graph_returns_empty_source(bridge) -> None:
 
 
 def test_to_material_rejects_none(bridge) -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphError,
     )
     with pytest.raises(MaterialGraphError):
@@ -173,7 +173,7 @@ def test_to_material_rejects_none(bridge) -> None:
 
 
 def test_to_material_rejects_non_graph(bridge) -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphError,
     )
     with pytest.raises(MaterialGraphError):
@@ -275,7 +275,7 @@ def test_from_material_raw_wgsl_produces_single_node(bridge) -> None:
 
 
 def test_from_material_missing_source_raises(bridge) -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphError,
     )
     with pytest.raises(MaterialGraphError):
@@ -283,7 +283,7 @@ def test_from_material_missing_source_raises(bridge) -> None:
 
 
 def test_from_material_rejects_non_dict(bridge) -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphError,
     )
     with pytest.raises(MaterialGraphError):
@@ -321,7 +321,7 @@ def test_roundtrip_five_node(bridge, five_node_graph) -> None:
 
 
 def test_sync_to_editor_calls_set_material(two_node_graph) -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     editor = MockMaterialEditor()
@@ -333,7 +333,7 @@ def test_sync_to_editor_calls_set_material(two_node_graph) -> None:
 
 
 def test_sync_to_editor_without_editor_returns_false(two_node_graph) -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     bridge = MaterialGraphBridge(material_editor=None)
@@ -341,7 +341,7 @@ def test_sync_to_editor_without_editor_returns_false(two_node_graph) -> None:
 
 
 def test_sync_from_editor_returns_node_graph() -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     from pharos_engine.visual_scripting import NodeGraph
@@ -359,7 +359,7 @@ def test_sync_from_editor_returns_node_graph() -> None:
 
 
 def test_sync_from_editor_uses_get_material_hook() -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     from pharos_engine.visual_scripting import NodeGraph
@@ -377,7 +377,7 @@ def test_sync_from_editor_uses_get_material_hook() -> None:
 
 
 def test_sync_from_editor_returns_none_when_no_editor() -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     bridge = MaterialGraphBridge(material_editor=None)
@@ -385,7 +385,7 @@ def test_sync_from_editor_returns_none_when_no_editor() -> None:
 
 
 def test_sync_from_editor_returns_none_when_target_missing() -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     editor = MockMaterialEditor()  # target defaults to None
@@ -399,7 +399,7 @@ def test_sync_from_editor_returns_none_when_target_missing() -> None:
 
 
 def test_material_graph_error_carries_per_node_lines() -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphError,
     )
     err = MaterialGraphError(
@@ -416,7 +416,7 @@ def test_material_graph_error_carries_per_node_lines() -> None:
 
 def test_to_material_cycle_raises_material_graph_error() -> None:
     """A cyclic graph must fail with MaterialGraphError."""
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge, MaterialGraphError,
     )
     from pharos_engine.visual_scripting import (
@@ -437,7 +437,7 @@ def test_to_material_cycle_raises_material_graph_error() -> None:
 
 
 def test_material_graph_error_without_error_list() -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphError,
     )
     err = MaterialGraphError("just a message")
@@ -451,7 +451,7 @@ def test_material_graph_error_without_error_list() -> None:
 
 
 def test_bridge_stores_call_log_for_sync_actions(two_node_graph) -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     editor = MockMaterialEditor()
@@ -463,7 +463,7 @@ def test_bridge_stores_call_log_for_sync_actions(two_node_graph) -> None:
 
 
 def test_bridge_default_output_type_is_vec4() -> None:
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge, DEFAULT_OUTPUT_TYPE,
     )
     bridge = MaterialGraphBridge()

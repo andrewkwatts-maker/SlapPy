@@ -15,7 +15,7 @@ import pytest
 
 from pharos_engine.fluid import FluidWorld
 from pharos_engine.softbody import SoftBodyWorld
-from pharos_engine.ui.editor.spawn_menu import (
+from pharos_editor.ui.editor.spawn_menu import (
     SpawnAction,
     SpawnMenu,
     create_spawn_menu,

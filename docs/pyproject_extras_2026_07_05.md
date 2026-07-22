@@ -77,8 +77,8 @@ extra-gated code path does.
 | `pharos_engine.asset_import.gltf_importer`        | `assets`       | `pygltflib`                              |
 | `pharos_engine.asset_import.stub_importer`        | `assets`       | `trimesh` (STL/PLY paths)                |
 | `pharos_engine.asset_import.texture_importer`     | (base)         | `PIL.Image` (Pillow — core dep)          |
-| `pharos_engine.ui.editor.*`                       | `editor`       | `dearpygui`                              |
-| `pharos_engine.ui.editor.notebook_project_picker` | `editor`       | `pywebview`                              |
+| `pharos_editor.ui.editor.*`                       | `editor`       | `dearpygui`                              |
+| `pharos_editor.ui.editor.notebook_project_picker` | `editor`       | `pywebview`                              |
 | `pharos_engine.math.Formula` (Rust-backed path)   | `math`         | `arithma`                                |
 | `pharos_engine.audio` + `audio_runtime`           | `audio`        | `sounddevice`, `soundfile`               |
 | `pharos_engine.animation.video_import`            | `video`        | `av`                                     |
@@ -86,7 +86,7 @@ extra-gated code path does.
 | `pharos_engine.net.*`                             | `network`      | `kademlia`, `aioice`, `zeroconf`         |
 | `pharos_engine.ai.llm_client`                     | `ai`           | `httpx`                                  |
 | `pharos_engine.ai` (transformer path)             | `ai`           | `torch`, `transformers`                  |
-| `pharos_engine.ui.runtime.hud_kit` (imgui bridge) | `hud`          | `imgui`                                  |
+| `pharos_editor.ui.runtime.hud_kit` (imgui bridge) | `hud`          | `imgui`                                  |
 | `pharos_engine._core` 3D features                 | `3d`           | Rust feature flag (build-time)           |
 | `pharos_engine.testing`                           | `dev`          | `pytest`, `pytest-asyncio`               |
 | `pharos_engine.watcher`                           | `dev`          | `watchdog`                               |

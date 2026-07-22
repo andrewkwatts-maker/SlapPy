@@ -90,7 +90,7 @@ sequences seven sprints to v0.4.
 |                       UI / AUTHORING (Python)                      |
 |                                                                    |
 |  +-----------------------------------+  +----------------------+   |
-|  |       pharos_engine.ui.editor      |  |  pharos_engine.studio |   |
+|  |       pharos_editor.ui.editor      |  |  pharos_engine.studio |   |
 |  |  - EditorShell (2689 LOC -- big)  |  |  - Stage / record()  |   |
 |  |  - 13 notebook_* panels           |  |  - softbody_stage    |   |
 |  |  - 18 Nova3D-legacy panels        |  |  - fluid_stage       |   |
@@ -99,10 +99,10 @@ sequences seven sprints to v0.4.
 |  +-----------------------------------+                             |
 |                                                                    |
 |  +-----------------------------------+                             |
-|  |       pharos_engine.ui.theme       |  6 diary themes + creatures |
+|  |       pharos_editor.ui.theme       |  6 diary themes + creatures |
 |  +-----------------------------------+                             |
 |  +-----------------------------------+                             |
-|  |       pharos_engine.ui.widgets     |  29 notebook widgets         |
+|  |       pharos_editor.ui.widgets     |  29 notebook widgets         |
 |  +-----------------------------------+                             |
 +--------------------------------------------------------------------+
                             |
@@ -251,7 +251,7 @@ against the 2026-06-07 working tree.
      ([shell.py:214-280](../python/pharos_engine/ui/editor/shell.py#L214)) (~500 LOC).
    * `shell_lifecycle.py` — project pick / save / undo / play
      toggle (~700 LOC).
-   No public API change; the import line is `from pharos_engine.ui.editor.shell import EditorShell`.
+   No public API change; the import line is `from pharos_editor.ui.editor.shell import EditorShell`.
 
 2. **`shell._dispatch_editor_command` ([shell.py:214-280](../python/pharos_engine/ui/editor/shell.py#L214))**
    — bare `except Exception: pass` on lines 228-229, 244-246, 261-263,
@@ -299,7 +299,7 @@ against the 2026-06-07 working tree.
    replace the "[clip]" path picker stub
    ([line 644-669](../python/pharos_engine/ui/editor/notebook_inspector.py#L644))
    with a real OS file dialog.** A single shared helper
-   (`pharos_engine.ui.editor.file_picker.pick_file(filters, parent)`)
+   (`pharos_editor.ui.editor.file_picker.pick_file(filters, parent)`)
    covers the Inspector path field AND the `ctrl+o` hotkey
    (item §8 of feature map 4.4).
 
@@ -343,7 +343,7 @@ against the 2026-06-07 working tree.
 13. **`python/pharos_engine/ui/editor/resize_handles.py` (744 LOC) +
     `dock_zones.py` (417 LOC) + `snap_manager.py` (283 LOC) +
     `movable_panel.py` (412 LOC) — consolidate as
-    `pharos_engine.ui.editor.docking/`.**
+    `pharos_editor.ui.editor.docking/`.**
     Five files implement one feature (movable / dockable panels with
     snap + resize); they import each other in a brittle cycle. Move
     each to `docking/handles.py`, `docking/zones.py`, etc., with a
@@ -424,8 +424,8 @@ The notebook panels each open with the same boilerplate:
 
 ```
 import dearpygui.dearpygui as dpg
-from pharos_engine.ui.theme import get_active_theme
-from pharos_engine.ui.widgets import StickerButton, WashiPanel
+from pharos_editor.ui.theme import get_active_theme
+from pharos_editor.ui.widgets import StickerButton, WashiPanel
 ...
 def __init__(...):
     self._panel_tag = f"{cls_name}_panel_{id(self)}"
@@ -434,7 +434,7 @@ def __init__(...):
 ```
 
 Extract a `NotebookPanelBase` mixin under
-`pharos_engine.ui.editor.notebook_panel_base.py`. Eight panels would
+`pharos_editor.ui.editor.notebook_panel_base.py`. Eight panels would
 shed ~40 LOC each (~320 LOC saved).
 
 ### 5.3 Spec-modal pattern
@@ -446,7 +446,7 @@ bound to a spawn-spec dataclass. The same pattern would serve:
 * New "Save effect as…" modal (Sprint 5 deferred to v0.5).
 * New "Create script…" modal (Sprint 2 — DiaryPagePanel new-script).
 
-Extract `pharos_engine.ui.editor.spec_modal.open_spec_modal(spec, on_ok)`.
+Extract `pharos_editor.ui.editor.spec_modal.open_spec_modal(spec, on_ok)`.
 
 ### 5.4 Dead Nova3D fallbacks ready for retirement
 
@@ -637,7 +637,7 @@ graph; toggle button at the spine of the spread).
   corner (`add_sticker_corner` from `ui.widgets`).
 * **Paper background** — `ruled_paper(...)` for the live viewport;
   `dot_grid(...)` for the code / node side. Both are already shipped
-  procedural shader effects under `pharos_engine.ui.theme`.
+  procedural shader effects under `pharos_editor.ui.theme`.
 * **Handwritten font** — already shipped via `theme_teengirl_notebook`
   (Patrick Hand / Caveat).
 * **Status ribbon** — reuses `NotebookStatusBar` pattern; per-script

@@ -465,7 +465,7 @@ setlocal
 set "PROJECT_DIR=%~dp0"
 set "PYTHONPATH=%PROJECT_DIR%;%PYTHONPATH%"
 
-python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('pharos_engine.ui.editor') else 1)"
+python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('pharos_editor.ui.editor') else 1)"
 if errorlevel 1 (
     echo.
     echo The SlapPyEngine editor is not installed.
@@ -474,7 +474,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-python -m pharos_engine.ui.editor "%PROJECT_DIR%" %*
+python -m pharos_editor.ui.editor "%PROJECT_DIR%" %*
 set EC=%ERRORLEVEL%
 endlocal & exit /b %EC%
 """
@@ -485,7 +485,7 @@ _LAUNCH_EDITOR_PS1 = """\
 $ProjectDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $env:PYTHONPATH = "$ProjectDir;$env:PYTHONPATH"
 
-$probe = python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('pharos_engine.ui.editor') else 1)"
+$probe = python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('pharos_editor.ui.editor') else 1)"
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
     Write-Host "The SlapPyEngine editor is not installed."
@@ -494,7 +494,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-python -m pharos_engine.ui.editor $ProjectDir @args
+python -m pharos_editor.ui.editor $ProjectDir @args
 exit $LASTEXITCODE
 """
 
@@ -506,7 +506,7 @@ set -e
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export PYTHONPATH="$PROJECT_DIR:$PYTHONPATH"
 
-if ! python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('pharos_engine.ui.editor') else 1)"; then
+if ! python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('pharos_editor.ui.editor') else 1)"; then
     echo
     echo "The SlapPyEngine editor is not installed."
     echo 'Install it with:  pip install "pharos-engine[editor]"'
@@ -514,7 +514,7 @@ if ! python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_sp
     exit 1
 fi
 
-python -m pharos_engine.ui.editor "$PROJECT_DIR" "$@"
+python -m pharos_editor.ui.editor "$PROJECT_DIR" "$@"
 exit $?
 """
 
@@ -615,7 +615,7 @@ def render_template(template: str, context: dict) -> str:
 def editor_installed() -> bool:
     """Return True if the ``pharos_engine[editor]`` extra can be imported."""
     import importlib.util
-    return importlib.util.find_spec("pharos_engine.ui.editor") is not None
+    return importlib.util.find_spec("pharos_editor.ui.editor") is not None
 
 
 def temp_projects_root() -> Path:
@@ -817,7 +817,7 @@ def launch_project(
     path
         Project directory (created by :func:`create_project`).
     editor
-        When True, invoke ``python -m pharos_engine.ui.editor <path>`` instead
+        When True, invoke ``python -m pharos_editor.ui.editor <path>`` instead
         of ``main.py``.  If the editor extra is not installed a
         :class:`RuntimeError` is raised.
     dry_run
@@ -836,7 +836,7 @@ def launch_project(
             raise RuntimeError(
                 "editor extra not installed — pip install 'pharos-engine[editor]'"
             )
-        cmd = [sys.executable, "-m", "pharos_engine.ui.editor", str(p)]
+        cmd = [sys.executable, "-m", "pharos_editor.ui.editor", str(p)]
     else:
         cmd = [sys.executable, str(p / "main.py")]
     cmd.extend(list(extra_args))

@@ -14,7 +14,7 @@ after r14's ``capture_actions`` + ``render_toggle_actions`` landings):
 * ``theme.hot_swap`` — apply a named theme directly (distinct from
   ``theme.cycle`` / ``theme.random`` / ``theme.reload_all``).
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up is exercised end-to-end. No DPG context — fixtures use
 :class:`SimpleNamespace` stand-ins for shell / camera / panel handles.
 """
@@ -26,7 +26,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -374,9 +374,9 @@ class TestThemeHotSwap:
         # Inject a fake theme so the test doesn't depend on the shell
         # having pre-baked its default roster.
         try:
-            import pharos_engine.ui.theme as theme_mod
+            import pharos_editor.ui.theme as theme_mod
         except Exception:  # noqa: BLE001
-            pytest.skip("pharos_engine.ui.theme not importable in this env")
+            pytest.skip("pharos_editor.ui.theme not importable in this env")
         applied: list[str] = []
         target = "__nn2_stub_theme_ok__"
         monkeypatch.setattr(
@@ -411,9 +411,9 @@ class TestThemeHotSwap:
     ) -> None:
         # A shell that intercepts apply_theme wins over the module fallback.
         try:
-            import pharos_engine.ui.theme as theme_mod
+            import pharos_editor.ui.theme as theme_mod
         except Exception:  # noqa: BLE001
-            pytest.skip("pharos_engine.ui.theme not importable in this env")
+            pytest.skip("pharos_editor.ui.theme not importable in this env")
         target = "__nn2_stub_theme_hook__"
         monkeypatch.setattr(
             theme_mod, "list_registered_themes", lambda: [target],

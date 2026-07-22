@@ -191,8 +191,8 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def clear_state():
     from pharos_engine import telemetry as t
-    from pharos_engine.ui.widgets import notebook_theme
-    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_editor.ui.widgets import notebook_theme
+    from pharos_editor.ui.widgets.notebook_theme import set_active_theme
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -209,7 +209,7 @@ def clear_state():
 
 
 def _make_dashboard(**kwargs):
-    from pharos_engine.ui.editor.notebook_telemetry_dashboard import (
+    from pharos_editor.ui.editor.notebook_telemetry_dashboard import (
         NotebookTelemetryDashboard,
     )
     return NotebookTelemetryDashboard(**kwargs)
@@ -231,7 +231,7 @@ class TestConstruction:
         assert d.perf == {}
 
     def test_defaults_expose_constants(self):
-        from pharos_engine.ui.editor.notebook_telemetry_dashboard import (
+        from pharos_editor.ui.editor.notebook_telemetry_dashboard import (
             POLL_INTERVAL_DEFAULT_MS,
             POLL_INTERVAL_MAX_MS,
             POLL_INTERVAL_MIN_MS,
@@ -368,7 +368,7 @@ class TestAggregation:
     def test_gauge_sparkline_sample_count(self):
         """Sparkline buffer holds up to :data:`SPARKLINE_SAMPLE_COUNT`."""
         from pharos_engine import telemetry
-        from pharos_engine.ui.editor.notebook_telemetry_dashboard import (
+        from pharos_editor.ui.editor.notebook_telemetry_dashboard import (
             SPARKLINE_SAMPLE_COUNT,
         )
 
@@ -582,7 +582,7 @@ class TestTabs:
 
     def test_every_tab_renders_under_stub(self, stub_dpg):
         from pharos_engine import telemetry
-        from pharos_engine.ui.editor.notebook_telemetry_dashboard import (
+        from pharos_editor.ui.editor.notebook_telemetry_dashboard import (
             TAB_NAMES,
         )
 
@@ -658,7 +658,7 @@ class TestExport:
 
 class TestTheme:
     def test_theme_switch_logs(self):
-        from pharos_engine.ui.widgets.notebook_theme import (
+        from pharos_editor.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )
@@ -740,11 +740,11 @@ class TestBuild:
 
 class TestRegistration:
     def test_all_contains_dashboard(self):
-        from pharos_engine.ui import editor
+        from pharos_editor.ui import editor
         assert "NotebookTelemetryDashboard" in editor.__all__
 
     def test_lazy_map_maps_dashboard(self):
-        from pharos_engine.ui import editor
+        from pharos_editor.ui import editor
         assert "NotebookTelemetryDashboard" in editor._LAZY_MAP
         assert (
             editor._LAZY_MAP["NotebookTelemetryDashboard"]
@@ -752,6 +752,6 @@ class TestRegistration:
         )
 
     def test_lazy_import_resolves(self):
-        from pharos_engine.ui import editor
+        from pharos_editor.ui import editor
         cls = editor.NotebookTelemetryDashboard  # triggers __getattr__
         assert cls.TITLE == "Telemetry Dashboard"

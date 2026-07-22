@@ -122,8 +122,8 @@ def stub_dpg(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def clear_state():
-    from pharos_engine.ui.widgets import notebook_theme
-    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_editor.ui.widgets import notebook_theme
+    from pharos_editor.ui.widgets.notebook_theme import set_active_theme
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -138,7 +138,7 @@ def clear_state():
 
 
 def _make_panel(**kwargs):
-    from pharos_engine.ui.editor.notebook_post_process_panel import (
+    from pharos_editor.ui.editor.notebook_post_process_panel import (
         NotebookPostProcessPanel,
     )
     return NotebookPostProcessPanel(**kwargs)
@@ -169,7 +169,7 @@ class TestConstruction:
         assert labels == ["bloom", "vignette"]
 
     def test_rejects_non_callable_callback(self):
-        from pharos_engine.ui.editor.notebook_post_process_panel import (
+        from pharos_editor.ui.editor.notebook_post_process_panel import (
             NotebookPostProcessPanel,
         )
         with pytest.raises(TypeError):
@@ -352,7 +352,7 @@ class TestStatusCallback:
 
 class TestThemeIntegration:
     def test_theme_switch_logs(self):
-        from pharos_engine.ui.widgets.notebook_theme import (
+        from pharos_editor.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )

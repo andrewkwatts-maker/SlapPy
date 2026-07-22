@@ -474,7 +474,7 @@ class TestBuildGen:
 
 class TestScriptBindingPanel:
     def test_inspect_script_detects_hooks(self, tmp_path):
-        from pharos_engine.ui.editor.script_binding_panel import _inspect_script
+        from pharos_editor.ui.editor.script_binding_panel import _inspect_script
         p = tmp_path / "ctrl.py"
         p.write_text("def on_launch(e): pass\ndef on_tick(e,dt): pass\n")
         info = _inspect_script(p)
@@ -483,20 +483,20 @@ class TestScriptBindingPanel:
         assert "on_end" not in info["hooks"]
 
     def test_inspect_script_detects_subscribe(self, tmp_path):
-        from pharos_engine.ui.editor.script_binding_panel import _inspect_script
+        from pharos_editor.ui.editor.script_binding_panel import _inspect_script
         p = tmp_path / "sub.py"
         p.write_text('from pharos_engine.event_bus import global_bus\nglobal_bus.subscribe("vehicle:hit", lambda p: None)\n')
         info = _inspect_script(p)
         assert "vehicle:hit" in info["subscribes"]
 
     def test_inspect_missing_script_returns_empty(self, tmp_path):
-        from pharos_engine.ui.editor.script_binding_panel import _inspect_script
+        from pharos_editor.ui.editor.script_binding_panel import _inspect_script
         info = _inspect_script(tmp_path / "nonexistent.py")
         assert info["hooks"] == set()
         assert info["subscribes"] == []
 
     def test_scan_scripts_finds_py_files(self, tmp_path):
-        from pharos_engine.ui.editor.script_binding_panel import _scan_scripts
+        from pharos_editor.ui.editor.script_binding_panel import _scan_scripts
         (tmp_path / "a.py").write_text("pass")
         (tmp_path / "b.py").write_text("pass")
         (tmp_path / "data.yml").write_text("x: 1")
@@ -508,7 +508,7 @@ class TestScriptBindingPanel:
 
     def test_panel_set_entity_with_manifest(self, tmp_path):
         import yaml
-        from pharos_engine.ui.editor.script_binding_panel import ScriptBindingPanel
+        from pharos_editor.ui.editor.script_binding_panel import ScriptBindingPanel
         # Write a minimal manifest
         m_path = tmp_path / "assets" / "player.yml"
         m_path.parent.mkdir()
@@ -528,7 +528,7 @@ class TestScriptBindingPanel:
 
     def test_auto_create_script(self, tmp_path):
         import os
-        from pharos_engine.ui.editor.script_binding_panel import ScriptBindingPanel
+        from pharos_editor.ui.editor.script_binding_panel import ScriptBindingPanel
 
         class _Entity:
             name = "Hero"

@@ -13,7 +13,7 @@ gameplay code can share definitions. Every prefab bundles:
 * Free-form metadata for editor / gameplay tagging.
 
 Prefabs are managed by :class:`PrefabLibrary`, which mirrors the
-:class:`pharos_engine.ui.theme.user_themes.UserThemeStore` pattern:
+:class:`pharos_editor.ui.theme.user_themes.UserThemeStore` pattern:
 baked files ship inside the wheel at
 ``python/pharos_engine/prefabs/baked/`` and are copied into
 ``~/.pharos_engine/prefabs/`` on first use so downstream code can edit

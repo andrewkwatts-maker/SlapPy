@@ -280,8 +280,8 @@ def _step_hud_overlay(
     statuses: list[SubsystemStatus] = []
     try:
         from pharos_engine.render.camera import Camera2D
-        from pharos_engine.ui.runtime.hud_kit import AmmoCounter, HealthBar
-        from pharos_engine.ui.runtime.hud_overlay import HUDOverlay
+        from pharos_editor.ui.runtime.hud_kit import AmmoCounter, HealthBar
+        from pharos_editor.ui.runtime.hud_overlay import HUDOverlay
     except Exception as exc:
         trace.record("hud_missing", error=str(exc))
         statuses.append(SubsystemStatus("hud_overlay", False, reason=str(exc)))

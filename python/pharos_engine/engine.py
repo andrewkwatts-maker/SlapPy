@@ -438,7 +438,7 @@ class Engine:
 
             # Route mouse events to SceneUIEntity widgets
             if self._scene is not None:
-                from pharos_engine.ui.scene_ui import SceneUIEntity
+                from pharos_editor.ui.scene_ui import SceneUIEntity
                 for entity in self._scene.entities:
                     if isinstance(entity, SceneUIEntity):
                         entity.handle_mouse(self._mouse_x, self._mouse_y,
@@ -775,7 +775,7 @@ class Engine:
 
         try:
             from pharos_engine.projects import get_default_registry
-            from pharos_engine.ui.editor.notebook_project_picker import (
+            from pharos_editor.ui.editor.notebook_project_picker import (
                 NotebookProjectPicker,
             )
         except Exception:
@@ -856,7 +856,7 @@ class Engine:
             return
 
         from pathlib import Path
-        from pharos_engine.ui.project_manager import ProjectManager
+        from pharos_editor.ui.project_manager import ProjectManager
 
         manager = ProjectManager(engine=self)
         html_path = Path(__file__).parent / "ui" / "project_ui.html"
@@ -911,25 +911,25 @@ class Engine:
                 "Install it with: pip install SlapPyEngine[editor]"
             ) from exc
 
-        from pharos_engine.ui.editor.shell import EditorShell
-        from pharos_engine.ui.editor.layer_panel import LayerPanel
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
-        from pharos_engine.ui.editor.notebook_material_editor import (
+        from pharos_editor.ui.editor.shell import EditorShell
+        from pharos_editor.ui.editor.layer_panel import LayerPanel
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.notebook_material_editor import (
             NotebookMaterialEditor,
         )
-        from pharos_engine.ui.editor.viewport_panel import ViewportPanel
+        from pharos_editor.ui.editor.viewport_panel import ViewportPanel
 
         # TagPainter is a future panel — import gracefully so the editor
         # still works when the module hasn't been written yet.
         try:
-            from pharos_engine.ui.editor.tag_painter import TagPainter
+            from pharos_editor.ui.editor.tag_painter import TagPainter
             _has_tag_painter = True
         except ImportError:
             _has_tag_painter = False
 
         # BehaviorPanel (AI-assisted scripting) — optional; requires [ai] extra.
         try:
-            from pharos_engine.ui.editor.behavior_panel import BehaviorPanel
+            from pharos_editor.ui.editor.behavior_panel import BehaviorPanel
             _has_behavior_panel = True
         except ImportError:
             _has_behavior_panel = False
@@ -970,7 +970,7 @@ class Engine:
             shell._behavior_panel = BehaviorPanel()  # type: ignore[name-defined]
 
         # NotebookCodePanel — diary-themed code mode tab
-        from pharos_engine.ui.editor.notebook_code_panel import NotebookCodePanel
+        from pharos_editor.ui.editor.notebook_code_panel import NotebookCodePanel
         shell._code_mode_panel = NotebookCodePanel()
 
         # Build the DPG window layout
@@ -1059,7 +1059,7 @@ class Engine:
 
         Requires: pip install SlapPyEngine[editor]
         """
-        from pharos_engine.ui.project_manager import ProjectManager
+        from pharos_editor.ui.project_manager import ProjectManager
         pm = ProjectManager(engine=self)
         pm.show()
         return pm.selected_project

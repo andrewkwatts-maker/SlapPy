@@ -28,7 +28,7 @@ after WW4's round-24 ``view.toggle_axes`` / ``view.toggle_background`` /
   ``snap.increase_grid_size``, VV4's ``snap.set_grid_size``, UU4's
   ``snap.set_angle_snap``, RR1's ``snap.toggle_incremental``.
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up is exercised end-to-end. No DPG context — fixtures use
 :class:`SimpleNamespace` stand-ins for shell / scene / entity handles.
 """
@@ -38,7 +38,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,

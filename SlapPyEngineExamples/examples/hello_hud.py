@@ -150,13 +150,13 @@ def main(
 
     # Locate the widgets we want to drive each frame. The default set is
     # ordered [HealthBar, StaminaBar, AmmoCounter, Compass, Crosshair].
-    from pharos_engine.ui.runtime.hud_kit import (
+    from pharos_editor.ui.runtime.hud_kit import (
         AmmoCounter,
         Compass,
         HealthBar,
         StaminaBar,
     )
-    from pharos_engine.ui.runtime.hud_kit_extra import Crosshair
+    from pharos_editor.ui.runtime.hud_kit_extra import Crosshair
 
     health_bar: HealthBar = next(w for w in widgets if isinstance(w, HealthBar))
     stamina_bar: StaminaBar = next(w for w in widgets if isinstance(w, StaminaBar))

@@ -2,7 +2,7 @@
 
 Covers:
 
-* Every helper in :mod:`pharos_engine.editor.helpers` is importable,
+* Every helper in :mod:`pharos_editor.editor.helpers` is importable,
   carries a non-empty docstring, and (for spawn helpers) returns a
   handle with the requested initial state.
 * ``clear_scene`` empties the app; ``save_scene`` / ``load_scene``
@@ -171,31 +171,31 @@ EXPECTED_HELPERS = [
 
 class TestHelperSurface:
     def test_module_importable(self):
-        from pharos_engine.editor import helpers
+        from pharos_editor.editor import helpers
 
         assert helpers is not None
 
     def test_editor_package_importable(self):
-        import pharos_engine.editor as ed
+        import pharos_editor.editor as ed
 
         assert hasattr(ed, "helpers")
 
     def test_all_expected_helpers_exported(self):
-        from pharos_engine.editor import helpers
+        from pharos_editor.editor import helpers
 
         for name in EXPECTED_HELPERS:
             assert hasattr(helpers, name), f"missing helper: {name}"
             assert name in helpers.__all__, f"{name} not in __all__"
 
     def test_at_least_20_public_helpers(self):
-        from pharos_engine.editor import helpers
+        from pharos_editor.editor import helpers
 
         publics = [n for n in helpers.__all__ if not n.startswith("_")
                    and callable(getattr(helpers, n))]
         assert len(publics) >= 20, f"only {len(publics)} public helpers"
 
     def test_every_helper_has_docstring(self):
-        from pharos_engine.editor import helpers
+        from pharos_editor.editor import helpers
 
         for name in EXPECTED_HELPERS:
             fn = getattr(helpers, name)
@@ -211,7 +211,7 @@ class TestHelperSurface:
 class TestSpawning:
     def test_spawn_cube_returns_model_handle_with_position(self, fresh_app):
         from pharos_engine.app import ModelHandle
-        from pharos_engine.editor.helpers import spawn_cube
+        from pharos_editor.editor.helpers import spawn_cube
 
         h = spawn_cube(position=(1.0, 2.0, 3.0), size=2.0, app=fresh_app)
         assert isinstance(h, ModelHandle)
@@ -220,21 +220,21 @@ class TestSpawning:
         assert h in fresh_app.models
 
     def test_spawn_sphere_uses_radius_as_scale(self, fresh_app):
-        from pharos_engine.editor.helpers import spawn_sphere
+        from pharos_editor.editor.helpers import spawn_sphere
 
         h = spawn_sphere(position=(0.0, 5.0, 0.0), radius=0.25, app=fresh_app)
         assert h.position == (0.0, 5.0, 0.0)
         assert h.scale == (0.25, 0.25, 0.25)
 
     def test_spawn_plane_maps_size_to_xz(self, fresh_app):
-        from pharos_engine.editor.helpers import spawn_plane
+        from pharos_editor.editor.helpers import spawn_plane
 
         h = spawn_plane(size=(20.0, 30.0), app=fresh_app)
         assert h.scale == (20.0, 1.0, 30.0)
 
     def test_spawn_light_returns_light_handle(self, fresh_app):
         from pharos_engine.app import LightHandle
-        from pharos_engine.editor.helpers import spawn_light
+        from pharos_editor.editor.helpers import spawn_light
 
         h = spawn_light(
             position=(4.0, 4.0, 4.0), color=(1.0, 0.5, 0.0),
@@ -245,7 +245,7 @@ class TestSpawning:
         assert h in fresh_app.lights
 
     def test_set_camera_marks_active(self, fresh_app):
-        from pharos_engine.editor.helpers import set_camera
+        from pharos_editor.editor.helpers import set_camera
 
         cam = set_camera(position=(0.0, 0.0, 10.0), app=fresh_app)
         assert cam.position == (0.0, 0.0, 10.0)
@@ -259,28 +259,28 @@ class TestSpawning:
 
 class TestTransforms:
     def test_move_translates(self, fresh_app):
-        from pharos_engine.editor.helpers import move, spawn_cube
+        from pharos_editor.editor.helpers import move, spawn_cube
 
         h = spawn_cube(app=fresh_app)
         move(h, dx=1, dy=2, dz=3)
         assert h.position == (1.0, 2.0, 3.0)
 
     def test_rotate_adds(self, fresh_app):
-        from pharos_engine.editor.helpers import rotate, spawn_cube
+        from pharos_editor.editor.helpers import rotate, spawn_cube
 
         h = spawn_cube(app=fresh_app)
         rotate(h, ry=1.5)
         assert h.rotation == (0.0, 1.5, 0.0)
 
     def test_scale_multiplies(self, fresh_app):
-        from pharos_engine.editor.helpers import scale, spawn_cube
+        from pharos_editor.editor.helpers import scale, spawn_cube
 
         h = spawn_cube(size=2.0, app=fresh_app)
         scale(h, factor=3.0)
         assert h.scale == (6.0, 6.0, 6.0)
 
     def test_delete_removes_from_app(self, fresh_app):
-        from pharos_engine.editor.helpers import delete, spawn_cube
+        from pharos_editor.editor.helpers import delete, spawn_cube
 
         h = spawn_cube(app=fresh_app)
         assert h in fresh_app.models
@@ -288,7 +288,7 @@ class TestTransforms:
         assert h not in fresh_app.models
 
     def test_clear_scene_empties_everything(self, fresh_app):
-        from pharos_engine.editor.helpers import (
+        from pharos_editor.editor.helpers import (
             clear_scene, set_camera, spawn_cube, spawn_light,
         )
 
@@ -309,7 +309,7 @@ class TestTransforms:
 
 class TestSelection:
     def test_list_entities_returns_flat_list(self, fresh_app):
-        from pharos_engine.editor.helpers import (
+        from pharos_editor.editor.helpers import (
             list_entities, spawn_cube, spawn_light,
         )
 
@@ -319,14 +319,14 @@ class TestSelection:
         assert len(entities) == 2
 
     def test_select_finds_by_id(self, fresh_app):
-        from pharos_engine.editor.helpers import select, spawn_cube
+        from pharos_editor.editor.helpers import select, spawn_cube
 
         h = spawn_cube(app=fresh_app)
         found = select(h.id, app=fresh_app)
         assert found is h
 
     def test_select_none_on_miss(self, fresh_app):
-        from pharos_engine.editor.helpers import select
+        from pharos_editor.editor.helpers import select
 
         assert select(9999, app=fresh_app) is None
 
@@ -338,7 +338,7 @@ class TestSelection:
 
 class TestSceneIO:
     def test_save_and_load_scene_roundtrip(self, fresh_app, tmp_path):
-        from pharos_engine.editor.helpers import (
+        from pharos_editor.editor.helpers import (
             clear_scene, list_entities, load_scene,
             save_scene, spawn_cube, spawn_light,
         )
@@ -356,13 +356,13 @@ class TestSceneIO:
         assert len(entities) == 2
 
     def test_set_background_updates_config(self, fresh_app):
-        from pharos_engine.editor.helpers import set_background
+        from pharos_editor.editor.helpers import set_background
 
         set_background((0.2, 0.3, 0.4), app=fresh_app)
         assert fresh_app.config.clear_color[:3] == (0.2, 0.3, 0.4)
 
     def test_load_shader_reads_file(self, fresh_app, tmp_path):
-        from pharos_engine.editor.helpers import ShaderHandle, load_shader
+        from pharos_editor.editor.helpers import ShaderHandle, load_shader
 
         src = "@compute fn main() {}"
         p = tmp_path / "test.wgsl"
@@ -379,7 +379,7 @@ class TestSceneIO:
 
 class TestHelpCheatSheet:
     def test_help_returns_markdown_with_every_helper(self):
-        from pharos_engine.editor.helpers import help as helpers_help
+        from pharos_editor.editor.helpers import help as helpers_help
 
         text = helpers_help()
         assert isinstance(text, str)
@@ -397,7 +397,7 @@ class TestHelpCheatSheet:
 
 class TestREPLPanel:
     def test_panel_builds_under_dpg_stub(self, stub_dpg, fresh_app):
-        from pharos_engine.ui.editor.repl_panel import REPLPanel
+        from pharos_editor.ui.editor.repl_panel import REPLPanel
 
         panel = REPLPanel(app=fresh_app)
         panel.build(parent_tag="parent_container")
@@ -407,7 +407,7 @@ class TestREPLPanel:
         assert stub_dpg.calls.get("add_input_text")
 
     def test_submit_expression_returns_repr(self, fresh_app):
-        from pharos_engine.ui.editor.repl_panel import REPLPanel
+        from pharos_editor.ui.editor.repl_panel import REPLPanel
 
         panel = REPLPanel(app=fresh_app)
         out = panel.submit("1 + 1")
@@ -418,7 +418,7 @@ class TestREPLPanel:
         assert "result" in kinds
 
     def test_submit_statement_persists_binding(self, fresh_app):
-        from pharos_engine.ui.editor.repl_panel import REPLPanel
+        from pharos_editor.ui.editor.repl_panel import REPLPanel
 
         panel = REPLPanel(app=fresh_app)
         panel.submit("x = 42")
@@ -426,7 +426,7 @@ class TestREPLPanel:
         assert result == "42"
 
     def test_submit_traceback_captured(self, fresh_app):
-        from pharos_engine.ui.editor.repl_panel import REPLPanel
+        from pharos_editor.ui.editor.repl_panel import REPLPanel
 
         panel = REPLPanel(app=fresh_app)
         out = panel.submit('raise ValueError("test")')
@@ -438,7 +438,7 @@ class TestREPLPanel:
         assert "ValueError" in errors[-1]
 
     def test_history_navigation(self, fresh_app):
-        from pharos_engine.ui.editor.repl_panel import REPLPanel
+        from pharos_editor.ui.editor.repl_panel import REPLPanel
 
         panel = REPLPanel(app=fresh_app)
         panel.submit("a = 1")
@@ -454,7 +454,7 @@ class TestREPLPanel:
         assert panel.next() == ""  # back at the live line
 
     def test_tab_completion_on_helpers(self, fresh_app):
-        from pharos_engine.ui.editor.repl_panel import REPLPanel
+        from pharos_editor.ui.editor.repl_panel import REPLPanel
 
         panel = REPLPanel(app=fresh_app)
         # Force ns build so helpers are bound.
@@ -463,7 +463,7 @@ class TestREPLPanel:
         assert any("spawn_cube" in c for c in candidates)
 
     def test_tab_completion_top_level(self, fresh_app):
-        from pharos_engine.ui.editor.repl_panel import REPLPanel
+        from pharos_editor.ui.editor.repl_panel import REPLPanel
 
         panel = REPLPanel(app=fresh_app)
         panel._get_namespace()
@@ -471,7 +471,7 @@ class TestREPLPanel:
         assert any("spawn_cube" in c for c in candidates)
 
     def test_slash_help_command(self, fresh_app):
-        from pharos_engine.ui.editor.repl_panel import REPLPanel
+        from pharos_editor.ui.editor.repl_panel import REPLPanel
 
         panel = REPLPanel(app=fresh_app)
         panel.submit("/help")
@@ -480,7 +480,7 @@ class TestREPLPanel:
         assert any("Panel commands" in t for t in info_entries)
 
     def test_slash_clear_empties_output(self, fresh_app):
-        from pharos_engine.ui.editor.repl_panel import REPLPanel
+        from pharos_editor.ui.editor.repl_panel import REPLPanel
 
         panel = REPLPanel(app=fresh_app)
         panel.submit("1 + 1")
@@ -490,7 +490,7 @@ class TestREPLPanel:
         assert panel.output[0][0] == "info"
 
     def test_namespace_includes_app_and_helpers(self, fresh_app):
-        from pharos_engine.ui.editor.repl_panel import REPLPanel
+        from pharos_editor.ui.editor.repl_panel import REPLPanel
 
         panel = REPLPanel(app=fresh_app)
         ns = panel._get_namespace()
@@ -507,7 +507,7 @@ class TestREPLPanel:
 
 class TestREPLEndToEnd:
     def test_repl_can_spawn_cube_into_app(self, fresh_app):
-        from pharos_engine.ui.editor.repl_panel import REPLPanel
+        from pharos_editor.ui.editor.repl_panel import REPLPanel
 
         panel = REPLPanel(app=fresh_app)
         panel.submit("spawn_cube(position=(3, 0, 0))")

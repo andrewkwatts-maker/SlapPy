@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.ui.user_overrides`.
+"""Tests for :mod:`pharos_editor.ui.user_overrides`.
 
 Verifies the brief's contract:
 
@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from pharos_engine.ui.user_overrides import (
+from pharos_editor.ui.user_overrides import (
     UserOverrideBundle,
     UserOverrideLoader,
     _CONFIG_DEFAULTS,

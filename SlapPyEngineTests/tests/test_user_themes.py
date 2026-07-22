@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.ui.theme.user_themes`.
+"""Tests for :mod:`pharos_editor.ui.theme.user_themes`.
 
 The store exposes six responsibilities: bootstrap defaults, list baked
 themes, list user themes, load (user-wins), save, revert, and
@@ -13,9 +13,9 @@ from pathlib import Path
 
 import pytest
 
-from pharos_engine.ui.theme.themes import TEENGIRL_NOTEBOOK
-from pharos_engine.ui.theme.theme_spec import ThemeSpec
-from pharos_engine.ui.theme.user_themes import (
+from pharos_editor.ui.theme.themes import TEENGIRL_NOTEBOOK
+from pharos_editor.ui.theme.theme_spec import ThemeSpec
+from pharos_editor.ui.theme.user_themes import (
     UserThemeError,
     UserThemeStore,
     bake_default_themes,

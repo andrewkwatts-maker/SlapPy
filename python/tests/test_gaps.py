@@ -125,7 +125,7 @@ class TestRayMarchNode:
 
 class TestScrollView:
     def test_import(self):
-        from pharos_engine.ui.widgets import ScrollView
+        from pharos_editor.ui.widgets import ScrollView
         assert ScrollView is not None
 
     def test_import_from_engine(self):
@@ -133,12 +133,12 @@ class TestScrollView:
         assert ScrollView is not None
 
     def test_default_scroll_offset(self):
-        from pharos_engine.ui.widgets import ScrollView
+        from pharos_editor.ui.widgets import ScrollView
         sv = ScrollView(w=200, h=100)
         assert sv.scroll_offset == 0.0
 
     def test_scroll_by_positive(self):
-        from pharos_engine.ui.widgets import ScrollView, Label
+        from pharos_editor.ui.widgets import ScrollView, Label
         sv = ScrollView(w=200, h=100)
         # Add taller content than view
         for i in range(10):
@@ -147,13 +147,13 @@ class TestScrollView:
         assert sv.scroll_offset == 30.0
 
     def test_scroll_by_negative_clamps_to_zero(self):
-        from pharos_engine.ui.widgets import ScrollView
+        from pharos_editor.ui.widgets import ScrollView
         sv = ScrollView(w=200, h=100)
         sv.scroll_by(-999)
         assert sv.scroll_offset == 0.0
 
     def test_scroll_to(self):
-        from pharos_engine.ui.widgets import ScrollView, Label
+        from pharos_editor.ui.widgets import ScrollView, Label
         sv = ScrollView(w=200, h=100)
         for i in range(10):
             sv.add(Label(text=f"Item {i}", x=0, y=i*20, w=200, h=18))
@@ -161,12 +161,12 @@ class TestScrollView:
         assert sv.scroll_offset == 40.0
 
     def test_at_bottom_empty(self):
-        from pharos_engine.ui.widgets import ScrollView
+        from pharos_editor.ui.widgets import ScrollView
         sv = ScrollView(w=200, h=100)
         assert sv.at_bottom  # empty → no content to scroll
 
     def test_scroll_event_handled(self):
-        from pharos_engine.ui.widgets import ScrollView, Label
+        from pharos_editor.ui.widgets import ScrollView, Label
         sv = ScrollView(w=200, h=100, x=0, y=0, scroll_speed=20.0)
         for i in range(10):
             sv.add(Label(text=f"Item {i}", x=0, y=i*20, w=200, h=18))
@@ -174,24 +174,24 @@ class TestScrollView:
         assert sv.scroll_offset == 20.0
 
     def test_scroll_event_outside_not_handled(self):
-        from pharos_engine.ui.widgets import ScrollView
+        from pharos_editor.ui.widgets import ScrollView
         sv = ScrollView(w=200, h=100, x=0, y=0)
         consumed = sv.handle_event({"type": "scroll", "x": 300, "y": 300, "dy": -1})
         assert not consumed
         assert sv.scroll_offset == 0.0
 
     def test_is_panel_subclass(self):
-        from pharos_engine.ui.widgets import ScrollView, Panel
+        from pharos_editor.ui.widgets import ScrollView, Panel
         assert issubclass(ScrollView, Panel)
 
     def test_scroll_speed_configurable(self):
-        from pharos_engine.ui.widgets import ScrollView
+        from pharos_editor.ui.widgets import ScrollView
         sv = ScrollView(scroll_speed=50.0, w=200, h=100)
         assert sv.scroll_speed == 50.0
 
     def test_draw_does_not_raise(self):
         """Draw should silently succeed or skip without Pillow draw object."""
-        from pharos_engine.ui.widgets import ScrollView, Label
+        from pharos_editor.ui.widgets import ScrollView, Label
         sv = ScrollView(w=200, h=100)
         sv.add(Label(text="A", x=0, y=0, w=100, h=20))
         sv.draw(None)   # draw=None → try/except inside should swallow

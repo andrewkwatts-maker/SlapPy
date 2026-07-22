@@ -20,7 +20,7 @@ after RR1's round-19 ``edit.select_similar`` / ``theme.reset_to_default``
   ``spawn.spawn_batch_row`` (identical stride but no jitter, no
   ``_stamp_history`` slot) and ``spawn.repeat_last`` (single one-shot).
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up is exercised end-to-end. No DPG context — fixtures use
 :class:`SimpleNamespace` stand-ins for shell / browser handles.
 """
@@ -31,7 +31,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -142,7 +142,7 @@ class TestContentRevealInExplorer:
             launched.append(list(argv))
             return object()
 
-        import pharos_engine.actions.content_reveal_explorer_actions as mod
+        import pharos_editor.actions.content_reveal_explorer_actions as mod
         monkeypatch.setattr(mod.subprocess, "Popen", fake_popen)
 
         target = tmp_path / "hero.png"

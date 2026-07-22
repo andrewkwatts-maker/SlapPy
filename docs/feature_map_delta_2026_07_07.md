@@ -9,7 +9,7 @@ NN2's round-15 ``view.frame_selected`` / ``view.reset_view`` /
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_editor.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `layer.solo`              | `layer_solo_actions.solo_layer`               | layer |
 | `layer.merge_down`        | `layer_merge_down_actions.merge_down`         | layer |

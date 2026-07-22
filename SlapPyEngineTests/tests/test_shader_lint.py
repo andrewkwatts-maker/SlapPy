@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.ui.theme.shader_lint`.
+"""Tests for :mod:`pharos_editor.ui.theme.shader_lint`.
 
 Covers:
 
@@ -23,7 +23,7 @@ from typing import Iterable
 
 import pytest
 
-from pharos_engine.ui.theme.shader_lint import (
+from pharos_editor.ui.theme.shader_lint import (
     SHADER_CONTRACTS,
     WGSLLintError,
     WGSLLintResult,
@@ -41,7 +41,7 @@ from pharos_engine.ui.theme.shader_lint import (
 
 
 def _washi_sources() -> list[tuple[str, str, str]]:
-    from pharos_engine.ui.theme.washi_tape.library import WASHI_TAPES
+    from pharos_editor.ui.theme.washi_tape.library import WASHI_TAPES
 
     return [
         ("washi_tape", sid, style.wgsl_source)
@@ -50,7 +50,7 @@ def _washi_sources() -> list[tuple[str, str, str]]:
 
 
 def _lining_sources() -> list[tuple[str, str, str]]:
-    from pharos_engine.ui.theme.page_linings.library import PAGE_LININGS
+    from pharos_editor.ui.theme.page_linings.library import PAGE_LININGS
 
     return [
         ("page_linings", sid, style.source)
@@ -59,7 +59,7 @@ def _lining_sources() -> list[tuple[str, str, str]]:
 
 
 def _edge_stroke_sources() -> list[tuple[str, str, str]]:
-    from pharos_engine.ui.theme.edge_strokes.library import EDGE_STROKES
+    from pharos_editor.ui.theme.edge_strokes.library import EDGE_STROKES
 
     return [
         ("edge_strokes", sid, style.wgsl_source)

@@ -2,10 +2,10 @@
 
 Covers four panels:
 
-* :class:`pharos_engine.ui.editor.notebook_material_editor.NotebookMaterialEditor`
-* :class:`pharos_engine.ui.editor.notebook_theming_editor.NotebookThemingEditor`
-* :class:`pharos_engine.ui.editor.notebook_spawn_menu.NotebookSpawnMenu`
-* :class:`pharos_engine.ui.editor.notebook_diary_page.NotebookDiaryPage`
+* :class:`pharos_editor.ui.editor.notebook_material_editor.NotebookMaterialEditor`
+* :class:`pharos_editor.ui.editor.notebook_theming_editor.NotebookThemingEditor`
+* :class:`pharos_editor.ui.editor.notebook_spawn_menu.NotebookSpawnMenu`
+* :class:`pharos_editor.ui.editor.notebook_diary_page.NotebookDiaryPage`
 
 Silent-acceptance = a mutation method that returns a "success"-shaped
 value (``None``, ``True``, etc.) without actually doing anything (e.g.
@@ -174,8 +174,8 @@ def stub_dpg(monkeypatch):
 def clear_notebook_theme():
     """Reset notebook widget theme listeners between tests."""
     try:
-        from pharos_engine.ui.widgets import notebook_theme
-        from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+        from pharos_editor.ui.widgets import notebook_theme
+        from pharos_editor.ui.widgets.notebook_theme import set_active_theme
 
         set_active_theme(None)
         notebook_theme._theme_listeners.clear()
@@ -215,7 +215,7 @@ class _StubFluidMaterial:
 
 class TestNotebookMaterialEditorHardening:
     def _make(self, target: Any = None):
-        from pharos_engine.ui.editor.notebook_material_editor import (
+        from pharos_editor.ui.editor.notebook_material_editor import (
             NotebookMaterialEditor,
         )
         return NotebookMaterialEditor(target=target)
@@ -305,7 +305,7 @@ class _StubStore:
 
 class TestNotebookThemingEditorHardening:
     def _make(self, store: Any = None):
-        from pharos_engine.ui.editor.notebook_theming_editor import (
+        from pharos_editor.ui.editor.notebook_theming_editor import (
             NotebookThemingEditor,
         )
         return NotebookThemingEditor(theme_store=store)
@@ -428,7 +428,7 @@ class TestNotebookThemingEditorHardening:
 
 class TestNotebookSpawnMenuHardening:
     def _make(self, on_spawn=None):
-        from pharos_engine.ui.editor.notebook_spawn_menu import (
+        from pharos_editor.ui.editor.notebook_spawn_menu import (
             NotebookSpawnMenu,
         )
         return NotebookSpawnMenu(
@@ -557,7 +557,7 @@ class TestNotebookSpawnMenuHardening:
 
 class TestNotebookDiaryPageHardening:
     def _make(self):
-        from pharos_engine.ui.editor.notebook_diary_page import (
+        from pharos_editor.ui.editor.notebook_diary_page import (
             NotebookDiaryPage,
         )
         return NotebookDiaryPage()
@@ -625,7 +625,7 @@ class TestNotebookDiaryPageHardening:
     def test_run_script_studio_missing_returns_false(self, monkeypatch, caplog):
         page = self._make()
         # Force _try_import_studio to return None.
-        import pharos_engine.ui.editor.notebook_diary_page as mod
+        import pharos_editor.ui.editor.notebook_diary_page as mod
 
         monkeypatch.setattr(mod, "_try_import_studio", lambda: None)
         with caplog.at_level(logging.WARNING):

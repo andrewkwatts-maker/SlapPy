@@ -25,14 +25,14 @@ from pharos_engine.hud_bridge import (
     mount_hud,
     unmount_hud,
 )
-from pharos_engine.ui.runtime.hud_kit import (
+from pharos_editor.ui.runtime.hud_kit import (
     AmmoCounter,
     Compass,
     HealthBar,
     StaminaBar,
 )
-from pharos_engine.ui.runtime.hud_kit_extra import Crosshair
-from pharos_engine.ui.runtime.hud_overlay import HUDOverlay
+from pharos_editor.ui.runtime.hud_kit_extra import Crosshair
+from pharos_editor.ui.runtime.hud_overlay import HUDOverlay
 
 
 # ---------------------------------------------------------------------------

@@ -353,7 +353,7 @@ class TestAsyncImportQueueStats:
 
 class TestAssetImportPanelIntegration:
     def test_tick_drains_async_completions_into_cards(self, tmp_path, cache_root):
-        from pharos_engine.ui.editor.asset_import_panel import AssetImportPanel
+        from pharos_editor.ui.editor.asset_import_panel import AssetImportPanel
 
         cache = ThumbnailCache(cache_root)
         queue = AsyncImportQueue(max_workers=2, router=_fake_router)
@@ -385,7 +385,7 @@ class TestAssetImportPanelIntegration:
             panel.shutdown()
 
     def test_panel_cache_stats_expose_public_shape(self, tmp_path, cache_root):
-        from pharos_engine.ui.editor.asset_import_panel import AssetImportPanel
+        from pharos_editor.ui.editor.asset_import_panel import AssetImportPanel
 
         cache = ThumbnailCache(cache_root)
         queue = AsyncImportQueue(max_workers=1, router=_fake_router)

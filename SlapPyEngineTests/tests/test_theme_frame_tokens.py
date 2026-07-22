@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 
 try:
-    from pharos_engine.ui.theme import (
+    from pharos_editor.ui.theme import (
         Color,
         FrameStyle,
         PanelFrameSet,
@@ -21,12 +21,12 @@ try:
         apply_theme_to_dpg,
         register_theme,
     )
-    from pharos_engine.ui.theme import _reset_registry_for_tests
-    from pharos_engine.ui.theme.dpg_bridge import (
+    from pharos_editor.ui.theme import _reset_registry_for_tests
+    from pharos_editor.ui.theme.dpg_bridge import (
         get_last_dpg_payload,
         _reset_last_dpg_payload_for_tests,
     )
-    from pharos_engine.ui.theme.themes import (
+    from pharos_editor.ui.theme.themes import (
         BULLET_JOURNAL,
         COTTAGECORE_GARDEN,
         COZY_DIARY,
@@ -37,7 +37,7 @@ try:
     )
 except Exception as e:  # pragma: no cover - skip if subpackage missing
     pytest.skip(
-        f"pharos_engine.ui.theme frame tokens not importable: {e}",
+        f"pharos_editor.ui.theme frame tokens not importable: {e}",
         allow_module_level=True,
     )
 
@@ -398,7 +398,7 @@ def test_theme_switch_picks_up_new_border_color():
     assert bj is not None
     bj_border = bj["colors"][bj["color_tags"].__iter__().__next__()]  # noqa
     # Re-fetch by key to be deterministic — pull WindowBg colour.
-    from pharos_engine.ui.theme.dpg_bridge import _DPG
+    from pharos_editor.ui.theme.dpg_bridge import _DPG
     bj_wnd_bg = bj["colors"][_DPG.mvThemeCol_WindowBg]
     apply_theme("kawaii_planner")
     kp = get_last_dpg_payload()

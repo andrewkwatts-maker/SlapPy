@@ -41,7 +41,11 @@ Issues = "https://github.com/andrewkwatts-maker/SlapPyEngine/issues"
 [project.optional-dependencies]
 # Notebook / diary editor UI stack — DearPyGui-based panels + gizmos,
 # pywebview-based project-manager splash, arithma expression editor.
-editor = ["dearpygui>=1.11", "pywebview>=4.0", "arithma>=2.0.2"]
+#
+# As of v0.3.0b1 the editor ships as a separate PyPI wheel
+# (``pharos-editor``) so headless / build-tool / server deployments do
+# not pay the ~15MB DearPyGui cost. This extra just pulls that wheel.
+editor = ["pharos-editor==0.3.0b1"]
 # 3D asset import — glTF 2.0 + Wavefront OBJ + STL/PLY (trimesh) +
 # HDR/EXR/DDS textures (imageio). Pillow is already a core dep and
 # covers PNG/JPEG/WebP/TGA out of the box.
@@ -129,16 +133,14 @@ features = ["pyo3/extension-module"]
 # Non-Python package data that must ship inside the wheel. Maturin auto-
 # includes ``*.py`` files under ``python-source`` but skips other file
 # types unless they are named here. The baked diary themes are
-# copied on first launch by ``pharos_engine.ui.theme.user_themes``.
+# copied on first launch by ``pharos_editor.ui.theme.user_themes``.
 include = [
-    "python/pharos_engine/ui/theme/themes/_baked/*.theme.yaml",
+    # Engine-side baked assets. Editor-side baked assets (themes,
+    # hotkeys, layouts, plugin_samples) ship in the pharos-editor wheel
+    # via its own setuptools package-data config.
     "python/pharos_engine/prefabs/baked/*.prefab.yaml",
     "python/pharos_engine/prefabs/baked/previews/*.png",
     "python/pharos_engine/post_process/baked_chains/*.chain.yaml",
-    "python/pharos_engine/ui/hotkeys/baked/*.yaml",
-    "python/pharos_engine/ui/editor/baked_layouts/*.layout.yaml",
-    "python/pharos_engine/ui/plugin_samples/**/*.py",
-    "python/pharos_engine/ui/plugin_samples/**/*.yaml",
 ]
 # Strip debug symbols from the compiled _core extension to shrink wheel size.
 # Combined with [profile.release] strip = true in Cargo.toml, this drops the
@@ -168,6 +170,10 @@ exclude = [
     "**/.pytest_cache",
     "**/.mypy_cache",
     "**/.ruff_cache",
+    # pharos-editor is its own PyPI wheel; never bundle it into
+    # pharos-engine (split-package invariant, Sprint 2 landing).
+    "python/pharos_editor",
+    "python/pharos_editor/**",
     # Inner test subpackages — explicit paths because `**/tests` alone
     # didn't catch them through maturin's globbing.
     "python/pharos_engine/tests",

@@ -81,7 +81,7 @@ class JointSpec:
 # ---------------------------------------------------------------------------
 
 try:
-    from pharos_engine.ui.editor.property_inspector import PropertyInspector
+    from pharos_editor.ui.editor.property_inspector import PropertyInspector
 except Exception as _err:  # pragma: no cover
     pytest.skip(
         f"PropertyInspector not importable: {_err}",
@@ -117,7 +117,7 @@ class TestPropertyInspectorDataclass:
 
     def test_every_field_categorises_into_a_widget_section(self):
         """Each field falls into transform / primitive / complex — none lost."""
-        from pharos_engine.ui.editor.property_inspector import (
+        from pharos_editor.ui.editor.property_inspector import (
             TRANSFORM_FIELDS, _is_engine_object, _is_primitive,
         )
 
@@ -148,7 +148,7 @@ class TestPropertyInspectorDataclass:
 
     def test_dataclass_with_primitive_widget_field_dispatch(self):
         """Spot-check that a primitive field would route to _render_field."""
-        from pharos_engine.ui.editor.property_inspector import _is_primitive
+        from pharos_editor.ui.editor.property_inspector import _is_primitive
 
         spec = JointSpec(stiffness=2.5e8, damping=0.5)
         assert _is_primitive(spec.kind)        # str

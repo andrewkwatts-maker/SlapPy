@@ -25,7 +25,7 @@ after SS1's round-20 ``content.reveal_in_explorer`` /
   (distinct from PP1's ``edit.rename`` which renames entities + FF1's
   ``content.rename_asset`` which renames files on disk).
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up is exercised end-to-end. No DPG context — fixtures use
 :class:`SimpleNamespace` stand-ins for shell / viewport handles.
 """
@@ -36,7 +36,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -392,8 +392,8 @@ class TestThemeReloadFromDisk:
     def test_reloads_yaml_and_registers(
         self, router: ToolRouter, tmp_path: Path,
     ) -> None:
-        pytest.importorskip("pharos_engine.ui.theme")
-        from pharos_engine.ui.theme import (
+        pytest.importorskip("pharos_editor.ui.theme")
+        from pharos_editor.ui.theme import (
             ThemeSpec,
             list_registered_themes,
         )

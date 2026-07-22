@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# pharos_engine.ui.theme — API Reference
+# pharos_editor.ui.theme — API Reference
 
 > Hand-written reference for the **PRIMITIVE infrastructure** that any
 > SlapPyEngine UI theme builds on. Owns the nine-slice texture renderer,
@@ -32,7 +32,7 @@ everything at runtime.
 ## Public surface
 
 ```python
-from pharos_engine.ui.theme import (
+from pharos_editor.ui.theme import (
     # data classes
     Color, Font, Gradient, NineSlice, Palette, ShaderEffect, SVGIcon,
     SemanticTokens, SpacingScale, RadiusScale, TransitionScale, ZIndexScale,
@@ -54,7 +54,7 @@ validation through the shared ``pharos_engine._validation`` helpers per
 
 ### `Color`
 
-_dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
+_dataclass — defined in `pharos_editor.ui.theme.theme_spec`_
 
 An sRGB colour with 8-bit per-channel `r`/`g`/`b` (`[0, 255]`) plus a
 unit-float alpha (`[0.0, 1.0]`). Two accessors:
@@ -65,7 +65,7 @@ unit-float alpha (`[0.0, 1.0]`). Two accessors:
 
 ### `Palette`
 
-_dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
+_dataclass — defined in `pharos_editor.ui.theme.theme_spec`_
 
 A named bag of `Color` entries keyed by semantic role
 (`"primary"`, `"surface"`, `"accent"`, …). Validation refuses
@@ -74,14 +74,14 @@ rather than at render time.
 
 ### `Font`
 
-_frozen dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
+_frozen dataclass — defined in `pharos_editor.ui.theme.theme_spec`_
 
 A `(family, size, weight)` record. No rasterisation is implied — fonts
 are *named* and resolved by the host renderer.
 
 ### `NineSlice`
 
-_dataclass — defined in `pharos_engine.ui.theme.nine_slice`_
+_dataclass — defined in `pharos_editor.ui.theme.nine_slice`_
 
 Nine-slice texture renderer.
 
@@ -110,7 +110,7 @@ deserialise if needed.
 
 ### `SVGIcon`
 
-_dataclass — defined in `pharos_engine.ui.theme.svg_icon`_
+_dataclass — defined in `pharos_editor.ui.theme.svg_icon`_
 
 Minimal SVG rasteriser. Parses a useful subset of SVG without pulling
 in `cairosvg` / `pyrsvg` / a Qt runtime:
@@ -138,11 +138,11 @@ Colour parsing covers `#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb(r,g,b)`,
   not installed.
 
 Texture cache is shared module-globally; call
-`pharos_engine.ui.theme.svg_icon.clear_cache()` between tests.
+`pharos_editor.ui.theme.svg_icon.clear_cache()` between tests.
 
 ### `ShaderEffect`
 
-_dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
+_dataclass — defined in `pharos_editor.ui.theme.theme_spec`_
 
 A *named* procedural-texture recipe: an effect name + a kwargs bag.
 Pure data — the registry-side dispatcher (typically one of the helpers
@@ -150,7 +150,7 @@ in `shader_effects`) resolves the name to a generator.
 
 ### `Gradient`
 
-_frozen dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
+_frozen dataclass — defined in `pharos_editor.ui.theme.theme_spec`_
 
 A two-stop linear gradient (`start: Color`, `end: Color`, `angle_deg:
 float = 135.0`). `135°` matches the EyesOfAzrael `--theme-gradient`
@@ -162,7 +162,7 @@ convention (top-left to bottom-right sweep).
 
 ### `SemanticTokens`
 
-_dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
+_dataclass — defined in `pharos_editor.ui.theme.theme_spec`_
 
 A **named contract** above the raw palette. Widget code should read
 from this layer so swapping themes only requires rebinding the token
@@ -196,7 +196,7 @@ class SemanticTokens:
 
 ### `SpacingScale`
 
-_frozen dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
+_frozen dataclass — defined in `pharos_editor.ui.theme.theme_spec`_
 
 Six-step spacing scale in DPG pixels: `xs=4`, `sm=8`, `md=16`, `lg=24`,
 `xl=32`, `xxl=48`. Each field must be a non-negative finite number.
@@ -204,7 +204,7 @@ Tracks EyesOfAzrael's `--spacing-*` token family.
 
 ### `RadiusScale`
 
-_frozen dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
+_frozen dataclass — defined in `pharos_editor.ui.theme.theme_spec`_
 
 Five-step border-radius scale in DPG pixels: `sm=4`, `md=8`, `lg=12`,
 `xl=16`, `pill=999`. `pill` is intentionally over-sized so it can be
@@ -212,7 +212,7 @@ applied directly as `border-radius: 9999px`-style "fully rounded".
 
 ### `TransitionScale`
 
-_frozen dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
+_frozen dataclass — defined in `pharos_editor.ui.theme.theme_spec`_
 
 Three-step transition-duration scale in seconds: `fast=0.15`,
 `normal=0.25`, `slow=0.5`. Each field must be a *positive* finite
@@ -220,7 +220,7 @@ number (a zero-duration transition is rejected).
 
 ### `ZIndexScale`
 
-_frozen dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
+_frozen dataclass — defined in `pharos_editor.ui.theme.theme_spec`_
 
 Four-tier z-index scale: `base=1`, `dropdown=100`, `modal=1000`,
 `toast=2000`. Tiers must rise monotonically; a typo that would push a
@@ -228,7 +228,7 @@ toast under a modal raises `ValueError` at construction.
 
 ### `ThemeSpec`
 
-_dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
+_dataclass — defined in `pharos_editor.ui.theme.theme_spec`_
 
 The top-level declarative theme:
 
@@ -360,15 +360,15 @@ given `opacity`, and blends them additively over a transparent canvas.
 ## Starter themes
 
 The concrete theme content built on the primitives ships in the
-`pharos_engine.ui.theme.themes` subpackage. **Six** `ThemeSpec` constants
+`pharos_editor.ui.theme.themes` subpackage. **Six** `ThemeSpec` constants
 demonstrate the full diary-family contract documented under
 [`docs/theme_diary_family_2026_06_03.md`](../theme_diary_family_2026_06_03.md)
 and the base brief at
 [`docs/theme_teengirl_notebook_2026_06_03.md`](../theme_teengirl_notebook_2026_06_03.md).
 
 ```python
-from pharos_engine.ui.theme import apply_theme
-from pharos_engine.ui.theme.themes import (
+from pharos_editor.ui.theme import apply_theme
+from pharos_editor.ui.theme.themes import (
     # The three original starters (Phase A + B):
     BULLET_JOURNAL, COZY_DIARY, TEENGIRL_NOTEBOOK,
     # The three v0.4 Phase C extended variants:
@@ -410,33 +410,33 @@ want YAML can dump on demand:
 
 ```python
 from pathlib import Path
-from pharos_engine.ui.theme.themes import TEENGIRL_NOTEBOOK
+from pharos_editor.ui.theme.themes import TEENGIRL_NOTEBOOK
 Path("teengirl_notebook.yml").write_text(TEENGIRL_NOTEBOOK.to_yaml())
 ```
 
 ## Inner modules
 
-- `pharos_engine.ui.theme.theme_spec` — `Color`, `Font`, `Gradient`,
+- `pharos_editor.ui.theme.theme_spec` — `Color`, `Font`, `Gradient`,
   `Palette`, `SemanticTokens`, `SpacingScale`, `RadiusScale`,
   `TransitionScale`, `ZIndexScale`, `ShaderEffect`, `ThemeSpec`
   dataclasses + YAML round-trip.
-- `pharos_engine.ui.theme.nine_slice` — image-backed +
+- `pharos_editor.ui.theme.nine_slice` — image-backed +
   procedural nine-slice renderer.
-- `pharos_engine.ui.theme.svg_icon` — SVG parser, rasteriser,
+- `pharos_editor.ui.theme.svg_icon` — SVG parser, rasteriser,
   DPG texture bridge, module-global rasterised-texture cache.
-- `pharos_engine.ui.theme.shader_effects` — pure-numpy procedural
+- `pharos_editor.ui.theme.shader_effects` — pure-numpy procedural
   texture helpers (`ruled_paper`, `highlighter_stroke`,
   `paper_shadow`, `noise_glitter`, `glass_blur`, `frosted_panel`,
   `dot_grid`, `parchment`, `watercolor_wash`).
-- `pharos_engine.ui.theme.themes` — six diary-family `ThemeSpec`
+- `pharos_editor.ui.theme.themes` — six diary-family `ThemeSpec`
   constants (`TEENGIRL_NOTEBOOK`, `COZY_DIARY`, `BULLET_JOURNAL`,
   `SCRAPBOOK_SUMMER`, `COTTAGECORE_GARDEN`, `KAWAII_PLANNER`) +
   `register_all_themes()` / `register_starter_themes()`.
 
 ## Conventions
 
-- **Lazy import.** The parent `pharos_engine.ui` package resolves
-  `theme` through its `__getattr__` so importing `pharos_engine.ui`
+- **Lazy import.** The parent `pharos_editor.ui` package resolves
+  `theme` through its `__getattr__` so importing `pharos_editor.ui`
   alone does not eagerly load this subpackage.
 - **Validation.** Every public boundary calls the shared
   `pharos_engine._validation` helpers per `CONTRIBUTING.md` — no
@@ -451,7 +451,7 @@ Path("teengirl_notebook.yml").write_text(TEENGIRL_NOTEBOOK.to_yaml())
 
 ## Creatures
 
-The optional `pharos_engine.ui.theme.creatures` subpackage layers the
+The optional `pharos_editor.ui.theme.creatures` subpackage layers the
 **woodland-creature animation system** on top of the primitives above.
 A theme may register zero or more `Creature` records and the
 `CreatureScheduler` drives their per-frame state machine — idle
@@ -467,7 +467,7 @@ drawlist handle, the test suite passes a recording mock.
 ### Public surface
 
 ```python
-from pharos_engine.ui.theme.creatures import (
+from pharos_editor.ui.theme.creatures import (
     AnimationCurve, Keyframe,
     Creature, DrawList, RenderFn,
     CreatureScheduler,
@@ -475,7 +475,7 @@ from pharos_engine.ui.theme.creatures import (
     # module-level singleton wrappers
     register_creature, trigger, tick, set_enabled, set_reduced_motion,
 )
-from pharos_engine.ui.theme.creatures.builtin import (
+from pharos_editor.ui.theme.creatures.builtin import (
     register_builtins,
     fox_01, fox_01_slot,
     butterfly_01, butterfly_01_slot,
@@ -592,7 +592,7 @@ catalog's slot-assignment table (toolbar / status bar / panel corner).
 
 ## Event bindings
 
-The `pharos_engine.ui.theme.creatures` subpackage wires engine events to
+The `pharos_editor.ui.theme.creatures` subpackage wires engine events to
 woodland-creature animations. The integration is opt-in — instantiate
 :class:`CreatureBusAdapter` against a scheduler + bus, call
 :meth:`install`, and engine events start lighting up creatures.
@@ -600,7 +600,7 @@ woodland-creature animations. The integration is opt-in — instantiate
 ### Public surface
 
 ```python
-from pharos_engine.ui.theme.creatures import (
+from pharos_editor.ui.theme.creatures import (
     CreatureBusAdapter,
     EVENT_TO_CREATURE_ANIMS,
     IdleEventEmitter,

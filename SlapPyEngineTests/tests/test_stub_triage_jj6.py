@@ -14,7 +14,7 @@ Covers the five new action ids added by the 2026-07-05 JJ6 sprint tick
   entity whose ``kind`` matches the reference selection (or an explicit
   ``ctx["kind"]``).
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up (``action_id`` -> Python fallback) is exercised
 end-to-end. No DPG context is required — the fixtures use
 :class:`SimpleNamespace` stand-ins for shell / scene handles.
@@ -26,7 +26,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -430,29 +430,29 @@ class TestCtxValidation:
     """Silent-acceptance guard — every JJ6 helper rejects None ctx."""
 
     def test_hide_selection_rejects_none_ctx(self) -> None:
-        from pharos_engine.actions.edit_hide_show_actions import hide_selection
+        from pharos_editor.actions.edit_hide_show_actions import hide_selection
         with pytest.raises(TypeError):
             hide_selection(None)  # type: ignore[arg-type]
 
     def test_show_all_rejects_list_ctx(self) -> None:
-        from pharos_engine.actions.edit_hide_show_actions import show_all
+        from pharos_editor.actions.edit_hide_show_actions import show_all
         with pytest.raises(TypeError):
             show_all([])  # type: ignore[arg-type]
 
     def test_lock_selection_rejects_none_ctx(self) -> None:
-        from pharos_engine.actions.edit_lock_unlock_actions import (
+        from pharos_editor.actions.edit_lock_unlock_actions import (
             lock_selection,
         )
         with pytest.raises(TypeError):
             lock_selection(None)  # type: ignore[arg-type]
 
     def test_unlock_all_rejects_list_ctx(self) -> None:
-        from pharos_engine.actions.edit_lock_unlock_actions import unlock_all
+        from pharos_editor.actions.edit_lock_unlock_actions import unlock_all
         with pytest.raises(TypeError):
             unlock_all([])  # type: ignore[arg-type]
 
     def test_select_by_prefab_kind_rejects_none_ctx(self) -> None:
-        from pharos_engine.actions.edit_select_by_kind_actions import (
+        from pharos_editor.actions.edit_select_by_kind_actions import (
             select_by_prefab_kind,
         )
         with pytest.raises(TypeError):

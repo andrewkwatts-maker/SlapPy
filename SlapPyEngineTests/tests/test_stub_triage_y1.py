@@ -12,7 +12,7 @@ Covers the five new action ids added by the 2026-07-04 Y1 sprint tick
 * ``theme.cycle`` — rotate to the next registered theme via the shell
   hook or the headless-safe registry cursor.
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up (``action_id`` → Python fallback) is exercised end-to-end.
 Filesystem side effects — where present — use :func:`pathlib.Path` +
 ``tmp_path``; no DPG context is required so the suite is headless.
@@ -25,7 +25,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -48,10 +48,10 @@ def router() -> ToolRouter:
 @pytest.fixture(autouse=True)
 def _reset_clipboard_and_cursor() -> None:
     """Drop the process-wide clipboard + theme cursor before each test."""
-    from pharos_engine.ui.editor.entity_clipboard import (
+    from pharos_editor.ui.editor.entity_clipboard import (
         reset_active_clipboard,
     )
-    from pharos_engine.actions.theme_actions import (
+    from pharos_editor.actions.theme_actions import (
         _reset_theme_cursor_for_tests,
     )
     reset_active_clipboard()
@@ -215,7 +215,7 @@ def test_copy_selection_no_selection_returns_status(router: ToolRouter) -> None:
 
 
 def test_copy_selection_from_explicit_ctx(router: ToolRouter) -> None:
-    from pharos_engine.ui.editor.entity_clipboard import get_active_clipboard
+    from pharos_editor.ui.editor.entity_clipboard import get_active_clipboard
 
     ent = _MockEntity(name="explicit")
     result = router.dispatch(
@@ -228,7 +228,7 @@ def test_copy_selection_from_explicit_ctx(router: ToolRouter) -> None:
 
 
 def test_copy_selection_reads_shell_selected_entity(router: ToolRouter) -> None:
-    from pharos_engine.ui.editor.entity_clipboard import get_active_clipboard
+    from pharos_editor.ui.editor.entity_clipboard import get_active_clipboard
 
     ent = _MockEntity(name="from_shell_single")
     shell = SimpleNamespace(
@@ -242,7 +242,7 @@ def test_copy_selection_reads_shell_selected_entity(router: ToolRouter) -> None:
 
 
 def test_copy_selection_multi_select_from_shell(router: ToolRouter) -> None:
-    from pharos_engine.ui.editor.entity_clipboard import get_active_clipboard
+    from pharos_editor.ui.editor.entity_clipboard import get_active_clipboard
 
     ents = [_MockEntity(name="a"), _MockEntity(name="b")]
     shell = SimpleNamespace(
@@ -256,7 +256,7 @@ def test_copy_selection_multi_select_from_shell(router: ToolRouter) -> None:
 
 def test_copy_selection_does_not_auto_paste(router: ToolRouter) -> None:
     """Unlike duplicate_selection, copy must not paste anything."""
-    from pharos_engine.ui.editor.entity_clipboard import get_active_clipboard
+    from pharos_editor.ui.editor.entity_clipboard import get_active_clipboard
 
     ent = _MockEntity(name="lonely")
     router.dispatch("editor.copy_selection", {"selection": ent})
@@ -316,7 +316,7 @@ def test_paste_selection_custom_suffix(router: ToolRouter) -> None:
 def test_paste_selection_bumps_clipboard_last_action(
     router: ToolRouter,
 ) -> None:
-    from pharos_engine.ui.editor.entity_clipboard import get_active_clipboard
+    from pharos_editor.ui.editor.entity_clipboard import get_active_clipboard
 
     ent = _MockEntity(name="bump_check")
     router.dispatch("editor.copy_selection", {"selection": ent})

@@ -227,7 +227,7 @@ class TestAssetDatabaseWatch:
 
 class TestDebugOverlayInit:
     def _d(self):
-        from pharos_engine.ui.debug_overlay import DebugOverlay
+        from pharos_editor.ui.debug_overlay import DebugOverlay
         return DebugOverlay()
 
     def test_instantiates(self):
@@ -254,7 +254,7 @@ class TestDebugOverlayInit:
 
 class TestDebugOverlayToggles:
     def _d(self):
-        from pharos_engine.ui.debug_overlay import DebugOverlay
+        from pharos_editor.ui.debug_overlay import DebugOverlay
         return DebugOverlay()
 
     def test_toggle_events_on(self):
@@ -302,7 +302,7 @@ class TestDebugOverlayToggles:
 
 class TestDebugOverlayReportPass:
     def _d(self):
-        from pharos_engine.ui.debug_overlay import DebugOverlay
+        from pharos_editor.ui.debug_overlay import DebugOverlay
         return DebugOverlay()
 
     def test_report_skipping(self):
@@ -330,7 +330,7 @@ class TestDebugOverlayReportPass:
 
 class TestDebugOverlayHeatmap:
     def _d(self):
-        from pharos_engine.ui.debug_overlay import DebugOverlay
+        from pharos_editor.ui.debug_overlay import DebugOverlay
         d = DebugOverlay()
         d.toggle_heatmap()  # must be enabled for record_attr_publish to track
         return d
@@ -362,7 +362,7 @@ class TestDebugOverlayHeatmap:
 
 class TestDebugOverlayRender:
     def _d(self):
-        from pharos_engine.ui.debug_overlay import DebugOverlay
+        from pharos_editor.ui.debug_overlay import DebugOverlay
         return DebugOverlay()
 
     def test_render_none_when_all_hidden(self):
@@ -393,7 +393,7 @@ class TestDebugOverlayRender:
         self._d().begin_frame()  # should not raise
 
     def test_constants_defined(self):
-        from pharos_engine.ui.debug_overlay import DebugOverlay
+        from pharos_editor.ui.debug_overlay import DebugOverlay
         assert DebugOverlay.MAX_EVENTS > 0
         assert DebugOverlay.FONT_SIZE > 0
         assert DebugOverlay.LINE_H > 0

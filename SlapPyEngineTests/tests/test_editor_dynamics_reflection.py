@@ -67,7 +67,7 @@ def stub_dearpygui(monkeypatch):
 # ---------------------------------------------------------------------------
 
 try:
-    from pharos_engine.ui.editor.property_inspector import (
+    from pharos_editor.ui.editor.property_inspector import (
         PropertyInspector,
         _is_engine_object,
         _is_list_of_int,

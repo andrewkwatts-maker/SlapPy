@@ -402,7 +402,7 @@ def test_instrument_module_rejects_non_module():
 
 def test_payload_keys_match_dashboard_sniff():
     """Assert every emitted payload carries a key DD4 sniffs for."""
-    from pharos_engine.ui.editor.notebook_telemetry_dashboard import (
+    from pharos_editor.ui.editor.notebook_telemetry_dashboard import (
         _classify_event,
     )
     sink = TelemetrySink("panel")

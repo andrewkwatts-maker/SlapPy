@@ -16,20 +16,20 @@ import numpy as np
 import pytest
 
 from pharos_engine.render.camera import Camera2D, Camera3D
-from pharos_engine.ui.runtime.draw_command import DrawCommand
-from pharos_engine.ui.runtime.hud_kit import HealthBar, StaminaBar, Toast
-from pharos_engine.ui.runtime.hud_kit_extra import (
+from pharos_editor.ui.runtime.draw_command import DrawCommand
+from pharos_editor.ui.runtime.hud_kit import HealthBar, StaminaBar, Toast
+from pharos_editor.ui.runtime.hud_kit_extra import (
     Crosshair,
     ObjectiveMarker,
     ScoreCounter,
 )
-from pharos_engine.ui.runtime.hud_overlay import (
+from pharos_editor.ui.runtime.hud_overlay import (
     HUDOverlay,
     SpriteSubmission,
     hud_command_to_sprite,
     hud_command_to_text,
 )
-from pharos_engine.ui.runtime.hud_registry import HUDRegistry
+from pharos_editor.ui.runtime.hud_registry import HUDRegistry
 
 
 # ---------------------------------------------------------------------------

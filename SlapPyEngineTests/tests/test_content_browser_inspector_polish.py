@@ -225,7 +225,7 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def reset_project_context():
     """Reset the module-level project banner override between tests."""
-    from pharos_engine.ui.editor import notebook_inspector
+    from pharos_editor.ui.editor import notebook_inspector
 
     notebook_inspector.set_project_context(None)
     yield
@@ -248,7 +248,7 @@ class TestContentBrowserTruncation:
         raise, and the label passed to ``add_selectable`` must be
         shorter than the folder name.
         """
-        from pharos_engine.ui.editor.content_browser import ContentBrowser
+        from pharos_editor.ui.editor.content_browser import ContentBrowser
 
         long_name = "temp_" + "x" * 95   # 100 chars total
         deep = tmp_path / long_name
@@ -273,7 +273,7 @@ class TestContentBrowserTruncation:
 
     def test_long_folder_name_gets_tooltip(self, tmp_path, stub_dpg):
         """When we truncate, we must attach a tooltip with the full name."""
-        from pharos_engine.ui.editor.content_browser import ContentBrowser
+        from pharos_editor.ui.editor.content_browser import ContentBrowser
 
         long_name = "temp_20260719_" + "0" * 90  # >>_TREE_LABEL_MAX_CHARS
         (tmp_path / long_name).mkdir()
@@ -295,7 +295,7 @@ class TestContentBrowserTruncation:
 
     def test_short_folder_name_no_tooltip(self, tmp_path, stub_dpg):
         """Short names should NOT trigger the tooltip cost."""
-        from pharos_engine.ui.editor.content_browser import ContentBrowser
+        from pharos_editor.ui.editor.content_browser import ContentBrowser
 
         (tmp_path / "short").mkdir()
         cb = ContentBrowser(root_path=tmp_path)
@@ -315,7 +315,7 @@ class TestContentBrowserTruncation:
 class TestContentBrowserEmptyState:
     def test_empty_directory_shows_hint(self, tmp_path, stub_dpg):
         """Empty folder → paper-note style empty-state message appears."""
-        from pharos_engine.ui.editor.content_browser import ContentBrowser
+        from pharos_editor.ui.editor.content_browser import ContentBrowser
 
         cb = ContentBrowser(root_path=tmp_path)
         # ``_current`` is empty by default; force the grid path via build.
@@ -334,7 +334,7 @@ class TestContentBrowserEmptyState:
 
     def test_populated_directory_hides_hint(self, tmp_path, stub_dpg):
         """Folder with entries must NOT render the empty-state hint."""
-        from pharos_engine.ui.editor.content_browser import ContentBrowser
+        from pharos_editor.ui.editor.content_browser import ContentBrowser
 
         (tmp_path / "real.py").write_text("# real\n", encoding="utf-8")
         cb = ContentBrowser(root_path=tmp_path)
@@ -365,7 +365,7 @@ class TestNotebookInspectorEmptyState:
     def test_shows_engine_version_banner(self, stub_dpg):
         """Empty state must include the running engine version string."""
         from pharos_engine import __version__ as engine_version
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
 
         insp = NotebookInspector(target=None)
         insp.build("root")
@@ -384,7 +384,7 @@ class TestNotebookInspectorEmptyState:
 
     def test_shows_project_banner_when_registered(self, stub_dpg):
         """When ``set_project_context`` is set, its name+version appear."""
-        from pharos_engine.ui.editor.notebook_inspector import (
+        from pharos_editor.ui.editor.notebook_inspector import (
             NotebookInspector, set_project_context,
         )
 
@@ -405,7 +405,7 @@ class TestNotebookInspectorEmptyState:
 
     def test_shows_recent_activity_label(self, stub_dpg):
         """Empty state must include the 'Recent activity' mini-log label."""
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
 
         insp = NotebookInspector(target=None)
         insp.build("root")
@@ -420,7 +420,7 @@ class TestNotebookInspectorEmptyState:
 
     def test_empty_state_uses_ink_color_not_gray(self, stub_dpg):
         """Empty-state copy must be styled with the notebook ink palette."""
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
 
         insp = NotebookInspector(target=None)
         insp.build("root")
@@ -446,7 +446,7 @@ class TestNotebookInspectorSelectionSwitch:
         Transform section takes over. We assert this by looking for the
         Transform title text in add_text calls after the target flip.
         """
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
 
         insp = NotebookInspector(target=None)
         insp.build("root")

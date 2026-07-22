@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# pharos_engine.ui.theme.declarative — API Reference
+# pharos_editor.ui.theme.declarative — API Reference
 
 ## Declarative Theme Grammar
 
@@ -20,7 +20,7 @@ Switcher to pick up.
 ## Public surface
 
 ```python
-from pharos_engine.ui.theme import (
+from pharos_editor.ui.theme import (
     DeclarativeTheme, DeclarativeThemeError, NAMED_COLORS, load_declarative,
 )
 
@@ -81,7 +81,7 @@ sunflower, lavender, mint, peach, seafoam,
 white, black, transparent, red, green, blue
 ```
 
-The full list lives in `pharos_engine.ui.theme.NAMED_COLORS`. Unknown
+The full list lives in `pharos_editor.ui.theme.NAMED_COLORS`. Unknown
 names raise `DeclarativeThemeError` at parse time with a line/column.
 
 ### Sizes

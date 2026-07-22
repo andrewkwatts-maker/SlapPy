@@ -148,8 +148,8 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def clear_theme():
     """Reset notebook theme + listener list between tests."""
-    from pharos_engine.ui.widgets import notebook_theme
-    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_editor.ui.widgets import notebook_theme
+    from pharos_editor.ui.widgets.notebook_theme import set_active_theme
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -213,7 +213,7 @@ def _make_shell(stub_dpg):
     The shell constructor pulls a NotebookStatusBar in at __init__; the
     stub_dpg fixture must already be installed.
     """
-    from pharos_engine.ui.editor.shell import EditorShell
+    from pharos_editor.ui.editor.shell import EditorShell
 
     return EditorShell(_StubEngine())
 
@@ -225,14 +225,14 @@ def _make_shell(stub_dpg):
 
 class TestToolbar:
     def test_each_tool_button_has_callback(self):
-        from pharos_engine.ui.editor.notebook_toolbar import NotebookToolbar
+        from pharos_editor.ui.editor.notebook_toolbar import NotebookToolbar
 
         bar = NotebookToolbar(on_tool_changed=lambda t: None)
         for tool_id, btn in bar.buttons.items():
             assert btn.callback is not None, f"tool {tool_id} has dead callback"
 
     def test_tool_callback_routes_to_set_active(self):
-        from pharos_engine.ui.editor.notebook_toolbar import NotebookToolbar
+        from pharos_editor.ui.editor.notebook_toolbar import NotebookToolbar
 
         captured: list[str] = []
         bar = NotebookToolbar(on_tool_changed=lambda t: captured.append(t))
@@ -241,7 +241,7 @@ class TestToolbar:
         assert captured == ["move"]
 
     def test_keyboard_shortcut_dispatch_lives(self):
-        from pharos_engine.ui.editor.notebook_toolbar import NotebookToolbar
+        from pharos_editor.ui.editor.notebook_toolbar import NotebookToolbar
 
         bar = NotebookToolbar()
         assert bar.handle_shortcut("R") is True
@@ -258,7 +258,7 @@ class TestOutliner:
         return types.SimpleNamespace(entities=list(entities))
 
     def test_visibility_toggle_writes_back(self):
-        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_editor.ui.editor.notebook_outliner import NotebookOutliner
 
         ent = types.SimpleNamespace(id="e1", name="thing", visible=True, locked=False)
         out = NotebookOutliner(
@@ -271,7 +271,7 @@ class TestOutliner:
         assert ent.visible is True
 
     def test_lock_toggle_writes_back(self):
-        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_editor.ui.editor.notebook_outliner import NotebookOutliner
 
         ent = types.SimpleNamespace(id="e1", name="thing", visible=True, locked=False)
         out = NotebookOutliner(
@@ -282,7 +282,7 @@ class TestOutliner:
         assert ent.locked is True
 
     def test_search_filters_rows(self):
-        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_editor.ui.editor.notebook_outliner import NotebookOutliner
 
         a = types.SimpleNamespace(id="a", name="alice", visible=True, locked=False)
         b = types.SimpleNamespace(id="b", name="bob", visible=True, locked=False)
@@ -296,7 +296,7 @@ class TestOutliner:
         assert rows[0]["name"] == "alice"
 
     def test_select_callback_not_dead(self):
-        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_editor.ui.editor.notebook_outliner import NotebookOutliner
 
         captured: list[Any] = []
         out = NotebookOutliner(
@@ -325,7 +325,7 @@ class _Probe:
 
 class TestInspector:
     def test_write_back_fires_for_each_field_type(self):
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
 
         probe = _Probe()
         ins = NotebookInspector(target=probe)
@@ -339,20 +339,20 @@ class TestInspector:
         assert probe.label == "newname"
 
     def test_help_button_docstring_fallback_returns_string(self):
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
 
         ins = NotebookInspector(target=_Probe())
         doc = ins._field_doc("pos_x")
         assert isinstance(doc, str) and doc
 
     def test_help_doc_fallback_when_no_target(self):
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
 
         ins = NotebookInspector(target=None)
         assert ins._field_doc("anything") == "anything"
 
     def test_set_target_logs_call(self):
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
 
         ins = NotebookInspector()
         probe = _Probe()
@@ -367,7 +367,7 @@ class TestInspector:
 
 class TestCodePanel:
     def test_pin_toggle_flips_flag(self):
-        from pharos_engine.ui.editor.notebook_code_panel import NotebookCodePanel
+        from pharos_editor.ui.editor.notebook_code_panel import NotebookCodePanel
 
         panel = NotebookCodePanel()
         assert panel.code_pinned is False
@@ -377,14 +377,14 @@ class TestCodePanel:
         assert panel.code_pinned is False
 
     def test_saved_toggle_logs_call(self):
-        from pharos_engine.ui.editor.notebook_code_panel import NotebookCodePanel
+        from pharos_editor.ui.editor.notebook_code_panel import NotebookCodePanel
 
         panel = NotebookCodePanel()
         panel.toggle_saved()
         assert any(c[0] == "toggle_saved" for c in panel.call_log)
 
     def test_regenerate_softfails_without_ai(self):
-        from pharos_engine.ui.editor.notebook_code_panel import NotebookCodePanel
+        from pharos_editor.ui.editor.notebook_code_panel import NotebookCodePanel
 
         panel = NotebookCodePanel()
         # Force the AI offline state.
@@ -395,7 +395,7 @@ class TestCodePanel:
         assert "Ollama" in panel.status or "AI" in panel.status
 
     def test_reverse_sync_softfails_without_ai(self):
-        from pharos_engine.ui.editor.notebook_code_panel import NotebookCodePanel
+        from pharos_editor.ui.editor.notebook_code_panel import NotebookCodePanel
 
         panel = NotebookCodePanel()
         panel._ai_available = False
@@ -404,7 +404,7 @@ class TestCodePanel:
         assert "Ollama" in panel.status or "AI" in panel.status
 
     def test_new_file_creates_scratch_buffer(self):
-        from pharos_engine.ui.editor.notebook_code_panel import NotebookCodePanel
+        from pharos_editor.ui.editor.notebook_code_panel import NotebookCodePanel
 
         panel = NotebookCodePanel()
         before = len(panel.files)
@@ -422,7 +422,7 @@ class TestCodePanel:
 
 class TestSpawnMenu:
     def test_every_card_has_summon_callback(self):
-        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_editor.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         assert menu.card_count == 10
@@ -432,7 +432,7 @@ class TestSpawnMenu:
             menu.cancel_modal()
 
     def test_summon_then_submit_fires_on_spawn(self):
-        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_editor.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         captured: list[tuple[str, dict]] = []
         menu = NotebookSpawnMenu(
@@ -444,7 +444,7 @@ class TestSpawnMenu:
         assert captured[0][0] == "rope"
 
     def test_cancel_modal_does_not_fire_on_spawn(self):
-        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_editor.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         captured: list = []
         menu = NotebookSpawnMenu(
@@ -462,7 +462,7 @@ class TestSpawnMenu:
 
 class TestMaterialEditor:
     def test_set_material_switches_kind(self):
-        from pharos_engine.ui.editor.notebook_material_editor import (
+        from pharos_editor.ui.editor.notebook_material_editor import (
             NotebookMaterialEditor,
         )
 
@@ -479,7 +479,7 @@ class TestMaterialEditor:
         assert ed.target is sb
 
     def test_on_theme_change_callback_lives(self):
-        from pharos_engine.ui.editor.notebook_material_editor import (
+        from pharos_editor.ui.editor.notebook_material_editor import (
             NotebookMaterialEditor,
         )
 
@@ -495,8 +495,8 @@ class TestMaterialEditor:
 
 class TestWelcome:
     def _make(self):
-        from pharos_engine.ui.editor.notebook_welcome import NotebookWelcome
-        from pharos_engine.ui.editor.settings import UISettings
+        from pharos_editor.ui.editor.notebook_welcome import NotebookWelcome
+        from pharos_editor.ui.editor.settings import UISettings
 
         settings = UISettings()
         out: dict = {
@@ -545,7 +545,7 @@ class TestWelcome:
 
 class TestStatusBar:
     def test_theme_indicator_click_routes_to_callback(self):
-        from pharos_engine.ui.editor.notebook_status_bar import NotebookStatusBar
+        from pharos_editor.ui.editor.notebook_status_bar import NotebookStatusBar
 
         captured = {"hits": 0}
         bar = NotebookStatusBar(
@@ -557,13 +557,13 @@ class TestStatusBar:
         assert captured["hits"] == 1
 
     def test_theme_indicator_no_callback_returns_false(self):
-        from pharos_engine.ui.editor.notebook_status_bar import NotebookStatusBar
+        from pharos_editor.ui.editor.notebook_status_bar import NotebookStatusBar
 
         bar = NotebookStatusBar()
         assert bar.on_theme_indicator_click() is False
 
     def test_message_setter_does_not_crash(self):
-        from pharos_engine.ui.editor.notebook_status_bar import NotebookStatusBar
+        from pharos_editor.ui.editor.notebook_status_bar import NotebookStatusBar
 
         bar = NotebookStatusBar()
         bar.set_message("hello", kind="success")
@@ -577,7 +577,7 @@ class TestStatusBar:
 
 class TestThemeSwitcher:
     def test_theme_card_click_records_event(self):
-        from pharos_engine.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
+        from pharos_editor.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
 
         panel = ThemeSwitcherPanel()
         panel._on_theme_card_clicked("teengirl_notebook")
@@ -587,7 +587,7 @@ class TestThemeSwitcher:
         )
 
     def test_creature_toggle_writes_state(self):
-        from pharos_engine.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
+        from pharos_editor.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
 
         panel = ThemeSwitcherPanel()
         panel._on_creature_toggle("fox_01", True)
@@ -596,28 +596,28 @@ class TestThemeSwitcher:
         assert panel.creature_state["fox_01"] is False
 
     def test_global_animations_toggle_lives(self):
-        from pharos_engine.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
+        from pharos_editor.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
 
         panel = ThemeSwitcherPanel()
         panel._on_animations_toggle(False)
         assert panel.animations_enabled is False
 
     def test_reduced_motion_toggle_lives(self):
-        from pharos_engine.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
+        from pharos_editor.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
 
         panel = ThemeSwitcherPanel()
         panel._on_reduced_motion_toggle(True)
         assert panel.reduced_motion is True
 
     def test_easter_eggs_toggle_lives(self):
-        from pharos_engine.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
+        from pharos_editor.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
 
         panel = ThemeSwitcherPanel()
         panel._on_easter_eggs_toggle(False)
         assert panel.easter_eggs is False
 
     def test_refresh_button_callback_lives(self):
-        from pharos_engine.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
+        from pharos_editor.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
 
         hits = {"n": 0}
         panel = ThemeSwitcherPanel(
@@ -779,7 +779,7 @@ class TestAuditSummary:
     """Walk every panel and assert no clickable surface is left dead."""
 
     def test_toolbar_buttons_not_lambda_none(self):
-        from pharos_engine.ui.editor.notebook_toolbar import NotebookToolbar
+        from pharos_editor.ui.editor.notebook_toolbar import NotebookToolbar
 
         bar = NotebookToolbar()
         for tool_id, btn in bar.buttons.items():
@@ -789,7 +789,7 @@ class TestAuditSummary:
             assert bar.get_active() == tool_id
 
     def test_spawn_menu_summon_button_mutates_state(self):
-        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_editor.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         # Open the modal — open_modal must transition from None.
@@ -800,13 +800,13 @@ class TestAuditSummary:
         assert menu.open_modal is None
 
     def test_welcome_demo_card_count_matches_callbacks(self):
-        from pharos_engine.ui.editor.notebook_welcome import DEMO_CARDS, THEME_SWATCHES
+        from pharos_editor.ui.editor.notebook_welcome import DEMO_CARDS, THEME_SWATCHES
 
         assert len(DEMO_CARDS) == 3
         assert len(THEME_SWATCHES) == 6
 
     def test_inspector_widget_help_button_records_field(self):
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
 
         ins = NotebookInspector(target=_Probe())
         # Field doc lookup is the surface the ? button reads from.
@@ -814,7 +814,7 @@ class TestAuditSummary:
         assert isinstance(doc, str)
 
     def test_status_bar_set_active_tool_lives(self):
-        from pharos_engine.ui.editor.notebook_status_bar import NotebookStatusBar
+        from pharos_editor.ui.editor.notebook_status_bar import NotebookStatusBar
 
         bar = NotebookStatusBar()
         bar.set_active_tool("move")

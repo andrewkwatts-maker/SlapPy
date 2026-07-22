@@ -12,7 +12,7 @@ importable (e.g. Rust _core extension not yet compiled).
 import pytest
 
 try:
-    from pharos_engine.ui.scene_ui import SceneUIEntity
+    from pharos_editor.ui.scene_ui import SceneUIEntity
     from pharos_engine.layer import Layer
 except Exception as e:
     pytest.skip(f"SlapPyEngine.ui not importable: {e}", allow_module_level=True)

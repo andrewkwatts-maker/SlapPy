@@ -68,7 +68,7 @@ def stub_dearpygui(monkeypatch):
 # ---------------------------------------------------------------------------
 
 try:
-    from pharos_engine.ui.editor import spawn_menu  # noqa: F401
+    from pharos_editor.ui.editor import spawn_menu  # noqa: F401
 except Exception as _import_err:  # pragma: no cover
     pytest.skip(
         f"editor.spawn_menu not importable: {_import_err}",
@@ -83,11 +83,11 @@ except Exception as _import_err:  # pragma: no cover
 class TestSpawnActionsTable:
     def test_nine_actions(self):
         """5 Phase A actions + 4 Phase B+ dynamics primitives."""
-        from pharos_engine.ui.editor.spawn_menu import SPAWN_ACTIONS
+        from pharos_editor.ui.editor.spawn_menu import SPAWN_ACTIONS
         assert len(SPAWN_ACTIONS) == 9
 
     def test_required_action_labels(self):
-        from pharos_engine.ui.editor.spawn_menu import SPAWN_ACTIONS
+        from pharos_editor.ui.editor.spawn_menu import SPAWN_ACTIONS
         labels = {a["label"] for a in SPAWN_ACTIONS}
         assert "Add SoftBody Lattice"  in labels
         assert "Add Layered Creature"  in labels
@@ -100,7 +100,7 @@ class TestSpawnActionsTable:
         assert "Add Humanoid"          in labels
 
     def test_each_action_has_label_factory_spec(self):
-        from pharos_engine.ui.editor.spawn_menu import SPAWN_ACTIONS
+        from pharos_editor.ui.editor.spawn_menu import SPAWN_ACTIONS
         for action in SPAWN_ACTIONS:
             assert "label"   in action
             assert "factory" in action
@@ -110,7 +110,7 @@ class TestSpawnActionsTable:
             assert dataclasses.is_dataclass(action["spec"])
 
     def test_each_spec_constructs_without_args(self):
-        from pharos_engine.ui.editor.spawn_menu import SPAWN_ACTIONS
+        from pharos_editor.ui.editor.spawn_menu import SPAWN_ACTIONS
         for action in SPAWN_ACTIONS:
             instance = action["spec"]()
             assert instance is not None
@@ -126,7 +126,7 @@ class TestSpawnActionsTable:
 class TestFactoryResolution:
     def test_resolves_when_factory_exists(self, monkeypatch):
         """Stub out one factory in sys.modules and confirm it resolves."""
-        from pharos_engine.ui.editor.spawn_menu import _resolve_factory
+        from pharos_editor.ui.editor.spawn_menu import _resolve_factory
 
         fake_mod = types.ModuleType("pharos_engine.fake_softbody")
         fake_mod.make_thing = lambda world, **kw: ("called", world, kw)
@@ -140,7 +140,7 @@ class TestFactoryResolution:
 
     def test_raises_when_factory_missing(self):
         """A non-existent dotted path should raise ImportError."""
-        from pharos_engine.ui.editor.spawn_menu import _resolve_factory
+        from pharos_editor.ui.editor.spawn_menu import _resolve_factory
         with pytest.raises(ImportError):
             _resolve_factory(
                 "pharos_engine.nonexistent_module_xyz.does_not_exist"
@@ -153,7 +153,7 @@ class TestFactoryResolution:
 
 class TestOpenSpawnModal:
     def test_modal_opens_without_raising_for_each_action(self):
-        from pharos_engine.ui.editor.spawn_menu import (
+        from pharos_editor.ui.editor.spawn_menu import (
             SPAWN_ACTIONS, open_spawn_modal,
         )
         world = object()
@@ -163,7 +163,7 @@ class TestOpenSpawnModal:
 
     def test_modal_spawn_invokes_factory_with_spec_kwargs(self, monkeypatch):
         """When the user clicks Spawn, factory(world, **spec_fields) runs."""
-        from pharos_engine.ui.editor import spawn_menu as sm
+        from pharos_editor.ui.editor import spawn_menu as sm
 
         captured: dict = {}
 
@@ -200,7 +200,7 @@ class TestOpenSpawnModal:
 # ---------------------------------------------------------------------------
 
 def _find_action(label: str) -> dict:
-    from pharos_engine.ui.editor.spawn_menu import SPAWN_ACTIONS
+    from pharos_editor.ui.editor.spawn_menu import SPAWN_ACTIONS
     for action in SPAWN_ACTIONS:
         if action["label"] == label:
             return action
@@ -211,7 +211,7 @@ class TestDynamicsSpawnActions:
     def test_spawn_rope_constructs_body(self):
         """Driving the Rope action's adapter factory materialises a rope Body."""
         from pharos_engine.dynamics.world import World
-        from pharos_engine.ui.editor.spawn_menu import _resolve_factory, _spec_to_kwargs
+        from pharos_editor.ui.editor.spawn_menu import _resolve_factory, _spec_to_kwargs
 
         action = _find_action("Add Rope")
         spec_default = action["spec"]()
@@ -233,7 +233,7 @@ class TestDynamicsSpawnActions:
     def test_spawn_ragdoll_constructs_body(self):
         """Driving the Ragdoll action's adapter materialises a ragdoll Body."""
         from pharos_engine.dynamics.world import World
-        from pharos_engine.ui.editor.spawn_menu import _resolve_factory, _spec_to_kwargs
+        from pharos_editor.ui.editor.spawn_menu import _resolve_factory, _spec_to_kwargs
 
         action = _find_action("Add Ragdoll")
         spec_default = action["spec"]()
@@ -256,7 +256,7 @@ class TestDynamicsSpawnActions:
         import numpy as np
 
         from pharos_engine.dynamics.world import World
-        from pharos_engine.ui.editor.spawn_menu import _resolve_factory, _spec_to_kwargs
+        from pharos_editor.ui.editor.spawn_menu import _resolve_factory, _spec_to_kwargs
 
         action = _find_action("Add IK Chain")
         spec_default = action["spec"]()
@@ -280,7 +280,7 @@ class TestDynamicsSpawnActions:
 
     def test_dynamics_spawn_actions_open_modal_without_raising(self):
         """The generic modal-builder must auto-reflect the new specs."""
-        from pharos_engine.ui.editor.spawn_menu import open_spawn_modal
+        from pharos_editor.ui.editor.spawn_menu import open_spawn_modal
 
         world = object()
         for label in ("Add Rope", "Add Ragdoll", "Add IK Chain", "Add Humanoid"):

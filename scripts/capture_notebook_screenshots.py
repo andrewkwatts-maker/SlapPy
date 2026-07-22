@@ -93,16 +93,16 @@ class PanelSpec:
 
 
 PANELS: tuple[PanelSpec, ...] = (
-    PanelSpec("toolbar",        "Toolbar",         "pharos_engine.ui.editor.notebook_toolbar:NotebookToolbar"),
-    PanelSpec("outliner",       "Scene Outliner",  "pharos_engine.ui.editor.notebook_outliner:NotebookOutliner"),
-    PanelSpec("inspector",      "Property Inspector", "pharos_engine.ui.editor.notebook_inspector:NotebookInspector"),
-    PanelSpec("gizmos",         "Gizmo Overlay",   "pharos_engine.ui.editor.notebook_gizmos:NotebookGizmoOverlay"),
-    PanelSpec("theme_switcher", "Theme Switcher",  "pharos_engine.ui.editor.theme_switcher_panel:ThemeSwitcherPanel"),
-    PanelSpec("code_mode",      "Code Mode",       "pharos_engine.ui.editor.notebook_code_panel:NotebookCodePanel"),
-    PanelSpec("spawn_menu",     "Spawn Menu",      "pharos_engine.ui.editor.notebook_spawn_menu:NotebookSpawnMenu"),
-    PanelSpec("material",       "Material Editor", "pharos_engine.ui.editor.notebook_material_editor:NotebookMaterialEditor"),
-    PanelSpec("welcome",        "Welcome",         "pharos_engine.ui.editor.notebook_welcome:NotebookWelcome"),
-    PanelSpec("status_bar",     "Status Bar",      "pharos_engine.ui.editor.notebook_status_bar:NotebookStatusBar"),
+    PanelSpec("toolbar",        "Toolbar",         "pharos_editor.ui.editor.notebook_toolbar:NotebookToolbar"),
+    PanelSpec("outliner",       "Scene Outliner",  "pharos_editor.ui.editor.notebook_outliner:NotebookOutliner"),
+    PanelSpec("inspector",      "Property Inspector", "pharos_editor.ui.editor.notebook_inspector:NotebookInspector"),
+    PanelSpec("gizmos",         "Gizmo Overlay",   "pharos_editor.ui.editor.notebook_gizmos:NotebookGizmoOverlay"),
+    PanelSpec("theme_switcher", "Theme Switcher",  "pharos_editor.ui.editor.theme_switcher_panel:ThemeSwitcherPanel"),
+    PanelSpec("code_mode",      "Code Mode",       "pharos_editor.ui.editor.notebook_code_panel:NotebookCodePanel"),
+    PanelSpec("spawn_menu",     "Spawn Menu",      "pharos_editor.ui.editor.notebook_spawn_menu:NotebookSpawnMenu"),
+    PanelSpec("material",       "Material Editor", "pharos_editor.ui.editor.notebook_material_editor:NotebookMaterialEditor"),
+    PanelSpec("welcome",        "Welcome",         "pharos_editor.ui.editor.notebook_welcome:NotebookWelcome"),
+    PanelSpec("status_bar",     "Status Bar",      "pharos_editor.ui.editor.notebook_status_bar:NotebookStatusBar"),
 )
 
 
@@ -115,11 +115,11 @@ def discover_themes() -> list[str]:
     """Return the list of registered diary-theme names.
 
     Falls back to a hard-coded six-name list if the registry cannot be
-    populated (e.g. ``pharos_engine.ui.theme`` failed to import).
+    populated (e.g. ``pharos_editor.ui.theme`` failed to import).
     """
     try:
-        from pharos_engine.ui.theme import list_registered_themes
-        from pharos_engine.ui.theme.themes import register_all_themes
+        from pharos_editor.ui.theme import list_registered_themes
+        from pharos_editor.ui.theme.themes import register_all_themes
 
         register_all_themes()
         names = list_registered_themes()
@@ -150,7 +150,7 @@ def resolve_theme_palette(name: str) -> tuple[tuple[int, int, int, int], ...]:
         (255, 224, 102, 255),
     )
     try:
-        from pharos_engine.ui.theme import apply_theme
+        from pharos_editor.ui.theme import apply_theme
 
         spec = apply_theme(name)
         out: list[tuple[int, int, int, int]] = []

@@ -3,7 +3,7 @@
 CC-batch sprint (2026-07-05) — task CC2. Builds four end-to-end material
 graphs directly out of the V5 material-node palette
 (:mod:`pharos_engine.visual_scripting.material_nodes`) and pipes each
-through :class:`~pharos_engine.ui.editor.material_graph_bridge.MaterialGraphBridge`
+through :class:`~pharos_editor.ui.editor.material_graph_bridge.MaterialGraphBridge`
 to produce a complete WGSL fragment shader.
 
 Graphs
@@ -49,7 +49,7 @@ from pharos_engine.visual_scripting import (
     TimeNode,
     UVOffsetNode,
 )
-from pharos_engine.ui.editor.material_graph_bridge import MaterialGraphBridge
+from pharos_editor.ui.editor.material_graph_bridge import MaterialGraphBridge
 
 
 # ---------------------------------------------------------------------------

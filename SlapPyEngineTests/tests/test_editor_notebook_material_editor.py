@@ -159,7 +159,7 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def reset_notebook_theme():
     """Reset the notebook theme registry between tests."""
-    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_editor.ui.widgets.notebook_theme import set_active_theme
 
     set_active_theme(None)
     yield
@@ -244,7 +244,7 @@ def _make_fluid(name: str = "water", **kwargs: Any) -> Any:
 
 
 try:
-    from pharos_engine.ui.editor.notebook_material_editor import (
+    from pharos_editor.ui.editor.notebook_material_editor import (
         NotebookMaterialEditor,
     )
     from pharos_engine.material.map import ColorRange, MaterialDef, MaterialMap
@@ -443,7 +443,7 @@ class TestInspectorDelegation:
         editor = NotebookMaterialEditor(target=mat)
         editor.build("parent_x")
         # The editor stashes the inspector reference.
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
 
         assert isinstance(editor._inspector, NotebookInspector)
         # The inspector's target is the softbody material itself.
@@ -551,7 +551,7 @@ class TestRefreshAndPreview:
 
 class TestThemeSwitch:
     def test_theme_change_triggers_repaint(self, stub_dpg):
-        from pharos_engine.ui.widgets.notebook_theme import (
+        from pharos_editor.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )

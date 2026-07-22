@@ -1,9 +1,18 @@
-"""Extension shim — re-exports from pharos_engine.ui.
+"""Legacy shim: ``pharos_engine.ext.ui`` moved to ``pharos_editor.ui``.
 
-This subpackage's canonical home is SlapPyEngine.ext.ui.
-Import via either path; both are supported.
-
-Note: SlapPyEngine.ui.editor requires the [editor] extra.
+The pharos-engine wheel intentionally does not include the editor UI
+(saves the ~15MB DearPyGui footprint on headless/server deployments).
+Install ``pharos-editor`` and import from ``pharos_editor.ui`` instead.
 """
-from pharos_engine.ui import *  # noqa: F401, F403
-from pharos_engine.ui import __all__  # propagate __all__
+from __future__ import annotations
+
+
+def __getattr__(name: str):  # pragma: no cover - error path
+    raise ImportError(
+        f"pharos_engine.ext.ui.{name} is no longer bundled with pharos-engine. "
+        "Install pharos-editor (pip install pharos-editor) and import from "
+        f"pharos_editor.ui.{name}."
+    )
+
+
+__all__: list[str] = []

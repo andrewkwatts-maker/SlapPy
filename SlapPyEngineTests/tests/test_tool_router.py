@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.tool_router` — the editor tool-routing contract.
+"""Tests for :mod:`pharos_editor.tool_router` — the editor tool-routing contract.
 
 Coverage
 --------
@@ -26,7 +26,7 @@ from typing import Any
 import pytest
 
 from pharos_engine import tool_router
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolAction,
     ToolRouter,
@@ -361,7 +361,7 @@ def test_default_registry_has_at_least_50_actions() -> None:
 
 def test_every_hotkey_command_is_registered() -> None:
     """Every command in the NotebookHotkeys table has a router registration."""
-    from pharos_engine.ui.editor.notebook_hotkeys import _BINDINGS_FROZEN
+    from pharos_editor.ui.editor.notebook_hotkeys import _BINDINGS_FROZEN
 
     missing: list[str] = []
     for _key, command in _BINDINGS_FROZEN.items():
@@ -373,7 +373,7 @@ def test_every_hotkey_command_is_registered() -> None:
 
 def test_every_spawn_card_is_registered() -> None:
     """Every SpawnCard.card_id has a matching `spawn.<id>` action."""
-    from pharos_engine.ui.editor.notebook_spawn_menu import SPAWN_CARDS
+    from pharos_editor.ui.editor.notebook_spawn_menu import SPAWN_CARDS
 
     # SPAWN_CARDS entries are tuples whose first item is the card_id.
     for card_tuple in SPAWN_CARDS:

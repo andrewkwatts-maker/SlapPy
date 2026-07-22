@@ -181,7 +181,7 @@ def reset_reloader():
 
 class TestHighlighter:
     def test_tokenize_keyword_and_annotation(self):
-        from pharos_engine.ui.editor.wgsl_editor_panel import tokenize_line
+        from pharos_editor.ui.editor.wgsl_editor_panel import tokenize_line
 
         tokens = tokenize_line("@vertex fn vs_main() -> f32 {")
         kinds = [k for k, _ in tokens]
@@ -191,7 +191,7 @@ class TestHighlighter:
         assert any(t == "fn" for _, t in tokens)
 
     def test_count_keywords_matches_expected(self):
-        from pharos_engine.ui.editor.wgsl_editor_panel import count_keywords
+        from pharos_editor.ui.editor.wgsl_editor_panel import count_keywords
 
         # In _SAMPLE_SHADER:
         #   annotations: @vertex, @fragment, @builtin, @location (×2) → recognised: @vertex, @fragment
@@ -203,7 +203,7 @@ class TestHighlighter:
         assert count == 12, count
 
     def test_highlight_source_line_count_matches(self):
-        from pharos_engine.ui.editor.wgsl_editor_panel import highlight_source
+        from pharos_editor.ui.editor.wgsl_editor_panel import highlight_source
 
         highlighted = highlight_source(_SAMPLE_SHADER)
         expected_lines = _SAMPLE_SHADER.splitlines()
@@ -217,17 +217,17 @@ class TestHighlighter:
 
 class TestAutocomplete:
     def test_open_brace_closes(self):
-        from pharos_engine.ui.editor.wgsl_editor_panel import autocomplete_brackets
+        from pharos_editor.ui.editor.wgsl_editor_panel import autocomplete_brackets
 
         assert autocomplete_brackets("struct Foo {") == "struct Foo {}"
 
     def test_open_paren_closes(self):
-        from pharos_engine.ui.editor.wgsl_editor_panel import autocomplete_brackets
+        from pharos_editor.ui.editor.wgsl_editor_panel import autocomplete_brackets
 
         assert autocomplete_brackets("fn f(") == "fn f()"
 
     def test_no_change_for_regular_text(self):
-        from pharos_engine.ui.editor.wgsl_editor_panel import autocomplete_brackets
+        from pharos_editor.ui.editor.wgsl_editor_panel import autocomplete_brackets
 
         assert autocomplete_brackets("let x = 1;") == "let x = 1;"
 
@@ -239,14 +239,14 @@ class TestAutocomplete:
 
 class TestDiscovery:
     def test_discover_wgsl_shaders(self, shader_root):
-        from pharos_engine.ui.editor.wgsl_editor_panel import discover_wgsl_shaders
+        from pharos_editor.ui.editor.wgsl_editor_panel import discover_wgsl_shaders
 
         paths = discover_wgsl_shaders(shader_root)
         assert len(paths) == 2
         assert all(p.endswith(".wgsl") for p in paths)
 
     def test_discover_missing_root(self, tmp_path):
-        from pharos_engine.ui.editor.wgsl_editor_panel import discover_wgsl_shaders
+        from pharos_editor.ui.editor.wgsl_editor_panel import discover_wgsl_shaders
 
         assert discover_wgsl_shaders(str(tmp_path / "nope")) == []
 
@@ -258,7 +258,7 @@ class TestDiscovery:
 
 class TestPanelBuild:
     def test_panel_builds(self, stub_dpg, shader_root, reset_reloader):
-        from pharos_engine.ui.editor.wgsl_editor_panel import WGSLEditorPanel
+        from pharos_editor.ui.editor.wgsl_editor_panel import WGSLEditorPanel
 
         panel = WGSLEditorPanel(shader_root=shader_root)
         panel.build("parent_stub")
@@ -272,12 +272,12 @@ class TestPanelBuild:
             assert expected in button_labels
 
     def test_button_count_constant(self):
-        from pharos_engine.ui.editor.wgsl_editor_panel import WGSLEditorPanel
+        from pharos_editor.ui.editor.wgsl_editor_panel import WGSLEditorPanel
 
         assert WGSLEditorPanel.BUTTON_COUNT == 4
 
     def test_panel_auto_loads_first_shader(self, shader_root, reset_reloader):
-        from pharos_engine.ui.editor.wgsl_editor_panel import WGSLEditorPanel
+        from pharos_editor.ui.editor.wgsl_editor_panel import WGSLEditorPanel
 
         panel = WGSLEditorPanel(shader_root=shader_root)
         assert panel.current_path is not None
@@ -291,7 +291,7 @@ class TestPanelBuild:
 
 class TestCompilePath:
     def test_compile_no_shader_reports_error(self, tmp_path, reset_reloader):
-        from pharos_engine.ui.editor.wgsl_editor_panel import WGSLEditorPanel
+        from pharos_editor.ui.editor.wgsl_editor_panel import WGSLEditorPanel
 
         # Empty shader root → no auto-load.
         empty = tmp_path / "empty"
@@ -304,7 +304,7 @@ class TestCompilePath:
         self, monkeypatch, shader_root, reset_reloader,
     ):
         from pharos_engine.render import shader_hot_reload as hr
-        from pharos_engine.ui.editor.wgsl_editor_panel import WGSLEditorPanel
+        from pharos_editor.ui.editor.wgsl_editor_panel import WGSLEditorPanel
 
         monkeypatch.setattr(hr, "_wgpu", None)
         monkeypatch.setattr(hr, "_wgpu_utils", None)
@@ -320,7 +320,7 @@ class TestCompilePath:
     ):
         """Compile succeeds when a stub wgpu device accepts everything."""
         from pharos_engine.render import shader_hot_reload as hr
-        from pharos_engine.ui.editor.wgsl_editor_panel import WGSLEditorPanel
+        from pharos_editor.ui.editor.wgsl_editor_panel import WGSLEditorPanel
 
         class _StubDevice:
             def create_shader_module(self, code=None, **_kw):
@@ -347,7 +347,7 @@ class TestCompilePath:
     ):
         """Compile flags an error when wgpu raises during shader module creation."""
         from pharos_engine.render import shader_hot_reload as hr
-        from pharos_engine.ui.editor.wgsl_editor_panel import WGSLEditorPanel
+        from pharos_editor.ui.editor.wgsl_editor_panel import WGSLEditorPanel
 
         class _StubDevice:
             def create_shader_module(self, code=None, **_kw):
@@ -377,7 +377,7 @@ class TestCompilePath:
 
 class TestSaveRevertReload:
     def test_save_writes_to_disk(self, shader_root, reset_reloader):
-        from pharos_engine.ui.editor.wgsl_editor_panel import WGSLEditorPanel
+        from pharos_editor.ui.editor.wgsl_editor_panel import WGSLEditorPanel
 
         panel = WGSLEditorPanel(shader_root=shader_root)
         panel.current_source = "// edited\n"
@@ -387,7 +387,7 @@ class TestSaveRevertReload:
             assert fh.read() == "// edited\n"
 
     def test_revert_restores_disk_source(self, shader_root, reset_reloader):
-        from pharos_engine.ui.editor.wgsl_editor_panel import WGSLEditorPanel
+        from pharos_editor.ui.editor.wgsl_editor_panel import WGSLEditorPanel
 
         panel = WGSLEditorPanel(shader_root=shader_root)
         original = panel.disk_source
@@ -397,7 +397,7 @@ class TestSaveRevertReload:
         assert panel.current_source == original
 
     def test_reload_reads_from_disk(self, shader_root, reset_reloader):
-        from pharos_engine.ui.editor.wgsl_editor_panel import WGSLEditorPanel
+        from pharos_editor.ui.editor.wgsl_editor_panel import WGSLEditorPanel
 
         panel = WGSLEditorPanel(shader_root=shader_root)
         assert panel.current_path is not None
@@ -500,7 +500,7 @@ class TestHotReloader:
 
 class TestReloadShaderHelper:
     def test_helper_exposed_in_editor_helpers(self):
-        from pharos_engine.editor import helpers
+        from pharos_editor.editor import helpers
 
         assert hasattr(helpers, "reload_shader")
         assert "reload_shader" in helpers.__all__
@@ -509,7 +509,7 @@ class TestReloadShaderHelper:
         self, shader_root, reset_reloader,
     ):
         from pharos_engine.app import App
-        from pharos_engine.editor.helpers import reload_shader
+        from pharos_editor.editor.helpers import reload_shader
         from pharos_engine.render.shader_hot_reload import get_default_reloader
 
         App._clear_implicit()
@@ -546,7 +546,7 @@ class TestReloadShaderHelper:
 
 class TestPanelTick:
     def test_tick_fires_watch_at_1hz(self, shader_root, reset_reloader):
-        from pharos_engine.ui.editor.wgsl_editor_panel import WGSLEditorPanel
+        from pharos_editor.ui.editor.wgsl_editor_panel import WGSLEditorPanel
 
         panel = WGSLEditorPanel(shader_root=shader_root)
         target = panel.current_path

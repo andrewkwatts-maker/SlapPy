@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.ui.editor.notebook_gizmo_overlay import (
+from pharos_editor.ui.editor.notebook_gizmo_overlay import (
     TOOL_MOVE,
     TOOL_ROTATE,
     TOOL_SCALE,
@@ -23,8 +23,8 @@ from pharos_engine.ui.editor.notebook_gizmo_overlay import (
     _jitter_samples,
     _stable_hash,
 )
-from pharos_engine.ui.theme import Color, apply_theme, register_theme
-from pharos_engine.ui.theme.theme_spec import (
+from pharos_editor.ui.theme import Color, apply_theme, register_theme
+from pharos_editor.ui.theme.theme_spec import (
     Gradient,
     SemanticTokens,
     ThemeSpec,

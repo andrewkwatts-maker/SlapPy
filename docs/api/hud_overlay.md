@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# pharos_engine.ui.runtime.hud_overlay — API Reference
+# pharos_editor.ui.runtime.hud_overlay — API Reference
 
 > Hand-written reference for the LL1 HUD overlay + registry surface plus
 > the MM2 :mod:`pharos_engine.hud_bridge` glue that mounts it onto the
@@ -14,7 +14,7 @@
 
 ## Overview
 
-`pharos_engine.ui.runtime.hud_overlay` is the LL1 landing. It gives games
+`pharos_editor.ui.runtime.hud_overlay` is the LL1 landing. It gives games
 a screen-space overlay that sits on top of the rendered 3D scene,
 managed as a per-frame `begin → build widgets → end → submit` pipeline:
 
@@ -40,11 +40,11 @@ into :class:`~pharos_engine.App`'s ``after_tick`` +
 
 ```python
 # LL1 — core overlay surface
-from pharos_engine.ui.runtime.hud_overlay import (
+from pharos_editor.ui.runtime.hud_overlay import (
     HUDOverlay, SpriteSubmission,
     hud_command_to_sprite, hud_command_to_text,
 )
-from pharos_engine.ui.runtime.hud_registry import HUDRegistry, WidgetFactory
+from pharos_editor.ui.runtime.hud_registry import HUDRegistry, WidgetFactory
 
 # MM2 — App-lifecycle glue + diagnostics widget
 from pharos_engine.hud_bridge import (
@@ -58,7 +58,7 @@ from pharos_engine.hud_bridge import (
 
 ### `HUDOverlay`
 
-_class — defined in `pharos_engine.ui.runtime.hud_overlay`_
+_class — defined in `pharos_editor.ui.runtime.hud_overlay`_
 
 Screen-space HUD manager that renders on top of the 3D viewport.
 
@@ -102,7 +102,7 @@ Attributes: `visible: bool`, `command_count -> int` (last frame),
 
 ### `SpriteSubmission`
 
-_dataclass — defined in `pharos_engine.ui.runtime.hud_overlay`_
+_dataclass — defined in `pharos_editor.ui.runtime.hud_overlay`_
 
 Payload for a `Renderer.submit_sprite` call.
 
@@ -114,7 +114,7 @@ Payload for a `Renderer.submit_sprite` call.
 
 ### `HUDRegistry`
 
-_class — defined in `pharos_engine.ui.runtime.hud_registry`_
+_class — defined in `pharos_editor.ui.runtime.hud_registry`_
 
 Named-factory registry for HUD widgets. Ships with the nine first-party
 widgets pre-registered.
@@ -132,7 +132,7 @@ widgets pre-registered.
 
 ### `hud_command_to_sprite(cmd) -> SpriteSubmission`
 
-_defined in `pharos_engine.ui.runtime.hud_overlay`_
+_defined in `pharos_editor.ui.runtime.hud_overlay`_
 
 Convert a `rect` or `textured_quad` :class:`DrawCommand` into a
 :class:`SpriteSubmission`. `size == (0, 0)` is treated as fullscreen
@@ -141,7 +141,7 @@ Convert a `rect` or `textured_quad` :class:`DrawCommand` into a
 
 ### `hud_command_to_text(cmd, atlas) -> TextMesh | None`
 
-_defined in `pharos_engine.ui.runtime.hud_overlay`_
+_defined in `pharos_editor.ui.runtime.hud_overlay`_
 
 Convert a `text` :class:`DrawCommand` into an SDF `TextMesh` via the
 KK6 `pharos_engine.text` renderer. Returns `None` when *atlas* is
@@ -217,8 +217,8 @@ assert ("hud_mount", 5) in app.trace
 Direct overlay use (bypassing the bridge):
 
 ```python
-from pharos_engine.ui.runtime.hud_overlay import HUDOverlay
-from pharos_engine.ui.runtime.hud_registry import HUDRegistry
+from pharos_editor.ui.runtime.hud_overlay import HUDOverlay
+from pharos_editor.ui.runtime.hud_registry import HUDRegistry
 
 registry = HUDRegistry()
 overlay = HUDOverlay(renderer=my_renderer, camera_2d=my_camera_2d)
@@ -231,7 +231,7 @@ n = overlay.submit_to_renderer()
 
 ## Skip the wrapper
 
-`pharos_engine.ui.runtime.hud_overlay` and `pharos_engine.hud_bridge` are
+`pharos_editor.ui.runtime.hud_overlay` and `pharos_engine.hud_bridge` are
 Python-only. Grep of `pharos_engine._core_facade.RUST_MODULE_MAP` shows
 **no** `hud_overlay` / `hud_bridge` entry — the per-frame work is
 `ImmediateUI.begin_frame` bookkeeping + a handful of DrawCommand

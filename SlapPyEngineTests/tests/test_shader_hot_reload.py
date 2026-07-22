@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.ui.theme.shader_hot_reload` (BB4).
+"""Tests for :mod:`pharos_editor.ui.theme.shader_hot_reload` (BB4).
 
 The module extends the AA6 shader-lint suite with:
 
@@ -23,7 +23,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.ui.theme.shader_hot_reload import (
+from pharos_editor.ui.theme.shader_hot_reload import (
     NullShaderWatcherHandle,
     ShaderChangeEvent,
     ShaderHotReloadWatcher,
@@ -32,7 +32,7 @@ from pharos_engine.ui.theme.shader_hot_reload import (
     hot_reload_context_manager,
     start_default_hot_reload,
 )
-from pharos_engine.ui.theme.shader_lint import (
+from pharos_editor.ui.theme.shader_lint import (
     SHADER_CONTRACTS,
     WGSLLintResult,
     lint_wgsl,
@@ -367,7 +367,7 @@ def test_missing_watchdog_returns_null_handle(
         return real_import(name, *args, **kw)
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
-    import pharos_engine.ui.theme.shader_hot_reload as mod
+    import pharos_editor.ui.theme.shader_hot_reload as mod
     monkeypatch.setattr(mod, "_WATCHDOG_WARNED", False)
 
     watcher = ShaderHotReloadWatcher(
@@ -396,10 +396,10 @@ def test_missing_watchdog_warns_only_once(
         return real_import(name, *args, **kw)
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
-    import pharos_engine.ui.theme.shader_hot_reload as mod
+    import pharos_editor.ui.theme.shader_hot_reload as mod
     monkeypatch.setattr(mod, "_WATCHDOG_WARNED", False)
 
-    with caplog.at_level("WARNING", logger="pharos_engine.ui.theme.shader_hot_reload"):
+    with caplog.at_level("WARNING", logger="pharos_editor.ui.theme.shader_hot_reload"):
         for _ in range(3):
             watcher = ShaderHotReloadWatcher(
                 shader_dirs=[shader_root], on_change=lambda _e: None,

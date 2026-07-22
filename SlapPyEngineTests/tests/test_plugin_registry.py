@@ -1,4 +1,4 @@
-"""Tripwire suite for :mod:`pharos_engine.ui.plugin_registry` — sprint GG3.
+"""Tripwire suite for :mod:`pharos_editor.ui.plugin_registry` — sprint GG3.
 
 Covers:
 
@@ -36,7 +36,7 @@ from pathlib import Path
 
 import pytest
 
-from pharos_engine.ui.plugin_registry import (
+from pharos_editor.ui.plugin_registry import (
     LoadedPlugin,
     PluginDependencyError,
     PluginError,

@@ -8,7 +8,7 @@ Sweeps every public method flagged by the BB2 charter:
 * :mod:`pharos_engine.prefabs.prefab` — :meth:`Prefab.spawn`.
 * :mod:`pharos_engine.autosave` — :class:`AutosaveManager._write_snapshot`,
   :func:`default_snapshot_dir`.
-* :mod:`pharos_engine.actions.*` (Y/Z/AA batches only — NOT the BB1
+* :mod:`pharos_editor.actions.*` (Y/Z/AA batches only — NOT the BB1
   additions ``theme_import_actions`` / ``layout_io_actions`` /
   ``history_actions``): every public action helper now raises
   :class:`TypeError` on non-mapping ``ctx``.
@@ -351,46 +351,46 @@ def test_default_snapshot_dir_happy_path():
 
 
 def test_save_project_rejects_non_dict_ctx():
-    from pharos_engine.actions import save_project
+    from pharos_editor.actions import save_project
 
     with pytest.raises(TypeError, match="ctx must be a mapping"):
         save_project([])  # type: ignore[arg-type]
 
 
 def test_save_project_rejects_none_ctx():
-    from pharos_engine.actions import save_project
+    from pharos_editor.actions import save_project
 
     with pytest.raises(TypeError, match="ctx must not be None"):
         save_project(None)  # type: ignore[arg-type]
 
 
 def test_save_project_no_project_status():
-    from pharos_engine.actions import save_project
+    from pharos_editor.actions import save_project
 
     assert save_project({})["status"] == "no_project"
 
 
 def test_new_project_rejects_int_name():
-    from pharos_engine.actions import new_project
+    from pharos_editor.actions import new_project
 
     with pytest.raises(TypeError, match="ctx\\['name'\\] must be a str"):
         new_project({"path": "/tmp", "name": 42})
 
 
 def test_new_project_missing_path():
-    from pharos_engine.actions import new_project
+    from pharos_editor.actions import new_project
 
     assert new_project({})["status"] == "missing_path"
 
 
 def test_new_project_missing_name(tmp_path):
-    from pharos_engine.actions import new_project
+    from pharos_editor.actions import new_project
 
     assert new_project({"path": str(tmp_path)})["status"] == "missing_name"
 
 
 def test_open_recent_rejects_non_dict():
-    from pharos_engine.actions import open_recent
+    from pharos_editor.actions import open_recent
 
     with pytest.raises(TypeError, match="ctx must be a mapping"):
         open_recent("string")  # type: ignore[arg-type]
@@ -402,21 +402,21 @@ def test_open_recent_rejects_non_dict():
 
 
 def test_reset_layout_rejects_non_dict():
-    from pharos_engine.actions import reset_layout
+    from pharos_editor.actions import reset_layout
 
     with pytest.raises(TypeError, match="ctx must be a mapping"):
         reset_layout(42)  # type: ignore[arg-type]
 
 
 def test_reset_layout_rejects_int_preset():
-    from pharos_engine.actions import reset_layout
+    from pharos_editor.actions import reset_layout
 
     with pytest.raises(TypeError, match="ctx\\['preset'\\] must be a str"):
         reset_layout({"preset": 99})
 
 
 def test_reset_layout_no_shell():
-    from pharos_engine.actions import reset_layout
+    from pharos_editor.actions import reset_layout
 
     assert reset_layout({})["status"] == "no_shell"
 
@@ -427,53 +427,53 @@ def test_reset_layout_no_shell():
 
 
 def test_duplicate_selection_rejects_none():
-    from pharos_engine.actions import duplicate_selection
+    from pharos_editor.actions import duplicate_selection
 
     with pytest.raises(TypeError):
         duplicate_selection(None)  # type: ignore[arg-type]
 
 
 def test_duplicate_selection_no_selection_status():
-    from pharos_engine.actions import duplicate_selection
+    from pharos_editor.actions import duplicate_selection
 
     assert duplicate_selection({})["status"] == "no_selection"
 
 
 def test_select_all_rejects_list():
-    from pharos_engine.actions import select_all
+    from pharos_editor.actions import select_all
 
     with pytest.raises(TypeError):
         select_all([])  # type: ignore[arg-type]
 
 
 def test_select_all_no_scene():
-    from pharos_engine.actions import select_all
+    from pharos_editor.actions import select_all
 
     assert select_all({})["status"] == "no_scene"
 
 
 def test_deselect_all_rejects_non_dict():
-    from pharos_engine.actions import deselect_all
+    from pharos_editor.actions import deselect_all
 
     with pytest.raises(TypeError):
         deselect_all("nope")  # type: ignore[arg-type]
 
 
 def test_deselect_all_happy_path():
-    from pharos_engine.actions import deselect_all
+    from pharos_editor.actions import deselect_all
 
     assert deselect_all({})["status"] == "deselected"
 
 
 def test_copy_selection_rejects_int():
-    from pharos_engine.actions import copy_selection
+    from pharos_editor.actions import copy_selection
 
     with pytest.raises(TypeError):
         copy_selection(5)  # type: ignore[arg-type]
 
 
 def test_paste_selection_rejects_none():
-    from pharos_engine.actions import paste_selection
+    from pharos_editor.actions import paste_selection
 
     with pytest.raises(TypeError):
         paste_selection(None)  # type: ignore[arg-type]
@@ -485,22 +485,22 @@ def test_paste_selection_rejects_none():
 
 
 def test_cycle_theme_rejects_non_dict():
-    from pharos_engine.actions import cycle_theme
+    from pharos_editor.actions import cycle_theme
 
     with pytest.raises(TypeError):
         cycle_theme("string-ctx")  # type: ignore[arg-type]
 
 
 def test_toggle_snap_to_grid_rejects_none():
-    from pharos_engine.actions import toggle_snap_to_grid
+    from pharos_editor.actions import toggle_snap_to_grid
 
     with pytest.raises(TypeError):
         toggle_snap_to_grid(None)  # type: ignore[arg-type]
 
 
 def test_toggle_snap_to_grid_headless_toggle():
-    from pharos_engine.actions import toggle_snap_to_grid
-    from pharos_engine.actions.tool_settings_actions import (
+    from pharos_editor.actions import toggle_snap_to_grid
+    from pharos_editor.actions.tool_settings_actions import (
         _reset_snap_grid_for_tests,
     )
 
@@ -511,34 +511,34 @@ def test_toggle_snap_to_grid_headless_toggle():
 
 
 def test_zoom_in_rejects_non_dict():
-    from pharos_engine.actions import zoom_in
+    from pharos_editor.actions import zoom_in
 
     with pytest.raises(TypeError):
         zoom_in([1, 2])  # type: ignore[arg-type]
 
 
 def test_zoom_out_rejects_none():
-    from pharos_engine.actions import zoom_out
+    from pharos_editor.actions import zoom_out
 
     with pytest.raises(TypeError):
         zoom_out(None)  # type: ignore[arg-type]
 
 
 def test_zoom_reset_rejects_int():
-    from pharos_engine.actions import zoom_reset
+    from pharos_editor.actions import zoom_reset
 
     with pytest.raises(TypeError):
         zoom_reset(0)  # type: ignore[arg-type]
 
 
 def test_zoom_in_no_camera():
-    from pharos_engine.actions import zoom_in
+    from pharos_editor.actions import zoom_in
 
     assert zoom_in({})["status"] == "no_camera"
 
 
 def test_zoom_in_happy_path():
-    from pharos_engine.actions import zoom_in
+    from pharos_editor.actions import zoom_in
 
     camera = SimpleNamespace(_cam_distance=5.0)
     result = zoom_in({"camera": camera})
@@ -547,67 +547,67 @@ def test_zoom_in_happy_path():
 
 
 def test_export_current_theme_rejects_non_dict():
-    from pharos_engine.actions import export_current_theme
+    from pharos_editor.actions import export_current_theme
 
     with pytest.raises(TypeError):
         export_current_theme("nope")  # type: ignore[arg-type]
 
 
 def test_cut_selection_rejects_non_dict():
-    from pharos_engine.actions import cut_selection
+    from pharos_editor.actions import cut_selection
 
     with pytest.raises(TypeError):
         cut_selection(None)  # type: ignore[arg-type]
 
 
 def test_delete_selection_rejects_non_dict():
-    from pharos_engine.actions import delete_selection
+    from pharos_editor.actions import delete_selection
 
     with pytest.raises(TypeError):
         delete_selection(42)  # type: ignore[arg-type]
 
 
 def test_delete_selection_no_selection():
-    from pharos_engine.actions import delete_selection
+    from pharos_editor.actions import delete_selection
 
     assert delete_selection({})["status"] == "no_selection"
 
 
 def test_center_on_selection_rejects_non_dict():
-    from pharos_engine.actions import center_on_selection
+    from pharos_editor.actions import center_on_selection
 
     with pytest.raises(TypeError):
         center_on_selection([])  # type: ignore[arg-type]
 
 
 def test_center_on_selection_no_camera():
-    from pharos_engine.actions import center_on_selection
+    from pharos_editor.actions import center_on_selection
 
     assert center_on_selection({})["status"] == "no_camera"
 
 
 def test_frame_all_rejects_non_dict():
-    from pharos_engine.actions import frame_all
+    from pharos_editor.actions import frame_all
 
     with pytest.raises(TypeError):
         frame_all(None)  # type: ignore[arg-type]
 
 
 def test_frame_all_no_camera():
-    from pharos_engine.actions import frame_all
+    from pharos_editor.actions import frame_all
 
     assert frame_all({})["status"] == "no_camera"
 
 
 def test_activate_pan_tool_rejects_non_dict():
-    from pharos_engine.actions import activate_pan_tool
+    from pharos_editor.actions import activate_pan_tool
 
     with pytest.raises(TypeError):
         activate_pan_tool("string")  # type: ignore[arg-type]
 
 
 def test_activate_pan_tool_headless_fallback():
-    from pharos_engine.actions import activate_pan_tool, PAN_TOOL_ID
+    from pharos_editor.actions import activate_pan_tool, PAN_TOOL_ID
 
     result = activate_pan_tool({})
     assert result["status"] == "activated"
@@ -621,14 +621,14 @@ def test_activate_pan_tool_headless_fallback():
 
 
 def test_ensure_ctx_rejects_none():
-    from pharos_engine.actions._ctx import ensure_ctx
+    from pharos_editor.actions._ctx import ensure_ctx
 
     with pytest.raises(TypeError, match="ctx must not be None"):
         ensure_ctx("test_fn", None)
 
 
 def test_ensure_ctx_rejects_list():
-    from pharos_engine.actions._ctx import ensure_ctx
+    from pharos_editor.actions._ctx import ensure_ctx
 
     with pytest.raises(TypeError, match="ctx must be a mapping"):
         ensure_ctx("test_fn", [])
@@ -637,7 +637,7 @@ def test_ensure_ctx_rejects_list():
 def test_ensure_ctx_accepts_dict_subclass():
     from collections import ChainMap
 
-    from pharos_engine.actions._ctx import ensure_ctx
+    from pharos_editor.actions._ctx import ensure_ctx
 
     cm = ChainMap({"a": 1})
     assert ensure_ctx("test_fn", cm) is cm

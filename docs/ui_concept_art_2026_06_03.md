@@ -102,11 +102,11 @@ differ.)
 
 - **Formal theme spec:** `docs/theme_teengirl_notebook_2026_06_03.md`
   (parallel agent) — consumes the tables in §2 above.
-- **Editor surface:** `pharos_engine.ui.editor` — where the theme is
+- **Editor surface:** `pharos_editor.ui.editor` — where the theme is
   applied (existing dark Nova3D theme will gain a TeenGirl-Notebook
   alternative).
 - **Sticker rendering:** likely added under
-  `pharos_engine.ui.theme.stickers` (TBD; see formal spec).
+  `pharos_editor.ui.theme.stickers` (TBD; see formal spec).
 
 ## 5. Why these files are committed
 

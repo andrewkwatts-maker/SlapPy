@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.ui.theme.edge_strokes`.
+"""Tests for :mod:`pharos_editor.ui.theme.edge_strokes`.
 
 Covers the 15-style hand-drawn border library:
 
@@ -21,11 +21,11 @@ import numpy as np
 import pytest
 
 try:
-    from pharos_engine.ui.theme import (
+    from pharos_editor.ui.theme import (
         Color,
         FrameStyle,
     )
-    from pharos_engine.ui.theme.edge_strokes import (
+    from pharos_editor.ui.theme.edge_strokes import (
         EDGE_STROKES,
         EdgeStrokeStyle,
         bake_stroke_texture,
@@ -36,7 +36,7 @@ try:
     )
 except Exception as exc:  # pragma: no cover
     pytest.skip(
-        f"pharos_engine.ui.theme.edge_strokes not importable: {exc}",
+        f"pharos_editor.ui.theme.edge_strokes not importable: {exc}",
         allow_module_level=True,
     )
 

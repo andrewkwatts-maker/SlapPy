@@ -1,6 +1,6 @@
 """Prefab library — registry + on-disk loader for :class:`Prefab` entries.
 
-Mirrors the :class:`pharos_engine.ui.theme.user_themes.UserThemeStore`
+Mirrors the :class:`pharos_editor.ui.theme.user_themes.UserThemeStore`
 pattern:
 
 * :attr:`PrefabLibrary.BAKED_DIR` — read-only ``*.prefab.yaml`` shipped

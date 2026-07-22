@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.ui.theme.creatures`.
+"""Tests for :mod:`pharos_editor.ui.theme.creatures`.
 
 Coverage:
 
@@ -22,7 +22,7 @@ import time
 import pytest
 
 try:
-    from pharos_engine.ui.theme.creatures import (
+    from pharos_editor.ui.theme.creatures import (
         AnimationCurve,
         Creature,
         CreatureScheduler,
@@ -36,7 +36,7 @@ try:
         tick,
         trigger,
     )
-    from pharos_engine.ui.theme.creatures.builtin import (
+    from pharos_editor.ui.theme.creatures.builtin import (
         butterfly_01,
         butterfly_01_slot,
         fox_01,
@@ -45,10 +45,10 @@ try:
         sparkle,
         sparkle_slot,
     )
-    from pharos_engine.ui.theme import Color
+    from pharos_editor.ui.theme import Color
 except Exception as e:  # pragma: no cover — defensive import skip
     pytest.skip(
-        f"pharos_engine.ui.theme.creatures not importable: {e}",
+        f"pharos_editor.ui.theme.creatures not importable: {e}",
         allow_module_level=True,
     )
 

@@ -149,7 +149,7 @@ def stub_dpg(monkeypatch):
 
 
 try:
-    from pharos_engine.ui.editor.notebook_node_editor import (
+    from pharos_editor.ui.editor.notebook_node_editor import (
         BUILTIN_NODES,
         Edge,
         Node,
@@ -540,7 +540,7 @@ class TestRefresh:
 
     def test_theme_switch_updates_wire_color(self, stub_dpg):
         """When the theme changes, the next refresh queries the new accent."""
-        from pharos_engine.ui.widgets.notebook_theme import (
+        from pharos_editor.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )

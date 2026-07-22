@@ -12,7 +12,7 @@ v0.4 lands the **Nova3D parity milestone** — SlapPyEngine graduates from a
 skinned glTF, animation, CSM shadows, IBL, SSAO, skybox, SDF text, HUD,
 capture, positional audio, instanced rendering, BVH culling, and a
 cross-platform game exporter. On top of that: a diary-themed notebook
-editor with 20+ panels, a `pharos_engine.actions` 20-action subpackage
+editor with 20+ panels, a `pharos_editor.actions` 20-action subpackage
 plus router, six diary themes, three 15-shader WGSL libraries, six
 baked prefabs, and an autosave / crash-recovery layer.
 
@@ -64,8 +64,8 @@ shipped surfaces:
 - `pharos_engine.render` — wgpu-based 2D + 3D forward renderer (HH4).
 - `pharos_engine.projects` — multi-project management + registry +
   scaffolder + CLI (`pharos_engine.projects`, HH2 + M6 + F).
-- `pharos_engine.actions` — 20-action subpackage + `ToolRouter` +
-  `pharos_engine.tool_router` formal editor tool-routing contract.
+- `pharos_editor.actions` — 20-action subpackage + `ToolRouter` +
+  `pharos_editor.tool_router` formal editor tool-routing contract.
 - `pharos_engine.math` — Formula / `evaluate` / `compile_formula` backed
   by Arithma when `[math]` extra is installed, with locked-down Python
   eval sandbox fallback + `Vec2`/`Vec3`/`Vec4` + animation curves.
@@ -77,10 +77,10 @@ shipped surfaces:
 - `pharos_engine.exporter` + `slap export` CLI with dry-run + manifest +
   exclude (LL6 + NN7).
 - `pharos_engine.residency` — GPU/RAM/DISK three-tier asset residency.
-- `pharos_engine.ui.editor` — diary-themed notebook editor + 20+ panels
-  (see below); `pharos_engine.ui.theme` primitive infrastructure
-  (nine-slice / SVG / procedural shader); `pharos_engine.ui.widgets`
-  Dear PyGui notebook primitives; `pharos_engine.ui.runtime`.
+- `pharos_editor.ui.editor` — diary-themed notebook editor + 20+ panels
+  (see below); `pharos_editor.ui.theme` primitive infrastructure
+  (nine-slice / SVG / procedural shader); `pharos_editor.ui.widgets`
+  Dear PyGui notebook primitives; `pharos_editor.ui.runtime`.
 - `App` + `launch()` + `load_model()` ergonomic top-level API (HH1).
 
 **Notebook editor + diary theme family (V, W, X, Y, Z, AA, BB, CC, DD,

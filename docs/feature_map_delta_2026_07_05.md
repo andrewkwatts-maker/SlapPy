@@ -8,7 +8,7 @@ r14's `capture_actions` + `render_toggle_actions` landings).
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_editor.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `view.frame_selected`  | `view_frame_selected_actions.frame_selected` | view |
 | `view.reset_view`      | `view_reset_view_actions.reset_view`         | view |
@@ -59,9 +59,9 @@ L/R + theme hot-swap (round 15) ──` block.
 * **`theme.hot_swap`** — Unity Preferences → Themes dropdown, Blender
   Preferences → load theme preset. Applies the theme named
   `ctx["theme"]` (required str) directly, without cycling. Resolves via
-  `pharos_engine.ui.theme.list_registered_themes` (and `get_theme` when
+  `pharos_editor.ui.theme.list_registered_themes` (and `get_theme` when
   present); dispatches through `shell.apply_theme` when the shell
-  exposes it, else `pharos_engine.ui.theme.apply_theme`. Mirrors the
+  exposes it, else `pharos_editor.ui.theme.apply_theme`. Mirrors the
   new active theme onto `shell._active_theme` /
   `shell._current_theme` / `shell._theme_cursor` so subsequent
   `theme.cycle` calls continue from the new anchor. Return contract:

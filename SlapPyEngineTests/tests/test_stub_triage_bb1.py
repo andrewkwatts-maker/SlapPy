@@ -12,7 +12,7 @@ Covers the five new action ids added by the 2026-07-05 BB1 sprint tick
 * ``edit.undo`` — pop + reverse the newest ``UndoStack`` entry.
 * ``edit.redo`` — reapply the newest redo entry.
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up (``action_id`` → Python fallback) is exercised end-to-end.
 No DPG context is required — themes are constructed directly and layouts
 travel through ``EditorLayout`` mocks so the suite is fully headless.
@@ -25,7 +25,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -48,7 +48,7 @@ def router() -> ToolRouter:
 @pytest.fixture(autouse=True)
 def _reset_theme_registry() -> None:
     """Drop the process-wide theme registry between tests."""
-    from pharos_engine.ui.theme import _reset_registry_for_tests
+    from pharos_editor.ui.theme import _reset_registry_for_tests
     _reset_registry_for_tests()
     yield
     _reset_registry_for_tests()
@@ -56,7 +56,7 @@ def _reset_theme_registry() -> None:
 
 def _make_theme(name: str = "bb1_test"):
     """Build a minimal :class:`ThemeSpec` for round-trip tests."""
-    from pharos_engine.ui.theme import (
+    from pharos_editor.ui.theme import (
         Color,
         Gradient,
         SemanticTokens,
@@ -93,7 +93,7 @@ def _make_theme(name: str = "bb1_test"):
 
 def _make_layout(theme: str = "bb1_test") -> Any:
     """Build a minimal :class:`EditorLayout` snapshot."""
-    from pharos_engine.ui.editor.layout_persistence import (
+    from pharos_editor.ui.editor.layout_persistence import (
         EditorLayout,
         PanelLayoutState,
         SCHEMA_VERSION,
@@ -183,7 +183,7 @@ class TestThemeImport:
         assert result["theme"] == "imported_alpha"
         assert result["activated"] is True
 
-        from pharos_engine.ui.theme import (
+        from pharos_editor.ui.theme import (
             get_active_theme,
             list_registered_themes,
         )
@@ -204,7 +204,7 @@ class TestThemeImport:
         assert result["status"] == "imported"
         assert result["activated"] is False
 
-        from pharos_engine.ui.theme import list_registered_themes
+        from pharos_editor.ui.theme import list_registered_themes
         assert "registered_only" in list_registered_themes()
 
     def test_import_missing_file(
@@ -462,7 +462,7 @@ class TestEditUndoRedo:
     """Cover the edit.undo / edit.redo wiring."""
 
     def _stack_with_entry(self, sink: list[str]):
-        from pharos_engine.ui.editor.editor_undo import UndoStack
+        from pharos_editor.ui.editor.editor_undo import UndoStack
         stack = UndoStack(capacity=8)
         stack.push(
             "test.mutate",
@@ -494,13 +494,13 @@ class TestEditUndoRedo:
         assert result["redo_depth"] == 0
 
     def test_undo_empty_stack(self, router: ToolRouter) -> None:
-        from pharos_engine.ui.editor.editor_undo import UndoStack
+        from pharos_editor.ui.editor.editor_undo import UndoStack
         stack = UndoStack()
         result = router.dispatch("edit.undo", {"stack": stack})
         assert result["status"] == "empty"
 
     def test_redo_empty_stack(self, router: ToolRouter) -> None:
-        from pharos_engine.ui.editor.editor_undo import UndoStack
+        from pharos_editor.ui.editor.editor_undo import UndoStack
         stack = UndoStack()
         result = router.dispatch("edit.redo", {"stack": stack})
         assert result["status"] == "empty"
@@ -532,7 +532,7 @@ class TestEditUndoRedo:
         assert result["status"] == "redone"
 
     def test_undo_multiple_entries(self, router: ToolRouter) -> None:
-        from pharos_engine.ui.editor.editor_undo import UndoStack
+        from pharos_editor.ui.editor.editor_undo import UndoStack
         stack = UndoStack()
         stack.push("a", lambda: None, lambda: None, label="A")
         stack.push("b", lambda: None, lambda: None, label="B")
@@ -568,7 +568,7 @@ class TestBB1RoundTrip:
         self, router: ToolRouter, tmp_path: Path,
     ) -> None:
         theme = _make_theme("roundtripper")
-        from pharos_engine.ui.theme import apply_theme, register_theme
+        from pharos_editor.ui.theme import apply_theme, register_theme
         register_theme(theme)
         apply_theme("roundtripper")
 
@@ -579,7 +579,7 @@ class TestBB1RoundTrip:
         )
         assert export["status"] == "exported"
 
-        from pharos_engine.ui.theme import _reset_registry_for_tests
+        from pharos_editor.ui.theme import _reset_registry_for_tests
         _reset_registry_for_tests()
 
         import_result = router.dispatch(

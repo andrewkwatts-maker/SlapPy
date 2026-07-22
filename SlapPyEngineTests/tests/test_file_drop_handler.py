@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.ui.editor.file_drop_handler` (EE4).
+"""Tests for :mod:`pharos_editor.ui.editor.file_drop_handler` (EE4).
 
 Covers classification per extension, dispatch semantics, batch
 robustness (one failure doesn't abort the whole drop), and default
@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.ui.editor.file_drop_handler import (
+from pharos_editor.ui.editor.file_drop_handler import (
     COMPOUND_SUFFIX_MAP,
     DEFAULT_SHADER_DIR,
     DropAction,

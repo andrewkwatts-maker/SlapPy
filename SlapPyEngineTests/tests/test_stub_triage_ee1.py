@@ -18,7 +18,7 @@ Covers the five new action ids added by the 2026-07-05 EE1 sprint tick
 * ``edit.snap_to_pixel_grid`` — round selected entity positions to
   integer pixels (or an arbitrary ``pixel_size`` grid).
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up (``action_id`` -> Python fallback) is exercised end-to-end.
 No DPG context is required — the fixtures use :class:`SimpleNamespace`
 stand-ins for the shell / scene handles.
@@ -31,7 +31,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -218,7 +218,7 @@ class TestUngroupSelection:
         # (-5,0,0) and (5,0,0) — matches what group_selection would emit.
         a = _FakeEntity("a", [-5.0, 0.0, 0.0])
         b = _FakeEntity("b", [5.0, 0.0, 0.0])
-        from pharos_engine.actions.edit_group_actions import _GroupEntity
+        from pharos_editor.actions.edit_group_actions import _GroupEntity
 
         group = _GroupEntity(position=[5.0, 0.0, 0.0], children=[a, b])
         scene = _FakeScene([group])
@@ -297,7 +297,7 @@ class TestRandomTheme:
         self, router: ToolRouter,
     ) -> None:
         # Seed the theme cursor at "dark" so the exclude filter kicks in.
-        from pharos_engine.actions import theme_actions as ta
+        from pharos_editor.actions import theme_actions as ta
         ta._reset_theme_cursor_for_tests()
         ta._THEME_CURSOR = "dark"
 
@@ -310,7 +310,7 @@ class TestRandomTheme:
         assert result["theme"] == "light"
 
     def test_single_theme_short_circuits(self, router: ToolRouter) -> None:
-        from pharos_engine.actions import theme_actions as ta
+        from pharos_editor.actions import theme_actions as ta
         ta._reset_theme_cursor_for_tests()
         ta._THEME_CURSOR = "only"
         result = router.dispatch(
@@ -489,13 +489,13 @@ class TestCtxGuards:
         ],
     )
     def test_none_ctx_raises(self, action_id: str) -> None:
-        from pharos_engine.actions.edit_group_actions import (
+        from pharos_editor.actions.edit_group_actions import (
             group_selection,
             ungroup_selection,
         )
-        from pharos_engine.actions.theme_random_actions import random_theme
-        from pharos_engine.actions.spawn_cursor_actions import spawn_at_cursor
-        from pharos_engine.actions.edit_snap_pixel_actions import (
+        from pharos_editor.actions.theme_random_actions import random_theme
+        from pharos_editor.actions.spawn_cursor_actions import spawn_at_cursor
+        from pharos_editor.actions.edit_snap_pixel_actions import (
             snap_to_pixel_grid,
         )
 
@@ -520,13 +520,13 @@ class TestCtxGuards:
         ],
     )
     def test_list_ctx_raises(self, action_id: str) -> None:
-        from pharos_engine.actions.edit_group_actions import (
+        from pharos_editor.actions.edit_group_actions import (
             group_selection,
             ungroup_selection,
         )
-        from pharos_engine.actions.theme_random_actions import random_theme
-        from pharos_engine.actions.spawn_cursor_actions import spawn_at_cursor
-        from pharos_engine.actions.edit_snap_pixel_actions import (
+        from pharos_editor.actions.theme_random_actions import random_theme
+        from pharos_editor.actions.spawn_cursor_actions import spawn_at_cursor
+        from pharos_editor.actions.edit_snap_pixel_actions import (
             snap_to_pixel_grid,
         )
 

@@ -16,7 +16,7 @@ try:
     from pharos_engine.scene import Scene
     from pharos_engine.asset import Asset
     from pharos_engine.layer import Layer
-    from pharos_engine.ui.scene_ui import SceneUIEntity
+    from pharos_editor.ui.scene_ui import SceneUIEntity
 except ImportError as e:
     print(f"Import error: {e}")
     print("Run 'maturin develop' to build the Rust extension first.")

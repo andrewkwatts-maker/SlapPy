@@ -8,12 +8,12 @@ lines / ink margin never appeared on screen.
 
 These tests exercise the two halves of the wiring:
 
-* :func:`pharos_engine.ui.theme.resolve_background` returns a real
+* :func:`pharos_editor.ui.theme.resolve_background` returns a real
   ``(H, W, 4)`` uint8 ndarray for the ``ruled_paper`` numpy-side
   effect (BBB1 fixed the sig-injection crash — this is a smoke test
   that it stays fixed and produces a non-empty texture).
 * :meth:`EditorShell.setup_theme_subsystem` calls
-  :func:`pharos_engine.ui.editor.theme._bind_paper_texture` for each
+  :func:`pharos_editor.ui.editor.theme._bind_paper_texture` for each
   of the four notebook surface panels (outliner, viewport, inspector,
   content browser). The helper records the intent on a module-level
   tracker so the test can prove the wiring ran without a live DPG
@@ -27,8 +27,8 @@ import pytest
 @pytest.fixture(autouse=True)
 def _reset_theme_state():
     """Drop theme registry + paper-texture bookkeeping between cases."""
-    from pharos_engine.ui.theme import _reset_registry_for_tests
-    from pharos_engine.ui.editor.theme import (
+    from pharos_editor.ui.theme import _reset_registry_for_tests
+    from pharos_editor.ui.editor.theme import (
         _reset_paper_texture_bindings_for_tests,
     )
 
@@ -50,7 +50,7 @@ class TestResolveRuledPaperBackground:
     def test_returns_rgba_ndarray_from_shader_effect(self):
         import numpy as np
 
-        from pharos_engine.ui.theme import ShaderEffect, resolve_background
+        from pharos_editor.ui.theme import ShaderEffect, resolve_background
 
         effect = ShaderEffect(
             name="ruled_paper",
@@ -79,7 +79,7 @@ class TestResolveRuledPaperBackground:
         we'd be back to the flat off-white bug the user reported."""
         import numpy as np
 
-        from pharos_engine.ui.theme import ShaderEffect, resolve_background
+        from pharos_editor.ui.theme import ShaderEffect, resolve_background
 
         effect = ShaderEffect(
             name="ruled_paper",
@@ -118,8 +118,8 @@ class _StubEngine:
 
 class TestPanelTextureWiring:
     def test_setup_theme_subsystem_binds_paper_for_four_panels(self):
-        from pharos_engine.ui.editor.shell import EditorShell
-        from pharos_engine.ui.editor.theme import get_bound_paper_textures
+        from pharos_editor.ui.editor.shell import EditorShell
+        from pharos_editor.ui.editor.theme import get_bound_paper_textures
 
         shell = EditorShell(_StubEngine())
         shell.setup_theme_subsystem()
@@ -140,8 +140,8 @@ class TestPanelTextureWiring:
     def test_bound_textures_have_unique_registry_tags(self):
         """Each panel gets its own texture-registry tag so DPG doesn't
         collide when the theme is re-applied on a live editor."""
-        from pharos_engine.ui.editor.shell import EditorShell
-        from pharos_engine.ui.editor.theme import get_bound_paper_textures
+        from pharos_editor.ui.editor.shell import EditorShell
+        from pharos_editor.ui.editor.theme import get_bound_paper_textures
 
         shell = EditorShell(_StubEngine())
         shell.setup_theme_subsystem()
@@ -156,7 +156,7 @@ class TestPanelTextureWiring:
         """When ``get_baked_background`` returns ``None`` (no theme or
         no shader) the helper must still record the intent so panels
         wire up their solid fallback colour instead of crashing."""
-        from pharos_engine.ui.editor.theme import (
+        from pharos_editor.ui.editor.theme import (
             _bind_paper_texture,
             get_bound_paper_textures,
         )
@@ -169,6 +169,6 @@ class TestPanelTextureWiring:
     def test_bind_helper_rejects_empty_panel_tag(self):
         """A blank panel tag is a caller bug — we return ``None`` so the
         caller can log + skip rather than register a nameless texture."""
-        from pharos_engine.ui.editor.theme import _bind_paper_texture
+        from pharos_editor.ui.editor.theme import _bind_paper_texture
 
         assert _bind_paper_texture(None, "") is None

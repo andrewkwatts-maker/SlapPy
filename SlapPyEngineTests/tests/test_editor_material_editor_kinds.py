@@ -67,7 +67,7 @@ def stub_dearpygui(monkeypatch):
 # ---------------------------------------------------------------------------
 
 try:
-    from pharos_engine.ui.editor.material_editor import (
+    from pharos_editor.ui.editor.material_editor import (
         MaterialEditor,
         KIND_MATERIAL_MAP,
         KIND_SOFTBODY,

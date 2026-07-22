@@ -15,7 +15,7 @@ tracks which shipped subpackages have references and which do not.
 
 | Subpackage | Doc |
 |---|---|
-| `pharos_engine.actions` | [`actions.md`](actions.md) |
+| `pharos_editor.actions` | [`actions.md`](actions.md) |
 | `pharos_engine.ai` | [`ai.md`](ai.md) |
 | `pharos_engine.animation` | [`animation.md`](animation.md) |
 | `pharos_engine.animation.skeleton_runtime` | [`animation_skeleton.md`](animation_skeleton.md) |
@@ -55,10 +55,10 @@ tracks which shipped subpackages have references and which do not.
 | `pharos_engine.thermal` | [`thermal.md`](thermal.md) |
 | `pharos_engine.tools` | [`tools.md`](tools.md) |
 | `pharos_engine.topology` | [`topology.md`](topology.md) |
-| `pharos_engine.ui.editor` | [`ui_editor.md`](ui_editor.md) |
-| `pharos_engine.ui.runtime.hud_overlay` | [`hud_overlay.md`](hud_overlay.md) |
-| `pharos_engine.ui.theme` | [`ui_theme.md`](ui_theme.md) |
-| `pharos_engine.ui.widgets` | [`ui_widgets.md`](ui_widgets.md) |
+| `pharos_editor.ui.editor` | [`ui_editor.md`](ui_editor.md) |
+| `pharos_editor.ui.runtime.hud_overlay` | [`hud_overlay.md`](hud_overlay.md) |
+| `pharos_editor.ui.theme` | [`ui_theme.md`](ui_theme.md) |
+| `pharos_editor.ui.widgets` | [`ui_widgets.md`](ui_widgets.md) |
 | `pharos_engine.visual_scripting` | [`visual_scripting.md`](visual_scripting.md) |
 | `pharos_engine.zones` | [`zones.md`](zones.md) |
 
@@ -83,7 +83,7 @@ each row is deferred. Filed for follow-on agents.
 | `pharos_engine.render` | Composite root package; individual first-class refs already exist for the load-bearing modules (`render.scene_walker`, `render.shadows`, `render.bvh_3d`, `render.skybox`, `render.instanced`). A top-level `render.md` would only summarise the split refs above. Deferred: covered by the sub-refs. |
 | `pharos_engine.scenes` | Scene registration + persistence helpers. Deferred: rewrite pending after WW-batch WIP unfreeze. |
 | `pharos_engine.text` | SDF text renderer. Deferred: covered inline by [`../feature_map_2026_06_03.md`](../feature_map_2026_06_03.md) until dedicated ref lands. |
-| `pharos_engine.ui` (top level) | Composite root package; first-class refs exist for `ui.editor`, `ui.theme`, `ui.widgets`, `ui.runtime.hud_overlay`. Deferred: covered by the sub-refs. |
+| `pharos_editor.ui` (top level) | Composite root package; first-class refs exist for `ui.editor`, `ui.theme`, `ui.widgets`, `ui.runtime.hud_overlay`. Deferred: covered by the sub-refs. |
 
 ## WIP subpackages — refs deliberately withheld
 

@@ -445,7 +445,7 @@ Heat diffusion + pairwise heat exchange — Phase B public surface.
 
 **Inner modules:** `_sprite_audit_validation`, `audio_tools`, `gen_placeholders`, `sprite_audit`, `sprite_tools`, `texture_tools`, `track_tools`, `video`
 
-### `pharos_engine.ui`
+### `pharos_editor.ui`
 
 UI subpackage — lazy-loaded to avoid eager numpy/wgpu imports.
 
@@ -553,5 +553,5 @@ in the API reference's "Design notes" section (linked from the
 | `pharos_engine.testing` | [`api/testing.md`](api/testing.md) | no separate doc — see API ref §Design notes |
 | `pharos_engine.thermal` | [`api/thermal.md`](api/thermal.md) | no separate doc — see API ref §Design notes |
 | `pharos_engine.topology` | [`api/topology.md`](api/topology.md) | no separate doc — see API ref §Design notes |
-| `pharos_engine.ui.editor` | [`api/ui_editor.md`](api/ui_editor.md) | no separate doc — see API ref §Design notes |
+| `pharos_editor.ui.editor` | [`api/ui_editor.md`](api/ui_editor.md) | no separate doc — see API ref §Design notes |
 | `pharos_engine.tools` | [`api/tools.md`](api/tools.md) | no separate doc — surface is the `sprite_audit` CPU utility (see [`sprite_audit_recipe.md`](sprite_audit_recipe.md)) |

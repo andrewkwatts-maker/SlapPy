@@ -151,29 +151,29 @@ class _MockDraw:
 
 class TestDrawStatBar:
     def test_draws_without_exception(self):
-        from pharos_engine.ui.hud_widgets import draw_stat_bar
+        from pharos_editor.ui.hud_widgets import draw_stat_bar
         draw_stat_bar(_MockDraw(), x=0, y=0, w=100, h=16, value=50, max_value=100)
 
     def test_always_draws_background(self):
-        from pharos_engine.ui.hud_widgets import draw_stat_bar
+        from pharos_editor.ui.hud_widgets import draw_stat_bar
         d = _MockDraw()
         draw_stat_bar(d, 0, 0, 100, 16, value=0, max_value=100)
         assert len(d.rects) >= 1
 
     def test_full_value_draws_two_rects(self):
-        from pharos_engine.ui.hud_widgets import draw_stat_bar
+        from pharos_editor.ui.hud_widgets import draw_stat_bar
         d = _MockDraw()
         draw_stat_bar(d, 0, 0, 100, 16, value=100, max_value=100)
         assert len(d.rects) == 2  # background + fill
 
     def test_zero_value_draws_only_background(self):
-        from pharos_engine.ui.hud_widgets import draw_stat_bar
+        from pharos_editor.ui.hud_widgets import draw_stat_bar
         d = _MockDraw()
         draw_stat_bar(d, 0, 0, 100, 16, value=0, max_value=100)
         assert len(d.rects) == 1  # only background (ratio == 0)
 
     def test_fill_color_used(self):
-        from pharos_engine.ui.hud_widgets import draw_stat_bar
+        from pharos_editor.ui.hud_widgets import draw_stat_bar
         d = _MockDraw()
         draw_stat_bar(d, 0, 0, 100, 16, value=50, max_value=100,
                       fill_color=(255, 0, 0))
@@ -181,24 +181,24 @@ class TestDrawStatBar:
         assert (255, 0, 0) in fills
 
     def test_label_text_drawn(self):
-        from pharos_engine.ui.hud_widgets import draw_stat_bar
+        from pharos_editor.ui.hud_widgets import draw_stat_bar
         d = _MockDraw()
         draw_stat_bar(d, 0, 0, 100, 16, value=50, max_value=100, label="HP")
         assert any(t["text"] == "HP" for t in d.texts)
 
     def test_no_label_no_text(self):
-        from pharos_engine.ui.hud_widgets import draw_stat_bar
+        from pharos_editor.ui.hud_widgets import draw_stat_bar
         d = _MockDraw()
         draw_stat_bar(d, 0, 0, 100, 16, value=50, max_value=100, label="")
         assert d.texts == []
 
     def test_zero_max_no_crash(self):
-        from pharos_engine.ui.hud_widgets import draw_stat_bar
+        from pharos_editor.ui.hud_widgets import draw_stat_bar
         d = _MockDraw()
         draw_stat_bar(d, 0, 0, 100, 16, value=50, max_value=0)
 
     def test_value_beyond_max_clamped(self):
-        from pharos_engine.ui.hud_widgets import draw_stat_bar
+        from pharos_editor.ui.hud_widgets import draw_stat_bar
         d = _MockDraw()
         draw_stat_bar(d, 0, 0, 100, 16, value=200, max_value=100)
         # Fill rect should use clamped ratio (1.0), so fill width == bar width
@@ -219,7 +219,7 @@ class TestHtmlOverlayImport:
             pytest.skip("pywebview is installed; can't test missing-dep path")
         except ImportError:
             pass
-        from pharos_engine.ui.html_overlay import HtmlOverlay
+        from pharos_editor.ui.html_overlay import HtmlOverlay
         with pytest.raises(ImportError, match="pywebview"):
             HtmlOverlay(width=800, height=600)
 
@@ -230,19 +230,19 @@ class TestHtmlOverlayImport:
 
 class TestProjectManagerHelpers:
     def test_load_recent_no_crash(self):
-        from pharos_engine.ui.project_manager import _load_recent
+        from pharos_editor.ui.project_manager import _load_recent
         result = _load_recent()
         assert isinstance(result, list)
 
     def test_add_recent_creates_entry(self, tmp_path, monkeypatch):
-        from pharos_engine.ui import project_manager as pm
+        from pharos_editor.ui import project_manager as pm
         monkeypatch.setattr(pm, "_RECENT_FILE", tmp_path / "recent.json")
         pm._add_recent("/fake/path", "TestProject")
         entries = pm._load_recent()
         assert any(e["path"] == "/fake/path" for e in entries)
 
     def test_add_recent_max_ten(self, tmp_path, monkeypatch):
-        from pharos_engine.ui import project_manager as pm
+        from pharos_editor.ui import project_manager as pm
         monkeypatch.setattr(pm, "_RECENT_FILE", tmp_path / "recent.json")
         for i in range(15):
             pm._add_recent(f"/path/{i}", f"proj{i}")
@@ -250,7 +250,7 @@ class TestProjectManagerHelpers:
         assert len(entries) <= pm._MAX_RECENT
 
     def test_add_recent_deduplicates(self, tmp_path, monkeypatch):
-        from pharos_engine.ui import project_manager as pm
+        from pharos_editor.ui import project_manager as pm
         monkeypatch.setattr(pm, "_RECENT_FILE", tmp_path / "recent.json")
         pm._add_recent("/same/path", "A")
         pm._add_recent("/same/path", "B")
@@ -261,7 +261,7 @@ class TestProjectManagerHelpers:
 
 class TestProjectManagerAPI:
     def _make_api(self, tmp_path):
-        from pharos_engine.ui.project_manager import ProjectManagerAPI
+        from pharos_editor.ui.project_manager import ProjectManagerAPI
 
         class _FakeManager:
             _current_asset = None

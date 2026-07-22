@@ -152,8 +152,8 @@ path is `pharos_engine.input` for now.
 
 ### `ext.ui` — editor UI
 
-Re-exports `pharos_engine.ui`. The `ext.ui.editor` sub-shim re-exports
-`pharos_engine.ui.editor` (full surface in [`ui_editor.md`](ui_editor.md))
+Re-exports `pharos_editor.ui`. The `ext.ui.editor` sub-shim re-exports
+`pharos_editor.ui.editor` (full surface in [`ui_editor.md`](ui_editor.md))
 and requires the `[editor]` extra (PyQt6 + qtawesome) before any
 class is instantiated — importing the module is cheap, instantiating
 `EditorShell` is not.

@@ -121,7 +121,7 @@ def stub_dpg(monkeypatch):
 
 @pytest.fixture
 def make_panel():
-    from pharos_engine.ui.editor.notebook_asset_inspector import (
+    from pharos_editor.ui.editor.notebook_asset_inspector import (
         NotebookAssetInspector,
     )
 
@@ -288,7 +288,7 @@ class TestConstruction:
             make_panel(clipboard_shim=42)
 
     def test_title_and_min_size_constants(self):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             NotebookAssetInspector,
         )
         assert NotebookAssetInspector.TITLE == "Asset Inspector"
@@ -303,12 +303,12 @@ class TestConstruction:
 
 class TestEditorRegistration:
     def test_lazy_import_via_editor_init(self):
-        from pharos_engine.ui.editor import NotebookAssetInspector
+        from pharos_editor.ui.editor import NotebookAssetInspector
         panel = NotebookAssetInspector()
         assert panel.path is None
 
     def test_all_contains_asset_inspector_alphabetically(self):
-        import pharos_engine.ui.editor as ed
+        import pharos_editor.ui.editor as ed
         assert "NotebookAssetInspector" in ed.__all__
         # Between NodeGraphPanel and NotebookAutosavePanel.
         i_ng = ed.__all__.index("NodeGraphPanel")
@@ -317,7 +317,7 @@ class TestEditorRegistration:
         assert i_ng < i_ai < i_av
 
     def test_lazy_map_contains_module_path(self):
-        from pharos_engine.ui.editor import _LAZY_MAP
+        from pharos_editor.ui.editor import _LAZY_MAP
         assert _LAZY_MAP["NotebookAssetInspector"] == (
             ".notebook_asset_inspector"
         )
@@ -330,20 +330,20 @@ class TestEditorRegistration:
 
 class TestClassifyAssetKind:
     def test_script(self):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             classify_asset_kind,
         )
         assert classify_asset_kind(Path("foo.py")) == "script"
 
     def test_scene(self):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             classify_asset_kind,
         )
         assert classify_asset_kind(Path("level.scene.yaml")) == "scene"
         assert classify_asset_kind(Path("level.scene.json")) == "scene"
 
     def test_texture(self):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             classify_asset_kind,
         )
         assert classify_asset_kind(Path("t.png")) == "texture"
@@ -351,27 +351,27 @@ class TestClassifyAssetKind:
         assert classify_asset_kind(Path("t.webp")) == "texture"
 
     def test_material(self):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             classify_asset_kind,
         )
         assert classify_asset_kind(Path("b.mat.yaml")) == "material"
         assert classify_asset_kind(Path("b.material.yaml")) == "material"
 
     def test_shader(self):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             classify_asset_kind,
         )
         assert classify_asset_kind(Path("s.wgsl")) == "shader"
         assert classify_asset_kind(Path("s.glsl")) == "shader"
 
     def test_prefab(self):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             classify_asset_kind,
         )
         assert classify_asset_kind(Path("c.prefab.yaml")) == "prefab"
 
     def test_other(self):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             classify_asset_kind,
         )
         assert classify_asset_kind(Path("readme.md")) == "other"
@@ -397,7 +397,7 @@ class TestSetAssetPath:
             panel.set_asset_path(42)
 
     def test_script_populates_script_preview(self, make_panel, script_file):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             ScriptPreview,
         )
         panel = make_panel(path=script_file)
@@ -406,7 +406,7 @@ class TestSetAssetPath:
         assert not panel.preview.truncated
 
     def test_scene_populates_scene_preview(self, make_panel, scene_file):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             ScenePreview,
         )
         panel = make_panel(path=scene_file)
@@ -417,7 +417,7 @@ class TestSetAssetPath:
         assert "hero" in panel.preview.entity_names
 
     def test_corrupt_scene_captures_error(self, make_panel, corrupt_scene):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             ScenePreview,
         )
         panel = make_panel(path=corrupt_scene)
@@ -426,7 +426,7 @@ class TestSetAssetPath:
         assert preview.error is not None
 
     def test_texture_populates_texture_preview(self, make_panel, texture_file):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             TexturePreview,
         )
         panel = make_panel(path=texture_file)
@@ -436,7 +436,7 @@ class TestSetAssetPath:
         assert panel.preview.mode == "RGBA"
 
     def test_material_populates_material_preview(self, make_panel, material_file):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             MaterialPreview,
         )
         panel = make_panel(path=material_file)
@@ -445,7 +445,7 @@ class TestSetAssetPath:
         assert panel.preview.wgsl_bytes > 0
 
     def test_shader_populates_shader_preview(self, make_panel, shader_file):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             ShaderPreview,
         )
         panel = make_panel(path=shader_file)
@@ -454,7 +454,7 @@ class TestSetAssetPath:
         assert "fs_main" in panel.preview.source
 
     def test_prefab_populates_prefab_preview(self, make_panel, prefab_file):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             PrefabPreview,
         )
         panel = make_panel(path=prefab_file)
@@ -464,7 +464,7 @@ class TestSetAssetPath:
         assert panel.preview.bounding_box == (-1.0, -1.0, 1.0, 1.0)
 
     def test_other_populates_other_preview(self, make_panel, other_file):
-        from pharos_engine.ui.editor.notebook_asset_inspector import (
+        from pharos_editor.ui.editor.notebook_asset_inspector import (
             OtherPreview,
         )
         panel = make_panel(path=other_file)

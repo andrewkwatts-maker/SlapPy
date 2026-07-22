@@ -685,7 +685,7 @@ engine.add_player(ActionMap.wasd(player_id=0))
 ### Launch
 
 ```bash
-python -m pharos_engine.ui.editor
+python -m pharos_editor.ui.editor
 ```
 
 Or from Python:

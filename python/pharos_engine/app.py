@@ -1122,8 +1122,8 @@ class App:
     # dict, no router boilerplate. Callers wanting to bypass this
     # convenience layer (custom ctx, non-default renderer target, etc.)
     # can call the ``_core`` action helpers directly:
-    # :mod:`pharos_engine.actions.capture_actions` /
-    # :mod:`pharos_engine.actions.render_toggle_actions`.
+    # :mod:`pharos_editor.actions.capture_actions` /
+    # :mod:`pharos_editor.actions.render_toggle_actions`.
     # ------------------------------------------------------------------
     def start_recording(
         self,
@@ -1134,7 +1134,7 @@ class App:
         """Start an MP4 recording of the current renderer.
 
         One-liner over
-        :func:`pharos_engine.actions.capture_actions.start_recording`.
+        :func:`pharos_editor.actions.capture_actions.start_recording`.
         Recording state is stashed on ``self._capture_state`` so a
         subsequent :meth:`stop_recording` closes it out.
 
@@ -1158,11 +1158,11 @@ class App:
         Notes
         -----
         Bypass hint: call
-        ``pharos_engine.actions.capture_actions.start_recording(ctx)``
+        ``pharos_editor.actions.capture_actions.start_recording(ctx)``
         directly (``_core`` surface) when you need a custom renderer /
         codec / bitrate.
         """
-        from pharos_engine.actions.capture_actions import (
+        from pharos_editor.actions.capture_actions import (
             start_recording as _core,
         )
 
@@ -1179,7 +1179,7 @@ class App:
         """Stop the MP4 recording session started by :meth:`start_recording`.
 
         One-liner over
-        :func:`pharos_engine.actions.capture_actions.stop_recording`.
+        :func:`pharos_editor.actions.capture_actions.stop_recording`.
         Safe to call when nothing is recording — returns
         ``{"status": "not_recording"}``.
 
@@ -1192,11 +1192,11 @@ class App:
         Notes
         -----
         Bypass hint: call
-        ``pharos_engine.actions.capture_actions.stop_recording(ctx)``
+        ``pharos_editor.actions.capture_actions.stop_recording(ctx)``
         directly (``_core`` surface) to close a session belonging to a
         different shell.
         """
-        from pharos_engine.actions.capture_actions import (
+        from pharos_editor.actions.capture_actions import (
             stop_recording as _core,
         )
 
@@ -1210,7 +1210,7 @@ class App:
         """Capture a one-shot screenshot of the current renderer.
 
         One-liner over
-        :func:`pharos_engine.actions.capture_actions.screenshot`. Does
+        :func:`pharos_editor.actions.capture_actions.screenshot`. Does
         not touch any live recording session.
 
         Parameters
@@ -1233,10 +1233,10 @@ class App:
         Notes
         -----
         Bypass hint: call
-        ``pharos_engine.actions.capture_actions.screenshot(ctx)``
+        ``pharos_editor.actions.capture_actions.screenshot(ctx)``
         directly (``_core`` surface) for custom resolution / renderer.
         """
-        from pharos_engine.actions.capture_actions import (
+        from pharos_editor.actions.capture_actions import (
             screenshot as _core,
         )
 
@@ -1266,7 +1266,7 @@ class App:
         """Toggle the SSAO pass on the current renderer.
 
         One-liner over
-        :func:`pharos_engine.actions.render_toggle_actions.enable_ssao`.
+        :func:`pharos_editor.actions.render_toggle_actions.enable_ssao`.
         Headless-safe: when no renderer is bound, the flag is stored on
         the shell (``self._ssao_enabled``) so subsequent calls still
         round-trip.
@@ -1287,11 +1287,11 @@ class App:
         Notes
         -----
         Bypass hint: call
-        ``pharos_engine.actions.render_toggle_actions.enable_ssao(ctx)``
+        ``pharos_editor.actions.render_toggle_actions.enable_ssao(ctx)``
         directly (``_core`` surface) to omit ``enabled`` (i.e. flip
         the flag).
         """
-        from pharos_engine.actions.render_toggle_actions import (
+        from pharos_editor.actions.render_toggle_actions import (
             enable_ssao as _core,
         )
 
@@ -1307,7 +1307,7 @@ class App:
         """Toggle the CSM shadow-map pass on the current renderer.
 
         One-liner over
-        :func:`pharos_engine.actions.render_toggle_actions.enable_shadows`.
+        :func:`pharos_editor.actions.render_toggle_actions.enable_shadows`.
         Same headless-safe fallback as :meth:`enable_ssao`.
 
         Parameters
@@ -1324,11 +1324,11 @@ class App:
         Notes
         -----
         Bypass hint: call
-        ``pharos_engine.actions.render_toggle_actions.enable_shadows(ctx)``
+        ``pharos_editor.actions.render_toggle_actions.enable_shadows(ctx)``
         directly (``_core`` surface) to omit ``enabled`` (i.e. flip
         the flag).
         """
-        from pharos_engine.actions.render_toggle_actions import (
+        from pharos_editor.actions.render_toggle_actions import (
             enable_shadows as _core,
         )
 

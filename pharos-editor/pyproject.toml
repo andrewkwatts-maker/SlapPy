@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pharos-editor"
+version = "0.3.0b1"
+description = "Notebook-style editor UI for PharosEngine (DearPyGui + gizmos + themes)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+keywords = ["game-engine", "editor", "dearpygui", "pharos"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Games/Entertainment",
+    "Topic :: Multimedia :: Graphics",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+# Hard dep on the engine wheel + all the UI-only deps that used to be
+# bundled in pharos-engine[editor]. Installing pharos-editor gives you
+# a runnable editor with no additional extras.
+dependencies = [
+    "pharos-engine==0.3.0b1",
+    "dearpygui>=1.11",
+    "pywebview>=4.0",
+    "arithma>=2.0.2",
+]
+
+[project.scripts]
+pharos-edit = "pharos_editor.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/andrewkwatts-maker/SlapPyEngine"
+Repository = "https://github.com/andrewkwatts-maker/SlapPyEngine"
+Issues = "https://github.com/andrewkwatts-maker/SlapPyEngine/issues"
+
+[tool.setuptools]
+package-dir = {"" = "../python"}
+
+[tool.setuptools.packages.find]
+where = ["../python"]
+include = ["pharos_editor*"]
+exclude = ["pharos_engine*"]
+
+[tool.setuptools.package-data]
+"pharos_editor" = [
+    "ui/theme/themes/_baked/*.theme.yaml",
+    "ui/hotkeys/baked/*.yaml",
+    "ui/editor/baked_layouts/*.layout.yaml",
+    "ui/plugin_samples/**/*.py",
+    "ui/plugin_samples/**/*.yaml",
+]

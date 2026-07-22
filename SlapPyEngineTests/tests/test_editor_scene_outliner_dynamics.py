@@ -76,7 +76,7 @@ def stub_dearpygui(monkeypatch):
 # ---------------------------------------------------------------------------
 
 try:
-    from pharos_engine.ui.editor.scene_outliner import (  # noqa: F401
+    from pharos_editor.ui.editor.scene_outliner import (  # noqa: F401
         SceneOutliner,
         _is_humanoid_body,
     )
@@ -99,7 +99,7 @@ def _spawn_rope(world):
     Resolves through the public spawn-menu surface so the test exercises the
     same code path the editor's ``+ Add`` button would.
     """
-    from pharos_engine.ui.editor.spawn_menu import (
+    from pharos_editor.ui.editor.spawn_menu import (
         SPAWN_ACTIONS,
         _resolve_factory,
         _spec_to_kwargs,

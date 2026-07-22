@@ -110,10 +110,10 @@ def stub_dpg(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def reset_theme_registry():
-    from pharos_engine.ui.theme import _reset_registry_for_tests
-    from pharos_engine.ui.theme import dpg_bridge
-    from pharos_engine.ui.widgets import notebook_theme
-    from pharos_engine.ui.theme.creatures import (
+    from pharos_editor.ui.theme import _reset_registry_for_tests
+    from pharos_editor.ui.theme import dpg_bridge
+    from pharos_editor.ui.widgets import notebook_theme
+    from pharos_editor.ui.theme.creatures import (
         _reset_default_scheduler_for_tests,
     )
 
@@ -139,7 +139,7 @@ def reset_theme_registry():
 
 
 def _make_shell():
-    from pharos_engine.ui.editor.shell import EditorShell
+    from pharos_editor.ui.editor.shell import EditorShell
 
     class _StubEngine:
         def __init__(self):
@@ -151,7 +151,7 @@ def _make_shell():
 def _wire_default_panels(shell):
     shell.setup_theme_subsystem()
     shell.setup_notebook_panels()
-    from pharos_engine.ui.editor.notebook_content_browser import (
+    from pharos_editor.ui.editor.notebook_content_browser import (
         NotebookContentBrowser,
     )
     shell._content_browser = NotebookContentBrowser(
@@ -225,7 +225,7 @@ class TestNoOverlap:
 
     def test_toolbar_sits_over_center_column_not_scene(self):
         """Toolbar must start at ``LEFT_W`` — not at ``0``."""
-        from pharos_engine.ui.editor.shell import LEFT_W
+        from pharos_editor.ui.editor.shell import LEFT_W
 
         shell = _wire_default_panels(_make_shell())
         windows = shell.compose_default_panel_layout()
@@ -236,7 +236,7 @@ class TestNoOverlap:
         )
 
     def test_toolbar_width_does_not_spill_into_inspector(self):
-        from pharos_engine.ui.editor.shell import LEFT_W, RIGHT_W
+        from pharos_editor.ui.editor.shell import LEFT_W, RIGHT_W
 
         shell = _wire_default_panels(_make_shell())
         windows = shell.compose_default_panel_layout()
@@ -254,7 +254,7 @@ class TestNoOverlap:
 
     def test_scene_panel_spans_full_sidebar_height(self):
         """Scene panel (Outliner) sits FROM titlebar TO content browser."""
-        from pharos_engine.ui.editor.shell import LEFT_W
+        from pharos_editor.ui.editor.shell import LEFT_W
 
         shell = _wire_default_panels(_make_shell())
         windows = shell.compose_default_panel_layout()
@@ -270,7 +270,7 @@ class TestNoOverlap:
         assert y == 28
 
     def test_inspector_pinned_to_right_edge(self):
-        from pharos_engine.ui.editor.shell import RIGHT_W
+        from pharos_editor.ui.editor.shell import RIGHT_W
 
         shell = _wire_default_panels(_make_shell())
         windows = shell.compose_default_panel_layout()
@@ -313,8 +313,8 @@ class TestToolbarContents:
     def test_toolbar_min_width_fits_center_column(self):
         """Toolbar MIN_WIDTH <= centre column width so the sticker
         buttons render instead of being crushed to a single black rect."""
-        from pharos_engine.ui.editor.notebook_toolbar import NotebookToolbar
-        from pharos_engine.ui.editor.shell import LEFT_W, RIGHT_W
+        from pharos_editor.ui.editor.notebook_toolbar import NotebookToolbar
+        from pharos_editor.ui.editor.shell import LEFT_W, RIGHT_W
 
         shell = _make_shell()
         centre = shell._width - LEFT_W - RIGHT_W
@@ -327,7 +327,7 @@ class TestToolbarContents:
     def test_toolbar_build_emits_four_buttons(self, stub_dpg):
         """After ``build()`` the toolbar's parent tag must hold at
         least four widgets — the Select / Move / Rotate / Scale row."""
-        from pharos_engine.ui.editor.notebook_toolbar import NotebookToolbar
+        from pharos_editor.ui.editor.notebook_toolbar import NotebookToolbar
 
         tb = NotebookToolbar()
         tb.build("toolbar_root")
@@ -344,7 +344,7 @@ class TestToolbarContents:
         )
 
     def test_toolbar_has_four_registered_tools(self):
-        from pharos_engine.ui.editor.notebook_toolbar import NotebookToolbar
+        from pharos_editor.ui.editor.notebook_toolbar import NotebookToolbar
 
         tb = NotebookToolbar()
         assert len(tb.tools) == 4
@@ -364,7 +364,7 @@ class TestEditorRootShims:
         empty (Nova3D-era external code still expects the tag)."""
         import inspect
 
-        from pharos_engine.ui.editor import shell as shell_mod
+        from pharos_editor.ui.editor import shell as shell_mod
 
         source = inspect.getsource(shell_mod.EditorShell.setup)
         # The tag must be created inside setup...
@@ -382,7 +382,7 @@ class TestEditorRootShims:
     def test_status_bar_text_is_hidden(self):
         import inspect
 
-        from pharos_engine.ui.editor import shell as shell_mod
+        from pharos_editor.ui.editor import shell as shell_mod
 
         source = inspect.getsource(shell_mod.EditorShell.setup)
         idx = source.find('tag="status_bar"')

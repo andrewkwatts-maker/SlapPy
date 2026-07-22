@@ -44,8 +44,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from pharos_engine.actions.camera_animation_actions import CameraAnimator
-from pharos_engine.ui.editor.notebook_toast_manager import (
+from pharos_editor.actions.camera_animation_actions import CameraAnimator
+from pharos_editor.ui.editor.notebook_toast_manager import (
     NotebookToastManager,
     ToastLevel,
 )

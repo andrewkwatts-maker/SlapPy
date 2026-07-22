@@ -149,7 +149,7 @@ def default_game_hud_widgets() -> list[Any]:
     Widgets are fresh instances each call so the caller can safely mutate
     fields without spooky-action-at-a-distance.
     """
-    from pharos_engine.ui.runtime.hud_registry import HUDRegistry
+    from pharos_editor.ui.runtime.hud_registry import HUDRegistry
 
     registry = HUDRegistry()
     return [
@@ -207,7 +207,7 @@ def mount_hud(app: Any, *, widgets: Iterable[Any] | None = None) -> Any:
     if existing is not None:
         return existing
 
-    from pharos_engine.ui.runtime.hud_overlay import HUDOverlay
+    from pharos_editor.ui.runtime.hud_overlay import HUDOverlay
 
     # Renderer shim — HUDOverlay needs submit_sprite; wrap the stub renderer
     # in the recorder so headless demos still produce meaningful traces.

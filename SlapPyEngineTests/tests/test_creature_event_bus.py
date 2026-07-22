@@ -21,12 +21,12 @@ from typing import Any
 import pytest
 
 from pharos_engine.event_bus import EventBus
-from pharos_engine.ui.theme.creatures import (
+from pharos_editor.ui.theme.creatures import (
     CreatureBusAdapter,
     EVENT_TO_CREATURE_ANIMS,
     IdleEventEmitter,
 )
-from pharos_engine.ui.theme.creatures.bus_adapter import DEFAULT_DEBOUNCE_MS
+from pharos_editor.ui.theme.creatures.bus_adapter import DEFAULT_DEBOUNCE_MS
 
 
 # ---------------------------------------------------------------------------
@@ -272,7 +272,7 @@ def test_missing_creature_logs_warning_and_does_not_crash(caplog):
     sched = _StubScheduler(known_ids=set(), always_known=False)
     CreatureBusAdapter(sched, bus).install()
 
-    with caplog.at_level(logging.WARNING, logger="pharos_engine.ui.theme.creatures.bus_adapter"):
+    with caplog.at_level(logging.WARNING, logger="pharos_editor.ui.theme.creatures.bus_adapter"):
         bus.publish("engine.save")
 
     assert sched.calls == []  # no successful trigger recorded

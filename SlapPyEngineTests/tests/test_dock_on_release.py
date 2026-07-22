@@ -18,8 +18,8 @@ from __future__ import annotations
 
 import pytest
 
-from pharos_engine.ui.editor.dock_zones import DockZone, DockZoneManager
-from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
+from pharos_editor.ui.editor.dock_zones import DockZone, DockZoneManager
+from pharos_editor.ui.editor.movable_panel import MovablePanelWindow
 
 
 VIEWPORT_W = 1600
@@ -254,7 +254,7 @@ def _make_shell_with_panels(*windows: MovablePanelWindow):
     subsystem; the shell only touches ``self._panel_windows`` and
     ``self._dock_zones`` in the code path under test.
     """
-    from pharos_engine.ui.editor.shell import EditorShell
+    from pharos_editor.ui.editor.shell import EditorShell
 
     class _StubEngine:
         pass

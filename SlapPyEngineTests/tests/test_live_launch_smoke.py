@@ -171,9 +171,9 @@ def smoke_dpg(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def reset_theme_registry():
-    from pharos_engine.ui.theme import _reset_registry_for_tests
-    from pharos_engine.ui.widgets import notebook_theme
-    from pharos_engine.ui.theme.creatures import (
+    from pharos_editor.ui.theme import _reset_registry_for_tests
+    from pharos_editor.ui.widgets import notebook_theme
+    from pharos_editor.ui.theme.creatures import (
         _reset_default_scheduler_for_tests,
     )
 
@@ -194,12 +194,12 @@ def test_editor_shell_setup_no_exception(smoke_dpg, monkeypatch):
     # after the shell flips ``mark_dpg_context_ready(True)`` — the real
     # ``dearpygui`` library segfaults on ``add_theme`` without a live
     # context, and the shell legitimately calls into it.
-    from pharos_engine.ui.theme import dpg_bridge as _bridge
+    from pharos_editor.ui.theme import dpg_bridge as _bridge
 
     monkeypatch.setattr(_bridge, "_HAS_DPG", False)
     monkeypatch.setattr(_bridge, "_REAL_DPG", None)
 
-    from pharos_engine.ui.editor.shell import EditorShell
+    from pharos_editor.ui.editor.shell import EditorShell
 
     class _StubEngine:
         def __init__(self):

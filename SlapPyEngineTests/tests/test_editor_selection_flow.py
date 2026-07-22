@@ -151,9 +151,9 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def clear_theme(stub_dpg):
     """Drop any cached theme + listener state between tests."""
-    from pharos_engine.ui.widgets import notebook_theme
-    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
-    from pharos_engine.ui.widgets.sticker_corner import _active_stickers
+    from pharos_editor.ui.widgets import notebook_theme
+    from pharos_editor.ui.widgets.notebook_theme import set_active_theme
+    from pharos_editor.ui.widgets.sticker_corner import _active_stickers
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -221,10 +221,10 @@ class _FakeEngine:
 
 def _make_harness(entities: list[Any]) -> Any:
     """Return a populated shell-like harness for selection-flow tests."""
-    from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
-    from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
-    from pharos_engine.ui.editor.notebook_gizmos import NotebookGizmoOverlay
-    from pharos_engine.ui.editor.notebook_status_bar import NotebookStatusBar
+    from pharos_editor.ui.editor.notebook_outliner import NotebookOutliner
+    from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
+    from pharos_editor.ui.editor.notebook_gizmos import NotebookGizmoOverlay
+    from pharos_editor.ui.editor.notebook_status_bar import NotebookStatusBar
 
     engine = _FakeEngine(_FakeScene(entities))
     inspector = NotebookInspector()
@@ -447,7 +447,7 @@ class _VisibleEntity:
 
 class TestVisibilityHeart:
     def test_heart_checkbox_starts_unchecked_for_invisible_entity(self) -> None:
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
 
         ent = _VisibleEntity(name="ghost", visible=False)
         inspector = NotebookInspector()
@@ -463,7 +463,7 @@ class TestVisibilityHeart:
         assert bool_events[0][2] == "bool"
 
     def test_writeback_mutates_visible_attribute(self) -> None:
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
 
         ent = _VisibleEntity(name="ghost", visible=False)
         inspector = NotebookInspector()
@@ -488,7 +488,7 @@ class TestChainedOnSelect:
         """``Engine.run_editor`` calls ``set_on_select(gizmo.set_entity)`` after
         the shell's ``_on_entity_selected`` is already wired. The chain must
         fire BOTH callbacks per selection so the inspector still updates."""
-        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_editor.ui.editor.notebook_outliner import NotebookOutliner
 
         captured_prev: list[Any] = []
         captured_new: list[Any] = []
@@ -515,7 +515,7 @@ class TestEditorShellWiring:
     """Cover the actual ``EditorShell._on_entity_selected`` codepath."""
 
     def _build_shell(self, entities: list[Any]) -> Any:
-        from pharos_engine.ui.editor.shell import EditorShell
+        from pharos_editor.ui.editor.shell import EditorShell
 
         engine = _FakeEngine(_FakeScene(entities))
         shell = EditorShell(engine)

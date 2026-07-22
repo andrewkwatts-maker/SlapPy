@@ -106,7 +106,7 @@ not actually implemented (or actively frozen via the WIP-commit reminder).
 
 ### Sprint 1 — Editor UI Theme Overhaul (TeenGirl Notebook)
 
-**Goal:** ship a switchable "TeenGirl Notebook" theme for `pharos_engine.ui.editor`
+**Goal:** ship a switchable "TeenGirl Notebook" theme for `pharos_editor.ui.editor`
 that achieves a hand-decorated-paper aesthetic via nine-slice / SVG /
 shaders — zero per-asset PNG bloat in the wheel.
 

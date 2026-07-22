@@ -25,15 +25,15 @@ from typing import Any
 import pytest
 
 try:
-    from pharos_engine.ui.editor.notebook_theming_editor import (
+    from pharos_editor.ui.editor.notebook_theming_editor import (
         NotebookThemingEditor,
         PALETTE_ROLES,
         STYLE_KEYS,
         _fallback_yaml_dump,
         _fallback_yaml_load,
     )
-    from pharos_engine.ui.editor.panel_decor import DividerStyle
-    from pharos_engine.ui.theme import (
+    from pharos_editor.ui.editor.panel_decor import DividerStyle
+    from pharos_editor.ui.theme import (
         Color,
         Font,
         Gradient,
@@ -43,7 +43,7 @@ try:
         apply_theme,
         register_theme,
     )
-    from pharos_engine.ui.theme.washi_tape.library import list_tapes
+    from pharos_editor.ui.theme.washi_tape.library import list_tapes
 except Exception as exc:  # pragma: no cover - skip when deps missing
     pytest.skip(
         f"notebook_theming_editor dependencies unavailable: {exc}",

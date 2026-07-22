@@ -150,7 +150,7 @@ theme appears in the theme-switcher dropdown.
 Programmatic access:
 
 ```python
-from pharos_engine.ui.theme.user_themes import UserThemeStore
+from pharos_editor.ui.theme.user_themes import UserThemeStore
 
 store = UserThemeStore()
 store.bake_defaults()          # idempotent copy of baked themes
@@ -178,7 +178,7 @@ ctrl+alt+p:   editor.profiler_toggle   # rebind an existing built-in
 
 
 def mark_bookmark() -> None:
-    from pharos_engine.ui.editor.editor_undo import global_stack
+    from pharos_editor.ui.editor.editor_undo import global_stack
     global_stack().push_bookmark("user_bookmark")
 ```
 

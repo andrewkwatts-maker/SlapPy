@@ -33,7 +33,7 @@ recipe into a real world, returning the created
 :class:`~pharos_engine.dynamics.body.Body` handles.
 
 :class:`PrefabLibrary` mirrors the
-:class:`pharos_engine.ui.theme.user_themes.UserThemeStore` pattern:
+:class:`pharos_editor.ui.theme.user_themes.UserThemeStore` pattern:
 baked files ship inside the wheel at
 `python/pharos_engine/prefabs/baked/` and are copied into
 `~/.pharos_engine/prefabs/` on first use so downstream code can

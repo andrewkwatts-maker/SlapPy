@@ -21,9 +21,9 @@ import pytest
 @pytest.fixture(autouse=True)
 def reset_theme_registry():
     """Drop the registry + active theme + module-level scheduler."""
-    from pharos_engine.ui.theme import _reset_registry_for_tests
-    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
-    from pharos_engine.ui.theme.creatures import _reset_default_scheduler_for_tests
+    from pharos_editor.ui.theme import _reset_registry_for_tests
+    from pharos_editor.ui.widgets.notebook_theme import set_active_theme
+    from pharos_editor.ui.theme.creatures import _reset_default_scheduler_for_tests
 
     _reset_registry_for_tests()
     set_active_theme(None)
@@ -56,7 +56,7 @@ def _make_shell(ui_settings=None):
     The shell only stores the engine reference until ``run`` — we can
     hand in any object that satisfies ``hasattr`` lookups.
     """
-    from pharos_engine.ui.editor.shell import EditorShell
+    from pharos_editor.ui.editor.shell import EditorShell
 
     class _StubEngine:
         def __init__(self):
@@ -73,7 +73,7 @@ def _make_shell(ui_settings=None):
 
 class TestUISettings:
     def test_default_values(self):
-        from pharos_engine.ui.editor.settings import UISettings
+        from pharos_editor.ui.editor.settings import UISettings
 
         settings = UISettings()
         assert settings.default_theme == "teengirl_notebook"
@@ -82,19 +82,19 @@ class TestUISettings:
         assert settings.easter_eggs is True
 
     def test_override_default_theme(self):
-        from pharos_engine.ui.editor.settings import UISettings
+        from pharos_editor.ui.editor.settings import UISettings
 
         settings = UISettings(default_theme="cozy_diary")
         assert settings.default_theme == "cozy_diary"
 
     def test_empty_default_theme_rejected(self):
-        from pharos_engine.ui.editor.settings import UISettings
+        from pharos_editor.ui.editor.settings import UISettings
 
         with pytest.raises(ValueError):
             UISettings(default_theme="")
 
     def test_non_bool_creature_animations_rejected(self):
-        from pharos_engine.ui.editor.settings import UISettings
+        from pharos_editor.ui.editor.settings import UISettings
 
         with pytest.raises(TypeError):
             UISettings(creature_animations=1)  # type: ignore[arg-type]
@@ -107,7 +107,7 @@ class TestUISettings:
 
 class TestThemeRegistration:
     def test_starter_themes_registered(self, isolated_bus):
-        from pharos_engine.ui.theme import list_registered_themes
+        from pharos_editor.ui.theme import list_registered_themes
 
         shell = _make_shell()
         shell.setup_theme_subsystem()
@@ -118,7 +118,7 @@ class TestThemeRegistration:
         assert "bullet_journal" in names
 
     def test_default_theme_applied(self, isolated_bus):
-        from pharos_engine.ui.theme import get_active_theme
+        from pharos_editor.ui.theme import get_active_theme
 
         shell = _make_shell()
         shell.setup_theme_subsystem()
@@ -126,8 +126,8 @@ class TestThemeRegistration:
         assert get_active_theme().name == "teengirl_notebook"
 
     def test_default_theme_override_honored(self, isolated_bus):
-        from pharos_engine.ui.editor.settings import UISettings
-        from pharos_engine.ui.theme import get_active_theme
+        from pharos_editor.ui.editor.settings import UISettings
+        from pharos_editor.ui.theme import get_active_theme
 
         shell = _make_shell(UISettings(default_theme="cozy_diary"))
         shell.setup_theme_subsystem()
@@ -136,8 +136,8 @@ class TestThemeRegistration:
 
     def test_unknown_default_theme_falls_back(self, isolated_bus):
         """A bad ``default_theme`` falls back to a registered name."""
-        from pharos_engine.ui.editor.settings import UISettings
-        from pharos_engine.ui.theme import get_active_theme, list_registered_themes
+        from pharos_editor.ui.editor.settings import UISettings
+        from pharos_editor.ui.theme import get_active_theme, list_registered_themes
 
         shell = _make_shell(UISettings(default_theme="not_a_real_theme"))
         shell.setup_theme_subsystem()
@@ -153,7 +153,7 @@ class TestThemeRegistration:
 
 class TestPanelRegistration:
     def test_theme_switcher_registered(self, isolated_bus):
-        from pharos_engine.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
+        from pharos_editor.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
 
         shell = _make_shell()
         shell.setup_theme_subsystem()
@@ -181,8 +181,8 @@ class TestNotebookPanelsAreExclusive:
     """The shell must wire Notebook* panels and never the Nova3D siblings."""
 
     def test_notebook_toolbar_registered(self, isolated_bus):
-        from pharos_engine.ui.editor.notebook_toolbar import NotebookToolbar
-        from pharos_engine.ui.editor.toolbar import EditorToolbar
+        from pharos_editor.ui.editor.notebook_toolbar import NotebookToolbar
+        from pharos_editor.ui.editor.toolbar import EditorToolbar
 
         shell = _make_shell()
         shell.setup_theme_subsystem()
@@ -192,8 +192,8 @@ class TestNotebookPanelsAreExclusive:
         assert not isinstance(shell._toolbar, EditorToolbar)
 
     def test_notebook_outliner_registered(self, isolated_bus):
-        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
 
         shell = _make_shell()
         shell.setup_theme_subsystem()
@@ -203,8 +203,8 @@ class TestNotebookPanelsAreExclusive:
         assert not isinstance(shell._scene_outliner, SceneOutliner)
 
     def test_notebook_inspector_registered(self, isolated_bus):
-        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
 
         shell = _make_shell()
         shell.setup_theme_subsystem()
@@ -220,8 +220,8 @@ class TestNotebookPanelsAreExclusive:
         assert inspectors[0] is shell._inspector
 
     def test_notebook_gizmo_overlay_wired(self, isolated_bus):
-        from pharos_engine.ui.editor.gizmo_overlay import GizmoOverlay
-        from pharos_engine.ui.editor.notebook_gizmos import NotebookGizmoOverlay
+        from pharos_editor.ui.editor.gizmo_overlay import GizmoOverlay
+        from pharos_editor.ui.editor.notebook_gizmos import NotebookGizmoOverlay
 
         shell = _make_shell()
         shell.setup_theme_subsystem()
@@ -233,8 +233,8 @@ class TestNotebookPanelsAreExclusive:
     def test_nova3d_apply_dark_theme_not_called_during_boot(
         self, isolated_bus, monkeypatch
     ):
-        """``pharos_engine.ui.editor.theme.apply_editor_theme`` must not run."""
-        from pharos_engine.ui.editor import theme as nova_theme
+        """``pharos_editor.ui.editor.theme.apply_editor_theme`` must not run."""
+        from pharos_editor.ui.editor import theme as nova_theme
 
         calls: list[str] = []
 
@@ -252,7 +252,7 @@ class TestNotebookPanelsAreExclusive:
         assert calls == []
 
     def test_active_theme_is_a_diary_variant(self, isolated_bus):
-        from pharos_engine.ui.theme import get_active_theme
+        from pharos_editor.ui.theme import get_active_theme
 
         shell = _make_shell()
         shell.setup_theme_subsystem()
@@ -289,7 +289,7 @@ class TestCreatureScheduler:
         assert {"fox_01", "butterfly_01", "sparkle"} <= ids
 
     def test_scheduler_respects_animations_setting(self, isolated_bus):
-        from pharos_engine.ui.editor.settings import UISettings
+        from pharos_editor.ui.editor.settings import UISettings
 
         shell = _make_shell(UISettings(creature_animations=False))
         shell.setup_theme_subsystem()
@@ -297,7 +297,7 @@ class TestCreatureScheduler:
         assert shell._creature_scheduler.is_enabled is False
 
     def test_scheduler_respects_reduced_motion_setting(self, isolated_bus):
-        from pharos_engine.ui.editor.settings import UISettings
+        from pharos_editor.ui.editor.settings import UISettings
 
         shell = _make_shell(UISettings(reduced_motion=True))
         shell.setup_theme_subsystem()
@@ -343,7 +343,7 @@ class TestBusAdapter:
 
 class TestIdleEmitter:
     def test_emitter_created(self, isolated_bus):
-        from pharos_engine.ui.theme.creatures import IdleEventEmitter
+        from pharos_editor.ui.theme.creatures import IdleEventEmitter
 
         shell = _make_shell()
         shell.setup_theme_subsystem()

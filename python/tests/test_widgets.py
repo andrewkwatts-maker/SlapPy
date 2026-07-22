@@ -19,64 +19,64 @@ def _make_draw(size=(400, 300)):
 
 class TestThemeDark:
     def test_dark_returns_theme(self):
-        from pharos_engine.ui.widgets import Theme
+        from pharos_editor.ui.widgets import Theme
         t = Theme.dark()
         assert isinstance(t, Theme)
 
     def test_dark_surface_is_dark(self):
-        from pharos_engine.ui.widgets import Theme
+        from pharos_editor.ui.widgets import Theme
         t = Theme.dark()
         # on_surface should be light (for readability on dark bg)
         assert t.on_surface[0] > 180
 
     def test_dark_primary_is_4tuple(self):
-        from pharos_engine.ui.widgets import Theme
+        from pharos_editor.ui.widgets import Theme
         t = Theme.dark()
         assert len(t.primary) == 4
 
     def test_font_size_body_positive(self):
-        from pharos_engine.ui.widgets import Theme
+        from pharos_editor.ui.widgets import Theme
         t = Theme.dark()
         assert t.font_size_body > 0
 
     def test_corner_radius_positive(self):
-        from pharos_engine.ui.widgets import Theme
+        from pharos_editor.ui.widgets import Theme
         t = Theme.dark()
         assert t.corner_radius > 0
 
 
 class TestThemeLight:
     def test_light_returns_theme(self):
-        from pharos_engine.ui.widgets import Theme
+        from pharos_editor.ui.widgets import Theme
         t = Theme.light()
         assert isinstance(t, Theme)
 
     def test_light_surface_is_light(self):
-        from pharos_engine.ui.widgets import Theme
+        from pharos_editor.ui.widgets import Theme
         t = Theme.light()
         # surface should be lighter than dark theme
         assert t.surface[0] > 200
 
     def test_light_on_surface_is_dark(self):
-        from pharos_engine.ui.widgets import Theme
+        from pharos_editor.ui.widgets import Theme
         t = Theme.light()
         assert t.on_surface[0] < 50
 
 
 class TestThemeFromDict:
     def test_from_dict_applies_known_keys(self):
-        from pharos_engine.ui.widgets import Theme
+        from pharos_editor.ui.widgets import Theme
         t = Theme.from_dict({"font_size_body": 18, "corner_radius": 8.0})
         assert t.font_size_body == 18
         assert t.corner_radius == 8.0
 
     def test_from_dict_ignores_unknown_keys(self):
-        from pharos_engine.ui.widgets import Theme
+        from pharos_editor.ui.widgets import Theme
         t = Theme.from_dict({"unknown_key": "value", "font_size_body": 12})
         assert t.font_size_body == 12
 
     def test_from_dict_empty_uses_defaults(self):
-        from pharos_engine.ui.widgets import Theme
+        from pharos_editor.ui.widgets import Theme
         t = Theme.from_dict({})
         t2 = Theme()
         assert t.font_size_body == t2.font_size_body
@@ -88,7 +88,7 @@ class TestThemeFromDict:
 
 class TestWidgetInit:
     def test_defaults(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget()
         assert w.x == 0
         assert w.y == 0
@@ -99,7 +99,7 @@ class TestWidgetInit:
         assert w.dirty is True
 
     def test_custom_geometry(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget(x=10, y=20, w=80, h=40, tag="test")
         assert w.x == 10
         assert w.y == 20
@@ -108,12 +108,12 @@ class TestWidgetInit:
         assert w.tag == "test"
 
     def test_event_value_initially_none(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget()
         assert w._event_value is None
 
     def test_no_callbacks_initially(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget()
         assert w._on_click is None
         assert w._on_change is None
@@ -122,7 +122,7 @@ class TestWidgetInit:
 
 class TestWidgetBind:
     def test_bind_adds_to_bindings(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget()
 
         class _Obj:
@@ -134,7 +134,7 @@ class TestWidgetBind:
         assert len(w._bindings) == 1
 
     def test_update_polls_bound_value(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
 
         class _Obj:
             speed = 99.0
@@ -146,7 +146,7 @@ class TestWidgetBind:
         assert w.dirty is True
 
     def test_update_returns_dirty_flag(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget()
         w.dirty = True
         assert w.update() is True
@@ -156,19 +156,19 @@ class TestWidgetBind:
 
 class TestWidgetBindEvent:
     def test_bind_event_returns_self(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget()
         result = w.bind_event("Test.Event")
         assert result is w
 
     def test_bind_event_adds_handle(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget()
         w.bind_event("Test.EventHandle")
         assert len(w._event_handles) == 1
 
     def test_unbind_all_clears_handles(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget()
         w.bind_event("Test.EventA")
         w.bind_event("Test.EventB")
@@ -176,7 +176,7 @@ class TestWidgetBindEvent:
         assert len(w._event_handles) == 0
 
     def test_unbind_all_clears_legacy_bindings(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
 
         class _Obj:
             x = 1
@@ -187,7 +187,7 @@ class TestWidgetBindEvent:
         assert len(w._bindings) == 0
 
     def test_event_arrival_marks_dirty(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         from pharos_engine.event_bus import publish
         w = Widget()
         w.dirty = False
@@ -197,7 +197,7 @@ class TestWidgetBindEvent:
         w.unbind_all()
 
     def test_event_arrival_sets_event_value(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         from pharos_engine.event_bus import publish
         w = Widget()
         w.bind_event("Widget.ValueTest")
@@ -206,7 +206,7 @@ class TestWidgetBindEvent:
         w.unbind_all()
 
     def test_transform_applied_to_event_value(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         from pharos_engine.event_bus import publish
         w = Widget()
         w.bind_event("Widget.TransformTest", transform=lambda evt: getattr(evt, "value", 0) * 2)
@@ -217,7 +217,7 @@ class TestWidgetBindEvent:
 
 class TestWidgetCallbacks:
     def test_on_click_stored(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget()
         cb = lambda _: None
         result = w.on_click(cb)
@@ -225,14 +225,14 @@ class TestWidgetCallbacks:
         assert w._on_click is cb
 
     def test_on_change_stored(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget()
         cb = lambda _: None
         w.on_change(cb)
         assert w._on_change is cb
 
     def test_on_hover_stored(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget()
         cb = lambda _: None
         w.on_hover(cb)
@@ -241,7 +241,7 @@ class TestWidgetCallbacks:
 
 class TestWidgetHandleEvent:
     def test_click_fires_callback(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget(x=0, y=0, w=100, h=30)
         clicked = []
         w.on_click(lambda _: clicked.append(1))
@@ -249,7 +249,7 @@ class TestWidgetHandleEvent:
         assert len(clicked) == 1
 
     def test_click_outside_no_callback(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget(x=0, y=0, w=100, h=30)
         clicked = []
         w.on_click(lambda _: clicked.append(1))
@@ -257,14 +257,14 @@ class TestWidgetHandleEvent:
         assert len(clicked) == 0
 
     def test_click_consumed(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget(x=0, y=0, w=100, h=30)
         w.on_click(lambda _: None)
         result = w.handle_event({"type": "mouse_down", "x": 50, "y": 10})
         assert result is True
 
     def test_hover_marks_dirty(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget(x=0, y=0, w=100, h=30)
         w.dirty = False
         w.handle_event({"type": "mouse_move", "x": 50, "y": 10})
@@ -272,7 +272,7 @@ class TestWidgetHandleEvent:
         assert w.dirty is True
 
     def test_hover_fires_callback(self):
-        from pharos_engine.ui.widgets import Widget
+        from pharos_editor.ui.widgets import Widget
         w = Widget(x=0, y=0, w=100, h=30)
         hovered = []
         w.on_hover(lambda _: hovered.append(1))
@@ -282,14 +282,14 @@ class TestWidgetHandleEvent:
 
 class TestWidgetApplyTheme:
     def test_apply_theme_updates_theme(self):
-        from pharos_engine.ui.widgets import Widget, Theme
+        from pharos_editor.ui.widgets import Widget, Theme
         w = Widget()
         new_theme = Theme.light()
         w.apply_theme(new_theme)
         assert w._theme is new_theme
 
     def test_apply_theme_marks_dirty(self):
-        from pharos_engine.ui.widgets import Widget, Theme
+        from pharos_editor.ui.widgets import Widget, Theme
         w = Widget()
         w.dirty = False
         w.apply_theme(Theme())
@@ -302,25 +302,25 @@ class TestWidgetApplyTheme:
 
 class TestLabel:
     def test_init_text(self):
-        from pharos_engine.ui.widgets import Label
+        from pharos_editor.ui.widgets import Label
         lb = Label(text="hello")
         assert lb.text == "hello"
 
     def test_draw_no_exception(self):
-        from pharos_engine.ui.widgets import Label
+        from pharos_editor.ui.widgets import Label
         lb = Label(text="test", x=5, y=5, w=100, h=20)
         draw, _ = _make_draw()
         lb.draw(draw)
 
     def test_bind_format_adds_event_handle(self):
-        from pharos_engine.ui.widgets import Label
+        from pharos_editor.ui.widgets import Label
         lb = Label()
         lb.bind_format("Test.LabelFormat", "{value:.1f} km/h")
         assert len(lb._event_handles) == 1
         lb.unbind_all()
 
     def test_bind_format_updates_event_value(self):
-        from pharos_engine.ui.widgets import Label
+        from pharos_editor.ui.widgets import Label
         from pharos_engine.event_bus import publish
         lb = Label()
         lb.bind_format("Test.LabelFmtValue", "{value:.0f} km/h")
@@ -329,14 +329,14 @@ class TestLabel:
         lb.unbind_all()
 
     def test_bind_format_returns_self(self):
-        from pharos_engine.ui.widgets import Label
+        from pharos_editor.ui.widgets import Label
         lb = Label()
         result = lb.bind_format("Test.LabelChain", "{value}")
         assert result is lb
         lb.unbind_all()
 
     def test_pulse_end_updated_on_value(self):
-        from pharos_engine.ui.widgets import Label
+        from pharos_editor.ui.widgets import Label
         from pharos_engine.event_bus import publish
         import time
         lb = Label()
@@ -347,7 +347,7 @@ class TestLabel:
         lb.unbind_all()
 
     def test_event_value_used_in_draw(self):
-        from pharos_engine.ui.widgets import Label
+        from pharos_editor.ui.widgets import Label
         from pharos_engine.event_bus import publish
         lb = Label(text="default", x=0, y=0, w=200, h=20)
         lb.bind_event("Test.LabelDraw")
@@ -363,18 +363,18 @@ class TestLabel:
 
 class TestButton:
     def test_init_label(self):
-        from pharos_engine.ui.widgets import Button
+        from pharos_editor.ui.widgets import Button
         b = Button(label="OK")
         assert b.label == "OK"
 
     def test_draw_no_exception(self):
-        from pharos_engine.ui.widgets import Button
+        from pharos_editor.ui.widgets import Button
         b = Button(label="Click", x=10, y=10, w=80, h=28)
         draw, _ = _make_draw()
         b.draw(draw)
 
     def test_click_fires_callback(self):
-        from pharos_engine.ui.widgets import Button
+        from pharos_editor.ui.widgets import Button
         hits = []
         b = Button(x=0, y=0, w=100, h=30)
         b.on_click(lambda _: hits.append(1))
@@ -382,7 +382,7 @@ class TestButton:
         assert len(hits) == 1
 
     def test_mouse_up_not_pressed(self):
-        from pharos_engine.ui.widgets import Button
+        from pharos_editor.ui.widgets import Button
         b = Button(x=0, y=0, w=100, h=30)
         b.handle_event({"type": "mouse_down", "x": 50, "y": 10})
         b.handle_event({"type": "mouse_up", "x": 50, "y": 10})
@@ -395,49 +395,49 @@ class TestButton:
 
 class TestProgressBar:
     def test_init_value(self):
-        from pharos_engine.ui.widgets import ProgressBar
+        from pharos_editor.ui.widgets import ProgressBar
         pb = ProgressBar(value=0.7)
         assert pb.value == pytest.approx(0.7)
 
     def test_draw_no_exception(self):
-        from pharos_engine.ui.widgets import ProgressBar
+        from pharos_editor.ui.widgets import ProgressBar
         pb = ProgressBar(value=0.5, x=0, y=0, w=100, h=16)
         draw, _ = _make_draw()
         pb.draw(draw)
 
     def test_lerp_color_returns_4tuple(self):
-        from pharos_engine.ui.widgets import ProgressBar
+        from pharos_editor.ui.widgets import ProgressBar
         pb = ProgressBar()
         color = pb._lerp_color(0.5)
         assert len(color) == 4
 
     def test_lerp_color_at_zero(self):
-        from pharos_engine.ui.widgets import ProgressBar
+        from pharos_editor.ui.widgets import ProgressBar
         pb = ProgressBar()
         color = pb._lerp_color(0.0)
         assert len(color) == 4
 
     def test_lerp_color_at_one(self):
-        from pharos_engine.ui.widgets import ProgressBar
+        from pharos_editor.ui.widgets import ProgressBar
         pb = ProgressBar()
         color = pb._lerp_color(1.0)
         assert len(color) == 4
 
     def test_lerp_color_midpoint_is_interpolated(self):
-        from pharos_engine.ui.widgets import ProgressBar
+        from pharos_editor.ui.widgets import ProgressBar
         # Use two-stop gradient for predictable result
         pb = ProgressBar(color_gradient=[(0.0, (0, 0, 0, 255)), (1.0, (100, 100, 100, 255))])
         mid = pb._lerp_color(0.5)
         assert 40 <= mid[0] <= 60  # approx 50
 
     def test_custom_gradient(self):
-        from pharos_engine.ui.widgets import ProgressBar
+        from pharos_editor.ui.widgets import ProgressBar
         g = [(0.0, (255, 0, 0, 255)), (1.0, (0, 255, 0, 255))]
         pb = ProgressBar(color_gradient=g)
         assert pb._gradient == g
 
     def test_value_clamped_in_display(self):
-        from pharos_engine.ui.widgets import ProgressBar
+        from pharos_editor.ui.widgets import ProgressBar
         pb = ProgressBar(value=2.0, transition_ms=0)
         draw, _ = _make_draw()
         pb.draw(draw)  # should not raise; value clamped internally
@@ -449,18 +449,18 @@ class TestProgressBar:
 
 class TestStatBar:
     def test_init_label(self):
-        from pharos_engine.ui.widgets import StatBar
+        from pharos_editor.ui.widgets import StatBar
         sb = StatBar(label="HP", value=0.8)
         assert sb.label == "HP"
 
     def test_draw_no_exception(self):
-        from pharos_engine.ui.widgets import StatBar
+        from pharos_editor.ui.widgets import StatBar
         sb = StatBar(label="HP", value=0.8, x=0, y=0, w=120, h=20)
         draw, _ = _make_draw()
         sb.draw(draw)
 
     def test_is_progress_bar(self):
-        from pharos_engine.ui.widgets import StatBar, ProgressBar
+        from pharos_editor.ui.widgets import StatBar, ProgressBar
         assert issubclass(StatBar, ProgressBar)
 
 
@@ -470,34 +470,34 @@ class TestStatBar:
 
 class TestSlider:
     def test_init_range(self):
-        from pharos_engine.ui.widgets import Slider
+        from pharos_editor.ui.widgets import Slider
         s = Slider(value=5.0, min_val=0.0, max_val=10.0)
         assert s.min_val == 0.0
         assert s.max_val == 10.0
         assert s.value == 5.0
 
     def test_normalised_midpoint(self):
-        from pharos_engine.ui.widgets import Slider
+        from pharos_editor.ui.widgets import Slider
         s = Slider(value=5.0, min_val=0.0, max_val=10.0)
         assert s.normalised == pytest.approx(0.5)
 
     def test_normalised_at_min(self):
-        from pharos_engine.ui.widgets import Slider
+        from pharos_editor.ui.widgets import Slider
         s = Slider(value=0.0, min_val=0.0, max_val=10.0)
         assert s.normalised == pytest.approx(0.0)
 
     def test_normalised_at_max(self):
-        from pharos_engine.ui.widgets import Slider
+        from pharos_editor.ui.widgets import Slider
         s = Slider(value=10.0, min_val=0.0, max_val=10.0)
         assert s.normalised == pytest.approx(1.0)
 
     def test_normalised_zero_range(self):
-        from pharos_engine.ui.widgets import Slider
+        from pharos_editor.ui.widgets import Slider
         s = Slider(value=5.0, min_val=5.0, max_val=5.0)
         assert s.normalised == pytest.approx(0.0)
 
     def test_draw_no_exception(self):
-        from pharos_engine.ui.widgets import Slider
+        from pharos_editor.ui.widgets import Slider
         s = Slider(value=0.5, x=0, y=0, w=120, h=20)
         draw, _ = _make_draw()
         s.draw(draw)
@@ -509,18 +509,18 @@ class TestSlider:
 
 class TestDial:
     def test_init_value(self):
-        from pharos_engine.ui.widgets import Dial
+        from pharos_editor.ui.widgets import Dial
         d = Dial(value=0.3)
         assert d.value == pytest.approx(0.3)
 
     def test_draw_no_exception(self):
-        from pharos_engine.ui.widgets import Dial
+        from pharos_editor.ui.widgets import Dial
         d = Dial(value=0.5, x=10, y=10, w=80, h=80)
         draw, _ = _make_draw()
         d.draw(draw)
 
     def test_event_value_updates_displayed(self):
-        from pharos_engine.ui.widgets import Dial
+        from pharos_editor.ui.widgets import Dial
         from pharos_engine.event_bus import publish
         d = Dial(transition_ms=0, x=0, y=0, w=60, h=60)
         d.bind_event("Test.DialEvent")
@@ -535,7 +535,7 @@ class TestDial:
 
 class TestPanel:
     def test_add_child(self):
-        from pharos_engine.ui.widgets import Panel, Label
+        from pharos_editor.ui.widgets import Panel, Label
         p = Panel(x=0, y=0, w=200, h=100)
         lb = Label(text="hi")
         result = p.add(lb)
@@ -543,14 +543,14 @@ class TestPanel:
         assert lb in p.children
 
     def test_draw_no_exception(self):
-        from pharos_engine.ui.widgets import Panel, Label
+        from pharos_editor.ui.widgets import Panel, Label
         p = Panel(x=0, y=0, w=200, h=100)
         p.add(Label(text="hi", x=5, y=5, w=80, h=20))
         draw, _ = _make_draw()
         p.draw(draw)
 
     def test_apply_theme_cascades(self):
-        from pharos_engine.ui.widgets import Panel, Label, Theme
+        from pharos_editor.ui.widgets import Panel, Label, Theme
         p = Panel()
         lb = Label()
         p.add(lb)
@@ -559,7 +559,7 @@ class TestPanel:
         assert lb._theme is new_theme
 
     def test_handle_event_dispatches_to_children(self):
-        from pharos_engine.ui.widgets import Panel, Button
+        from pharos_editor.ui.widgets import Panel, Button
         p = Panel(x=0, y=0, w=300, h=200)
         hits = []
         b = Button(label="X", x=10, y=10, w=80, h=30)
@@ -569,7 +569,7 @@ class TestPanel:
         assert len(hits) == 1
 
     def test_invisible_panel_no_draw(self):
-        from pharos_engine.ui.widgets import Panel
+        from pharos_editor.ui.widgets import Panel
         p = Panel(x=0, y=0, w=200, h=100)
         p.visible = False
         draw, img = _make_draw()
@@ -583,30 +583,30 @@ class TestPanel:
 
 class TestCheckbox:
     def test_init_unchecked(self):
-        from pharos_engine.ui.widgets import Checkbox
+        from pharos_editor.ui.widgets import Checkbox
         cb = Checkbox()
         assert cb.checked is False
 
     def test_init_checked(self):
-        from pharos_engine.ui.widgets import Checkbox
+        from pharos_editor.ui.widgets import Checkbox
         cb = Checkbox(checked=True)
         assert cb.checked is True
 
     def test_toggle_on_click(self):
-        from pharos_engine.ui.widgets import Checkbox
+        from pharos_editor.ui.widgets import Checkbox
         cb = Checkbox(x=0, y=0, w=20, h=20)
         cb.handle_event({"type": "mouse_down", "x": 10, "y": 10})
         assert cb.checked is True
 
     def test_double_toggle(self):
-        from pharos_engine.ui.widgets import Checkbox
+        from pharos_editor.ui.widgets import Checkbox
         cb = Checkbox(x=0, y=0, w=20, h=20)
         cb.handle_event({"type": "mouse_down", "x": 10, "y": 10})
         cb.handle_event({"type": "mouse_down", "x": 10, "y": 10})
         assert cb.checked is False
 
     def test_on_change_fires(self):
-        from pharos_engine.ui.widgets import Checkbox
+        from pharos_editor.ui.widgets import Checkbox
         changes = []
         cb = Checkbox(x=0, y=0, w=20, h=20)
         cb.on_change(lambda v: changes.append(v))
@@ -614,13 +614,13 @@ class TestCheckbox:
         assert changes == [True]
 
     def test_click_outside_no_toggle(self):
-        from pharos_engine.ui.widgets import Checkbox
+        from pharos_editor.ui.widgets import Checkbox
         cb = Checkbox(x=0, y=0, w=20, h=20)
         cb.handle_event({"type": "mouse_down", "x": 100, "y": 100})
         assert cb.checked is False
 
     def test_draw_no_exception(self):
-        from pharos_engine.ui.widgets import Checkbox
+        from pharos_editor.ui.widgets import Checkbox
         cb = Checkbox(checked=True, label="Enable", x=5, y=5, w=20, h=20)
         draw, _ = _make_draw()
         cb.draw(draw)
@@ -632,35 +632,35 @@ class TestCheckbox:
 
 class TestDropdown:
     def test_init_options(self):
-        from pharos_engine.ui.widgets import Dropdown
+        from pharos_editor.ui.widgets import Dropdown
         dd = Dropdown(options=["A", "B", "C"])
         assert dd.options == ["A", "B", "C"]
 
     def test_value_property(self):
-        from pharos_engine.ui.widgets import Dropdown
+        from pharos_editor.ui.widgets import Dropdown
         dd = Dropdown(options=["X", "Y", "Z"], selected=1)
         assert dd.value == "Y"
 
     def test_value_empty_on_no_options(self):
-        from pharos_engine.ui.widgets import Dropdown
+        from pharos_editor.ui.widgets import Dropdown
         dd = Dropdown()
         assert dd.value == ""
 
     def test_click_opens(self):
-        from pharos_engine.ui.widgets import Dropdown
+        from pharos_editor.ui.widgets import Dropdown
         dd = Dropdown(options=["A", "B"], x=0, y=0, w=100, h=24)
         dd.handle_event({"type": "mouse_down", "x": 50, "y": 12})
         assert dd._open is True
 
     def test_click_again_closes(self):
-        from pharos_engine.ui.widgets import Dropdown
+        from pharos_editor.ui.widgets import Dropdown
         dd = Dropdown(options=["A", "B"], x=0, y=0, w=100, h=24)
         dd.handle_event({"type": "mouse_down", "x": 50, "y": 12})
         dd.handle_event({"type": "mouse_down", "x": 50, "y": 12})
         assert dd._open is False
 
     def test_select_option_changes_selected(self):
-        from pharos_engine.ui.widgets import Dropdown
+        from pharos_editor.ui.widgets import Dropdown
         dd = Dropdown(options=["Alpha", "Beta", "Gamma"],
                       selected=0, x=0, y=0, w=100, h=24)
         # Open it
@@ -671,7 +671,7 @@ class TestDropdown:
         assert dd.value == "Beta"
 
     def test_on_change_fires_on_select(self):
-        from pharos_engine.ui.widgets import Dropdown
+        from pharos_editor.ui.widgets import Dropdown
         changes = []
         dd = Dropdown(options=["A", "B", "C"], selected=0,
                       x=0, y=0, w=100, h=24)
@@ -681,14 +681,14 @@ class TestDropdown:
         assert changes == ["B"]
 
     def test_draw_no_exception(self):
-        from pharos_engine.ui.widgets import Dropdown
+        from pharos_editor.ui.widgets import Dropdown
         dd = Dropdown(options=["One", "Two", "Three"],
                       selected=0, x=5, y=5, w=100, h=24)
         draw, _ = _make_draw()
         dd.draw(draw)
 
     def test_unselected_options_excludes_selected(self):
-        from pharos_engine.ui.widgets import Dropdown
+        from pharos_editor.ui.widgets import Dropdown
         dd = Dropdown(options=["A", "B", "C"], selected=1)
         unselected = dd._unselected_options()
         indices = [i for i, _ in unselected]
@@ -703,12 +703,12 @@ class TestDropdown:
 
 class TestScrollView:
     def test_init_scroll_offset(self):
-        from pharos_engine.ui.widgets import ScrollView
+        from pharos_editor.ui.widgets import ScrollView
         sv = ScrollView(x=0, y=0, w=200, h=100)
         assert sv.scroll_offset == pytest.approx(0.0)
 
     def test_scroll_by_positive(self):
-        from pharos_engine.ui.widgets import ScrollView, Label
+        from pharos_editor.ui.widgets import ScrollView, Label
         sv = ScrollView(x=0, y=0, w=200, h=100)
         sv.add(Label(y=0, h=20))
         sv.add(Label(y=20, h=20))
@@ -717,13 +717,13 @@ class TestScrollView:
         assert sv.scroll_offset > 0
 
     def test_scroll_by_clamped_at_zero(self):
-        from pharos_engine.ui.widgets import ScrollView
+        from pharos_editor.ui.widgets import ScrollView
         sv = ScrollView(x=0, y=0, w=200, h=100)
         sv.scroll_by(-50)
         assert sv.scroll_offset == pytest.approx(0.0)
 
     def test_scroll_to_sets_offset(self):
-        from pharos_engine.ui.widgets import ScrollView, Label
+        from pharos_editor.ui.widgets import ScrollView, Label
         sv = ScrollView(x=0, y=0, w=200, h=100)
         sv.add(Label(y=0, h=20))
         sv.add(Label(y=200, h=20))  # content > view
@@ -731,12 +731,12 @@ class TestScrollView:
         assert sv.scroll_offset == pytest.approx(50.0)
 
     def test_at_bottom_initially_true_when_short(self):
-        from pharos_engine.ui.widgets import ScrollView
+        from pharos_editor.ui.widgets import ScrollView
         sv = ScrollView(x=0, y=0, w=200, h=100)
         assert sv.at_bottom is True
 
     def test_at_bottom_false_when_scrolled_up(self):
-        from pharos_engine.ui.widgets import ScrollView, Label
+        from pharos_editor.ui.widgets import ScrollView, Label
         sv = ScrollView(x=0, y=0, w=200, h=50, scroll_speed=20)
         for i in range(10):
             sv.add(Label(y=i * 30, h=30))
@@ -744,7 +744,7 @@ class TestScrollView:
         assert sv.at_bottom is False
 
     def test_scroll_event_handled(self):
-        from pharos_engine.ui.widgets import ScrollView, Label
+        from pharos_editor.ui.widgets import ScrollView, Label
         sv = ScrollView(x=0, y=0, w=200, h=100, scroll_speed=20)
         for i in range(10):
             sv.add(Label(y=i * 30, h=30))
@@ -753,7 +753,7 @@ class TestScrollView:
         assert sv.scroll_offset > 0
 
     def test_draw_no_exception(self):
-        from pharos_engine.ui.widgets import ScrollView, Label
+        from pharos_editor.ui.widgets import ScrollView, Label
         sv = ScrollView(x=0, y=0, w=200, h=100)
         for i in range(5):
             sv.add(Label(text=f"item {i}", y=i*20, h=20))
@@ -767,13 +767,13 @@ class TestScrollView:
 
 class TestImageWidget:
     def test_init_no_image(self):
-        from pharos_engine.ui.widgets import ImageWidget
+        from pharos_editor.ui.widgets import ImageWidget
         iw = ImageWidget(x=0, y=0, w=100, h=100)
         assert iw._image is None
 
     def test_set_image(self):
         from PIL import Image
-        from pharos_engine.ui.widgets import ImageWidget
+        from pharos_editor.ui.widgets import ImageWidget
         iw = ImageWidget(x=0, y=0, w=80, h=80)
         img = Image.new("RGBA", (64, 64), (255, 0, 0, 255))
         iw.set_image(img)
@@ -783,34 +783,34 @@ class TestImageWidget:
 
     def test_resolve_pil_from_pil_image(self):
         from PIL import Image
-        from pharos_engine.ui.widgets import ImageWidget
+        from pharos_editor.ui.widgets import ImageWidget
         img = Image.new("RGBA", (32, 32), (0, 255, 0, 255))
         iw = ImageWidget(image=img, x=0, y=0, w=64, h=64)
         resolved = iw._resolve_pil()
         assert resolved is img
 
     def test_resolve_pil_returns_none_when_no_image(self):
-        from pharos_engine.ui.widgets import ImageWidget
+        from pharos_editor.ui.widgets import ImageWidget
         iw = ImageWidget()
         assert iw._resolve_pil() is None
 
     def test_draw_no_exception_with_image(self):
         from PIL import Image
-        from pharos_engine.ui.widgets import ImageWidget
+        from pharos_editor.ui.widgets import ImageWidget
         img = Image.new("RGBA", (32, 32), (128, 128, 128, 255))
         iw = ImageWidget(image=img, fit="contain", x=0, y=0, w=80, h=80)
         draw, _ = _make_draw()
         iw.draw(draw)
 
     def test_draw_no_exception_no_image(self):
-        from pharos_engine.ui.widgets import ImageWidget
+        from pharos_editor.ui.widgets import ImageWidget
         iw = ImageWidget(x=0, y=0, w=80, h=80)
         draw, _ = _make_draw()
         iw.draw(draw)
 
     def test_fit_modes_no_exception(self):
         from PIL import Image
-        from pharos_engine.ui.widgets import ImageWidget
+        from pharos_editor.ui.widgets import ImageWidget
         img = Image.new("RGBA", (50, 50), (200, 100, 50, 255))
         for fit in ("contain", "cover", "stretch", "none"):
             iw = ImageWidget(image=img, fit=fit, x=0, y=0, w=80, h=60)
@@ -824,7 +824,7 @@ class TestImageWidget:
 
 class TestLayoutBoxInit:
     def test_defaults(self):
-        from pharos_engine.ui.widgets import LayoutBox
+        from pharos_editor.ui.widgets import LayoutBox
         lb = LayoutBox()
         assert lb.direction == "column"
         assert lb.align == "start"
@@ -832,7 +832,7 @@ class TestLayoutBoxInit:
         assert lb.padding >= 0
 
     def test_custom_params(self):
-        from pharos_engine.ui.widgets import LayoutBox
+        from pharos_editor.ui.widgets import LayoutBox
         lb = LayoutBox(direction="row", align="center", gap=8, padding=12,
                        x=10, y=20, w=300, h=200)
         assert lb.direction == "row"
@@ -841,7 +841,7 @@ class TestLayoutBoxInit:
         assert lb.padding == 12
 
     def test_add_child(self):
-        from pharos_engine.ui.widgets import LayoutBox, Label
+        from pharos_editor.ui.widgets import LayoutBox, Label
         lb = LayoutBox()
         lbl = Label(text="test")
         result = lb.add(lbl)
@@ -849,7 +849,7 @@ class TestLayoutBoxInit:
         assert lbl in lb._children
 
     def test_add_nested_layoutbox(self):
-        from pharos_engine.ui.widgets import LayoutBox
+        from pharos_editor.ui.widgets import LayoutBox
         parent = LayoutBox()
         child = LayoutBox()
         parent.add(child)
@@ -858,7 +858,7 @@ class TestLayoutBoxInit:
 
 class TestLayoutBoxLayout:
     def test_column_sets_y_positions(self):
-        from pharos_engine.ui.widgets import LayoutBox, Label
+        from pharos_editor.ui.widgets import LayoutBox, Label
         lb = LayoutBox(direction="column", gap=4, padding=0,
                        x=0, y=0, w=200, h=200)
         w1 = Label(h=20)
@@ -868,7 +868,7 @@ class TestLayoutBoxLayout:
         assert w1.y < w2.y
 
     def test_row_sets_x_positions(self):
-        from pharos_engine.ui.widgets import LayoutBox, Label
+        from pharos_editor.ui.widgets import LayoutBox, Label
         lb = LayoutBox(direction="row", gap=4, padding=0,
                        x=0, y=0, w=400, h=100)
         w1 = Label(w=60)
@@ -878,7 +878,7 @@ class TestLayoutBoxLayout:
         assert w1.x < w2.x
 
     def test_stretch_sets_width_in_column(self):
-        from pharos_engine.ui.widgets import LayoutBox, Label
+        from pharos_editor.ui.widgets import LayoutBox, Label
         lb = LayoutBox(direction="column", align="stretch",
                        padding=10, x=0, y=0, w=200, h=200)
         w = Label()
@@ -887,7 +887,7 @@ class TestLayoutBoxLayout:
         assert w.w == pytest.approx(200 - 2 * 10)
 
     def test_stretch_sets_height_in_row(self):
-        from pharos_engine.ui.widgets import LayoutBox, Label
+        from pharos_editor.ui.widgets import LayoutBox, Label
         lb = LayoutBox(direction="row", align="stretch",
                        padding=10, x=0, y=0, w=400, h=100)
         w = Label()
@@ -896,7 +896,7 @@ class TestLayoutBoxLayout:
         assert w.h == pytest.approx(100 - 2 * 10)
 
     def test_layout_with_bounds(self):
-        from pharos_engine.ui.widgets import LayoutBox, Label
+        from pharos_editor.ui.widgets import LayoutBox, Label
         lb = LayoutBox()
         lb.add(Label(h=30))
         lb.layout((0, 0, 300, 400))
@@ -906,7 +906,7 @@ class TestLayoutBoxLayout:
 
 class TestLayoutBoxApplyTheme:
     def test_theme_cascades_to_children(self):
-        from pharos_engine.ui.widgets import LayoutBox, Label, Theme
+        from pharos_editor.ui.widgets import LayoutBox, Label, Theme
         lb = LayoutBox()
         lbl = Label()
         lb.add(lbl)
@@ -917,7 +917,7 @@ class TestLayoutBoxApplyTheme:
 
 class TestLayoutBoxHandleEvent:
     def test_dispatches_to_child(self):
-        from pharos_engine.ui.widgets import LayoutBox, Button
+        from pharos_editor.ui.widgets import LayoutBox, Button
         lb = LayoutBox(x=0, y=0, w=300, h=200)
         hits = []
         b = Button(label="X", x=10, y=10, w=80, h=30)
@@ -929,7 +929,7 @@ class TestLayoutBoxHandleEvent:
 
 class TestLayoutBoxRenderToLayer:
     def test_render_to_layer_returns_layer(self):
-        from pharos_engine.ui.widgets import LayoutBox, Label
+        from pharos_editor.ui.widgets import LayoutBox, Label
         lb = LayoutBox(x=0, y=0, w=200, h=100)
         lb.add(Label(text="hi", x=10, y=10, w=80, h=20))
         lb.layout()
@@ -938,7 +938,7 @@ class TestLayoutBoxRenderToLayer:
             assert hasattr(result, "_image_data")
 
     def test_render_to_layer_with_size(self):
-        from pharos_engine.ui.widgets import LayoutBox
+        from pharos_editor.ui.widgets import LayoutBox
         lb = LayoutBox(x=0, y=0, w=100, h=50)
         result = lb.render_to_layer(size=(200, 150))
         if result is not None:
@@ -948,13 +948,13 @@ class TestLayoutBoxRenderToLayer:
 
 class TestLayoutBoxFromDict:
     def test_from_dict_empty_children(self):
-        from pharos_engine.ui.widgets import LayoutBox
+        from pharos_editor.ui.widgets import LayoutBox
         lb = LayoutBox._from_dict({"direction": "row"})
         assert lb.direction == "row"
         assert lb._children == []
 
     def test_from_dict_with_label_child(self):
-        from pharos_engine.ui.widgets import LayoutBox, Label
+        from pharos_editor.ui.widgets import LayoutBox, Label
         data = {
             "direction": "column",
             "children": [
@@ -967,7 +967,7 @@ class TestLayoutBoxFromDict:
         assert lb._children[0].text == "Hello"
 
     def test_from_dict_unknown_widget_type_skipped(self):
-        from pharos_engine.ui.widgets import LayoutBox
+        from pharos_editor.ui.widgets import LayoutBox
         data = {
             "children": [{"type": "UnknownWidget"}]
         }
@@ -975,7 +975,7 @@ class TestLayoutBoxFromDict:
         assert lb._children == []
 
     def test_from_dict_nested_layoutbox(self):
-        from pharos_engine.ui.widgets import LayoutBox
+        from pharos_editor.ui.widgets import LayoutBox
         data = {
             "children": [
                 {"type": "LayoutBox", "direction": "row", "children": []}
@@ -986,7 +986,7 @@ class TestLayoutBoxFromDict:
         assert isinstance(lb._children[0], LayoutBox)
 
     def test_from_dict_all_widget_types(self):
-        from pharos_engine.ui.widgets import LayoutBox
+        from pharos_editor.ui.widgets import LayoutBox
         types = ["Label", "Button", "ProgressBar", "StatBar",
                  "Slider", "Dial", "Panel", "Checkbox", "Dropdown"]
         data = {"children": [{"type": t, "w": 100, "h": 24} for t in types]}
@@ -996,13 +996,13 @@ class TestLayoutBoxFromDict:
 
 class TestLayoutBoxLoadYml:
     def test_load_nonexistent_returns_empty(self):
-        from pharos_engine.ui.widgets import LayoutBox
+        from pharos_editor.ui.widgets import LayoutBox
         lb = LayoutBox.load_yml("nonexistent_path_xyz.yml")
         assert isinstance(lb, LayoutBox)
 
     def test_load_valid_yml(self, tmp_path):
         pytest.importorskip("yaml")
-        from pharos_engine.ui.widgets import LayoutBox, Label
+        from pharos_editor.ui.widgets import LayoutBox, Label
         yml_file = tmp_path / "test_layout.yml"
         yml_file.write_text(
             "direction: column\n"
@@ -1019,7 +1019,7 @@ class TestLayoutBoxLoadYml:
 
     def test_load_bad_yml_returns_empty(self, tmp_path):
         pytest.importorskip("yaml")
-        from pharos_engine.ui.widgets import LayoutBox
+        from pharos_editor.ui.widgets import LayoutBox
         bad = tmp_path / "bad.yml"
         bad.write_text("this: is: invalid: yaml: {{{", encoding="utf-8")
         lb = LayoutBox.load_yml(str(bad))

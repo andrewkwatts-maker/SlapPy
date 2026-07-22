@@ -79,16 +79,16 @@ from pharos_engine.autosave import AutosaveManager, AutosaveState
 from pharos_engine.dynamics import World
 from pharos_engine.math import evaluate
 from pharos_engine.prefabs import PrefabLibrary
-from pharos_engine.ui.editor.diary_shell import (
+from pharos_editor.ui.editor.diary_shell import (
     DEFAULT_PAGES,
     DiaryShell,
     _resolve_panel_key,
 )
-from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
-from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
-from pharos_engine.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
-from pharos_engine.ui.theme import apply_theme, get_active_theme
-from pharos_engine.ui.theme.themes import register_all_themes
+from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
+from pharos_editor.ui.editor.notebook_outliner import NotebookOutliner
+from pharos_editor.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
+from pharos_editor.ui.theme import apply_theme, get_active_theme
+from pharos_editor.ui.theme.themes import register_all_themes
 from pharos_engine.visual_scripting.graph import NodeGraph
 from pharos_engine.visual_scripting.node import Node, NodePort
 
@@ -408,7 +408,7 @@ def _build_material_graph(trace: DemoTrace) -> NodeGraph:
     used_bridge = False
     bridge_result: dict[str, Any] | None = None
     try:  # pragma: no cover — AA4 optional
-        from pharos_engine.ui.editor.material_graph_bridge import (
+        from pharos_editor.ui.editor.material_graph_bridge import (
             MaterialGraphBridge,  # type: ignore
         )
         try:

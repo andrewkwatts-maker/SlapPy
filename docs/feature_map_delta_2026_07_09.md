@@ -10,7 +10,7 @@ batch).
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_editor.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `spawn.at_origin`          | `spawn_origin_actions.spawn_at_origin`              | spawn |
 | `selection.by_type`        | `selection_by_type_actions.select_by_type`          | selection |

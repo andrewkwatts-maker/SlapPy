@@ -1,7 +1,7 @@
 """Baked post-process chain presets — sprint Z3.
 
 The :class:`ChainBaker` mirrors the
-:class:`pharos_engine.ui.theme.user_themes.UserThemeStore` pattern for
+:class:`pharos_editor.ui.theme.user_themes.UserThemeStore` pattern for
 post-process chain manifests: every shipping preset lives as a YAML
 file under
 ``python/pharos_engine/post_process/baked_chains/*.chain.yaml`` inside

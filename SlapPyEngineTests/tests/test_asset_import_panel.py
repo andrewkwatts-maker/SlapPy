@@ -354,7 +354,7 @@ def stub_dpg(monkeypatch):
 
 
 try:
-    from pharos_engine.ui.editor.asset_import_panel import (
+    from pharos_editor.ui.editor.asset_import_panel import (
         AssetImportPanel,
         ImportedAssetCard,
         type_badge,

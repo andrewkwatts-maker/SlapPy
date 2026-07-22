@@ -95,7 +95,7 @@ def test_rendertarget_has_post_process():
 
 def test_scene_ui_entity_text():
     try:
-        from pharos_engine.ui.scene_ui import SceneUIEntity
+        from pharos_editor.ui.scene_ui import SceneUIEntity
     except ImportError as exc:
         pytest.skip(f"SceneUIEntity not importable: {exc}")
     ui = SceneUIEntity(name="hud", size=(100, 50))
@@ -106,7 +106,7 @@ def test_scene_ui_entity_text():
 
 def test_scene_ui_entity_html():
     try:
-        from pharos_engine.ui.scene_ui import SceneUIEntity
+        from pharos_editor.ui.scene_ui import SceneUIEntity
     except ImportError as exc:
         pytest.skip(f"SceneUIEntity not importable: {exc}")
     ui = SceneUIEntity(name="menu", size=(200, 100))
@@ -120,7 +120,7 @@ def test_scene_ui_entity_html():
 
 def test_scene_ui_entity_input_rect():
     try:
-        from pharos_engine.ui.scene_ui import SceneUIEntity
+        from pharos_editor.ui.scene_ui import SceneUIEntity
     except ImportError as exc:
         pytest.skip(f"SceneUIEntity not importable: {exc}")
     ui = SceneUIEntity(name="btn", position=(10.0, 20.0), size=(100, 50))
@@ -137,7 +137,7 @@ def test_scene_ui_entity_input_rect():
 
 def test_scene_ui_entity_handle_mouse():
     try:
-        from pharos_engine.ui.scene_ui import SceneUIEntity
+        from pharos_editor.ui.scene_ui import SceneUIEntity
     except ImportError as exc:
         pytest.skip(f"SceneUIEntity not importable: {exc}")
     ui = SceneUIEntity(name="btn", position=(0.0, 0.0), size=(100, 100))

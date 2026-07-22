@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# pharos_engine.ui.editor — API Reference
+# pharos_editor.ui.editor — API Reference
 
 > Hand-written reference for the optional Dear PyGui editor shell
 > (``pip install pharos-engine[editor]``).
@@ -81,7 +81,7 @@ Phase A surfaces:
 
 ### `PropertyInspector`
 
-_class — defined in `pharos_engine.ui.editor.property_inspector`_
+_class — defined in `pharos_editor.ui.editor.property_inspector`_
 
 Auto-generates DPG widgets for every primitive field of an arbitrary
 Python object. The **single source of truth** for object reflection
@@ -162,7 +162,7 @@ crashing the editor.
 
 ### `SpawnMenu` (module)
 
-_module — defined in `pharos_engine.ui.editor.spawn_menu`_
+_module — defined in `pharos_editor.ui.editor.spawn_menu`_
 
 The `+ Add` action table. Not a class — the module exposes a list of
 action dicts plus an `open_spawn_modal` callable that the
@@ -228,7 +228,7 @@ constructing the real `IKChainSpec`.
 
 ### `MaterialEditor`
 
-_class — defined in `pharos_engine.ui.editor.material_editor`_
+_class — defined in `pharos_editor.ui.editor.material_editor`_
 
 Visual material editor with a Sprint 2F `kind=` discriminator that
 lets one panel handle three target shapes:
@@ -275,7 +275,7 @@ panel; nothing to add).
 
 ### `SceneOutliner`
 
-_class — defined in `pharos_engine.ui.editor.scene_outliner`_
+_class — defined in `pharos_editor.ui.editor.scene_outliner`_
 
 Scene entity hierarchy panel with per-row visibility / lock /
 selection controls, plus the **host for the `+ Add` spawn-menu
@@ -303,7 +303,7 @@ follow the outliner.
 #### Spawn-menu wiring
 
 The `+ Add` button has a popup attached (`mousebutton=0`) populated
-from `pharos_engine.ui.editor.spawn_menu.SPAWN_ACTIONS`. Each menu
+from `pharos_editor.ui.editor.spawn_menu.SPAWN_ACTIONS`. Each menu
 item binds the action at default-arg time so the closure does not
 capture the loop variable, then calls
 `open_spawn_modal(action, self._scene)`. Missing spawn module is
@@ -312,7 +312,7 @@ just hides the popup rather than breaking the outliner.
 
 ### `EditorShell`
 
-_class — defined in `pharos_engine.ui.editor.shell`_
+_class — defined in `pharos_editor.ui.editor.shell`_
 
 Top-level Dear PyGui shell that orchestrates every panel under a
 single primary window.
@@ -375,10 +375,10 @@ before the 3D panels have been built.
 
 The shell applies the active diary-family theme through
 ``setup_theme_subsystem`` (which calls
-``pharos_engine.ui.theme.apply_theme``) — the notebook theme registry
+``pharos_editor.ui.theme.apply_theme``) — the notebook theme registry
 owns the entire editor look. The Nova3D ``apply_editor_theme`` /
 ``apply_dwm_glass`` / ``get_viewport_opaque_theme`` helpers in
-``pharos_engine.ui.editor.theme`` are **reference only** and are not
+``pharos_editor.ui.editor.theme`` are **reference only** and are not
 invoked by ``setup()``.
 
 ## Inner modules
@@ -402,8 +402,8 @@ invoked by ``setup()``.
 ## Conventions
 
 - **Lazy import.** `__init__.py` resolves names through a `_LAZY_MAP`
-  + `__getattr__` so `import pharos_engine.ui` (or
-  `import pharos_engine.ui.editor`) never imports `dearpygui` until a
+  + `__getattr__` so `import pharos_editor.ui` (or
+  `import pharos_editor.ui.editor`) never imports `dearpygui` until a
   concrete class is referenced.
 - **Optional extra.** Every dearpygui import is **deferred to method
   bodies**. A missing dearpygui surfaces as `ImportError` only at

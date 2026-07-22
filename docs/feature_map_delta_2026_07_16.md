@@ -9,7 +9,7 @@ WW4's round-24 ``view.toggle_axes`` / ``view.toggle_background`` /
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_editor.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `view.toggle_snap_indicator` | `view_toggle_snap_indicator_actions.toggle_snap_indicator` | view  |
 | `edit.select_parent`         | `edit_select_parent_actions.select_parent`                | edit  |

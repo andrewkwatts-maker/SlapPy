@@ -23,7 +23,7 @@ after VV4's round-23 ``layer.new`` / ``layer.delete`` /
   preserving the layer entry. Distinct from VV4's ``layer.delete``
   (removes entry too) and OO1's ``layer.merge_down`` (moves entities).
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up is exercised end-to-end. No DPG context — fixtures use
 :class:`SimpleNamespace` stand-ins for shell / scene / entity handles.
 """
@@ -33,7 +33,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,

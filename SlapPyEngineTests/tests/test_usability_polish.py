@@ -150,9 +150,9 @@ def stub_dpg(monkeypatch):
 def clear_theme(monkeypatch):
     """Reset theme + sticker registry between tests."""
     try:
-        from pharos_engine.ui.widgets import notebook_theme
-        from pharos_engine.ui.widgets.notebook_theme import set_active_theme
-        from pharos_engine.ui.widgets.sticker_corner import _active_stickers
+        from pharos_editor.ui.widgets import notebook_theme
+        from pharos_editor.ui.widgets.notebook_theme import set_active_theme
+        from pharos_editor.ui.widgets.sticker_corner import _active_stickers
     except Exception:
         yield
         return
@@ -197,7 +197,7 @@ class _FakeWorld:
 
 class TestTooltipRegistry:
     def test_register_stores_entry(self):
-        from pharos_engine.ui.editor.tooltip_registry import TooltipRegistry
+        from pharos_editor.ui.editor.tooltip_registry import TooltipRegistry
 
         reg = TooltipRegistry()
         reg.register("btn_save", "Save the scene")
@@ -206,7 +206,7 @@ class TestTooltipRegistry:
         assert reg.text_for("btn_save") == "Save the scene"
 
     def test_register_defaults_to_500ms(self):
-        from pharos_engine.ui.editor.tooltip_registry import (
+        from pharos_editor.ui.editor.tooltip_registry import (
             DEFAULT_DELAY_MS,
             TooltipRegistry,
         )
@@ -216,28 +216,28 @@ class TestTooltipRegistry:
         assert reg.get("btn").delay_ms == DEFAULT_DELAY_MS == 500
 
     def test_register_rejects_empty_tag(self):
-        from pharos_engine.ui.editor.tooltip_registry import TooltipRegistry
+        from pharos_editor.ui.editor.tooltip_registry import TooltipRegistry
 
         reg = TooltipRegistry()
         with pytest.raises(ValueError):
             reg.register("", "some text")
 
     def test_register_rejects_empty_text(self):
-        from pharos_engine.ui.editor.tooltip_registry import TooltipRegistry
+        from pharos_editor.ui.editor.tooltip_registry import TooltipRegistry
 
         reg = TooltipRegistry()
         with pytest.raises(ValueError):
             reg.register("btn", "")
 
     def test_register_rejects_negative_delay(self):
-        from pharos_engine.ui.editor.tooltip_registry import TooltipRegistry
+        from pharos_editor.ui.editor.tooltip_registry import TooltipRegistry
 
         reg = TooltipRegistry()
         with pytest.raises(ValueError):
             reg.register("btn", "hi", delay_ms=-1)
 
     def test_register_overwrites_existing(self):
-        from pharos_engine.ui.editor.tooltip_registry import TooltipRegistry
+        from pharos_editor.ui.editor.tooltip_registry import TooltipRegistry
 
         reg = TooltipRegistry()
         reg.register("btn", "old")
@@ -246,14 +246,14 @@ class TestTooltipRegistry:
         assert len(reg) == 1
 
     def test_register_many_bulk(self):
-        from pharos_engine.ui.editor.tooltip_registry import TooltipRegistry
+        from pharos_editor.ui.editor.tooltip_registry import TooltipRegistry
 
         reg = TooltipRegistry()
         reg.register_many([("a", "one"), ("b", "two"), ("c", "three")])
         assert len(reg) == 3
 
     def test_unregister_returns_true_on_remove(self):
-        from pharos_engine.ui.editor.tooltip_registry import TooltipRegistry
+        from pharos_editor.ui.editor.tooltip_registry import TooltipRegistry
 
         reg = TooltipRegistry()
         reg.register("btn", "hi")
@@ -261,7 +261,7 @@ class TestTooltipRegistry:
         assert reg.unregister("btn") is False
 
     def test_default_registry_covers_toolbar_and_outliner(self):
-        from pharos_engine.ui.editor.tooltip_registry import (
+        from pharos_editor.ui.editor.tooltip_registry import (
             build_default_registry,
         )
 
@@ -272,14 +272,14 @@ class TestTooltipRegistry:
         assert "notebook_spawn_summon" in reg
 
     def test_install_dpg_hover_returns_zero_when_dpg_none(self):
-        from pharos_engine.ui.editor.tooltip_registry import TooltipRegistry
+        from pharos_editor.ui.editor.tooltip_registry import TooltipRegistry
 
         reg = TooltipRegistry()
         reg.register("btn", "hi")
         assert reg.install_dpg_hover(None) == 0
 
     def test_install_dpg_hover_installs_only_existing_widgets(self, stub_dpg):
-        from pharos_engine.ui.editor.tooltip_registry import TooltipRegistry
+        from pharos_editor.ui.editor.tooltip_registry import TooltipRegistry
 
         # Widget "btn_existing" is pre-registered in DPG; "btn_missing" isn't.
         stub_dpg.items.add("btn_existing")
@@ -304,7 +304,7 @@ class TestTooltipRegistry:
 
 class TestOutlinerContextMenu:
     def _make(self, entities: list[Any] | None = None):
-        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_editor.ui.editor.notebook_outliner import NotebookOutliner
         world = _FakeWorld(entities or [
             _FakeEntity("e0", kind="rope", eid="e0"),
             _FakeEntity("e1", kind="ragdoll", eid="e1"),
@@ -396,7 +396,7 @@ class TestOutlinerContextMenu:
 
 class TestOutlinerMultiSelect:
     def _make(self):
-        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_editor.ui.editor.notebook_outliner import NotebookOutliner
         world = _FakeWorld([
             _FakeEntity("e0", kind="rope", eid="e0"),
             _FakeEntity("e1", kind="ragdoll", eid="e1"),
@@ -471,7 +471,7 @@ class TestOutlinerMultiSelect:
 
 class TestBreadcrumb:
     def test_no_root_bound_returns_projects_default(self):
-        from pharos_engine.ui.editor.notebook_content_browser import (
+        from pharos_editor.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -484,7 +484,7 @@ class TestBreadcrumb:
         assert segs and segs[0][0] == "projects"
 
     def test_breadcrumb_with_root_only(self, tmp_path):
-        from pharos_engine.ui.editor.notebook_content_browser import (
+        from pharos_editor.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -499,7 +499,7 @@ class TestBreadcrumb:
         assert [s[0] for s in segs] == ["projects", "MyGame"]
 
     def test_breadcrumb_after_navigating_into_subdir(self, tmp_path):
-        from pharos_engine.ui.editor.notebook_content_browser import (
+        from pharos_editor.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -516,7 +516,7 @@ class TestBreadcrumb:
         assert labels == ["projects", "MyGame", "scenes"]
 
     def test_navigate_to_segment_clears_cwd_at_root(self, tmp_path):
-        from pharos_engine.ui.editor.notebook_content_browser import (
+        from pharos_editor.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -534,7 +534,7 @@ class TestBreadcrumb:
         assert cb.get_cwd() is None
 
     def test_navigate_to_segment_sets_cwd_to_ancestor(self, tmp_path):
-        from pharos_engine.ui.editor.notebook_content_browser import (
+        from pharos_editor.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -552,7 +552,7 @@ class TestBreadcrumb:
         assert cb.get_cwd() == proj / "scenes"
 
     def test_set_cwd_outside_root_raises(self, tmp_path):
-        from pharos_engine.ui.editor.notebook_content_browser import (
+        from pharos_editor.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -570,7 +570,7 @@ class TestBreadcrumb:
             cb.set_cwd(other)
 
     def test_iter_files_respects_cwd(self, tmp_path):
-        from pharos_engine.ui.editor.notebook_content_browser import (
+        from pharos_editor.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -600,7 +600,7 @@ class TestBreadcrumb:
 
 class TestSpawnRecents:
     def _make(self):
-        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_editor.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         return NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
 
@@ -635,7 +635,7 @@ class TestSpawnRecents:
         assert menu.get_recent_ids() == ["ragdoll", "rope"]
 
     def test_recent_cards_returns_spawncard_objects(self, tmp_path):
-        from pharos_engine.ui.editor.notebook_spawn_menu import SpawnCard
+        from pharos_editor.ui.editor.notebook_spawn_menu import SpawnCard
 
         menu = self._make()
         menu.set_project_root(tmp_path)
@@ -666,7 +666,7 @@ class TestSpawnRecents:
 
 class TestUndoStack:
     def test_push_undo_redo_round_trip(self):
-        from pharos_engine.ui.editor.editor_undo import UndoStack
+        from pharos_editor.ui.editor.editor_undo import UndoStack
 
         state = {"count": 0}
         stack = UndoStack()
@@ -686,7 +686,7 @@ class TestUndoStack:
         assert state["count"] == 1
 
     def test_push_clears_redo(self):
-        from pharos_engine.ui.editor.editor_undo import UndoStack
+        from pharos_editor.ui.editor.editor_undo import UndoStack
 
         stack = UndoStack()
         stack.push("a", lambda: None, lambda: None)
@@ -696,7 +696,7 @@ class TestUndoStack:
         assert not stack.can_redo()
 
     def test_capacity_trims_from_bottom(self):
-        from pharos_engine.ui.editor.editor_undo import UndoStack
+        from pharos_editor.ui.editor.editor_undo import UndoStack
 
         stack = UndoStack(capacity=2)
         stack.push("a", lambda: None, lambda: None)
@@ -707,14 +707,14 @@ class TestUndoStack:
         assert top is not None and top.action_id == "c"
 
     def test_undo_on_empty_returns_none(self):
-        from pharos_engine.ui.editor.editor_undo import UndoStack
+        from pharos_editor.ui.editor.editor_undo import UndoStack
 
         stack = UndoStack()
         assert stack.undo() is None
         assert stack.redo() is None
 
     def test_clear_empties_both_stacks(self):
-        from pharos_engine.ui.editor.editor_undo import UndoStack
+        from pharos_editor.ui.editor.editor_undo import UndoStack
 
         stack = UndoStack()
         stack.push("a", lambda: None, lambda: None)
@@ -731,7 +731,7 @@ class TestUndoStack:
 
 class TestEntityClipboard:
     def test_copy_stores_snapshot(self):
-        from pharos_engine.ui.editor.entity_clipboard import EntityClipboard
+        from pharos_editor.ui.editor.entity_clipboard import EntityClipboard
 
         clip = EntityClipboard()
         ent = _FakeEntity("hero", kind="body", eid="hero")
@@ -741,7 +741,7 @@ class TestEntityClipboard:
         assert snap["name"] == "hero"
 
     def test_paste_suffixes_name(self):
-        from pharos_engine.ui.editor.entity_clipboard import EntityClipboard
+        from pharos_editor.ui.editor.entity_clipboard import EntityClipboard
 
         clip = EntityClipboard()
         clip.copy(_FakeEntity("hero", kind="body", eid="hero"))
@@ -749,7 +749,7 @@ class TestEntityClipboard:
         assert pasted[0]["name"] == "hero (paste)"
 
     def test_singleton_reset(self):
-        from pharos_engine.ui.editor.entity_clipboard import (
+        from pharos_editor.ui.editor.entity_clipboard import (
             get_active_clipboard,
             reset_active_clipboard,
         )
@@ -769,7 +769,7 @@ class TestEntityClipboard:
 
 class TestSaveOnQuitPrompt:
     def test_clean_scene_quits_directly(self):
-        from pharos_engine.ui.editor.save_on_quit import SaveOnQuitPrompt
+        from pharos_editor.ui.editor.save_on_quit import SaveOnQuitPrompt
 
         quit_called: list[bool] = []
         p = SaveOnQuitPrompt(
@@ -783,7 +783,7 @@ class TestSaveOnQuitPrompt:
         assert p.is_open is False
 
     def test_dirty_scene_opens_prompt(self, stub_dpg):
-        from pharos_engine.ui.editor.save_on_quit import SaveOnQuitPrompt
+        from pharos_editor.ui.editor.save_on_quit import SaveOnQuitPrompt
 
         p = SaveOnQuitPrompt(
             is_dirty=lambda: True,
@@ -795,7 +795,7 @@ class TestSaveOnQuitPrompt:
         assert p.is_open is True
 
     def test_resolve_save_calls_save_then_quit(self, stub_dpg):
-        from pharos_engine.ui.editor.save_on_quit import (
+        from pharos_editor.ui.editor.save_on_quit import (
             SaveOnQuitPrompt,
             SavePromptChoice,
         )
@@ -812,7 +812,7 @@ class TestSaveOnQuitPrompt:
         assert order == ["save", "quit"]
 
     def test_resolve_discard_skips_save(self, stub_dpg):
-        from pharos_engine.ui.editor.save_on_quit import (
+        from pharos_editor.ui.editor.save_on_quit import (
             SaveOnQuitPrompt,
             SavePromptChoice,
         )
@@ -828,7 +828,7 @@ class TestSaveOnQuitPrompt:
         assert order == ["quit"]
 
     def test_resolve_cancel_aborts(self, stub_dpg):
-        from pharos_engine.ui.editor.save_on_quit import (
+        from pharos_editor.ui.editor.save_on_quit import (
             SaveOnQuitPrompt,
             SavePromptChoice,
         )
@@ -846,7 +846,7 @@ class TestSaveOnQuitPrompt:
         assert p.is_open is False
 
     def test_resolve_wrong_type_raises(self):
-        from pharos_engine.ui.editor.save_on_quit import SaveOnQuitPrompt
+        from pharos_editor.ui.editor.save_on_quit import SaveOnQuitPrompt
 
         p = SaveOnQuitPrompt(
             is_dirty=lambda: False,

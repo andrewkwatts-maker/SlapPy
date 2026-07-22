@@ -10,8 +10,8 @@ HH1 wire-up sprint tick:
 * :meth:`App.enable_shadows`
 
 Each method is a one-liner over the LL2 / MM6 action helpers
-(:mod:`pharos_engine.actions.capture_actions` /
-:mod:`pharos_engine.actions.render_toggle_actions`). The tests assert
+(:mod:`pharos_editor.actions.capture_actions` /
+:mod:`pharos_editor.actions.render_toggle_actions`). The tests assert
 that:
 
 (a) the App class exposes all five methods,

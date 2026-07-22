@@ -10,7 +10,7 @@ VV4's round-23 ``layer.new`` / ``layer.delete`` /
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_editor.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `view.toggle_axes`       | `view_toggle_axes_actions.toggle_axes`             | view  |
 | `view.toggle_background` | `view_toggle_background_actions.toggle_background` | view  |

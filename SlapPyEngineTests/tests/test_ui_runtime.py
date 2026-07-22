@@ -1,4 +1,4 @@
-"""Tests for :mod:`pharos_engine.ui.runtime` — HH7 immediate-mode game UI.
+"""Tests for :mod:`pharos_editor.ui.runtime` — HH7 immediate-mode game UI.
 
 Covers:
     * :class:`ImmediateUI` frame lifecycle + widgets (button, label, slider,
@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from pharos_engine.ui.runtime import (
+from pharos_editor.ui.runtime import (
     AmmoCounter,
     Compass,
     DrawCommand,
@@ -573,7 +573,7 @@ def test_anchor_bottomright_returns_offset_from_bottomright():
 def test_dpg_bridge_soft_skip_or_run():
     """`run_immediate_in_dpg` requires DPG; skip cleanly when it's missing."""
     pytest.importorskip("dearpygui.dearpygui")
-    from pharos_engine.ui.runtime.dpg_bridge import run_immediate_in_dpg
+    from pharos_editor.ui.runtime.dpg_bridge import run_immediate_in_dpg
 
     # Empty parent tag rejected regardless of whether DPG is installed.
     with pytest.raises(ValueError):
@@ -586,8 +586,8 @@ def test_dpg_bridge_import_does_not_import_dpg():
     import sys
 
     # Force a clean reimport of the bridge module.
-    sys.modules.pop("pharos_engine.ui.runtime.dpg_bridge", None)
-    mod = importlib.import_module("pharos_engine.ui.runtime.dpg_bridge")
+    sys.modules.pop("pharos_editor.ui.runtime.dpg_bridge", None)
+    mod = importlib.import_module("pharos_editor.ui.runtime.dpg_bridge")
     assert hasattr(mod, "run_immediate_in_dpg")
     # The import itself must not have side-effected DPG into sys.modules,
     # unless another test already imported it.

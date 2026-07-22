@@ -21,7 +21,7 @@ batch):
   Distinct from OO1's ``layer.merge_down`` which flattens two layers
   into one, and TT2's ``layer.rename`` which touches names not order.
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up is exercised end-to-end. No DPG context — fixtures use
 :class:`SimpleNamespace` stand-ins for shell / scene / layer handles.
 """
@@ -31,7 +31,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,

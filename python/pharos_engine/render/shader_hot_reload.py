@@ -6,7 +6,7 @@ The user's directive:
     functions"
 
 This module is the runtime half of the WGSL live-editor loop. The editor
-panel (:mod:`pharos_engine.ui.editor.wgsl_editor_panel`) drives it via
+panel (:mod:`pharos_editor.ui.editor.wgsl_editor_panel`) drives it via
 ``.recompile(path, new_source)`` when the user hits the Compile button;
 the shell drives it via ``.watch()`` from the per-frame tick so on-disk
 edits (external editors, VCS resets) are picked up without the user

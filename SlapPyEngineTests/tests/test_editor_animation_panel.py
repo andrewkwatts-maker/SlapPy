@@ -116,8 +116,8 @@ def stub_dpg(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def clear_state():
-    from pharos_engine.ui.widgets import notebook_theme
-    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_editor.ui.widgets import notebook_theme
+    from pharos_editor.ui.widgets.notebook_theme import set_active_theme
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -132,7 +132,7 @@ def clear_state():
 
 
 def _make_panel(**kwargs):
-    from pharos_engine.ui.editor.notebook_animation_panel import (
+    from pharos_editor.ui.editor.notebook_animation_panel import (
         NotebookAnimationPanel,
     )
     return NotebookAnimationPanel(**kwargs)
@@ -343,7 +343,7 @@ class TestBindEntity:
 
 class TestThemeIntegration:
     def test_theme_switch_logs(self):
-        from pharos_engine.ui.widgets.notebook_theme import (
+        from pharos_editor.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )

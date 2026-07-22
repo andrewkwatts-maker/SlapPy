@@ -130,7 +130,7 @@ ctrl+alt+p:   editor.profiler_toggle    # rebind an existing command
 """Callables invoked by `user.*` command ids in hotkey YAMLs."""
 
 def mark_bookmark() -> None:
-    from pharos_engine.ui.editor.editor_undo import global_stack
+    from pharos_editor.ui.editor.editor_undo import global_stack
     global_stack().push_bookmark("user_bookmark")
 ```
 
@@ -215,7 +215,7 @@ a single feature during debugging.
   three kind subdirectories. Shaders directly in `shaders/` are
   skipped by design.
 * **Nothing is loading.** Inspect the editor log — every failure
-  emits a `WARNING` from `pharos_engine.ui.user_overrides`. Bundles
+  emits a `WARNING` from `pharos_editor.ui.user_overrides`. Bundles
   also carry the errors on `bundle.errors` for programmatic access.
 
 ---
@@ -225,7 +225,7 @@ a single feature during debugging.
 The loader is a plain Python class you can consume outside the editor:
 
 ```python
-from pharos_engine.ui.user_overrides import UserOverrideLoader
+from pharos_editor.ui.user_overrides import UserOverrideLoader
 
 loader = UserOverrideLoader()
 loader.ensure_scaffolded()

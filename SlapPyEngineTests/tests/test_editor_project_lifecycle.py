@@ -34,11 +34,11 @@ def reset_globals(monkeypatch, tmp_path):
     """
     from pharos_engine import event_bus as eb
     from pharos_engine.projects import registry as reg
-    from pharos_engine.ui.theme import _reset_registry_for_tests
-    from pharos_engine.ui.theme.creatures import (
+    from pharos_editor.ui.theme import _reset_registry_for_tests
+    from pharos_editor.ui.theme.creatures import (
         _reset_default_scheduler_for_tests,
     )
-    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_editor.ui.widgets.notebook_theme import set_active_theme
 
     _reset_registry_for_tests()
     set_active_theme(None)
@@ -64,7 +64,7 @@ def reset_globals(monkeypatch, tmp_path):
 
 def _make_shell(ui_settings=None):
     """Build a headless :class:`EditorShell` with a stub engine."""
-    from pharos_engine.ui.editor.shell import EditorShell
+    from pharos_editor.ui.editor.shell import EditorShell
 
     class _StubEngine:
         def __init__(self):
@@ -156,7 +156,7 @@ class TestLoadProject:
         assert "(no project)" in shell._last_window_title
 
     def test_content_browser_reroots(self, tmp_path):
-        from pharos_engine.ui.editor.content_browser import ContentBrowser
+        from pharos_editor.ui.editor.content_browser import ContentBrowser
 
         shell = _make_shell()
         shell._content_browser = ContentBrowser()
@@ -404,7 +404,7 @@ class TestMenuWiring:
 
 class TestWindowTitle:
     def test_format_with_project_name(self):
-        from pharos_engine.ui.editor.notebook_window_title import (
+        from pharos_editor.ui.editor.notebook_window_title import (
             format_window_title,
         )
         title = format_window_title(
@@ -417,7 +417,7 @@ class TestWindowTitle:
         assert "main" in title
 
     def test_format_no_project_placeholder(self):
-        from pharos_engine.ui.editor.notebook_window_title import (
+        from pharos_editor.ui.editor.notebook_window_title import (
             format_window_title,
         )
         title = format_window_title(
@@ -439,7 +439,7 @@ class TestWindowTitle:
 
     def test_format_legacy_signature_unchanged(self):
         """Three-arg call (pre-M6) must still emit the legacy format."""
-        from pharos_engine.ui.editor.notebook_window_title import (
+        from pharos_editor.ui.editor.notebook_window_title import (
             format_window_title,
         )
         title = format_window_title(

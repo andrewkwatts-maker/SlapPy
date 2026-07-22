@@ -1,4 +1,4 @@
-"""Tests for ``pharos_engine.ui.editor.layout_persistence``.
+"""Tests for ``pharos_editor.ui.editor.layout_persistence``.
 
 The persistence layer is Dear PyGui-free and operates exclusively on
 plain Python objects, so every test in this module runs headlessly
@@ -19,14 +19,14 @@ try:
 except Exception as exc:  # pragma: no cover - exotic install matrix
     pytest.skip(f"yaml not importable: {exc}", allow_module_level=True)
 
-from pharos_engine.ui.editor.layout_persistence import (
+from pharos_editor.ui.editor.layout_persistence import (
     EditorLayout,
     LayoutPersistence,
     PanelLayoutState,
     SCHEMA_VERSION,
     VALID_DOCK_SIDES,
 )
-from pharos_engine.ui.editor.default_layouts import (
+from pharos_editor.ui.editor.default_layouts import (
     DEFAULT_LAYOUT,
     PRESET_LAYOUTS,
     TRIPLE_PANE_LAYOUT,

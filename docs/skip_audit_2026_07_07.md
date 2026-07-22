@@ -124,7 +124,7 @@ the same reason string):
 
 | File | Lines | Count | Category | Reason (verbatim or paraphrased) | Action |
 |---|---|---:|---|---|---|
-| `test_actions_stub_triage_r15.py` | 379, 416 | 2 | legit-env | `pharos_engine.ui.theme not importable in this env` | keep |
+| `test_actions_stub_triage_r15.py` | 379, 416 | 2 | legit-env | `pharos_editor.ui.theme not importable in this env` | keep |
 | `test_api_polish_aa2.py` | 336 | 1 | legit-dep | `pyyaml not installed — line tracking unavailable` | keep |
 | `test_app_integration.py` | 65, 75, 197, 214, 229, 245, 265, 278, 280, 293, 307, 380, 439 | 13 | legit-env | `pharos_engine.render not importable` / `wgpu not available in this environment` | keep |
 | `test_app_lifecycle_stress.py` | 193 | 1 | legit-upstream-drift | `physics3 unavailable: {exc}` (physics3_bridge WIP) | keep |

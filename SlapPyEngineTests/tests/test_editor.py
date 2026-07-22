@@ -118,7 +118,7 @@ class TestLayerPanel:
 
     def _panel(self):
         try:
-            from pharos_engine.ui.editor.layer_panel import LayerPanel
+            from pharos_editor.ui.editor.layer_panel import LayerPanel
         except ImportError as e:
             pytest.skip(f"LayerPanel not importable: {e}")
         return LayerPanel()
@@ -206,7 +206,7 @@ class TestPropertyInspector:
 
     def _panel(self):
         try:
-            from pharos_engine.ui.editor.property_inspector import PropertyInspector
+            from pharos_editor.ui.editor.property_inspector import PropertyInspector
         except ImportError as e:
             pytest.skip(f"PropertyInspector not importable: {e}")
         return PropertyInspector()
@@ -254,7 +254,7 @@ class TestMaterialEditor:
 
     def _panel(self):
         try:
-            from pharos_engine.ui.editor.material_editor import MaterialEditor
+            from pharos_editor.ui.editor.material_editor import MaterialEditor
         except ImportError as e:
             pytest.skip(f"MaterialEditor not importable: {e}")
         return MaterialEditor()
@@ -332,7 +332,7 @@ class TestTagPainter:
 
     def _panel(self):
         try:
-            from pharos_engine.ui.editor.tag_painter import TagPainter
+            from pharos_editor.ui.editor.tag_painter import TagPainter
         except ImportError as e:
             pytest.skip(f"TagPainter not importable: {e}")
         return TagPainter()
@@ -370,7 +370,7 @@ class TestAnimGraphPanel:
 
     def _panel(self):
         try:
-            from pharos_engine.ui.editor.anim_graph_panel import AnimGraphPanel
+            from pharos_editor.ui.editor.anim_graph_panel import AnimGraphPanel
         except ImportError as e:
             pytest.skip(f"AnimGraphPanel not importable: {e}")
         return AnimGraphPanel()

@@ -10,13 +10,13 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.ui.editor.notebook_gizmos import (
+from pharos_editor.ui.editor.notebook_gizmos import (
     NotebookGizmoOverlay,
     _stable_hash,
     _wobble_samples,
 )
-from pharos_engine.ui.theme import Color, register_theme, apply_theme
-from pharos_engine.ui.theme.theme_spec import (
+from pharos_editor.ui.theme import Color, register_theme, apply_theme
+from pharos_editor.ui.theme.theme_spec import (
     Gradient,
     SemanticTokens,
     ThemeSpec,

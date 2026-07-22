@@ -24,7 +24,7 @@ batch):
   ``spawn.at_origin`` + TT2's ``spawn.at_view_center`` + UU4's
   ``spawn.at_origin_offset``.
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up is exercised end-to-end. No DPG context — fixtures use
 :class:`SimpleNamespace` stand-ins for shell / scene / layer handles.
 """
@@ -34,7 +34,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,

@@ -1,9 +1,9 @@
 """Headless tests for editor panel helper functions and pure-Python class methods.
 
 Covers:
-- pharos_engine.ui.editor.property_inspector  (module helpers + PropertyInspector)
-- pharos_engine.ui.editor.deform_panel        (module helpers + DeformPanel + ZoneEditorPanel)
-- pharos_engine.ui.editor.scene_outliner      (SceneOutliner)
+- pharos_editor.ui.editor.property_inspector  (module helpers + PropertyInspector)
+- pharos_editor.ui.editor.deform_panel        (module helpers + DeformPanel + ZoneEditorPanel)
+- pharos_editor.ui.editor.scene_outliner      (SceneOutliner)
 
 All tests are headless — no DearPyGUI, no GPU.  DPG methods are only called
 inside build() / _refresh() which are behind a ``dpg.does_item_exist`` guard
@@ -45,7 +45,7 @@ class _FakeEnum(Enum):
 
 class TestIsFloatTuple:
     def _fn(self, v):
-        from pharos_engine.ui.editor.property_inspector import _is_float_tuple
+        from pharos_editor.ui.editor.property_inspector import _is_float_tuple
         return _is_float_tuple(v)
 
     def test_float_pair(self):
@@ -81,7 +81,7 @@ class TestIsFloatTuple:
 
 class TestIsListOfStr:
     def _fn(self, v):
-        from pharos_engine.ui.editor.property_inspector import _is_list_of_str
+        from pharos_editor.ui.editor.property_inspector import _is_list_of_str
         return _is_list_of_str(v)
 
     def test_str_list(self):
@@ -108,7 +108,7 @@ class TestIsListOfStr:
 
 class TestIsPrimitive:
     def _fn(self, v):
-        from pharos_engine.ui.editor.property_inspector import _is_primitive
+        from pharos_editor.ui.editor.property_inspector import _is_primitive
         return _is_primitive(v)
 
     def test_bool(self):
@@ -147,7 +147,7 @@ class TestIsPrimitive:
 
 class TestIsEngineObject:
     def _fn(self, v):
-        from pharos_engine.ui.editor.property_inspector import _is_engine_object
+        from pharos_editor.ui.editor.property_inspector import _is_engine_object
         return _is_engine_object(v)
 
     def test_list_with_dict_is_complex(self):
@@ -184,29 +184,29 @@ class TestIsEngineObject:
 
 class TestPropertyInspectorInit:
     def test_instantiates(self):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         assert pi is not None
 
     def test_obj_none_initially(self):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         assert pi._obj is None
 
     def test_panel_tag_default(self):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         assert pi._panel_tag == "property_inspector"
 
     def test_widget_map_empty(self):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         assert pi._widget_map == {}
 
 
 class TestPropertyInspectorIterFields:
     def _pi(self, obj):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         pi._obj = obj
         return pi
@@ -238,34 +238,34 @@ class TestPropertyInspectorIterFields:
 
 class TestPropertyInspectorUniqueTag:
     def test_returns_string(self):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         pi._obj = _PlainObj()
         tag = pi._unique_tag("speed")
         assert isinstance(tag, str)
 
     def test_contains_panel_tag(self):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         pi._obj = _PlainObj()
         tag = pi._unique_tag("speed")
         assert "property_inspector" in tag
 
     def test_contains_attr_name(self):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         pi._obj = _PlainObj()
         tag = pi._unique_tag("speed")
         assert "speed" in tag
 
     def test_two_attrs_different_tags(self):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         pi._obj = _PlainObj()
         assert pi._unique_tag("x") != pi._unique_tag("y")
 
     def test_stable_for_same_obj(self):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         obj = _PlainObj()
         pi._obj = obj
@@ -274,14 +274,14 @@ class TestPropertyInspectorUniqueTag:
 
 class TestPropertyInspectorMakeCallback:
     def test_returns_callable(self):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         pi._obj = _PlainObj()
         cb = pi._make_callback("speed")
         assert callable(cb)
 
     def test_callback_sets_attribute(self):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         obj = _PlainObj()
         pi._obj = obj
@@ -290,14 +290,14 @@ class TestPropertyInspectorMakeCallback:
         assert obj.speed == pytest.approx(99.0)
 
     def test_callback_noop_if_obj_none(self):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         pi._obj = None
         cb = pi._make_callback("speed")
         cb(None, 42.0, None)  # should not raise
 
     def test_callback_ignores_attribute_error(self):
-        from pharos_engine.ui.editor.property_inspector import PropertyInspector
+        from pharos_editor.ui.editor.property_inspector import PropertyInspector
         pi = PropertyInspector()
         pi._obj = _FlatDC()
         cb = pi._make_callback("nonexistent_frozen_attr")
@@ -306,19 +306,19 @@ class TestPropertyInspectorMakeCallback:
 
 class TestPropertyInspectorConstants:
     def test_transform_fields_contains_position(self):
-        from pharos_engine.ui.editor.property_inspector import TRANSFORM_FIELDS
+        from pharos_editor.ui.editor.property_inspector import TRANSFORM_FIELDS
         assert "position" in TRANSFORM_FIELDS
 
     def test_transform_fields_contains_rotation(self):
-        from pharos_engine.ui.editor.property_inspector import TRANSFORM_FIELDS
+        from pharos_editor.ui.editor.property_inspector import TRANSFORM_FIELDS
         assert "rotation" in TRANSFORM_FIELDS
 
     def test_drag_float_names_contains_width(self):
-        from pharos_engine.ui.editor.property_inspector import DRAG_FLOAT_NAMES
+        from pharos_editor.ui.editor.property_inspector import DRAG_FLOAT_NAMES
         assert "width" in DRAG_FLOAT_NAMES
 
     def test_drag_float_names_contains_height(self):
-        from pharos_engine.ui.editor.property_inspector import DRAG_FLOAT_NAMES
+        from pharos_editor.ui.editor.property_inspector import DRAG_FLOAT_NAMES
         assert "height" in DRAG_FLOAT_NAMES
 
 
@@ -328,7 +328,7 @@ class TestPropertyInspectorConstants:
 
 class TestEnumItems:
     def _fn(self, cls):
-        from pharos_engine.ui.editor.deform_panel import _enum_items
+        from pharos_editor.ui.editor.deform_panel import _enum_items
         return _enum_items(cls)
 
     def test_returns_list(self):
@@ -350,7 +350,7 @@ class TestEnumItems:
 
 class TestEnumValue:
     def _fn(self, v):
-        from pharos_engine.ui.editor.deform_panel import _enum_value
+        from pharos_editor.ui.editor.deform_panel import _enum_value
         return _enum_value(v)
 
     def test_enum_member_returns_value(self):
@@ -368,7 +368,7 @@ class TestEnumValue:
 
 class TestSafeSetattr:
     def _fn(self, obj, attr, val):
-        from pharos_engine.ui.editor.deform_panel import _safe_setattr
+        from pharos_editor.ui.editor.deform_panel import _safe_setattr
         _safe_setattr(obj, attr, val)
 
     def test_sets_existing_attr(self):
@@ -391,7 +391,7 @@ class TestSafeSetattr:
 
     def test_no_crash_on_none_target(self):
         # None has no settable attrs — TypeError should be swallowed
-        from pharos_engine.ui.editor.deform_panel import _safe_setattr
+        from pharos_editor.ui.editor.deform_panel import _safe_setattr
         _safe_setattr(None, "foo", 1)  # should not raise
 
 
@@ -401,27 +401,27 @@ class TestSafeSetattr:
 
 class TestDeformPanelInit:
     def test_instantiates(self):
-        from pharos_engine.ui.editor.deform_panel import DeformPanel
+        from pharos_editor.ui.editor.deform_panel import DeformPanel
         p = DeformPanel()
         assert p is not None
 
     def test_comp_none_initially(self):
-        from pharos_engine.ui.editor.deform_panel import DeformPanel
+        from pharos_editor.ui.editor.deform_panel import DeformPanel
         p = DeformPanel()
         assert p._comp is None
 
     def test_panel_tag(self):
-        from pharos_engine.ui.editor.deform_panel import DeformPanel
+        from pharos_editor.ui.editor.deform_panel import DeformPanel
         p = DeformPanel()
         assert p._panel_tag == "deform_panel"
 
     def test_tags_empty_dict(self):
-        from pharos_engine.ui.editor.deform_panel import DeformPanel
+        from pharos_editor.ui.editor.deform_panel import DeformPanel
         p = DeformPanel()
         assert p._tags == {}
 
     def test_set_component_stores_comp(self):
-        from pharos_engine.ui.editor.deform_panel import DeformPanel
+        from pharos_editor.ui.editor.deform_panel import DeformPanel
 
         class _FakeComp:
             pass
@@ -452,36 +452,36 @@ class _FakeCompWithZones:
 
 class TestZoneEditorPanelInit:
     def test_instantiates(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         assert p is not None
 
     def test_comp_none_initially(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         assert p._comp is None
 
     def test_panel_tag(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         assert p._panel_tag == "zone_editor_panel"
 
     def test_preview_callback_none_initially(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         assert p._preview_callback is None
 
 
 class TestZoneEditorPanelSetPreviewCallback:
     def test_stores_callback(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         cb = lambda comp: None
         p.set_preview_callback(cb)
         assert p._preview_callback is cb
 
     def test_replace_callback(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         cb1 = lambda comp: None
         cb2 = lambda comp: None
@@ -492,18 +492,18 @@ class TestZoneEditorPanelSetPreviewCallback:
 
 class TestZoneEditorPanelOnPreviewZones:
     def test_no_crash_when_both_none(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         p._on_preview_zones()  # _comp None, _preview_callback None — no crash
 
     def test_no_crash_when_no_callback(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         p._comp = _FakeCompWithZones()
         p._on_preview_zones()  # callback is None — should not raise
 
     def test_no_crash_when_comp_none(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         fired = []
         p._preview_callback = lambda c: fired.append(c)
@@ -511,7 +511,7 @@ class TestZoneEditorPanelOnPreviewZones:
         assert fired == []
 
     def test_fires_callback_with_comp(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         comp = _FakeCompWithZones()
         p._comp = comp
@@ -522,7 +522,7 @@ class TestZoneEditorPanelOnPreviewZones:
         assert fired[0] is comp
 
     def test_swallows_callback_exception(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         p._comp = _FakeCompWithZones()
         p._preview_callback = lambda c: (_ for _ in ()).throw(RuntimeError("boom"))
@@ -531,13 +531,13 @@ class TestZoneEditorPanelOnPreviewZones:
 
 class TestZoneEditorPanelMakeZoneFieldCb:
     def test_returns_callable(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         cb = p._make_zone_field_cb(0, "name")
         assert callable(cb)
 
     def test_sets_field_on_zone(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         zone = _FakeZone(name="original")
         p._comp = _FakeCompWithZones(zones=[zone])
@@ -546,7 +546,7 @@ class TestZoneEditorPanelMakeZoneFieldCb:
         assert zone.name == "renamed"
 
     def test_cast_applied(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         zone = _FakeZone()
         p._comp = _FakeCompWithZones(zones=[zone])
@@ -555,14 +555,14 @@ class TestZoneEditorPanelMakeZoneFieldCb:
         assert zone.integrity_threshold == pytest.approx(0.75)
 
     def test_no_crash_index_out_of_range(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         p._comp = _FakeCompWithZones(zones=[])
         cb = p._make_zone_field_cb(5, "name")
         cb(None, "x", None)  # index 5 out of range — should not raise
 
     def test_no_crash_comp_none(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         cb = p._make_zone_field_cb(0, "name")
         cb(None, "x", None)  # comp is None — should not raise
@@ -570,13 +570,13 @@ class TestZoneEditorPanelMakeZoneFieldCb:
 
 class TestZoneEditorPanelMakeZoneRectCb:
     def test_returns_callable(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         cb = p._make_zone_rect_cb(0, 0)
         assert callable(cb)
 
     def test_updates_rect_x(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         zone = _FakeZone(rect=(10, 20, 30, 40))
         p._comp = _FakeCompWithZones(zones=[zone])
@@ -585,7 +585,7 @@ class TestZoneEditorPanelMakeZoneRectCb:
         assert zone.rect[0] == 99
 
     def test_updates_rect_y(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         zone = _FakeZone(rect=(10, 20, 30, 40))
         p._comp = _FakeCompWithZones(zones=[zone])
@@ -594,7 +594,7 @@ class TestZoneEditorPanelMakeZoneRectCb:
         assert zone.rect[1] == 55
 
     def test_no_crash_index_out_of_range(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         p._comp = _FakeCompWithZones(zones=[])
         cb = p._make_zone_rect_cb(5, 0)
@@ -603,13 +603,13 @@ class TestZoneEditorPanelMakeZoneRectCb:
 
 class TestZoneEditorPanelMakeZoneMaterialCb:
     def test_returns_callable(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         cb = p._make_zone_material_cb(0)
         assert callable(cb)
 
     def test_sets_material_to_none_on_inherit(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         zone = _FakeZone()
         zone.material = "something"
@@ -619,7 +619,7 @@ class TestZoneEditorPanelMakeZoneMaterialCb:
         assert zone.material is None
 
     def test_no_crash_index_out_of_range(self):
-        from pharos_engine.ui.editor.deform_panel import ZoneEditorPanel
+        from pharos_editor.ui.editor.deform_panel import ZoneEditorPanel
         p = ZoneEditorPanel()
         p._comp = _FakeCompWithZones(zones=[])
         cb = p._make_zone_material_cb(5)
@@ -632,49 +632,49 @@ class TestZoneEditorPanelMakeZoneMaterialCb:
 
 class TestSceneOutlinerInit:
     def test_instantiates(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
         o = SceneOutliner()
         assert o is not None
 
     def test_scene_none_initially(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
         o = SceneOutliner()
         assert o._scene is None
 
     def test_selected_entity_none_initially(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
         o = SceneOutliner()
         assert o._selected_entity is None
 
     def test_on_select_none_initially(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
         o = SceneOutliner()
         assert o._on_select is None
 
     def test_panel_tag_default(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
         o = SceneOutliner()
         assert o._panel_tag == "scene_outliner"
 
     def test_row_group_tag_default(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
         o = SceneOutliner()
         assert o._row_group_tag == "scene_outliner_rows"
 
     def test_accent_theme_none(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
         o = SceneOutliner()
         assert o._accent_theme is None
 
     def test_default_theme_none(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
         o = SceneOutliner()
         assert o._default_theme is None
 
 
 class TestSceneOutlinerSetScene:
     def test_stores_scene(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
 
         class _FakeScene:
             pass
@@ -685,7 +685,7 @@ class TestSceneOutlinerSetScene:
         assert o._scene is s
 
     def test_no_refresh_before_build(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
 
         class _FakeScene:
             pass
@@ -695,7 +695,7 @@ class TestSceneOutlinerSetScene:
         o.set_scene(_FakeScene())  # should not raise
 
     def test_replace_scene(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
 
         class _S:
             pass
@@ -709,12 +709,12 @@ class TestSceneOutlinerSetScene:
 
 class TestSceneOutlinerGetSelected:
     def test_returns_none_initially(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
         o = SceneOutliner()
         assert o.get_selected() is None
 
     def test_returns_set_entity(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
 
         class _E:
             pass
@@ -727,14 +727,14 @@ class TestSceneOutlinerGetSelected:
 
 class TestSceneOutlinerSetOnSelect:
     def test_stores_callback(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
         o = SceneOutliner()
         cb = lambda e: None
         o.set_on_select(cb)
         assert o._on_select is cb
 
     def test_replace_callback(self):
-        from pharos_engine.ui.editor.scene_outliner import SceneOutliner
+        from pharos_editor.ui.editor.scene_outliner import SceneOutliner
         o = SceneOutliner()
         cb1 = lambda e: None
         cb2 = lambda e: None

@@ -124,8 +124,8 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def reset_theme_registry():
     """Reset the theme registry + active theme between tests."""
-    from pharos_engine.ui.theme import _reset_registry_for_tests
-    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_editor.ui.theme import _reset_registry_for_tests
+    from pharos_editor.ui.widgets.notebook_theme import set_active_theme
 
     _reset_registry_for_tests()
     set_active_theme(None)
@@ -141,7 +141,7 @@ def reset_theme_registry():
 
 def _register_starter_themes() -> list[str]:
     """Register the starter diary themes and return their names."""
-    from pharos_engine.ui.theme.themes import register_starter_themes
+    from pharos_editor.ui.theme.themes import register_starter_themes
 
     return register_starter_themes()
 
@@ -176,7 +176,7 @@ class _StubScheduler:
 class TestConstruction:
     def test_constructs_without_dpg_errors(self):
         """The panel must construct even when no theme is registered."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -189,12 +189,12 @@ class TestConstruction:
 
     def test_build_registers_root_tag(self, stub_dpg):
         """``build`` populates the headless DPG stub with a header tag."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
         _register_starter_themes()
-        from pharos_engine.ui.theme import apply_theme
+        from pharos_editor.ui.theme import apply_theme
 
         apply_theme("teengirl_notebook")
 
@@ -213,7 +213,7 @@ class TestConstruction:
 
     def test_build_is_safe_before_any_theme_registered(self, stub_dpg):
         """No registered themes → panel still builds cleanly."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -231,7 +231,7 @@ class TestConstruction:
 class TestCardPreview:
     def test_card_carries_three_color_stripes(self):
         """Card preview returns primary / accent / surface as RGBA tuples."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -249,10 +249,10 @@ class TestCardPreview:
 
     def test_active_card_flag_tracks_apply_theme(self):
         """``card_preview['active']`` is True only for the active theme."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
-        from pharos_engine.ui.theme import apply_theme
+        from pharos_editor.ui.theme import apply_theme
 
         _register_starter_themes()
         apply_theme("teengirl_notebook")
@@ -267,7 +267,7 @@ class TestCardPreview:
 
     def test_unknown_theme_card_returns_safe_defaults(self):
         """An unregistered theme still yields a renderable card preview."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -279,7 +279,7 @@ class TestCardPreview:
 
     def test_card_preview_rejects_empty_id(self):
         """``card_preview`` validates the theme id like every editor surface."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -296,10 +296,10 @@ class TestCardPreview:
 class TestThemeSwitch:
     def test_clicking_card_applies_theme(self, stub_dpg):
         """Clicking a card with a different theme id calls ``apply_theme``."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
-        from pharos_engine.ui.theme import apply_theme, get_active_theme
+        from pharos_editor.ui.theme import apply_theme, get_active_theme
 
         _register_starter_themes()
         apply_theme("teengirl_notebook")
@@ -315,7 +315,7 @@ class TestThemeSwitch:
 
     def test_clicking_unregistered_card_does_not_crash(self, stub_dpg):
         """Clicking a card whose theme isn't registered must not raise."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -333,10 +333,10 @@ class TestThemeSwitch:
 class TestCreatureRoster:
     def test_roster_reflects_active_theme_metadata(self, stub_dpg):
         """Active theme's metadata roster surfaces as the creature state map."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
-        from pharos_engine.ui.theme import apply_theme
+        from pharos_editor.ui.theme import apply_theme
 
         _register_starter_themes()
         apply_theme("teengirl_notebook")
@@ -351,10 +351,10 @@ class TestCreatureRoster:
 
     def test_roster_updates_when_theme_switches(self, stub_dpg):
         """Switching themes layers the new roster onto the existing state."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
-        from pharos_engine.ui.theme import apply_theme
+        from pharos_editor.ui.theme import apply_theme
 
         _register_starter_themes()
         apply_theme("teengirl_notebook")
@@ -373,10 +373,10 @@ class TestCreatureRoster:
 
     def test_toggling_creature_calls_scheduler(self, stub_dpg):
         """Toggling a creature checkbox routes through ``scheduler.set_enabled``."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
-        from pharos_engine.ui.theme import apply_theme
+        from pharos_editor.ui.theme import apply_theme
 
         _register_starter_themes()
         apply_theme("teengirl_notebook")
@@ -393,7 +393,7 @@ class TestCreatureRoster:
 
     def test_creature_toggle_rejects_non_bool(self, stub_dpg):
         """The internal handler validates *enabled* is a real bool."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -403,7 +403,7 @@ class TestCreatureRoster:
 
     def test_creature_toggle_rejects_empty_id(self, stub_dpg):
         """Empty creature id is rejected by validators."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -419,7 +419,7 @@ class TestCreatureRoster:
 
 class TestGlobalToggles:
     def test_animations_toggle_updates_state(self, stub_dpg):
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -432,7 +432,7 @@ class TestGlobalToggles:
 
     def test_reduced_motion_toggle_propagates_to_scheduler(self, stub_dpg):
         """The reduced-motion toggle calls ``scheduler.set_reduced_motion``."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -445,7 +445,7 @@ class TestGlobalToggles:
         assert scheduler.reduced_motion_calls == [True]
 
     def test_easter_eggs_toggle_propagates_to_scheduler(self, stub_dpg):
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -458,7 +458,7 @@ class TestGlobalToggles:
         assert scheduler.easter_egg_calls == [False]
 
     def test_animations_master_propagates_to_scheduler(self, stub_dpg):
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -478,7 +478,7 @@ class TestGlobalToggles:
 class TestRefresh:
     def test_refresh_logs_call(self, stub_dpg):
         """``refresh`` always records itself in the call log."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -492,7 +492,7 @@ class TestRefresh:
 
     def test_refresh_before_build_is_a_no_op(self):
         """Calling ``refresh`` before ``build`` does not crash."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -503,7 +503,7 @@ class TestRefresh:
 
     def test_footer_refresh_button_fires_callback(self, stub_dpg):
         """Clicking the footer "Refresh editor" button calls ``on_refresh``."""
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -522,7 +522,7 @@ class TestRefresh:
 
 class TestActiveThemeName:
     def test_returns_empty_when_no_active_theme(self):
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
 
@@ -530,10 +530,10 @@ class TestActiveThemeName:
         assert panel.active_theme_name() == ""
 
     def test_tracks_apply_theme(self):
-        from pharos_engine.ui.editor.theme_switcher_panel import (
+        from pharos_editor.ui.editor.theme_switcher_panel import (
             ThemeSwitcherPanel,
         )
-        from pharos_engine.ui.theme import apply_theme
+        from pharos_editor.ui.theme import apply_theme
 
         _register_starter_themes()
         apply_theme("cozy_diary")

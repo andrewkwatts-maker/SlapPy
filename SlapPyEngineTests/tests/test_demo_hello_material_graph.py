@@ -83,7 +83,7 @@ def test_four_wgsl_files_written(demo, tmp_path):
 
 def test_lint_wgsl_soft_imported(demo, tmp_path):
     try:
-        from pharos_engine.ui.theme.shader_lint import lint_wgsl
+        from pharos_editor.ui.theme.shader_lint import lint_wgsl
     except Exception:
         pytest.skip("lint_wgsl unavailable — soft-import contract satisfied")
         return
@@ -175,7 +175,7 @@ def test_each_shader_has_wgsl_markers(demo, tmp_path):
 
 
 def test_bridge_body_has_let_bindings(demo):
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
 
@@ -219,7 +219,7 @@ def test_main_prints_summary_and_returns_zero(demo, monkeypatch, tmp_path):
 
 
 def test_expected_uniforms_appear(demo):
-    from pharos_engine.ui.editor.material_graph_bridge import (
+    from pharos_editor.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
 

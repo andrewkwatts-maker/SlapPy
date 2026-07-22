@@ -17,7 +17,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from pharos_engine.ui.theme import (
+from pharos_editor.ui.theme import (
     EDGE_STROKE_PRESETS,
     PanelDecorator,
     render_edge_stroke,

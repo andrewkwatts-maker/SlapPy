@@ -368,7 +368,7 @@ plain construction (data is set via `set_target` / `set_scene` / etc.).
 
 **Recommendation. ADOPT** — the shipping notebook panels already
 follow this. Enforce via a typing.Protocol declared in
-`pharos_engine.ui.editor.panel_protocol` so linters catch drift.
+`pharos_editor.ui.editor.panel_protocol` so linters catch drift.
 
 **Effort.** small (~10 LOC to add the Protocol).
 

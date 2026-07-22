@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 
 try:
-    from pharos_engine.ui.theme import (
+    from pharos_editor.ui.theme import (
         Color,
         Font,
         NineSlice,
@@ -25,9 +25,9 @@ try:
         list_registered_themes,
         register_theme,
     )
-    from pharos_engine.ui.theme import _reset_registry_for_tests
-    from pharos_engine.ui.theme.svg_icon import clear_cache as clear_svg_cache
-    from pharos_engine.ui.theme.themes import (
+    from pharos_editor.ui.theme import _reset_registry_for_tests
+    from pharos_editor.ui.theme.svg_icon import clear_cache as clear_svg_cache
+    from pharos_editor.ui.theme.themes import (
         BULLET_JOURNAL,
         COZY_DIARY,
         TEENGIRL_NOTEBOOK,
@@ -35,7 +35,7 @@ try:
     )
 except Exception as e:  # pragma: no cover - skip if subpackage missing
     pytest.skip(
-        f"pharos_engine.ui.theme.themes not importable: {e}",
+        f"pharos_editor.ui.theme.themes not importable: {e}",
         allow_module_level=True,
     )
 

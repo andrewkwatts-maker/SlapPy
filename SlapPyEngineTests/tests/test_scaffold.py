@@ -321,7 +321,7 @@ def test_launch_project_dry_run_with_editor_flag(tmp_path):
             launch_project(project, editor=True, dry_run=True)
     else:
         cmd = launch_project(project, editor=True, dry_run=True)
-        assert "pharos_engine.ui.editor" in cmd
+        assert "pharos_editor.ui.editor" in cmd
 
 
 def test_launch_project_rejects_non_project(tmp_path):

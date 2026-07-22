@@ -13,7 +13,7 @@ Covers the five new action ids added by the 2026-07-05 KK7 sprint tick
 * ``view.top_down_view`` — Blender ``Numpad 7`` — snap camera to
   top-down orthographic.
 
-Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_editor.tool_router.ToolRouter`
 so the wire-up (``action_id`` -> Python fallback) is exercised
 end-to-end. No DPG context is required — the fixtures use
 :class:`SimpleNamespace` stand-ins for shell / camera handles.
@@ -26,7 +26,7 @@ from typing import Any
 
 import pytest
 
-from pharos_engine.tool_router import (
+from pharos_editor.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -422,33 +422,33 @@ class TestCtxValidation:
     """Silent-acceptance guard — every KK7 helper rejects None ctx."""
 
     def test_mirror_x_rejects_none_ctx(self) -> None:
-        from pharos_engine.actions.edit_mirror_actions import (
+        from pharos_editor.actions.edit_mirror_actions import (
             mirror_selection_x,
         )
         with pytest.raises(TypeError):
             mirror_selection_x(None)  # type: ignore[arg-type]
 
     def test_mirror_y_rejects_list_ctx(self) -> None:
-        from pharos_engine.actions.edit_mirror_actions import (
+        from pharos_editor.actions.edit_mirror_actions import (
             mirror_selection_y,
         )
         with pytest.raises(TypeError):
             mirror_selection_y([])  # type: ignore[arg-type]
 
     def test_mirror_z_rejects_none_ctx(self) -> None:
-        from pharos_engine.actions.edit_mirror_actions import (
+        from pharos_editor.actions.edit_mirror_actions import (
             mirror_selection_z,
         )
         with pytest.raises(TypeError):
             mirror_selection_z(None)  # type: ignore[arg-type]
 
     def test_orbit_selection_rejects_none_ctx(self) -> None:
-        from pharos_engine.actions.view_orbit_actions import orbit_selection
+        from pharos_editor.actions.view_orbit_actions import orbit_selection
         with pytest.raises(TypeError):
             orbit_selection(None)  # type: ignore[arg-type]
 
     def test_top_down_view_rejects_list_ctx(self) -> None:
-        from pharos_engine.actions.view_snap_actions import top_down_view
+        from pharos_editor.actions.view_snap_actions import top_down_view
         with pytest.raises(TypeError):
             top_down_view([])  # type: ignore[arg-type]
 

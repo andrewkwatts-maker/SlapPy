@@ -69,7 +69,7 @@ Authoring + tooling:
   (Stone Keep tower-defence surface).
 * :mod:`pharos_engine.animation`  — ``AnimationGraph`` state machine +
   ``ProceduralRig`` / ``ControlPoint`` IK.
-* :mod:`pharos_engine.ui` / ``ui.editor`` — DearPyGui editor shell, panels,
+* :mod:`pharos_editor.ui` / ``ui.editor`` — DearPyGui editor shell, panels,
   spawn menu, scene outliner.
 * :mod:`pharos_engine.input`       — action-map / bindings layer.
 * :mod:`pharos_engine.audio_runtime` — sounddevice backend (or no-op stub).

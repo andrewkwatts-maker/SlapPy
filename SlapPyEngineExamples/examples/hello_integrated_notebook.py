@@ -52,20 +52,20 @@ except Exception:  # pragma: no cover — DPG missing means headless path
     _HAS_DPG = False
 
 
-from pharos_engine.ui.editor.diary_shell import (
+from pharos_editor.ui.editor.diary_shell import (
     DEFAULT_PAGES,
     DiaryShell,
     _resolve_panel_key,
 )
-from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
-from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
-from pharos_engine.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
-from pharos_engine.ui.theme import (
+from pharos_editor.ui.editor.notebook_inspector import NotebookInspector
+from pharos_editor.ui.editor.notebook_outliner import NotebookOutliner
+from pharos_editor.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
+from pharos_editor.ui.theme import (
     apply_theme,
     get_active_theme,
     list_registered_themes,
 )
-from pharos_engine.ui.theme.themes import register_all_themes
+from pharos_editor.ui.theme.themes import register_all_themes
 
 
 # ---------------------------------------------------------------------------

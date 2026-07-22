@@ -1,6 +1,6 @@
 # Washi-Tape Shader Library
 
-`pharos_engine.ui.theme.washi_tape` ships a library of fifteen
+`pharos_editor.ui.theme.washi_tape` ships a library of fifteen
 procedural WGSL fragment shaders that render pastel washi-tape swatches
 for the panel-decor system (T2). Every style is a **short WGSL source
 string** (<= 800 bytes) plus a numpy fallback so tape swatches bake
@@ -9,7 +9,7 @@ cleanly on both GPU and headless CI.
 ## Quick start
 
 ```python
-from pharos_engine.ui.theme.washi_tape import (
+from pharos_editor.ui.theme.washi_tape import (
     WASHI_TAPES, WashiTapeStyle, bake_tape_texture, get_tape, list_tapes,
     render_tape,
 )
@@ -125,7 +125,7 @@ and is essentially free when the GPU path is enabled.
 ## Numpy fallback
 
 Every style also has a pure-numpy fallback registered in
-`pharos_engine.ui.theme.washi_tape.renderer._FALLBACKS`. These are used
+`pharos_editor.ui.theme.washi_tape.renderer._FALLBACKS`. These are used
 whenever `wgpu` is not importable (all headless CI, all our unit
 tests). They reproduce the WGSL output up to floating-point rounding
 so themes look identical between the two backends.
@@ -135,12 +135,12 @@ automatically.
 
 ## T2 integration
 
-`pharos_engine.ui.editor.panel_decor.WashiCornerSpec` now carries an
+`pharos_editor.ui.editor.panel_decor.WashiCornerSpec` now carries an
 optional `tape_style_id: str | None` field. Setting it to a valid
 `WashiTapeStyle.id` opts a theme into the shader library:
 
 ```python
-from pharos_engine.ui.editor.panel_decor import WashiCornerSpec, WashiCornerStyle
+from pharos_editor.ui.editor.panel_decor import WashiCornerSpec, WashiCornerStyle
 
 WashiCornerSpec(
     corner="TL",

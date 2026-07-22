@@ -77,13 +77,13 @@ loop while the modal is open. If you'd rather it didn't, see
 **§9 Accessibility**.
 
 The welcome is implemented by
-`pharos_engine.ui.editor.notebook_welcome.NotebookWelcome`. It is
+`pharos_editor.ui.editor.notebook_welcome.NotebookWelcome`. It is
 headless-safe — running the editor in CI builds it but never paints it.
 
 ### Picking a theme on first launch
 
 The six swatches map left-to-right onto the same six `ThemeSpec`
-constants exported from `pharos_engine.ui.theme.themes`:
+constants exported from `pharos_editor.ui.theme.themes`:
 
 | # | Swatch tone | Theme name | Vibe |
 |---|---|---|---|
@@ -356,7 +356,7 @@ What they do:
   startles the toolbar fox; saving the scene makes the bee dance;
   spawning a ragdoll triggers a butterfly waft. The full table is
   `EVENT_TO_CREATURE_ANIMS` under
-  `pharos_engine.ui.theme.creatures.event_bindings`.
+  `pharos_editor.ui.theme.creatures.event_bindings`.
 * **Sleep.** After 60s of user-inactivity the scheduler emits
   `engine.idle_60s` and creatures fall into their "nap" animation. At
   120s they sleep deeper.
@@ -367,7 +367,7 @@ What they do:
    for the current session.
 2. Toggle the master *Animations* switch in the Theme Switcher to
    disable every creature engine-wide.
-3. Programmatically: `pharos_engine.ui.theme.creatures.set_enabled(
+3. Programmatically: `pharos_editor.ui.theme.creatures.set_enabled(
    "fox_01", False)`.
 
 Performance budget: **≤ 1 ms idle / ≤ 5 ms one-shot** per scheduler
@@ -448,13 +448,13 @@ Cheapest. Every notebook widget (`StickerButton`, `WashiPanel`,
 touching the theme file:
 
 ```python
-from pharos_engine.ui.theme import apply_theme, get_active_theme, Color
+from pharos_editor.ui.theme import apply_theme, get_active_theme, Color
 
 apply_theme("teengirl_notebook")
 spec = get_active_theme()
 spec.palette["accent"] = Color(0, 180, 255, 1.0)   # cyan accent
 # Notify any panel that subscribed to theme changes.
-from pharos_engine.ui.widgets.notebook_theme import _notify_theme_listeners
+from pharos_editor.ui.widgets.notebook_theme import _notify_theme_listeners
 _notify_theme_listeners(spec)
 ```
 
@@ -472,7 +472,7 @@ from `list_registered_themes()`.
 Minimum required:
 
 ```python
-from pharos_engine.ui.theme import (
+from pharos_editor.ui.theme import (
     Color, Font, NineSlice, SemanticTokens, ShaderEffect, ThemeSpec,
     register_theme,
 )
@@ -502,7 +502,7 @@ draw using only the methods on the `DrawList` protocol so the same fn
 works under DPG, PIL, or the test mock.
 
 ```python
-from pharos_engine.ui.theme.creatures import (
+from pharos_editor.ui.theme.creatures import (
     Creature, register_creature, SlotPolicy, SlotRegion,
 )
 

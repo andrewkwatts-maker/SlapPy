@@ -71,7 +71,7 @@ texture variance):
 ## Public API
 
 ```python
-from pharos_engine.ui.theme.page_linings import (
+from pharos_editor.ui.theme.page_linings import (
     AAAShaderQualityPreset, DEFAULT_AAA_PRESET, render_lining,
 )
 

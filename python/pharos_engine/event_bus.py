@@ -168,7 +168,7 @@ class EventBus:
 
     # NOTE: __slots__ intentionally REMOVED (was ("_listeners",)) — Backwards-
     # compat (ZZ2, 2026-07). Two downstream contracts break under __slots__:
-    #   1. ``pharos_engine.ui.debug_overlay._sync_event_sub`` stashes the
+    #   1. ``pharos_editor.ui.debug_overlay._sync_event_sub`` stashes the
     #      original ``publish`` callable on the bus as
     #      ``bus._debug_overlay_orig_pub`` before wrapping ``bus.publish``
     #      for the F2 event-stream overlay. Slotted classes reject the
@@ -237,7 +237,7 @@ class EventBus:
           ``unsubscribe(h)`` handle pattern used by Bullet Strata's
           ``ArenaInfoHUD.teardown`` (see ``project_bullet_strata.md``)
           and Ochema Circuit's Sprint P1 tests. Also matches the
-          ``pharos_engine.ui.widgets.Widget.unbind_all`` pattern which
+          ``pharos_editor.ui.widgets.Widget.unbind_all`` pattern which
           calls ``unsubscribe(h)`` for every handle in
           ``self._event_handles``.
         * ``unsubscribe()`` or ``unsubscribe(None, None)`` — no-op.

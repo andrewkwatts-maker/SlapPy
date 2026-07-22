@@ -80,7 +80,7 @@ def stub_dearpygui(monkeypatch):
 # ---------------------------------------------------------------------------
 
 try:
-    from pharos_engine.ui.editor import spawn_menu  # noqa: F401
+    from pharos_editor.ui.editor import spawn_menu  # noqa: F401
     from pharos_engine.dynamics.world import World as _DynWorld  # noqa: F401
 except Exception as _import_err:  # pragma: no cover
     pytest.skip(
@@ -90,7 +90,7 @@ except Exception as _import_err:  # pragma: no cover
 
 
 def _find_action(label: str) -> dict:
-    from pharos_engine.ui.editor.spawn_menu import SPAWN_ACTIONS
+    from pharos_editor.ui.editor.spawn_menu import SPAWN_ACTIONS
     for action in SPAWN_ACTIONS:
         if action["label"] == label:
             return action
@@ -103,7 +103,7 @@ def _drive_spawn(label: str, world):
     Mirrors what :func:`open_spawn_modal`'s ``_on_spawn`` callback does
     when the user clicks the Spawn button.
     """
-    from pharos_engine.ui.editor.spawn_menu import (
+    from pharos_editor.ui.editor.spawn_menu import (
         _resolve_factory,
         _spec_to_kwargs,
     )

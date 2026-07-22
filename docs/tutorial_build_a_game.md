@@ -121,7 +121,7 @@ A SceneUIEntity is an entity whose layer carries text/widget pixels. Build
 one and paint the score into its canvas with PIL:
 
 ```python
-from pharos_engine.ui.scene_ui import SceneUIEntity
+from pharos_editor.ui.scene_ui import SceneUIEntity
 
 hud = SceneUIEntity(name="hud", position=(0, 0), size=(320, 60))
 hud.set_text("SCORE: 0", "TIME: 00:00")

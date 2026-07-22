@@ -10,7 +10,7 @@ listener, failing Bullet Strata's
 ``TestArenaInfoHUDReactive.test_teardown_unsubscribes_arena_events``.
 
 DO NOT REMOVE without a v1.0 deprecation cycle — this same pattern is
-also used by ``pharos_engine.ui.widgets.Widget.bind_event/unbind_all``
+also used by ``pharos_editor.ui.widgets.Widget.bind_event/unbind_all``
 and by Ochema Circuit's Sprint P1 observable tests.
 """
 from __future__ import annotations

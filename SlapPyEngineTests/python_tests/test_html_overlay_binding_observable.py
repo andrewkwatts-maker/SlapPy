@@ -19,7 +19,7 @@ sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 class TestHtmlOverlayInit:
     def _overlay(self, w=800, h=600, title=""):
-        from pharos_engine.ui.html_overlay import HtmlOverlay
+        from pharos_editor.ui.html_overlay import HtmlOverlay
         return HtmlOverlay(w, h, title)
 
     def test_instantiates(self):
@@ -51,21 +51,21 @@ class TestHtmlOverlayInit:
         orig = sys.modules.get("webview")
         sys.modules["webview"] = None
         # Need to reload the module to trigger the ImportError path
-        if "pharos_engine.ui.html_overlay" in sys.modules:
-            del sys.modules["pharos_engine.ui.html_overlay"]
+        if "pharos_editor.ui.html_overlay" in sys.modules:
+            del sys.modules["pharos_editor.ui.html_overlay"]
         try:
             with pytest.raises(ImportError, match="pywebview"):
-                from pharos_engine.ui.html_overlay import HtmlOverlay
+                from pharos_editor.ui.html_overlay import HtmlOverlay
                 HtmlOverlay(800, 600)
         finally:
             sys.modules["webview"] = orig
-            if "pharos_engine.ui.html_overlay" in sys.modules:
-                del sys.modules["pharos_engine.ui.html_overlay"]
+            if "pharos_editor.ui.html_overlay" in sys.modules:
+                del sys.modules["pharos_editor.ui.html_overlay"]
 
 
 class TestHtmlOverlaySetHtml:
     def _overlay(self):
-        from pharos_engine.ui.html_overlay import HtmlOverlay
+        from pharos_editor.ui.html_overlay import HtmlOverlay
         return HtmlOverlay(800, 600)
 
     def test_set_html_updates_field(self):
@@ -96,7 +96,7 @@ class TestHtmlOverlaySetHtml:
 
 class TestHtmlOverlaySetHud:
     def _overlay(self):
-        from pharos_engine.ui.html_overlay import HtmlOverlay
+        from pharos_editor.ui.html_overlay import HtmlOverlay
         return HtmlOverlay(800, 600)
 
     def test_set_hud_includes_keys(self):
@@ -123,7 +123,7 @@ class TestHtmlOverlaySetHud:
 
 class TestHtmlOverlayLifecycle:
     def _overlay(self):
-        from pharos_engine.ui.html_overlay import HtmlOverlay
+        from pharos_editor.ui.html_overlay import HtmlOverlay
         return HtmlOverlay(800, 600)
 
     def test_hide_no_crash_without_window(self):

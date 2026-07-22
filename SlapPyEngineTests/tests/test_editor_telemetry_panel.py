@@ -140,8 +140,8 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def clear_state():
     from pharos_engine import telemetry as t
-    from pharos_engine.ui.widgets import notebook_theme
-    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_editor.ui.widgets import notebook_theme
+    from pharos_editor.ui.widgets.notebook_theme import set_active_theme
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -158,7 +158,7 @@ def clear_state():
 
 
 def _make_panel(**kwargs):
-    from pharos_engine.ui.editor.notebook_telemetry_panel import (
+    from pharos_editor.ui.editor.notebook_telemetry_panel import (
         NotebookTelemetryPanel,
     )
     return NotebookTelemetryPanel(**kwargs)
@@ -241,21 +241,21 @@ class TestSubscription:
 
 class TestFiltering:
     def test_empty_filter_matches_all(self):
-        from pharos_engine.ui.editor.notebook_telemetry_panel import (
+        from pharos_editor.ui.editor.notebook_telemetry_panel import (
             matches_filter,
         )
         assert matches_filter("physics.step", "")
         assert matches_filter("render.frame", "  ")
 
     def test_substring_case_insensitive(self):
-        from pharos_engine.ui.editor.notebook_telemetry_panel import (
+        from pharos_editor.ui.editor.notebook_telemetry_panel import (
             matches_filter,
         )
         assert matches_filter("Physics.Step", "physics")
         assert not matches_filter("render.frame", "physics")
 
     def test_fnmatch_glob(self):
-        from pharos_engine.ui.editor.notebook_telemetry_panel import (
+        from pharos_editor.ui.editor.notebook_telemetry_panel import (
             matches_filter,
         )
         assert matches_filter("physics.step", "physics.*")
@@ -410,7 +410,7 @@ class TestCapacity:
 
 class TestThemeIntegration:
     def test_theme_switch_logs(self):
-        from pharos_engine.ui.widgets.notebook_theme import (
+        from pharos_editor.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )

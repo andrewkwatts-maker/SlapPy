@@ -119,7 +119,7 @@ def stub_dpg(monkeypatch):
 
 
 def _make_manager(**kwargs):
-    from pharos_engine.ui.editor.notebook_toast_manager import (
+    from pharos_editor.ui.editor.notebook_toast_manager import (
         NotebookToastManager,
     )
     return NotebookToastManager(**kwargs)
@@ -160,13 +160,13 @@ class TestConstruction:
 
 class TestLevelNormalisation:
     def test_toastlevel_passthrough(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import (
+        from pharos_editor.ui.editor.notebook_toast_manager import (
             ToastLevel, normalise_toast_level,
         )
         assert normalise_toast_level(ToastLevel.WARN) is ToastLevel.WARN
 
     def test_string_names(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import (
+        from pharos_editor.ui.editor.notebook_toast_manager import (
             ToastLevel, normalise_toast_level,
         )
         assert normalise_toast_level("info") is ToastLevel.INFO
@@ -175,7 +175,7 @@ class TestLevelNormalisation:
         assert normalise_toast_level("error") is ToastLevel.ERROR
 
     def test_aliases(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import (
+        from pharos_editor.ui.editor.notebook_toast_manager import (
             ToastLevel, normalise_toast_level,
         )
         assert normalise_toast_level("WARNING") is ToastLevel.WARN
@@ -184,7 +184,7 @@ class TestLevelNormalisation:
         assert normalise_toast_level("done") is ToastLevel.SUCCESS
 
     def test_stdlib_int_levels(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import (
+        from pharos_editor.ui.editor.notebook_toast_manager import (
             ToastLevel, normalise_toast_level,
         )
         assert normalise_toast_level(logging.ERROR) is ToastLevel.ERROR
@@ -192,14 +192,14 @@ class TestLevelNormalisation:
         assert normalise_toast_level(logging.INFO) is ToastLevel.INFO
 
     def test_bool_refused(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import (
+        from pharos_editor.ui.editor.notebook_toast_manager import (
             normalise_toast_level,
         )
         with pytest.raises(TypeError):
             normalise_toast_level(True)
 
     def test_unknown_falls_back_to_info(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import (
+        from pharos_editor.ui.editor.notebook_toast_manager import (
             ToastLevel, normalise_toast_level,
         )
         assert normalise_toast_level("HYPE") is ToastLevel.INFO
@@ -227,19 +227,19 @@ class TestShow:
         assert toasts[0].message == "hello"
 
     def test_show_default_level_is_info(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import ToastLevel
+        from pharos_editor.ui.editor.notebook_toast_manager import ToastLevel
         mgr = _make_manager()
         mgr.show("hi")
         assert mgr.active_toasts()[0].level is ToastLevel.INFO
 
     def test_show_accepts_level_string(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import ToastLevel
+        from pharos_editor.ui.editor.notebook_toast_manager import ToastLevel
         mgr = _make_manager()
         mgr.show("nice", level="SUCCESS")
         assert mgr.active_toasts()[0].level is ToastLevel.SUCCESS
 
     def test_show_accepts_level_enum(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import ToastLevel
+        from pharos_editor.ui.editor.notebook_toast_manager import ToastLevel
         mgr = _make_manager()
         mgr.show("boom", level=ToastLevel.ERROR)
         assert mgr.active_toasts()[0].level is ToastLevel.ERROR
@@ -461,7 +461,7 @@ class TestMaxVisible:
 
 class TestLevelColors:
     def test_all_levels_have_border_color(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import (
+        from pharos_editor.ui.editor.notebook_toast_manager import (
             LEVEL_BORDER_COLORS, ToastLevel,
         )
         for level in ToastLevel:
@@ -472,7 +472,7 @@ class TestLevelColors:
                 assert 0 <= c <= 255
 
     def test_success_is_green(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import (
+        from pharos_editor.ui.editor.notebook_toast_manager import (
             LEVEL_BORDER_COLORS, ToastLevel,
         )
         r, g, b, _a = LEVEL_BORDER_COLORS[ToastLevel.SUCCESS]
@@ -480,7 +480,7 @@ class TestLevelColors:
         assert g > r and g > b
 
     def test_warn_is_amber(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import (
+        from pharos_editor.ui.editor.notebook_toast_manager import (
             LEVEL_BORDER_COLORS, ToastLevel,
         )
         r, g, b, _a = LEVEL_BORDER_COLORS[ToastLevel.WARN]
@@ -488,7 +488,7 @@ class TestLevelColors:
         assert r > b and g > b
 
     def test_error_is_red(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import (
+        from pharos_editor.ui.editor.notebook_toast_manager import (
             LEVEL_BORDER_COLORS, ToastLevel,
         )
         r, g, b, _a = LEVEL_BORDER_COLORS[ToastLevel.ERROR]
@@ -525,7 +525,7 @@ class TestLoggingIntegration:
             mgr.unsubscribe_from_logging()
 
     def test_error_becomes_error_level_toast(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import ToastLevel
+        from pharos_editor.ui.editor.notebook_toast_manager import ToastLevel
         mgr = _make_manager()
         logger = logging.getLogger("test_notebook_toast_manager_C")
         logger.setLevel(logging.DEBUG)
@@ -649,7 +649,7 @@ class TestBuild:
 
 class TestStickerOptions:
     def test_sticker_options_exposed(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import (
+        from pharos_editor.ui.editor.notebook_toast_manager import (
             STICKER_OPTIONS,
         )
         assert isinstance(STICKER_OPTIONS, tuple)
@@ -668,7 +668,7 @@ class TestStickerOptions:
 
 class TestToastDataclass:
     def test_toast_progress_expired_phase(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import Toast
+        from pharos_editor.ui.editor.notebook_toast_manager import Toast
         t = Toast(message="x", duration_ms=100)
         t.created_ms = 0.0
         # Well past total_lifetime_ms.
@@ -677,7 +677,7 @@ class TestToastDataclass:
         assert p["alpha"] == 0.0
 
     def test_toast_progress_slide_phase(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import Toast
+        from pharos_editor.ui.editor.notebook_toast_manager import Toast
         t = Toast(message="x", duration_ms=1000)
         t.created_ms = 0.0
         p = t.progress(0.0)
@@ -685,19 +685,19 @@ class TestToastDataclass:
         assert p["slide_in"] == 0.0
 
     def test_toast_progress_slide_full_at_boundary(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import Toast
+        from pharos_editor.ui.editor.notebook_toast_manager import Toast
         t = Toast(message="x", duration_ms=1000)
         t.created_ms = 0.0
         p = t.progress(Toast.SLIDE_IN_MS)
         assert p["slide_in"] == 1.0
 
     def test_toast_total_lifetime(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import Toast
+        from pharos_editor.ui.editor.notebook_toast_manager import Toast
         t = Toast(message="x", duration_ms=1234)
         assert t.total_lifetime_ms() == 1234 + Toast.FADE_OUT_MS
 
     def test_toast_default_id(self):
-        from pharos_engine.ui.editor.notebook_toast_manager import Toast
+        from pharos_editor.ui.editor.notebook_toast_manager import Toast
         t1 = Toast(message="a")
         t2 = Toast(message="a")
         assert t1.id != t2.id
@@ -710,13 +710,13 @@ class TestToastDataclass:
 
 class TestLazyRegistration:
     def test_lazy_import_works(self):
-        import pharos_engine.ui.editor as editor_pkg
+        import pharos_editor.ui.editor as editor_pkg
         assert "NotebookToastManager" in editor_pkg.__all__
         cls = editor_pkg.NotebookToastManager
         assert cls.__name__ == "NotebookToastManager"
 
     def test_all_alphabetically_ordered_neighbors(self):
-        import pharos_engine.ui.editor as editor_pkg
+        import pharos_editor.ui.editor as editor_pkg
         idx = editor_pkg.__all__.index("NotebookToastManager")
         prev_entry = editor_pkg.__all__[idx - 1]
         next_entry = editor_pkg.__all__[idx + 1]

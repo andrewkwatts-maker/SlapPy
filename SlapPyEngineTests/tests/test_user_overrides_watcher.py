@@ -24,7 +24,7 @@ from typing import Any, Callable
 
 import pytest
 
-from pharos_engine.ui.user_overrides import (
+from pharos_editor.ui.user_overrides import (
     NullWatcherHandle,
     ReloadedBundle,
     UserOverrideBundle,
@@ -149,7 +149,7 @@ def test_watch_dir_missing_watchdog_returns_null(
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
     # Reset warned flag so we don't skip the branch under test.
-    import pharos_engine.ui.user_overrides as mod
+    import pharos_editor.ui.user_overrides as mod
     monkeypatch.setattr(mod, "_WATCHDOG_WARNED", False)
 
     handle = loader.watch_dir(lambda _k, _p: None)
@@ -173,10 +173,10 @@ def test_watch_dir_missing_watchdog_only_warns_once(
         return real_import(name, *args, **kw)
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
-    import pharos_engine.ui.user_overrides as mod
+    import pharos_editor.ui.user_overrides as mod
     monkeypatch.setattr(mod, "_WATCHDOG_WARNED", False)
 
-    with caplog.at_level("WARNING", logger="pharos_engine.ui.user_overrides"):
+    with caplog.at_level("WARNING", logger="pharos_editor.ui.user_overrides"):
         loader.watch_dir(lambda _k, _p: None).stop()
         first_count = sum(
             1 for r in caplog.records if "watchdog not installed" in r.getMessage()
