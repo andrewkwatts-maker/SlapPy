@@ -53,6 +53,30 @@ struct FragOut {
     @location(3) ior_absorb_flags: vec4<f32>,
 };
 
+// -- Sprint 1 Nova3D bug intake: degenerate TBN guard --
+//
+// Nova3D bug: Assimp-imported untextured meshes rendered black because
+// tangent = (0,0,0). normalize((0,0,0)) is NaN, so the whole shading
+// output collapsed to NaN. Guard length before constructing TBN, fall
+// back to the geometric normal when the tangent basis is degenerate.
+const PHAROS_TBN_EPS: f32 = 1.0e-6;
+
+fn guarded_tbn(t_in: vec3<f32>, b_in: vec3<f32>, n_in: vec3<f32>) -> mat3x3<f32> {
+    let n_geom = normalize(n_in);
+    let t_len = length(t_in);
+    let b_len = length(b_in);
+    if (t_len > PHAROS_TBN_EPS && b_len > PHAROS_TBN_EPS) {
+        return mat3x3<f32>(t_in / t_len, b_in / b_len, n_geom);
+    }
+    // Degenerate: reconstruct an orthonormal basis around the
+    // geometric normal so downstream math stays finite.
+    var up: vec3<f32> = vec3<f32>(0.0, 1.0, 0.0);
+    if (abs(n_geom.y) > 0.9) { up = vec3<f32>(1.0, 0.0, 0.0); }
+    let t_fallback = normalize(cross(up, n_geom));
+    let b_fallback = normalize(cross(n_geom, t_fallback));
+    return mat3x3<f32>(t_fallback, b_fallback, n_geom);
+}
+
 @fragment
 fn fs_main(in: VertexOut) -> FragOut {
     var o: FragOut;

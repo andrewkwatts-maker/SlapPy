@@ -9,6 +9,30 @@ use crate::pipeline::{ForwardPass, GBufferPass};
 use crate::scene::RenderScene;
 use crate::{Backend, BackendKind, RenderError};
 
+// -- Sprint 1 Nova3D bug intake: MRT draw-buffer caching --
+//
+// Nova3D bug: after the composite pass, subsequent frames silently
+// dropped writes to unaffected render targets because a previous MRT
+// state leaked. Every render pass must re-declare its color attachments
+// and every begin_pass site must assert the attachment list is non-empty.
+//
+// `assert_color_attachments_present` is called at every `begin_render_pass`
+// site in this crate. Panicking here catches "silent drop" bugs on the
+// first frame instead of manifesting hours later as broken refraction.
+
+/// Assert that the color attachment list passed to `begin_render_pass`
+/// is not empty. Panics with a descriptive message otherwise.
+pub fn assert_color_attachments_present(
+    label: &'static str,
+    attachments: &[Option<wgpu::RenderPassColorAttachment>],
+) {
+    let live = attachments.iter().filter(|a| a.is_some()).count();
+    assert!(
+        live > 0,
+        "pharos_render: render pass '{label}' begun with no color attachments — Nova3D MRT-caching bug guard tripped"
+    );
+}
+
 pub struct WgpuBackend {
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -134,16 +158,18 @@ impl Backend for WgpuBackend {
                 label: Some("pharos_render.encoder"),
             });
         {
+            let color_attachments = [Some(wgpu::RenderPassColorAttachment {
+                view: &colour_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(scene.clear_colour_wgpu()),
+                    store: wgpu::StoreOp::Store,
+                },
+            })];
+            assert_color_attachments_present("pharos_render.forward.pass", &color_attachments);
             let pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("pharos_render.forward.pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &colour_view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(scene.clear_colour_wgpu()),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
+                color_attachments: &color_attachments,
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                     view: &depth_view,
                     depth_ops: Some(wgpu::Operations {

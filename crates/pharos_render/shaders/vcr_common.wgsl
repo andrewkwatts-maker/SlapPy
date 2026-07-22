@@ -71,3 +71,58 @@ fn slot_score(s: Slot) -> f32 {
     if ((s.flags & FLAG_PERSISTENT) != 0u) { bonus = 4.0; }
     return s.alpha * bonus;
 }
+
+// -- Sprint 1 Nova3D bug intake: pack/unpack helpers --
+//
+// Nova3D bug: accum shader called packOctU16 without defining it —
+// duplicated helper declarations across stages diverged and one stage
+// lost its copy after a refactor. Every pack/unpack helper lives here
+// as the SSoT. Concatenated into every VCR stage at compile time via
+// pharos_render::vcr::config::wgsl_define_block callers (they prepend
+// this file's contents to each stage source).
+//
+// Octahedral encoding of a unit vec3 into 2xf16 (packed into a single
+// u32). See Cigolle et al. 2014 "A Survey of Efficient Representations
+// for Independent Unit Vectors".
+
+fn signNotZero2(v: vec2<f32>) -> vec2<f32> {
+    let sx = select(-1.0, 1.0, v.x >= 0.0);
+    let sy = select(-1.0, 1.0, v.y >= 0.0);
+    return vec2<f32>(sx, sy);
+}
+
+fn octEncode(n_in: vec3<f32>) -> vec2<f32> {
+    let n = n_in / (abs(n_in.x) + abs(n_in.y) + abs(n_in.z));
+    var uv: vec2<f32> = n.xy;
+    if (n.z < 0.0) {
+        uv = (vec2<f32>(1.0) - abs(vec2<f32>(n.y, n.x))) * signNotZero2(n.xy);
+    }
+    return uv;
+}
+
+fn octDecode(uv: vec2<f32>) -> vec3<f32> {
+    var n: vec3<f32> = vec3<f32>(uv, 1.0 - abs(uv.x) - abs(uv.y));
+    if (n.z < 0.0) {
+        let s = signNotZero2(n.xy);
+        n = vec3<f32>((1.0 - abs(vec2<f32>(n.y, n.x))) * s, n.z);
+    }
+    return normalize(n);
+}
+
+/// Pack a unit vec3 into two f16 lanes stored in a single u32.
+/// Matches Nova3D `packOctU16`.
+fn packOctU16(n: vec3<f32>) -> u32 {
+    let uv = octEncode(n) * 0.5 + vec2<f32>(0.5);
+    let ux = u32(clamp(uv.x, 0.0, 1.0) * 65535.0 + 0.5);
+    let uy = u32(clamp(uv.y, 0.0, 1.0) * 65535.0 + 0.5);
+    return (uy << 16u) | (ux & 0xFFFFu);
+}
+
+/// Recover a unit vec3 from a two-f16-lane u32.
+/// Matches Nova3D `unpackOctU16`.
+fn unpackOctU16(packed: u32) -> vec3<f32> {
+    let ux = f32(packed & 0xFFFFu) / 65535.0;
+    let uy = f32((packed >> 16u) & 0xFFFFu) / 65535.0;
+    let uv = vec2<f32>(ux, uy) * 2.0 - vec2<f32>(1.0);
+    return octDecode(uv);
+}

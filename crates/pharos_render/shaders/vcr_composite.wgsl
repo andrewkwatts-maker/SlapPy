@@ -15,6 +15,13 @@
 @group(1) @binding(0) var reservoir:     texture_storage_3d<rgba32float, read>;
 @group(2) @binding(0) var env_cube:      texture_cube<f32>;
 @group(2) @binding(1) var env_sampler:   sampler;
+// Sprint 1 Nova3D bug intake: SSR fallback halo fix. When SSR bind
+// group is unbound / no reflection input is present, sample the
+// lit-colour target (previous forward pass output) instead of black.
+// Nova3D shipped a plain vec3(0.0) fallback and that produced dark
+// halos around transparent silhouettes when SSR was disabled.
+@group(3) @binding(0) var lit_colour:    texture_2d<f32>;
+@group(3) @binding(1) var lit_sampler:   sampler;
 
 struct VertexOut {
     @builtin(position) clip: vec4<f32>,
@@ -50,6 +57,12 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     var reflected_sum = vec3<f32>(0.0);
     var refracted_sum = vec3<f32>(0.0);
     var total_weight  = 0.0;
+    // Sprint 1 fallback source: sample the lit-colour target for the
+    // current pixel. Used only when the reservoir has no reflection
+    // contribution — avoids Nova3D's dark-halo bug.
+    let uvf = vec2<f32>(f32(px.x) + 0.5, f32(px.y) + 0.5)
+        / vec2<f32>(f32(dims.x), f32(dims.y));
+    let ssr_fallback = textureSampleLevel(lit_colour, lit_sampler, uvf, 0.0).rgb;
 
     for (var k: u32 = 0u; k < VCR_K_SLOTS; k = k + 1u) {
         let lo = textureLoad(reservoir, vec3<i32>(px, i32(k * 2u)));
@@ -72,6 +85,11 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     if (total_weight > 0.0) {
         reflected_sum = reflected_sum / total_weight;
         refracted_sum = refracted_sum / total_weight;
+    } else {
+        // No reflection contribution — fall back to lit-colour target
+        // instead of leaving the accumulator at zero. Fixes Sprint 1
+        // Nova3D SSR-disabled halo bug.
+        reflected_sum = ssr_fallback;
     }
 
     // Fresnel-lite mix. Full model comes in Sprint 7 with proper GGX.
