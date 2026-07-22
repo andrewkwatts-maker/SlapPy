@@ -5,6 +5,7 @@ members = [
     "crates/pharos_render",
     "crates/pharos_py",
     "crates/pharos_bin",
+    "crates/pharos_c_abi",
 ]
 
 [workspace.package]

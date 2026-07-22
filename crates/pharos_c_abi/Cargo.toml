@@ -1,0 +1,14 @@
+[package]
+name = "pharos_c_abi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Stable C ABI over PharosEngine kernels. Consumers: PyO3 (pharos_py), Godot/Unity native modules, JS via wasmtime + wit, etc."
+
+[lib]
+name = "pharos_c_abi"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+pharos_core = { path = "../pharos_core" }

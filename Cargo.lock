@@ -829,6 +829,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "pharos_c_abi"
+version = "0.3.0-beta.1"
+dependencies = [
+ "pharos_core",
+]
+
+[[package]]
 name = "pharos_core"
 version = "0.3.0-beta.1"
 dependencies = [

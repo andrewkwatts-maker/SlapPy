@@ -1,6 +1,20 @@
-# SlapPyEngine
+# PharosEngine
 
-**2D pixel-art game engine with a notebook-diary aesthetic editor, a Python game surface, a Rust `_core` backend, and an [Arithma](https://pypi.org/project/arithma/) symbolic-math sibling.**
+*(formerly SlapPyEngine — see [`RENAME_NOTES.md`](RENAME_NOTES.md) for the 2026-07 rename + Rust/Vulkan rewrite summary.)*
+
+**2D pixel-art game engine with a notebook-diary aesthetic editor, a Python game surface, a Rust `_core` backend (5-crate Cargo workspace), a wgpu + Vulkan render backend hosting the Nova3D VCR pipeline, and an [Arithma](https://pypi.org/project/arithma/) symbolic-math sibling.**
+
+## Two wheels
+
+- `pip install pharos-engine`  → headless engine + Rust `_core`. No UI deps.
+- `pip install pharos-editor`  → notebook editor UI. Transitively installs `pharos-engine`.
+
+There is also a standalone Rust binary — `pharos-headless` — that renders scenes with **no Python required** (built from the `pharos_bin` crate).
+
+See [`RENAME_NOTES.md`](RENAME_NOTES.md) for the full 10-sprint changelog including VCR pipeline port, GPU compute migration, Nova3D flaw remediation, and the C ABI for future Godot / Unity / JS bindings.
+
+---
+
 
 Build expressive 2D games in Python — from classic pixel-art shooters to hybrid 2D/3D worlds — driven by the DearPyGui **notebook-diary** editor (six shipped themes, procedural washi-tape / page-lining / edge-stroke shaders, a stationery-tray toolbar, and idle woodland creatures), backed by a Rust `_core` extension (PyO3 / maturin) for hot paths, cross-platform GPU rendering via wgpu, and an optional symbolic-math bridge into the Rust-backed [Arithma](https://pypi.org/project/arithma/) sibling for animation curves, IK targets, and material graphs.
 

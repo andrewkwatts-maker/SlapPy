@@ -32,7 +32,10 @@ mod ibl;
 use pharos_core::{hull, ik_solver, material_eval, slap_format, physics, sdf_collision, pbf_solver, softbody_solver};
 
 #[cfg(feature = "3d")]
-use pharos_core::{math_3d, bvh, sdf};
+use pharos_core::{math_3d, sdf};
+// `pharos_core::bvh` is re-exportable but not yet wired through _core
+// (no `pub fn register` needed by Python). Sprint 11 exposes it when
+// the scene_walker path in pharos_render pulls it in as a dep.
 
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
