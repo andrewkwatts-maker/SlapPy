@@ -1,0 +1,23 @@
+world:
+  gravity: [0.0, 196.0]
+  bounds: [-200, -200, 200, 200]
+bodies:
+  - name: floor
+    material: stone
+    shape: rect
+    width: 300
+    height: 12
+    position: [0, 150]
+    fixed: true
+  - name: steel_ball
+    material: steel
+    shape: circle
+    diameter: 30
+    position: [-40, -30]
+  - name: mud_block
+    material: mud
+    shape: rect
+    width: 32
+    height: 32
+    position: [40, -30]
+    velocity: [-5, 0]

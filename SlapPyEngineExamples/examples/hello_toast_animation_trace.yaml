@@ -13,7 +13,7 @@ events:
 - kind: toast_shown
   t_ms: 0.0
   level: INFO
-  toast_id: toast-c6372f6a4aa6
+  toast_id: toast-ca3f490ae2ac
   message: Welcome! Watching the camera dance...
 - kind: frame
   frame_idx: 0
@@ -389,7 +389,7 @@ events:
   t_ms: 500.0
   level: SUCCESS
   sticker: '>'
-  toast_id: toast-4e95446730b4
+  toast_id: toast-d15e167adca5
   message: Panning east...
 - kind: frame
   frame_idx: 30
@@ -1122,7 +1122,7 @@ events:
   t_ms: 1500.0
   level: WARN
   sticker: '!'
-  toast_id: toast-96438126c724
+  toast_id: toast-43420df8f7ca
   message: Zoom overshooting - bounce curve
 - kind: frame
   frame_idx: 90
@@ -1851,7 +1851,7 @@ events:
   t_ms: 2500.0
   level: ERROR
   sticker: x
-  toast_id: toast-c6897c6eba23
+  toast_id: toast-fb2660bcdc5a
   message: Stopped abruptly
 - kind: frame
   frame_idx: 150
@@ -2216,7 +2216,7 @@ events:
 - kind: toast_shown
   t_ms: 3000.0
   level: INFO
-  toast_id: toast-321d26ca11e2
+  toast_id: toast-504206dc8379
   message: Restoring default view
 - kind: frame
   frame_idx: 180
@@ -3668,7 +3668,7 @@ events:
   t_ms: 5000.0
   level: SUCCESS
   sticker: '*'
-  toast_id: toast-0627799eef8f
+  toast_id: toast-7dde92895230
   message: Focus complete
 - kind: frame
   frame_idx: 300

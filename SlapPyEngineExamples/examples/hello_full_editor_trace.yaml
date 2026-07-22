@@ -102,7 +102,7 @@ events:
 - kind: fx_preset_loaded
   preset: dreamy
   pass_count: 4
-  user_dir: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_fx_qx6ipb6h
+  user_dir: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_fx_zx1pwl4x
 - kind: fx_preset_applied
   preset: dreamy
 - kind: page_switch
@@ -119,21 +119,21 @@ events:
   error: ''
 - kind: autosave_snapshot
   index: 0
-  path: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_t64xlo7y\20260704_193156_0001.snap.yaml
+  path: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_oytjxu94\20260704_220422_0001.snap.yaml
   iteration: 1
 - kind: autosave_snapshot
   index: 1
-  path: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_t64xlo7y\20260704_193156_0002.snap.yaml
+  path: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_oytjxu94\20260704_220422_0002.snap.yaml
   iteration: 2
 - kind: autosave_snapshot
   index: 2
-  path: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_t64xlo7y\20260704_193156_0003.snap.yaml
+  path: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_oytjxu94\20260704_220422_0003.snap.yaml
   iteration: 3
 - kind: autosave_done
   snapshot_count: 3
-  latest: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_t64xlo7y\20260704_193156_0003.snap.yaml
+  latest: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_oytjxu94\20260704_220422_0003.snap.yaml
 - kind: autosave_summary
-  latest: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_t64xlo7y\20260704_193156_0003.snap.yaml
+  latest: C:\Users\Andrew\AppData\Local\Temp\hello_full_editor_autosave_oytjxu94\20260704_220422_0003.snap.yaml
 - kind: theme_applied
   theme_id: teengirl_notebook
   active_name: teengirl_notebook

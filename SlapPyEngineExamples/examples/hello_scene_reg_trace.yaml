@@ -3,7 +3,7 @@ events:
   python: 3.13.14
   schema_version: 1
 - kind: temp_root_created
-  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0
+  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1810\test_cli_main_returns_zero0
 - kind: library_ready
   prefab_names:
   - ball
@@ -73,27 +73,27 @@ events:
   - ball_b
   - chain_a
 - kind: scene1_saved
-  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0\scenes\scene1.scene.yaml
+  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1810\test_cli_main_returns_zero0\scenes\scene1.scene.yaml
   size_bytes: 613
 - kind: scene1_round_trip
   equal: true
   loaded_entity_count: 5
 - kind: registry_created
-  root: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0\scenes
+  root: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1810\test_cli_main_returns_zero0\scenes
 - kind: extra_scene_saved
   tag: small
   name: scene_small
-  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0\scenes\scene_small.scene.yaml
+  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1810\test_cli_main_returns_zero0\scenes\scene_small.scene.yaml
   entity_count: 1
 - kind: extra_scene_saved
   tag: medium
   name: scene_medium
-  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0\scenes\scene_medium.scene.yaml
+  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1810\test_cli_main_returns_zero0\scenes\scene_medium.scene.yaml
   entity_count: 3
 - kind: extra_scene_saved
   tag: large
   name: scene_large
-  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0\scenes\scene_large.scene.yaml
+  path: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1810\test_cli_main_returns_zero0\scenes\scene_large.scene.yaml
   entity_count: 7
 - kind: registry_discovered
   count: 4
@@ -151,5 +151,5 @@ events:
   trace_events: 25
 - kind: demo_end
   total_events: 26
-  temp_root: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1574\test_cli_main_returns_zero0
+  temp_root: C:\Users\Andrew\AppData\Local\Temp\pytest-of-Andrew\pytest-1810\test_cli_main_returns_zero0
 event_count: 26

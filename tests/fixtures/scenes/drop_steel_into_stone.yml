@@ -1,0 +1,17 @@
+world:
+  gravity: [0.0, 196.0]
+  bounds: [-200, -100, 200, 250]
+bodies:
+  - name: ground
+    material: stone
+    shape: rect
+    width: 240
+    height: 16
+    position: [0, 180]
+    fixed: true
+  - name: ball
+    material: steel
+    shape: circle
+    diameter: 24
+    position: [0, 0]
+    velocity: [0, 0]

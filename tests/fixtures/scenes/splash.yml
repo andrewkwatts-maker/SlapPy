@@ -1,0 +1,17 @@
+world:
+  gravity: [0.0, 250.0]
+  bounds: [-150, -150, 150, 200]
+bodies:
+  - name: pool
+    material: water
+    shape: rect
+    width: 200
+    height: 40
+    position: [0, 150]
+    fixed: true
+  - name: ball
+    material: steel
+    shape: circle
+    diameter: 20
+    position: [0, -50]
+    velocity: [0, 30]

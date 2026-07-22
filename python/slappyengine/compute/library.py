@@ -49,6 +49,15 @@ class ComputeLibrary:
         source:
             WGSL source code.
         """
+        from slappyengine.compute._validation import (
+            validate_shader_source,
+            validate_non_empty_str,
+        )
+
+        # Boundary refusal: an empty name silently overwrites the empty-string
+        # entry on every call, and ``bytes`` source never compiles as WGSL.
+        validate_non_empty_str("name", "ComputeLibrary.register", name)
+        validate_shader_source("source", "ComputeLibrary.register", source)
         cls._registry[name] = source
 
     @classmethod

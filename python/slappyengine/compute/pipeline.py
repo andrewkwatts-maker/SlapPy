@@ -7,6 +7,13 @@ import numpy as np
 import wgpu
 
 from slappyengine.compute.readback import ReadbackBuffer
+from slappyengine.compute._validation import (
+    validate_entry_point,
+    validate_shader_label,
+    validate_shader_path,
+    validate_shader_source,
+    validate_workgroup_count,
+)
 
 if TYPE_CHECKING:
     from slappyengine.gpu.context import GPUContext
@@ -20,17 +27,27 @@ _SHADER_DIR = Path(__file__).parent.parent.parent.parent / "shaders"
 
 class ComputePass:
     def __init__(self, source: str, entry_point: str = "main", label: str = ""):
-        self.source = source
-        self.entry_point = entry_point
-        self.label = label
+        # Boundary validation: refuse bytes-typed source, empty entry-point,
+        # non-str label — these used to slip through and explode deep inside
+        # wgpu's shader compiler with messages that did not name the caller.
+        self.source = validate_shader_source("source", "ComputePass", source)
+        self.entry_point = validate_entry_point(
+            "entry_point", "ComputePass", entry_point,
+        )
+        self.label = validate_shader_label("label", "ComputePass", label)
 
     @classmethod
     def from_wgsl(cls, path: str | Path, entry_point: str = "main") -> "ComputePass":
-        src = Path(path).read_text(encoding="utf-8")
-        return cls(source=src, entry_point=entry_point, label=str(path))
+        p = validate_shader_path("path", "ComputePass.from_wgsl", path)
+        validate_entry_point(
+            "entry_point", "ComputePass.from_wgsl", entry_point,
+        )
+        src = p.read_text(encoding="utf-8")
+        return cls(source=src, entry_point=entry_point, label=str(p))
 
     @classmethod
     def from_source(cls, source: str, entry_point: str = "main", label: str = "") -> "ComputePass":
+        # Delegate to __init__ — validators fire there too.
         return cls(source=source, entry_point=entry_point, label=label)
 
 
@@ -71,6 +88,25 @@ class ComputePipeline:
             return 0
         w, h = self._layer.size
         return w * h
+
+    @staticmethod
+    def validate_workgroups(
+        x: Any, y: Any = 1, z: Any = 1,
+        *, fn: str = "ComputePipeline.dispatch",
+    ) -> tuple[int, int, int]:
+        """Validate a ``(workgroup_x, workgroup_y, workgroup_z)`` triple.
+
+        Direct callers of ``dispatch_workgroups`` (lighting, fluid_sim,
+        post-process, GI) can route their counts through here to catch
+        NaN / non-positive / oversize values before they reach wgpu.
+
+        Returns the coerced ``(x, y, z)`` tuple.
+        """
+        return (
+            validate_workgroup_count("workgroup_x", fn, x),
+            validate_workgroup_count("workgroup_y", fn, y),
+            validate_workgroup_count("workgroup_z", fn, z),
+        )
 
     async def dispatch(self, pass_: "ComputePass",
                        readback_channels: list[str] | None = None) -> dict:
