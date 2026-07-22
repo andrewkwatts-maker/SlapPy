@@ -235,7 +235,7 @@ def collect_subpackages(names: Iterable[str]) -> list[tuple[str, str, list[str],
 # ---------------------------------------------------------------------------
 
 
-HEADER = """# SlapPyEngine v0.3 — Engine Surface Reference
+HEADER = """# Pharos Engine v0.3 — Engine Surface Reference
 
 > Auto-generated from runtime introspection of `pharos_engine.__all__` and the
 > `_subpackages` set declared in `python/pharos_engine/__init__.py`.

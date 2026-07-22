@@ -21,7 +21,7 @@ Typical use::
 
     def _cli(argv: list[str] | None = None) -> int:
         parser = build_demo_arg_parser(
-            "Hello Foo - SlapPyEngine demo",
+            "Hello Foo - Pharos Engine demo",
             default_frames=DEFAULT_FRAMES,
         )
         args = parser.parse_args(argv)

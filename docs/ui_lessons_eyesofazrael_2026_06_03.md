@@ -2,7 +2,7 @@
 
 A read-only audit of the EyesOfAzrael (EoA) web project's UI architecture
 (89 CSS files, 8 mythology themes, glassmorphism design system) with a
-translation map for the patterns SlapPyEngine should adopt, has already
+translation map for the patterns Pharos Engine should adopt, has already
 adopted, or should explicitly *not* port. Pure-docs commit; no source
 edits accompany this file.
 
@@ -19,7 +19,7 @@ EoA reference paths (all read-only):
 * `H:/Github/EyesOfAzrael/FIREBASE/CHANGELOG_UI_SYSTEM.md` — historical
   rollout (v1.0.0, 2025-12-13): theme manager, content loader, demo.
 
-SlapPyEngine cross-references (where each lesson lands):
+Pharos Engine cross-references (where each lesson lands):
 
 * U1 — `python/pharos_engine/ui/theme/theme_spec.py` (semantic-token layer,
   spacing/radius/transition/z-index scales).
@@ -76,7 +76,7 @@ Widget rules read only the semantic layer:
 }
 ```
 
-### How SlapPyEngine translates it
+### How Pharos Engine translates it
 
 `SemanticTokens` (already in `theme_spec.py`) is the dataclass equivalent
 of the EoA `--theme-*` / `--glass-*` surface:
@@ -129,7 +129,7 @@ swap:
 /* … */
 ```
 
-### How SlapPyEngine translates it
+### How Pharos Engine translates it
 
 `apply_theme(name)` in `ui/theme/__init__.py` is the analogue: a single
 mutable `_ACTIVE` slot plus a `_REGISTRY` keyed by `ThemeSpec.name`. The
@@ -182,7 +182,7 @@ A single `:root` block of CSS custom properties:
 }
 ```
 
-### How SlapPyEngine translates it
+### How Pharos Engine translates it
 
 The four frozen dataclasses now live next to `SemanticTokens` in
 `theme_spec.py` and mirror the EoA shape verbatim (per-field):
@@ -226,7 +226,7 @@ list, page-template). Each entry documents *purpose, variants, when to
 use, accessibility notes, example HTML*. Components are "copy-paste
 ready" — no build step required.
 
-### How SlapPyEngine translates it
+### How Pharos Engine translates it
 
 `python/pharos_engine/ui/widgets/` ships the analogue:
 
@@ -267,9 +267,9 @@ The EoA glassmorphism aesthetic is three CSS rules layered:
 `backdrop-filter` blurs whatever is *behind* the element, giving the
 frosted-glass read. The vendor-prefixed copy is mandatory for Safari.
 
-### How SlapPyEngine translates it
+### How Pharos Engine translates it
 
-DPG has no `backdrop-filter` equivalent. SlapPyEngine pre-bakes the
+DPG has no `backdrop-filter` equivalent. Pharos Engine pre-bakes the
 blur into a procedural texture via `glass_blur` in `shader_effects.py`:
 
 ```python
@@ -320,7 +320,7 @@ body.theme-transitioning * {
 }
 ```
 
-### How SlapPyEngine translates it
+### How Pharos Engine translates it
 
 `ThemeSwitcherPanel` (U5, planned for the editor sprint) — a DPG combo
 or grid showing each registered `ThemeSpec` with a preview swatch built
@@ -360,7 +360,7 @@ duration argument for *every* animation in the system:
 The duration vocabulary is shared between transitions
 (state changes) and keyframe animations (entry/exit).
 
-### How SlapPyEngine translates it
+### How Pharos Engine translates it
 
 `TransitionScale.fast / normal / slow` is the same vocabulary, available
 to both editor-side widget hover transitions (DPG style) *and*
@@ -373,7 +373,7 @@ engine-side creature-animation timings:
 | Idle creature one-shot (peek, blink) | `normal` × 4-8    | 1-2 s |
 | Idle creature long loop (sleep)     | `slow` × 6-12      | 3-6 s |
 
-The creature-animation system (no analog in EoA — uniquely SlapPy)
+The creature-animation system (no analog in EoA — uniquely Pharos)
 sources its base timing from the same `TransitionScale` instance the
 widget hover states use. That way "make the UI feel snappier" is a
 single token edit, not a 200-call-site search-and-replace.
@@ -391,7 +391,7 @@ analogue:
 
 ### 8.1 DPG / desktop vs CSS / web rendering primitives
 
-EoA renders via the browser's compositor. SlapPyEngine renders via Dear
+EoA renders via the browser's compositor. Pharos Engine renders via Dear
 PyGui's immediate-mode draw list (for the editor) or via numpy / Rust
 kernels (for the engine viewport). Implications:
 
@@ -407,7 +407,7 @@ kernels (for the engine viewport). Implications:
 ### 8.2 Headless rendering (visual tests)
 
 EoA has no headless test harness (browser screenshots are
-out-of-band). SlapPyEngine's `pharos_engine.testing` module provides
+out-of-band). Pharos Engine's `pharos_engine.testing` module provides
 `render_scene_to_png` + `assert_scene_matches`, which means *every theme
 needs a headless baseline*. The TeenGirl Notebook theme should ship a
 baseline plate per sprint to catch palette / scale regressions.
@@ -415,17 +415,17 @@ baseline plate per sprint to catch palette / scale regressions.
 ### 8.3 Hot-swap theme runtime requirement
 
 EoA can afford a full page repaint on theme switch (a browser FLIP is
-~16 ms). SlapPyEngine runs at 60-1000 fps with retained DPG textures;
+~16 ms). Pharos Engine runs at 60-1000 fps with retained DPG textures;
 re-baking every nine-slice + every SVG icon on theme swap costs ~50 ms
 on a warm cache. The `_REGISTRY` should be augmented with a per-theme
 texture cache so swapping back to a previously-used theme is O(1).
 
-### 8.4 Creature animation system — uniquely SlapPy
+### 8.4 Creature animation system — uniquely Pharos
 
 EoA has no analogue. The `ui/theme/creatures/` subpackage (CreatureBus
 adapter, idle-event emitter, 19 event-to-creature bindings) is *new
 ground*. EoA contributes only the timing-token vocabulary
-(`TransitionScale`); the dispatch + lifecycle layer is SlapPy-original.
+(`TransitionScale`); the dispatch + lifecycle layer is Pharos-original.
 The reference doc is
 [`idle_animation_system_2026_06_03.md`](idle_animation_system_2026_06_03.md).
 
@@ -494,7 +494,7 @@ by reflex.
   below useful thresholds; respond to DPI changes instead, via
   `RadiusScale` and `SpacingScale` rescaling.
 * **No 89-file CSS sprawl.** EoA admits in its own architecture doc to
-  needing a consolidation pass. The SlapPy theme system caps at four
+  needing a consolidation pass. The Pharos theme system caps at four
   primitives modules (`nine_slice`, `svg_icon`, `shader_effects`,
   `theme_spec`) plus one module per concrete theme. Adding a fifth
   primitive requires a design doc.
@@ -509,7 +509,7 @@ by reflex.
   — first concrete theme; cites this audit as its design provenance
   (per its module docstring §1).
 * [`ui_pattern_audit_2026_06_03.md`](ui_pattern_audit_2026_06_03.md) —
-  per-panel contract audit; the EoA → SlapPy translation map landed
+  per-panel contract audit; the EoA → Pharos translation map landed
   here and is referenced by every panel's "translation" section.
 * [`ui_concept_art_2026_06_03.md`](ui_concept_art_2026_06_03.md) — visual
   inspection template for the user-side art pass.
@@ -526,7 +526,7 @@ by reflex.
 
 ## 12. Summary
 
-| Lesson                                  | Status        | SlapPy artefact                                |
+| Lesson                                  | Status        | Pharos artefact                                |
 |-----------------------------------------|---------------|------------------------------------------------|
 | Semantic-token layer                    | ADOPTED       | `theme_spec.SemanticTokens`                    |
 | Spacing / radius / transition / z-index | ADOPTED       | `theme_spec.{Spacing,Radius,Transition,ZIndex}Scale` |

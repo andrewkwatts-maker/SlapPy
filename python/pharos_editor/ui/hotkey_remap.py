@@ -1,4 +1,4 @@
-"""User-remappable hotkey system for the SlapPyEngine editor.
+"""User-remappable hotkey system for the Pharos Engine editor.
 
 The :mod:`pharos_editor.ui.user_overrides` layer (X6) already loads user
 YAML hotkey files from ``~/.pharos_engine/ui/hotkeys/`` and folds them

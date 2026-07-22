@@ -7,7 +7,7 @@ class IsoCamera:
     """Camera for isometric scenes.
 
     Tracks a world-space pixel offset (``cam_x``, ``cam_y``) and the active
-    :class:`~SlapPyEngine.iso.projection.IsoViewpoint`.  The viewpoint can be
+    :class:`~Pharos Engine.iso.projection.IsoViewpoint`.  The viewpoint can be
     rotated through the four cardinal directions with :meth:`rotate_cw` and
     :meth:`rotate_ccw`.
 
@@ -18,7 +18,7 @@ class IsoCamera:
     ~~~~~~~~~~~~~~~~~~~~~
     When the active viewpoint changes, call :meth:`update_entity_viewpoints`
     to push the new ``rotation`` value to every
-    :class:`~SlapPyEngine.iso.iso_entity.IsoEntity` in the scene.  This causes
+    :class:`~Pharos Engine.iso.iso_entity.IsoEntity` in the scene.  This causes
     the engine's existing ``AngleSpriteMap`` system to select the correct
     per-viewpoint sprite automatically — no changes to the sprite system are
     required.

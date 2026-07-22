@@ -1,6 +1,6 @@
 """Extension shim — re-exports from pharos_engine.input.
 
-This subpackage's canonical home is SlapPyEngine.ext.input.
+This subpackage's canonical home is Pharos Engine.ext.input.
 Import via either path; both are supported.
 """
 from pharos_engine.input import *  # noqa: F401, F403

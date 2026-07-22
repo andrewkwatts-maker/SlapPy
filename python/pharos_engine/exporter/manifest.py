@@ -1,6 +1,6 @@
-"""Project manifest for the SlapPyEngine exporter (LL6).
+"""Project manifest for the Pharos Engine exporter (LL6).
 
-A ``ProjectManifest`` is a small YAML file (``slappyproject.yaml``) that
+A ``ProjectManifest`` is a small YAML file (``pharosproject.yaml``) that
 lives at the project root and describes the ship-time metadata the
 exporter needs: name, version, author, main script, additional asset
 directories, and Python compatibility range.
@@ -19,7 +19,7 @@ from typing import Any
 __all__ = ["ProjectManifest", "MANIFEST_FILENAME", "load_manifest"]
 
 
-MANIFEST_FILENAME = "slappyproject.yaml"
+MANIFEST_FILENAME = "pharosproject.yaml"
 
 
 @dataclass
@@ -80,7 +80,7 @@ class ProjectManifest:
     # ------------------------------------------------------------------
     @classmethod
     def load(cls, project_dir: Path | str) -> "ProjectManifest":
-        """Read ``slappyproject.yaml`` from *project_dir* or synthesise defaults."""
+        """Read ``pharosproject.yaml`` from *project_dir* or synthesise defaults."""
         project_dir = Path(project_dir)
         manifest_path = project_dir / MANIFEST_FILENAME
         if manifest_path.is_file():

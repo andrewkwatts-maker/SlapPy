@@ -9,7 +9,7 @@ STUB-triage sprint tick (round 19 after QQ1's round-18
 Distinct from PP1's ``selection.invert_by_type`` (kind-only, invert) and
 QQ1's ``selection.by_type`` / ``selection.same_material`` (kind-only or
 material-only, inclusive). Photoshop's ``Select → Similar`` grabs every
-pixel matching the seed's colour + tolerance — the SlapPyEngine analogue
+pixel matching the seed's colour + tolerance — the Pharos Engine analogue
 for entity-graph selection is a signature that fuses *kind* and
 *material* (either match wins), plus a fall-through to bare kind. The
 "select similar" verb thus catches sibling entities of the same class

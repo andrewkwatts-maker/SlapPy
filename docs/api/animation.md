@@ -184,7 +184,7 @@ PyAV, decodes the first video stream, and returns up to `max_frames`
 RGBA frames. Requires the `[video]` extra:
 
 ```
-pip install SlapPyEngine[video]
+pip install Pharos Engine[video]
 ```
 
 Without PyAV installed the function raises `ImportError` with the

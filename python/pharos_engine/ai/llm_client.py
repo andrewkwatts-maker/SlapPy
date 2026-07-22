@@ -1,4 +1,4 @@
-﻿"""LLMClient — synchronous Ollama REST client for SlapPyEngine AI features.
+﻿"""LLMClient — synchronous Ollama REST client for Pharos Engine AI features.
 
 Environment variables:
   LLM_HOST   — Ollama base URL  (default: http://localhost:11434)
@@ -20,7 +20,7 @@ def _require_httpx():
     except ImportError:
         raise ImportError(
             "httpx is required for LLMClient.\n"
-            "Install it with: pip install SlapPyEngine[ai]"
+            "Install it with: pip install Pharos Engine[ai]"
         )
 
 

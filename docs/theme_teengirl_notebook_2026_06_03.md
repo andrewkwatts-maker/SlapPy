@@ -3,7 +3,7 @@
 > **Status:** design doc only (Sprint 5+, 2026-06-03). No engine code lands in
 > this sprint — this file is the contract Phases A-E will be cut against.
 >
-> **Scope:** alternate look-and-feel for the SlapPyEngine editor (`pharos_editor.ui.editor`).
+> **Scope:** alternate look-and-feel for the Pharos Engine editor (`pharos_editor.ui.editor`).
 > Lives alongside the existing glassmorphism theme in
 > [`python/pharos_engine/ui/editor/theme.py`](../python/pharos_engine/ui/editor/theme.py).
 > Opt-in via a future `apply_teengirl_notebook_theme()` entry point — never

@@ -1,4 +1,4 @@
-# SlapPyEngine perf tripwire baseline for hello_ragdoll.
+# Pharos Engine perf tripwire baseline for hello_ragdoll.
 # Regenerate with: python -m pharos_engine.perf.tripwire --write-baseline
 commit_sha: 5fd475d
 demo: hello_ragdoll

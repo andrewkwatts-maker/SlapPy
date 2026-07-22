@@ -1,4 +1,4 @@
-"""Debug overlay for SlapPyEngine — toggled at runtime with F2 / F3 / F4.
+"""Debug overlay for Pharos Engine — toggled at runtime with F2 / F3 / F4.
 
 Three independent panels, each independently togglable:
 

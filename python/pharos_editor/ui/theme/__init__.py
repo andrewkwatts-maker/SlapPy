@@ -1,6 +1,6 @@
 """Theme primitives — nine-slice, SVG icons, procedural shader effects.
 
-This subpackage owns the *foundation* that any concrete SlapPyEngine UI
+This subpackage owns the *foundation* that any concrete Pharos Engine UI
 theme builds on. It deliberately ships **no theme content** — only the
 primitives. The accompanying theme content (e.g. the upcoming
 "TeenGirl Notebook" pack) lives in a sibling module that imports from

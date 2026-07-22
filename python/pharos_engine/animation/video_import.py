@@ -5,13 +5,13 @@ import numpy as np
 def extract_frames(video_path: str | Path, max_frames: int = 256) -> list[np.ndarray]:
     """Extract frames from a video file as RGBA numpy arrays.
 
-    Requires [extra: video] — pip install SlapPyEngine[video]
+    Requires [extra: video] — pip install Pharos Engine[video]
     """
     try:
         import av
     except ImportError as e:
         raise ImportError(
-            "Video import requires: pip install SlapPyEngine[video]"
+            "Video import requires: pip install Pharos Engine[video]"
         ) from e
 
     frames = []

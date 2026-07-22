@@ -1,13 +1,13 @@
-"""Cross-platform game exporter for SlapPyEngine (LL6).
+"""Cross-platform game exporter for Pharos Engine (LL6).
 
-This subpackage packages a scaffolded SlapPyEngine project into a
+This subpackage packages a scaffolded Pharos Engine project into a
 distributable ZIP + (optionally) a standalone binary via PyInstaller.
 
 Public surface
 --------------
 * :class:`ZipBundler` — walks a project tree and writes a filtered ZIP.
 * :class:`BinaryExporter` — PyInstaller-backed executable builder.
-* :class:`ProjectManifest` — dataclass mirror of ``slappyproject.yaml``.
+* :class:`ProjectManifest` — dataclass mirror of ``pharosproject.yaml``.
 * :data:`TARGETS` — table of platform descriptors (windows / linux / macos).
 * :class:`ExportResult` — unified return value for CLI / API callers.
 * :func:`export_project` — convenience wrapper that dispatches on output
@@ -116,15 +116,15 @@ def export_project(
             ],
         )
     main_script_hint = "main.py"
-    manifest_path = project_dir / "slappyproject.yaml"
+    manifest_path = project_dir / "pharosproject.yaml"
     has_main = (project_dir / main_script_hint).is_file()
     has_manifest = manifest_path.is_file()
     if not has_main and not has_manifest:
         return ExportResult(
             path=None,
             errors=[
-                f"not a SlapPyEngine project: {project_dir} "
-                f"(needs main.py or slappyproject.yaml)",
+                f"not a Pharos Engine project: {project_dir} "
+                f"(needs main.py or pharosproject.yaml)",
             ],
         )
 

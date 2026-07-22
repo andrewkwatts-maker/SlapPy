@@ -17,7 +17,7 @@ class SdfExtruder:
     extrusion is dispatched as a compute shader (``sdf_3d_extrude.wgsl``).
     The shader atomically claims slots in a pre-allocated storage buffer and
     writes packed f32 vertex data directly on the GPU.  After the dispatch,
-    ``readback()`` maps the buffer and constructs a :class:`~SlapPyEngine.gpu.mesh.GpuMesh`
+    ``readback()`` maps the buffer and constructs a :class:`~Pharos Engine.gpu.mesh.GpuMesh`
     from the returned bytes.  The GPU path is O(pixels) and fully parallel.
 
     CPU fallback

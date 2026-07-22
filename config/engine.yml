@@ -1,5 +1,5 @@
 window:
-  title: "SlapPyEngine"
+  title: "Pharos Engine"
   width: 800
   height: 600
   clear_color: [0.08, 0.08, 0.12, 1.0]

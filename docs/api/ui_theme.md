@@ -2,7 +2,7 @@
 # pharos_editor.ui.theme — API Reference
 
 > Hand-written reference for the **PRIMITIVE infrastructure** that any
-> SlapPyEngine UI theme builds on. Owns the nine-slice texture renderer,
+> Pharos Engine UI theme builds on. Owns the nine-slice texture renderer,
 > the tiny SVG icon rasteriser, the procedural background / effect
 > texture helpers, and the declarative `ThemeSpec` data model + registry.
 > The companion theme *content* (e.g. the upcoming "TeenGirl Notebook"
@@ -102,7 +102,7 @@ NineSlice(
 - `render_procedural(size, color, pattern_fn=None) -> np.ndarray` —
   synthesise the border using *color* and either solid-fill the centre
   or call `pattern_fn(width, height) -> ndarray` to build it. This is
-  the zero-asset path the SlapPyEngine theme system prefers.
+  the zero-asset path the Pharos Engine theme system prefers.
 
 The `to_dict` / `from_dict` round-trip intentionally drops the source
 array — bytes do not survive YAML. Callers re-attach the source on
@@ -134,7 +134,7 @@ Colour parsing covers `#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb(r,g,b)`,
 - `to_dpg_texture(registry) -> int` — upload the rasterised buffer to
   a Dear PyGui texture registry. The returned texture id is cached on
   the icon so repeat calls do not re-upload. Raises `ImportError` with
-  the standard `pip install SlapPyEngine[editor]` hint if dearpygui is
+  the standard `pip install Pharos Engine[editor]` hint if dearpygui is
   not installed.
 
 Texture cache is shared module-globally; call
@@ -686,9 +686,9 @@ as the *contract* every component renders against. Hot-swapping a
 theme is therefore a single rebind of the token surface rather than a
 search-and-replace through widget code.
 
-SlapPyEngine adopts the same split:
+Pharos Engine adopts the same split:
 
-| EyesOfAzrael CSS | SlapPyEngine equivalent |
+| EyesOfAzrael CSS | Pharos Engine equivalent |
 |---|---|
 | `--theme-primary`, `--theme-gradient` | `SemanticTokens.primary`, `SemanticTokens.primary_gradient` |
 | `--glass-bg`, `--glass-blur` | `SemanticTokens.glass_bg`, `SemanticTokens.glass_blur_px` |

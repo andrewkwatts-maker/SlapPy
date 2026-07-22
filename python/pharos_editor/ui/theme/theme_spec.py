@@ -20,7 +20,7 @@ the **EyesOfAzrael** Firebase-themes CSS architecture
 (``css/firebase-themes.css``). That stylesheet treats raw palette
 colours as *implementation* and a stable named token surface
 (``--theme-primary``, ``--glass-bg``, ``--radius-md`` …) as the
-*contract* every component renders against. SlapPyEngine adopts the
+*contract* every component renders against. Pharos Engine adopts the
 same split: :attr:`ThemeSpec.palette` is the raw bag of authored
 colours; :attr:`ThemeSpec.semantic` is the named contract widget code
 binds to.
@@ -161,7 +161,7 @@ class Font:
 #
 # EyesOfAzrael's ``firebase-themes.css`` exposes spacing / radius /
 # transition / z-index as CSS custom properties so every component reads
-# from one source of truth. SlapPyEngine mirrors that with four small
+# from one source of truth. Pharos Engine mirrors that with four small
 # dataclasses below. Each is a *frozen* dataclass so themes can share
 # instances safely, and each validates its values in ``__post_init__``.
 

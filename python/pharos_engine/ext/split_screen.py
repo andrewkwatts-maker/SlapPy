@@ -1,6 +1,6 @@
 """Extension shim — re-exports from pharos_engine.split_screen.
 
-This module's canonical home is SlapPyEngine.ext.split_screen.
+This module's canonical home is Pharos Engine.ext.split_screen.
 Import via either path; both are supported.
 """
 from pharos_engine.split_screen import (

@@ -11,7 +11,7 @@ one workflow — Scene, Code, Material, Animation, FX, Settings.
 Layout sketch::
 
     ┌─────────────────────────────────────────┬───┐
-    │  [washi-tape spine: SlapPy Notebook]    │Sce│  ← index tabs
+    │  [washi-tape spine: Pharos Notebook]    │Sce│  ← index tabs
     │                                         ├───┤
     │  ┌──────┐   ┌──────────┐   ┌──────┐     │Cod│
     │  │ Out  │   │ Viewport │   │ Insp │     ├───┤

@@ -1,7 +1,7 @@
 """Preset post-process chains — Sprint-3 lighting integration.
 
 These factories compose existing chain helpers (no new pass internals) into
-ready-to-use combinations that match the three SlapPyEngine flagship games:
+ready-to-use combinations that match the three Pharos Engine flagship games:
 
 * :func:`cinematic_chain` — the "movie look" for cutscenes and showcase demos.
 * :func:`arcade_chain`    — punchy, readable post-FX for top-down shooters

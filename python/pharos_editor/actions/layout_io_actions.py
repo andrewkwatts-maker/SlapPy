@@ -10,7 +10,7 @@ BB1 STUB-triage sprint tick:
 
 These are the *explicit-path* counterparts to
 :class:`pharos_editor.ui.editor.layout_persistence.LayoutPersistence`,
-which owns the *implicit* per-project ``.slappy/layout.yaml`` path.
+which owns the *implicit* per-project ``.pharos/layout.yaml`` path.
 Users invoke these when they want to share a layout across projects
 (export from Project A, import into Project B) or when they want to
 keep a named preset library (``combat.layout.yaml``, ``authoring.layout.yaml``)

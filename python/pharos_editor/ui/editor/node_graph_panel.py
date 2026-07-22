@@ -50,8 +50,8 @@ class NodeGraphPanel:
     """
     Visual node graph editor using DPG's built-in node editor widget.
 
-    Edits :class:`~SlapPyEngine.material.node_material.NodeMaterial` graphs —
-    each :class:`~SlapPyEngine.material.node_material.NodeDef` becomes a DPG
+    Edits :class:`~Pharos Engine.material.node_material.NodeMaterial` graphs —
+    each :class:`~Pharos Engine.material.node_material.NodeDef` becomes a DPG
     node box with typed input/output port attributes.
 
     Protocol: ``build(parent_tag) -> None``

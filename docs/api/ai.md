@@ -1,7 +1,7 @@
 <!-- handauthored: do not regenerate -->
 # pharos_engine.ai — API Reference
 
-> Hand-written reference for the SlapPyEngine LLM-backed authoring surface.
+> Hand-written reference for the Pharos Engine LLM-backed authoring surface.
 > Owns the local-Ollama REST client, the entity-script generator, the
 > prompt / code bidirectional sync watcher, and the backend Protocol
 > that makes all three swappable for tests or third-party providers.

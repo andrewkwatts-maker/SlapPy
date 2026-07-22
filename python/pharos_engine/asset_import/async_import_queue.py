@@ -107,7 +107,7 @@ class AsyncImportQueue:
         self._bus = bus if bus is not None else _event_bus_mod.get_default_bus()
         self._executor: ThreadPoolExecutor | None = ThreadPoolExecutor(
             max_workers=self._max_workers,
-            thread_name_prefix="slappy-asset-import",
+            thread_name_prefix="pharos-asset-import",
         )
         self._pending: set[Future] = set()
         self._completed: deque[ImportResult] = deque()

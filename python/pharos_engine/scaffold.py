@@ -1,6 +1,6 @@
-"""Project scaffolder for SlapPyEngine (HH2).
+"""Project scaffolder for Pharos Engine (HH2).
 
-This module builds new SlapPyEngine game projects from templates.  It powers
+This module builds new Pharos Engine game projects from templates.  It powers
 the ``slap new`` / ``slap launch`` / ``slap dev`` / ``slap config`` CLI
 subcommands defined in :mod:`pharos_engine.cli` and can also be used as a
 library::
@@ -101,7 +101,7 @@ PROJECT_MARKER = ".slappyproject"
 #: discover the full surface area by opening ``config.yaml`` in an editor.
 DEFAULT_APP_CONFIG = """\
 # ---------------------------------------------------------------------------
-# SlapPyEngine project config for ${project_title}
+# Pharos Engine project config for ${project_title}
 # Generated ${created_iso} by pharos_engine ${engine_version}
 # ---------------------------------------------------------------------------
 # Every option below is documented with its default value.  Delete a key to
@@ -319,7 +319,7 @@ __pycache__/
 venv/
 env/
 
-# SlapPyEngine
+# Pharos Engine
 *.blob
 assets/**/*.blob
 build/
@@ -337,7 +337,7 @@ dist/
 _README = """\
 # ${project_title}
 
-A SlapPyEngine project scaffolded on ${created_iso}.
+A Pharos Engine project scaffolded on ${created_iso}.
 
 ## Quickstart
 
@@ -358,7 +358,7 @@ python main.py            # or double-click launch.bat / launch.ps1 / ./launch.s
 | `scenes/`        | Scene YAML / JSON files.                            |
 | `launch.*`       | Cross-platform launcher scripts.                    |
 | `build.*`        | Install deps + run — useful for fresh clones.       |
-| `launch_editor.*`| Launches the SlapPyEngine editor (extra required).  |
+| `launch_editor.*`| Launches the Pharos Engine editor (extra required).  |
 
 ## Editing config
 
@@ -460,7 +460,7 @@ exit $?
 
 _LAUNCH_EDITOR_BAT = """\
 @echo off
-REM ${project_title} — launch the SlapPyEngine editor
+REM ${project_title} — launch the Pharos Engine editor
 setlocal
 set "PROJECT_DIR=%~dp0"
 set "PYTHONPATH=%PROJECT_DIR%;%PYTHONPATH%"
@@ -468,7 +468,7 @@ set "PYTHONPATH=%PROJECT_DIR%;%PYTHONPATH%"
 python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('pharos_editor.ui.editor') else 1)"
 if errorlevel 1 (
     echo.
-    echo The SlapPyEngine editor is not installed.
+    echo The Pharos Engine editor is not installed.
     echo Install it with:  pip install "pharos-engine[editor]"
     echo.
     exit /b 1
@@ -481,14 +481,14 @@ endlocal & exit /b %EC%
 
 
 _LAUNCH_EDITOR_PS1 = """\
-# ${project_title} — launch the SlapPyEngine editor
+# ${project_title} — launch the Pharos Engine editor
 $ProjectDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $env:PYTHONPATH = "$ProjectDir;$env:PYTHONPATH"
 
 $probe = python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('pharos_editor.ui.editor') else 1)"
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
-    Write-Host "The SlapPyEngine editor is not installed."
+    Write-Host "The Pharos Engine editor is not installed."
     Write-Host 'Install it with:  pip install "pharos-engine[editor]"'
     Write-Host ""
     exit 1
@@ -501,14 +501,14 @@ exit $LASTEXITCODE
 
 _LAUNCH_EDITOR_SH = """\
 #!/usr/bin/env bash
-# ${project_title} — launch the SlapPyEngine editor
+# ${project_title} — launch the Pharos Engine editor
 set -e
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export PYTHONPATH="$PROJECT_DIR:$PYTHONPATH"
 
 if ! python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('pharos_editor.ui.editor') else 1)"; then
     echo
-    echo "The SlapPyEngine editor is not installed."
+    echo "The Pharos Engine editor is not installed."
     echo 'Install it with:  pip install "pharos-engine[editor]"'
     echo
     exit 1
@@ -638,7 +638,7 @@ def create_project(
     overwrite: bool = False,
     extra_context: dict | None = None,
 ) -> Path:
-    """Scaffold a new SlapPyEngine project.
+    """Scaffold a new Pharos Engine project.
 
     Parameters
     ----------
@@ -785,7 +785,7 @@ def _try_getsource(fn: Callable) -> str | None:
 
 
 def is_project_dir(path: str | Path) -> bool:
-    """Return True if *path* looks like a scaffolded SlapPyEngine project.
+    """Return True if *path* looks like a scaffolded Pharos Engine project.
 
     We require the marker file *and* the three lifecycle hooks — a directory
     that only contains one of these is treated as ambiguous and rejected.
@@ -829,7 +829,7 @@ def launch_project(
     """
     p = Path(path).resolve()
     if not is_project_dir(p):
-        raise FileNotFoundError(f"not a SlapPyEngine project: {p}")
+        raise FileNotFoundError(f"not a Pharos Engine project: {p}")
 
     if editor:
         if not editor_installed():

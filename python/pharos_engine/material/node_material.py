@@ -266,7 +266,7 @@ class NodeMaterial:
             from pharos_engine import _core
             self._compiled_wgsl = _core.compile_node_graph(self.to_json())
         except ImportError:
-            raise RuntimeError("SlapPyEngine._core (Rust extension) required for node compilation")
+            raise RuntimeError("Pharos Engine._core (Rust extension) required for node compilation")
         return self._compiled_wgsl
 
     @property

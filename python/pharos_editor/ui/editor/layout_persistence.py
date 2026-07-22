@@ -2,9 +2,9 @@
 
 A small YAML-backed snapshot of every notebook panel's position / size /
 visibility / docking / z-order. Stored at
-``<project_root>/.slappy/layout.yaml`` so users get the same layout next
+``<project_root>/.pharos/layout.yaml`` so users get the same layout next
 time they re-open a project, and so it can be ``.gitignore``-d at the
-``.slappy/`` level without losing the rest of the project tree.
+``.pharos/`` level without losing the rest of the project tree.
 
 When no project is loaded (e.g. the very first launch before the project
 picker runs), the persistence layer falls back to
@@ -343,7 +343,7 @@ class LayoutPersistence:
     """
 
     #: Hidden directory inside the project root that holds layout state.
-    LAYOUT_DIR: str = ".slappy"
+    LAYOUT_DIR: str = ".pharos"
 
     #: Filename of the YAML snapshot.
     LAYOUT_FILE: str = "layout.yaml"
@@ -365,7 +365,7 @@ class LayoutPersistence:
         """Return the absolute path to the layout file.
 
         When a project root was supplied, returns
-        ``<project>/.slappy/layout.yaml``. Otherwise falls back to
+        ``<project>/.pharos/layout.yaml``. Otherwise falls back to
         ``~/.pharos_engine/default_layout.yaml``.
         """
         if self._project_root is not None:
@@ -381,7 +381,7 @@ class LayoutPersistence:
     def save(self, layout: EditorLayout) -> None:
         """Persist *layout* to :meth:`get_file_path`.
 
-        Creates the ``.slappy/`` (or ``~/.pharos_engine/``) directory if
+        Creates the ``.pharos/`` (or ``~/.pharos_engine/``) directory if
         it doesn't yet exist. Writes through a ``.tmp`` file + atomic
         rename so a crash mid-write never leaves a partial YAML on disk.
         """

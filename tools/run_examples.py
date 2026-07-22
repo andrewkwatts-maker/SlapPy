@@ -42,7 +42,7 @@ except ModuleNotFoundError:  # pragma: no cover - executed as a script
 
 # ── Tunables ─────────────────────────────────────────────────────────────────
 REPO_ROOT: Path = Path(__file__).resolve().parent.parent
-EXAMPLES_DIR: Path = REPO_ROOT / "SlapPyEngineExamples" / "examples"
+EXAMPLES_DIR: Path = REPO_ROOT / "PharosEngineExamples" / "examples"
 DEFAULT_OUT: Path = REPO_ROOT / "docs" / "screenshots" / "examples_grid.png"
 DEFAULT_TIMEOUT_S: float = 60.0
 DEFAULT_FRAMES: int = 60

@@ -29,7 +29,7 @@ New here? Read [`docs/quickstart.md`](docs/quickstart.md) (5 minutes) then jump 
 pip install "pharos-engine[editor]"
 
 # 2. Verify the install — the ragdoll demo exercises softbody + IK + Rust core.
-python SlapPyEngineExamples/examples/hello_ragdoll.py --no-gif
+python PharosEngineExamples/examples/hello_ragdoll.py --no-gif
 
 # 3. Boot the notebook-diary editor.
 python -c "import pharos_engine as se; se.Engine().run_editor()"
@@ -187,7 +187,7 @@ if __name__ == "__main__":
     record_or_smoke(build_stage(), args, default_out=Path("rope.gif"))
 ```
 
-`record_or_smoke` runs `stage.record(...)` by default and falls back to a step-only smoke loop under `--no-gif`. For richer scenes see [`SlapPyEngineExamples/examples/hello_studio.py`](SlapPyEngineExamples/examples/hello_studio.py), [`SlapPyEngineExamples/examples/hello_composite.py`](SlapPyEngineExamples/examples/hello_composite.py) (iso combat + rope + zones + thermal in one scene), and [`docs/studio_quickstart.md`](docs/studio_quickstart.md).
+`record_or_smoke` runs `stage.record(...)` by default and falls back to a step-only smoke loop under `--no-gif`. For richer scenes see [`PharosEngineExamples/examples/hello_studio.py`](PharosEngineExamples/examples/hello_studio.py), [`PharosEngineExamples/examples/hello_composite.py`](PharosEngineExamples/examples/hello_composite.py) (iso combat + rope + zones + thermal in one scene), and [`docs/studio_quickstart.md`](docs/studio_quickstart.md).
 
 ---
 
@@ -220,7 +220,7 @@ Every entry below is a top-level lazy export — `import pharos_engine as sle` a
 
 ## Demo gallery
 
-Every script under [`SlapPyEngineExamples/examples/`](SlapPyEngineExamples/examples/) is runnable headlessly via the shared `examples_common` CLI helper — pass `--no-gif` for a smoke test, `--render` (or no flag) for the GIF / PNG output. The curated tour with reproducible commands, refreshed artefacts, and one-line summaries lives at [`docs/demo_gallery.md`](docs/demo_gallery.md) (6 flagship demos: ragdoll, studio one-liner, humanoid walking, IK terrain, rope, GI).
+Every script under [`PharosEngineExamples/examples/`](PharosEngineExamples/examples/) is runnable headlessly via the shared `examples_common` CLI helper — pass `--no-gif` for a smoke test, `--render` (or no flag) for the GIF / PNG output. The curated tour with reproducible commands, refreshed artefacts, and one-line summaries lives at [`docs/demo_gallery.md`](docs/demo_gallery.md) (6 flagship demos: ragdoll, studio one-liner, humanoid walking, IK terrain, rope, GI).
 
 For the full 47/47 GREEN pass/fail audit see [`docs/examples_smoke_2026_06_01_v3.md`](docs/examples_smoke_2026_06_01_v3.md). The composite grid is regenerated with:
 
@@ -247,7 +247,7 @@ See [`docs/perf_dashboard.md`](docs/perf_dashboard.md) for the per-subsystem tri
 
 ## Editor (the notebook)
 
-SlapPyEngine ships a Dear PyGui editor reskinned as a **diary notebook** — a stationery-tray toolbar of rubber stamps, a bestiary-style scene outliner, a field-journal property inspector, coloured-pencil gizmos, and a small cast of woodland creatures that idle in the corners. Six diary themes ship in the box (`teengirl_notebook`, `cozy_diary`, `bullet_journal`, `scrapbook_summer`, `cottagecore_garden`, `kawaii_planner`) and hot-swap losslessly.
+Pharos Engine ships a Dear PyGui editor reskinned as a **diary notebook** — a stationery-tray toolbar of rubber stamps, a bestiary-style scene outliner, a field-journal property inspector, coloured-pencil gizmos, and a small cast of woodland creatures that idle in the corners. Six diary themes ship in the box (`teengirl_notebook`, `cozy_diary`, `bullet_journal`, `scrapbook_summer`, `cottagecore_garden`, `kawaii_planner`) and hot-swap losslessly.
 
 ![Notebook editor overview](docs/screenshots/notebook_overview.png)
 
@@ -291,13 +291,13 @@ The `docs/` tree carries the long-form references:
 
 ```bash
 git clone https://github.com/andrewkwatts-maker/SlapPyEngine
-cd SlapPyEngine
+cd Pharos Engine
 
 pip install maturin
 maturin develop --extras dev
 
 # Run tests
-pytest SlapPyEngineTests/tests/
+pytest PharosEngineTests/tests/
 
 # Release wheel
 maturin build --release

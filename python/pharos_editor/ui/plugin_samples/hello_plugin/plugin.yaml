@@ -1,6 +1,6 @@
 name: hello_plugin
 version: "0.1.0"
-author: SlapPyEngine
+author: Pharos Engine
 entry: hello_plugin.py
 on_load: on_load
 on_shell_ready: on_shell_ready

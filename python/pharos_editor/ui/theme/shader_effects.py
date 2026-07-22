@@ -14,7 +14,7 @@ Effects share one set of conventions:
   validate channel-by-channel.
 
 These primitives back the "no PNG bake" design priority for the
-SlapPyEngine theme system: a 100 KB total asset budget is comfortable
+Pharos Engine theme system: a 100 KB total asset budget is comfortable
 even when several backgrounds + highlights are baked on demand.
 """
 from __future__ import annotations

@@ -303,9 +303,9 @@ blocked; VV7/YY7 both recommend DEFERRED-BY-DESIGN pending user Q3).
 
 ### API backcompat snapshot
 
-* **UU7 pinned snapshot** at `SlapPyEngineTests/tests/data/api_surface_snapshot.json`:
+* **UU7 pinned snapshot** at `PharosEngineTests/tests/data/api_surface_snapshot.json`:
   **338 public symbols across 14 modules** (unchanged since UU7).
-* **YY6 downstream-shape contract** at `SlapPyEngineTests/tests/test_backcompat_downstream_shape.py`:
+* **YY6 downstream-shape contract** at `PharosEngineTests/tests/test_backcompat_downstream_shape.py`:
   **8 return-shape tripwires** — EventBus.publish attr+dict access,
   AudioManager.play_loop object-handle, LightingSystem.load_profile
   returned-config, RenderTarget.add_layer dict-spec polymorphism,

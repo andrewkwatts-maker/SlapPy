@@ -1,6 +1,6 @@
-"""Batch smoke-test runner for SlapPyEngine ``hello_*.py`` examples.
+"""Batch smoke-test runner for Pharos Engine ``hello_*.py`` examples.
 
-This module walks ``SlapPyEngineExamples/examples/`` for every ``hello_*.py``
+This module walks ``PharosEngineExamples/examples/`` for every ``hello_*.py``
 demo, launches each in a subprocess with ``SLAPPY_HEADLESS=1``, and reports
 pass / fail / skip / timeout without any pytest infrastructure.
 
@@ -74,7 +74,7 @@ _OUTPUT_HEAD_CHARS: int = 800
 # ---------------------------------------------------------------------------
 
 def _repo_root() -> Path:
-    """Return the SlapPyEngine repository root.
+    """Return the Pharos Engine repository root.
 
     ``__file__`` lives at ``<repo>/python/pharos_engine/smoke_runner.py``, so
     two ``.parent`` hops land on the package root and one more on the repo.
@@ -83,8 +83,8 @@ def _repo_root() -> Path:
 
 
 def _default_examples_dir() -> Path:
-    """Return the canonical ``SlapPyEngineExamples/examples`` directory."""
-    return _repo_root() / "SlapPyEngineExamples" / "examples"
+    """Return the canonical ``PharosEngineExamples/examples`` directory."""
+    return _repo_root() / "PharosEngineExamples" / "examples"
 
 
 # ---------------------------------------------------------------------------
@@ -152,7 +152,7 @@ class SmokeRunner:
         ----------
         examples_dir:
             Directory to scan. Defaults to
-            ``SlapPyEngineExamples/examples`` under the repo root.
+            ``PharosEngineExamples/examples`` under the repo root.
         """
         root = Path(examples_dir) if examples_dir is not None else _default_examples_dir()
         if not root.is_dir():
@@ -483,13 +483,13 @@ def _cli(argv: Optional[Sequence[str]] = None) -> int:
     """CLI entrypoint. Returns exit code (0 pass, 1 any fail/timeout)."""
     parser = argparse.ArgumentParser(
         prog="pharos_engine.smoke_runner",
-        description="Batch smoke-test every SlapPyEngine hello_* example.",
+        description="Batch smoke-test every Pharos Engine hello_* example.",
     )
     parser.add_argument(
         "--examples-dir",
         type=Path,
         default=None,
-        help="Override the default SlapPyEngineExamples/examples location.",
+        help="Override the default PharosEngineExamples/examples location.",
     )
     parser.add_argument(
         "--timeout",

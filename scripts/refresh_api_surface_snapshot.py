@@ -1,5 +1,5 @@
 """Regenerate the API-surface snapshot at
-``SlapPyEngineTests/tests/data/api_surface_snapshot.json``.
+``PharosEngineTests/tests/data/api_surface_snapshot.json``.
 
 Run this ONLY when a deletion is intentional. Per
 ``docs/api_stability_2026_07_07.md``:
@@ -9,7 +9,7 @@ Run this ONLY when a deletion is intentional. Per
   old symbol) before the actual removal.
 
 Then run this script to lock the new surface. The paired
-``SlapPyEngineTests/tests/test_backcompat_api_surface.py`` will then
+``PharosEngineTests/tests/test_backcompat_api_surface.py`` will then
 accept the new state.
 
 Usage
@@ -53,7 +53,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PYTHON_PKG = REPO_ROOT / "python"
 SNAPSHOT_PATH = (
     REPO_ROOT
-    / "SlapPyEngineTests"
+    / "PharosEngineTests"
     / "tests"
     / "data"
     / "api_surface_snapshot.json"

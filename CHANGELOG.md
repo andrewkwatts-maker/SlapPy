@@ -1,13 +1,13 @@
 # Changelog
 
-All notable changes to SlapPyEngine (`pharos-engine` on PyPI).
+All notable changes to Pharos Engine (`pharos-engine` on PyPI).
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [Semantic Versioning](https://semver.org/).
 
 ## [0.4.0] — YYYY-MM-DD (UNRELEASED)
 
-v0.4 lands the **Nova3D parity milestone** — SlapPyEngine graduates from a
+v0.4 lands the **Nova3D parity milestone** — Pharos Engine graduates from a
 2D-first physics + post-process rig into a real forward 3D renderer with
 skinned glTF, animation, CSM shadows, IBL, SSAO, skybox, SDF text, HUD,
 capture, positional audio, instanced rendering, BVH culling, and a
@@ -279,7 +279,7 @@ remain part of the public API for v0.4:
 Coverage tracked by
 [`api_stability_2026_07_07.md`](docs/api_stability_2026_07_07.md) —
 UU7's 338-symbol pinned surface snapshot
-(`SlapPyEngineTests/tests/data/api_surface_snapshot.json`) plus the
+(`PharosEngineTests/tests/data/api_surface_snapshot.json`) plus the
 `test_backcompat_api_surface.py` + `test_backcompat_subclass_patterns.py`
 tripwires now guard the restored surface.
 

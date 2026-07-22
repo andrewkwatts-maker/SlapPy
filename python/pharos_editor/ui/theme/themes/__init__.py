@@ -1,4 +1,4 @@
-"""Starter theme content for the SlapPyEngine diary family.
+"""Starter theme content for the Pharos Engine diary family.
 
 Six :class:`ThemeSpec` constants ship here — the concrete UI themes
 built on the ``pharos_editor.ui.theme`` primitive infrastructure

@@ -55,7 +55,7 @@ _PROMPT_COLOR = (140, 180, 240)  # blue for the echoed command
 _INFO_COLOR = (120, 200, 140)    # green for /help + banner
 
 _BANNER = (
-    "SlapPyEngine REPL — `app`, `scene`, `helpers`, and every top-level "
+    "Pharos Engine REPL — `app`, `scene`, `helpers`, and every top-level "
     "export are pre-imported.\n"
     "Type `help()` for the helper cheat sheet, or `/help` for panel commands."
 )

@@ -45,7 +45,7 @@ __all__ = ["scaffold_project"]
 _MAIN_SCENE_TEMPLATE = """\
 # Welcome scene — edit me!
 #
-# Open the editor with ``slappy editor`` (or your IDE's launch button)
+# Open the editor with ``pharos editor`` (or your IDE's launch button)
 # to load this scene visually. Every YAML key under ``entities`` becomes
 # an :class:`pharos_engine.Entity`.
 name: "{name}"

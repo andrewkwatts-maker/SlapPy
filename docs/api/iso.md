@@ -10,7 +10,7 @@
 
 ## Overview
 
-SlapPyEngine.iso — Isometric 2D-grid-with-Z rendering subsystem.
+Pharos Engine.iso — Isometric 2D-grid-with-Z rendering subsystem.
 
 ## Rendering surface (summary)
 

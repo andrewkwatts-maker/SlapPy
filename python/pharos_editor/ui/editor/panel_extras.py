@@ -18,7 +18,7 @@ whose :attr:`~MovablePanelWindow.docked_to` isn't the sentinel
 The module is deliberately headless-safe: every DPG call sits inside
 its own ``try/except`` and the washi-tape helper library is soft-imported
 so unit tests can run against a plain recording stub. That's how
-:mod:`SlapPyEngineTests.tests.test_extended_corners` drives the
+:mod:`PharosEngineTests.tests.test_extended_corners` drives the
 renderer without a live viewport.
 
 Public surface

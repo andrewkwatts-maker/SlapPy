@@ -6,7 +6,7 @@ STUB-triage sprint tick (round 18).
 
 Photoshop's ``Cmd+Alt+Click`` on the layer panel selects every pixel /
 shape on a layer; Blender's ``Select → Same Collection`` grabs every
-object in the active seed's collection. This helper is the SlapPyEngine
+object in the active seed's collection. This helper is the Pharos Engine
 analogue: read the layer id of every seed entity, walk the scene, and
 add every entity whose layer matches. Seeds are preserved.
 

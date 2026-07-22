@@ -22,7 +22,7 @@ def _import_dpg() -> Any:
     except Exception as exc:  # pragma: no cover - defensive
         raise ImportError(
             "run_immediate_in_dpg requires Dear PyGui: "
-            "pip install SlapPyEngine[editor]"
+            "pip install Pharos Engine[editor]"
         ) from exc
     return dpg
 

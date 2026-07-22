@@ -142,7 +142,7 @@ class SdfCanvas:
     Parameters
     ----------
     layer:
-        A SlapPyEngine layer object that exposes ``._image_data`` (H×W×4 uint8
+        A Pharos Engine layer object that exposes ``._image_data`` (H×W×4 uint8
         numpy array) for the CPU fallback, and eventually a wgpu texture /
         device for the GPU path.
     """

@@ -164,7 +164,7 @@ production-readiness artefacts required for a public ship:
    count, per-pixel struct layout — the same decisions that stalled
    the earlier per-pixel arc).
 2. **Regression test coverage from engine perspective** — no
-   `SlapPyEngineTests/tests/test_softbody_*.py` /
+   `PharosEngineTests/tests/test_softbody_*.py` /
    `test_fluid_*.py` / `test_physics_*.py` / `test_physics2_*.py`
    suite exists. Landing without tests would mean an entire subpackage
    ships with zero tripwire coverage; a downstream breakage would go
@@ -248,7 +248,7 @@ the surface that would consume it.
 Un-freeze pre-flight checklist (per subpackage):
 
 1. User commits the tree with a signed-off commit message.
-2. Engine-side tripwire tests land in `SlapPyEngineTests/tests/`.
+2. Engine-side tripwire tests land in `PharosEngineTests/tests/`.
 3. `docs/api/<pkg>.md` written (template `docs/api/_template.md`).
 4. `docs/api/README.md` migrates the row from "WIP subpackages" to
    "Shipped subpackages WITH references".
@@ -271,7 +271,7 @@ Steps:
 1. **Clone the repo** (not `pip install`):
    ```
    git clone https://github.com/<owner>/SlapPyEngine.git
-   cd SlapPyEngine
+   cd Pharos Engine
    git checkout <sha-of-interest>
    ```
 2. **Copy the subpackage into your own project**:

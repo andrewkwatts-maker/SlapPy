@@ -1,17 +1,17 @@
 """Golden-file baker for the visual-scripting round-trip suite.
 
 Writes the canonical golden triples to
-``SlapPyEngineTests/goldens/visual_scripting/<name>/{source.py,
+``PharosEngineTests/goldens/visual_scripting/<name>/{source.py,
 expected.yaml, output.py}`` from the CASES table below.
 
 Regenerate the goldens after a codegen change with::
 
     PYTHONPATH=python python tools/bake_visual_scripting_goldens.py
 
-Then inspect ``git diff SlapPyEngineTests/goldens/visual_scripting`` and
+Then inspect ``git diff PharosEngineTests/goldens/visual_scripting`` and
 commit the delta alongside the codegen change. If a case newly
 xpasses / xfails after regen, update the ``_XFAIL_*`` tables in
-``SlapPyEngineTests/tests/test_visual_scripting_goldens.py``.
+``PharosEngineTests/tests/test_visual_scripting_goldens.py``.
 """
 from __future__ import annotations
 

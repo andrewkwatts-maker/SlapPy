@@ -1,4 +1,4 @@
-"""SlapPyEngine — compute-shader-driven 2D game engine.
+"""Pharos Engine — compute-shader-driven 2D game engine.
 
 A Python game engine where every hot path ports to Rust (via ``_core``) and
 every authoring surface stays in Python. Targets 60+ fps on the rebuild stack
@@ -77,14 +77,14 @@ Authoring + tooling:
   visual diff harness.
 * :mod:`pharos_engine.telemetry`  — ``emit`` / ``subscribe`` pattern bus
   with optional pattern index for hot paths.
-* :mod:`pharos_engine.tools`      — CLI subcommands (``slappy`` entry).
+* :mod:`pharos_engine.tools`      — CLI subcommands (``pharos`` entry).
 * :mod:`pharos_engine.ext`        — back-compat aliases for the pre-0.3
   flat layout (``ext.lighting`` → ``pharos_engine.lighting`` etc.).
 
 Game-compat / misc:
 
 * :mod:`pharos_engine.modules`    — game-side plugin discovery hook.
-* :mod:`pharos_engine.ai`         — AI code tools (``slappy code`` agent).
+* :mod:`pharos_engine.ai`         — AI code tools (``pharos code`` agent).
 * :mod:`pharos_engine.assets`     — ``AssetDatabase``.
 * :mod:`pharos_engine.net`        — P2P networking.
 

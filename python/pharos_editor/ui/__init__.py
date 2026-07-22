@@ -18,7 +18,7 @@ def __getattr__(name: str):
         except ImportError:
             if name == "HtmlOverlay":
                 raise AttributeError(
-                    f"HtmlOverlay requires the 'editor' extra: pip install SlapPyEngine[editor]"
+                    f"HtmlOverlay requires the 'editor' extra: pip install Pharos Engine[editor]"
                 ) from None
             raise
         val = getattr(mod, name)

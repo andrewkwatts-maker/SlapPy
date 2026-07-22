@@ -1,6 +1,6 @@
 # Video Output (MP4 vs GIF)
 
-SlapPyEngine's showcase and capture tools emit MP4 by default and fall back to
+Pharos Engine's showcase and capture tools emit MP4 by default and fall back to
 GIF when an ffmpeg backend cannot be located. MP4 is strongly preferred:
 files are roughly an order of magnitude smaller for the same length, playback
 is smoother, and you get true 24-bit colour instead of GIF's 8-bit (256-entry)

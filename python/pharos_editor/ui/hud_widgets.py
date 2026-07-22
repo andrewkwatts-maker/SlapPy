@@ -1,7 +1,7 @@
 """HUD widget drawing helpers — PIL-based, engine-side utilities.
 
 These functions operate on a :class:`PIL.ImageDraw.ImageDraw` context so they
-can be called from any :class:`~SlapPyEngine.ui.scene_ui.SceneUIEntity`
+can be called from any :class:`~Pharos Engine.ui.scene_ui.SceneUIEntity`
 ``_render`` method without duplicating bar-drawing arithmetic across games.
 """
 from __future__ import annotations

@@ -14,7 +14,7 @@ Each tick it:
 
 The contract documented in
 ``docs/idle_animation_system_2026_06_03.md`` §3 is asserted by
-``SlapPyEngineTests/tests/test_creature_scheduler.py``.
+``PharosEngineTests/tests/test_creature_scheduler.py``.
 
 Design notes:
 

@@ -4,7 +4,7 @@ Sprint-3 ships three ready-to-use post-process chain presets that compose the
 existing lighting-polish helpers (round-3 bloom, round-4 vignette, round-5
 outline, round-6 chromatic-aberration falloff, round-7 auto-EV, round-8
 render-channel topological order, round-9 DoF focus transition) into the three
-flagship game looks supported by SlapPyEngine.
+flagship game looks supported by Pharos Engine.
 
 Import path:
 
@@ -113,7 +113,7 @@ breaking the preset's invariants.
 
 ## Tests
 
-Regression coverage lives at `SlapPyEngineTests/tests/test_post_process_preset_chains.py`
+Regression coverage lives at `PharosEngineTests/tests/test_post_process_preset_chains.py`
 and runs CPU-only (no GPU required):
 
 1. `test_cinematic_has_dof_and_bloom`

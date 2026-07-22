@@ -80,7 +80,7 @@ class GPUContext:
         Parameters
         ----------
         cfg:
-            Optional :class:`~SlapPyEngine.config.Config` object.  When
+            Optional :class:`~Pharos Engine.config.Config` object.  When
             provided, ``cfg.rendering.backend`` and
             ``cfg.rendering.power_preference`` drive adapter selection.
         """

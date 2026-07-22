@@ -1,4 +1,4 @@
-# SlapPyEngine Lifecycle Contract
+# Pharos Engine Lifecycle Contract
 
 This document formalises the lifecycle hooks honoured by the engine and
 its subpackages. The hooks predate the v0.3 surface freeze (they were
@@ -9,7 +9,7 @@ generated bindings can rely on a single source of truth.
 
 ## The three call-sites
 
-Every SlapPyEngine lifecycle hook fires at one of three points:
+Every Pharos Engine lifecycle hook fires at one of three points:
 
 | Phase    | When                                         | Reentrant?         |
 |----------|----------------------------------------------|--------------------|
@@ -130,6 +130,6 @@ that hold per-frame state in module globals must re-initialise inside
 * `docs/getting_started.md` — first-run scaffold + script tutorial.
 * `python/pharos_engine/script.py` — `Script` base class.
 * `python/pharos_engine/asset_manifest.py` — `ScriptBinding`.
-* `SlapPyEngineTests/tests/test_protocols.py` — Round 3 Protocols.
-* `SlapPyEngineTests/tests/test_subpackage_protocols.py` — F6
+* `PharosEngineTests/tests/test_protocols.py` — Round 3 Protocols.
+* `PharosEngineTests/tests/test_subpackage_protocols.py` — F6
   per-subpackage Protocols.

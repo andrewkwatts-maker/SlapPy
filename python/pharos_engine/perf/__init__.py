@@ -1,4 +1,4 @@
-"""Perf regression tooling for SlapPyEngine.
+"""Perf regression tooling for Pharos Engine.
 
 This sub-package provides a lightweight, dependency-free perf tripwire
 that measures per-frame time on the ``hello_ragdoll`` demo and flags

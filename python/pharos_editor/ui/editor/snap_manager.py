@@ -1,4 +1,4 @@
-"""Window snap-to-edge subsystem for the SlapPyEngine editor.
+"""Window snap-to-edge subsystem for the Pharos Engine editor.
 
 The :class:`SnapManager` is hooked into each ``MovablePanelWindow`` drag
 handler.  When the user drags a panel close to (a) a viewport edge,

@@ -255,7 +255,7 @@ class AppConfig:
     """
 
     # Window
-    window_title: str = "SlapPyEngine"
+    window_title: str = "Pharos Engine"
     window_size: tuple[int, int] = (1280, 720)
     fullscreen: bool = False
     vsync: bool = True
@@ -364,7 +364,7 @@ class AppConfig:
         default = type(self)()  # fresh defaults, don't leak caller mutations
         raw = default.to_dict()
         lines = [
-            "# SlapPyEngine AppConfig — auto-generated defaults.",
+            "# Pharos Engine AppConfig — auto-generated defaults.",
             "# Uncomment and edit any field to override the built-in default.",
             "# Every field maps 1:1 to pharos_engine.app.AppConfig.",
             "",
@@ -446,7 +446,7 @@ class _PygameWindowRenderer:
         w, h = getattr(config, "window_size", None) or getattr(
             config, "resolution", None
         ) or (1280, 720)
-        title = getattr(config, "window_title", None) or "SlapPyEngine"
+        title = getattr(config, "window_title", None) or "Pharos Engine"
 
         pygame_mod.init()
         pygame_mod.display.set_caption(title)
@@ -484,7 +484,7 @@ class _PygameWindowRenderer:
     def end_frame(self) -> None:
         try:
             hud = self._font.render(
-                f"SlapPyEngine — frame {self.frame_index}",
+                f"Pharos Engine — frame {self.frame_index}",
                 True,
                 (200, 210, 220),
             )

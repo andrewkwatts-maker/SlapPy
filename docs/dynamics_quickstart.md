@@ -1,7 +1,7 @@
 # pharos_engine.dynamics — Quickstart
 
 `pharos_engine.dynamics` is the unified 2D constraint subsystem for
-SlapPyEngine. It is an **Extended Position-Based Dynamics (XPBD) solver** —
+Pharos Engine. It is an **Extended Position-Based Dynamics (XPBD) solver** —
 positions are projected directly, no separate force / acceleration pass —
 exposed through a single `World.step()` entry point. There is no split
 between "constraints" and "forces" on the public surface: every spring,
@@ -95,7 +95,7 @@ for _ in range(60):
     world.step(1.0 / 60.0)
 ```
 
-See [examples/hello_ragdoll.py](../SlapPyEngineExamples/examples/hello_ragdoll.py) for a
+See [examples/hello_ragdoll.py](../PharosEngineExamples/examples/hello_ragdoll.py) for a
 6-bone humanoid drop. Note `parent_idx` must reference an earlier index
 in the `bones` list (the builder walks the list once). For the named
 13-node anatomical skeleton (pelvis / neck / head / shoulders / hips /
@@ -123,7 +123,7 @@ spec = IKChainSpec(node_indices=chain, target=(2.0, 1.0), fixed_root=True)
 converged = solve_ik(spec, world, iterations=20, tolerance=0.01)
 ```
 
-See [examples/hello_ik_chain.py](../SlapPyEngineExamples/examples/hello_ik_chain.py) for a
+See [examples/hello_ik_chain.py](../PharosEngineExamples/examples/hello_ik_chain.py) for a
 moving target swept over 240 frames. For analytic 2-bone foot IK on a
 humanoid skeleton, see `place_feet_on_terrain` referenced in section 5.
 
@@ -148,7 +148,7 @@ for _ in range(120):
 print(world.positions[bob])
 ```
 
-See [examples/hello_spring.py](../SlapPyEngineExamples/examples/hello_spring.py) for an
+See [examples/hello_spring.py](../PharosEngineExamples/examples/hello_spring.py) for an
 oscillator measured against the theoretical period `T = 2π·sqrt(m/k)`.
 
 ### `make_motor` — driven hub-rim wheel
@@ -171,7 +171,7 @@ for _ in range(240):
     world.step(1.0 / 60.0)
 ```
 
-See [examples/hello_motor.py](../SlapPyEngineExamples/examples/hello_motor.py) for the full
+See [examples/hello_motor.py](../PharosEngineExamples/examples/hello_motor.py) for the full
 wheel rendering with frame trails. As of `cc11183`, `max_torque <= 0` and
 non-finite `target_omega` raise `ValueError` rather than silently
 no-opping.
@@ -269,7 +269,7 @@ for _ in range(120):
     world.step(1.0 / 60.0)
 ```
 
-See [examples/hello_rope.py](../SlapPyEngineExamples/examples/hello_rope.py) for a 50%-slack
+See [examples/hello_rope.py](../PharosEngineExamples/examples/hello_rope.py) for a 50%-slack
 catenary that settles to a ~2.0-unit droop in 120 frames.
 
 ### `build_humanoid` — 13-node anatomical skeleton
@@ -326,7 +326,7 @@ for _ in range(60):
 ```
 
 For a richer demo of the full integration (sprite + line + glow + bloom
-post-process) see [examples/hello_rope.py](../SlapPyEngineExamples/examples/hello_rope.py) and
+post-process) see [examples/hello_rope.py](../PharosEngineExamples/examples/hello_rope.py) and
 the studio API in [studio_quickstart.md](studio_quickstart.md).
 
 ## 7. Common pitfalls
@@ -398,11 +398,11 @@ softbody / fluid paths layered on top.
   primitive sits in the type system; failure modes.
 * [api/dynamics.md](api/dynamics.md) — auto-generated reference for every
   public class / function / field.
-* [examples/hello_spring.py](../SlapPyEngineExamples/examples/hello_spring.py),
-  [hello_joint.py](../SlapPyEngineExamples/examples/hello_joint.py),
-  [hello_motor.py](../SlapPyEngineExamples/examples/hello_motor.py),
-  [hello_rope.py](../SlapPyEngineExamples/examples/hello_rope.py),
-  [hello_ragdoll.py](../SlapPyEngineExamples/examples/hello_ragdoll.py),
-  [hello_ik_chain.py](../SlapPyEngineExamples/examples/hello_ik_chain.py),
-  [hello_dynamics_serialize.py](../SlapPyEngineExamples/examples/hello_dynamics_serialize.py)
+* [examples/hello_spring.py](../PharosEngineExamples/examples/hello_spring.py),
+  [hello_joint.py](../PharosEngineExamples/examples/hello_joint.py),
+  [hello_motor.py](../PharosEngineExamples/examples/hello_motor.py),
+  [hello_rope.py](../PharosEngineExamples/examples/hello_rope.py),
+  [hello_ragdoll.py](../PharosEngineExamples/examples/hello_ragdoll.py),
+  [hello_ik_chain.py](../PharosEngineExamples/examples/hello_ik_chain.py),
+  [hello_dynamics_serialize.py](../PharosEngineExamples/examples/hello_dynamics_serialize.py)
   — runnable demos for every primitive on this page.

@@ -1,4 +1,4 @@
-# SlapPyEngine — 5-Minute Quickstart
+# Pharos Engine — 5-Minute Quickstart
 
 *Last updated 2026-07-04*
 
@@ -56,23 +56,23 @@ maturin develop --extras dev
 ## 3. First demo — verify the install
 
 Every `hello_*` script under
-[`SlapPyEngineExamples/examples/`](../SlapPyEngineExamples/examples/) is
+[`PharosEngineExamples/examples/`](../PharosEngineExamples/examples/) is
 runnable headlessly. The ragdoll demo touches the biggest slice of the
 Rust core (softbody XPBD + IK + rasterisation) so it makes a good smoke
 test:
 
 ```bash
 # From a checkout:
-python SlapPyEngineExamples/examples/hello_ragdoll.py --no-gif
+python PharosEngineExamples/examples/hello_ragdoll.py --no-gif
 
 # Or emit a 120-frame GIF:
-python SlapPyEngineExamples/examples/hello_ragdoll.py --frames 120 --out ragdoll.gif
+python PharosEngineExamples/examples/hello_ragdoll.py --frames 120 --out ragdoll.gif
 ```
 
 Every demo uses the shared `pharos_engine.examples_common` argparse helper,
 so `--frames` / `--out` / `--no-gif` / `--render` behave the same across
 the 47-demo gallery. If you installed via `pip`, download the demo
-scripts from the [SlapPyEngineExamples folder on GitHub](https://github.com/andrewkwatts-maker/SlapPyEngine/tree/master/SlapPyEngineExamples/examples)
+scripts from the [PharosEngineExamples folder on GitHub](https://github.com/andrewkwatts-maker/SlapPyEngine/tree/master/PharosEngineExamples/examples)
 or clone the repo (`git clone …`).
 
 ---
@@ -95,7 +95,7 @@ Save that as `boot.py` and run `python boot.py`.
 **B. From the example script:**
 
 ```bash
-python SlapPyEngineExamples/examples/editor_demo.py
+python PharosEngineExamples/examples/editor_demo.py
 ```
 
 This variant prepopulates a demo scene (terrain, material map, animation

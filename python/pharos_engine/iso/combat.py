@@ -1,4 +1,4 @@
-"""SlapPyEngine.iso.combat — pure-logic combat primitives for iso games.
+"""Pharos Engine.iso.combat — pure-logic combat primitives for iso games.
 
 This module provides the small set of pure-logic primitives Stone Keep (the
 engine's iso flagship game) needs to drive tower-defence-style waves and

@@ -1,6 +1,6 @@
 """Extension shim — re-exports from pharos_engine.angle_sprite.
 
-This module's canonical home is SlapPyEngine.ext.angle_sprite.
+This module's canonical home is Pharos Engine.ext.angle_sprite.
 Import via either path; both are supported.
 """
 from pharos_engine.angle_sprite import (

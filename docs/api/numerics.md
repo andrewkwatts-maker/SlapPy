@@ -1,7 +1,7 @@
 <!-- handauthored: do not regenerate -->
 # pharos_engine.numerics — API Reference
 
-> Hand-written reference for the SS7 pass on the SlapPyEngine numerical
+> Hand-written reference for the SS7 pass on the Pharos Engine numerical
 > primitives. Owns the 2-D multigrid V-cycle Poisson solver, the
 > Red-Black SOR smoother, and the masked 5-point Laplacian residual —
 > nothing else. Sibling references: [`topology.md`](topology.md) is the

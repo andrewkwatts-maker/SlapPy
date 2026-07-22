@@ -4,7 +4,7 @@ Flow
 ----
 1. :class:`AiOptInDialog` — shown on first launch; asks whether the user
    wants local AI support and which model to use.  Saves the choice to
-   ``~/.SlapPyEngine/ai_settings.json`` so it is never asked again.
+   ``~/.Pharos Engine/ai_settings.json`` so it is never asked again.
 2. :class:`OllamaSetupModal` — shown when the chosen model still needs to
    be pulled.  Shows a live progress bar fed by ``ollama pull`` output.
 """
@@ -56,7 +56,7 @@ class AiOptInDialog:
     """First-run dialog asking whether to enable local AI support.
 
     Shows a model picker and saves the choice to
-    ``~/.SlapPyEngine/ai_settings.json``.  Returns the chosen model tag
+    ``~/.Pharos Engine/ai_settings.json``.  Returns the chosen model tag
     (``str``) or ``None`` (disabled / skipped).
 
     Usage::
@@ -107,7 +107,7 @@ class AiOptInDialog:
             pos=(max(0, (vw - w) // 2), max(0, (vh - h) // 2)),
         ):
             dpg.add_text(
-                "SlapPyEngine can use a local Ollama model to automatically\n"
+                "Pharos Engine can use a local Ollama model to automatically\n"
                 "sync your prompt descriptions with code as you edit.",
                 wrap=w - 24,
                 color=(200, 200, 220),

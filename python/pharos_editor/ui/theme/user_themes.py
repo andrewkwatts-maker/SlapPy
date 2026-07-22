@@ -1,6 +1,6 @@
 """User-editable theme storage — baked vs user directories.
 
-SlapPyEngine ships every built-in :class:`ThemeSpec` as a YAML file
+Pharos Engine ships every built-in :class:`ThemeSpec` as a YAML file
 baked into the wheel (``python/pharos_engine/ui/theme/themes/_baked/``).
 On first launch a :class:`UserThemeStore` copies each baked file into
 ``~/.pharos_engine/themes/`` so users can open, edit, and save the YAML

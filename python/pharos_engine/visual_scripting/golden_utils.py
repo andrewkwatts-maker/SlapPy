@@ -9,7 +9,7 @@ Two responsibilities:
   irrespective of trailing newlines, indentation width, or surrounding
   function wrapper.
 * :func:`load_golden` — load the ``(source, expected_yaml, output)``
-  triple for a named case from ``SlapPyEngineTests/goldens/visual_scripting/``.
+  triple for a named case from ``PharosEngineTests/goldens/visual_scripting/``.
 
 The tests also need a *stable* YAML serialisation of the graph produced
 by :func:`python_to_graph`, but node IDs are randomly-generated uuids
@@ -30,10 +30,10 @@ from .graph import NodeGraph
 # Root directory holding the golden triples. Resolved relative to the
 # repo layout: ``python/pharos_engine/visual_scripting/golden_utils.py``
 # is 4 levels below the repo root, so we walk up and land in
-# ``SlapPyEngineTests/goldens/visual_scripting``.
+# ``PharosEngineTests/goldens/visual_scripting``.
 _GOLDENS_ROOT = (
     Path(__file__).resolve().parents[3]
-    / "SlapPyEngineTests"
+    / "PharosEngineTests"
     / "goldens"
     / "visual_scripting"
 )

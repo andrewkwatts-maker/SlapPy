@@ -1,7 +1,7 @@
 """ScriptGenerator — wraps LLMClient to produce EntityScript classes."""
 from __future__ import annotations
 
-SYSTEM_PROMPT = """You are a SlapPyEngine entity script generator.
+SYSTEM_PROMPT = """You are a Pharos Engine entity script generator.
 Output ONLY valid Python code — no markdown, no explanation, no ``` fences.
 
 Scripts define a class named EntityScript with any of these optional methods:
@@ -41,7 +41,7 @@ class ScriptGenerator:
     Parameters
     ----------
     llm_client:
-        An :class:`~SlapPyEngine.ai.llm_client.LLMClient` instance.  If
+        An :class:`~Pharos Engine.ai.llm_client.LLMClient` instance.  If
         ``None`` a default instance is created on first use.
     """
 

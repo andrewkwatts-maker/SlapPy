@@ -48,7 +48,7 @@ DEFAULT_BASELINE_PATH: Path = Path(__file__).with_name("baseline_ragdoll.yaml")
 
 
 def _repo_root() -> Path:
-    """Return the SlapPyEngine repository root.
+    """Return the Pharos Engine repository root.
 
     ``__file__`` lives at ``<repo>/python/pharos_engine/perf/tripwire.py``,
     so three ``.parent`` hops land on the repo root.
@@ -58,7 +58,7 @@ def _repo_root() -> Path:
 
 def _demo_path() -> Path:
     """Absolute path to the read-only ``hello_ragdoll.py`` example."""
-    return _repo_root() / "SlapPyEngineExamples" / "examples" / "hello_ragdoll.py"
+    return _repo_root() / "PharosEngineExamples" / "examples" / "hello_ragdoll.py"
 
 
 def _load_demo() -> Any:
@@ -398,7 +398,7 @@ class PerfTripwire:
         out.parent.mkdir(parents=True, exist_ok=True)
         payload = result.to_dict()
         header = (
-            "# SlapPyEngine perf tripwire baseline for hello_ragdoll.\n"
+            "# Pharos Engine perf tripwire baseline for hello_ragdoll.\n"
             "# Regenerate with: python -m pharos_engine.perf.tripwire --write-baseline\n"
         )
         body = _yaml.safe_dump(payload, sort_keys=True, default_flow_style=False)

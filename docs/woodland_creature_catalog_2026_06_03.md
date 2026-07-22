@@ -7,7 +7,7 @@
 **Pattern audit:** [`ui_pattern_audit_2026_06_03.md`](ui_pattern_audit_2026_06_03.md)
 
 This catalog defines the woodland creatures, plants, and decorative
-motifs that may appear across the SlapPyEngine editor. It is a **layer
+motifs that may appear across the Pharos Engine editor. It is a **layer
 on top of** the TeenGirl Notebook base theme — the creatures are not
 required; a stripped-down TeenGirl Notebook with `creature_animations =
 False` is the same theme minus the cast. Read this together with the

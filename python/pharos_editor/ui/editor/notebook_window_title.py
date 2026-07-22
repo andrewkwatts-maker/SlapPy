@@ -6,8 +6,8 @@ and the active theme name all surface in the OS task switcher.
 
 Format
 ------
-Saved:    ``"SlapPy Notebook -- <scene> heart  | <theme>"``
-Unsaved:  ``"SlapPy Notebook -- <scene> flower  | <theme>"``
+Saved:    ``"Pharos Notebook -- <scene> heart  | <theme>"``
+Unsaved:  ``"Pharos Notebook -- <scene> flower  | <theme>"``
 
 The sticker glyphs are ASCII-safe by default (``heart`` / ``flower``) so
 the title renders on every OS shell font; a caller that wants the brief's
@@ -35,7 +35,7 @@ _UNICODE_UNSAVED_GLYPH: str = "✿"   # BLACK FLORETTE - notebook flower
 
 # Branding prefix — tests pin this so a future rename has to bump the
 # constant + the assertion in lock-step.
-_BRAND_PREFIX: str = "SlapPy Notebook"
+_BRAND_PREFIX: str = "Pharos Notebook"
 
 # Em-dash separator + theme-segment separator.
 _TITLE_SEPARATOR: str = " — "   # em dash
@@ -70,18 +70,18 @@ def format_window_title(
     use_unicode: bool = False,
     project_name: "str | None | object" = _PROJECT_NAME_OMITTED,
 ) -> str:
-    """Return e.g. ``'SlapPy Notebook -- my_scene heart  | teengirl_notebook'``.
+    """Return e.g. ``'Pharos Notebook -- my_scene heart  | teengirl_notebook'``.
 
     Three call shapes:
 
     1. **Legacy** — ``format_window_title(scene, saved, theme)`` (no
        ``project_name`` keyword) emits the pre-M6 format
-       ``"SlapPy Notebook -- <scene> heart  | <theme>"``.
+       ``"Pharos Notebook -- <scene> heart  | <theme>"``.
     2. **No project** — ``project_name=None`` collapses to
-       ``"SlapPy Notebook -- (no project)"``.
+       ``"Pharos Notebook -- (no project)"``.
     3. **Project loaded** — ``project_name="My Game"`` weaves the
        project name in:
-       ``"SlapPy Notebook -- My Game -- <scene> heart  | <theme>"``.
+       ``"Pharos Notebook -- My Game -- <scene> heart  | <theme>"``.
 
     The legacy path stays untouched so every test predating this sprint
     keeps passing without modification.

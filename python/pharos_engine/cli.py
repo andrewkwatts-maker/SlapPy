@@ -1,4 +1,4 @@
-"""slap — SlapPyEngine command-line interface.
+"""slap — Pharos Engine command-line interface.
 
 Entry point: main()
 """
@@ -100,7 +100,7 @@ def cmd_info(_args: argparse.Namespace) -> None:
     except Exception:
         wgpu_version = "not installed"
 
-    print(f"SlapPyEngine {engine_version}")
+    print(f"Pharos Engine {engine_version}")
     print(f"Python       {sys.version}")
     print(f"wgpu         {wgpu_version}")
     print(f"Platform     {sys.platform}")
@@ -118,9 +118,9 @@ def cmd_pack(args: argparse.Namespace) -> None:
 def cmd_launch(args: argparse.Namespace) -> None:
     """Launch a scaffolded project — or spin up a temp project when no path.
 
-    ``slappy launch``          → new temp project in ~/.pharos_engine/temp_projects
-    ``slappy launch PATH``     → launch that project
-    ``slappy launch --editor`` → open the editor instead of main.py
+    ``pharos launch``          → new temp project in ~/.pharos_engine/temp_projects
+    ``pharos launch PATH``     → launch that project
+    ``pharos launch --editor`` → open the editor instead of main.py
     """
     from pharos_engine import scaffold
 
@@ -130,7 +130,7 @@ def cmd_launch(args: argparse.Namespace) -> None:
     else:
         proj = Path(args.path).resolve()
         if not scaffold.is_project_dir(proj):
-            _die(f"not a SlapPyEngine project: {proj}")
+            _die(f"not a Pharos Engine project: {proj}")
 
     if args.dry_run:
         cmd = scaffold.launch_project(proj, editor=args.editor, dry_run=True)
@@ -152,7 +152,7 @@ def cmd_dev(args: argparse.Namespace) -> None:
 
     proj = Path(args.path).resolve() if args.path else Path.cwd().resolve()
     if not scaffold.is_project_dir(proj):
-        _die(f"not a SlapPyEngine project: {proj}")
+        _die(f"not a Pharos Engine project: {proj}")
 
     try:
         import watchdog  # noqa: F401
@@ -199,11 +199,11 @@ def cmd_export(args: argparse.Namespace) -> None:
     if not proj_raw.is_dir():
         _die(f"project path is not a directory: {proj_raw}")
     has_main = (proj_raw / "main.py").is_file()
-    has_manifest = (proj_raw / "slappyproject.yaml").is_file()
+    has_manifest = (proj_raw / "pharosproject.yaml").is_file()
     if not has_main and not has_manifest:
         _die(
-            f"not a SlapPyEngine project: {proj_raw} "
-            f"(needs main.py or slappyproject.yaml)"
+            f"not a Pharos Engine project: {proj_raw} "
+            f"(needs main.py or pharosproject.yaml)"
         )
     proj = proj_raw
 
@@ -257,7 +257,7 @@ def cmd_export(args: argparse.Namespace) -> None:
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="slap",
-        description="SlapPyEngine project toolchain",
+        description="Pharos Engine project toolchain",
     )
     sub = parser.add_subparsers(dest="command", metavar="<command>")
     sub.required = True

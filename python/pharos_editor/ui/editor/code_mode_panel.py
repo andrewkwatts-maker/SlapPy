@@ -5,7 +5,7 @@ The AI reconciles the two panes in the direction of whichever was last edited:
   - Prompt edited last  → AI rewrites code to implement the description
   - Code edited last    → AI generates a new description from the code
 
-For .py asset scripts a background :class:`~SlapPyEngine.ai.code_sync.CodeSyncWatcher`
+For .py asset scripts a background :class:`~Pharos Engine.ai.code_sync.CodeSyncWatcher`
 does this automatically whenever a local Ollama instance is available.
 """
 from __future__ import annotations
@@ -22,7 +22,7 @@ class CodeModePanel:
     """Split editor panel: left = plain-English prompt, right = Python code.
 
     Panel protocol — implements ``build(parent_tag)`` so it can be passed to
-    :meth:`~SlapPyEngine.ui.editor.shell.EditorShell.register_panel`.
+    :meth:`~Pharos Engine.ui.editor.shell.EditorShell.register_panel`.
     """
 
     def __init__(self, engine: "Engine") -> None:
@@ -48,7 +48,7 @@ class CodeModePanel:
 
         Decision tree
         -------------
-        1. Load ~/.SlapPyEngine/ai_settings.json.
+        1. Load ~/.Pharos Engine/ai_settings.json.
         2. If no settings file → show the opt-in dialog on first DPG frame.
         3. If settings say disabled (model=None) → skip AI, mark disabled.
         4. If settings say enabled → check server/model; if ready go live,
@@ -154,7 +154,7 @@ class CodeModePanel:
     def build(self, parent_tag) -> None:
         """Build the panel UI inside *parent_tag*.
 
-        Called by :class:`~SlapPyEngine.ui.editor.shell.EditorShell` during
+        Called by :class:`~Pharos Engine.ui.editor.shell.EditorShell` during
         ``setup()``.
         """
         import dearpygui.dearpygui as dpg

@@ -1,6 +1,6 @@
 // pharos_render :: Softbody XPBD full step on the GPU.
 //
-// Sprint 7 GPU port of pharos_core::softbody_solver::slappyengine_step
+// Sprint 7 GPU port of pharos_core::softbody_solver::pharosengine_step
 // (kept the historical function name in Python; the Rust GPU version
 // is `pharos_step_full`).
 //

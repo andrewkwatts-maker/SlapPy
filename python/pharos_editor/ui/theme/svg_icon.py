@@ -4,7 +4,7 @@ A purposely-minimal SVG parser sufficient for theme icons (chevrons,
 checkmarks, glyph buttons, …). Supports a handful of shapes —
 ``<rect>``, ``<circle>``, ``<line>``, ``<polygon>``, ``<path>`` (only
 ``M`` / ``L`` / ``Z`` commands), each with ``fill`` and ``stroke``
-attributes. That's enough to cover every icon the SlapPyEngine editor
+attributes. That's enough to cover every icon the Pharos Engine editor
 currently ships without pulling in ``cairosvg`` / ``pyrsvg`` / a Qt
 runtime.
 
@@ -397,7 +397,7 @@ class SVGIcon:
         The DPG texture id is cached on the icon so repeated calls return
         the same id without re-uploading. When :mod:`dearpygui` is not
         installed the method raises :class:`ImportError` with the usual
-        ``pip install SlapPyEngine[editor]`` hint.
+        ``pip install Pharos Engine[editor]`` hint.
         """
         if self._dpg_texture_id is not None:
             return self._dpg_texture_id
@@ -406,7 +406,7 @@ class SVGIcon:
         except ImportError as exc:  # pragma: no cover - defensive
             raise ImportError(
                 "SVGIcon.to_dpg_texture requires dearpygui: "
-                "pip install SlapPyEngine[editor]"
+                "pip install Pharos Engine[editor]"
             ) from exc
         arr = self.rasterize().astype(np.float32) / 255.0
         flat = arr.reshape(-1).tolist()

@@ -589,7 +589,7 @@ def help() -> str:  # noqa: A001 — deliberate shadow, REPL-scoped name
     import sys
 
     mod = sys.modules[__name__]
-    lines = ["# SlapPyEngine editor helpers", ""]
+    lines = ["# Pharos Engine editor helpers", ""]
     for name in __all__:
         obj = getattr(mod, name, None)
         if obj is None or obj is help or not callable(obj):

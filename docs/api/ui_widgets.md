@@ -275,7 +275,7 @@ List active sticker handles, optionally filtered by parent tag.
   visual contract degrades gracefully — no widget raises because a
   theme slot is missing.
 - **Headless tests.** Every widget is exercised by
-  `SlapPyEngineTests/tests/test_ui_widgets_notebook.py` against a
+  `PharosEngineTests/tests/test_ui_widgets_notebook.py` against a
   stubbed `dearpygui.dearpygui` module.  Constructors, theme
   re-binding, and callback firing all work without a live DPG context.
 

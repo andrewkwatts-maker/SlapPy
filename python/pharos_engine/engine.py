@@ -806,13 +806,13 @@ class Engine:
         try:
             dpg.create_context()
             dpg.create_viewport(
-                title="SlapPyEngine — Pick a notebook",
+                title="Pharos Engine — Pick a notebook",
                 width=560,
                 height=520,
             )
             with dpg.window(
                 tag="__project_picker_host",
-                label="SlapPyEngine",
+                label="Pharos Engine",
                 no_title_bar=True,
                 no_resize=True,
                 no_move=True,
@@ -861,7 +861,7 @@ class Engine:
         manager = ProjectManager(engine=self)
         html_path = Path(__file__).parent / "ui" / "project_ui.html"
         manager._window = webview.create_window(
-            "SlapPyEngine — Open or Create Project",
+            "Pharos Engine — Open or Create Project",
             str(html_path) + "?wizard=1",
             js_api=manager._api,
             width=900,
@@ -890,7 +890,7 @@ class Engine:
         ImportError
             If ``dearpygui`` is not installed.  Install with::
 
-                pip install SlapPyEngine[editor]
+                pip install Pharos Engine[editor]
         """
         # --- Project detection (before any DPG window is created) -------
         project_path = self._find_project()
@@ -908,7 +908,7 @@ class Engine:
         except ImportError as exc:
             raise ImportError(
                 "dearpygui is required for the editor mode. "
-                "Install it with: pip install SlapPyEngine[editor]"
+                "Install it with: pip install Pharos Engine[editor]"
             ) from exc
 
         from pharos_editor.ui.editor.shell import EditorShell
@@ -1057,7 +1057,7 @@ class Engine:
         Blocks until the user selects a project or closes the window.
         Returns the selected project path, or '' if cancelled.
 
-        Requires: pip install SlapPyEngine[editor]
+        Requires: pip install Pharos Engine[editor]
         """
         from pharos_editor.ui.project_manager import ProjectManager
         pm = ProjectManager(engine=self)
@@ -1131,7 +1131,7 @@ class Engine:
     # -----------------------------------------------------------------------
 
     def add_player(self, action_map) -> int:
-        """Register a player's :class:`~SlapPyEngine.input.ActionMap`.
+        """Register a player's :class:`~Pharos Engine.input.ActionMap`.
 
         Returns the ``player_id`` from the action map.  Players can be added
         before or after :meth:`run`; action dispatch begins as soon as the
@@ -1148,7 +1148,7 @@ class Engine:
 
     @property
     def input_maps(self) -> list:
-        """List of registered :class:`~SlapPyEngine.input.ActionMap` objects."""
+        """List of registered :class:`~Pharos Engine.input.ActionMap` objects."""
         return self._action_maps
 
     def _on_key_down(self, raw_key: str) -> None:
@@ -1195,7 +1195,7 @@ class Engine:
         num_players:
             Number of viewports to create.  Up to 8+ are supported.
         cameras:
-            Optional list of :class:`~SlapPyEngine.camera.Camera` instances,
+            Optional list of :class:`~Pharos Engine.camera.Camera` instances,
             one per player.  Pass ``None`` for individual cameras and assign
             them later with :meth:`SplitScreenManager.set_camera`.
 
@@ -1220,7 +1220,7 @@ class Engine:
 
     @property
     def split_screen(self) -> "SplitScreenManager | None":
-        """The active :class:`~SlapPyEngine.split_screen.SplitScreenManager`,
+        """The active :class:`~Pharos Engine.split_screen.SplitScreenManager`,
         or ``None`` when split-screen is not enabled."""
         return self._split_screen
 
@@ -1372,20 +1372,20 @@ class Engine:
 
     @property
     def ibl(self) -> "IBLSystem | None":
-        """The active :class:`~SlapPyEngine.gpu.ibl.IBLSystem`, or ``None``
+        """The active :class:`~Pharos Engine.gpu.ibl.IBLSystem`, or ``None``
         when IBL has not been enabled via :meth:`enable_ibl`."""
         return self._ibl
 
     @property
     def sdf(self) -> "SdfRenderer | None":
-        """The active :class:`~SlapPyEngine.gpu.sdf_renderer.SdfRenderer`,
+        """The active :class:`~Pharos Engine.gpu.sdf_renderer.SdfRenderer`,
         or ``None`` when SDF rendering has not been enabled via
         :meth:`enable_sdf`."""
         return self._sdf_renderer
 
     @property
     def cluster_3d(self) -> "Cluster3DSystem | None":
-        """The active :class:`~SlapPyEngine.gpu.cluster_3d.Cluster3DSystem`,
+        """The active :class:`~Pharos Engine.gpu.cluster_3d.Cluster3DSystem`,
         or ``None`` when 3D clustered lighting has not been enabled via
         :meth:`enable_cluster_3d`."""
         return self._cluster_3d

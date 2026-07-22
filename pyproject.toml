@@ -188,12 +188,12 @@ exclude = [
     "benchmarks/**",
     "docs",
     "docs/**",
-    # Tests / examples now live under SlapPyEngineTests/ and
-    # SlapPyEngineExamples/ at the repo root (2026-06-02 restructure).
-    "SlapPyEngineTests",
-    "SlapPyEngineTests/**",
-    "SlapPyEngineExamples",
-    "SlapPyEngineExamples/**",
+    # Tests / examples now live under PharosEngineTests/ and
+    # PharosEngineExamples/ at the repo root (renamed Sprint 3).
+    "PharosEngineTests",
+    "PharosEngineTests/**",
+    "PharosEngineExamples",
+    "PharosEngineExamples/**",
     "scripts",
     "scripts/**",
     "tools",
@@ -204,7 +204,7 @@ exclude = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["SlapPyEngineTests/tests"]
+testpaths = ["PharosEngineTests/tests"]
 
 [tool.ruff]
 line-length = 120

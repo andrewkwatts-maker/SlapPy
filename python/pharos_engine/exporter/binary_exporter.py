@@ -97,7 +97,7 @@ class BinaryExporter:
     """Build a standalone binary from a scaffolded project."""
 
     def __init__(self, *, hidden_imports: Sequence[str] | None = None) -> None:
-        # Slappyengine ships C-extensions and yaml — surface them by default
+        # Pharos Engine ships C-extensions and yaml — surface them by default
         # so PyInstaller's static analysis picks them up.
         default_hidden = [
             "pharos_engine",
@@ -242,7 +242,7 @@ class BinaryExporter:
             src = project_dir / data_dir
             if src.exists():
                 datas.append((str(src), data_dir))
-        for data_file in ("config.yaml", "slappyproject.yaml"):
+        for data_file in ("config.yaml", "pharosproject.yaml"):
             src = project_dir / data_file
             if src.is_file():
                 datas.append((str(src), "."))

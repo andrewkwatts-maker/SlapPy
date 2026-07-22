@@ -69,7 +69,7 @@ tag. Again all seven slots landed direct-to-master.
 | Agent | Commit SHA | Delivered | Tests added |
 |---|---|---|---|
 | **PP1** | `26e29ca` | STUB triage round 17: 5 new WIRED action ids (`selection.shrink` / `selection.invert_by_type` / `view.toggle_wireframe` / `edit.rename` / `edit.duplicate_at_cursor`); 5 new action modules; `feature_map_delta_2026_07_08.md` | 34 (`test_actions_stub_triage_r17.py`) |
-| **PP2** | `cf64daa` | Legacy `python/tests/` shadow delete — 241 files byte-identical to `SlapPyEngineTests/python_tests/` per sha256 diff; zero novel content; readiness audit gate 6 flipped GREEN | — (audit doc updated) |
+| **PP2** | `cf64daa` | Legacy `python/tests/` shadow delete — 241 files byte-identical to `PharosEngineTests/python_tests/` per sha256 diff; zero novel content; readiness audit gate 6 flipped GREEN | — (audit doc updated) |
 | **PP3** | `a08b805` | F1 Rust mod-decl audit — swept 14 tracked `.rs` files vs `src/lib.rs`; **zero mod-decl lag** (all tracked modules declared and registered); 4 untracked F1 files re-scope to gate 11 (WIP unfreeze); readiness gate 9 flipped GREEN for tracked scope | — (audit doc updated) |
 | **PP4** | `38ebf65` | 8 demo test-smoke closures — `test_demo_hello_3d_layer.py`, `_hello_bake.py`, `_hello_lighting.py`, `_hello_physics.py`, `_hello_pixel.py`, `_hello_studio.py`, `_hello_world.py`, `_humanoid_standing.py`; readiness gate 8 delta closed | 8 demo tests |
 | **PP5** | `7fd7257` | 6 new hand-authored API refs for JJ/KK/LL Nova3D-parity landings: `api/animation_skeleton.md`, `api/asset_import.md`, `api/capture.md`, `api/render_bvh_3d.md`, `api/render_scene_walker.md`, `api/render_shadows.md`; inventory updated | — (docs-only) |
@@ -305,11 +305,11 @@ slot; folded into the tag sprint.
 
 ### Key hello_* demos (r5-relevant)
 
-* `SlapPyEngineExamples/examples/hello_render_real_hud.py` — OO3, HUD +
+* `PharosEngineExamples/examples/hello_render_real_hud.py` — OO3, HUD +
   real-asset combined.
-* `SlapPyEngineExamples/examples/hello_export_cli.py` — OO5, LL6 CLI
+* `PharosEngineExamples/examples/hello_export_cli.py` — OO5, LL6 CLI
   walkthrough.
-* `SlapPyEngineExamples/examples/hello_rust_bypass.py` — PP7, HH8
+* `PharosEngineExamples/examples/hello_rust_bypass.py` — PP7, HH8
   `_core_facade` demo.
 
 ---

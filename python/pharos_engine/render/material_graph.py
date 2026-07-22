@@ -1,7 +1,7 @@
 """PBR material graph — Python node graph that compiles to a WGSL fragment shader.
 
 Node graph inspired by Nova3D `AdvancedMaterial` / `MaterialGraphEditor`, but
-implemented in pure Python for the SlapPy PyPI wrapper. Constant folding and
+implemented in pure Python for the Pharos PyPI wrapper. Constant folding and
 uniform baking are delegated to `_core.material_eval.bake_material_constants`
 when the Rust core is available.
 

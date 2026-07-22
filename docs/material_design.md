@@ -225,7 +225,7 @@ factory is referenced (`UVNode`, `NodeMaterial`, …). This matters for:
 - Startup latency on the engine's "import everything" smoke test.
 
 The lazy import is asserted by
-`SlapPyEngineTests/tests/test_material_lazy_import.py` — adding a
+`PharosEngineTests/tests/test_material_lazy_import.py` — adding a
 top-level import of `node_material` in `__init__.py` breaks the test.
 
 ## Performance

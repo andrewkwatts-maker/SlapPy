@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pharos_engine.engine import Engine
 
-_RECENT_FILE = Path.home() / ".SlapPyEngine" / "recent_projects.json"
+_RECENT_FILE = Path.home() / ".Pharos Engine" / "recent_projects.json"
 _MAX_RECENT = 10
 _PROJ_FILE = "project.slap_proj"
 
@@ -227,7 +227,7 @@ class ProjectManager:
         except ImportError:
             raise ImportError(
                 "pywebview is required for the Project Manager.\n"
-                "Install it with: pip install SlapPyEngine[editor]"
+                "Install it with: pip install Pharos Engine[editor]"
             )
 
         html_path = Path(__file__).parent / "project_ui.html"
@@ -237,7 +237,7 @@ class ProjectManager:
             html = _FALLBACK_HTML
 
         self._window = webview.create_window(
-            title="SlapPyEngine — Project Manager",
+            title="Pharos Engine — Project Manager",
             html=html,
             js_api=self._api,
             width=1024,
@@ -254,8 +254,8 @@ class ProjectManager:
 
 
 _FALLBACK_HTML = """<!DOCTYPE html>
-<html><head><title>SlapPyEngine</title>
+<html><head><title>Pharos Engine</title>
 <style>body{background:#0d0d14;color:#ccc;font-family:monospace;display:flex;
 align-items:center;justify-content:center;height:100vh;margin:0}
 h1{color:#7af}</style></head>
-<body><h1>SlapPyEngine Project Manager</h1><p>project_ui.html not found</p></body></html>"""
+<body><h1>Pharos Engine Project Manager</h1><p>project_ui.html not found</p></body></html>"""

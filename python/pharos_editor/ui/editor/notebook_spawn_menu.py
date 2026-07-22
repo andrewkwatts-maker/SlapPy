@@ -307,7 +307,7 @@ class NotebookSpawnMenu:
     # :meth:`record_recent`. The relative path is joined against the
     # active project root; the LRU list is capped so old cards fall off.
     RECENT_MAX: int = 5
-    RECENT_YAML_RELPATH: str = ".slappy/recent_spawns.yaml"
+    RECENT_YAML_RELPATH: str = ".pharos/recent_spawns.yaml"
 
     # ------------------------------------------------------------------
 
@@ -403,7 +403,7 @@ class NotebookSpawnMenu:
         """Bind the project *root* for the persistent recents file.
 
         Passing ``None`` leaves recents in memory only; setting a path
-        loads any existing ``<root>/.slappy/recent_spawns.yaml`` file.
+        loads any existing ``<root>/.pharos/recent_spawns.yaml`` file.
 
         Returns
         -------

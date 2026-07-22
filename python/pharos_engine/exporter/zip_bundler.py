@@ -1,4 +1,4 @@
-"""ZIP bundling for the SlapPyEngine exporter (LL6).
+"""ZIP bundling for the Pharos Engine exporter (LL6).
 
 Walks a scaffolded project tree and produces a distributable ZIP that
 contains only the files an end-user needs to run the game.
@@ -11,14 +11,14 @@ Always excluded (regardless of caller):
 * ``__pycache__/`` and any ``*.pyc`` bytecode
 * ``.venv/`` / ``venv/`` / ``env/`` (developer virtualenvs)
 * ``build/`` and ``dist/`` (previous export artefacts)
-* ``.slappy/temp/`` (engine-managed temp state)
+* ``.pharos/temp/`` (engine-managed temp state)
 * ``*.log`` files (developer noise)
 
 Always included when present:
 
 * ``main.py`` / ``begin.py`` / ``tick.py`` / ``end.py``
 * ``config.yaml``
-* ``slappyproject.yaml`` (manifest)
+* ``pharosproject.yaml`` (manifest)
 * ``assets/`` and ``scenes/`` subtrees
 * Launcher scripts (``launch.*``) if the project scaffolded them
 
@@ -79,8 +79,8 @@ DEFAULT_EXCLUDES: tuple[str, ...] = (
     "build/*",
     "dist",
     "dist/*",
-    ".slappy/temp",
-    ".slappy/temp/*",
+    ".pharos/temp",
+    ".pharos/temp/*",
     "*.log",
     ".DS_Store",
     "*/.DS_Store",

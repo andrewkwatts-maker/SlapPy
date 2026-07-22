@@ -44,13 +44,13 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# SlapPyEngine asset files (keep example ones)
+# Pharos Engine asset files (keep example ones)
 *.slap
-!SlapPyEngineExamples/examples/**/*.slap
+!PharosEngineExamples/examples/**/*.slap
 
 # Visual test output (generated PNGs and videos, not committed)
-SlapPyEngineTests/tests/visual/output/
-SlapPyEngineTests/tests/output/
+PharosEngineTests/tests/visual/output/
+PharosEngineTests/tests/output/
 
 # Audit / profiling artefacts (regenerated on demand)
 _audit_snapshots/
@@ -61,16 +61,16 @@ _prof_*.py
 docs/visual_diffs/
 
 # Generated example outputs (gallery artefacts re-included below)
-SlapPyEngineExamples/examples/output/**
-!SlapPyEngineExamples/examples/output/hello_gi/hello_gi.png
-!SlapPyEngineExamples/examples/output/humanoid/humanoid_ik_terrain.gif
-!SlapPyEngineExamples/examples/output/humanoid/humanoid_walking.gif
-!SlapPyEngineExamples/examples/output/ragdoll/hello_ragdoll.gif
-!SlapPyEngineExamples/examples/output/rope/hello_rope.png
-!SlapPyEngineExamples/examples/output/studio/hello_studio.gif
+PharosEngineExamples/examples/output/**
+!PharosEngineExamples/examples/output/hello_gi/hello_gi.png
+!PharosEngineExamples/examples/output/humanoid/humanoid_ik_terrain.gif
+!PharosEngineExamples/examples/output/humanoid/humanoid_walking.gif
+!PharosEngineExamples/examples/output/ragdoll/hello_ragdoll.gif
+!PharosEngineExamples/examples/output/rope/hello_rope.png
+!PharosEngineExamples/examples/output/studio/hello_studio.gif
 
 # Legacy example regeneration target
-SlapPyEngineExamples/examples/legacy/output/
+PharosEngineExamples/examples/legacy/output/
 
 # UI concept art — reference assets, always tracked
 !UIConceptArt/*.jfif

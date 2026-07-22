@@ -71,7 +71,7 @@ def _is_simple_value_dict(value: Any) -> bool:
 def _is_engine_object(value: Any) -> bool:
     """Return True for complex engine objects that should not be shown inline.
 
-    An engine object is anything whose type lives in a ``SlapPyEngine.*``
+    An engine object is anything whose type lives in a ``Pharos Engine.*``
     module and is *not* a dataclass (dataclasses are considered plain data).
     A list containing at least one non-primitive item is also treated as complex.
 

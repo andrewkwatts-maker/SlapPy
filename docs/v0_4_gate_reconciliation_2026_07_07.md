@@ -340,7 +340,7 @@ version constants, regenerate `engine_surface_v030.md` (rename to
 from `YYYY-MM-DD` to `2026-07-07`, update `test_projects.py` fixtures,
 re-run `test_version_consistency.py` — closes gates 1, 2, 14.
 Slot 2: skip audit sweep (`grep -rn "pytest.mark.skip\|pytest.skip\|
-@skipif" SlapPyEngineTests/tests/`) → docs entry per hit → closes
+@skipif" PharosEngineTests/tests/`) → docs entry per hit → closes
 gate 7. Slot 3: game-compat tripwire re-run (Ochema 1124/1126 + Bullet
 54/54) → closes gate 12. **Prerequisite** (per SS5 walk 2026-07-07):
 clone both game repos onto the workstation first; see

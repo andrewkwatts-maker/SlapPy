@@ -1,5 +1,5 @@
 ﻿"""
-SlapPyEngine.split_screen
+Pharos Engine.split_screen
 =========================
 
 N-way split-screen viewport management.

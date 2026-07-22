@@ -5,7 +5,7 @@ Backs the ``view.toggle_wireframe``
 STUB-triage sprint tick (round 17).
 
 Every 3D DCC ships a "wireframe mode" hotkey (Blender ``Z → Wireframe``,
-Maya ``4`` / ``5``, Unity's shading dropdown). In SlapPyEngine the
+Maya ``4`` / ``5``, Unity's shading dropdown). In Pharos Engine the
 viewport renderer consults ``shell._wireframe_visible`` before drawing
 each mesh; the helper flips that flag and returns the *new* state so
 tests + toast strings can echo the change.

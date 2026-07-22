@@ -1,6 +1,6 @@
 """Extension shim — re-exports from pharos_engine.fluid_sim.
 
-This module's canonical home is SlapPyEngine.ext.fluid_sim.
+This module's canonical home is Pharos Engine.ext.fluid_sim.
 Import via either path; both are supported.
 """
 from pharos_engine.fluid_sim import (

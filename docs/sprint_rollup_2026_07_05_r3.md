@@ -1,7 +1,7 @@
 # Sprint Rollup r3 — HH through LL Batches (post-Nova3D-parity)
 
 Consolidated retrospective of the four-batch scrum push that took
-SlapPyEngine from the GG7 big-picture status report (2026-07-05 morning,
+Pharos Engine from the GG7 big-picture status report (2026-07-05 morning,
 `824db96`) to the LL5 acceptance-test demo (`670d91c`,
 `hello_gltf_character`). This is the r3 rollup — the third in the
 series after BB5 (`docs/sprint_rollup_2026_07_04.md`, V–DD) and EE5
@@ -194,7 +194,7 @@ Commit: `06617b4`. File: `docs/nova3d_gap_audit_2026_07_05.md`
 (610 lines).
 
 Read-only comparison of Nova3D C++ engine (`H:\Github\Nova3D\engine\`,
-44 subdirectories, ~950 files) against SlapPyEngine's Python surface.
+44 subdirectories, ~950 files) against Pharos Engine's Python surface.
 Tally: **12 WIRED / 20 PARTIAL / 10 GAP / 1 N/A** across Nova3D's 44
 subsystems.
 
@@ -303,7 +303,7 @@ comes next.
 ### II1 — Rust bypass docs + test suite
 
 Commit: `585a883`. File: `docs/rust_bypass_2026_07_05.md`,
-`SlapPyEngineTests/tests/test_core_facade.py`.
+`PharosEngineTests/tests/test_core_facade.py`.
 
 Documents when to use `_core_facade` (tight inner loops, benchmark
 suites, C-extension consumers) vs the Python wrappers (regular engine
@@ -314,7 +314,7 @@ callable, plus a benchmark that measures wrapper overhead
 ### II2 — `ui.runtime` tests (HH7 followup)
 
 Commit: `1c7818c`. Files:
-`SlapPyEngineTests/tests/test_ui_runtime_*.py` (multiple).
+`PharosEngineTests/tests/test_ui_runtime_*.py` (multiple).
 
 Coverage: `draw_command` ordering, immediate-mode layout, text layout,
 HUD kit widgets, theme bridge, null backend fidelity. All headless.
@@ -337,7 +337,7 @@ end-to-end without stubs.
 ### II4 — `hello_render` (2-line demo)
 
 Commit: `5c7e130`. File:
-`SlapPyEngineExamples/examples/hello_render.py`.
+`PharosEngineExamples/examples/hello_render.py`.
 
 The literal 2-line demo:
 
@@ -346,8 +346,8 @@ import pharos_engine as slap
 slap.launch().load_model("cube.gltf").run()
 ```
 
-Ships with a `cube.gltf` fixture under `SlapPyEngineExamples/assets/`.
-Headless test at `SlapPyEngineTests/tests/test_demo_hello_render.py`
+Ships with a `cube.gltf` fixture under `PharosEngineExamples/assets/`.
+Headless test at `PharosEngineTests/tests/test_demo_hello_render.py`
 runs it and reads back a frame.
 
 ### II5 — STUB triage round 11
@@ -603,7 +603,7 @@ sound ids → file paths + default volume/pitch/loop; hot-reload.
 ### LL5 — hello_gltf_character (Sprint 20 acceptance)
 
 Commit: `670d91c`. File:
-`SlapPyEngineExamples/examples/hello_gltf_character.py`.
+`PharosEngineExamples/examples/hello_gltf_character.py`.
 
 **The acceptance test for Sprints 1-7.** Loads a rigged glTF fixture
 (procedural rigged-cube stand-in; real bunny.obj is deferred as a
@@ -612,7 +612,7 @@ Commit: `670d91c`. File:
 60 frames via LL2. Golden trace at
 `hello_gltf_character_trace.yaml`.
 
-A green run means SlapPyEngine reached HH3-defined 3D content-pipeline
+A green run means Pharos Engine reached HH3-defined 3D content-pipeline
 parity minus the deprioritised "fancy" items.
 
 ### LL6 — Cross-platform exporter + `slap export`
@@ -714,7 +714,7 @@ ids).
     1000-blade + LL4 audio_3d pan ratio + LL5 gltf_character golden +
     LL6 exporter dry-run + LL7 physics3_bridge SAP ≈ 200-400 new.
 * **Aggregate order-of-magnitude at LL close: ~5500+ tests running**
-  across `SlapPyEngineTests/tests/`. No batch reported a red suite in
+  across `PharosEngineTests/tests/`. No batch reported a red suite in
   the r3 window.
 
 ### Rust `_core` module count
@@ -756,7 +756,7 @@ ids).
 
 ### Demos
 
-* **hello_* demos shipped**: **33** (per `SlapPyEngineExamples/examples/`
+* **hello_* demos shipped**: **33** (per `PharosEngineExamples/examples/`
   listing). r3 additions: `hello_render` (II4), `hello_gltf_character`
   (LL5).
 
@@ -851,7 +851,7 @@ because ripping / re-baking the classic Stanford Bunny into a rigged
 glTF was out of scope. A one-slot sprint could:
 
 * Source a public-domain rigged bunny (or a knock-off) as glTF.
-* Ship it under `SlapPyEngineExamples/assets/`.
+* Ship it under `PharosEngineExamples/assets/`.
 * Add `hello_render_real.py` — the 2-line demo running against the
   real asset (not a fixture).
 
@@ -886,7 +886,7 @@ Extends GG7 §7 with r3-specific risks.
 | **ffmpeg PATH dependency for LL2** | Medium | Low | LL2 defaults to `av` (Python-native) backend if it's installed. `ffmpeg` backend gracefully degrades to a warning + no-op if the binary isn't found. |
 | **PyInstaller wheel bundling for LL6** | Medium | High | LL6 exporter dry-run-tested but no full-wheel bundle has been produced in CI. First real `slap export --target windows` will likely surface hidden-import / data-file issues. Mitigation: dry-run test suite covers spec-file contents; real export is a "manual smoke test" during hardening pass. |
 | **`physics3_bridge` fallback fidelity (LL7)** | Medium | Medium | The SAP fallback is a broadphase only; there's no 3D solver behind it. LL5 demo works because it never issues 3D contacts. Any real 3D physics test needs the WIP tree unpinned. Mitigation: LL7 explicitly documents itself as a shim. |
-| **glTF fixture assets under `SlapPyEngineExamples/assets/`** | Low | Low | Fixtures are procedural rigged cubes, not licensed real assets. Users trying `slap.launch().load_model("real_asset.gltf")` need to source assets themselves. |
+| **glTF fixture assets under `PharosEngineExamples/assets/`** | Low | Low | Fixtures are procedural rigged cubes, not licensed real assets. Users trying `slap.launch().load_model("real_asset.gltf")` need to source assets themselves. |
 | **Runtime HUD ↔ editor UI drift (LL1 / HH7)** | Low | Medium | Two UI stacks (DPG editor + `ui.runtime` immediate mode) share a theme via `theme_bridge`; future theme edits must update both. Mitigation: `ui/runtime/dpg_bridge.py` cross-tests both. |
 | **All r3 sprints landed without cross-agent review** | Low | Medium | Every sprint is single-agent + test-covered + green. But there's been no synchronous multi-agent code review of the JJ+KK+LL landings. Mitigation: 10.1 hardening sweep will catch silent-acceptance bugs. |
 | **Rest of GG7 risks still apply** | — | — | Wheel size drift, PyO3 upgrade, DPG headless quirks, cross-agent commit races, silent rate-limit drops, silent-acceptance regressions, float-precision drift, untracked-file bloat, `src/lib.rs` mod-declaration lag, Nova3D legacy panels — all unchanged from GG7 §7. |
@@ -922,7 +922,7 @@ Extends GG7 §7 with r3-specific risks.
   `_safe_wgpu` for JJ1+ — real adapter is optional, null-backend
   always available).
 * Every new subpackage has a headless smoke test at
-  `SlapPyEngineTests/tests/test_<subsystem>_*.py`.
+  `PharosEngineTests/tests/test_<subsystem>_*.py`.
 * Golden-trace demos (`hello_*_trace.yaml`) are the acceptance test
   for end-to-end demos — see `hello_gltf_character_trace.yaml` for the
   parity milestone.
@@ -944,23 +944,23 @@ Extends GG7 §7 with r3-specific risks.
 
 ### Docs authored / consumed in r3 window
 
-* `H:\Github\SlapPyEngine\docs\sprint_rollup_2026_07_04.md` — BB5 + EE5
+* `H:\Github\Pharos Engine\docs\sprint_rollup_2026_07_04.md` — BB5 + EE5
   V–DD rollup (input).
-* `H:\Github\SlapPyEngine\docs\big_picture_2026_07_05.md` — GG7
+* `H:\Github\Pharos Engine\docs\big_picture_2026_07_05.md` — GG7
   big-picture status (input to HH3 + II7).
-* `H:\Github\SlapPyEngine\docs\feature_map_delta_2026_07_04_v2.md` —
+* `H:\Github\Pharos Engine\docs\feature_map_delta_2026_07_04_v2.md` —
   EE5 post-DD delta (input).
-* `H:\Github\SlapPyEngine\docs\nova3d_gap_audit_2026_07_05.md` — HH3
+* `H:\Github\Pharos Engine\docs\nova3d_gap_audit_2026_07_05.md` — HH3
   gap audit (610 lines).
-* `H:\Github\SlapPyEngine\docs\nova3d_parity_sprint_plan_2026_07_05.md`
+* `H:\Github\Pharos Engine\docs\nova3d_parity_sprint_plan_2026_07_05.md`
   — II7 20-sprint plan (645 lines).
-* `H:\Github\SlapPyEngine\docs\rust_migration_audit_2026_07_05.md` —
+* `H:\Github\Pharos Engine\docs\rust_migration_audit_2026_07_05.md` —
   FF4 audit (input to r3's Rust-porting recommendations).
-* `H:\Github\SlapPyEngine\docs\rust_bypass_2026_07_05.md` — II1 bypass
+* `H:\Github\Pharos Engine\docs\rust_bypass_2026_07_05.md` — II1 bypass
   docs.
-* `H:\Github\SlapPyEngine\docs\pyproject_extras_2026_07_05.md` — II6
+* `H:\Github\Pharos Engine\docs\pyproject_extras_2026_07_05.md` — II6
   extras split.
-* **`H:\Github\SlapPyEngine\docs\sprint_rollup_2026_07_05_r3.md`** —
+* **`H:\Github\Pharos Engine\docs\sprint_rollup_2026_07_05_r3.md`** —
   this doc, MM4.
 
 ### Historical rollups
@@ -971,14 +971,14 @@ Extends GG7 §7 with r3-specific risks.
 
 ### Key hello_* demos
 
-* `SlapPyEngineExamples/examples/hello_render.py` — II4, 2-line demo.
-* `SlapPyEngineExamples/examples/hello_gltf_character.py` — LL5,
+* `PharosEngineExamples/examples/hello_render.py` — II4, 2-line demo.
+* `PharosEngineExamples/examples/hello_gltf_character.py` — LL5,
   Nova3D parity acceptance test.
-* `SlapPyEngineExamples/examples/hello_scene_reg.py` — FF7, scene
+* `PharosEngineExamples/examples/hello_scene_reg.py` — FF7, scene
   registry walkthrough.
-* `SlapPyEngineExamples/examples/hello_v2_showcase.py` — EE2, 15+
+* `PharosEngineExamples/examples/hello_v2_showcase.py` — EE2, 15+
   subsystem mega-demo.
-* `SlapPyEngineExamples/examples/hello_full_editor.py` — AA5,
+* `PharosEngineExamples/examples/hello_full_editor.py` — AA5,
   37-event scripted editor session.
 
 ---
@@ -1018,5 +1018,5 @@ against `docs/sprint_rollup_2026_07_04.md` (r1), `docs/big_picture_
 2026_07_05.md` (r2 = GG7), `docs/feature_map_delta_2026_07_04_v2.md`
 (EE5), `docs/nova3d_gap_audit_2026_07_05.md` (HH3), `docs/nova3d_
 parity_sprint_plan_2026_07_05.md` (II7). All 20 II7 parity sprints
-verified against the live source tree at `H:\Github\SlapPyEngine\
-python\pharos_engine\` and `SlapPyEngineExamples\examples\`.*
+verified against the live source tree at `H:\Github\Pharos Engine\
+python\pharos_engine\` and `PharosEngineExamples\examples\`.*

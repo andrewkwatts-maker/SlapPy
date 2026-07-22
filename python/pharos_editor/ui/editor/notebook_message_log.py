@@ -610,7 +610,7 @@ class NotebookMessageLog:
             path = Path(path)
         lines = [m.format_line() for m in self.visible_messages]
         header = (
-            f"# SlapPyEngine session log — {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+            f"# Pharos Engine session log — {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
             f"# {len(lines)} messages\n"
         )
         try:

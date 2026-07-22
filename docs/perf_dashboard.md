@@ -1,4 +1,4 @@
-# SlapPyEngine perf dashboard -- 2026-05-30
+# Pharos Engine perf dashboard -- 2026-05-30
 
 ## At a glance
 

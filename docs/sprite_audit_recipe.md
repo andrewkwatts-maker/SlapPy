@@ -81,7 +81,7 @@ coverage).
 ## 5. Commit boundary
 
 The engine-side commit is just this recipe doc plus its companion test
-(`SlapPyEngineTests/tests/test_sprite_audit_recipe.py`). The sprite itself ships through the
+(`PharosEngineTests/tests/test_sprite_audit_recipe.py`). The sprite itself ships through the
 downstream game's own VCS (SVN for Ochema) — do not check binary art into
 the engine tree.
 
@@ -91,7 +91,7 @@ Cross-game sprite quality audit ran the procedure above against the
 engine's own bundled PNGs. Full inventory + analysis lives in
 `H:/tmp/sprite_audit_sprint2/inventory.md`; key results:
 
-- **Scope.** No repo-root `assets/` directory exists. `SlapPyEngineTests/tests/visual/reference/`
+- **Scope.** No repo-root `assets/` directory exists. `PharosEngineTests/tests/visual/reference/`
   only contains `.npy` numeric goldens. The only PNGs the engine ships are
   the 21 baselines under `python/pharos_engine/testing/baselines/`, which are
   full-frame render captures, not isolated sprites — they were still audited
@@ -102,7 +102,7 @@ engine's own bundled PNGs. Full inventory + analysis lives in
   heuristic (mean RGB on opaque dark-scene captures sits near grey-of-low-luma,
   which is by design for the chroma-spread metric tuned to UI sprites).
 - **Critical recommendation:** 0. The Sprint 2 anchor test
-  (`SlapPyEngineTests/tests/test_sprint_2_sprite_audit.py`) asserts
+  (`PharosEngineTests/tests/test_sprint_2_sprite_audit.py`) asserts
   `assess_quality(entry)['recommendation'] != "critical"` for every PNG.
 - **Regenerated:** 0. These are render goldens — rewriting them would
   invalidate the visual-regression suite they back.

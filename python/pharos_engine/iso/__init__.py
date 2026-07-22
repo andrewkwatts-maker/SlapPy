@@ -1,6 +1,6 @@
-"""SlapPyEngine.iso — Isometric 2D-grid-with-Z rendering subsystem.
+"""Pharos Engine.iso — Isometric 2D-grid-with-Z rendering subsystem.
 
-This subpackage adds isometric grid rendering to SlapPyEngine.  It has
+This subpackage adds isometric grid rendering to Pharos Engine.  It has
 **zero hard dependencies on wgpu** at import time; all rendering flows
 through the engine's existing pipeline.
 
@@ -19,7 +19,7 @@ Quick start::
 
 Public API
 ----------
-The following names are importable directly from ``SlapPyEngine.iso``:
+The following names are importable directly from ``Pharos Engine.iso``:
 """
 
 from .projection import IsoViewpoint

@@ -80,7 +80,7 @@ _MUTED_INK: tuple[int, int, int, int] = (90, 90, 110, 255)
 
 # Empty-state banner labels — polished BBB7 version now shows engine +
 # project info instead of only the "pick a critter" placeholder.
-_ENGINE_BANNER_LABEL = "SlapPyEngine"
+_ENGINE_BANNER_LABEL = "Pharos Engine"
 _PROJECT_BANNER_LABEL = "Project"
 _RECENT_ACTIVITY_LABEL = "Recent activity"
 _RECENT_ACTIVITY_EMPTY = "(no events yet — start the sim!)"
@@ -447,7 +447,7 @@ class NotebookInspector(InspectorDispatchMixin):
 
         Instead of the bare "pick a critter" placeholder, we now show:
 
-        1. Engine version banner (``SlapPyEngine v0.3.0b0``).
+        1. Engine version banner (``Pharos Engine v0.3.0b0``).
         2. Project banner (``Project: MyGame v0.3.0b0``) — suppressed
            when no project is active.
         3. Recent-activity mini-log (last 5 events from ``global_bus``).

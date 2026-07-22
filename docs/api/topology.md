@@ -1,7 +1,7 @@
 <!-- handauthored: do not regenerate -->
 # pharos_engine.topology — API Reference
 
-> Hand-written reference for the SS7 pass on the SlapPyEngine graph
+> Hand-written reference for the SS7 pass on the Pharos Engine graph
 > topology primitives. Owns connected-components / union-find on generic
 > edge-list graphs plus a legacy 2-D grid convenience form kept for the
 > old bond-solver call sites. Sibling references:

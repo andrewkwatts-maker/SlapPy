@@ -112,7 +112,7 @@ path or the formal v0.4.1 deferral sign-off.
 |---|---|---|---|
 | **SS1** | `40695fb` (salvage) | STUB triage round 20: 5 new WIRED action ids (`content.reveal_in_explorer` / `content.duplicate_folder` / `view.increase_pixel_scale` / `view.decrease_pixel_scale` / `spawn.stamp_repeat`); 4 new action modules + `__init__.py` + `tool_router.py` wiring | 62 (`test_actions_stub_triage_r20.py`, r19+r20 combined) |
 | **SS2** | `796cbb2` | Batch-4 demo smoke: `bullet_holes_demo`, `character_damage_demo`, `detonate_gallery_demo`, `glass_fracture_demo`, `ik_skeleton_demo` — each guards WIP-subpackage imports (physics/softbody/fluid) with clear skip-reason strings; on this workstation all 15/15 pass end-to-end | 15 (5 demo tests × 3 asserts) |
-| **SS3** | `40695fb` (salvage) | Skip audit sweep (`docs/skip_audit_2026_07_07.md`, 370 lines) — 291 skip sites walked across `SlapPyEngineTests/tests/**/*.py` (230 `pytest.skip` + 45 `importorskip` + 11 `skipif` + 4 `mark.skip` + 1 `mark.xfail`); zero silent-acceptance hits; every site categorised; **gate 7 flipped needs-verify → GREEN** | — (docs-only) |
+| **SS3** | `40695fb` (salvage) | Skip audit sweep (`docs/skip_audit_2026_07_07.md`, 370 lines) — 291 skip sites walked across `PharosEngineTests/tests/**/*.py` (230 `pytest.skip` + 45 `importorskip` + 11 `skipif` + 4 `mark.skip` + 1 `mark.xfail`); zero silent-acceptance hits; every site categorised; **gate 7 flipped needs-verify → GREEN** | — (docs-only) |
 | **SS4** | `40695fb` (salvage) | Perf re-baseline (`docs/perf_baseline_2026_07_07.md`, 182 lines) — 6-hot-path benchmark harness (`benchmarks/perf_baseline_2026_07_07.py`, 496 lines): raster.line_batch / raster.circle_batch / _core.hull.convex_hull / _core.ik_solver.solve / World3D.raycast (BVH + linear) / DiagnosticsCollector.install; BVH 13.7× vs linear at 500 bodies; no regression >20% vs baseline; **gate 13 flipped needs-verify → GREEN** | — (benchmark harness) |
 | **SS5** | **LOST / re-dispatched as TT1** | Game-compat tripwire walk BLOCKED — top-level `H:/Github/` walk (51 entries) found zero `ochema` / `bullet` / `strata` / `circuit` matches; `docs/game_compat_2026_07_07.md` (184 lines, swept by SS6 into `60bb55a`) documents the block and enumerates the two follow-up paths (clone-then-run vs. sign v0.4.1 deferral); **gate 12 still needs-verify** | — (docs-only) |
 | **SS6** | `60bb55a` | `DiagnosticsCollector.render_markdown_report(max_events, group_by)` — one-shot Markdown problem-panel with # Summary + ## Top subsystems + ## Recent events; `group_by` supports "subsystem" / "time" / "level"; `save_report(path, **kwargs)`; `App.diagnostics_report(**kwargs)` shim | 14 (`test_diagnostics_report.py`; OO6's 47 stay green) |
@@ -279,7 +279,7 @@ salvage. The pattern that works:
    the non-conflicting rows.
 
 Round 1 salvage rate ~30%; Round 2 salvage rate ~10% (per
-[`feedback_worktree_cherrypick_pattern.md`](../C:/Users/Andrew/.claude/projects/h--Github-SlapPyEngine/memory/feedback_worktree_cherrypick_pattern.md)
+[`feedback_worktree_cherrypick_pattern.md`](../C:/Users/Andrew/.claude/projects/h--Github-Pharos Engine/memory/feedback_worktree_cherrypick_pattern.md)
 tracker). r6 window continues the trend: only 4 of 21 slots (SS1 /
 SS3 / SS4 salvaged as one commit + SS5 LOST) needed intervention
 = **~19% salvage rate**, matching the Round-2 baseline.
@@ -302,7 +302,7 @@ TT1 was re-dispatched to pick up SS5's LOST slot. Two paths:
 
 1. **Clone-then-verify**: Clone Ochema Circuit + Bullet Strata onto
    `H:/Github/`, run the full test suite of each against the
-   pinned SlapPyEngine wheel, confirm 1124/1126 + 54/54 baselines
+   pinned Pharos Engine wheel, confirm 1124/1126 + 54/54 baselines
    (or diff). If green, **gate 12 flips to GREEN** and v0.4 is
    fully ship-ready modulo gate 1 + 11.
 2. **Sign v0.4.1 deferral**: Add a docs note (`docs/game_compat_2026_07_07.md`
@@ -402,9 +402,9 @@ open the v0.4.1 milestone tracker.
 
 ### Key hello_* demos (r6-relevant)
 
-* `SlapPyEngineExamples/examples/hello_diagnostics_hud.py` — QQ5,
+* `PharosEngineExamples/examples/hello_diagnostics_hud.py` — QQ5,
   OO6 collector into LL1 HUD.
-* `SlapPyEngineExamples/examples/hello_full_lifecycle.py` — RR5,
+* `PharosEngineExamples/examples/hello_full_lifecycle.py` — RR5,
   180-frame 8-subsystem flagship.
 
 ---

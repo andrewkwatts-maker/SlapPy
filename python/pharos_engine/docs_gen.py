@@ -1,4 +1,4 @@
-"""HTML reference documentation generator for SlapPyEngine.
+"""HTML reference documentation generator for Pharos Engine.
 
 Generates a single-page ``docs/reference.html`` from:
 - Engine public API (docstrings via ``inspect``)
@@ -35,7 +35,7 @@ _HTML_HEAD = """\
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SlapPyEngine — Reference</title>
+<title>Pharos Engine — Reference</title>
 <style>
   :root {{ --bg: #0d0d14; --fg: #d0d0e0; --accent: #4e9af1; --dim: #888;
           --code-bg: #161622; --border: #2a2a3e; }}
@@ -90,7 +90,7 @@ _HTML_HEAD = """\
   {nav_api_links}
 </nav>
 <main>
-<h1>SlapPyEngine — Reference</h1>
+<h1>Pharos Engine — Reference</h1>
 """
 
 _HTML_FOOT = """\

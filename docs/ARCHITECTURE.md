@@ -1,9 +1,9 @@
-# SlapPyEngine — Architecture Guide
+# Pharos Engine — Architecture Guide
 
 ## Repository Layout
 
 ```
-SlapPyEngine/
+Pharos Engine/
 ├── python/pharos_engine/          # Python package source
 │   └── compute/defaults/         # Default WGSL compute shaders
 ├── src/                          # Rust extension source (_core crate)

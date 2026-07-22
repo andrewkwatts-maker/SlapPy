@@ -1,4 +1,4 @@
-﻿"""YAML-backed configuration loader for SlapPyEngine.
+﻿"""YAML-backed configuration loader for Pharos Engine.
 
 Finds ``config/engine.yml`` (and optionally ``config/materials.yml``) relative
 to the package root, or at the directory given by the ``SLAPPY_CONFIG_DIR``
@@ -517,7 +517,7 @@ def engine_config(path: str | None = None) -> Config:
 
     On the first call the YAML file is read and parsed.  Subsequent calls
     return the cached instance regardless of *path*.  Pass *path* only during
-    initialisation (e.g. inside :class:`~SlapPyEngine.engine.Engine.__init__`).
+    initialisation (e.g. inside :class:`~Pharos Engine.engine.Engine.__init__`).
     """
     global _config_cache
     if _config_cache is None:

@@ -178,12 +178,12 @@ Commit: `774f1b0` (salvage). Files:
 * `python/pharos_engine/hud_bridge.py` — glue between `App` and the
   runtime UI HUD overlay (LL1).
 * `python/pharos_engine/app.py` — `App.enable_hud(...)` appended.
-* `SlapPyEngineExamples/examples/hello_hud.py` — scripted demo that
+* `PharosEngineExamples/examples/hello_hud.py` — scripted demo that
   boots App, enables HUD, cycles overlays.
-* `SlapPyEngineExamples/examples/hello_hud_trace.yaml` — golden
+* `PharosEngineExamples/examples/hello_hud_trace.yaml` — golden
   event trace (1048 lines).
-* `SlapPyEngineTests/tests/test_hud_bridge.py` — 29 tests.
-* `SlapPyEngineTests/tests/test_demo_hello_hud.py` — 151-line demo
+* `PharosEngineTests/tests/test_hud_bridge.py` — 29 tests.
+* `PharosEngineTests/tests/test_demo_hello_hud.py` — 151-line demo
   regression harness.
 
 Closes the r3 §10.4 "HUD overlay currently a runtime overlay; the
@@ -214,7 +214,7 @@ with the MM + NN batches.
 ### MM5 — `hello_showcase_v3` mega-demo
 
 Commit: `774f1b0` (salvage). File:
-`SlapPyEngineExamples/examples/hello_showcase_v3.py` (1406 lines).
+`PharosEngineExamples/examples/hello_showcase_v3.py` (1406 lines).
 
 Scripted demo exercising ≥25 subsystems in one end-to-end run —
 renderer + asset_import + animation + lighting + shadow + SSAO +
@@ -243,12 +243,12 @@ rounds**.
 
 Commit: `774f1b0` (salvage). Files:
 
-* `SlapPyEngineExamples/examples/assets/_generate_bunny.py` (303
+* `PharosEngineExamples/examples/assets/_generate_bunny.py` (303
   LoC) — procedural low-poly bunny generator (spherical
   triangulation + deformation).
-* `SlapPyEngineExamples/examples/assets/bunny_low.obj` (991 LoC).
-* `SlapPyEngineExamples/examples/assets/bunny_low.mtl` (8 LoC).
-* `SlapPyEngineExamples/examples/hello_render_real.py` (293 LoC) —
+* `PharosEngineExamples/examples/assets/bunny_low.obj` (991 LoC).
+* `PharosEngineExamples/examples/assets/bunny_low.mtl` (8 LoC).
+* `PharosEngineExamples/examples/hello_render_real.py` (293 LoC) —
   the 2-line demo against a real (non-fixture) asset.
 
 Closes r3 §10.5. Note the bunny is a procedurally-generated
@@ -429,7 +429,7 @@ MM5's `hello_showcase_v3.py` (25-subsystem end-to-end) and MM7's
 `hello_render_real.py` both ship without golden traces (the two
 agents died before dropping the test files). One follow-up sprint
 per demo captures a baseline trace + adds
-`SlapPyEngineTests/tests/test_demo_hello_showcase_v3.py` and
+`PharosEngineTests/tests/test_demo_hello_showcase_v3.py` and
 `test_demo_hello_render_real.py`.
 
 ### 7.5 Real Stanford Bunny asset — P2
@@ -437,7 +437,7 @@ per demo captures a baseline trace + adds
 MM7 ships a procedural low-poly bunny as the "real" asset. A P2
 follow-up could source a public-domain rigged Stanford Bunny (or
 canonical stand-in) glTF and ship it under
-`SlapPyEngineExamples/assets/`.
+`PharosEngineExamples/assets/`.
 
 ### 7.6 Ochema Circuit / Bullet Strata compat re-run — P1
 
@@ -551,21 +551,21 @@ Extends r3 §11.
 
 ### Docs authored / consumed in r4 window
 
-* `H:\Github\SlapPyEngine\docs\sprint_rollup_2026_07_05_r3.md` — r3
+* `H:\Github\Pharos Engine\docs\sprint_rollup_2026_07_05_r3.md` — r3
   (MM4, input).
-* `H:\Github\SlapPyEngine\docs\engine_feature_map_2026_07_04.md` —
+* `H:\Github\Pharos Engine\docs\engine_feature_map_2026_07_04.md` —
   MM3 extended (input).
-* `H:\Github\SlapPyEngine\docs\feature_map_delta_2026_07_04_v2.md`
+* `H:\Github\Pharos Engine\docs\feature_map_delta_2026_07_04_v2.md`
   — EE5 delta v2 (input).
-* `H:\Github\SlapPyEngine\docs\nova3d_gap_audit_2026_07_05.md` —
+* `H:\Github\Pharos Engine\docs\nova3d_gap_audit_2026_07_05.md` —
   HH3 (still current).
-* `H:\Github\SlapPyEngine\docs\nova3d_parity_sprint_plan_2026_07_05.md`
+* `H:\Github\Pharos Engine\docs\nova3d_parity_sprint_plan_2026_07_05.md`
   — II7 (all 20 sprints now landed).
-* **`H:\Github\SlapPyEngine\docs\sprint_rollup_2026_07_06.md`** —
+* **`H:\Github\Pharos Engine\docs\sprint_rollup_2026_07_06.md`** —
   this doc (NN6).
-* **`H:\Github\SlapPyEngine\docs\feature_map_delta_2026_07_06.md`**
+* **`H:\Github\Pharos Engine\docs\feature_map_delta_2026_07_06.md`**
   — delta v3 (NN6).
-* **`H:\Github\SlapPyEngine\docs\engine_surface_v030.md`** —
+* **`H:\Github\Pharos Engine\docs\engine_surface_v030.md`** —
   refreshed with HH1 + HH5 surface + `asset_import` subpackage
   (NN6).
 
@@ -579,15 +579,15 @@ Extends r3 §11.
 
 ### Key hello_* demos (r4-relevant)
 
-* `SlapPyEngineExamples/examples/hello_hud.py` — MM2, HUD bridge
+* `PharosEngineExamples/examples/hello_hud.py` — MM2, HUD bridge
   demo.
-* `SlapPyEngineExamples/examples/hello_showcase_v3.py` — MM5, 25+
+* `PharosEngineExamples/examples/hello_showcase_v3.py` — MM5, 25+
   subsystem end-to-end.
-* `SlapPyEngineExamples/examples/hello_render_real.py` — MM7,
+* `PharosEngineExamples/examples/hello_render_real.py` — MM7,
   second Nova3D-parity acceptance demo.
-* `SlapPyEngineExamples/examples/hello_gltf_character.py` — LL5,
+* `PharosEngineExamples/examples/hello_gltf_character.py` — LL5,
   first Nova3D-parity acceptance demo (still green).
-* `SlapPyEngineExamples/examples/hello_render.py` — II4, 2-line
+* `PharosEngineExamples/examples/hello_render.py` — II4, 2-line
   demo.
 
 ---
@@ -627,5 +627,5 @@ NN6's docs consolidation commit. Cross-referenced against
 `docs/sprint_rollup_2026_07_05_r3.md` (r3), `docs/feature_map_delta
 _2026_07_04_v2.md` (v2), `docs/engine_feature_map_2026_07_04.md`
 (post-MM3 baseline), and the live source tree at
-`H:\Github\SlapPyEngine\python\pharos_engine\` and
-`SlapPyEngineExamples\examples\`.*
+`H:\Github\Pharos Engine\python\pharos_engine\` and
+`PharosEngineExamples\examples\`.*

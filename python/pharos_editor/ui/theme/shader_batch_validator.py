@@ -104,7 +104,7 @@ class ValidationSummary:
 
 
 def _repo_root() -> Path:
-    """Locate the SlapPyEngine repo root by walking up from this file."""
+    """Locate the Pharos Engine repo root by walking up from this file."""
     here = Path(__file__).resolve()
     # ui/theme/ -> ui/ -> pharos_engine/ -> python/ -> repo root.
     for parent in here.parents:
@@ -130,7 +130,7 @@ WGSL_SEARCH_DIRS: list[tuple[str, str]] = [
 ]
 
 
-HELLO_EXAMPLES_REL = "SlapPyEngineExamples/examples"
+HELLO_EXAMPLES_REL = "PharosEngineExamples/examples"
 
 
 # Contract used for free-form ``*.wgsl`` files that were not authored to
@@ -309,7 +309,7 @@ def validate_all_shaders(
     ----------
     include_hello_examples:
         If ``True`` (default), the sweep also inspects
-        ``SlapPyEngineExamples/examples/*.wgsl`` — the CC2
+        ``PharosEngineExamples/examples/*.wgsl`` — the CC2
         hello-material-graph fixtures.
     include_baked:
         If ``True`` (default), any ``*.wgsl`` files that live under the

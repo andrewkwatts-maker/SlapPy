@@ -66,7 +66,7 @@ class EditorShell:
     def __init__(
         self,
         engine: "Engine",
-        title: str = "SlapPy Notebook",
+        title: str = "Pharos Notebook",
         width: int = 1400,
         height: int = 900,
         ui_settings: "UISettings | None" = None,
@@ -364,7 +364,7 @@ class EditorShell:
           preset / toggle pipeline,
         * the legacy ``<project>/layout.yaml`` file written by the older
           preset implementation, and
-        * the new ``<project>/.slappy/layout.yaml`` snapshot produced by
+        * the new ``<project>/.pharos/layout.yaml`` snapshot produced by
           :class:`LayoutPersistence` (or the user-wide fallback when no
           project is loaded).
 
@@ -383,7 +383,7 @@ class EditorShell:
                     legacy.unlink()
             except Exception:
                 pass
-        # Drop the new ``.slappy/layout.yaml`` snapshot.
+        # Drop the new ``.pharos/layout.yaml`` snapshot.
         persistence = getattr(self, "_layout_persistence", None)
         if persistence is not None:
             try:
@@ -1507,7 +1507,7 @@ class EditorShell:
         except ImportError as exc:
             raise ImportError(
                 "dearpygui is required for the editor shell. "
-                "Install it with: pip install SlapPyEngine[editor]"
+                "Install it with: pip install Pharos Engine[editor]"
             ) from exc
 
         width  = self._width
@@ -2564,7 +2564,7 @@ class EditorShell:
         except ImportError as exc:
             raise ImportError(
                 "dearpygui is required for the editor shell. "
-                "Install it with: pip install SlapPyEngine[editor]"
+                "Install it with: pip install Pharos Engine[editor]"
             ) from exc
 
         self._running = True
@@ -2893,7 +2893,7 @@ class EditorShell:
 
         # ── Layout persistence — re-root, then restore ─────────────────────
         # Re-construct the persistence handle against the project root so
-        # subsequent save()/load() target ``<project>/.slappy/layout.yaml``.
+        # subsequent save()/load() target ``<project>/.pharos/layout.yaml``.
         # When a layout exists on disk, replay it through ``apply_to_shell``.
         try:
             from pharos_editor.ui.editor.layout_persistence import (
@@ -3421,13 +3421,13 @@ class EditorShell:
             modal_tag = "menu_about_modal"
             if not dpg.does_item_exist(modal_tag):
                 with dpg.window(
-                    label="About SlapPy",
+                    label="About Pharos",
                     modal=True,
                     tag=modal_tag,
                     width=320,
                     height=160,
                 ):
-                    dpg.add_text(f"SlapPyEngine v{info['version']}")
+                    dpg.add_text(f"Pharos Engine v{info['version']}")
                     dpg.add_text(f"Codename: {info['codename']}")
                     dpg.add_text("Engine surface:")
                     dpg.add_text(info["engine_surface_url"], wrap=300)
@@ -3442,7 +3442,7 @@ class EditorShell:
                     pass
         except Exception:
             pass
-        self._set_status(f"SlapPyEngine v{info['version']}")
+        self._set_status(f"Pharos Engine v{info['version']}")
         return info
 
     @staticmethod

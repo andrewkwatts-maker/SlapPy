@@ -1,7 +1,7 @@
 <!-- handauthored: do not regenerate -->
 # pharos_engine.net — API Reference
 
-> Hand-written reference for the SlapPyEngine peer-to-peer multiplayer
+> Hand-written reference for the Pharos Engine peer-to-peer multiplayer
 > stack. Owns the deterministic lockstep sync layer, the UDP transport
 > with STUN + DHT + LAN peer discovery, and the human-readable room
 > code / DHT-key derivation. Sibling reference:
@@ -10,7 +10,7 @@
 
 ## Overview
 
-`pharos_engine.net` is the shipped multiplayer transport for SlapPyEngine
+`pharos_engine.net` is the shipped multiplayer transport for Pharos Engine
 games. It targets 2–8 player cooperative and competitive sessions over
 consumer NATs and exposes exactly one deterministic sync model —
 **frame-accurate lockstep** with input prediction across timeout windows.

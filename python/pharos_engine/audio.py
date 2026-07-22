@@ -1,7 +1,7 @@
 """
 Audio system — spatial sound playback via sounddevice + soundfile.
 
-Optional extra: pip install SlapPyEngine[audio]
+Optional extra: pip install Pharos Engine[audio]
 Falls back gracefully if sounddevice/soundfile not installed. When
 sounddevice is missing, the engine logs a single WARNING at import time
 (see `audio_runtime`) and playback becomes a no-op stub rather than

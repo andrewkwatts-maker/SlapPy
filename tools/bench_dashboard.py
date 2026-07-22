@@ -555,7 +555,7 @@ def compose_markdown(
     prev_path: Path,
 ) -> str:
     lines: list[str] = []
-    lines.append(f"# SlapPyEngine perf dashboard -- {date}")
+    lines.append(f"# Pharos Engine perf dashboard -- {date}")
     lines.append("")
 
     lines.append("## At a glance")

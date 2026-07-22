@@ -7,7 +7,7 @@ Responsibilities
 3. Check whether a specific model is installed.
 4. Stream ``ollama pull <model>`` progress to a caller-supplied callback.
 5. Orchestrate all of the above via :meth:`ensure_ready`.
-6. Persist AI settings to ~/.SlapPyEngine/ai_settings.json.
+6. Persist AI settings to ~/.Pharos Engine/ai_settings.json.
 
 No GUI code lives here — this module is pure logic so it can be unit-tested
 without a DPG context.
@@ -24,7 +24,7 @@ import urllib.request
 from pathlib import Path
 from typing import Callable
 
-_SETTINGS_DIR  = Path.home() / ".SlapPyEngine"
+_SETTINGS_DIR  = Path.home() / ".Pharos Engine"
 _SETTINGS_FILE = _SETTINGS_DIR / "ai_settings.json"
 
 _PERCENT_RE = re.compile(r"(\d+)%")
@@ -39,7 +39,7 @@ def load_ai_settings() -> dict:
 
 
 def save_ai_settings(settings: dict) -> None:
-    """Persist AI settings dict to ~/.SlapPyEngine/ai_settings.json."""
+    """Persist AI settings dict to ~/.Pharos Engine/ai_settings.json."""
     _SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
     _SETTINGS_FILE.write_text(json.dumps(settings, indent=2), encoding="utf-8")
 

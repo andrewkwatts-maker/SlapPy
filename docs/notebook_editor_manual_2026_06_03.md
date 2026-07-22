@@ -1,9 +1,9 @@
 # Notebook Editor — User Manual
 
-*A warm, friendly tour of the diary-themed SlapPyEngine editor.*
+*A warm, friendly tour of the diary-themed Pharos Engine editor.*
 
 Welcome! Pull up a chair, brew a cup of something, and crack the spine of
-your favourite notebook. This is the user-facing guide to the SlapPyEngine
+your favourite notebook. This is the user-facing guide to the Pharos Engine
 "Notebook" editor — the diary-flavoured re-skin of the Nova3D shell that
 lives under `python/pharos_engine/ui/editor/`. Every panel below is a
 real, shipping module; every keybinding works in the current build; every

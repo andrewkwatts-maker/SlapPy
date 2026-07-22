@@ -140,7 +140,7 @@ across the push:
   Node Editor.
 * **Bidirectional codegen** (V6) — Python AST ↔ Graph, on
   `visual_scripting.codegen`. Golden fixtures under
-  `SlapPyEngineTests/goldens/visual_scripting/` (arithmetic, assignment
+  `PharosEngineTests/goldens/visual_scripting/` (arithmetic, assignment
   reuse, boolean logic, comparison chain, for range, function call
   chain, nested if, while countdown). The Diary "Generate Python from
   nodes" button (row 79) still emits placeholder — planned one-line
@@ -181,13 +181,13 @@ Seven new hello_* demos landed (or fixed):
 
 | Demo | Batch | File | Notes |
 |------|-------|------|-------|
-| `hello_ragdoll` (fix) | W1 | `SlapPyEngineExamples/examples/hello_ragdoll.py` | Damping regression + tests. |
-| `hello_integrated_notebook` | W6 | `SlapPyEngineExamples/examples/hello_integrated_notebook.py` | DiaryShell + panels end-to-end. |
-| `hello_rope` (fix) | X2 | `SlapPyEngineExamples/examples/hello_rope.py` | Damping regression + tests. |
-| `hello_joint` (fix) | Y2 | `SlapPyEngineExamples/examples/hello_joint.py` | Damping fix + iters × damping metric. |
-| `hello_prefab` | Z4 | `SlapPyEngineExamples/examples/hello_prefab.py` | 4 baked prefabs (crate + ball + windmill + chain), 120 frames at 1/60 s, PIL rasterise. 12 entities. |
-| `hello_autosave` | Z4 | `SlapPyEngineExamples/examples/hello_autosave.py` | ~6 s of editor activity, AutosaveManager every 1 s + crash + RecoveryPrompt restore. |
-| `hello_full_editor` | AA5 | `SlapPyEngineExamples/examples/hello_full_editor.py` | Full scripted session: 6 pages, 5 outliner selects, 3-node NodeGraph (math.constant → math.mul → render.material_out), MaterialGraphBridge, `dreamy` chain preset, `sin(x)*a + b` math eval, autosave × 3 force_saves, 6 themes cycled. 37 events → `hello_full_editor_trace.yaml`. |
+| `hello_ragdoll` (fix) | W1 | `PharosEngineExamples/examples/hello_ragdoll.py` | Damping regression + tests. |
+| `hello_integrated_notebook` | W6 | `PharosEngineExamples/examples/hello_integrated_notebook.py` | DiaryShell + panels end-to-end. |
+| `hello_rope` (fix) | X2 | `PharosEngineExamples/examples/hello_rope.py` | Damping regression + tests. |
+| `hello_joint` (fix) | Y2 | `PharosEngineExamples/examples/hello_joint.py` | Damping fix + iters × damping metric. |
+| `hello_prefab` | Z4 | `PharosEngineExamples/examples/hello_prefab.py` | 4 baked prefabs (crate + ball + windmill + chain), 120 frames at 1/60 s, PIL rasterise. 12 entities. |
+| `hello_autosave` | Z4 | `PharosEngineExamples/examples/hello_autosave.py` | ~6 s of editor activity, AutosaveManager every 1 s + crash + RecoveryPrompt restore. |
+| `hello_full_editor` | AA5 | `PharosEngineExamples/examples/hello_full_editor.py` | Full scripted session: 6 pages, 5 outliner selects, 3-node NodeGraph (math.constant → math.mul → render.material_out), MaterialGraphBridge, `dreamy` chain preset, `sin(x)*a + b` math eval, autosave × 3 force_saves, 6 themes cycled. 37 events → `hello_full_editor_trace.yaml`. |
 
 ### Actions subpackage
 
@@ -397,7 +397,7 @@ reported by each sprint's commit message):
   commit reports 149 combined for the three rate-limited sprints).
 
 Aggregate order-of-magnitude: **~4476+ tests running** across
-`SlapPyEngineTests/tests/` at DD-close (roughly ~4000 at AA5 + 327 CC
+`PharosEngineTests/tests/` at DD-close (roughly ~4000 at AA5 + 327 CC
 + 149 DD). No batch reported a red suite. The seven rounds of STUB
 triage (X3 / Y1 / Z7 / AA1 / BB1 / CC1 / DD1 plus the pre-V post-V1
 tag_painter registration) collectively land 35 new router-action
@@ -479,76 +479,76 @@ Concrete follow-ups the nine batches deferred:
 
 Docs:
 
-* `H:\Github\SlapPyEngine\docs\engine_feature_map_2026_07_04.md` — the
+* `H:\Github\Pharos Engine\docs\engine_feature_map_2026_07_04.md` — the
   266-row feature-map with per-action WIRED / STUB / BROKEN status +
   X3 / Y1 / Z7 / AA1 patch sections at the tail.
-* `H:\Github\SlapPyEngine\docs\feature_map_delta_2026_07_04.md` — Y7
+* `H:\Github\Pharos Engine\docs\feature_map_delta_2026_07_04.md` — Y7
   delta re-audit (V/W/X features + 5 STUB→WIRED flips + drift risks).
-* `H:\Github\SlapPyEngine\docs\diary_softbody_bridge_2026_07_04.md` —
+* `H:\Github\Pharos Engine\docs\diary_softbody_bridge_2026_07_04.md` —
   AA3 investigation + shim documentation.
-* `H:\Github\SlapPyEngine\docs\master_review_2026_06_07.md` — the
+* `H:\Github\Pharos Engine\docs\master_review_2026_06_07.md` — the
   master review + 7-sprint refactor plan the V-batch was drawn from.
-* `H:\Github\SlapPyEngine\docs\consolidation_2026_06_07.md` — Nova3D
+* `H:\Github\Pharos Engine\docs\consolidation_2026_06_07.md` — Nova3D
   legacy inventory + deletion blockers.
-* `H:\Github\SlapPyEngine\docs\user_customization_2026_06_07.md` —
+* `H:\Github\Pharos Engine\docs\user_customization_2026_06_07.md` —
   `~/.pharos_engine/ui/` override folder guide (X6 landing).
-* `H:\Github\SlapPyEngine\docs\sprint_5_doc_inventory.md` — this rollup
+* `H:\Github\Pharos Engine\docs\sprint_5_doc_inventory.md` — this rollup
   is indexed here.
 
 Code hubs:
 
-* `H:\Github\SlapPyEngine\python\pharos_engine\actions\` — the 20-action
+* `H:\Github\Pharos Engine\python\pharos_engine\actions\` — the 20-action
   subpackage (X3 / Y1 / Z7 / AA1).
-* `H:\Github\SlapPyEngine\python\pharos_engine\prefabs\` — Y3 prefab
+* `H:\Github\Pharos Engine\python\pharos_engine\prefabs\` — Y3 prefab
   library + AA2 API polish. Baked `.prefab.yaml` under
   `python/pharos_engine/prefabs/baked/`.
-* `H:\Github\SlapPyEngine\python\pharos_engine\autosave.py` — Y6
+* `H:\Github\Pharos Engine\python\pharos_engine\autosave.py` — Y6
   AutosaveManager + RecoveryPrompt.
-* `H:\Github\SlapPyEngine\python\pharos_engine\project_registry.py` —
+* `H:\Github\Pharos Engine\python\pharos_engine\project_registry.py` —
   V2 multi-project management.
-* `H:\Github\SlapPyEngine\python\pharos_engine\visual_scripting\material_nodes.py`
+* `H:\Github\Pharos Engine\python\pharos_engine\visual_scripting\material_nodes.py`
   — V5 WGSL material graph nodes.
-* `H:\Github\SlapPyEngine\python\pharos_engine\visual_scripting\codegen.py`
+* `H:\Github\Pharos Engine\python\pharos_engine\visual_scripting\codegen.py`
   — V6 Python ↔ Graph bidirectional codegen.
-* `H:\Github\SlapPyEngine\python\pharos_engine\ui\editor\` — the notebook
+* `H:\Github\Pharos Engine\python\pharos_engine\ui\editor\` — the notebook
   editor panels. V/W/X/Y/Z/AA new panels: `notebook_startup_prompt.py`,
   `notebook_project_registry.py`, `notebook_snap_overlay.py`,
   `notebook_gizmo_overlay.py`, `notebook_message_log.py`,
   `notebook_prefab_menu.py`, `editor_autosave.py`,
   `diary_softbody_bridge.py`, plus AA4 `material_graph_bridge.py`.
-* `H:\Github\SlapPyEngine\python\pharos_engine\ui\theme\washi_tape\library.py`
+* `H:\Github\Pharos Engine\python\pharos_engine\ui\theme\washi_tape\library.py`
   — T2 (15) + V7 (8) shaders.
-* `H:\Github\SlapPyEngine\python\pharos_engine\ui\hotkeys\baked\` — AA7
+* `H:\Github\Pharos Engine\python\pharos_engine\ui\hotkeys\baked\` — AA7
   baked hotkey presets.
-* `H:\Github\SlapPyEngine\python\pharos_engine\post_process\chain_manifest.py`
+* `H:\Github\Pharos Engine\python\pharos_engine\post_process\chain_manifest.py`
   — X5 declarative chain manifest.
-* `H:\Github\SlapPyEngine\python\pharos_engine\shader_lint.py` — AA6
+* `H:\Github\Pharos Engine\python\pharos_engine\shader_lint.py` — AA6
   WGSL lint suite (53 shaders).
-* `H:\Github\SlapPyEngine\SlapPyEngineExamples\examples\hello_full_editor.py`
+* `H:\Github\Pharos Engine\PharosEngineExamples\examples\hello_full_editor.py`
   — AA5 full-stack editor demo.
-* `H:\Github\SlapPyEngine\SlapPyEngineExamples\examples\hello_material_graph.py`
+* `H:\Github\Pharos Engine\PharosEngineExamples\examples\hello_material_graph.py`
   — CC2 four-graph WGSL demo via V5+AA4 bridge.
-* `H:\Github\SlapPyEngine\SlapPyEngineExamples\examples\hello_toast_animation.py`
+* `H:\Github\Pharos Engine\PharosEngineExamples\examples\hello_toast_animation.py`
   — DD2 6-second CC5+CC6 walkthrough.
-* `H:\Github\SlapPyEngine\python\pharos_engine\ui\editor\baked_layouts\`
+* `H:\Github\Pharos Engine\python\pharos_engine\ui\editor\baked_layouts\`
   — CC4 6 baked layout presets.
-* `H:\Github\SlapPyEngine\python\pharos_engine\ui\editor\layout_baker.py`
+* `H:\Github\Pharos Engine\python\pharos_engine\ui\editor\layout_baker.py`
   — CC4 LayoutBaker.
-* `H:\Github\SlapPyEngine\python\pharos_engine\ui\editor\notebook_asset_inspector.py`
+* `H:\Github\Pharos Engine\python\pharos_engine\ui\editor\notebook_asset_inspector.py`
   — CC3 7-kind asset inspector.
-* `H:\Github\SlapPyEngine\python\pharos_engine\ui\editor\notebook_toast_manager.py`
+* `H:\Github\Pharos Engine\python\pharos_engine\ui\editor\notebook_toast_manager.py`
   — CC5 toast subsystem.
-* `H:\Github\SlapPyEngine\python\pharos_engine\ui\editor\notebook_command_palette.py`
+* `H:\Github\Pharos Engine\python\pharos_engine\ui\editor\notebook_command_palette.py`
   — CC7 Ctrl+Shift+P fuzzy finder.
-* `H:\Github\SlapPyEngine\python\pharos_engine\ui\editor\notebook_telemetry_dashboard.py`
+* `H:\Github\Pharos Engine\python\pharos_engine\ui\editor\notebook_telemetry_dashboard.py`
   — DD4 4-view telemetry panel.
-* `H:\Github\SlapPyEngine\python\pharos_engine\ui\editor\notebook_timeline_editor.py`
+* `H:\Github\Pharos Engine\python\pharos_engine\ui\editor\notebook_timeline_editor.py`
   — DD5 keyframe curve editor (salvage).
-* `H:\Github\SlapPyEngine\python\pharos_engine\actions\camera_animation_actions.py`
+* `H:\Github\Pharos Engine\python\pharos_engine\actions\camera_animation_actions.py`
   — CC6 CameraAnimator + 6 easing curves.
-* `H:\Github\SlapPyEngine\python\pharos_engine\smoke_runner.py`
+* `H:\Github\Pharos Engine\python\pharos_engine\smoke_runner.py`
   — DD3 SmokeRunner + parallel runner (salvage).
-* `H:\Github\SlapPyEngine\python\pharos_engine\ui\theme\shader_batch_validator.py`
+* `H:\Github\Pharos Engine\python\pharos_engine\ui\theme\shader_batch_validator.py`
   — DD6 WGSL batch validator + Markdown/YAML report.
 
 ---

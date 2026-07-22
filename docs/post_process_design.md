@@ -95,7 +95,7 @@ This is the **canonical** path for any non-trivial UBO. TAA, GTAO, and
 Bloom all use it. The class then carries its WGSL binding in the
 header comment for documentation and matches the struct layout
 byte-for-byte. Drift is caught by
-`SlapPyEngineTests/tests/test_post_process_base.py::test_bloom_params_to_bytes_matches_legacy_struct_pack`.
+`PharosEngineTests/tests/test_post_process_base.py::test_bloom_params_to_bytes_matches_legacy_struct_pack`.
 
 #### Worked example — Bloom (16-byte std140 UBO)
 

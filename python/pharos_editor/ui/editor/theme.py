@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 # ---------------------------------------------------------------------------
-# Glassmorphism dark theme for SlapPyEngine editor
+# Glassmorphism dark theme for Pharos Engine editor
 # All colour constants are (R, G, B) or (R, G, B, A) tuples in 0-255 range
 # as used by DPG.
 # ---------------------------------------------------------------------------

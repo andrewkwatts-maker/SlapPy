@@ -304,7 +304,7 @@ blocked; VV7 recommends DEFERRED-BY-DESIGN).
 
 ### API backcompat snapshot
 
-* **UU7 pinned snapshot** at `SlapPyEngineTests/tests/data/api_surface_snapshot.json`:
+* **UU7 pinned snapshot** at `PharosEngineTests/tests/data/api_surface_snapshot.json`:
   **338 public symbols across 14 modules** (`pharos_engine.__all__` +
   event_bus + entity + layer + render_target + asset + app + dynamics +
   physics3_bridge + diagnostics + hud_bridge + audio_3d + capture +
@@ -319,7 +319,7 @@ run since Round 2 established the direct-to-master norm. TT7's absorption
 of TT1's technical content into the r6 rollup commit was a working-tree
 race (not a rate-limit event); load-bearing TT1 attribution footer
 followed the RR6 precedent pattern per
-[`feedback_worktree_cherrypick_pattern.md`](../C:/Users/Andrew/.claude/projects/h--Github-SlapPyEngine/memory/feedback_worktree_cherrypick_pattern.md).
+[`feedback_worktree_cherrypick_pattern.md`](../C:/Users/Andrew/.claude/projects/h--Github-Pharos Engine/memory/feedback_worktree_cherrypick_pattern.md).
 
 **Round 3 salvage rate estimate**: ~5% (down from Round 2's ~10% and
 Round 1's ~30%). SHA-echo pattern and worktree-conflict-resolution
@@ -424,7 +424,7 @@ picks up sprint rollup r7 (this doc) at batch close.
 
 ### Key hello_* demos (r7-relevant)
 
-* `SlapPyEngineExamples/examples/hello_downstream_pattern.py` — VV5,
+* `PharosEngineExamples/examples/hello_downstream_pattern.py` — VV5,
   30-frame Observable+Asset subclass pattern exercising the exact
   class-of-gap that let TT1's 6+ silent backwards-incompat breaks
   past CI.

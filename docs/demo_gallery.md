@@ -1,14 +1,14 @@
 <!-- handauthored: do not regenerate -->
-# SlapPyEngine Demo Gallery
+# Pharos Engine Demo Gallery
 
 Curated tour of the engine's flagship runnable demos. Every entry below
 is reproducible from a clean clone with `PYTHONPATH=python` and the
 exact command shown. Generated artefacts live under
-`SlapPyEngineExamples/examples/output/<subdir>/` and are committed alongside this document so
+`PharosEngineExamples/examples/output/<subdir>/` and are committed alongside this document so
 the gallery renders correctly on GitHub and the docs site without a
 local engine install.
 
-For the full pass/fail audit of every script in `SlapPyEngineExamples/examples/` (47 demos,
+For the full pass/fail audit of every script in `PharosEngineExamples/examples/` (47 demos,
 47/47 GREEN as of the v3 audit) see
 [`examples_smoke_2026_06_01_v3.md`](examples_smoke_2026_06_01_v3.md).
 
@@ -19,12 +19,12 @@ master (engine `0.3.0b0`, Rust kernels live).
 
 | Demo | Artefact | One-line |
 |---|---|---|
-| [Hello Ragdoll](#hello-ragdoll) | `SlapPyEngineExamples/examples/output/ragdoll/hello_ragdoll.gif` | 6-bone ragdoll falls + tumbles on a flat floor; XPBD distance + angular joints. |
-| [Hello Studio](#hello-studio) | `SlapPyEngineExamples/examples/output/studio/hello_studio.gif` | 24-node rope hung between two pinned anchors, recorded via the unified `studio.record()` one-liner. |
-| [Humanoid Walking](#humanoid-walking) | `SlapPyEngineExamples/examples/output/humanoid/humanoid_walking.gif` | Textured biped strides L→R on a flat floor with 2-bone knee IK foot-plant. |
-| [Humanoid IK Terrain](#humanoid-ik-terrain) | `SlapPyEngineExamples/examples/output/humanoid/humanoid_ik_terrain.gif` | Same biped walks across a heightfield while the IK solver keeps feet planted on terrain. |
-| [Hello Rope](#hello-rope) | `SlapPyEngineExamples/examples/output/rope/hello_rope.png` | 24-node rope settles into a catenary droop between two pinned anchors (single-frame render). |
-| [Hello GI](#hello-gi) | `SlapPyEngineExamples/examples/output/hello_gi/hello_gi.png` | 3-panel showcase: direct only \| radiance cascade + noise \| SVGF-denoised. |
+| [Hello Ragdoll](#hello-ragdoll) | `PharosEngineExamples/examples/output/ragdoll/hello_ragdoll.gif` | 6-bone ragdoll falls + tumbles on a flat floor; XPBD distance + angular joints. |
+| [Hello Studio](#hello-studio) | `PharosEngineExamples/examples/output/studio/hello_studio.gif` | 24-node rope hung between two pinned anchors, recorded via the unified `studio.record()` one-liner. |
+| [Humanoid Walking](#humanoid-walking) | `PharosEngineExamples/examples/output/humanoid/humanoid_walking.gif` | Textured biped strides L→R on a flat floor with 2-bone knee IK foot-plant. |
+| [Humanoid IK Terrain](#humanoid-ik-terrain) | `PharosEngineExamples/examples/output/humanoid/humanoid_ik_terrain.gif` | Same biped walks across a heightfield while the IK solver keeps feet planted on terrain. |
+| [Hello Rope](#hello-rope) | `PharosEngineExamples/examples/output/rope/hello_rope.png` | 24-node rope settles into a catenary droop between two pinned anchors (single-frame render). |
+| [Hello GI](#hello-gi) | `PharosEngineExamples/examples/output/hello_gi/hello_gi.png` | 3-panel showcase: direct only \| radiance cascade + noise \| SVGF-denoised. |
 
 ## Hello Ragdoll
 
@@ -45,7 +45,7 @@ What it shows: 6 bones / 11 joints / dt = 1/60 / GIF_FPS = 30.
 
 The smoke harness drives this demo with `--frames 5 --no-gif` and
 verifies the summary dict. See
-[`hello_ragdoll.py`](../SlapPyEngineExamples/examples/hello_ragdoll.py) and the gallery
+[`hello_ragdoll.py`](../PharosEngineExamples/examples/hello_ragdoll.py) and the gallery
 entry in
 [`examples_smoke_2026_06_01_v3.md`](examples_smoke_2026_06_01_v3.md).
 
@@ -170,7 +170,7 @@ PYTHONPATH=python python examples/hello_gi.py
 ## See also
 
 - [`examples_smoke_2026_06_01_v3.md`](examples_smoke_2026_06_01_v3.md)
-  — read-only smoke audit of every `SlapPyEngineExamples/examples/*.py` (47/47 GREEN).
+  — read-only smoke audit of every `PharosEngineExamples/examples/*.py` (47/47 GREEN).
 - [`studio_quickstart.md`](studio_quickstart.md) — 5-minute tour of
   the `pharos_engine.studio` surface used by `hello_studio`.
 - [`getting_started.md`](getting_started.md) — game-dev tutorial that

@@ -1,7 +1,7 @@
 # Tool Routing Contract — 2026-06-07
 
 This document formalises the **editor tool-routing contract**: how every
-user-invocable action in the SlapPyEngine editor (button click, hotkey,
+user-invocable action in the Pharos Engine editor (button click, hotkey,
 menu item, spawn card, content-browser command) is dispatched into the
 Rust core wherever a Rust kernel exists, and into a Python fallback
 otherwise.
@@ -185,7 +185,7 @@ sample.
    the other fallback directly. Keeps the routing table the single
    source of truth.
 4. **Test it**: add a registration assertion in
-   `SlapPyEngineTests/tests/test_tool_router.py` so a future silent
+   `PharosEngineTests/tests/test_tool_router.py` so a future silent
    drop can't remove your action.
 
 ---
@@ -212,7 +212,7 @@ consumed ~0.5 ms per sample (8 µs × 60 samples/frame = 0.48 ms budget)
 before the router landed; Rust routing brings it under 60 µs total per
 frame, freeing a full ms for other work.
 
-*Numbers reproduce with `python -m pytest SlapPyEngineTests/benchmarks/bench_tool_router.py --benchmark-only` — not committed today; regenerate as needed.*
+*Numbers reproduce with `python -m pytest PharosEngineTests/benchmarks/bench_tool_router.py --benchmark-only` — not committed today; regenerate as needed.*
 
 ---
 
@@ -223,7 +223,7 @@ frame, freeing a full ms for other work.
 * `python/pharos_engine/ui/editor/notebook_hotkeys.py` — the hotkey table
 * `python/pharos_engine/ui/editor/notebook_spawn_menu.py` — `SPAWN_CARDS`
 * `python/pharos_engine/ui/editor/notebook_toolbar.py` — tool buttons
-* `SlapPyEngineTests/tests/test_tool_router.py` — 34-test suite
+* `PharosEngineTests/tests/test_tool_router.py` — 34-test suite
 * `docs/rust_port_audit_2026_06_02.md` — Rust surface inventory
 * `docs/rust_migration_plan.md` — migration steps
 

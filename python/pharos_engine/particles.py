@@ -260,7 +260,7 @@ class GpuParticleSystem:
     Parameters
     ----------
     ctx:
-        The active :class:`~SlapPyEngine.gpu.context.GPUContext`.
+        The active :class:`~Pharos Engine.gpu.context.GPUContext`.
     max_particles:
         Maximum number of simultaneously live particles.  The GPU buffer is
         allocated once at construction time.

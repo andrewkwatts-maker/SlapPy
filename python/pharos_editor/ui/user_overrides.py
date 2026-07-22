@@ -1,4 +1,4 @@
-"""User-override layer for the SlapPyEngine editor UI.
+"""User-override layer for the Pharos Engine editor UI.
 
 Users can drop Python files, YAML config, and WGSL shaders into
 ``~/.pharos_engine/ui/`` to extend or replace parts of the editor
@@ -928,14 +928,14 @@ class UserOverrideLoader:
 
 _README_BODIES: dict[str, str] = {
     "README.md": (
-        "# SlapPyEngine — User UI Overrides\n\n"
+        "# Pharos Engine — User UI Overrides\n\n"
         "Drop files under the subfolders here to extend the editor:\n\n"
         "* `panels/`        - custom editor panels (`.py`)\n"
         "* `hotkeys/`       - extra keybindings (`.yaml` + optional `commands.py`)\n"
         "* `spawn_actions/` - extra spawn cards (`.py`)\n"
         "* `shaders/`       - user WGSL for page linings / washi tape / edge strokes\n"
         "* `config.yaml`    - master toggles\n\n"
-        "See `docs/user_customization_2026_06_07.md` in the SlapPyEngine repo\n"
+        "See `docs/user_customization_2026_06_07.md` in the Pharos Engine repo\n"
         "for the full guide (5 worked examples).\n"
     ),
     "panels/README.md": (
@@ -991,7 +991,7 @@ _README_BODIES: dict[str, str] = {
 
 
 _DEFAULT_CONFIG_YAML: str = (
-    "# SlapPyEngine user override toggles\n"
+    "# Pharos Engine user override toggles\n"
     "enable_user_panels:        true\n"
     "enable_user_hotkeys:       true\n"
     "enable_user_spawn_actions: true\n"

@@ -217,7 +217,7 @@ frames = PanelFrameSet(
 
 ## Testing
 
-`SlapPyEngineTests/tests/test_edge_stroke_shaders.py` exercises the
+`PharosEngineTests/tests/test_edge_stroke_shaders.py` exercises the
 full surface — registry integrity, per-style WGSL validity, renderer
 shape / dtype / thickness, per-style alpha character, numpy fallback,
 theme colour propagation, `FrameStyle` integration, and validation
@@ -227,5 +227,5 @@ Run the suite:
 
 ```bash
 PYTHONPATH=python python -m pytest \
-    SlapPyEngineTests/tests/test_edge_stroke_shaders.py --no-header -q
+    PharosEngineTests/tests/test_edge_stroke_shaders.py --no-header -q
 ```

@@ -1,4 +1,4 @@
-"""SlapPyEngine project scaffolder.
+"""Pharos Engine project scaffolder.
 
 Usage::
 
@@ -188,7 +188,7 @@ def _slap_proj_manifest(name: str, template: str) -> str:
 def _readme(name: str) -> str:
     return (
         f"# {name}\n\n"
-        f"A SlapPyEngine project.\n\n"
+        f"A Pharos Engine project.\n\n"
         f"Run with: `python Source/main.py`\n"
     )
 
@@ -198,7 +198,7 @@ def _readme(name: str) -> str:
 # ---------------------------------------------------------------------------
 
 def scaffold_project(name: str, parent_dir: str, template: str = "blank") -> Path:
-    """Create a new SlapPyEngine project scaffold.
+    """Create a new Pharos Engine project scaffold.
 
     Parameters
     ----------

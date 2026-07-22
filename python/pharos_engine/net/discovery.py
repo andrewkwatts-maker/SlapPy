@@ -95,7 +95,7 @@ async def discover_peers_dht(
     Announces our presence at room_key, then looks up who else is there.
     Returns list of (ip, port) for discovered peers.
 
-    Requires: pip install SlapPyEngine[network]
+    Requires: pip install Pharos Engine[network]
     Falls back gracefully with a warning if kademlia is not installed.
     """
     try:
@@ -103,7 +103,7 @@ async def discover_peers_dht(
     except ImportError:
         logger.warning(
             "kademlia not installed — DHT peer discovery unavailable. "
-            "Install with: pip install SlapPyEngine[network]"
+            "Install with: pip install Pharos Engine[network]"
         )
         return []
 
@@ -173,7 +173,7 @@ async def discover_peers_lan(
     Broadcasts room_code on LAN multicast group 239.255.42.42 and collects
     responses from other peers on the same subnet.
 
-    The optional zeroconf package (pip install SlapPyEngine[network]) can
+    The optional zeroconf package (pip install Pharos Engine[network]) can
     supplement this with mDNS-based discovery, but the raw UDP multicast path
     works without it.
     """

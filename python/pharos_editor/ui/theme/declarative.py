@@ -1,7 +1,7 @@
 """Declarative "HTML5-like" theme spec parser.
 
 A hand-rolled recursive-descent parser + emitter that lets end users
-customize SlapPyEngine themes with a CSS-inspired grammar which compiles
+customize Pharos Engine themes with a CSS-inspired grammar which compiles
 into the existing :class:`~pharos_editor.ui.theme.theme_spec.ThemeSpec`
 runtime.
 

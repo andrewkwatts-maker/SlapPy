@@ -6,7 +6,7 @@ structure — every hand-authored ref file must carry the do-not-
 regenerate marker on line 1, use the `# pharos_engine.<X> — API
 Reference` H1, and provide one of the canonical landing H2s
 (`## Overview` / `## Public surface` / `## Usage`). Enforced by
-`SlapPyEngineTests/tests/test_docs_api_template_conformance.py`.
+`PharosEngineTests/tests/test_docs_api_template_conformance.py`.
 
 This file is **index-only** — no per-symbol content lives here. It
 tracks which shipped subpackages have references and which do not.

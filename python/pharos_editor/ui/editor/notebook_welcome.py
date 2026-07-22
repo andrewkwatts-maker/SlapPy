@@ -2,7 +2,7 @@
 
 The :class:`NotebookWelcome` panel is the editor's first-run "front
 cover" — a centred modal styled as a hand-drawn diary cover. It
-introduces SlapPyEngine with three warm onboarding cues:
+introduces Pharos Engine with three warm onboarding cues:
 
 1. A trio of *sticker demo cards* (fox / bunny / butterfly) that open
    one-click example demos:
@@ -334,7 +334,7 @@ class NotebookWelcome:
                 # Header row — the big handwritten title.
                 try:
                     dpg.add_text(
-                        "* SlapPy *", color=accent, tag=f"{self._panel_tag}_header",
+                        "* Pharos *", color=accent, tag=f"{self._panel_tag}_header",
                     )
                 except Exception:
                     pass

@@ -55,12 +55,12 @@ must be GREEN before touching version strings. Expected outputs
 below assume live commit around `c5b00e1` (YY3-verified 91.8% F1).
 
 ```
-$ PYTHONPATH=python python -m pytest SlapPyEngineTests/tests/ -q --no-header --tb=line
+$ PYTHONPATH=python python -m pytest PharosEngineTests/tests/ -q --no-header --tb=line
 (expect: N passed, no failures — SS3 skip audit + WW6 tripwires green)
 ```
 
 ```
-$ PYTHONPATH=h:/Github/SlapPyEngine/python python -m pytest H:/DaedalusSVN/OchemaCircuit/tests -q --no-header --tb=line
+$ PYTHONPATH=h:/Github/Pharos Engine/python python -m pytest H:/DaedalusSVN/OchemaCircuit/tests -q --no-header --tb=line
 (expect: >= 1067 passes — YY3 baseline was Ochema 1032 + Bullet 50 = 1082 combined at 91.8% F1;
 1067 sets the ≥95% F1 threshold agreed for Option B ship-gate)
 ```
@@ -112,7 +112,7 @@ __version__ = "0.4.0"
 **Success gate.** Run the version-consistency tripwire:
 
 ```
-$ PYTHONPATH=python python -m pytest SlapPyEngineTests/tests/test_version_consistency.py -q --no-header
+$ PYTHONPATH=python python -m pytest PharosEngineTests/tests/test_version_consistency.py -q --no-header
 (expect: 1 passed)
 ```
 
@@ -157,7 +157,7 @@ M Cargo.toml
 M pyproject.toml
 M python/pharos_engine/__init__.py
 $ git commit -m "Release v0.4.0"
-$ git tag -a v0.4.0 -m "SlapPyEngine v0.4.0"
+$ git tag -a v0.4.0 -m "Pharos Engine v0.4.0"
 $ git push origin master
 $ git push origin v0.4.0
 ```
@@ -205,7 +205,7 @@ $ python -m pharos_engine.demo.hello_studio
 Then create the GitHub release from the CHANGELOG body:
 
 ```
-$ gh release create v0.4.0 --title "SlapPyEngine v0.4.0" \
+$ gh release create v0.4.0 --title "Pharos Engine v0.4.0" \
     --notes-file <(sed -n '/^## \[0.4.0\]/,/^## \[/p' CHANGELOG.md | head -n -1)
 (expect: GitHub release page renders with body from CHANGELOG [0.4.0] section)
 ```
@@ -260,7 +260,7 @@ premature — leave the commit, delete the tag, fix, re-tag:
 $ git push origin :refs/tags/v0.4.0
 $ git tag -d v0.4.0
 (fix root cause, add follow-up commit)
-$ git tag -a v0.4.0 -m "SlapPyEngine v0.4.0"
+$ git tag -a v0.4.0 -m "Pharos Engine v0.4.0"
 $ git push origin master
 $ git push origin v0.4.0
 ```
@@ -274,7 +274,7 @@ post-release semantics:
 $ git push origin :refs/tags/v0.4.0     # only if not yet consumed downstream
 $ git tag -d v0.4.0
 (fix root cause, add follow-up commit)
-$ git tag -a v0.4.0.post1 -m "SlapPyEngine v0.4.0.post1 — <root cause>"
+$ git tag -a v0.4.0.post1 -m "Pharos Engine v0.4.0.post1 — <root cause>"
 $ git push origin master
 $ git push origin v0.4.0.post1
 ```

@@ -65,7 +65,7 @@ class CubeArray(RenderTarget):
             from pharos_engine.animation.video_import import extract_frames
             frame_arrays = extract_frames(path, max_frames=max_frames)
         except ImportError as e:
-            raise ImportError(f"Video import requires pip install SlapPyEngine[video]: {e}") from e
+            raise ImportError(f"Video import requires pip install Pharos Engine[video]: {e}") from e
         inst = cls(name=name)
         for arr in frame_arrays:
             layer = Layer.blank(arr.shape[1], arr.shape[0])

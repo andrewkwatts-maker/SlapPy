@@ -1,5 +1,5 @@
 """
-SlapPyEngine.input
+Pharos Engine.input
 ==================
 
 Keyboard / mouse / gamepad input utilities.

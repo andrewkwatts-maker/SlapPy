@@ -54,7 +54,7 @@ Every system follows the same lifecycle:
   caller-owned `wgpu.CommandEncoder`.
 
 The lifecycle pattern is asserted by
-`SlapPyEngineTests/tests/test_gi_*` — the headless construction case is
+`PharosEngineTests/tests/test_gi_*` — the headless construction case is
 load-bearing for CI.
 
 ## Radiance cascades

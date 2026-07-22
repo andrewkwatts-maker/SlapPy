@@ -1,12 +1,12 @@
-# SlapPyEngine — Contributor Onboarding
+# Pharos Engine — Contributor Onboarding
 
-Welcome to SlapPyEngine. This document covers the architecture, the data model, and everything you need to ship your first change in about ten minutes. Read it top-to-bottom once; afterwards the [ARCHITECTURE.md](ARCHITECTURE.md) file is a faster reference for day-to-day conventions.
+Welcome to Pharos Engine. This document covers the architecture, the data model, and everything you need to ship your first change in about ten minutes. Read it top-to-bottom once; afterwards the [ARCHITECTURE.md](ARCHITECTURE.md) file is a faster reference for day-to-day conventions.
 
 ---
 
-## 1. What is SlapPyEngine?
+## 1. What is Pharos Engine?
 
-SlapPyEngine is a GPU-accelerated pixel-art game engine whose primary render target is a 2D compute-shader pipeline. A second, opt-in 3D render path lives behind a Rust feature flag and a PyPI extra so the base wheel stays small.
+Pharos Engine is a GPU-accelerated pixel-art game engine whose primary render target is a 2D compute-shader pipeline. A second, opt-in 3D render path lives behind a Rust feature flag and a PyPI extra so the base wheel stays small.
 
 | Install variant | Command | Approximate size |
 |---|---|---|
@@ -27,9 +27,9 @@ The engine is in **alpha** (`Development Status :: 3 - Alpha`). APIs may change 
 ## 2. Repository Layout
 
 ```
-SlapPyEngine/
+Pharos Engine/
 ├── python/
-│   └── SlapPyEngine/              # Python package root
+│   └── Pharos Engine/              # Python package root
 │       ├── __init__.py            # Public API, lazy-import map, HAS_NATIVE flag
 │       ├── engine.py              # Engine class — GPU init, draw loop, subsystems
 │       ├── scene.py               # Scene, SceneComputeAPI, DecalSystem
@@ -174,7 +174,7 @@ SlapPyEngine/
 
 ```bash
 # Clone the repo (or open the existing checkout)
-cd H:\Github\SlapPyEngine
+cd H:\Github\Pharos Engine
 
 # Editable install with dev and editor extras
 pip install -e ".[dev,editor]"
@@ -585,12 +585,12 @@ pytest tests/ -k "not gpu_headless"
 ```
 
 Test files of interest for new contributors:
-- `SlapPyEngineTests/tests/test_basic.py` — Entity, Scene, Asset smoke tests
-- `SlapPyEngineTests/tests/test_material.py` — MaterialMap + ColorRange
-- `SlapPyEngineTests/tests/test_animation.py` — AnimationGraph state machine
-- `SlapPyEngineTests/tests/test_ik.py` — ProceduralRig + Rust IK solver
-- `SlapPyEngineTests/tests/test_residency.py` — .slap round-trip
-- `SlapPyEngineTests/tests/test_mixed_2d_3d.py` — 2D/3D layer coexistence
+- `PharosEngineTests/tests/test_basic.py` — Entity, Scene, Asset smoke tests
+- `PharosEngineTests/tests/test_material.py` — MaterialMap + ColorRange
+- `PharosEngineTests/tests/test_animation.py` — AnimationGraph state machine
+- `PharosEngineTests/tests/test_ik.py` — ProceduralRig + Rust IK solver
+- `PharosEngineTests/tests/test_residency.py` — .slap round-trip
+- `PharosEngineTests/tests/test_mixed_2d_3d.py` — 2D/3D layer coexistence
 
 ---
 
@@ -612,7 +612,7 @@ my_game/
 
 ### Step 2 — Implement your scene
 
-A scene is any class that sets up entities and hands itself to the engine. SlapPyEngine does not enforce a base class for scenes beyond `se.Scene`, but the recommended pattern is to subclass:
+A scene is any class that sets up entities and hands itself to the engine. Pharos Engine does not enforce a base class for scenes beyond `se.Scene`, but the recommended pattern is to subclass:
 
 ```python
 # scenes/level_1.py
@@ -906,7 +906,7 @@ def save_project(ctx: dict) -> dict | None:
 
 This split is what makes every user-invocable action unit-testable
 without spinning up the DPG viewport — the regression tests
-(`SlapPyEngineTests/tests/test_stub_triage_x3.py` and
+(`PharosEngineTests/tests/test_stub_triage_x3.py` and
 `test_stub_triage_y1.py`) call the helpers with a synthetic `ctx`
 dict and assert on the return value.
 

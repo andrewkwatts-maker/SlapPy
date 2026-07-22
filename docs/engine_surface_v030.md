@@ -1,4 +1,4 @@
-# SlapPyEngine v0.3 — Engine Surface Reference
+# Pharos Engine v0.3 — Engine Surface Reference
 
 > Auto-generated from runtime introspection of `pharos_engine.__all__` and the
 > `_subpackages` set declared in `python/pharos_engine/__init__.py`.
@@ -44,7 +44,7 @@ after the NN6 pass (2026-07-06). Delta since NN6:
 
 Gate #2 verdict: **GREEN** — the generator ran clean, produced
 9 passing tripwire tests
-(`SlapPyEngineTests/tests/test_docs_engine_surface_complete.py` +
+(`PharosEngineTests/tests/test_docs_engine_surface_complete.py` +
 `test_docs_inventory.py`), and the runtime-introspected counts match
 the doc's stated counts. Regeneration is now a one-command loop:
 `PYTHONPATH=python python scripts/gen_engine_surface_doc.py`.
@@ -255,7 +255,7 @@ Every name below is reachable as `pharos_engine.<Name>`. Module column is relati
 | Name | Kind | Module | Signature | Description |
 |---|---|---|---|---|
 | `App` | class | `app` | `(config: 'AppConfig | None' = None, *, config_path: 'str | Path | None' = None) -> 'None'` | Runtime shell: window + tick loop + hooks + asset handles. |
-| `AppConfig` | dataclass | `app` | `(window_title: 'str' = 'SlapPyEngine', window_size: 'tuple[int, int]' = (1280, 720), fu...` | Runtime configuration for :class:`App`. |
+| `AppConfig` | dataclass | `app` | `(window_title: 'str' = 'Pharos Engine', window_size: 'tuple[int, int]' = (1280, 720), fu...` | Runtime configuration for :class:`App`. |
 | `BlurPass` | function | `(top-level)` | `(radius: 'int' = 2)` | Return a :class:`PostProcessPass` configured for blur. |
 | `CameraHandle` | dataclass | `app` | `(position: 'tuple[float, float, float]' = (0.0, 0.0, 5.0), look_at: 'tuple[float, float...` | Active-camera handle. |
 | `DiagnosticEvent` | dataclass | `diagnostics` | `(level: 'str', subsystem: 'str', message: 'str', timestamp: 'float', exc_info: 'Optiona...` | One captured logging record, distilled for HUD / tooling display. |
@@ -329,7 +329,7 @@ Unified dynamics primitives layered on top of the XPBD substrate.
 
 ### `pharos_engine.ext`
 
-SlapPyEngine.ext — optional extension modules.
+Pharos Engine.ext — optional extension modules.
 
 **Public attributes:** _(none exposed at package level)_
 
@@ -345,7 +345,7 @@ GPU subpackage — lazy-loaded to avoid eager wgpu imports.
 
 ### `pharos_engine.input`
 
-SlapPyEngine.input
+Pharos Engine.input
 
 **Public attributes:** `ActionMap`, `InputManager`, `action_map`
 
@@ -353,7 +353,7 @@ SlapPyEngine.input
 
 ### `pharos_engine.iso`
 
-SlapPyEngine.iso — Isometric 2D-grid-with-Z rendering subsystem.
+Pharos Engine.iso — Isometric 2D-grid-with-Z rendering subsystem.
 
 **Public attributes:** `IsoCamera`, `IsoCell`, `IsoEntity`, `IsoGrid`, `IsoScene`, `IsoTileDef`, `IsoViewpoint`, `iso_camera`, `iso_entity`, `iso_grid`, `iso_scene`, `projection`
 
@@ -501,7 +501,7 @@ See the `examples/` directory for runnable scenes that exercise the surface abov
 
 Downstream games (e.g. Ochema Circuit, Bullet Strata) pin the names they import from this engine. When a game ships against a new engine name, add a tripwire test that asserts the name remains importable — removing any locked name breaks that game.
 
-Today the locked names are simply everything in `pharos_engine.__all__` plus the declared subpackages, both of which are exercised by `SlapPyEngineTests/tests/test_docs_engine_surface_complete.py`.
+Today the locked names are simply everything in `pharos_engine.__all__` plus the declared subpackages, both of which are exercised by `PharosEngineTests/tests/test_docs_engine_surface_complete.py`.
 
 <!-- BEGIN: AUTO-GENERATED SUBPACKAGE API LINKS -->
 

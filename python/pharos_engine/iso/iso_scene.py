@@ -9,11 +9,11 @@ from .projection import IsoViewpoint, depth_key
 
 
 class IsoScene:
-    """An isometric scene that integrates with the SlapPyEngine scene system.
+    """An isometric scene that integrates with the Pharos Engine scene system.
 
-    ``IsoScene`` owns an :class:`~SlapPyEngine.iso.iso_grid.IsoGrid`,
-    an :class:`~SlapPyEngine.iso.iso_camera.IsoCamera`, and a list of
-    :class:`~SlapPyEngine.iso.iso_entity.IsoEntity` objects.  It can be used
+    ``IsoScene`` owns an :class:`~Pharos Engine.iso.iso_grid.IsoGrid`,
+    an :class:`~Pharos Engine.iso.iso_camera.IsoCamera`, and a list of
+    :class:`~Pharos Engine.iso.iso_entity.IsoEntity` objects.  It can be used
     as a drop-in replacement for the engine's ``Scene`` class wherever the
     engine accepts a scene object.
 
@@ -126,12 +126,12 @@ class IsoScene:
         - ``"type"``: ``"tile"`` or ``"entity"``
         - ``"sx"``: Screen X in pixels (viewport origin = top-left).
         - ``"sy"``: Screen Y in pixels.
-        - ``"data"``: The :class:`~SlapPyEngine.iso.iso_grid.IsoCell` (tiles)
-          or :class:`~SlapPyEngine.iso.iso_entity.IsoEntity` (entities).
+        - ``"data"``: The :class:`~Pharos Engine.iso.iso_grid.IsoCell` (tiles)
+          or :class:`~Pharos Engine.iso.iso_entity.IsoEntity` (entities).
         - ``"dk"`` *(entities only)*: The raw depth key float.
 
         Tiles already carry an implicit depth key from
-        :meth:`~SlapPyEngine.iso.iso_grid.IsoGrid.sorted_cells`; entities are
+        :meth:`~Pharos Engine.iso.iso_grid.IsoGrid.sorted_cells`; entities are
         re-inserted at the correct position by the final sort.
 
         Args:

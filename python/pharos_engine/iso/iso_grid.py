@@ -47,7 +47,7 @@ class IsoCell:
         gz: Grid Z coordinate (height level, 0 = ground floor).
         tile_def: Visual definition attached to this cell, or ``None`` for
             an empty/air cell.
-        entity: The :class:`~SlapPyEngine.iso.iso_entity.IsoEntity` currently
+        entity: The :class:`~Pharos Engine.iso.iso_entity.IsoEntity` currently
             occupying this cell, or ``None``.
         z_offset: Fine-grained Z offset within the cell.  Added to ``gz``
             when computing screen position.
@@ -162,7 +162,7 @@ class IsoGrid:
     ) -> tuple[float, float]:
         """Project grid coordinates to screen space.
 
-        Thin wrapper around :func:`~SlapPyEngine.iso.projection.world_to_screen`
+        Thin wrapper around :func:`~Pharos Engine.iso.projection.world_to_screen`
         that uses this grid's ``tile_w``, ``tile_h``, and ``z_scale``.
         """
         return world_to_screen(
@@ -194,7 +194,7 @@ class IsoGrid:
         should subtract the appropriate offset after calling this method.
 
         Args:
-            vp: Current :class:`~SlapPyEngine.iso.projection.IsoViewpoint`.
+            vp: Current :class:`~Pharos Engine.iso.projection.IsoViewpoint`.
             cam_x: Camera X offset in pixels.
             cam_y: Camera Y offset in pixels.
             screen_w: Viewport width in pixels.

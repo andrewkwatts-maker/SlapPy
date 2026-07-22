@@ -2,7 +2,7 @@
 # pharos_engine.exporter — API Reference
 
 > Hand-written reference for the LL6 cross-platform game exporter.
-> Bundles a scaffolded SlapPyEngine project into a distributable ZIP or a
+> Bundles a scaffolded Pharos Engine project into a distributable ZIP or a
 > standalone PyInstaller binary. Sibling references: the CLI subcommand
 > `slap export` (documented in [`../ONBOARDING.md`](../ONBOARDING.md) and
 > registered in `python/pharos_engine/cli.py`) is the primary caller;
@@ -122,7 +122,7 @@ Fields: `binary_path`, `spec_path`, `size_bytes`, `log`, `warnings`,
 
 _dataclass — defined in `pharos_engine.exporter.manifest`_
 
-Ship-time project metadata (`slappyproject.yaml`).
+Ship-time project metadata (`pharosproject.yaml`).
 
 | Field | Type | Default |
 |-------|------|---------|
@@ -135,7 +135,7 @@ Ship-time project metadata (`slappyproject.yaml`).
 
 Class methods:
 
-- `load(project_dir) -> ProjectManifest` — read `slappyproject.yaml`
+- `load(project_dir) -> ProjectManifest` — read `pharosproject.yaml`
   or fall back to `_from_project_dir(...)` which synthesises defaults
   from `config.yaml` + folder conventions.
 - `from_yaml(text) -> ProjectManifest`
@@ -169,7 +169,7 @@ Unified return type for :func:`export_project`.
 _defined in `pharos_engine.exporter`_
 
 Convenience wrapper. Validates that *project_dir* exists and contains
-either `main.py` or `slappyproject.yaml`, loads the manifest, then
+either `main.py` or `pharosproject.yaml`, loads the manifest, then
 dispatches on `output.suffix.lower()` — `.zip` calls :class:`ZipBundler`
 otherwise :class:`BinaryExporter`.
 
@@ -178,7 +178,7 @@ otherwise :class:`BinaryExporter`.
 _defined in `pharos_engine.exporter.zip_bundler`_
 
 Compute a `manifest.json` payload: SHA-256 hashes over each included
-file, project name / version from `slappyproject.yaml`, ISO-8601 build
+file, project name / version from `pharosproject.yaml`, ISO-8601 build
 timestamp, and the list of intended platform targets. Written into the
 zip when `write_manifest_json=True`.
 
@@ -212,7 +212,7 @@ this before scheduling a binary export.
 
 ### `MANIFEST_FILENAME`
 
-_str — `"slappyproject.yaml"`_
+_str — `"pharosproject.yaml"`_
 
 ### `MANIFEST_JSON_FILENAME`
 
@@ -226,7 +226,7 @@ _tuple[str, ...] — defined in `pharos_engine.exporter.zip_bundler`_
 
 Always-on fnmatch exclusion patterns. Includes `.git`,
 `__pycache__`, `*.pyc`, `.venv`, `venv`, `build`, `dist`,
-`.slappy/temp`, `*.log`, `.DS_Store`.
+`.pharos/temp`, `*.log`, `.DS_Store`.
 
 ### `REQUIRED_FILES`
 

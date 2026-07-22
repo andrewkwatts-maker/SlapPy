@@ -12,7 +12,7 @@ This module ships two flavours:
   and renders into an arbitrarily-sized RGBA ndarray.
 * :meth:`NineSlice.render_procedural` — generates the nine cells from a
   caller-supplied 2D pattern function, no image asset needed. This is
-  the "zero-asset" path the SlapPyEngine theme system prefers for
+  the "zero-asset" path the Pharos Engine theme system prefers for
   flat / patterned UI surfaces.
 """
 from __future__ import annotations

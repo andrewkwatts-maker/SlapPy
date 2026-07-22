@@ -50,7 +50,7 @@ Files touched (per PP6's audit —
 | `python/pharos_engine/__init__.py` | 103 | `__version__ = "0.3.0b0"` | `__version__ = "0.4.0"` |
 
 **Success gate.**
-`SlapPyEngineTests/tests/test_version_consistency.py` green
+`PharosEngineTests/tests/test_version_consistency.py` green
 (cross-checks the three files agree).
 
 ### Step 2 — Update CHANGELOG.md
@@ -73,7 +73,7 @@ nothing under the `[0.4.0]` heading.
 Commit steps 1 + 2 as one commit (`v0.4.0 release`), then:
 
 ```
-git tag -a v0.4.0 -m "SlapPyEngine v0.4.0"
+git tag -a v0.4.0 -m "Pharos Engine v0.4.0"
 git push origin master
 git push origin v0.4.0
 ```
@@ -90,7 +90,7 @@ below on a clean checkout of `master`.
 
 | # | Check | Command | Pass criterion |
 |---|---|---|---|
-| 3.1 | Engine tests all-green | `pytest SlapPyEngineTests/tests` | 0 failed, 0 error; skips must already be documented per SS3 skip audit. |
+| 3.1 | Engine tests all-green | `pytest PharosEngineTests/tests` | 0 failed, 0 error; skips must already be documented per SS3 skip audit. |
 | 3.2 | Game-compat ≥80% of F1 (1178 combined) — **PASSING** (2026-07-08 +2 AAA3 reaffirm) | Re-run YY3/ZZ3/AAA3 harness against `H:/DaedalusSVN/Ochema Circuit/` + `H:/DaedalusSVN/Bullet Strata/` (**note**: repo dirs contain spaces — YY7 briefing path `OchemaCircuit/BulletStrata` was wrong; ZZ3 verified correct spaced paths) | Combined ≥ **942** passes (0.80 × 1178). **PASSING at 93.3% F1** (AAA3 reaffirm): AAA3 walk against HEAD `c758122` (ZZ2 backcompat) measured Ochema **1045/68/13** (93.0% of F1) + Bullet Strata **54/0/0** (**100.0% of F1 — FULLY RECOVERED**); combined **1099/1178 = 93.3%** (well above 80% YELLOW threshold, ~1.7 pp below 95% GREEN). YELLOW plateau sustained across 3 consecutive re-verify ticks: YY3 91.8% → ZZ3 92.4% → **AAA3 93.3%** (upward drift). Bullet Strata half of gate #12 is unambiguously CLOSED. Analysis: `docs/game_compat_2026_07_07.md` § 12 (YY3) + § 13 (ZZ3) + § 14 (**AAA3**). Pre-tag operators may proceed to Step 1 with gate #12 status YELLOW / SHIP-AT-YELLOW-NOW per ship-decision doc § 9 Option F, or wait one more tick for BB batch attempting GREEN threshold cross per § 10 Option B tail. |
 | 3.3 | `cargo check --release` zero errors | `cargo check --release --workspace` | Exit 0, no `error:` lines. Warnings tolerated. |
 | 3.4 | `maturin build --release` wheel ≤50MB | `maturin build --release` then `ls -lh target/wheels/*.whl` | Wheel size ≤ **50 MB** (PyPI upload budget). WW7 baseline is ~1.45 MB per gate #10 evidence. |
@@ -133,7 +133,7 @@ after Step 3 already pushed the tag:
    release commit; add a follow-up commit.
 4. Re-tag as `v0.4.0.post1` per PEP 440 post-release semantics:
    ```
-   git tag -a v0.4.0.post1 -m "SlapPyEngine v0.4.0.post1 — <root cause>"
+   git tag -a v0.4.0.post1 -m "Pharos Engine v0.4.0.post1 — <root cause>"
    git push origin master
    git push origin v0.4.0.post1
    ```

@@ -1,7 +1,7 @@
 ﻿"""
 HTML5 overlay via pywebview — renders a transparent HTML/CSS/JS window above wgpu.
 
-Optional extra: pip install SlapPyEngine[editor]
+Optional extra: pip install Pharos Engine[editor]
 pywebview creates a native transparent window layered above the wgpu output.
 
 Limitations:
@@ -37,7 +37,7 @@ class HtmlOverlay:
         except ImportError as exc:
             raise ImportError(
                 "pywebview is required for the HTML overlay. "
-                "Install it with: pip install SlapPyEngine[editor]"
+                "Install it with: pip install Pharos Engine[editor]"
             ) from exc
 
         self._width = width

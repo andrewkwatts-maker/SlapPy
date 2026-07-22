@@ -1,6 +1,6 @@
 # v0.4 Release Readiness Audit — 2026-07-06 (OO7)
 
-Big-picture ship-gate audit for the SlapPyEngine v0.3.0b0 → v0.4.0
+Big-picture ship-gate audit for the Pharos Engine v0.3.0b0 → v0.4.0
 transition. Written by OO7 (background scrum agent) after 20 Nova3D
 parity sprints (HH+II+JJ+KK+LL), MM salvage batch, and NN integration
 batch closed. Sources: `pyproject.toml`, `Cargo.toml`,
@@ -10,7 +10,7 @@ batch closed. Sources: `pyproject.toml`, `Cargo.toml`,
 `docs/sprint_rollup_2026_07_06.md`,
 `docs/engine_surface_v030.md`,
 `docs/sprint_5_doc_inventory.md`, `docs/sprint_7_ship_checklist.md`,
-`SlapPyEngineTests/tests/` file inventory, and `git log --oneline -40`.
+`PharosEngineTests/tests/` file inventory, and `git log --oneline -40`.
 
 ---
 
@@ -23,7 +23,7 @@ during the EE→NN window while adding 20 Nova3D parity subsystems
 SDF text / capture / IBL / instanced / audio / exporter / physics3
 bridge), but four hard blockers remain: the physics/softbody/fluid WIP
 trees are still uncommitted, a legacy `python/tests/` directory
-(241 files) shadows the canonical `SlapPyEngineTests/tests/` layout,
+(241 files) shadows the canonical `PharosEngineTests/tests/` layout,
 the version constants have drifted (`pyproject.toml=0.3.0b0`,
 `Cargo.toml=0.3.0-beta.0`, need to bump all three to `0.4.0` in one
 commit), and 13 STUBs remain (most DPG-shell-dependent, but 4 diary
@@ -80,9 +80,9 @@ docs, ECS narrative) rather than hot-path capabilities.
 
 ## 3. Test coverage
 
-`SlapPyEngineTests/tests/` inventory as of 2026-07-06 close:
+`PharosEngineTests/tests/` inventory as of 2026-07-06 close:
 
-* **Total files under `SlapPyEngineTests/tests/`**: 343 entries; **337
+* **Total files under `PharosEngineTests/tests/`**: 343 entries; **337
   `test_*.py` runners** (plus `__init__.py`, `fixtures/`, `output/`,
   `reference/`, `__pycache__/`).
 
@@ -120,7 +120,7 @@ reported a red suite in the V→NN window.
 `python/tests/` (legacy path from before the 2026-06-02 restructure —
 see `docs/restructure_2026_06_02.md`) previously contained **241 test
 files** that shadowed the canonical suite. **PP2 audit (2026-07-07)**
-sha256-diffed every file against `SlapPyEngineTests/python_tests/`
+sha256-diffed every file against `PharosEngineTests/python_tests/`
 and confirmed all 241 files were byte-identical duplicates: zero
 novel content, zero migrations required, zero files flagged for
 human review. The directory was untracked in git (never staged), so
@@ -139,7 +139,7 @@ gate 6 status: GREEN.**
   handful of screenshots subdir markers).
 * **`docs/api/` entries**: 30 (mix of hand-authored and auto-generated).
 * **`docs/sprint_5_doc_inventory.md`**: canonical index; asserted by
-  `SlapPyEngineTests/tests/test_docs_inventory.py`.
+  `PharosEngineTests/tests/test_docs_inventory.py`.
 
 ### API coverage vs top-level surface
 
@@ -311,7 +311,7 @@ gate belongs to.
   diff is empty. *Owner: docs lead. Status: refreshed 2026-07-06 by
   NN6; needs re-run after version bump.*
 
-- [ ] **3. `SlapPyEngineTests/tests/test_docs_inventory.py` green** —
+- [ ] **3. `PharosEngineTests/tests/test_docs_inventory.py` green** —
   every `docs/**/*.md` indexed with a non-empty description.
   *Owner: docs lead. Status: GREEN pending this doc's inventory row.*
 
@@ -325,7 +325,7 @@ gate belongs to.
 
 - [x] **6. No test files under `python/tests/`** — PP2 audit
   (2026-07-07) sha256-diffed all 241 files against
-  `SlapPyEngineTests/python_tests/`, confirmed byte-identical shadow
+  `PharosEngineTests/python_tests/`, confirmed byte-identical shadow
   (zero novel content), and deleted the directory. Canonical suite
   re-collected at 9195 tests, no drop. *Owner: repo hygiene lead.
   Status: GREEN (directory removed 2026-07-07).*
@@ -427,7 +427,7 @@ into v0.4.1 without hurting the tag.
 Cross-referenced against pyproject.toml (`0.3.0b0`), Cargo.toml
 (`0.3.0-beta.0`), `python/pharos_engine/__init__.py`
 (`__version__ = "0.3.0b0"`, `__all__` 88 names), git log −40 (V→NN
-window, ~120+ commits), `SlapPyEngineTests/tests/` inventory (343
+window, ~120+ commits), `PharosEngineTests/tests/` inventory (343
 entries), `docs/sprint_5_doc_inventory.md` (94 entries),
 `docs/feature_map_delta_2026_07_06.md` (13 STUB / 3 BROKEN),
 `docs/rust_migration_audit_2026_07_05.md` (17 Rust kernels shipped),

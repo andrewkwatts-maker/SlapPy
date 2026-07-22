@@ -320,7 +320,7 @@ single primary window.
 ```python
 EditorShell(
     engine: Engine,
-    title: str = "SlapPyEngine Editor",
+    title: str = "Pharos Engine Editor",
     width: int = 1400,
     height: int = 900,
 ) -> None
@@ -330,7 +330,7 @@ EditorShell(
 
 - `setup()` — create the DPG context, build the viewport, wire
   every panel into the layout. Raises `ImportError` with a clear
-  `pip install SlapPyEngine[editor]` hint if dearpygui is missing.
+  `pip install Pharos Engine[editor]` hint if dearpygui is missing.
 - `run()` — enter the render loop (blocks until viewport close or
   `stop()`). Polls keyboard shortcuts (Ctrl+S save, Ctrl+Z undo,
   Delete remove-selected, F5 toggle play), drives the gizmo overlay
@@ -408,7 +408,7 @@ invoked by ``setup()``.
 - **Optional extra.** Every dearpygui import is **deferred to method
   bodies**. A missing dearpygui surfaces as `ImportError` only at
   `setup()` / `run()` time, with a clear `pip install
-  SlapPyEngine[editor]` message.
+  Pharos Engine[editor]` message.
 - **Reuse the reflection machinery.** Per the Phase A plan, every
   new authoring surface that needs to edit a dataclass binds a
   `PropertyInspector` rather than building its own widget tree.

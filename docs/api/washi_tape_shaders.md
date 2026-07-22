@@ -174,6 +174,6 @@ WashiCornerSpec(
   records + WGSL sources + `get_tape` / `list_tapes` helpers.
 * `python/pharos_engine/ui/theme/washi_tape/renderer.py` —
   `render_tape` + `bake_tape_texture` + per-style numpy fallbacks.
-* `SlapPyEngineTests/tests/test_washi_tape_shaders.py` — 77 tests
+* `PharosEngineTests/tests/test_washi_tape_shaders.py` — 77 tests
   (registry sanity, WGSL contract, numpy fallback per style, colour
   propagation, animation, `WashiCornerSpec` integration).
