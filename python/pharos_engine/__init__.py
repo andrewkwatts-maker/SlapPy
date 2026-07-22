@@ -100,7 +100,7 @@ surface for the v0.3 ship.
 """
 from __future__ import annotations
 
-__version__ = "0.3.0b1"
+__version__ = "0.3.0"
 __author__ = "PharosEngine Contributors"
 
 # ---------------------------------------------------------------------------

@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "pharos-engine"
-version = "0.3.0b1"
+version = "0.3.0"
 description = "2D pixel-art game engine with optional 3D layers, Rust backends, and wgpu rendering"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -45,7 +45,7 @@ Issues = "https://github.com/andrewkwatts-maker/SlapPyEngine/issues"
 # As of v0.3.0b1 the editor ships as a separate PyPI wheel
 # (``pharos-editor``) so headless / build-tool / server deployments do
 # not pay the ~15MB DearPyGui cost. This extra just pulls that wheel.
-editor = ["pharos-editor==0.3.0b1"]
+editor = ["pharos-editor==0.3.0"]
 # 3D asset import — glTF 2.0 + Wavefront OBJ + STL/PLY (trimesh) +
 # HDR/EXR/DDS textures (imageio). Pillow is already a core dep and
 # covers PNG/JPEG/WebP/TGA out of the box.

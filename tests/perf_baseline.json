@@ -1,0 +1,12 @@
+{
+  "$schema": "https://pharos-engine.org/schema/perf_baseline.v1.json",
+  "notes": "Sprint 10 baseline. Numbers captured on the Sprint 9 GA build (0.3.0). CI gates future PRs at <5% regression per metric via scripts/perf_gate.py.",
+  "regression_threshold_pct": 5.0,
+  "metrics": {
+    "fluid_pbf_e2e_fps":            1176.0,
+    "softbody_rope20_e2e_fps":       544.0,
+    "pbf_bridge_step_ms":            34.41,
+    "softbody_world_step_20n_ms":    0.699,
+    "hardening_validator_overhead_pct": 4.8
+  }
+}

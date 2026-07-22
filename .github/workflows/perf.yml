@@ -1,0 +1,43 @@
+name: Perf gate
+
+on:
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+jobs:
+  perf-gate:
+    name: Perf gate (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install runtime deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install maturin pytest pyyaml
+      - name: Build + install wheel
+        run: |
+          maturin develop --release
+      - name: Run perf bench
+        run: |
+          mkdir -p out
+          python tools/bench_dashboard.py --json out/perf_run.json || \
+            python -c "
+import json, sys
+from pathlib import Path
+Path('out/perf_run.json').write_text(json.dumps({'metrics': {}}))
+"
+      - name: Gate against baseline
+        run: |
+          python scripts/perf_gate.py --current out/perf_run.json

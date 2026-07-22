@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pharos-editor"
-version = "0.3.0b1"
+version = "0.3.0"
 description = "Notebook-style editor UI for PharosEngine (DearPyGui + gizmos + themes)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,7 +25,7 @@ classifiers = [
 # bundled in pharos-engine[editor]. Installing pharos-editor gives you
 # a runnable editor with no additional extras.
 dependencies = [
-    "pharos-engine==0.3.0b1",
+    "pharos-engine==0.3.0",
     "dearpygui>=1.11",
     "pywebview>=4.0",
     "arithma>=2.0.2",

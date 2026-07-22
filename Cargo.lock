@@ -818,7 +818,7 @@ checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "pharos_bin"
-version = "0.3.0-beta.1"
+version = "0.3.0"
 dependencies = [
  "glam",
  "image",
@@ -830,14 +830,14 @@ dependencies = [
 
 [[package]]
 name = "pharos_c_abi"
-version = "0.3.0-beta.1"
+version = "0.3.0"
 dependencies = [
  "pharos_core",
 ]
 
 [[package]]
 name = "pharos_core"
-version = "0.3.0-beta.1"
+version = "0.3.0"
 dependencies = [
  "bytemuck",
  "half",
@@ -853,7 +853,7 @@ dependencies = [
 
 [[package]]
 name = "pharos_py"
-version = "0.3.0-beta.1"
+version = "0.3.0"
 dependencies = [
  "bytemuck",
  "half",
@@ -870,7 +870,7 @@ dependencies = [
 
 [[package]]
 name = "pharos_render"
-version = "0.3.0-beta.1"
+version = "0.3.0"
 dependencies = [
  "ash 0.38.0+1.3.281",
  "bytemuck",

@@ -1,0 +1,41 @@
+site_name: Pharos Engine
+site_description: Docs for the Pharos game engine + notebook editor.
+site_url: https://pharos-engine.org/
+
+docs_dir: docs_site
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: pink
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: pink
+  features:
+    - navigation.instant
+    - navigation.sections
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Quickstart: quickstart.md
+      - Extensions: extensions.md
+  - Reference:
+      - Release checklist: release.md
+      - HTTP bridge: http_bridge.md
+      - Themes: themes.md
+  - Contributing: contributing.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.snippets
+  - toc:
+      permalink: true
