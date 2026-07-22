@@ -7,7 +7,7 @@ runtime.
 
 ### Softbody materials (`config/softbody.yml`)
 
-Loaded by `slappyengine.softbody.MATERIALS`. Each name resolves through
+Loaded by `pharos_engine.softbody.MATERIALS`. Each name resolves through
 `load_catalog()` into a `Material` dataclass.
 
 | Material | Density (kg/m²) | Stiffness (Pa) | Break strain | Yield strain | Plasticity rate (1/s) | Use case |
@@ -32,7 +32,7 @@ Tuning notes:
 
 ### Fluid materials (`config/fluid.yml`)
 
-Loaded by `slappyengine.fluid.MATERIALS`. Each name resolves into a
+Loaded by `pharos_engine.fluid.MATERIALS`. Each name resolves into a
 `FluidMaterial` dataclass.
 
 | Material | Rest density (kg/m³) | Kernel radius (m) | Viscosity | Granular | Friction coef. | Phase change | Use case |
@@ -59,6 +59,6 @@ Tuning notes:
 ### Cross-references
 
 - Buoyancy uses `world.water_density` (default 1000 kg/m³, from `fluid.yml`'s
-  `world.water_density`) — see `slappyengine.fluid.apply_fluid_buoyancy`.
+  `world.water_density`) — see `pharos_engine.fluid.apply_fluid_buoyancy`.
 - Plasticity / yield mechanics are documented in `softbody_design.md`.
 - PBF kernel math is documented in `fluid_design.md`.

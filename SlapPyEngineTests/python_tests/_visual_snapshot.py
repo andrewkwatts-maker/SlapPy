@@ -29,7 +29,7 @@ def save_softbody_state(world, path: Path, *,
                         view_box: tuple[float, float, float, float] | None = None,
                         width: int = 320, height: int = 240) -> Path:
     """Render a softbody world's current state to a PNG via SoftBodyRenderer."""
-    from slappyengine.softbody import SoftBodyRenderConfig, SoftBodyRenderer
+    from pharos_engine.softbody import SoftBodyRenderConfig, SoftBodyRenderer
     cfg = SoftBodyRenderConfig.from_yaml({"width": width, "height": height})
     if view_box is None:
         n = world.nodes
@@ -53,7 +53,7 @@ def save_softbody_sequence(frames: Iterable[np.ndarray], path: Path,
     """Save a GIF from a list of RGBA frame arrays."""
     pil = [Image.fromarray(a, mode="RGBA").convert("RGB") for a in frames]
     path.parent.mkdir(parents=True, exist_ok=True)
-    from slappyengine.media import save_frames
+    from pharos_engine.media import save_frames
     save_frames(pil, path, fps=fps)
     return path
 

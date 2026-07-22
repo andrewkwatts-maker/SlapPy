@@ -1,6 +1,6 @@
-# slappyengine.numerics — Design Reference
+# pharos_engine.numerics — Design Reference
 
-`slappyengine.numerics` is the engine's home for **long-lived, reusable
+`pharos_engine.numerics` is the engine's home for **long-lived, reusable
 numerical kernels** that are decoupled from any particular physics
 flavour. The headline entry point is a 2-D multigrid V-cycle for the
 Poisson equation, used today by the fluid pressure projection and
@@ -13,14 +13,14 @@ For the runtime API surface (`vcycle_poisson`, `sor_smooth`,
 
 ## Why a separate subpackage?
 
-The Poisson solver started life inside `slappyengine.physics.pressure_multigrid`
+The Poisson solver started life inside `pharos_engine.physics.pressure_multigrid`
 as `vcycle_project_v`, tightly coupled to per-pixel-physics field
 layout. Two pressures pushed it out into its own subpackage:
 
 1. **Phase D strip pass.** The per-pixel-physics module is on the
    deprecation path. The Poisson solver — generic enough to solve any
    `Δp = rhs` problem on a 2-D cell-centred grid — should survive that
-   strip, so it was lifted to `slappyengine.numerics`. Exact behaviour
+   strip, so it was lifted to `pharos_engine.numerics`. Exact behaviour
    parity for matching inputs is asserted by
    `test_numerics_vcycle.py::test_cross_check_against_physics_module`.
 2. **Reuse.** Inflated-softbody pressure projection and 2-D heat-
@@ -29,8 +29,8 @@ layout. Two pressures pushed it out into its own subpackage:
    forked copies inside the dependent subpackages.
 
 The boundary is sharp: `numerics` does not import from
-`slappyengine.physics`, `slappyengine.softbody`, or
-`slappyengine.fluid`. It is a pure-numpy bottom-of-the-stack module.
+`pharos_engine.physics`, `pharos_engine.softbody`, or
+`pharos_engine.fluid`. It is a pure-numpy bottom-of-the-stack module.
 
 ## Pipeline shape — recursive V-cycle
 
@@ -197,7 +197,7 @@ A 4-6× Rust speedup on `_sor_sweep` would take the 256² target from
 size". The other kernels are individually small but collectively ~1
 ms, so a follow-up sprint to port them is the natural staging.
 
-This work is tracked under the same plan as `slappyengine.dynamics`
+This work is tracked under the same plan as `pharos_engine.dynamics`
 (see [`rust_migration_plan.md`](rust_migration_plan.md), Step 7) and
 will follow the dynamics Rust port once the latter is shipped.
 
@@ -226,7 +226,7 @@ paths for that consumer.
 ## Algorithm provenance
 
 The implementation was lifted from the working core of
-`slappyengine.physics.pressure_multigrid::vcycle_project_v` so behaviour
+`pharos_engine.physics.pressure_multigrid::vcycle_project_v` so behaviour
 parity is exact for matching inputs. The lifted form is **strictly
 generic** — no per-pixel-physics field assumptions remain. The
 provenance is documented inline in `numerics/__init__.py` and pinned by

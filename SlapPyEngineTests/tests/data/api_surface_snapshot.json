@@ -1,5 +1,5 @@
 {
-  "slappyengine": [
+  "pharos_engine": [
     "AABBShape",
     "ActionMap",
     "AddNode",
@@ -92,7 +92,7 @@
     "load_texture",
     "make_angle_map_from_spritesheet"
   ],
-  "slappyengine.app": [
+  "pharos_engine.app": [
     "Any",
     "App",
     "AppConfig",
@@ -116,7 +116,7 @@
     "register_model_loader",
     "time"
   ],
-  "slappyengine.asset": [
+  "pharos_engine.asset": [
     "Asset",
     "AssetComputeAPI",
     "Layer",
@@ -134,7 +134,7 @@
     "validate_optional_output_path",
     "validate_positive_size_2tuple"
   ],
-  "slappyengine.audio_3d": [
+  "pharos_engine.audio_3d": [
     "ATTENUATION_CURVES",
     "Audio3DEngine",
     "Audio3DSource",
@@ -151,7 +151,7 @@
     "math",
     "stereo_pan"
   ],
-  "slappyengine.capture": [
+  "pharos_engine.capture": [
     "CaptureManager",
     "CaptureResult",
     "FFMPEG_AVAILABLE",
@@ -166,7 +166,7 @@
     "gif_capture",
     "video_capture"
   ],
-  "slappyengine.diagnostics": [
+  "pharos_engine.diagnostics": [
     "Counter",
     "DiagnosticEvent",
     "DiagnosticsCollector",
@@ -187,7 +187,7 @@
     "timezone",
     "traceback"
   ],
-  "slappyengine.dynamics": [
+  "pharos_engine.dynamics": [
     "Body",
     "BoneSpec",
     "DynamicsWorldLike",
@@ -259,7 +259,7 @@
     "world_to_dict",
     "wrap_in_flesh"
   ],
-  "slappyengine.entity": [
+  "pharos_engine.entity": [
     "Entity",
     "Protocol",
     "TYPE_CHECKING",
@@ -267,7 +267,7 @@
     "field",
     "uuid"
   ],
-  "slappyengine.event_bus": [
+  "pharos_engine.event_bus": [
     "Any",
     "Callable",
     "EventBus",
@@ -283,7 +283,7 @@
     "validate_event_type",
     "validate_event_type_or_none"
   ],
-  "slappyengine.exporter": [
+  "pharos_engine.exporter": [
     "Any",
     "BinaryExportResult",
     "BinaryExporter",
@@ -311,7 +311,7 @@
     "pyinstaller_available",
     "zip_bundler"
   ],
-  "slappyengine.hud_bridge": [
+  "pharos_engine.hud_bridge": [
     "Any",
     "Callable",
     "Iterable",
@@ -323,7 +323,7 @@
     "mount_hud",
     "unmount_hud"
   ],
-  "slappyengine.layer": [
+  "pharos_engine.layer": [
     "Any",
     "Layer",
     "Layer2D",
@@ -344,7 +344,7 @@
     "validate_str",
     "validate_struct_fields"
   ],
-  "slappyengine.physics3_bridge": [
+  "pharos_engine.physics3_bridge": [
     "AABB3D",
     "Any",
     "Body3D",
@@ -360,7 +360,7 @@
     "np",
     "resolve_physics3_backend"
   ],
-  "slappyengine.render_target": [
+  "pharos_engine.render_target": [
     "Entity",
     "RenderTarget",
     "TYPE_CHECKING"

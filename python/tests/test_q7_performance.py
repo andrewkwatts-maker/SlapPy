@@ -26,7 +26,7 @@ import pytest
 
 def _fresh_bus(thread_safe: bool = False):
     """Return a fresh isolated EventBus (not the global singleton)."""
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
     return EventBus(thread_safe=thread_safe)
 
 
@@ -77,7 +77,7 @@ class TestEventBusThroughput:
 
     def test_global_publish_1000_events_no_crash(self):
         """Module-level publish() for 1000 unique event paths must not raise."""
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         for i in range(1000):
             publish(f"Perf.Test.Event{i}", publisher=None, index=i)
 
@@ -149,7 +149,7 @@ class TestObservableEntity1000AttrChanges:
     """1000 setattr calls, verify events fired, < 50ms."""
 
     def test_1000_setattr_fires_events(self):
-        from slappyengine.event_bus import Observable, subscribe, unsubscribe
+        from pharos_engine.event_bus import Observable, subscribe, unsubscribe
 
         class _TestEntity(Observable):
             speed: float = 0.0
@@ -165,7 +165,7 @@ class TestObservableEntity1000AttrChanges:
         assert len(received) == 1000
 
     def test_1000_setattr_under_50ms(self):
-        from slappyengine.event_bus import Observable, subscribe, unsubscribe
+        from pharos_engine.event_bus import Observable, subscribe, unsubscribe
 
         class _BenchEntity(Observable):
             value: float = 0.0
@@ -185,7 +185,7 @@ class TestObservableEntity1000AttrChanges:
 
     def test_observable_private_attrs_not_published(self):
         """Private (_) attrs must never fire any event — zero overhead."""
-        from slappyengine.event_bus import Observable, subscribe, unsubscribe
+        from pharos_engine.event_bus import Observable, subscribe, unsubscribe
 
         class _PrivEntity(Observable):
             pass
@@ -202,7 +202,7 @@ class TestObservableEntity1000AttrChanges:
 
     def test_observable_no_publish_opt_out(self):
         """Attrs in __no_publish__ must not fire global events."""
-        from slappyengine.event_bus import Observable, subscribe, unsubscribe
+        from pharos_engine.event_bus import Observable, subscribe, unsubscribe
 
         class _OptedOut(Observable):
             __no_publish__ = frozenset({"frame_idx"})
@@ -219,7 +219,7 @@ class TestObservableEntity1000AttrChanges:
         assert fired == [], "Opted-out attrs should never publish events"
 
     def test_observable_last_value_correct_after_1000_changes(self):
-        from slappyengine.event_bus import Observable, subscribe, unsubscribe
+        from pharos_engine.event_bus import Observable, subscribe, unsubscribe
 
         class _LastVal(Observable):
             x: float = 0.0
@@ -243,7 +243,7 @@ class TestSubscribeUnsubscribeScalability:
     """10000 subscribe/unsubscribe cycles — no memory growth, count returns to 0."""
 
     def test_10000_subscribe_unsubscribe_no_memory_growth(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         gc.collect()
         before = sum(len(v) for v in global_bus._listeners.values())
 
@@ -261,7 +261,7 @@ class TestSubscribeUnsubscribeScalability:
         )
 
     def test_10000_cycles_listener_count_returns_to_zero(self):
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         bus = EventBus()
         handles = []
         for _ in range(10000):
@@ -272,7 +272,7 @@ class TestSubscribeUnsubscribeScalability:
         assert bus.listener_count("mass.test") == 0
 
     def test_10000_cycles_under_2s(self):
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         bus = EventBus()
         t0 = time.perf_counter()
         handles = []
@@ -288,7 +288,7 @@ class TestSubscribeUnsubscribeScalability:
 
     def test_batch_subscribe_then_publish_still_fast(self):
         """Even with many subscribers, dispatch must complete quickly."""
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         bus = EventBus()
         counts = [0]
         handles = []
@@ -318,7 +318,7 @@ class TestEmptyListenerCleanup:
     """After all unsubscribe, _listeners dict has no empty sub-dicts."""
 
     def test_no_empty_entries_after_full_unsubscribe(self):
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         bus = EventBus()
         handles = []
         for i in range(10):
@@ -327,7 +327,7 @@ class TestEmptyListenerCleanup:
         for h in handles:
             bus.unsubscribe(h)
         # Trigger cleanup via debug_listeners or manual check
-        from slappyengine.event_bus import debug_listeners
+        from pharos_engine.event_bus import debug_listeners
         snapshot = debug_listeners()
         # debug_listeners already removes empty entries from global_bus;
         # for our isolated bus we inspect directly
@@ -339,7 +339,7 @@ class TestEmptyListenerCleanup:
 
     def test_debug_listeners_removes_empty_entries(self):
         """debug_listeners() on the global bus prunes zero-count keys."""
-        from slappyengine.event_bus import global_bus, subscribe, unsubscribe, debug_listeners
+        from pharos_engine.event_bus import global_bus, subscribe, unsubscribe, debug_listeners
         h = subscribe("cleanup.global.test", lambda evt: None)
         unsubscribe(h)
         snapshot = debug_listeners()
@@ -347,7 +347,7 @@ class TestEmptyListenerCleanup:
         assert snapshot.get("cleanup.global.test", 0) == 0
 
     def test_clear_removes_all_listeners(self):
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         bus = EventBus()
         for _ in range(50):
             bus.subscribe("clear.test", lambda p: None)
@@ -356,7 +356,7 @@ class TestEmptyListenerCleanup:
         assert bus.listener_count("clear.test") == 0
 
     def test_clear_all_empties_entire_bus(self):
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         bus = EventBus()
         for i in range(5):
             bus.subscribe(f"event.{i}", lambda p: None)
@@ -365,13 +365,13 @@ class TestEmptyListenerCleanup:
         assert total == 0
 
     def test_listener_count_zero_for_unknown_event(self):
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         bus = EventBus()
         assert bus.listener_count("does.not.exist") == 0
 
     def test_once_handler_removed_after_first_fire(self):
         """bus.once() auto-unsubscribes; no lingering empty entry after fire."""
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         bus = EventBus()
         fired: list[int] = []
         bus.once("once.cleanup", lambda p: fired.append(1))

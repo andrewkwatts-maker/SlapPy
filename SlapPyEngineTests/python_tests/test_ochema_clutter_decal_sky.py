@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _OCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _OCHEMA_STR = str(_OCHEMA_DIR)
@@ -198,7 +198,7 @@ class TestClutterSystemParticleCap:
         cs.teardown()
 
     def test_quality_tier_low_reduces_cap(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.clutter_system import ClutterSystem, _TIER_CAPS
         cs = ClutterSystem(gpu=None)
         publish("Quality.TierChanged", publisher=None, tier="low",
@@ -207,7 +207,7 @@ class TestClutterSystemParticleCap:
         cs.teardown()
 
     def test_quality_tier_ultra_increases_cap(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.clutter_system import ClutterSystem, _TIER_CAPS
         cs = ClutterSystem(gpu=None)
         publish("Quality.TierChanged", publisher=None, tier="ultra",
@@ -327,7 +327,7 @@ class TestDecalSystemScorchSkid:
 class TestDecalSystemEventHandlers:
     def test_vehicle_collision_event_applies_decal(self):
         import numpy as np
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.decal_system import DecalSystem
         layer = _make_numpy_layer(256, 256)
         ds = DecalSystem(layer)
@@ -338,7 +338,7 @@ class TestDecalSystemEventHandlers:
 
     def test_weapon_hit_event_applies_decal(self):
         import numpy as np
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.decal_system import DecalSystem
         layer = _make_numpy_layer(256, 256)
         ds = DecalSystem(layer)
@@ -346,7 +346,7 @@ class TestDecalSystemEventHandlers:
         ds.teardown()
 
     def test_vehicle_collision_missing_contact_pos_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.decal_system import DecalSystem
         layer = _make_numpy_layer()
         ds = DecalSystem(layer)

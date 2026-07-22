@@ -5,7 +5,7 @@ break_strain, plasticity_rate == 0) is released from height. On impact
 the high local strain exceeds the break threshold and the cube splits
 into multiple connected components.
 
-Showcase of the high-level helpers in :mod:`slappyengine.studio`:
+Showcase of the high-level helpers in :mod:`pharos_engine.studio`:
 the entire scene fits in ~15 lines instead of ~50 of boilerplate.
 
 Run:
@@ -18,9 +18,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from slappyengine.softbody import SoftBodyWorld, make_lattice_body
-from slappyengine.studio import output_path, record, softbody_stage
-from slappyengine.topology import connected_components
+from pharos_engine.softbody import SoftBodyWorld, make_lattice_body
+from pharos_engine.studio import output_path, record, softbody_stage
+from pharos_engine.topology import connected_components
 
 
 def _fragment_count(world: SoftBodyWorld) -> int:

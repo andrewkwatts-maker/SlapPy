@@ -49,25 +49,25 @@ def _load_demo():
     pytest.importorskip("yaml")
     pytest.importorskip("numpy")
     try:
-        import slappyengine  # noqa: F401
-        import slappyengine.event_bus  # noqa: F401
+        import pharos_engine  # noqa: F401
+        import pharos_engine.event_bus  # noqa: F401
     except Exception as exc:  # pragma: no cover — defensive
-        pytest.skip(f"slappyengine core unavailable: {exc}")
+        pytest.skip(f"pharos_engine core unavailable: {exc}")
 
     # Optional subsystems — soft-probe so a missing dep gives a useful
     # skip message rather than an opaque ImportError deep inside the demo.
     for optional_mod in (
-        "slappyengine.asset",
-        "slappyengine.layer",
-        "slappyengine.audio_3d",
-        "slappyengine.diagnostics",
-        "slappyengine.physics3_bridge",
-        "slappyengine.render.skybox",
-        "slappyengine.render.instanced",
-        "slappyengine.render.mesh",
-        "slappyengine.render.scene_walker",
-        "slappyengine.animation.skeleton_runtime",
-        "slappyengine.hud_bridge",
+        "pharos_engine.asset",
+        "pharos_engine.layer",
+        "pharos_engine.audio_3d",
+        "pharos_engine.diagnostics",
+        "pharos_engine.physics3_bridge",
+        "pharos_engine.render.skybox",
+        "pharos_engine.render.instanced",
+        "pharos_engine.render.mesh",
+        "pharos_engine.render.scene_walker",
+        "pharos_engine.animation.skeleton_runtime",
+        "pharos_engine.hud_bridge",
     ):
         pytest.importorskip(optional_mod)
 

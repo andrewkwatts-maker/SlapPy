@@ -1,24 +1,24 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.diagnostics — API Reference
+# pharos_engine.diagnostics — API Reference
 
 > Hand-written reference for the OO6 runtime diagnostics aggregator plus
-> the QQ4 :class:`~slappyengine.App` façade methods that bind it to the
+> the QQ4 :class:`~pharos_engine.App` façade methods that bind it to the
 > app lifecycle. Sibling references:
 > [`hud_overlay.md`](hud_overlay.md) documents the compact HUD widget
-> (:func:`slappyengine.hud_bridge.add_diagnostics_widget`) that surfaces
+> (:func:`pharos_engine.hud_bridge.add_diagnostics_widget`) that surfaces
 > collector state in-viewport; [`telemetry.md`](telemetry.md) is the
 > structured-event bus for domain telemetry — diagnostics is the
 > passive listener for the stdlib `logging` warnings + errors emitted
-> by every ``slappyengine.*`` subsystem.
+> by every ``pharos_engine.*`` subsystem.
 
 ## Overview
 
-`slappyengine.diagnostics` was landed in OO6 to solve one problem: MM1
+`pharos_engine.diagnostics` was landed in OO6 to solve one problem: MM1
 sprinkled `_LOG = logging.getLogger(__name__)` warnings across 13
 subsystem files (audio_3d, capture, exporter, physics3_bridge,
 render/ssao|skybox|instanced, text, asset_import/*, …), but those
 warnings just spammed stderr and disappeared. This module attaches a
-`logging.Handler` to the `slappyengine` root logger, keeps a rolling
+`logging.Handler` to the `pharos_engine` root logger, keeps a rolling
 buffer of :class:`DiagnosticEvent` records, and exposes structured
 counts + filters the HUD widget and downstream tooling can consume.
 
@@ -34,22 +34,22 @@ Contract highlights:
   preserved.
 * **Process-wide singleton.** :func:`get_global_collector` lazily
   constructs one collector per process; the HUD widget in
-  :mod:`slappyengine.hud_bridge` uses the same singleton so the
+  :mod:`pharos_engine.hud_bridge` uses the same singleton so the
   running frame surfaces the same events the tooling sees.
 
-The QQ4 :class:`~slappyengine.App` façade methods
-(:meth:`~slappyengine.App.enable_diagnostics`,
-:meth:`~slappyengine.App.disable_diagnostics`,
-:meth:`~slappyengine.App.get_diagnostics`,
-:meth:`~slappyengine.App.diagnostics_events`,
-:meth:`~slappyengine.App.diagnostics_stats`) are thin one-liners over
+The QQ4 :class:`~pharos_engine.App` façade methods
+(:meth:`~pharos_engine.App.enable_diagnostics`,
+:meth:`~pharos_engine.App.disable_diagnostics`,
+:meth:`~pharos_engine.App.get_diagnostics`,
+:meth:`~pharos_engine.App.diagnostics_events`,
+:meth:`~pharos_engine.App.diagnostics_stats`) are thin one-liners over
 this module; they exist so `App`-level users never have to import
-`slappyengine.diagnostics` directly.
+`pharos_engine.diagnostics` directly.
 
 ## Public surface
 
 ```python
-from slappyengine.diagnostics import (
+from pharos_engine.diagnostics import (
     DiagnosticEvent,
     DiagnosticsCollector,
     get_global_collector,
@@ -63,23 +63,23 @@ below).
 
 ### `DiagnosticEvent`
 
-_dataclass (frozen) — defined in `slappyengine.diagnostics`_
+_dataclass (frozen) — defined in `pharos_engine.diagnostics`_
 
 One captured logging record, distilled for HUD / tooling display.
 
 | Field | Type | Notes |
 |-------|------|-------|
 | `level` | `str` | Upper-case level name (`"WARNING"`, `"ERROR"`, ...). |
-| `subsystem` | `str` | Derived from `record.name`; `slappyengine.render.ssao` → `"render"`, `slappyengine.audio_3d` → `"audio_3d"`, foreign loggers keep their top-level module. |
+| `subsystem` | `str` | Derived from `record.name`; `pharos_engine.render.ssao` → `"render"`, `pharos_engine.audio_3d` → `"audio_3d"`, foreign loggers keep their top-level module. |
 | `message` | `str` | Fully-formatted log message (`record.getMessage()`). |
 | `timestamp` | `float` | Wall-clock seconds since epoch (`time.time()` at capture). |
 | `exc_info` | `str \| None` | Formatted traceback when the log carried `exc_info=True`. |
 
 ### `DiagnosticsCollector`
 
-_class — defined in `slappyengine.diagnostics`_
+_class — defined in `pharos_engine.diagnostics`_
 
-Rolling-buffer aggregator for `slappyengine.*` log records.
+Rolling-buffer aggregator for `pharos_engine.*` log records.
 
 ```python
 DiagnosticsCollector(
@@ -114,7 +114,7 @@ Buffer ops:
 
 ### `get_global_collector() -> DiagnosticsCollector`
 
-_defined in `slappyengine.diagnostics`_
+_defined in `pharos_engine.diagnostics`_
 
 Return the process-wide collector (lazy init). The first call
 constructs the collector with default parameters (`max_events=500`,
@@ -124,8 +124,8 @@ handler.
 
 ## App integration (QQ4)
 
-The following :class:`slappyengine.App` methods are thin façades over
-this module and defined in `python/slappyengine/app.py`:
+The following :class:`pharos_engine.App` methods are thin façades over
+this module and defined in `python/pharos_engine/app.py`:
 
 ### `App.enable_diagnostics(min_level="WARNING", max_events=500) -> DiagnosticsCollector`
 
@@ -134,7 +134,7 @@ Instantiate a fresh :class:`DiagnosticsCollector`, call
 `self._diagnostics`. Idempotent — a second call returns the same
 collector. When a HUD is already mounted (`self._hud_overlay` is not
 `None`), also attaches a diagnostics readout widget via
-:func:`slappyengine.hud_bridge.add_diagnostics_widget` so warnings +
+:func:`pharos_engine.hud_bridge.add_diagnostics_widget` so warnings +
 errors surface in-viewport without further wiring.
 
 ### `App.disable_diagnostics() -> dict[str, Any]`
@@ -164,14 +164,14 @@ Standalone (no `App`):
 
 ```python
 import logging
-from slappyengine.diagnostics import get_global_collector
+from pharos_engine.diagnostics import get_global_collector
 
 collector = get_global_collector()
 collector.install()
 try:
-    # Any subsystem emitting via `logging.getLogger("slappyengine.*")`
+    # Any subsystem emitting via `logging.getLogger("pharos_engine.*")`
     # is now captured.
-    logging.getLogger("slappyengine.render.ssao").warning(
+    logging.getLogger("pharos_engine.render.ssao").warning(
         "ssao pass fallback: %s", "no depth texture"
     )
     stats = collector.stats()
@@ -186,7 +186,7 @@ finally:
 `App` façade:
 
 ```python
-from slappyengine.app import App
+from pharos_engine.app import App
 
 app = App()
 collector = app.enable_diagnostics(min_level="WARNING", max_events=200)
@@ -198,26 +198,26 @@ app.disable_diagnostics()
 
 ## Skip the wrapper
 
-`slappyengine.diagnostics` is Python-only. Grep of
-`slappyengine._core_facade.RUST_MODULE_MAP` shows **no**
+`pharos_engine.diagnostics` is Python-only. Grep of
+`pharos_engine._core_facade.RUST_MODULE_MAP` shows **no**
 `diagnostics` entry — the per-record work is a `_subsystem_from_logger_name`
 string split plus a `deque.append` under an `RLock`, dwarfed by the
 formatting cost of the log record itself.
 
 Callers who want to bypass the :class:`App` façade (custom
-`min_level` per subsystem, collector attached to a non-`slappyengine`
+`min_level` per subsystem, collector attached to a non-`pharos_engine`
 logger, multi-app sharing) should reach for :class:`DiagnosticsCollector`
 / :func:`get_global_collector` directly. Games with their own log
-sink can install a :class:`logging.Handler` on the `slappyengine`
+sink can install a :class:`logging.Handler` on the `pharos_engine`
 logger themselves and never touch this module.
 
 ## See also
 
 - [`hud_overlay.md`](hud_overlay.md) — the compact diagnostics
   readout widget wired through
-  :func:`slappyengine.hud_bridge.add_diagnostics_widget`.
+  :func:`pharos_engine.hud_bridge.add_diagnostics_widget`.
 - [`telemetry.md`](telemetry.md) — structured event bus for
   first-party engine telemetry (diagnostics is the passive listener
   for stdlib `logging`; telemetry is the active emitter).
-- `python/slappyengine/app.py` — QQ4 façade methods
-  :meth:`~slappyengine.App.enable_diagnostics` and friends.
+- `python/pharos_engine/app.py` — QQ4 façade methods
+  :meth:`~pharos_engine.App.enable_diagnostics` and friends.

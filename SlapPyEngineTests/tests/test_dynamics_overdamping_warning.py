@@ -24,13 +24,13 @@ import warnings
 
 import pytest
 
-from slappyengine.dynamics import (
+from pharos_engine.dynamics import (
     OVERDAMPING_THRESHOLD,
     World,
     estimate_effective_damping,
     make_spring,
 )
-from slappyengine.dynamics.world import _reset_warning_cache
+from pharos_engine.dynamics.world import _reset_warning_cache
 
 
 @pytest.fixture(autouse=True)

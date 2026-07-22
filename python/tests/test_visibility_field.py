@@ -1,4 +1,4 @@
-"""Headless tests for slappyengine.visibility — VisibilityField and VisibilityObserver.
+"""Headless tests for pharos_engine.visibility — VisibilityField and VisibilityObserver.
 
 All methods are pure-Python / numpy; no GPU required.
 """
@@ -8,7 +8,7 @@ import math
 from unittest.mock import MagicMock
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 import numpy as np
 import pytest
@@ -19,13 +19,13 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def _field(w=200, h=200, blend_radius=0.0, overlap_mode="max", decay_rate=0.0):
-    from slappyengine.visibility import VisibilityField
+    from pharos_engine.visibility import VisibilityField
     return VisibilityField((w, h), blend_radius=blend_radius,
                            overlap_mode=overlap_mode, decay_rate=decay_rate)
 
 
 def _obs(entity, range_=80.0, mode="circle", cone_angle=360.0):
-    from slappyengine.visibility import VisibilityObserver
+    from pharos_engine.visibility import VisibilityObserver
     return VisibilityObserver(entity=entity, range=range_,
                               mode=mode, cone_angle=cone_angle)
 
@@ -251,7 +251,7 @@ class TestDecay:
 
 class TestDrawCircleMask:
     def test_centre_pixel_high(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField((100, 100), blend_radius=0.0)
         mask = np.zeros((100, 100), dtype=np.float32)
         ent = _Ent(50, 50)
@@ -260,7 +260,7 @@ class TestDrawCircleMask:
         assert mask[50, 50] > 0.8
 
     def test_outside_range_zero(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField((100, 100), blend_radius=0.0)
         mask = np.zeros((100, 100), dtype=np.float32)
         ent = _Ent(10, 10)
@@ -269,7 +269,7 @@ class TestDrawCircleMask:
         assert mask[90, 90] == 0.0
 
     def test_falloff_decreases_with_distance(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField((200, 200), blend_radius=0.0)
         mask = np.zeros((200, 200), dtype=np.float32)
         ent = _Ent(100, 100)
@@ -284,7 +284,7 @@ class TestDrawCircleMask:
 
 class TestDrawConeMask:
     def test_cone_hit_forward(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField((200, 200), blend_radius=0.0)
         mask = np.zeros((200, 200), dtype=np.float32)
         ent = _Ent(100, 100, rotation=0.0)  # facing east (0 rad)
@@ -293,7 +293,7 @@ class TestDrawConeMask:
         assert mask[100, 130] > 0.0  # east
 
     def test_cone_miss_behind(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField((200, 200), blend_radius=0.0)
         mask = np.zeros((200, 200), dtype=np.float32)
         ent = _Ent(100, 100, rotation=0.0)  # facing east
@@ -308,14 +308,14 @@ class TestDrawConeMask:
 
 class TestFeather:
     def test_feather_returns_same_shape(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField((100, 100), blend_radius=10.0)
         mask = np.ones((100, 100), dtype=np.float32)
         result = vf._feather(mask, 50.0, 50.0, 30.0)
         assert result.shape == mask.shape
 
     def test_feather_zero_blend_returns_unchanged(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField((100, 100), blend_radius=0.0)
         mask = np.ones((100, 100), dtype=np.float32)
         result = vf._feather(mask, 50.0, 50.0, 30.0)
@@ -323,7 +323,7 @@ class TestFeather:
         assert result is mask
 
     def test_feather_reduces_edge_values(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField((200, 200), blend_radius=20.0)
         mask = np.ones((200, 200), dtype=np.float32)
         result = vf._feather(mask, 100.0, 100.0, 50.0)
@@ -337,7 +337,7 @@ class TestFeather:
 
 class TestSampleLosPoints:
     def test_returns_num_rays_points(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField((200, 200), blend_radius=0.0)
         ent = _Ent(100, 100)
         obs = VisibilityObserver(entity=ent, range=50.0, mode="circle")
@@ -345,7 +345,7 @@ class TestSampleLosPoints:
         assert len(pts) == 16
 
     def test_points_are_2d_coords(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField((200, 200), blend_radius=0.0)
         ent = _Ent(100, 100)
         obs = VisibilityObserver(entity=ent, range=50.0, mode="circle")
@@ -354,7 +354,7 @@ class TestSampleLosPoints:
             assert len(p) == 2
 
     def test_points_approx_at_range_distance(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField((400, 400), blend_radius=0.0)
         ent = _Ent(200, 200)
         obs = VisibilityObserver(entity=ent, range=60.0, mode="circle")
@@ -370,7 +370,7 @@ class TestSampleLosPoints:
 
 class TestRasteriseHull:
     def test_fills_triangle(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField((100, 100), blend_radius=0.0)
         mask = np.zeros((100, 100), dtype=np.float32)
         hull = np.array([[30, 30], [70, 30], [50, 70]], dtype=np.float32)
@@ -379,7 +379,7 @@ class TestRasteriseHull:
         assert mask[50, 50] > 0.0
 
     def test_less_than_3_points_no_fill(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField((100, 100), blend_radius=0.0)
         mask = np.zeros((100, 100), dtype=np.float32)
         hull = np.array([[10, 10], [20, 20]], dtype=np.float32)

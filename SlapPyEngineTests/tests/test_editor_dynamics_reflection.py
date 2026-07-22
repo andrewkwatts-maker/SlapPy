@@ -1,4 +1,4 @@
-"""Phase A: PropertyInspector reflection over slappyengine.dynamics types.
+"""Phase A: PropertyInspector reflection over pharos_engine.dynamics types.
 
 The unified dynamics layer (``Body``, ``Material``, ``JointSpec``,
 ``MotorSpec``, ``SpringSpec``, ``RopeSpec``, ``IKChainSpec``,
@@ -67,14 +67,14 @@ def stub_dearpygui(monkeypatch):
 # ---------------------------------------------------------------------------
 
 try:
-    from slappyengine.ui.editor.property_inspector import (
+    from pharos_engine.ui.editor.property_inspector import (
         PropertyInspector,
         _is_engine_object,
         _is_list_of_int,
         _is_primitive,
         _is_simple_value_dict,
     )
-    from slappyengine.dynamics import (
+    from pharos_engine.dynamics import (
         Body,
         BoneSpec,
         IKChainSpec,

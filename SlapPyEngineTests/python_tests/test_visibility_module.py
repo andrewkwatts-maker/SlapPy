@@ -1,4 +1,4 @@
-"""Headless tests for slappyengine.visibility (VisibilityObserver, VisibilityField).
+"""Headless tests for pharos_engine.visibility (VisibilityObserver, VisibilityField).
 
 No GPU required — all tests use numpy for the field and dummy entities.
 """
@@ -17,42 +17,42 @@ class TestVisibilityObserver:
         return E()
 
     def test_instantiates(self):
-        from slappyengine.visibility import VisibilityObserver
+        from pharos_engine.visibility import VisibilityObserver
         obs = VisibilityObserver(entity=self._entity())
         assert obs is not None
 
     def test_default_range(self):
-        from slappyengine.visibility import VisibilityObserver
+        from pharos_engine.visibility import VisibilityObserver
         obs = VisibilityObserver(entity=self._entity())
         assert obs.range == 200.0
 
     def test_custom_range(self):
-        from slappyengine.visibility import VisibilityObserver
+        from pharos_engine.visibility import VisibilityObserver
         obs = VisibilityObserver(entity=self._entity(), range=500.0)
         assert obs.range == 500.0
 
     def test_default_mode_circle(self):
-        from slappyengine.visibility import VisibilityObserver
+        from pharos_engine.visibility import VisibilityObserver
         obs = VisibilityObserver(entity=self._entity())
         assert obs.mode == "circle"
 
     def test_default_cone_angle_360(self):
-        from slappyengine.visibility import VisibilityObserver
+        from pharos_engine.visibility import VisibilityObserver
         obs = VisibilityObserver(entity=self._entity())
         assert obs.cone_angle == 360.0
 
     def test_default_hull_alpha(self):
-        from slappyengine.visibility import VisibilityObserver
+        from pharos_engine.visibility import VisibilityObserver
         obs = VisibilityObserver(entity=self._entity())
         assert abs(obs.hull_alpha - 0.3) < 1e-9
 
     def test_default_occluders_empty(self):
-        from slappyengine.visibility import VisibilityObserver
+        from pharos_engine.visibility import VisibilityObserver
         obs = VisibilityObserver(entity=self._entity())
         assert obs.occluders == []
 
     def test_entity_stored(self):
-        from slappyengine.visibility import VisibilityObserver
+        from pharos_engine.visibility import VisibilityObserver
         e = self._entity()
         obs = VisibilityObserver(entity=e)
         assert obs.entity is e
@@ -64,52 +64,52 @@ class TestVisibilityObserver:
 
 class TestVisibilityFieldInit:
     def test_instantiates(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         assert vf is not None
 
     def test_field_shape(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(32, 16))
         assert vf._field.shape == (16, 32)
 
     def test_field_zeros_initially(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(8, 8))
         assert np.all(vf._field == 0.0)
 
     def test_default_blend_radius(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         assert vf.blend_radius == 20.0
 
     def test_custom_blend_radius(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64), blend_radius=5.0)
         assert vf.blend_radius == 5.0
 
     def test_default_overlap_mode_max(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         assert vf.overlap_mode == "max"
 
     def test_custom_overlap_mode(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64), overlap_mode="add")
         assert vf.overlap_mode == "add"
 
     def test_default_decay_rate_zero(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         assert vf.decay_rate == 0.0
 
     def test_observers_empty_initially(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         assert vf._observers == {}
 
     def test_obs_counter_starts_zero(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         assert vf._obs_counter == 0
 
@@ -121,7 +121,7 @@ class TestVisibilityFieldObservers:
         return E()
 
     def test_add_observer_returns_handle(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64))
         obs = VisibilityObserver(entity=self._entity(), range=20.0)
         handle = vf.add_observer(obs)
@@ -129,46 +129,46 @@ class TestVisibilityFieldObservers:
         assert handle > 0
 
     def test_add_observer_stores_observer(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64))
         obs = VisibilityObserver(entity=self._entity(), range=20.0)
         handle = vf.add_observer(obs)
         assert handle in vf._observers
 
     def test_handles_increment(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64))
         h1 = vf.add_observer(VisibilityObserver(entity=self._entity()))
         h2 = vf.add_observer(VisibilityObserver(entity=self._entity()))
         assert h2 > h1
 
     def test_remove_observer(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64))
         handle = vf.add_observer(VisibilityObserver(entity=self._entity()))
         vf.remove_observer(handle)
         assert handle not in vf._observers
 
     def test_remove_nonexistent_no_crash(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         vf.remove_observer(999)  # should not raise
 
 
 class TestVisibilityFieldSample:
     def test_sample_returns_float(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         result = vf.sample((10.0, 10.0))
         assert isinstance(result, float)
 
     def test_sample_zero_before_update(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         assert vf.sample((10.0, 10.0)) == 0.0
 
     def test_sample_in_range_zero_to_one(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(128, 128))
 
         class E:
@@ -183,12 +183,12 @@ class TestVisibilityFieldSample:
 
 class TestVisibilityFieldUpdate:
     def test_update_no_crash_empty(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         vf.update()  # should not raise
 
     def test_update_with_observer_modifies_field(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64))
 
         class E:
@@ -200,7 +200,7 @@ class TestVisibilityFieldUpdate:
         assert np.any(vf._field > 0.0)
 
     def test_update_max_mode_union(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(128, 128), overlap_mode="max")
 
         class E1:
@@ -221,7 +221,7 @@ class TestVisibilityFieldUpdate:
         assert val2 > 0.0
 
     def test_update_decay_rate_reduces_old_visibility(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64), decay_rate=0.5)
 
         class E:

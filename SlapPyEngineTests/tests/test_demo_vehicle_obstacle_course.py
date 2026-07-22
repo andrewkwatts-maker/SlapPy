@@ -5,8 +5,8 @@ anchored stone humps, then floors the throttle across 360 frames with a
 chase-camera view. Output lands at
 ``examples/output/softbody/vehicle_course.gif``.
 
-The demo imports from :mod:`slappyengine.softbody` and
-:mod:`slappyengine.studio`, both WIP subpackages. This test wakes up as
+The demo imports from :mod:`pharos_engine.softbody` and
+:mod:`pharos_engine.studio`, both WIP subpackages. This test wakes up as
 soon as those land — until then it skips with a clear reason so the
 gap remains visible in the test report.
 
@@ -36,12 +36,12 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP softbody / studio subpackages being unavailable.
     try:
-        from slappyengine.softbody import (  # noqa: F401
+        from pharos_engine.softbody import (  # noqa: F401
             VehicleSpec,
             build_vehicle,
             make_lattice_body,
         )
-        from slappyengine.studio import (  # noqa: F401
+        from pharos_engine.studio import (  # noqa: F401
             anchor,
             output_path,
             record,
@@ -49,7 +49,7 @@ def demo():
         )
     except Exception as exc:
         pytest.skip(
-            "slappyengine.softbody / studio unavailable (WIP): "
+            "pharos_engine.softbody / studio unavailable (WIP): "
             f"{exc}"
         )
 

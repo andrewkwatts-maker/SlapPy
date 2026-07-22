@@ -21,7 +21,7 @@ import types
 
 import pytest
 
-from slappyengine.tool_router import REGISTRY, ToolAction, ToolRouter
+from pharos_engine.tool_router import REGISTRY, ToolAction, ToolRouter
 
 
 # ---------------------------------------------------------------------------
@@ -140,7 +140,7 @@ def _make_action(
 
 
 def _make_palette(**kwargs):
-    from slappyengine.ui.editor.notebook_command_palette import (
+    from pharos_engine.ui.editor.notebook_command_palette import (
         NotebookCommandPalette,
     )
     return NotebookCommandPalette(**kwargs)
@@ -175,25 +175,25 @@ class TestConstruction:
         assert palette.is_built is False
 
     def test_title_constant(self):
-        from slappyengine.ui.editor.notebook_command_palette import (
+        from pharos_engine.ui.editor.notebook_command_palette import (
             NotebookCommandPalette,
         )
         assert NotebookCommandPalette.TITLE == "Command Palette"
 
     def test_recent_buffer_size_constant(self):
-        from slappyengine.ui.editor.notebook_command_palette import (
+        from pharos_engine.ui.editor.notebook_command_palette import (
             RECENT_BUFFER_SIZE,
         )
         assert RECENT_BUFFER_SIZE == 8
 
     def test_max_visible_rows_constant(self):
-        from slappyengine.ui.editor.notebook_command_palette import (
+        from pharos_engine.ui.editor.notebook_command_palette import (
             MAX_VISIBLE_ROWS,
         )
         assert MAX_VISIBLE_ROWS == 15
 
     def test_category_priority_ordered(self):
-        from slappyengine.ui.editor.notebook_command_palette import (
+        from pharos_engine.ui.editor.notebook_command_palette import (
             CATEGORY_PRIORITY,
         )
         assert CATEGORY_PRIORITY[:3] == ("file", "edit", "tool")
@@ -652,20 +652,20 @@ class TestHeadlessDPG:
 
 class TestRegistration:
     def test_all_exports_contains_palette(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         assert "NotebookCommandPalette" in editor_pkg.__all__
 
     def test_lazy_map_has_palette(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         assert "NotebookCommandPalette" in editor_pkg._LAZY_MAP
 
     def test_lazy_import_yields_class(self):
-        from slappyengine.ui.editor import NotebookCommandPalette
+        from pharos_engine.ui.editor import NotebookCommandPalette
         assert NotebookCommandPalette.__name__ == "NotebookCommandPalette"
 
     def test_all_list_is_sorted(self):
         # Sanity — the alphabetical ordering the sprint asks for.
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         names = editor_pkg.__all__
         idx = names.index("NotebookCommandPalette")
         assert names[idx - 1] < "NotebookCommandPalette"

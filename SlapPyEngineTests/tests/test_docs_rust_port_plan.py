@@ -1,7 +1,7 @@
 """Tripwire tests for ``docs/rust_port_plan_dynamics.md``.
 
 The doc is a decision-quality writeup for the proposed Rust port of
-``slappyengine.dynamics``. These tests guarantee its structural and
+``pharos_engine.dynamics``. These tests guarantee its structural and
 evidentiary integrity so future edits cannot silently strip the parts
 the decision relies on (bench numbers, prior-port citations, the
 seven required sections).
@@ -92,13 +92,13 @@ def test_doc_references_existing_core_module() -> None:
 
     Per ``project_rust_steps_1_4_2026_05`` / ``project_rust_migration_
     final_2026_05`` we have several landed kernels — softbody XPBD,
-    PBF inner loop, IK solver (``slappyengine._core.solve_ik``), etc.
+    PBF inner loop, IK solver (``pharos_engine._core.solve_ik``), etc.
     The doc must name at least one of them so the speedup estimate
     has provenance.
     """
     body = _read()
-    assert "slappyengine._core" in body, (
-        "expected the doc to mention the existing 'slappyengine._core' "
+    assert "pharos_engine._core" in body, (
+        "expected the doc to mention the existing 'pharos_engine._core' "
         "extension module (the Rust home of all current ports)"
     )
     # At least one already-ported kernel from memory must be named.

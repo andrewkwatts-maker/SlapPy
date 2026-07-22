@@ -91,7 +91,7 @@ additions (no row assignment, tracked in
 * `hello_v2_showcase` mega-demo (EE2), `NotebookMenuBar` (EE3),
   `FileDropHandler` (EE4), `NotebookPPPreviewPanel` (EE6),
   `TelemetrySink` (EE7).
-* `slappyengine.scenes` subpackage (FF3), hotkey conflict detector
+* `pharos_engine.scenes` subpackage (FF3), hotkey conflict detector
   (FF5), `NotebookMinimap` (FF6), `hello_scene_reg` demo (FF7).
 * `ProjectSceneBridge` (GG2), `PluginRegistry` (GG3), perf tripwire
   (GG4), `NotebookCurveEditor` (GG5), `scene_diff` (GG6),
@@ -221,7 +221,7 @@ WIRED, −2 STUB, ±0 BROKEN**.
 baseline + `docs/engine_feature_map_2026_07_04.md` batch sections
 for EE1 through MM6 rounds 8-14 + MM3 audit + MM1 hardening file
 list from `1e584e4`. Cross-referenced against `git log --oneline
--40` and the live source tree at `python/slappyengine/actions/*`,
-`python/slappyengine/render/*`, `python/slappyengine/asset_import/*`,
-`python/slappyengine/capture/*`, `python/slappyengine/text/*`,
-`python/slappyengine/exporter/*`.*
+-40` and the live source tree at `python/pharos_engine/actions/*`,
+`python/pharos_engine/render/*`, `python/pharos_engine/asset_import/*`,
+`python/pharos_engine/capture/*`, `python/pharos_engine/text/*`,
+`python/pharos_engine/exporter/*`.*

@@ -44,8 +44,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from slappyengine.actions.camera_animation_actions import CameraAnimator
-from slappyengine.ui.editor.notebook_toast_manager import (
+from pharos_engine.actions.camera_animation_actions import CameraAnimator
+from pharos_engine.ui.editor.notebook_toast_manager import (
     NotebookToastManager,
     ToastLevel,
 )

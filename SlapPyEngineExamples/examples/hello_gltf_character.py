@@ -94,7 +94,7 @@ TRACE_NAME: str = "hello_gltf_character_trace.yaml"
 # ---------------------------------------------------------------------------
 
 try:
-    from slappyengine.app import App, AppConfig  # noqa: PLC0415
+    from pharos_engine.app import App, AppConfig  # noqa: PLC0415
     _HAS_APP = True
 except Exception as _exc:  # pragma: no cover — hard-fail path only in stripped envs
     App = None  # type: ignore[assignment]
@@ -105,7 +105,7 @@ else:
     _APP_IMPORT_ERR = ""
 
 try:
-    from slappyengine.render.renderer import is_wgpu_available  # noqa: PLC0415
+    from pharos_engine.render.renderer import is_wgpu_available  # noqa: PLC0415
 except Exception:
     def is_wgpu_available() -> bool:  # type: ignore[misc]
         return False
@@ -205,7 +205,7 @@ def _quat_axis_angle(axis: tuple[float, float, float], angle_rad: float) -> np.n
 def _step_boot_app(trace: DemoTrace) -> Any:
     """Boot :class:`App` with the LL5 config.
 
-    Returns the live app or ``None`` when :mod:`slappyengine.app` is not
+    Returns the live app or ``None`` when :mod:`pharos_engine.app` is not
     importable in this environment.
     """
     if not _HAS_APP:
@@ -239,8 +239,8 @@ def _step_boot_app(trace: DemoTrace) -> Any:
 class LoadedCharacter:
     """Container for the imported skinned mesh + engine-side skeleton."""
     imported_skinned_mesh: Any
-    skinned_mesh_data: Any   # slappyengine.animation.skeleton_runtime.SkinnedMeshData
-    skeleton: Any            # slappyengine.animation.skeleton_runtime.Skeleton
+    skinned_mesh_data: Any   # pharos_engine.animation.skeleton_runtime.SkinnedMeshData
+    skeleton: Any            # pharos_engine.animation.skeleton_runtime.Skeleton
     inverse_bind_matrices: np.ndarray | None
     asset_path: Path
 
@@ -259,7 +259,7 @@ def _step_load_character(
     load_err = ""
     if asset_path.is_file():
         try:
-            from slappyengine.asset_import.gltf_importer import import_gltf
+            from pharos_engine.asset_import.gltf_importer import import_gltf
             result = import_gltf(asset_path)
             for m in result.meshes:
                 if hasattr(m, "joints_0") and m.joints_0 is not None:
@@ -284,7 +284,7 @@ def _step_load_character(
 
     # ---- Runtime skeleton + skinned mesh (JJ4) --------------------------
     try:
-        from slappyengine.animation.skeleton_runtime import (
+        from pharos_engine.animation.skeleton_runtime import (
             Skeleton,
             SkeletonNode,
             SkinnedMeshData,
@@ -466,7 +466,7 @@ def _mesh_field(mesh: Any, primary: str, secondary: str | None) -> np.ndarray | 
 def _step_build_clip(trace: DemoTrace, target_joint: int = 1) -> Any:
     """Author a 360-degree rotation clip over 2 seconds (3 keyframes)."""
     try:
-        from slappyengine.animation.clip import (
+        from pharos_engine.animation.clip import (
             AnimationChannel,
             AnimationClip,
         )
@@ -512,7 +512,7 @@ def _step_build_animator(
 ) -> Any:
     """Assemble the :class:`Animator` (JJ4) and start playback."""
     try:
-        from slappyengine.animation.skinner import Animator
+        from pharos_engine.animation.skinner import Animator
     except Exception as exc:
         trace.record("animator_missing", error=str(exc))
         return None
@@ -562,9 +562,9 @@ def _step_light_and_shadows(
 
     cascades: list[Any] = []
     try:
-        from slappyengine.render.camera import Camera3D
-        from slappyengine.render.light import Light
-        from slappyengine.render.shadows import CSMBuilder, ShadowMapConfig
+        from pharos_engine.render.camera import Camera3D
+        from pharos_engine.render.light import Light
+        from pharos_engine.render.shadows import CSMBuilder, ShadowMapConfig
     except Exception as exc:
         trace.record("csm_import_failed", error=str(exc))
         return light_handle, cascades

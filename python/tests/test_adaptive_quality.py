@@ -4,7 +4,7 @@ import pytest
 
 
 def _make_controller(num_tiers=3, target_fps=60.0, miss_threshold=3, recovery_threshold=5, callback=None):
-    from slappyengine.gpu.adaptive_quality import AdaptiveQualityController, QualityTier
+    from pharos_engine.gpu.adaptive_quality import AdaptiveQualityController, QualityTier
     tiers = [
         QualityTier("high", particles=1000, fog_res=1.0),
         QualityTier("medium", particles=500, fog_res=0.5),
@@ -21,25 +21,25 @@ def _make_controller(num_tiers=3, target_fps=60.0, miss_threshold=3, recovery_th
 
 class TestQualityTier:
     def test_init_stores_label(self):
-        from slappyengine.gpu.adaptive_quality import QualityTier
+        from pharos_engine.gpu.adaptive_quality import QualityTier
         qt = QualityTier("ultra", particles=2000)
         assert qt.label == "ultra"
 
     def test_init_stores_params(self):
-        from slappyengine.gpu.adaptive_quality import QualityTier
+        from pharos_engine.gpu.adaptive_quality import QualityTier
         qt = QualityTier("medium", fog_res=0.5, particle_cap=500)
         assert qt.params["fog_res"] == pytest.approx(0.5)
         assert qt.params["particle_cap"] == 500
 
     def test_repr_contains_label(self):
-        from slappyengine.gpu.adaptive_quality import QualityTier
+        from pharos_engine.gpu.adaptive_quality import QualityTier
         qt = QualityTier("low")
         assert "low" in repr(qt)
 
 
 class TestAdaptiveQualityControllerInit:
     def test_empty_tiers_raises(self):
-        from slappyengine.gpu.adaptive_quality import AdaptiveQualityController
+        from pharos_engine.gpu.adaptive_quality import AdaptiveQualityController
         with pytest.raises(ValueError):
             AdaptiveQualityController(tiers=[])
 
@@ -186,7 +186,7 @@ class TestDebugStr:
 
 class TestCubeArray:
     def test_init_defaults(self):
-        from slappyengine.cube_array import CubeArray
+        from pharos_engine.cube_array import CubeArray
         ca = CubeArray(name="test")
         assert ca.name == "test"
         assert ca.frame_count == 1
@@ -194,34 +194,34 @@ class TestCubeArray:
         assert ca.playing is False
 
     def test_play_sets_playing(self):
-        from slappyengine.cube_array import CubeArray
+        from pharos_engine.cube_array import CubeArray
         ca = CubeArray()
         ca.play()
         assert ca.playing is True
 
     def test_pause_clears_playing(self):
-        from slappyengine.cube_array import CubeArray
+        from pharos_engine.cube_array import CubeArray
         ca = CubeArray()
         ca.play()
         ca.pause()
         assert ca.playing is False
 
     def test_seek_clamps_to_frame_count(self):
-        from slappyengine.cube_array import CubeArray
+        from pharos_engine.cube_array import CubeArray
         ca = CubeArray()
         ca.frame_count = 4
         ca.seek(10)  # beyond max
         assert ca.current_frame == 3
 
     def test_seek_clamps_to_zero(self):
-        from slappyengine.cube_array import CubeArray
+        from pharos_engine.cube_array import CubeArray
         ca = CubeArray()
         ca.frame_count = 4
         ca.seek(-5)
         assert ca.current_frame == 0
 
     def test_tick_advances_frame_when_playing(self):
-        from slappyengine.cube_array import CubeArray
+        from pharos_engine.cube_array import CubeArray
         ca = CubeArray()
         ca.frame_count = 4
         ca.fps = 10.0
@@ -230,7 +230,7 @@ class TestCubeArray:
         assert ca.current_frame == 1
 
     def test_tick_does_not_advance_when_paused(self):
-        from slappyengine.cube_array import CubeArray
+        from pharos_engine.cube_array import CubeArray
         ca = CubeArray()
         ca.frame_count = 4
         ca.fps = 10.0
@@ -238,7 +238,7 @@ class TestCubeArray:
         assert ca.current_frame == 0
 
     def test_tick_loops_when_loop_true(self):
-        from slappyengine.cube_array import CubeArray
+        from pharos_engine.cube_array import CubeArray
         ca = CubeArray()
         ca.frame_count = 4
         ca.fps = 10.0
@@ -248,7 +248,7 @@ class TestCubeArray:
         assert ca.current_frame == 0
 
     def test_tick_stops_at_last_frame_when_not_looping(self):
-        from slappyengine.cube_array import CubeArray
+        from pharos_engine.cube_array import CubeArray
         ca = CubeArray()
         ca.frame_count = 3
         ca.fps = 10.0
@@ -259,8 +259,8 @@ class TestCubeArray:
         assert ca.playing is False
 
     def test_tick_uses_animation_graph(self):
-        from slappyengine.cube_array import CubeArray
-        from slappyengine.animation.graph import AnimationGraph, AnimState
+        from pharos_engine.cube_array import CubeArray
+        from pharos_engine.animation.graph import AnimationGraph, AnimState
         ca = CubeArray()
         ca.frame_count = 3
         # Add 3 dummy layers so that min(frame_index, len(layers)-1) = frame_index

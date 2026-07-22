@@ -1,6 +1,6 @@
 """SlapPyEngine — Hello Motor
 
-Minimal demo of :func:`slappyengine.dynamics.make_motor`.
+Minimal demo of :func:`pharos_engine.dynamics.make_motor`.
 
 A wheel is built from three nodes:
 
@@ -32,7 +32,7 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.dynamics import JointSpec, World, make_motor
+from pharos_engine.dynamics import JointSpec, World, make_motor
 
 
 # ── Demo parameters ────────────────────────────────────────────────────────

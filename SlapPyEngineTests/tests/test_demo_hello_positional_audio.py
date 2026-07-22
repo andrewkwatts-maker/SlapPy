@@ -38,9 +38,9 @@ def _load_demo():
         # Importing audio_3d exercises the audio backend probe. If it
         # raises for a reason the demo can't recover from (rare but
         # possible on air-gapped CI), skip rather than fail the suite.
-        import slappyengine.audio_3d  # noqa: F401
+        import pharos_engine.audio_3d  # noqa: F401
     except Exception as exc:  # pragma: no cover — defensive
-        pytest.skip(f"slappyengine.audio_3d unavailable: {exc}")
+        pytest.skip(f"pharos_engine.audio_3d unavailable: {exc}")
 
     spec = importlib.util.spec_from_file_location(
         "hello_positional_audio_demo", _DEMO_PATH

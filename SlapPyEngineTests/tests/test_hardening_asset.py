@@ -4,7 +4,7 @@
 The positive paths — constructing an Asset with finite coords, baking it
 to a .slap file, loading via ``from_image`` — are exercised by the
 residency / editor / example suites. This file only covers the rejection
-cases added by ``slappyengine._asset_validation``.
+cases added by ``pharos_engine._asset_validation``.
 
 Two silent-acceptance bugs landed alongside this round:
 
@@ -24,8 +24,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "python"))
 
-from slappyengine.asset import Asset  # noqa: E402
-from slappyengine.layer import Layer  # noqa: E402
+from pharos_engine.asset import Asset  # noqa: E402
+from pharos_engine.layer import Layer  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -190,7 +190,7 @@ def test_add_effect_rejects_none_mat():
 
 
 def test_add_effect_rejects_int_blend():
-    from slappyengine.material.node_material import NodeMaterial
+    from pharos_engine.material.node_material import NodeMaterial
     a = Asset(size=(16, 16))
     mat = NodeMaterial(name="fx")
     with pytest.raises(TypeError, match="blend must be a str"):
@@ -198,7 +198,7 @@ def test_add_effect_rejects_int_blend():
 
 
 def test_add_effect_rejects_none_blend():
-    from slappyengine.material.node_material import NodeMaterial
+    from pharos_engine.material.node_material import NodeMaterial
     a = Asset(size=(16, 16))
     mat = NodeMaterial(name="fx")
     with pytest.raises(TypeError, match="blend must be a str"):
@@ -206,7 +206,7 @@ def test_add_effect_rejects_none_blend():
 
 
 def test_add_effect_rejects_empty_blend():
-    from slappyengine.material.node_material import NodeMaterial
+    from pharos_engine.material.node_material import NodeMaterial
     a = Asset(size=(16, 16))
     mat = NodeMaterial(name="fx")
     with pytest.raises(ValueError, match="blend must not be empty"):

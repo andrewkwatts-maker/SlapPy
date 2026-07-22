@@ -13,9 +13,9 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.physics import hull as hull_mod
-from slappyengine.physics.cell import CELL_GRID_SIZE
-from slappyengine.physics.hull import HullTree
+from pharos_engine.physics import hull as hull_mod
+from pharos_engine.physics.cell import CELL_GRID_SIZE
+from pharos_engine.physics.hull import HullTree
 
 
 def _aabb_size(tree: HullTree, hid: int) -> tuple[float, float]:

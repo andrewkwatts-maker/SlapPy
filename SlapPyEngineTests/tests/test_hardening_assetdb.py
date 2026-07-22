@@ -15,7 +15,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "python"))
 
-from slappyengine.assets.database import AssetDatabase  # noqa: E402
+from pharos_engine.assets.database import AssetDatabase  # noqa: E402
 
 
 @pytest.fixture

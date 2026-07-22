@@ -32,7 +32,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from slappyengine.event_bus import (
+from pharos_engine.event_bus import (
     EventBus,
     EventPayload,
     EventDetails,

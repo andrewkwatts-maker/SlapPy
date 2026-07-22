@@ -15,7 +15,7 @@ import time
 
 import pytest
 
-from slappyengine.diagnostics import (
+from pharos_engine.diagnostics import (
     DiagnosticEvent,
     DiagnosticsCollector,
 )

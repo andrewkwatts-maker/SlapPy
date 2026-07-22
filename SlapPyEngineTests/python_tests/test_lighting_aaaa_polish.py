@@ -83,7 +83,7 @@ def test_cluster_accum_clear_reuses_cached_zero_buffer():
     to zero-clear the cluster accumulator (~16 MB/frame at 1080p). The
     polished version caches the buffer."""
     src = (Path(__file__).resolve().parents[2]
-           / "python" / "slappyengine" / "lighting.py").read_text(encoding="utf-8")
+           / "python" / "pharos_engine" / "lighting.py").read_text(encoding="utf-8")
     assert "_cluster_accum_zero" in src, (
         "lighting regressed: cluster zero-buffer no longer cached"
     )

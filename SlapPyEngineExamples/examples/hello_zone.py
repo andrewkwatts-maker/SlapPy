@@ -1,6 +1,6 @@
 """SlapPyEngine — Hello Zone
 
-Minimal demo of :mod:`slappyengine.zones` showing three trigger zones
+Minimal demo of :mod:`pharos_engine.zones` showing three trigger zones
 tracking three moving entities plus a threshold zone that fires on a
 ramping scalar measurement.
 
@@ -44,7 +44,7 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.zones import RectZone, ThresholdZone, ZoneManager
+from pharos_engine.zones import RectZone, ThresholdZone, ZoneManager
 
 
 # ── Demo parameters ────────────────────────────────────────────────────────

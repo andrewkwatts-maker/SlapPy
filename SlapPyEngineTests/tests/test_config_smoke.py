@@ -1,4 +1,4 @@
-﻿"""Smoke test: load_engine_config() must parse every YAML section without error."""
+"""Smoke test: load_engine_config() must parse every YAML section without error."""
 import os
 import pytest
 
@@ -8,7 +8,7 @@ os.environ.setdefault(
     str(__import__("pathlib").Path(__file__).resolve().parent.parent.parent / "config"),
 )
 
-from slappyengine.config import load_engine_config
+from pharos_engine.config import load_engine_config
 
 
 def test_config_smoke():

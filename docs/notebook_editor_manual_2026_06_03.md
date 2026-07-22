@@ -5,10 +5,10 @@
 Welcome! Pull up a chair, brew a cup of something, and crack the spine of
 your favourite notebook. This is the user-facing guide to the SlapPyEngine
 "Notebook" editor — the diary-flavoured re-skin of the Nova3D shell that
-lives under `python/slappyengine/ui/editor/`. Every panel below is a
+lives under `python/pharos_engine/ui/editor/`. Every panel below is a
 real, shipping module; every keybinding works in the current build; every
 creature you meet has its own little spec under
-`python/slappyengine/ui/theme/creatures/builtin/`.
+`python/pharos_engine/ui/theme/creatures/builtin/`.
 
 If you want the design rationale behind the look, see
 [`theme_diary_family_2026_06_03.md`](theme_diary_family_2026_06_03.md)
@@ -77,13 +77,13 @@ loop while the modal is open. If you'd rather it didn't, see
 **§9 Accessibility**.
 
 The welcome is implemented by
-`slappyengine.ui.editor.notebook_welcome.NotebookWelcome`. It is
+`pharos_engine.ui.editor.notebook_welcome.NotebookWelcome`. It is
 headless-safe — running the editor in CI builds it but never paints it.
 
 ### Picking a theme on first launch
 
 The six swatches map left-to-right onto the same six `ThemeSpec`
-constants exported from `slappyengine.ui.theme.themes`:
+constants exported from `pharos_engine.ui.theme.themes`:
 
 | # | Swatch tone | Theme name | Vibe |
 |---|---|---|---|
@@ -102,7 +102,7 @@ again.
 ## 3. Editor tour, panel by panel
 
 Each subsection here corresponds to a real module under
-`python/slappyengine/ui/editor/`. Cross-references point at the module
+`python/pharos_engine/ui/editor/`. Cross-references point at the module
 so you can dig into the source if a screenshot leaves you curious.
 
 ### 3.1 Toolbar — the stationery tray
@@ -335,14 +335,14 @@ semantic tokens) so a switch is loss-free.
 | `kawaii_planner` | Sticker-density maximal, coral pastels | `cat_01`, `panda_01`, `porcupine_01` |
 
 Each theme's source-of-truth lives at
-`python/slappyengine/ui/theme/themes/<name>.py`.
+`python/pharos_engine/ui/theme/themes/<name>.py`.
 
 ---
 
 ## 5. Creatures
 
 Twelve woodland-and-domestic-pet creatures ship under
-`python/slappyengine/ui/theme/creatures/builtin/`. Each is a small
+`python/pharos_engine/ui/theme/creatures/builtin/`. Each is a small
 declarative `Creature` dataclass: an id, a render fn, a table of named
 animations, a personality colour, and a CPU-budget hint.
 
@@ -356,7 +356,7 @@ What they do:
   startles the toolbar fox; saving the scene makes the bee dance;
   spawning a ragdoll triggers a butterfly waft. The full table is
   `EVENT_TO_CREATURE_ANIMS` under
-  `slappyengine.ui.theme.creatures.event_bindings`.
+  `pharos_engine.ui.theme.creatures.event_bindings`.
 * **Sleep.** After 60s of user-inactivity the scheduler emits
   `engine.idle_60s` and creatures fall into their "nap" animation. At
   120s they sleep deeper.
@@ -367,7 +367,7 @@ What they do:
    for the current session.
 2. Toggle the master *Animations* switch in the Theme Switcher to
    disable every creature engine-wide.
-3. Programmatically: `slappyengine.ui.theme.creatures.set_enabled(
+3. Programmatically: `pharos_engine.ui.theme.creatures.set_enabled(
    "fox_01", False)`.
 
 Performance budget: **≤ 1 ms idle / ≤ 5 ms one-shot** per scheduler
@@ -448,13 +448,13 @@ Cheapest. Every notebook widget (`StickerButton`, `WashiPanel`,
 touching the theme file:
 
 ```python
-from slappyengine.ui.theme import apply_theme, get_active_theme, Color
+from pharos_engine.ui.theme import apply_theme, get_active_theme, Color
 
 apply_theme("teengirl_notebook")
 spec = get_active_theme()
 spec.palette["accent"] = Color(0, 180, 255, 1.0)   # cyan accent
 # Notify any panel that subscribed to theme changes.
-from slappyengine.ui.widgets.notebook_theme import _notify_theme_listeners
+from pharos_engine.ui.widgets.notebook_theme import _notify_theme_listeners
 _notify_theme_listeners(spec)
 ```
 
@@ -463,7 +463,7 @@ caches on the next tick.
 
 ### 8.2 Register a new `ThemeSpec`
 
-Copy any file under `python/slappyengine/ui/theme/themes/` to start
+Copy any file under `python/pharos_engine/ui/theme/themes/` to start
 from. Pick a name, fill in a palette + fonts + nine-slice insets +
 background `ShaderEffect`, and call `register_theme(my_spec)` once at
 startup. The Theme Switcher will pick it up automatically — it reads
@@ -472,7 +472,7 @@ from `list_registered_themes()`.
 Minimum required:
 
 ```python
-from slappyengine.ui.theme import (
+from pharos_engine.ui.theme import (
     Color, Font, NineSlice, SemanticTokens, ShaderEffect, ThemeSpec,
     register_theme,
 )
@@ -495,14 +495,14 @@ register_theme(MY_THEME)
 
 ### 8.3 Register a new creature
 
-Copy one of `python/slappyengine/ui/theme/creatures/builtin/*.py` to
+Copy one of `python/pharos_engine/ui/theme/creatures/builtin/*.py` to
 start from. A creature is a single `Creature` dataclass plus a render
 fn — the fn receives `(draw_list, region, t, phase, colour)` and must
 draw using only the methods on the `DrawList` protocol so the same fn
 works under DPG, PIL, or the test mock.
 
 ```python
-from slappyengine.ui.theme.creatures import (
+from pharos_engine.ui.theme.creatures import (
     Creature, register_creature, SlotPolicy, SlotRegion,
 )
 

@@ -25,12 +25,12 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.render import PhysicsRenderer, RenderConfig
+from pharos_engine.physics.render import PhysicsRenderer, RenderConfig
 
 
 # Channel indices (mirrors world.py / cell.py).
@@ -90,7 +90,7 @@ def test_extreme_velocity_no_nan():
     )
     with warnings.catch_warnings():
         warnings.filterwarnings(
-            "error", category=RuntimeWarning, module=r"slappyengine\.physics.*"
+            "error", category=RuntimeWarning, module=r"pharos_engine\.physics.*"
         )
         for _ in range(60):
             world.step()
@@ -311,7 +311,7 @@ def test_no_runtime_warnings_during_showcase():
     renderer = PhysicsRenderer(RenderConfig(width=160, height=120))
     with warnings.catch_warnings():
         warnings.filterwarnings(
-            "error", category=RuntimeWarning, module=r"slappyengine\.physics.*"
+            "error", category=RuntimeWarning, module=r"pharos_engine\.physics.*"
         )
         for _ in range(30):
             world.step()

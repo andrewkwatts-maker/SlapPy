@@ -4,10 +4,10 @@ Audit of `Cargo.toml`, `Cargo.lock`, and `src/` for the `_core` PyO3 extension.
 
 ## Crate at a Glance
 
-- Package: `slappyengine` v0.3.0-beta.0
+- Package: `pharos_engine` v0.3.0-beta.0
 - Library name: `_core`, crate-type `cdylib`
 - Edition: 2021
-- Python module: `slappyengine._core` (built via maturin)
+- Python module: `pharos_engine._core` (built via maturin)
 - Target wheel size today: `_core.dll` ~ 798 KiB (release, before strip), `_core.pdb` ~ 1.0 MiB
 
 ## Public Surface (registered in `src/lib.rs`)
@@ -60,7 +60,7 @@ is out of scope (constraint: do not modify `src/*.rs`).
 Confirmed via `cargo tree`:
 
 ```
-slappyengine v0.3.0-beta.0
+pharos_engine v0.3.0-beta.0
 ├── bytemuck v1.25.0
 ├── half v2.7.1
 ├── lz4 v1.28.1
@@ -90,7 +90,7 @@ gi = ["3d"]
 ibl = ["3d"]
 ```
 
-- `default = ["3d"]` means `pip install slappy-engine` (which runs maturin with the
+- `default = ["3d"]` means `pip install pharos-engine` (which runs maturin with the
   crate's default features) ships the `3d`, but not `gi` or `ibl`, gated modules.
 - The Python-side `[project.optional-dependencies] 3d = []` is a no-op; the docstring
   says the gating is build-time via `maturin build --features 3d` — but `3d` is already
@@ -128,7 +128,7 @@ No change needed here.
 ```toml
 [tool.maturin]
 python-source = "python"
-module-name = "slappyengine._core"
+module-name = "pharos_engine._core"
 features = ["pyo3/extension-module"]
 exclude = [
     "**/__pycache__",
@@ -163,7 +163,7 @@ Ranked by impact / safety:
 3. **Make `gi` and `ibl` part of the default wheel**. They are small modules; the
    marginal binary cost is dwarfed by the wgpu Python wheel. Set
    `default = ["3d", "gi", "ibl"]` so PyPI users get the full surface out of the box.
-   Alternative: ship a `slappy-engine-full` variant. Verify with a wheel-size diff.
+   Alternative: ship a `pharos-engine-full` variant. Verify with a wheel-size diff.
 4. **Consider `panic = "abort"`** in `[profile.release]`. Saves a small amount of
    unwinding metadata in the cdylib. PyO3 catches panics at the FFI boundary anyway,
    so end-to-end behaviour from Python is unchanged. ~5-10% size win is common.

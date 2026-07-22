@@ -1,6 +1,6 @@
 """Sprint E2 — work package E2-I: mobile-skip flags for BVH + SDF.
 
-Verifies that flipping :data:`slappyengine.config.MOBILE_DISABLE_BVH` /
+Verifies that flipping :data:`pharos_engine.config.MOBILE_DISABLE_BVH` /
 :data:`MOBILE_DISABLE_SDF` causes the corresponding construction paths to
 short-circuit to ``None`` (BVH builder, SDF scene factory, SdfExtruder)
 or no-op (``Engine.enable_sdf``).
@@ -13,9 +13,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine import config as cfg
-from slappyengine.bvh_factory import build_bvh, make_sdf_scene
-from slappyengine.gpu.sdf_extruder import SdfExtruder
+from pharos_engine import config as cfg
+from pharos_engine.bvh_factory import build_bvh, make_sdf_scene
+from pharos_engine.gpu.sdf_extruder import SdfExtruder
 
 
 # ---------------------------------------------------------------------------
@@ -121,7 +121,7 @@ def test_engine_enable_sdf_is_noop_when_flag_on():
 
     # Build a stub Engine *without* triggering __init__ side effects (no
     # window, no wgpu device).  We only need _sdf_renderer + _gpu + _cfg.
-    from slappyengine.engine import Engine
+    from pharos_engine.engine import Engine
 
     eng = object.__new__(Engine)
     eng._sdf_renderer = None

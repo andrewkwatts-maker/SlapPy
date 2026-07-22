@@ -23,13 +23,13 @@ my_rocket_game/
         └── scenes.py
 ```
 
-In `pyproject.toml` declare `slappy-engine` as a dependency. Bare minimum:
+In `pyproject.toml` declare `pharos-engine` as a dependency. Bare minimum:
 
 ```toml
 [project]
 name = "rocket"
 version = "0.1.0"
-dependencies = ["slappy-engine"]
+dependencies = ["pharos-engine"]
 ```
 
 ## 2. Spawning the rocket
@@ -39,7 +39,7 @@ that translates input into velocity. Headless-safe snippet:
 
 ```python
 import numpy as np
-from slappyengine.dynamics import World
+from pharos_engine.dynamics import World
 
 world = World(gravity=(0.0, 0.0))
 world.solver_iterations = 4
@@ -57,7 +57,7 @@ velocity:
 
 ```python
 import numpy as np
-from slappyengine.dynamics import World
+from pharos_engine.dynamics import World
 
 world = World(gravity=(0.0, 0.0))
 world.solver_iterations = 4
@@ -79,11 +79,11 @@ print("after 1s, asteroid 1 is at", world.positions[1])
 
 ## 4. Collision
 
-Use `slappyengine.zones` to express the rocket's body as a trigger zone
+Use `pharos_engine.zones` to express the rocket's body as a trigger zone
 that fires when an asteroid enters it:
 
 ```python
-from slappyengine.zones import RectZone, ZoneManager
+from pharos_engine.zones import RectZone, ZoneManager
 
 hit_count = [0]
 def on_hit(eid: object) -> None:
@@ -106,7 +106,7 @@ The engine's telemetry bus is the natural fit for game-event broadcasting.
 Subscribe to a `score.changed` event and have collision callbacks publish:
 
 ```python
-from slappyengine import telemetry
+from pharos_engine import telemetry
 
 events = []
 telemetry.subscribe("score.*", lambda ev: events.append(ev.name))
@@ -121,7 +121,7 @@ A SceneUIEntity is an entity whose layer carries text/widget pixels. Build
 one and paint the score into its canvas with PIL:
 
 ```python
-from slappyengine.ui.scene_ui import SceneUIEntity
+from pharos_engine.ui.scene_ui import SceneUIEntity
 
 hud = SceneUIEntity(name="hud", position=(0, 0), size=(320, 60))
 hud.set_text("SCORE: 0", "TIME: 00:00")
@@ -135,7 +135,7 @@ print("hud size:", hud.size, "lines:", hud._text_lines)
 which falls back to a silent stub when `sounddevice` isn't installed.
 
 ```python
-from slappyengine.audio import AudioManager
+from pharos_engine.audio import AudioManager
 
 amgr = AudioManager()
 print("audio backend available:", amgr.available)
@@ -151,8 +151,8 @@ State serialization is JSON + base64. Round-trips byte-identically.
 from pathlib import Path
 import tempfile
 import numpy as np
-from slappyengine.dynamics import World
-from slappyengine.dynamics.serialize import save_world, load_world
+from pharos_engine.dynamics import World
+from pharos_engine.dynamics.serialize import save_world, load_world
 
 world = World()
 world.positions = np.array([[0.0, 1.0], [1.0, 2.0]], dtype=np.float32)
@@ -173,7 +173,7 @@ TAA + Vignette + Outline + CA + AutoEV + DoF helpers — see
 [engine_surface_v030.md](engine_surface_v030.md) for the full list.
 
 ```python
-from slappyengine.post_process.chain import PostProcessChain
+from pharos_engine.post_process.chain import PostProcessChain
 
 chain = PostProcessChain()
 chain.add_vignette(strength=0.6, inner_radius=0.4, feather=0.3)
@@ -187,8 +187,8 @@ print("post-process pass count:", len(chain.passes))
 Both opt-in:
 
 ```python
-from slappyengine import telemetry
-from slappyengine.zones import ZoneManager
+from pharos_engine import telemetry
+from pharos_engine.zones import ZoneManager
 
 telemetry.enable_pattern_index(True)
 mgr = ZoneManager()
@@ -201,9 +201,9 @@ defaults `False` — turn it on once you have hundreds of subscribers.
 
 ## Where to take it next
 
-- Add a wave-spawn system from `slappyengine.iso.combat.WaveSchedule` —
+- Add a wave-spawn system from `pharos_engine.iso.combat.WaveSchedule` —
   see [api/iso.md](api/iso.md).
-- Add a ragdoll explosion via `slappyengine.dynamics.RagdollSpec` — see
+- Add a ragdoll explosion via `pharos_engine.dynamics.RagdollSpec` — see
   [dynamics_quickstart.md](dynamics_quickstart.md).
 - Profile with `tools/bench_dashboard.py` — see [perf_dashboard.md](perf_dashboard.md).
 - Read [api/dynamics.md](api/dynamics.md), [api/zones.md](api/zones.md),

@@ -1,6 +1,6 @@
 """SlapPyEngine — Hello Numerics
 
-Minimal demo of :func:`slappyengine.numerics.vcycle_poisson` showing a
+Minimal demo of :func:`pharos_engine.numerics.vcycle_poisson` showing a
 multigrid Poisson solve on a 64x64 cell-centred grid.
 
 A 2-D Gaussian bump is placed at the grid centre:
@@ -42,7 +42,7 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.numerics import vcycle_poisson
+from pharos_engine.numerics import vcycle_poisson
 
 
 # ── Demo parameters ────────────────────────────────────────────────────────

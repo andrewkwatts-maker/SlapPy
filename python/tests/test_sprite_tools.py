@@ -16,7 +16,7 @@ def _make_test_png(path, width=64, height=64, color=(200, 100, 50, 255)):
 
 class TestGenerateRotationStrip:
     def test_creates_output_file(self, tmp_path):
-        from slappyengine.tools.sprite_tools import generate_rotation_strip
+        from pharos_engine.tools.sprite_tools import generate_rotation_strip
         src = tmp_path / "src.png"
         dst = tmp_path / "strip.png"
         _make_test_png(src)
@@ -25,7 +25,7 @@ class TestGenerateRotationStrip:
 
     def test_strip_width_is_frames_times_frame_width(self, tmp_path):
         from PIL import Image
-        from slappyengine.tools.sprite_tools import generate_rotation_strip
+        from pharos_engine.tools.sprite_tools import generate_rotation_strip
         src = tmp_path / "src.png"
         dst = tmp_path / "strip.png"
         _make_test_png(src, 32, 32)
@@ -36,7 +36,7 @@ class TestGenerateRotationStrip:
 
     def test_strip_all_frames_distinct(self, tmp_path):
         from PIL import Image
-        from slappyengine.tools.sprite_tools import generate_rotation_strip
+        from pharos_engine.tools.sprite_tools import generate_rotation_strip
         import numpy as np
         src = tmp_path / "arrow.png"
         # Create an asymmetric image so rotations produce different results
@@ -55,7 +55,7 @@ class TestGenerateRotationStrip:
         assert not np.array_equal(f0, f2)
 
     def test_returns_absolute_path(self, tmp_path):
-        from slappyengine.tools.sprite_tools import generate_rotation_strip
+        from pharos_engine.tools.sprite_tools import generate_rotation_strip
         src = tmp_path / "src.png"
         dst = tmp_path / "strip.png"
         _make_test_png(src)
@@ -65,7 +65,7 @@ class TestGenerateRotationStrip:
 
 class TestGenerateTiltSheet:
     def test_creates_correct_number_of_files(self, tmp_path):
-        from slappyengine.tools.sprite_tools import generate_tilt_sheet
+        from pharos_engine.tools.sprite_tools import generate_tilt_sheet
         src = tmp_path / "car.png"
         _make_test_png(src)
         out_dir = tmp_path / "tilts"
@@ -73,7 +73,7 @@ class TestGenerateTiltSheet:
         assert len(results) == 4
 
     def test_all_output_files_exist(self, tmp_path):
-        from slappyengine.tools.sprite_tools import generate_tilt_sheet
+        from pharos_engine.tools.sprite_tools import generate_tilt_sheet
         src = tmp_path / "car.png"
         _make_test_png(src)
         out_dir = tmp_path / "tilts"
@@ -82,7 +82,7 @@ class TestGenerateTiltSheet:
             assert Path(path).exists(), f"Missing: {path}"
 
     def test_creates_output_dir(self, tmp_path):
-        from slappyengine.tools.sprite_tools import generate_tilt_sheet
+        from pharos_engine.tools.sprite_tools import generate_tilt_sheet
         src = tmp_path / "car.png"
         _make_test_png(src)
         out_dir = tmp_path / "new_subdir" / "tilts"
@@ -91,7 +91,7 @@ class TestGenerateTiltSheet:
 
     def test_output_images_correct_size(self, tmp_path):
         from PIL import Image
-        from slappyengine.tools.sprite_tools import generate_tilt_sheet
+        from pharos_engine.tools.sprite_tools import generate_tilt_sheet
         src = tmp_path / "car.png"
         _make_test_png(src, 64, 64)
         out_dir = tmp_path / "tilts"
@@ -102,7 +102,7 @@ class TestGenerateTiltSheet:
 
 class TestRecolorSprite:
     def test_creates_output_file(self, tmp_path):
-        from slappyengine.tools.sprite_tools import recolor_sprite
+        from pharos_engine.tools.sprite_tools import recolor_sprite
         src = tmp_path / "src.png"
         dst = tmp_path / "recolored.png"
         _make_test_png(src, color=(200, 50, 50, 255))
@@ -111,7 +111,7 @@ class TestRecolorSprite:
 
     def test_hue_shift_changes_pixels(self, tmp_path):
         from PIL import Image
-        from slappyengine.tools.sprite_tools import recolor_sprite
+        from pharos_engine.tools.sprite_tools import recolor_sprite
         src = tmp_path / "src.png"
         dst = tmp_path / "out.png"
         # Use a saturated red so hue shift actually changes things
@@ -124,7 +124,7 @@ class TestRecolorSprite:
 
     def test_alpha_preserved(self, tmp_path):
         from PIL import Image
-        from slappyengine.tools.sprite_tools import recolor_sprite
+        from pharos_engine.tools.sprite_tools import recolor_sprite
         src = tmp_path / "src.png"
         dst = tmp_path / "out.png"
         _make_test_png(src, color=(200, 100, 50, 200))
@@ -135,7 +135,7 @@ class TestRecolorSprite:
 
     def test_zero_hue_shift_minimal_change(self, tmp_path):
         from PIL import Image
-        from slappyengine.tools.sprite_tools import recolor_sprite
+        from pharos_engine.tools.sprite_tools import recolor_sprite
         src = tmp_path / "src.png"
         dst = tmp_path / "out.png"
         _make_test_png(src, color=(200, 100, 50, 255))
@@ -147,7 +147,7 @@ class TestRecolorSprite:
 
     def test_saturation_zero_produces_gray(self, tmp_path):
         from PIL import Image
-        from slappyengine.tools.sprite_tools import recolor_sprite
+        from pharos_engine.tools.sprite_tools import recolor_sprite
         src = tmp_path / "src.png"
         dst = tmp_path / "out.png"
         _make_test_png(src, color=(200, 50, 50, 255))
@@ -173,14 +173,14 @@ class TestExtractSpritesheet:
         sheet.save(str(path))
 
     def test_correct_file_count(self, tmp_path):
-        from slappyengine.tools.sprite_tools import extract_spritesheet
+        from pharos_engine.tools.sprite_tools import extract_spritesheet
         src = tmp_path / "sheet.png"
         self._make_sheet(src, rows=2, cols=3)
         results = extract_spritesheet(str(src), str(tmp_path / "out"), rows=2, cols=3)
         assert len(results) == 6
 
     def test_all_files_exist(self, tmp_path):
-        from slappyengine.tools.sprite_tools import extract_spritesheet
+        from pharos_engine.tools.sprite_tools import extract_spritesheet
         src = tmp_path / "sheet.png"
         self._make_sheet(src, rows=2, cols=2)
         results = extract_spritesheet(str(src), str(tmp_path / "out"), rows=2, cols=2)
@@ -188,7 +188,7 @@ class TestExtractSpritesheet:
             assert Path(path).exists()
 
     def test_named_outputs(self, tmp_path):
-        from slappyengine.tools.sprite_tools import extract_spritesheet
+        from pharos_engine.tools.sprite_tools import extract_spritesheet
         src = tmp_path / "sheet.png"
         self._make_sheet(src, rows=1, cols=3)
         names = ["left", "center", "right"]
@@ -197,7 +197,7 @@ class TestExtractSpritesheet:
             assert name in Path(result).name
 
     def test_default_naming(self, tmp_path):
-        from slappyengine.tools.sprite_tools import extract_spritesheet
+        from pharos_engine.tools.sprite_tools import extract_spritesheet
         src = tmp_path / "sheet.png"
         self._make_sheet(src, rows=1, cols=2)
         results = extract_spritesheet(str(src), str(tmp_path / "out"), rows=1, cols=2)
@@ -207,7 +207,7 @@ class TestExtractSpritesheet:
 
     def test_cell_size_correct(self, tmp_path):
         from PIL import Image
-        from slappyengine.tools.sprite_tools import extract_spritesheet
+        from pharos_engine.tools.sprite_tools import extract_spritesheet
         src = tmp_path / "sheet.png"
         self._make_sheet(src, rows=2, cols=3, cell_w=16, cell_h=16)
         results = extract_spritesheet(str(src), str(tmp_path / "out"), rows=2, cols=3)
@@ -219,43 +219,43 @@ class TestStructModules:
     """Test that StructModule subclasses have correct channels."""
 
     def test_fluid_params_has_channels(self):
-        from slappyengine.modules.fluid_params import FluidParamsModule
+        from pharos_engine.modules.fluid_params import FluidParamsModule
         assert len(FluidParamsModule.channels) > 0
         channel_names = [c[0] for c in FluidParamsModule.channels]
         assert "viscosity" in channel_names
         assert "pressure" in channel_names
 
     def test_fluid_params_has_defaults(self):
-        from slappyengine.modules.fluid_params import FluidParamsModule
+        from pharos_engine.modules.fluid_params import FluidParamsModule
         assert "viscosity" in FluidParamsModule.default_values
 
     def test_physics_module_has_channels(self):
-        from slappyengine.modules.physics import PhysicsModule
+        from pharos_engine.modules.physics import PhysicsModule
         channel_names = [c[0] for c in PhysicsModule.channels]
         assert "vel_x" in channel_names
         assert "vel_y" in channel_names
         assert "density" in channel_names
 
     def test_physics_module_default_values(self):
-        from slappyengine.modules.physics import PhysicsModule
+        from pharos_engine.modules.physics import PhysicsModule
         assert PhysicsModule.default_values["vel_x"] == pytest.approx(0.0)
         assert PhysicsModule.default_values["density"] == pytest.approx(1.0)
 
     def test_pixel_physics_module(self):
-        from slappyengine.modules.pixel_physics import PixelPhysicsModule
+        from pharos_engine.modules.pixel_physics import PixelPhysicsModule
         assert hasattr(PixelPhysicsModule, "channels")
         assert len(PixelPhysicsModule.channels) > 0
 
     def test_health_module_channels(self):
-        from slappyengine.modules.health import HealthModule
+        from pharos_engine.modules.health import HealthModule
         channel_names = [c[0] for c in HealthModule.channels]
         assert "health" in channel_names
         assert "max_health" in channel_names
 
     def test_modules_register_cleanly(self):
-        from slappyengine.struct_registry import StructRegistry
-        from slappyengine.modules.fluid_params import FluidParamsModule
-        from slappyengine.modules.physics import PhysicsModule
+        from pharos_engine.struct_registry import StructRegistry
+        from pharos_engine.modules.fluid_params import FluidParamsModule
+        from pharos_engine.modules.physics import PhysicsModule
         reg = StructRegistry()
         reg.register(FluidParamsModule)
         reg.register(PhysicsModule)
@@ -264,9 +264,9 @@ class TestStructModules:
         assert "vel_x" in channel_names
 
     def test_fluid_params_compute_passes(self):
-        from slappyengine.modules.fluid_params import FluidParamsModule
+        from pharos_engine.modules.fluid_params import FluidParamsModule
         assert "fluid" in FluidParamsModule.compute_passes
 
     def test_physics_module_compute_passes(self):
-        from slappyengine.modules.physics import PhysicsModule
+        from pharos_engine.modules.physics import PhysicsModule
         assert "rigid" in PhysicsModule.compute_passes

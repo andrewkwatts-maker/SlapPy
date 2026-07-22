@@ -1,4 +1,4 @@
-"""Visual smoke tests for the slappyengine.testing harness.
+"""Visual smoke tests for the pharos_engine.testing harness.
 
 These three scene tests are the bootstrap golden-master set the user
 asked for. They cover the major CPU-visible subsystems present in this
@@ -26,7 +26,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from slappyengine.testing import (
+from pharos_engine.testing import (
     BASELINES_DIR,
     assert_scene_matches,
     diff_pngs,
@@ -83,8 +83,8 @@ def _fill_lattice(layer, rows: int = 6, cols: int = 6) -> None:
 
 def test_softbody_lattice_renders(tmp_path: Path) -> None:
     """Layer2D-backed lattice — stand-in for softbody.body_builders.make_lattice."""
-    from slappyengine.layer import Layer2D
-    from slappyengine.scene import Scene
+    from pharos_engine.layer import Layer2D
+    from pharos_engine.scene import Scene
 
     scene = Scene(name="softbody_lattice")
     layer = Layer2D(name="lattice", width=320, height=180)
@@ -103,9 +103,9 @@ def test_softbody_lattice_renders(tmp_path: Path) -> None:
 
 def test_fluid_pool_renders(tmp_path: Path) -> None:
     """Fluid-config-driven scene — stand-in for fluid.world.spawn_pool."""
-    from slappyengine.fluid_sim import FluidSimConfig
-    from slappyengine.layer import Layer2D
-    from slappyengine.scene import Scene
+    from pharos_engine.fluid_sim import FluidSimConfig
+    from pharos_engine.layer import Layer2D
+    from pharos_engine.scene import Scene
 
     scene = Scene(name="fluid_pool")
     # Carry a (water-tuned) FluidSimConfig on the scene so a future
@@ -152,8 +152,8 @@ def test_fluid_pool_renders(tmp_path: Path) -> None:
 
 def test_sim_field_density_tile_layer(tmp_path: Path) -> None:
     """Density patch baked into a layer — stand-in for SimField.as_density_layer()."""
-    from slappyengine.layer import Layer2D
-    from slappyengine.scene import Scene
+    from pharos_engine.layer import Layer2D
+    from pharos_engine.scene import Scene
 
     scene = Scene(name="sim_field_density")
     layer = Layer2D(name="density", width=256, height=144)

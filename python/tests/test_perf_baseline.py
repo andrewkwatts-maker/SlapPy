@@ -25,8 +25,8 @@ import time
 
 import pytest
 
-from slappyengine.softbody import SoftBodyWorld, make_lattice_body, step
-from slappyengine.fluid import FluidWorld, pbf_step
+from pharos_engine.softbody import SoftBodyWorld, make_lattice_body, step
+from pharos_engine.fluid import FluidWorld, pbf_step
 
 
 # Generous thresholds — 3x baseline. Adjust upward only if hardware

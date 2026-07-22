@@ -8,7 +8,7 @@ example scripts) live under clearly-named top-level directories.
 
 ```
 H:/Github/SlapPyEngine/
-├── python/slappyengine/   ← core engine (unchanged)
+├── python/pharos_engine/   ← core engine (unchanged)
 ├── src/                   ← Rust source (unchanged)
 ├── shaders/               ← WGSL (unchanged)
 ├── docs/                  ← documentation (unchanged)
@@ -42,9 +42,9 @@ collide.
 | `examples/legacy/`             | `SlapPyEngineExamples/examples/legacy/`            |
 
 Downstream consumers (Ochema Circuit, Bullet Strata) only consume the
-PyPI wheel — they import `slappyengine.testing` and call
+PyPI wheel — they import `pharos_engine.testing` and call
 `assert_scene_matches(...)`, which still works because the
-`python/slappyengine/testing/baselines/` data is unchanged and is still
+`python/pharos_engine/testing/baselines/` data is unchanged and is still
 shipped in the wheel. **No public Python API surface changed.**
 
 ## Commands that moved
@@ -86,11 +86,11 @@ The default `pytest` invocation also still works because
 
 ## What was NOT touched
 
-* `python/slappyengine/softbody/` and `python/slappyengine/fluid/` are
+* `python/pharos_engine/softbody/` and `python/pharos_engine/fluid/` are
   uncommitted WIP and were left alone per the restructure brief.
 * The Rust crate (`src/`, `Cargo.toml`) is unchanged.
-* The public Python API surface (`python/slappyengine/__init__.py`
-  exports, `slappyengine.testing.assert_scene_matches`, etc.).
+* The public Python API surface (`python/pharos_engine/__init__.py`
+  exports, `pharos_engine.testing.assert_scene_matches`, etc.).
 
 ## Verification
 

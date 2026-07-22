@@ -1,10 +1,10 @@
 """Sprint 2 anchor test — cross-game sprite quality audit (engine side).
 
 Iterates the engine's own bundled baseline PNGs under
-``python/slappyengine/testing/baselines/`` plus any source sprites that
+``python/pharos_engine/testing/baselines/`` plus any source sprites that
 might land under ``tests/visual/reference/`` or a future repo-root
 ``assets/`` tree, and asserts that none of them earn the ``critical``
-recommendation from :func:`slappyengine.tools.sprite_audit.assess_quality`.
+recommendation from :func:`pharos_engine.tools.sprite_audit.assess_quality`.
 
 The audit thresholds (alpha coverage, saturation, minimum dimension) come
 from the in-tree sprite audit tool — see ``docs/sprite_audit_recipe.md``
@@ -21,7 +21,7 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine.tools.sprite_audit import (
+from pharos_engine.tools.sprite_audit import (
     SpriteInventoryEntry,
     assess_quality,
     inventory_sprites,
@@ -30,7 +30,7 @@ from slappyengine.tools.sprite_audit import (
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
-_BASELINES_DIR = _REPO_ROOT / "python" / "slappyengine" / "testing" / "baselines"
+_BASELINES_DIR = _REPO_ROOT / "python" / "pharos_engine" / "testing" / "baselines"
 _VISUAL_REF_DIR = _REPO_ROOT / "SlapPyEngineTests" / "tests" / "visual" / "reference"
 _ASSETS_DIR = _REPO_ROOT / "assets"
 

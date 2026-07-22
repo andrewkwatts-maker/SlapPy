@@ -1,4 +1,4 @@
-﻿# SlapPyEngine — Contributor Onboarding
+# SlapPyEngine — Contributor Onboarding
 
 Welcome to SlapPyEngine. This document covers the architecture, the data model, and everything you need to ship your first change in about ten minutes. Read it top-to-bottom once; afterwards the [ARCHITECTURE.md](ARCHITECTURE.md) file is a faster reference for day-to-day conventions.
 
@@ -10,8 +10,8 @@ SlapPyEngine is a GPU-accelerated pixel-art game engine whose primary render tar
 
 | Install variant | Command | Approximate size |
 |---|---|---|
-| Core 2D | `pip install slappy-engine` | ~15 MB |
-| With 3D | `pip install slappy-engine[3d]` | ~35 MB |
+| Core 2D | `pip install pharos-engine` | ~15 MB |
+| With 3D | `pip install pharos-engine[3d]` | ~35 MB |
 | Full dev rig | `pip install -e ".[dev,editor,audio,network]"` | varies |
 
 Three first-party games ship alongside the engine as living integration tests:
@@ -194,7 +194,7 @@ maturin develop --extras dev
 
 ```python
 # examples/hello_world.py  (already in the repo)
-import slappyengine as se
+import pharos_engine as se
 
 engine = se.Engine()   # reads config/engine.yml — no magic numbers here
 engine.run()           # opens an 800×600 window, clears to dark slate
@@ -207,7 +207,7 @@ python examples/hello_world.py
 ### Step 3 — A scene with an asset
 
 ```python
-import slappyengine as se
+import pharos_engine as se
 
 engine = se.Engine()
 scene  = se.Scene(name="MyScene")
@@ -249,7 +249,7 @@ pytest tests/
 Everything visible on screen is an `Entity`. The most common concrete subclass is `Asset`, which extends `RenderTarget` and owns an ordered list of `Layer` objects.
 
 ```
-Entity          (python/slappyengine/entity.py)
+Entity          (python/pharos_engine/entity.py)
  └── RenderTarget  (render_target.py)
       └── Asset     (asset.py)
            └── Layer  (layer.py)   ←  visual_texture (wgpu) + data_buffer (wgpu)
@@ -264,7 +264,7 @@ A `Layer` carries two parallel data stores:
 | `visual_texture` | `wgpu.GPUTexture` | GPU-side colour texture |
 | `data_buffer` | `wgpu.GPUBuffer` | GPU-side struct buffer |
 
-The struct layout is defined at runtime via `StructRegistry` (see `python/slappyengine/struct_registry.py`). Fields like `health`, `temperature`, and `velocity` are read and written by WGSL compute shaders.
+The struct layout is defined at runtime via `StructRegistry` (see `python/pharos_engine/struct_registry.py`). Fields like `health`, `temperature`, and `velocity` are read and written by WGSL compute shaders.
 
 ### Layer.mode — 2D vs 3D
 
@@ -279,7 +279,7 @@ The mode can be changed at runtime; the engine checks it every frame in the draw
 
 `LightingSystem` (wired into `engine._lighting`) maintains separate accumulation buffers per layer. Lights registered via `engine.lighting.add(light)` contribute to the accumulation pass. The combine shader (`shaders/lighting_combine.wgsl`) multiplies the scene texture by `(ambient + accumulated)` then blits the result.
 
-Key light types in `python/slappyengine/lighting.py`:
+Key light types in `python/pharos_engine/lighting.py`:
 
 | Class | Description |
 |---|---|
@@ -298,7 +298,7 @@ Radiance cascades (`lighting.radiance_cascades: false` by default) can be enable
 All numeric defaults live in `config/engine.yml`. Reading them uses the singleton loader:
 
 ```python
-from slappyengine.config import engine_config
+from pharos_engine.config import engine_config
 
 cfg = engine_config()           # returns the cached Config object
 print(cfg.window.width)         # 800
@@ -306,7 +306,7 @@ print(cfg.physics.default_dt)   # 0.016667
 print(cfg.lighting.max_point_lights)  # 16
 ```
 
-The typed dataclass hierarchy is defined in `python/slappyengine/config.py`:
+The typed dataclass hierarchy is defined in `python/pharos_engine/config.py`:
 `WindowConfig`, `RenderingConfig`, `ResidencyConfig`, `ComputeConfig`, `PhysicsConfig`, `LightingConfig`, `FluidSimConfig`, `NetConfig`, and more.
 
 You can override individual window settings when constructing the engine:
@@ -326,7 +326,7 @@ engine = se.Engine(config_path="config/my_project.yml")
 `config/materials.yml` maps color ranges to `MaterialDef` entries (name, density, tags, pixel-physics behavior). The compute shader `shaders/material_dispatch.wgsl` runs each frame (configurable via `materials.dispatch_frequency`) and stamps per-pixel material tags into the data buffer based on pixel color.
 
 ```python
-from slappyengine.config import load_materials_config
+from pharos_engine.config import load_materials_config
 
 materials = load_materials_config()
 ```
@@ -367,7 +367,7 @@ Engine.run()
               └── fullscreen blit                     → fullscreen_blit.wgsl
 ```
 
-Key GPU objects (all in `python/slappyengine/gpu/`):
+Key GPU objects (all in `python/pharos_engine/gpu/`):
 
 - `GPUContext` (`context.py`) — wraps the wgpu device, queue, and surface. Call `ctx.create_encoder()`, `ctx.write_texture()`, `ctx.submit()`.
 - `RenderPipeline` (`render_pipeline.py`) — creates and holds the `wgpu.GPURenderPipeline` for textured quads and texture-array quads. Built once via `pipeline.build()`.
@@ -377,10 +377,10 @@ Key GPU objects (all in `python/slappyengine/gpu/`):
 
 ### Compute Pipeline
 
-Compute shaders run through `ComputePass` (`python/slappyengine/compute/pipeline.py`):
+Compute shaders run through `ComputePass` (`python/pharos_engine/compute/pipeline.py`):
 
 ```python
-from slappyengine.compute.pipeline import ComputePass
+from pharos_engine.compute.pipeline import ComputePass
 
 pass_ = ComputePass.from_wgsl(Path("shaders/my_shader.wgsl"))
 await asset.compute.dispatch(pass_)
@@ -411,8 +411,8 @@ Engine._draw()  [after 2D pass]
 To place 3D geometry on a layer:
 
 ```python
-from slappyengine.gpu.mesh import MeshGeometry
-from slappyengine.gpu.pbr_material import PbrMaterial
+from pharos_engine.gpu.mesh import MeshGeometry
+from pharos_engine.gpu.pbr_material import PbrMaterial
 
 layer = se.Layer(name="3D Layer", mode="3D")
 layer.mesh_geometry = MeshGeometry(vertices=..., indices=...)
@@ -430,7 +430,7 @@ maturin develop --features 3d
 
 ### Rust _core Extension
 
-`src/lib.rs` registers these modules into `slappyengine._core`:
+`src/lib.rs` registers these modules into `pharos_engine._core`:
 
 | Module | File | What it provides |
 |---|---|---|
@@ -447,7 +447,7 @@ The import is guarded in `__init__.py`:
 
 ```python
 try:
-    from slappyengine import _core
+    from pharos_engine import _core
     HAS_NATIVE = True
 except ImportError:
     HAS_NATIVE = False
@@ -457,7 +457,7 @@ Pure-Python fallbacks exist for all critical paths so tests can run without the 
 
 ### Asset Residency
 
-`ResidencyManager` (`python/slappyengine/residency/manager.py`) promotes and demotes assets through three tiers each frame based on camera distance:
+`ResidencyManager` (`python/pharos_engine/residency/manager.py`) promotes and demotes assets through three tiers each frame based on camera distance:
 
 ```
 disk  →  RAM (decompress .slap)  →  VRAM (upload to GPU)
@@ -486,7 +486,7 @@ The Navier-Stokes fluid sim runs entirely on the GPU across four compute shaders
 Enable it via:
 
 ```python
-from slappyengine import FluidSimConfig
+from pharos_engine import FluidSimConfig
 
 engine.enable_fluid_sim(FluidSimConfig(
     viscosity=0.05,
@@ -499,7 +499,7 @@ All numeric knobs live in `config/engine.yml → fluid_sim`.
 
 ### P2P Networking
 
-`GameSession` (`python/slappyengine/net/session.py`) implements lock-step multiplayer. Peer discovery uses LAN broadcast (zeroconf) and a DHT (kademlia) for internet play. Room codes are 6-character alphanumeric strings generated by `RoomCode` (`net/room.py`).
+`GameSession` (`python/pharos_engine/net/session.py`) implements lock-step multiplayer. Peer discovery uses LAN broadcast (zeroconf) and a DHT (kademlia) for internet play. Room codes are 6-character alphanumeric strings generated by `RoomCode` (`net/room.py`).
 
 ```python
 # Host
@@ -510,17 +510,17 @@ print(session.room_code)   # e.g. "X7K2MQ"
 session = await engine.join_game("X7K2MQ", player_id=1)
 
 # Per tick
-from slappyengine.net.sync import InputFrame
+from pharos_engine.net.sync import InputFrame
 frame = InputFrame(tick=session.sync.tick, player_id=0,
                    actions={"fire": True}, axes={"move_x": 0.5})
 all_inputs = await session.sync.tick_async(frame, session.broadcast)
 ```
 
-Requires the `[network]` extra: `pip install slappy-engine[network]`.
+Requires the `[network]` extra: `pip install pharos-engine[network]`.
 
 ### Post-Processing
 
-`PostProcessChain` (`python/slappyengine/post_process/chain.py`) holds an ordered list of `PostProcessPass` objects. Factory helpers are defined at the top level of the package:
+`PostProcessChain` (`python/pharos_engine/post_process/chain.py`) holds an ordered list of `PostProcessPass` objects. Factory helpers are defined at the top level of the package:
 
 ```python
 scene.post_process = [
@@ -552,7 +552,7 @@ Each pass references a WGSL shader by name in `shaders/`. `PostProcessExecutor` 
 maturin develop
 ```
 
-Compiles `src/` into `python/slappyengine/_core.pyd` (Windows) or `_core.so` (Linux/macOS) and installs the package in editable mode.
+Compiles `src/` into `python/pharos_engine/_core.pyd` (Windows) or `_core.so` (Linux/macOS) and installs the package in editable mode.
 
 ### Development build with 3D
 
@@ -616,7 +616,7 @@ A scene is any class that sets up entities and hands itself to the engine. SlapP
 
 ```python
 # scenes/level_1.py
-import slappyengine as se
+import pharos_engine as se
 
 class Level1(se.Scene):
     def __init__(self):
@@ -640,7 +640,7 @@ class Level1(se.Scene):
 
 ```python
 # main.py
-import slappyengine as se
+import pharos_engine as se
 from scenes.level_1 import Level1
 
 engine = se.Engine(config_path="config/engine.yml")
@@ -674,7 +674,7 @@ hero._scripts.append(HeroScript())
 Scripts receive `on_action` calls when keyboard events are routed through an `ActionMap`:
 
 ```python
-from slappyengine.input import ActionMap
+from pharos_engine.input import ActionMap
 engine.add_player(ActionMap.wasd(player_id=0))
 ```
 
@@ -685,7 +685,7 @@ engine.add_player(ActionMap.wasd(player_id=0))
 ### Launch
 
 ```bash
-python -m slappyengine.ui.editor
+python -m pharos_engine.ui.editor
 ```
 
 Or from Python:
@@ -696,11 +696,11 @@ engine.load_scene(scene)
 engine.run_editor()   # DPG-driven loop instead of wgpu loop
 ```
 
-Requires `pip install slappy-engine[editor]`.
+Requires `pip install pharos-engine[editor]`.
 
 ### Layout
 
-The editor is built from `EditorShell` (`python/slappyengine/ui/editor/shell.py`) with a fixed four-zone DearPyGui layout:
+The editor is built from `EditorShell` (`python/pharos_engine/ui/editor/shell.py`) with a fixed four-zone DearPyGui layout:
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -747,14 +747,14 @@ Setting a single layer to 3D mode in the `LayerPanel` writes `layer.mode = "3D"`
 
 ### Theme
 
-The editor uses the Nova3D dark theme defined in `python/slappyengine/ui/editor/theme.py`. Colors and font sizes are set via DearPyGui theme APIs at editor startup inside `EditorShell.setup()`.
+The editor uses the Nova3D dark theme defined in `python/pharos_engine/ui/editor/theme.py`. Colors and font sizes are set via DearPyGui theme APIs at editor startup inside `EditorShell.setup()`.
 
 ---
 
 ## 9. Common Gotchas
 
 **`_core` import fails after editing Rust source**
-You must re-run `maturin develop` after any change to `src/*.rs`. The Python import of `slappyengine._core` will silently degrade to `HAS_NATIVE = False` if the old .pyd/.so is missing or stale.
+You must re-run `maturin develop` after any change to `src/*.rs`. The Python import of `pharos_engine._core` will silently degrade to `HAS_NATIVE = False` if the old .pyd/.so is missing or stale.
 
 **Magic numbers in Python PRs**
 Any numeric literal that represents a tunable value belongs in `config/engine.yml`, not in Python source. PRs that hardcode physics constants, timeout values, or pixel counts will be flagged in review.
@@ -783,14 +783,14 @@ Adjust the number of `.parent` steps depending on how deep the calling module is
 
 | Goal | Start here |
 |---|---|
-| Understand GPU resource flow | `python/slappyengine/gpu/context.py` |
-| Write a custom compute effect | `python/slappyengine/compute/pipeline.py` + any shader in `shaders/` |
-| Add a new light type | `python/slappyengine/lighting.py` + new `.wgsl` in `shaders/` |
-| Add a new material node | `src/node_compiler.rs` + `python/slappyengine/material/node_material.py` |
-| Extend the editor with a panel | `python/slappyengine/ui/editor/shell.py` — implement `build(parent_tag)` |
-| Add a new config key | `config/engine.yml` + matching dataclass field in `python/slappyengine/config.py` |
+| Understand GPU resource flow | `python/pharos_engine/gpu/context.py` |
+| Write a custom compute effect | `python/pharos_engine/compute/pipeline.py` + any shader in `shaders/` |
+| Add a new light type | `python/pharos_engine/lighting.py` + new `.wgsl` in `shaders/` |
+| Add a new material node | `src/node_compiler.rs` + `python/pharos_engine/material/node_material.py` |
+| Extend the editor with a panel | `python/pharos_engine/ui/editor/shell.py` — implement `build(parent_tag)` |
+| Add a new config key | `config/engine.yml` + matching dataclass field in `python/pharos_engine/config.py` |
 | Profile the render loop | Set `rendering.backend: "vulkan"` and use RenderDoc or PIX |
-| Understand the `.slap` format | `python/slappyengine/residency/slap_format.py` + `src/slap_format.rs` |
+| Understand the `.slap` format | `python/pharos_engine/residency/slap_format.py` + `src/slap_format.rs` |
 
 ---
 
@@ -799,7 +799,7 @@ Adjust the number of `.parent` steps depending on how deep the calling module is
 Every user-invocable editor action — hotkey, menu entry, spawn-card
 button, toolbar sticker — routes through a single dispatcher.
 
-**Source:** `python/slappyengine/tool_router.py`.
+**Source:** `python/pharos_engine/tool_router.py`.
 
 **Contract:**
 
@@ -815,24 +815,24 @@ button, toolbar sticker — routes through a single dispatcher.
   panel method directly. This is what keeps every action headless-safe.
 - Callables live either as inline `_fb_*` closures inside
   `tool_router.py` or (for anything that touches persistent state) as
-  a helper in `python/slappyengine/actions/*.py` — see Section 13.
+  a helper in `python/pharos_engine/actions/*.py` — see Section 13.
 
 Grep patterns you will use often:
 
 ```bash
 # Find all registered ids
-grep -n 'ToolAction(' python/slappyengine/tool_router.py
+grep -n 'ToolAction(' python/pharos_engine/tool_router.py
 
 # See which id a hotkey binds to
-grep -n 'Ctrl+Shift+T\|ctrl+shift+t' python/slappyengine/ui/editor/notebook_hotkeys.py
+grep -n 'Ctrl+Shift+T\|ctrl+shift+t' python/pharos_engine/ui/editor/notebook_hotkeys.py
 
 # See where a spawn card fires from
-grep -n 'editor.spawn' python/slappyengine/ui/editor/notebook_spawn_menu.py
+grep -n 'editor.spawn' python/pharos_engine/ui/editor/notebook_spawn_menu.py
 ```
 
 When you add a new user-invocable action, register it here before
 wiring it into a panel. The router is the choke point for user-override
-YAML hotkeys (`~/.slappyengine/ui/hotkeys/*.yaml` → `user.*` command ids
+YAML hotkeys (`~/.pharos_engine/ui/hotkeys/*.yaml` → `user.*` command ids
 resolve inside `commands.py`; every other id passes straight through).
 
 ---
@@ -871,7 +871,7 @@ Sibling docs:
 
 Every `ToolAction` that mutates persistent state (project files, editor
 layout, entity clipboard, selection) lives as a small pure-Python
-helper under `python/slappyengine/actions/*.py` — one file per
+helper under `python/pharos_engine/actions/*.py` — one file per
 category bucket.
 
 **Files:**
@@ -925,13 +925,13 @@ Design provenance: `docs/tool_routing_2026_06_07.md` §5.
 
 Two engine-side subsystems every editor session touches.
 
-### `slappyengine.prefabs.PrefabLibrary`
+### `pharos_engine.prefabs.PrefabLibrary`
 
-- **Source:** `python/slappyengine/prefabs/{prefab.py, library.py}`.
+- **Source:** `python/pharos_engine/prefabs/{prefab.py, library.py}`.
 - **Baked entries** (read-only, ship inside the wheel):
-  `python/slappyengine/prefabs/baked/{ball, bridge, chain, crate,
+  `python/pharos_engine/prefabs/baked/{ball, bridge, chain, crate,
   ragdoll, windmill}.prefab.yaml`.
-- **User overlay** (writable): `~/.slappyengine/prefabs/`.
+- **User overlay** (writable): `~/.pharos_engine/prefabs/`.
   `PrefabLibrary.bake_defaults()` idempotently copies baked → user on
   first use so entries can be edited without touching the installed
   package.
@@ -944,15 +944,15 @@ Mirrors the same pattern as `UserThemeStore`
 (`ui/theme/user_themes.py`) so any code that reads themes reads
 prefabs the same way.
 
-### `slappyengine.autosave.AutosaveManager`
+### `pharos_engine.autosave.AutosaveManager`
 
-- **Source:** `python/slappyengine/autosave.py`.
+- **Source:** `python/pharos_engine/autosave.py`.
 - **Three orthogonal pieces:** `AutosaveState` (dataclass config bag),
   `AutosaveManager` (background timer + snapshot ring buffer +
   `threading.Lock`), `RecoveryPrompt` (boot-time helper that returns a
   `RecoveryOffer` if the newest snapshot is newer than the last-saved
   timestamp).
-- **Snapshot format:** `~/.slappyengine/autosave/YYYYMMDD_HHMMSS_<seq>.snap.yaml`
+- **Snapshot format:** `~/.pharos_engine/autosave/YYYYMMDD_HHMMSS_<seq>.snap.yaml`
   with a `meta:` block (`saved_at` ISO-Z, `project`, `engine_version`)
   and a `payload:` slot (dict / bytes-as-base64 / str).
 - **Thread safety:** every `_tick()` grabs `self._lock` before invoking
@@ -960,6 +960,6 @@ prefabs the same way.
   lock-protected so a timer tick can't fire mid-reconfigure.
 - **Design provenance:** sprint Y6 (autosave + crash-recovery).
 
-Both subsystems land under `~/.slappyengine/` — the same root the
+Both subsystems land under `~/.pharos_engine/` — the same root the
 user-override loader uses. See `docs/user_customization_2026_06_07.md`
 for the full folder contract.

@@ -1,5 +1,5 @@
 """Tests for the shared input-validation helpers in
-:mod:`slappyengine._validation`.
+:mod:`pharos_engine._validation`.
 
 These cover each public canonical validator with both positive and
 negative cases, including the standardisations applied during the
@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine._validation import (
+from pharos_engine._validation import (
     validate_bool,
     validate_callable,
     validate_callback,

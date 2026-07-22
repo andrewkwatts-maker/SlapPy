@@ -12,7 +12,7 @@ from pathlib import Path
 
 def _fresh_db():
     """Return a new AssetDatabase instance, bypassing the singleton."""
-    from slappyengine.assets.database import AssetDatabase
+    from pharos_engine.assets.database import AssetDatabase
     return AssetDatabase()  # direct __init__, not .instance()
 
 
@@ -22,21 +22,21 @@ def _fresh_db():
 
 class TestAssetRecord:
     def test_instantiates(self, tmp_path):
-        from slappyengine.assets.database import AssetRecord
+        from pharos_engine.assets.database import AssetRecord
         f = tmp_path / "test.txt"
         f.write_text("data")
         rec = AssetRecord(str(f), asset="hello", asset_type="txt")
         assert rec is not None
 
     def test_path_stored(self, tmp_path):
-        from slappyengine.assets.database import AssetRecord
+        from pharos_engine.assets.database import AssetRecord
         f = tmp_path / "a.txt"
         f.write_text("x")
         rec = AssetRecord(str(f), asset=None, asset_type="txt")
         assert rec.path == str(f)
 
     def test_asset_stored(self, tmp_path):
-        from slappyengine.assets.database import AssetRecord
+        from pharos_engine.assets.database import AssetRecord
         f = tmp_path / "b.txt"
         f.write_text("y")
         sentinel = object()
@@ -44,21 +44,21 @@ class TestAssetRecord:
         assert rec.asset is sentinel
 
     def test_size_bytes(self, tmp_path):
-        from slappyengine.assets.database import AssetRecord
+        from pharos_engine.assets.database import AssetRecord
         f = tmp_path / "sized.txt"
         f.write_bytes(b"1234567890")
         rec = AssetRecord(str(f), asset=None, asset_type="txt")
         assert rec.size_bytes == 10
 
     def test_last_modified_positive(self, tmp_path):
-        from slappyengine.assets.database import AssetRecord
+        from pharos_engine.assets.database import AssetRecord
         f = tmp_path / "ts.txt"
         f.write_text("time")
         rec = AssetRecord(str(f), asset=None, asset_type="txt")
         assert rec.last_modified > 0
 
     def test_thumbnail_path_initially_none(self, tmp_path):
-        from slappyengine.assets.database import AssetRecord
+        from pharos_engine.assets.database import AssetRecord
         f = tmp_path / "img.png"
         f.write_bytes(b"\x89PNG")
         rec = AssetRecord(str(f), asset=None, asset_type="png")
@@ -99,13 +99,13 @@ class TestAssetDatabaseInit:
 
 class TestAssetDatabaseSingleton:
     def test_instance_returns_same_object(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         a = AssetDatabase.instance()
         b = AssetDatabase.instance()
         assert a is b
 
     def test_instance_is_asset_database(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         assert isinstance(AssetDatabase.instance(), AssetDatabase)
 
 

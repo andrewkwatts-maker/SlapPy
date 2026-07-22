@@ -158,8 +158,8 @@ def stub_dpg(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def clear_theme_state():
-    from slappyengine.ui.widgets import notebook_theme
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine.ui.widgets import notebook_theme
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -176,7 +176,7 @@ def clear_theme_state():
 @pytest.fixture
 def baker(tmp_path):
     """Return a :class:`ChainBaker` whose user dir is isolated per test."""
-    from slappyengine.post_process.chain_baker import ChainBaker
+    from pharos_engine.post_process.chain_baker import ChainBaker
 
     b = ChainBaker(user_dir=tmp_path / "chains")
     b.bake_defaults()
@@ -185,7 +185,7 @@ def baker(tmp_path):
 
 
 def _make_panel(**kwargs):
-    from slappyengine.ui.editor.notebook_pp_preview import (
+    from pharos_engine.ui.editor.notebook_pp_preview import (
         NotebookPPPreviewPanel,
     )
     return NotebookPPPreviewPanel(**kwargs)
@@ -202,7 +202,7 @@ class TestConstruction:
         assert p.TITLE == "Post-Process Preview"
 
     def test_defaults_expose_constants(self):
-        from slappyengine.ui.editor.notebook_pp_preview import (
+        from pharos_engine.ui.editor.notebook_pp_preview import (
             PLACEHOLDER_PRESET_NAME,
             REFRESH_INTERVAL_MS,
             SPLIT_DEFAULT,
@@ -246,20 +246,20 @@ class TestConstruction:
 
 class TestTestImage:
     def test_build_test_image_deterministic(self):
-        from slappyengine.ui.editor.notebook_pp_preview import build_test_image
+        from pharos_engine.ui.editor.notebook_pp_preview import build_test_image
         a = build_test_image()
         b = build_test_image()
         assert np.allclose(a, b)
 
     def test_build_test_image_rejects_bad_size(self):
-        from slappyengine.ui.editor.notebook_pp_preview import build_test_image
+        from pharos_engine.ui.editor.notebook_pp_preview import build_test_image
         with pytest.raises(ValueError):
             build_test_image(0)
         with pytest.raises(ValueError):
             build_test_image(-1)
 
     def test_test_image_contains_red_square(self):
-        from slappyengine.ui.editor.notebook_pp_preview import build_test_image
+        from pharos_engine.ui.editor.notebook_pp_preview import build_test_image
         img = build_test_image()
         # Top-left quadrant should contain saturated red pixels.
         tl = img[:64, :64]
@@ -267,14 +267,14 @@ class TestTestImage:
         assert red_mask.any()
 
     def test_test_image_contains_green_circle(self):
-        from slappyengine.ui.editor.notebook_pp_preview import build_test_image
+        from pharos_engine.ui.editor.notebook_pp_preview import build_test_image
         img = build_test_image()
         tr = img[:64, 64:]
         green_mask = (tr[..., 1] > 0.9) & (tr[..., 0] < 0.2)
         assert green_mask.any()
 
     def test_test_image_contains_blue_triangle(self):
-        from slappyengine.ui.editor.notebook_pp_preview import build_test_image
+        from pharos_engine.ui.editor.notebook_pp_preview import build_test_image
         img = build_test_image()
         bl = img[64:, :64]
         blue_mask = (bl[..., 2] > 0.9) & (bl[..., 0] < 0.2) & (bl[..., 1] < 0.2)
@@ -436,7 +436,7 @@ class TestManifestMutation:
 
     def test_add_pass_rejects_unknown_kind(self):
         p = _make_panel()
-        from slappyengine.post_process.chain_manifest import ChainManifestError
+        from pharos_engine.post_process.chain_manifest import ChainManifestError
         with pytest.raises(ChainManifestError):
             p.add_pass("mystery_shader")
 
@@ -620,18 +620,18 @@ class TestWrap:
 
 class TestRegistration:
     def test_all_lists_class(self):
-        from slappyengine.ui.editor import __all__ as editor_all
+        from pharos_engine.ui.editor import __all__ as editor_all
         assert "NotebookPPPreviewPanel" in editor_all
 
     def test_lazy_map_registers_module(self):
-        from slappyengine.ui.editor import _LAZY_MAP
+        from pharos_engine.ui.editor import _LAZY_MAP
         assert _LAZY_MAP["NotebookPPPreviewPanel"] == ".notebook_pp_preview"
 
     def test_lazy_import(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         cls = editor_pkg.NotebookPPPreviewPanel
         # Direct import path should agree.
-        from slappyengine.ui.editor.notebook_pp_preview import (
+        from pharos_engine.ui.editor.notebook_pp_preview import (
             NotebookPPPreviewPanel,
         )
         assert cls is NotebookPPPreviewPanel

@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.numerics — API Reference
+# pharos_engine.numerics — API Reference
 
 > Hand-written reference for the SS7 pass on the SlapPyEngine numerical
 > primitives. Owns the 2-D multigrid V-cycle Poisson solver, the
@@ -12,8 +12,8 @@
 
 ## Overview
 
-`slappyengine.numerics` was extracted from
-`slappyengine.physics.pressure_multigrid` during Phase B so long-lived
+`pharos_engine.numerics` was extracted from
+`pharos_engine.physics.pressure_multigrid` during Phase B so long-lived
 numerical kernels have a clean home decoupled from any particular
 physics flavour. Today it ships a single class of solver — 2-D
 multigrid Poisson on a regular cell-centred grid with a binary
@@ -36,7 +36,7 @@ The public surface is three free functions:
 
 The implementation is pure numpy — **no** scipy, **no** GPU, **no**
 Rust — and intentionally self-contained (does not import from
-`slappyengine.physics`) so it survives Phase D's strip pass and serves
+`pharos_engine.physics`) so it survives Phase D's strip pass and serves
 as the canonical Poisson solver going forward.
 
 **Load-bearing invariant.** All three entry points assume
@@ -48,7 +48,7 @@ per-neighbour mask multiplications for a measurable smoother speedup
 ## Public surface
 
 ```python
-from slappyengine.numerics import (
+from pharos_engine.numerics import (
     compute_residual,
     sor_smooth,
     vcycle_poisson,
@@ -59,7 +59,7 @@ from slappyengine.numerics import (
 
 ### `vcycle_poisson(rhs, mask=None, iters_per_level=2, levels=3, *, n_cycles=1, omega=1.5, coarse_iters=8, initial=None, smooth_pre=None, smooth_post=None) -> np.ndarray`
 
-_defined in `slappyengine.numerics`_
+_defined in `pharos_engine.numerics`_
 
 Solve `Δp = rhs` with `n_cycles` multigrid V-cycles on a cell-centred
 grid.
@@ -91,7 +91,7 @@ frames).
 
 ### `sor_smooth(p, rhs, iters=1, omega=1.5, *, mask=None) -> np.ndarray`
 
-_defined in `slappyengine.numerics`_
+_defined in `pharos_engine.numerics`_
 
 Run `iters` full Red-Black SOR sweeps on `Δp = rhs`. Public wrapper
 around the internal `_sor_sweep`. Returns the mutated buffer as
@@ -107,7 +107,7 @@ around the internal `_sor_sweep`. Returns the mutated buffer as
 
 ### `compute_residual(p, rhs, *, mask=None) -> np.ndarray`
 
-_defined in `slappyengine.numerics`_
+_defined in `pharos_engine.numerics`_
 
 Return `rhs − Δp` on the masked 5-point Laplacian. Public wrapper
 around the internal `_compute_residual`. Returns a `float32` array;
@@ -123,7 +123,7 @@ zero outside the live mask.
 
 ```python
 import numpy as np
-from slappyengine.numerics import (
+from pharos_engine.numerics import (
     compute_residual, sor_smooth, vcycle_poisson,
 )
 
@@ -156,8 +156,8 @@ assert (p3[:4, :] == 0.0).all()
 
 ## Skip the wrapper
 
-`slappyengine.numerics` is pure numpy today. Grep of
-`slappyengine._core_facade.RUST_MODULE_MAP` shows **no** `numerics`
+`pharos_engine.numerics` is pure numpy today. Grep of
+`pharos_engine._core_facade.RUST_MODULE_MAP` shows **no** `numerics`
 entry — the hot path is currently the Red-Black SOR smoother
 (`_sor_sweep`), which is ~62% of wall-clock at 256² per the perf audit
 in [`../numerics_design.md`](../numerics_design.md).

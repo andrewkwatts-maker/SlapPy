@@ -1,0 +1,58 @@
+# SlapPyEngine — vim-style hotkey preset.
+#
+# Modal-editor flavoured overrides layered on top of the default map:
+#   hjkl viewport pan (mapped through view.frame_all / center-on-selection
+#   as the closest ToolRouter equivalents),
+#   gg / dd / u editor idioms mapped onto the closest routed actions.
+#
+# Users lay this on top of default.yaml by dropping it into
+# ~/.pharos_engine/ui/hotkeys/ and letting apply_remap() merge the two.
+bindings:
+  - combo: h
+    action_id: view.center_on_selection
+    enabled: true
+    source: vim_style
+  - combo: j
+    action_id: view.frame_all
+    enabled: true
+    source: vim_style
+  - combo: k
+    action_id: view.zoom_in
+    enabled: true
+    source: vim_style
+  - combo: l
+    action_id: view.zoom_out
+    enabled: true
+    source: vim_style
+  - combo: g g
+    action_id: view.frame_all
+    enabled: true
+    source: vim_style
+  - combo: d d
+    action_id: edit.delete_selection
+    enabled: true
+    source: vim_style
+  - combo: y y
+    action_id: editor.copy_selection
+    enabled: true
+    source: vim_style
+  - combo: p
+    action_id: editor.paste_selection
+    enabled: true
+    source: vim_style
+  - combo: u
+    action_id: editor.undo
+    enabled: true
+    source: vim_style
+  - combo: ctrl+r
+    action_id: editor.redo
+    enabled: true
+    source: vim_style
+  - combo: shift+colon w
+    action_id: editor.save
+    enabled: true
+    source: vim_style
+  - combo: v
+    action_id: tool.select_all
+    enabled: true
+    source: vim_style

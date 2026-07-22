@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-from slappyengine.ui.editor.notebook_hotkeys import (
+from pharos_engine.ui.editor.notebook_hotkeys import (
     NotebookHotkeys,
     _normalize_key,
     _EASTER_EGG_COMMANDS,

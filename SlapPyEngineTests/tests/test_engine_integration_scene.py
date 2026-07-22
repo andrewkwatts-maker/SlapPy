@@ -3,18 +3,18 @@
 This single test fixture composes four engine subpackages over a 60-frame
 sim:
 
-* :mod:`slappyengine.iso.combat` — a defender at (5, 5) plus a
+* :mod:`pharos_engine.iso.combat` — a defender at (5, 5) plus a
   :class:`WaveSchedule` that spawns three attackers from arena edges.
-* :mod:`slappyengine.zones` — a :class:`RectZone` trigger that fires
+* :mod:`pharos_engine.zones` — a :class:`RectZone` trigger that fires
   ``on_enter`` callbacks as attackers cross into ``(3..7, 3..7)``.
-* :mod:`slappyengine.thermal` — a 32x32 :class:`HeatField` with a hot
+* :mod:`pharos_engine.thermal` — a 32x32 :class:`HeatField` with a hot
   spot at cell ``(16, 16)`` diffusing under a ``clamp`` boundary.
-* :mod:`slappyengine.dynamics` — a rope of 8 nodes anchored between
+* :mod:`pharos_engine.dynamics` — a rope of 8 nodes anchored between
   ``(2, 0)`` and ``(8, 0)`` stepped each frame.
 
 After 60 frames at ``dt = 1/30`` six assertions exercise each subpackage's
 observable state plus a visual baseline rendered through
-:func:`slappyengine.testing.assert_scene_matches`.
+:func:`pharos_engine.testing.assert_scene_matches`.
 
 Notes on rough edges surfaced
 -----------------------------
@@ -45,17 +45,17 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import RopeSpec, World, build_rope
-from slappyengine.iso.combat import (
+from pharos_engine.dynamics import RopeSpec, World, build_rope
+from pharos_engine.iso.combat import (
     Attacker,
     Defender,
     WaveSchedule,
     WaveSpec,
     resolve_attack,
 )
-from slappyengine.testing import assert_scene_matches
-from slappyengine.thermal import HeatField
-from slappyengine.zones import RectZone, ZoneManager
+from pharos_engine.testing import assert_scene_matches
+from pharos_engine.thermal import HeatField
+from pharos_engine.zones import RectZone, ZoneManager
 
 
 # ── Scenario constants ──────────────────────────────────────────────────────
@@ -354,7 +354,7 @@ def test_integration_visual_baseline(scenario):
     """testing: 256x256 composite matches the committed golden master.
 
     First run writes ``engine_integration_v2.png`` under
-    ``python/slappyengine/testing/baselines/`` and passes.
+    ``python/pharos_engine/testing/baselines/`` and passes.
     """
     frame = scenario.frame_image
     assert frame is not None

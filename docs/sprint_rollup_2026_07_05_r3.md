@@ -26,11 +26,11 @@ master.
 
 Key r3 deliverables:
 
-* **HH batch** — ergonomic top-level API pivot. `slappyengine.launch()`
+* **HH batch** — ergonomic top-level API pivot. `pharos_engine.launch()`
   + `App` + `ModelHandle` (HH1), `slap` CLI + project scaffolder (HH2),
-  a read-only Nova3D gap audit (HH3), `slappyengine.render` wgpu 2D+3D
+  a read-only Nova3D gap audit (HH3), `pharos_engine.render` wgpu 2D+3D
   forward renderer (HH4), the `asset_import/` subpackage with glTF+OBJ
-  importers (HH5), `slappyengine.config` YAML defaults + validation
+  importers (HH5), `pharos_engine.config` YAML defaults + validation
   (HH6), the `ui/runtime/` immediate-mode UI backend (HH7), and the
   `_core_facade` Rust bypass (HH8).
 * **II batch** — integration + follow-ups: rust-bypass docs (II1),
@@ -83,7 +83,7 @@ directive from the recent conversation:
 * "Nova3D parity" (JJ+KK+LL) — all 20 sprints from II7 landed on
   master. Sprint 20 (`hello_gltf_character` demo, LL5) is the green
   acceptance test.
-* "editor optional" — `slappyengine[editor]` extra confirmed
+* "editor optional" — `pharos_engine[editor]` extra confirmed
   soft-import throughout; core wheel installs without DPG and every
   new panel wraps `_safe_dpg` per the Z1 headless-safety pattern.
 
@@ -110,7 +110,7 @@ executive summary.
 | **II** | `1c7818c` (II2) → `f651d21` (II5) | 7 landed | II1 rust bypass docs + tests, II2 `ui.runtime` tests, II3 HH1↔HH4↔HH5 integration, II4 `hello_render` 2-line demo, II5 STUB triage r11, II6 pip extras, II7 Nova3D parity sprint plan | Integration + planning batch. II3 wires the HH-batch pieces end-to-end; II7 is the 20-sprint plan that JJ+KK+LL executed against. |
 | **HH** | `ec94c2a` (HH1) → `de3a22b` (HH5+HH7+HH8 salvage) | 8 landed (7 + salvage) | HH1 App / launch / ModelHandle, HH2 project scaffolder + `slap` CLI, HH3 Nova3D gap audit (docs), HH4 wgpu 2D+3D renderer, HH5 asset importer, HH6 config defaults + validation, HH7 `ui.runtime` immediate-mode UI, HH8 `_core_facade` Rust bypass | **The ergonomic API pivot.** User directive "2-line render" (HH1) shapes every downstream sprint. Nova3D gap audit (HH3) identifies 11 MUST_HAVE / 8 NICE_TO_HAVE / 3+ SKIP subsystems. |
 | **GG** | `a8fbc4f` (GG2) → `824db96` (GG7) | 7 landed | GG1 STUB triage r10, GG2 ProjectSceneBridge, GG3 PluginRegistry, GG4 perf tripwire, GG5 NotebookCurveEditor, GG6 scene_diff, GG7 big-picture status report | Polish + planning batch immediately before the HH pivot. GG7 is the input to HH3 gap audit and II7 parity plan. |
-| **FF** | `5fd475d` (salvage FF1+FF2) → `29f7552` (FF7) | 7 landed | FF1 STUB triage r9, FF2 material graph bridge fix, FF3 `slappyengine.scenes`, FF4 Rust migration re-audit, FF5 hotkey conflict detector, FF6 NotebookMinimap, FF7 hello_scene_reg demo | Ships `slappyengine.scenes` subpackage; FF4 audit is the input to r3's Rust-porting recommendations. |
+| **FF** | `5fd475d` (salvage FF1+FF2) → `29f7552` (FF7) | 7 landed | FF1 STUB triage r9, FF2 material graph bridge fix, FF3 `pharos_engine.scenes`, FF4 Rust migration re-audit, FF5 hotkey conflict detector, FF6 NotebookMinimap, FF7 hello_scene_reg demo | Ships `pharos_engine.scenes` subpackage; FF4 audit is the input to r3's Rust-porting recommendations. |
 | **EE** | `69f4407` (EE7) → `77ac09b` (EE2) | 7 landed | EE1 STUB triage r8, EE2 hello_v2_showcase, EE3 NotebookMenuBar, EE4 FileDropHandler, EE5 rollup extension, EE6 NotebookPPPreviewPanel, EE7 TelemetrySink | Ships the mega-showcase demo + auto-generated menu bar + file-drop routing. |
 | **DD** | `7be6617` (salvage DD1/3/5) → `324e8e6` (DD2) | 6 landed / 7 dispatched (DD7 lost) | DD1 STUB triage r7, DD2 hello_toast_animation, DD3 SmokeRunner, DD4 NotebookTelemetryDashboard, DD5 NotebookTimelineEditor, DD6 shader batch validator | First salvage batch — three rate-limited slots recovered from working tree. |
 | **CC** | `06620e8` (CC1) → `2b835c3` (CC4) | 7 landed | CC1 STUB triage r6, CC2 hello_material_graph, CC3 NotebookAssetInspector, CC4 LayoutBaker + 6 baked layouts, CC5 NotebookToastManager, CC6 CameraAnimator + easing, CC7 NotebookCommandPalette | Command palette (Ctrl+Shift+P) + toast notifications + camera tweens polish. |
@@ -118,7 +118,7 @@ executive summary.
 | **AA** | `f6bb3f0` (AA1) → `9997cdd` (AA5) | 7 landed | AA1 STUB triage r4, AA2 PrefabLibrary API polish, AA3 diary_softbody_bridge shim, AA4 MaterialGraphBridge, AA5 hello_full_editor, AA6 shader_lint 53-shader coverage, AA7 hotkey_remap + 3 baked presets | Ships hello_full_editor (37-event scripted demo) + WGSL shader lint. |
 | **Z**  | `fb073f4` (Z1) → `39cad69` (Z7) | 7 landed | Z1 NotebookMessageLog headless fix, Z2 NotebookPrefabMenu, Z3 6 baked chain presets, Z4 hello_prefab + hello_autosave, Z5 docs polish, Z6 EditorAutosaveIntegration, Z7 STUB triage r3 | Ships 6 baked post-process chain presets + prefab spawn menu. |
 | **Y**  | `48eb8ee` (Y7) → `61d6b83` (Y7 followup) | 7 landed | Y1 STUB triage r2, Y2 hello_joint fix, Y3 prefab library, Y4 gizmo overlay, Y5 NotebookMessageLog, Y6 autosave subsystem, Y7 feature-map delta doc | Prefab library + gizmo overlay + autosave land here. |
-| **X**  | `d339995` (X2) → `194a0c9` (X7) | 7 landed | X2 hello_rope fix, X3 STUB triage r1 + actions subpackage, X4 NotebookContentBrowser project view, X5 chain manifest, X6 UserOverrideLoader watchdog, X7 6 widget primitives | Bootstraps `slappyengine.actions.*` subpackage — the container every later triage round populates. |
+| **X**  | `d339995` (X2) → `194a0c9` (X7) | 7 landed | X2 hello_rope fix, X3 STUB triage r1 + actions subpackage, X4 NotebookContentBrowser project view, X5 chain manifest, X6 UserOverrideLoader watchdog, X7 6 widget primitives | Bootstraps `pharos_engine.actions.*` subpackage — the container every later triage round populates. |
 | **W**  | `607bffe` (W1) → `f59a6f9` (W2) + `b019bdb` | 6 landed | W1 hello_ragdoll fix, W2 four-panel hardening (31 bug classes), W3 TAA polish, W4 bloom polish, W6 hello_integrated_notebook | Silent-acceptance sweep across 4 panels. TAA + bloom polish shipping-quality. |
 | **V**  | `a714b3a` salvage + `8205368`..`1467f91` | ~7 landed | V1 feature-map audit (233-row baseline), V2 project_registry, V3 inspector reflection, V4 SnapOverlay, V5 material nodes, V6 codegen, V7 8 animated washi tape shaders | Kicks off the 7-sprint push from the master review at `db56df3`. |
 
@@ -139,13 +139,13 @@ HH1 through HH8 were dispatched to build it.
 
 ### HH1 — App / launch() / ModelHandle
 
-Commit: `ec94c2a`. Files: `python/slappyengine/app.py`,
-`python/slappyengine/__init__.py` (top-level re-export).
+Commit: `ec94c2a`. Files: `python/pharos_engine/app.py`,
+`python/pharos_engine/__init__.py` (top-level re-export).
 
 Public API surface:
 
 ```python
-import slappyengine as slap
+import pharos_engine as slap
 app = slap.launch(title="My Game", size=(1280, 720))
 model = app.load_model("bunny.gltf")
 app.run()
@@ -159,7 +159,7 @@ wraps the imported asset with a fluent transform API (`.at(x, y, z)`,
 The 2-line contract:
 
 ```python
-import slappyengine as slap
+import pharos_engine as slap
 slap.launch().load_model("bunny.gltf")   # actually renders
 ```
 
@@ -168,8 +168,8 @@ Verified end-to-end by II4 (`hello_render.py`) and again by LL5
 
 ### HH2 — Project scaffolder + `slap` CLI
 
-Commit: `ffb56c2`. Files: `python/slappyengine/scaffold.py`,
-`python/slappyengine/cli.py`.
+Commit: `ffb56c2`. Files: `python/pharos_engine/scaffold.py`,
+`python/pharos_engine/cli.py`.
 
 CLI subcommands (`slap`):
 
@@ -213,7 +213,7 @@ This audit is the input to II7's 20-sprint parity plan.
 ### HH4 — wgpu 2D+3D forward renderer
 
 Commit: `de9c0c5`. Files (17):
-`python/slappyengine/render/{__init__.py, renderer.py, null_renderer.py,
+`python/pharos_engine/render/{__init__.py, renderer.py, null_renderer.py,
 shader_stock.py, camera.py, mesh.py, material.py, light.py, transform.py,
 scene_walker.py, pipeline.py, passes.py, bvh_3d.py, shadows.py,
 skybox.py, ssao.py, instanced.py}`.
@@ -230,7 +230,7 @@ API surface, JJ1 filled in the pipeline.
 ### HH5 — Asset importer (salvage)
 
 Commit: `de3a22b` (salvage). Files:
-`python/slappyengine/asset_import/{__init__.py, gltf_importer.py,
+`python/pharos_engine/asset_import/{__init__.py, gltf_importer.py,
 obj_importer.py, texture_importer.py, mtl_resolver.py, skinned_mesh.py,
 import_result.py, dispatcher.py, stub_importer.py, cubemap_importer.py,
 samples/}`.
@@ -246,8 +246,8 @@ landed that).
 
 ### HH6 — Config defaults + validation
 
-Commit: `10ea823`. Files: `python/slappyengine/config.py` (extended),
-`python/slappyengine/config_defaults.yaml`.
+Commit: `10ea823`. Files: `python/pharos_engine/config.py` (extended),
+`python/pharos_engine/config_defaults.yaml`.
 
 Auto-generated 55-option YAML config with:
 
@@ -266,7 +266,7 @@ recent_limit), and more.
 ### HH7 — Runtime UI (salvage)
 
 Commit: `de3a22b` (salvage). Files:
-`python/slappyengine/ui/runtime/{__init__.py, draw_command.py,
+`python/pharos_engine/ui/runtime/{__init__.py, draw_command.py,
 immediate_ui.py, layout.py, text_layout.py, hud_kit.py, hud_kit_extra.py,
 hud_overlay.py, hud_registry.py, runtime_theme.py, dpg_bridge.py}`.
 
@@ -282,7 +282,7 @@ II2 added a dedicated test suite.
 ### HH8 — `_core_facade` Rust bypass (salvage)
 
 Commit: `de3a22b` (salvage). File:
-`python/slappyengine/_core_facade.py`.
+`python/pharos_engine/_core_facade.py`.
 
 Zero-overhead facade that re-exports every symbol from the compiled
 `_core` PyO3 module. Rationale from GG7 §7: shipping games can skip
@@ -321,8 +321,8 @@ HUD kit widgets, theme bridge, null backend fidelity. All headless.
 
 ### II3 — HH1↔HH4↔HH5 integration
 
-Commit: `bec4c2c`. Extends: `python/slappyengine/app.py`,
-`python/slappyengine/asset_import/dispatcher.py`.
+Commit: `bec4c2c`. Extends: `python/pharos_engine/app.py`,
+`python/pharos_engine/asset_import/dispatcher.py`.
 
 `App.load_model(path)` now:
 1. Dispatches to `asset_import.dispatcher.import_asset(path)`.
@@ -342,7 +342,7 @@ Commit: `5c7e130`. File:
 The literal 2-line demo:
 
 ```python
-import slappyengine as slap
+import pharos_engine as slap
 slap.launch().load_model("cube.gltf").run()
 ```
 
@@ -353,7 +353,7 @@ runs it and reads back a frame.
 ### II5 — STUB triage round 11
 
 Commit: `f651d21`. Files:
-`python/slappyengine/actions/*` (new modules).
+`python/pharos_engine/actions/*` (new modules).
 
 5 more action ids wired. Continues the 5-per-round cadence: this round
 brings the total to **50 wired actions across 10 rounds** (X3 through
@@ -365,15 +365,15 @@ Commit: `c706767`. Files: `pyproject.toml`,
 `docs/pyproject_extras_2026_07_05.md`.
 
 Adds pip extras: `assets`, `hud`, `math`, `video`, `audio`, `network`,
-and an `all` meta-extra. Core wheel stays ~13 MiB; `slappy-engine[all]`
+and an `all` meta-extra. Core wheel stays ~13 MiB; `pharos-engine[all]`
 lands at ~70 MiB. Install matrix:
 
 | Use case | Command | Approx wheel weight |
 |----------|---------|---------------------|
-| Headless CI | `pip install slappy-engine` | ~13 MB (wgpu core) |
-| Game runtime + HUD | `pip install slappy-engine[hud]` | ~15 MB |
-| Editor + assets | `pip install slappy-engine[editor,assets]` | ~50 MB |
-| Full development | `pip install slappy-engine[all]` | ~70 MB |
+| Headless CI | `pip install pharos-engine` | ~13 MB (wgpu core) |
+| Game runtime + HUD | `pip install pharos-engine[hud]` | ~15 MB |
+| Editor + assets | `pip install pharos-engine[editor,assets]` | ~50 MB |
+| Full development | `pip install pharos-engine[all]` | ~70 MB |
 
 ### II7 — Nova3D parity sprint plan
 
@@ -399,9 +399,9 @@ All seven P0 sprints from II7 landed in one batch.
 
 ### JJ1 — Real wgpu forward pipeline (Sprint 1)
 
-Commit: `3ea1432`. Extends: `python/slappyengine/render/renderer.py`,
-`python/slappyengine/render/pipeline.py`,
-`python/slappyengine/render/shader_stock.py`.
+Commit: `3ea1432`. Extends: `python/pharos_engine/render/renderer.py`,
+`python/pharos_engine/render/pipeline.py`,
+`python/pharos_engine/render/shader_stock.py`.
 
 Un-forks `Renderer` from `NullRenderer`-only. Real `_compile_forward_
 pipeline()` + `_begin_render_pass()` + `_submit_drawcalls()` gated on
@@ -413,8 +413,8 @@ adapter.
 ### JJ2 — MTL material resolver (Sprint 2)
 
 Commit: `544317f`. Files:
-`python/slappyengine/asset_import/mtl_resolver.py`,
-`python/slappyengine/asset_import/obj_importer.py` (extended).
+`python/pharos_engine/asset_import/mtl_resolver.py`,
+`python/pharos_engine/asset_import/obj_importer.py` (extended).
 
 Wavefront MTL spec parser: `Ka` / `Kd` / `Ks` / `Ns` / `d` / `map_Kd` /
 `map_Bump` / `illum`. When `mtllib` present in `.obj`, sibling-loads
@@ -424,8 +424,8 @@ Wavefront MTL spec parser: `Ka` / `Kd` / `Ks` / `Ns` / `d` / `map_Kd` /
 ### JJ3 — Skinned-mesh loader (Sprint 3)
 
 Commit: `8d10f91`. Extends:
-`python/slappyengine/asset_import/gltf_importer.py`; adds
-`python/slappyengine/asset_import/skinned_mesh.py`.
+`python/pharos_engine/asset_import/gltf_importer.py`; adds
+`python/pharos_engine/asset_import/skinned_mesh.py`.
 
 Parses `JOINTS_0` (uvec4) + `WEIGHTS_0` (vec4) vertex attributes.
 Extracts `Skeleton` (bone hierarchy + inverse-bind matrices) from
@@ -435,9 +435,9 @@ Extracts `Skeleton` (bone hierarchy + inverse-bind matrices) from
 ### JJ4 — Skeleton runtime + AnimationClip + Skinner (Sprint 4)
 
 Commit: `9b457e6`. Files:
-`python/slappyengine/animation/skeleton_runtime.py`,
-`python/slappyengine/animation/clip.py`,
-`python/slappyengine/animation/skinner.py`.
+`python/pharos_engine/animation/skeleton_runtime.py`,
+`python/pharos_engine/animation/clip.py`,
+`python/pharos_engine/animation/skinner.py`.
 
 `Skeleton` — bone hierarchy + world-matrix compute from parent chain.
 `AnimationClip` — translation/rotation/scale channels per bone; linear
@@ -447,7 +447,7 @@ hook placeholder ready for a future `skinning.wgsl` GPU pass).
 ### JJ5 — SceneWalker (Sprint 5)
 
 Commit: `1867012`. File:
-`python/slappyengine/render/scene_walker.py`.
+`python/pharos_engine/render/scene_walker.py`.
 
 `SceneWalker.walk_and_draw(scene, camera)` — filters visible entities
 via `Frustum.intersects_aabb` (KK1 provides the culler), sorts by
@@ -456,7 +456,7 @@ calls. Integrates with FF3 `scenes.Scene` + HH4 `Renderer`.
 
 ### JJ6 — STUB triage round 12
 
-Commit: `0783e33`. Files: `python/slappyengine/actions/*` (new modules).
+Commit: `0783e33`. Files: `python/pharos_engine/actions/*` (new modules).
 
 5 more action ids wired. Round-12 total: **55 wired actions across 12
 rounds**.
@@ -464,9 +464,9 @@ rounds**.
 ### JJ7 — Cascaded shadow maps (Sprint 7)
 
 Commit: (part of the JJ landing chain — CSM wiring landed alongside
-JJ1's pipeline). Files: `python/slappyengine/render/shadows.py`,
-`python/slappyengine/lighting.py` (extended),
-`python/slappyengine/shaders/csm.wgsl`.
+JJ1's pipeline). Files: `python/pharos_engine/render/shadows.py`,
+`python/pharos_engine/lighting.py` (extended),
+`python/pharos_engine/shaders/csm.wgsl`.
 
 `DirectionalLight.compute_cascade_splits(camera, near, far, count=4)`
 implements practical PSSM. `render_shadow_cascade(scene, cascade_idx)`
@@ -481,7 +481,7 @@ Middle-of-plan visual-quality sprints. All seven land in one batch.
 
 ### KK1 — 3D BVH broadphase (Sprint 6)
 
-Commit: `47950ba`. File: `python/slappyengine/render/bvh_3d.py`.
+Commit: `47950ba`. File: `python/pharos_engine/render/bvh_3d.py`.
 
 Wraps existing `_core.Bvh` (Rust) for 3D use. `Frustum` derivation
 from view-proj matrix; `Frustum.intersects_aabb` for culler.
@@ -491,8 +491,8 @@ SceneWalker and (indirectly, via LL7) the physics broadphase.
 ### KK2 — Depth prepass + MSAA resolve + PassChain (Sprints 8+9)
 
 Commit: `d282c17`. Files:
-`python/slappyengine/render/passes.py` (extended),
-`python/slappyengine/render/pipeline.py` (PassChain).
+`python/pharos_engine/render/passes.py` (extended),
+`python/pharos_engine/render/pipeline.py` (PassChain).
 
 `DepthPrepass` — depth-only front-to-back sort with early-Z; disables
 colour writes. `MSAAResolvePass` — resolves the multisampled colour +
@@ -502,8 +502,8 @@ sequencing so post-process passes can slot in.
 ### KK3 — SSAO (Sprint 10)
 
 Commit: `0078382`. Files:
-`python/slappyengine/render/ssao.py`,
-`python/slappyengine/shaders/ssao.wgsl` (assumed sibling),
+`python/pharos_engine/render/ssao.py`,
+`python/pharos_engine/shaders/ssao.wgsl` (assumed sibling),
 chain-manifest `ssao` pass id registration.
 
 16-sample hemisphere kernel around interpolated normal, bilateral
@@ -513,8 +513,8 @@ chain.yaml` under `post_process/baked_chains/`.
 ### KK4 — Skybox + cubemap import (Sprint 11)
 
 Commit: `7f80f9e`. Files:
-`python/slappyengine/asset_import/cubemap_importer.py`,
-`python/slappyengine/render/skybox.py`.
+`python/pharos_engine/asset_import/cubemap_importer.py`,
+`python/pharos_engine/render/skybox.py`.
 
 Cubemap import supports 6-face PNG stacks and equirectangular HDR via
 `imageio` (soft dep). `Skybox` is a vertex-shader-less full-screen tri
@@ -524,8 +524,8 @@ procedural gradient-sky fallback for when no cubemap is supplied.
 ### KK5 — IBL prefilter chain (Sprint 12)
 
 Commit: `bb7392a`. Files:
-`python/slappyengine/gpu/ibl.py` (extended),
-`python/slappyengine/shaders/ibl_prefilter.wgsl` (assumed sibling).
+`python/pharos_engine/gpu/ibl.py` (extended),
+`python/pharos_engine/shaders/ibl_prefilter.wgsl` (assumed sibling).
 
 GGX importance-sampled cubemap prefilter (5-mip roughness chain) +
 BRDF LUT bake. Closes the `ibl_prefilter.wgsl` gap flagged in FF4.
@@ -534,7 +534,7 @@ PBR materials in `hello_pbr` now reflect real environments.
 ### KK6 — SDF text glyph atlas (Sprint 13)
 
 Commit: `27f9c88`. Files:
-`python/slappyengine/text/{__init__.py, atlas.py, sdf_generator.py,
+`python/pharos_engine/text/{__init__.py, atlas.py, sdf_generator.py,
 sdf_glyph.py, text_render.py}`.
 
 `freetype-py` (soft dep) glyph atlas baker; produces 1024×1024 8-bit
@@ -543,7 +543,7 @@ per-pixel derivatives so text stays crisp at any zoom.
 
 ### KK7 — STUB triage round 13
 
-Commit: `2437bb1`. Files: `python/slappyengine/actions/*` (new modules).
+Commit: `2437bb1`. Files: `python/pharos_engine/actions/*` (new modules).
 
 5 more action ids wired. Round-13 total: **60 wired actions across 13
 rounds**.
@@ -558,7 +558,7 @@ physics bridge, and the `hello_gltf_character` acceptance demo.
 
 ### LL1 — Runtime HUD overlay (Sprint 14)
 
-Commit: `6afa7d6`. Extends: `python/slappyengine/ui/runtime/`
+Commit: `6afa7d6`. Extends: `python/pharos_engine/ui/runtime/`
 (`hud_overlay.py`, `hud_registry.py`, `hud_kit_extra.py`).
 
 Builds on HH7's `ui.runtime` immediate-mode API. Adds `HUDOverlay`
@@ -569,7 +569,7 @@ minimalist score display) on top of the existing HUD kit.
 ### LL2 — Video / GIF / frame capture (Sprint 15)
 
 Commit: `47bc7f0`. Files:
-`python/slappyengine/capture/{__init__.py, video_capture.py,
+`python/pharos_engine/capture/{__init__.py, video_capture.py,
 gif_capture.py, frame_dump.py, capture_manager.py}`.
 
 `VideoCapture(path, fps, size).write_frame(rgba)` — subprocess pipe to
@@ -580,9 +580,9 @@ FFmpeg (soft dep on `ffmpeg` binary on PATH); `av`-backend fallback.
 ### LL3 — Instanced rendering (Sprint 16)
 
 Commit: `bdb9547`. Files:
-`python/slappyengine/render/instanced.py`,
+`python/pharos_engine/render/instanced.py`,
 `InstancedMeshComponent` addition to
-`python/slappyengine/components.py`.
+`python/pharos_engine/components.py`.
 
 `InstancedMesh` — one vertex/index buffer + per-instance model-matrix +
 tint buffer. `Renderer.draw_instanced(mesh, instance_count)` uses real
@@ -593,7 +593,7 @@ Verified: 1000-instance test drops drawcall count from 1000 → 1.
 
 ### LL4 — 3D positional audio (Sprint 17)
 
-Commit: `8300cd8`. File: `python/slappyengine/audio_3d.py`.
+Commit: `8300cd8`. File: `python/pharos_engine/audio_3d.py`.
 
 `AudioListener` (position + forward + up) replaces the flat
 `listener_pos` param. Doppler shift (via velocity), stereo panning via
@@ -618,7 +618,7 @@ parity minus the deprioritised "fancy" items.
 ### LL6 — Cross-platform exporter + `slap export`
 
 Commit: `7f4f0f4`. Files:
-`python/slappyengine/exporter/{__init__.py, manifest.py,
+`python/pharos_engine/exporter/{__init__.py, manifest.py,
 binary_exporter.py, zip_bundler.py, platform_targets.py}`;
 `slap export` CLI subcommand.
 
@@ -633,7 +633,7 @@ CLI: `slap export --target windows` produces a runnable `.exe` under
 
 ### LL7 — physics3_bridge (Sprint 18)
 
-Commit: `8376e7e`. File: `python/slappyengine/physics3_bridge.py`.
+Commit: `8376e7e`. File: `python/pharos_engine/physics3_bridge.py`.
 
 **Deliberate design change from II7 Sprint 18.** Rather than un-pin
 the entire untracked `physics/` WIP tree (which is still gated on the
@@ -660,7 +660,7 @@ sprint that closed it.
 | **"bat/ps launcher scripts"** — Windows launcher out of the box | HH2 (scaffolder) | ✅ | `slap new` emits `run.bat`, `run.ps1`, `run.sh`. Verified in scaffolder tests. |
 | **"bypass Python layer"** — direct Rust access for hot paths | HH8 (`_core_facade`) + II1 (docs) | ✅ Facade + docs | `_core_facade` re-exports every Rust symbol with ~200 ns overhead; documented in `docs/rust_bypass_2026_07_05.md`. |
 | **"Nova3D parity"** — full 3D content pipeline | JJ + KK + LL (20 sprints from II7) | ✅ All 20 sprints landed | LL5 `hello_gltf_character` demo is the green acceptance test. |
-| **"editor optional"** — core doesn't need DPG | HH7 + soft-import throughout | ✅ | `slappyengine[editor]` extra; every new panel wraps `_safe_dpg` per Z1 pattern; runtime UI has null_backend for headless. |
+| **"editor optional"** — core doesn't need DPG | HH7 + soft-import throughout | ✅ | `pharos_engine[editor]` extra; every new panel wraps `_safe_dpg` per Z1 pattern; runtime UI has null_backend for headless. |
 | **"no fancy pipeline"** — skip path tracing, RTX, spectral, etc. | HH3 gap audit + II7 plan | ✅ Deprioritised | HH3 §4 SKIP bucket + II7 §2 explicitly excludes: path tracing, RTX, spectral render, radiance cascade beyond current stub, SDF brick cache, marching cubes, Firebase, FBX. |
 
 ---
@@ -818,10 +818,10 @@ Additional r3-window candidates:
 
 `git status` still shows uncommitted:
 
-* `python/slappyengine/softbody/`
-* `python/slappyengine/fluid/`
-* `python/slappyengine/physics/` (~40 module files)
-* `python/slappyengine/physics2/`
+* `python/pharos_engine/softbody/`
+* `python/pharos_engine/fluid/`
+* `python/pharos_engine/physics/` (~40 module files)
+* `python/pharos_engine/physics2/`
 * `src/{fluid_shader, pbf_solver, raster, softbody_solver}.rs`
 
 The user has held these pending a fluid-WIP reconcile. r3 shipped
@@ -859,7 +859,7 @@ glTF was out of scope. A one-slot sprint could:
 
 Both downstream games were last verified against v0.3.0 beta (see
 `project_beta_2026_05.md` memory). The r3 window shipped major API
-surface (`slappyengine.launch`, `App`, `ModelHandle`) plus new
+surface (`pharos_engine.launch`, `App`, `ModelHandle`) plus new
 subpackages (`render`, `asset_import`, `animation.skeleton_runtime`,
 `spatial` via `render/bvh_3d.py`, `capture`, `exporter`,
 `physics3_bridge`, `text`). A regression re-run confirms downstream
@@ -899,22 +899,22 @@ Extends GG7 §7 with r3-specific risks.
 
 | Subsystem | Path | Sprint |
 |-----------|------|--------|
-| **Top-level API** | `python/slappyengine/app.py` | HH1 |
-| **CLI** | `python/slappyengine/cli.py` + `scaffold.py` | HH2 |
-| **wgpu renderer** | `python/slappyengine/render/` (17 files) | HH4 + JJ1 + KK1-KK5 + LL3 |
-| **Asset import** | `python/slappyengine/asset_import/` (11 files) | HH5 + JJ2 + JJ3 + KK4 |
-| **Config** | `python/slappyengine/config.py` + `config_defaults.yaml` | HH6 |
-| **Runtime UI** | `python/slappyengine/ui/runtime/` (11 files) | HH7 + LL1 |
-| **Rust bypass** | `python/slappyengine/_core_facade.py` | HH8 |
-| **Skeletal animation** | `python/slappyengine/animation/{skeleton_runtime,clip,skinner}.py` | JJ4 |
-| **SSAO** | `python/slappyengine/render/ssao.py` | KK3 |
-| **IBL prefilter** | `python/slappyengine/gpu/ibl.py` (extended) + `shaders/ibl_prefilter.wgsl` | KK5 |
-| **SDF text** | `python/slappyengine/text/` (5 files) | KK6 |
-| **Capture** | `python/slappyengine/capture/` (5 files) | LL2 |
-| **Instanced meshes** | `python/slappyengine/render/instanced.py` | LL3 |
-| **3D audio** | `python/slappyengine/audio_3d.py` | LL4 |
-| **Exporter** | `python/slappyengine/exporter/` (5 files) | LL6 |
-| **Physics bridge** | `python/slappyengine/physics3_bridge.py` | LL7 |
+| **Top-level API** | `python/pharos_engine/app.py` | HH1 |
+| **CLI** | `python/pharos_engine/cli.py` + `scaffold.py` | HH2 |
+| **wgpu renderer** | `python/pharos_engine/render/` (17 files) | HH4 + JJ1 + KK1-KK5 + LL3 |
+| **Asset import** | `python/pharos_engine/asset_import/` (11 files) | HH5 + JJ2 + JJ3 + KK4 |
+| **Config** | `python/pharos_engine/config.py` + `config_defaults.yaml` | HH6 |
+| **Runtime UI** | `python/pharos_engine/ui/runtime/` (11 files) | HH7 + LL1 |
+| **Rust bypass** | `python/pharos_engine/_core_facade.py` | HH8 |
+| **Skeletal animation** | `python/pharos_engine/animation/{skeleton_runtime,clip,skinner}.py` | JJ4 |
+| **SSAO** | `python/pharos_engine/render/ssao.py` | KK3 |
+| **IBL prefilter** | `python/pharos_engine/gpu/ibl.py` (extended) + `shaders/ibl_prefilter.wgsl` | KK5 |
+| **SDF text** | `python/pharos_engine/text/` (5 files) | KK6 |
+| **Capture** | `python/pharos_engine/capture/` (5 files) | LL2 |
+| **Instanced meshes** | `python/pharos_engine/render/instanced.py` | LL3 |
+| **3D audio** | `python/pharos_engine/audio_3d.py` | LL4 |
+| **Exporter** | `python/pharos_engine/exporter/` (5 files) | LL6 |
+| **Physics bridge** | `python/pharos_engine/physics3_bridge.py` | LL7 |
 
 ### Testing patterns
 
@@ -1019,4 +1019,4 @@ against `docs/sprint_rollup_2026_07_04.md` (r1), `docs/big_picture_
 (EE5), `docs/nova3d_gap_audit_2026_07_05.md` (HH3), `docs/nova3d_
 parity_sprint_plan_2026_07_05.md` (II7). All 20 II7 parity sprints
 verified against the live source tree at `H:\Github\SlapPyEngine\
-python\slappyengine\` and `SlapPyEngineExamples\examples\`.*
+python\pharos_engine\` and `SlapPyEngineExamples\examples\`.*

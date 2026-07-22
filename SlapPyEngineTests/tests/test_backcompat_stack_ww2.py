@@ -12,8 +12,8 @@ targeted shims after VV1/VV2/VV3:
    legacy ``volumetric`` kwarg so Ochema's vehicle-headlight system
    builds without raising ``TypeError``.
 3. ``collision.PixelCollisionPass`` — re-export of the class living in
-   ``slappyengine.collision_pixel`` so downstream
-   ``from slappyengine.collision import PixelCollisionPass`` resolves.
+   ``pharos_engine.collision_pixel`` so downstream
+   ``from pharos_engine.collision import PixelCollisionPass`` resolves.
 4. ``audio.AudioManager.play_loop`` / ``stop_loop`` / ``set_loop_volume``
    / ``set_loop_pitch`` — id-tracked loop registry. Returns int; stores
    in ``_loops`` dict; per-loop volume + pitch clamped.
@@ -45,13 +45,13 @@ class _FakeLayer:
 
 
 def test_stress_strain_buf_none_before_first_update():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     comp = DeformableLayerComponent(_FakeLayer())
     assert comp._stress_strain_buf is None
 
 
 def test_stress_strain_buf_allocated_on_first_update():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     comp = DeformableLayerComponent(_FakeLayer(w=16, h=8))
     comp.update(dt=1 / 60)
     assert comp._stress_strain_buf is not None
@@ -60,7 +60,7 @@ def test_stress_strain_buf_allocated_on_first_update():
 
 
 def test_stress_strain_buf_writes_on_plastic_impact():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     comp = DeformableLayerComponent(_FakeLayer(w=32, h=32))
     comp.update(dt=1 / 60)  # lazy-init the buffer
     comp.apply_impact((16.0, 16.0), force=200.0, radius=8.0, mode="plastic")
@@ -74,25 +74,25 @@ def test_stress_strain_buf_writes_on_plastic_impact():
 # ---------------------------------------------------------------------------
 
 def test_cone_light_accepts_volumetric_kwarg():
-    from slappyengine.lighting import ConeLight
+    from pharos_engine.lighting import ConeLight
     cl = ConeLight(volumetric=True)
     assert cl.volumetric is True
 
 
 def test_cone_light_volumetric_defaults_false():
-    from slappyengine.lighting import ConeLight
+    from pharos_engine.lighting import ConeLight
     cl = ConeLight()
     assert cl.volumetric is False
 
 
 # ---------------------------------------------------------------------------
-# Item 3 — PixelCollisionPass re-exported from slappyengine.collision
+# Item 3 — PixelCollisionPass re-exported from pharos_engine.collision
 # ---------------------------------------------------------------------------
 
 def test_pixel_collision_pass_importable_from_collision_module():
-    """Legacy path: `from slappyengine.collision import PixelCollisionPass`."""
-    from slappyengine.collision import PixelCollisionPass
-    from slappyengine.collision_pixel import (
+    """Legacy path: `from pharos_engine.collision import PixelCollisionPass`."""
+    from pharos_engine.collision import PixelCollisionPass
+    from pharos_engine.collision_pixel import (
         PixelCollisionPass as _Canonical,
     )
     assert PixelCollisionPass is _Canonical
@@ -103,7 +103,7 @@ def test_pixel_collision_pass_importable_from_collision_module():
 # ---------------------------------------------------------------------------
 
 def _make_headless_audio_manager():
-    import slappyengine.audio as audio_mod
+    import pharos_engine.audio as audio_mod
     am = audio_mod.AudioManager.__new__(audio_mod.AudioManager)
     am._sf = MagicMock()
     am._available = False  # skip the background thread — deterministic tests
@@ -117,7 +117,7 @@ def _make_headless_audio_manager():
 
 
 def _make_sound_handle():
-    from slappyengine.audio import SoundHandle
+    from pharos_engine.audio import SoundHandle
     return SoundHandle(
         path="test.wav",
         data=np.zeros((4410, 2), dtype=np.float32),
@@ -169,7 +169,7 @@ def test_play_loop_none_handle_still_returns_id():
 # ---------------------------------------------------------------------------
 
 def _make_lighting_system():
-    from slappyengine.lighting import LightingSystem
+    from pharos_engine.lighting import LightingSystem
     gpu = MagicMock()
     gpu.device = MagicMock()
     return LightingSystem(gpu, width=64, height=64)
@@ -212,7 +212,7 @@ def test_load_profile_custom_registry_overrides_builtins():
 # ---------------------------------------------------------------------------
 
 def test_on_overlap_fires_when_predicate_true():
-    from slappyengine.collision import CollisionManager, AABBShape
+    from pharos_engine.collision import CollisionManager, AABBShape
 
     class _E:
         position = (0.0, 0.0)
@@ -237,7 +237,7 @@ def test_on_overlap_fires_when_predicate_true():
 
 
 def test_on_overlap_predicate_false_no_fire():
-    from slappyengine.collision import CollisionManager, AABBShape
+    from pharos_engine.collision import CollisionManager, AABBShape
 
     class _E:
         position = (0.0, 0.0)

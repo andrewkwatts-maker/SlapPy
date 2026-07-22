@@ -1,6 +1,6 @@
 """Regression tests for the TAA round-6 polish (W3 sprint 2026-07-04).
 
-Round 6 adds five polish improvements to :mod:`slappyengine.post_process.taa`:
+Round 6 adds five polish improvements to :mod:`pharos_engine.post_process.taa`:
 
 1. **YCoCg conversion helpers** exposed at module level with a round-trip
    identity guarantee suitable for pipeline debugging.
@@ -23,7 +23,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.post_process.taa import (
+from pharos_engine.post_process.taa import (
     HALTON_2_3_8_SAMPLES,
     KARIS_2014_K,
     TAAPass,

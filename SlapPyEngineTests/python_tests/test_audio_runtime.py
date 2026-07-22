@@ -1,4 +1,4 @@
-"""Tests for slappyengine.audio_runtime.
+"""Tests for pharos_engine.audio_runtime.
 
 Asserts the soft-import + WARNING-on-stub contract. Does NOT require
 sounddevice / soundfile to be installed — the runtime adapts to either
@@ -10,7 +10,7 @@ import logging
 
 import pytest
 
-from slappyengine.audio_runtime import (
+from pharos_engine.audio_runtime import (
     backend_status,
     is_real_backend,
     play_sample,
@@ -49,10 +49,10 @@ def test_play_sample_stub_warning_logged_at_most_once(caplog):
     if is_real_backend():
         pytest.skip("real backend installed; stub-warning assertion N/A")
     # Reset the singleton warning state by accessing the internals
-    from slappyengine.audio_runtime import _get_runtime
+    from pharos_engine.audio_runtime import _get_runtime
     runtime = _get_runtime()
     runtime._stub_warned = False
-    with caplog.at_level(logging.WARNING, logger="slappyengine.audio_runtime"):
+    with caplog.at_level(logging.WARNING, logger="pharos_engine.audio_runtime"):
         play_sample("/first.wav")
         n1 = sum(1 for r in caplog.records if "stub" in r.message.lower())
         play_sample("/second.wav")

@@ -1,4 +1,4 @@
-"""Tests for ``slappyengine.ui.editor.snap_manager``.
+"""Tests for ``pharos_engine.ui.editor.snap_manager``.
 
 Covers registration, target generation (viewport / panel / grid), the
 drag-tick snap algorithm, theme switching, and per-axis disable knobs.
@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from slappyengine.ui.editor.snap_manager import (
+from pharos_engine.ui.editor.snap_manager import (
     SnapConfig,
     SnapManager,
     SnapTarget,

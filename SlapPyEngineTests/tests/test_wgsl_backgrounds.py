@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.ui.theme.wgsl_backgrounds`.
+"""Tests for :mod:`pharos_engine.ui.theme.wgsl_backgrounds`.
 
 The WGSL background hook lets themes drive procedural panel
 backgrounds through the engine's compute pipeline instead of only the
@@ -22,7 +22,7 @@ import numpy as np
 import pytest
 
 try:
-    from slappyengine.ui.theme import (
+    from pharos_engine.ui.theme import (
         Color,
         Gradient,
         SemanticTokens,
@@ -38,11 +38,11 @@ try:
         register_theme,
         resolve_background,
     )
-    from slappyengine.ui.theme import _reset_registry_for_tests
-    from slappyengine.ui.theme import wgsl_backgrounds as _wgsl_mod
+    from pharos_engine.ui.theme import _reset_registry_for_tests
+    from pharos_engine.ui.theme import wgsl_backgrounds as _wgsl_mod
 except Exception as exc:  # pragma: no cover - skip when extension absent
     pytest.skip(
-        f"slappyengine.ui.theme not importable: {exc}",
+        f"pharos_engine.ui.theme not importable: {exc}",
         allow_module_level=True,
     )
 

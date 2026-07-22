@@ -14,7 +14,7 @@ import time
 
 import pytest
 
-from slappyengine.audio import AudioManager
+from pharos_engine.audio import AudioManager
 
 
 # ---------------------------------------------------------------------------

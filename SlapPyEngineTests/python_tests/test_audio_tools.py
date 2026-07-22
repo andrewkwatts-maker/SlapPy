@@ -13,7 +13,7 @@ def _sf_mock(data: np.ndarray, samplerate: int = 44100):
 
 
 def _patch_sf(sf_mock):
-    return patch("slappyengine.tools.audio_tools._require_soundfile",
+    return patch("pharos_engine.tools.audio_tools._require_soundfile",
                  return_value=sf_mock)
 
 
@@ -24,9 +24,9 @@ def _patch_sf(sf_mock):
 class TestRequireSoundfile:
     def test_raises_import_error_when_missing(self):
         """_require_soundfile raises ImportError when soundfile isn't installed."""
-        with patch("slappyengine.tools.audio_tools._require_soundfile",
+        with patch("pharos_engine.tools.audio_tools._require_soundfile",
                    side_effect=ImportError("soundfile not found")):
-            from slappyengine.tools.audio_tools import _require_soundfile
+            from pharos_engine.tools.audio_tools import _require_soundfile
             with pytest.raises(ImportError):
                 _require_soundfile()
 
@@ -37,7 +37,7 @@ class TestRequireSoundfile:
 
 class TestTrimSilence:
     def _call(self, data, out_path, threshold_db=-40.0):
-        from slappyengine.tools.audio_tools import trim_silence
+        from pharos_engine.tools.audio_tools import trim_silence
         sf = _sf_mock(data)
         with _patch_sf(sf):
             result = trim_silence("fake.wav", str(out_path), threshold_db=threshold_db)
@@ -84,7 +84,7 @@ class TestTrimSilence:
     def test_samplerate_preserved(self, tmp_path):
         data = np.ones((100, 1), dtype=np.float32) * 0.5
         sf = _sf_mock(data, samplerate=22050)
-        from slappyengine.tools.audio_tools import trim_silence
+        from pharos_engine.tools.audio_tools import trim_silence
         with _patch_sf(sf):
             trim_silence("fake.wav", str(tmp_path / "out.wav"))
         sr_written = sf.write.call_args[0][2]
@@ -121,7 +121,7 @@ class TestTrimSilence:
 
 class TestNormalize:
     def _call(self, data, out_path, peak_db=-1.0):
-        from slappyengine.tools.audio_tools import normalize
+        from pharos_engine.tools.audio_tools import normalize
         sf = _sf_mock(data)
         with _patch_sf(sf):
             result = normalize("fake.wav", str(out_path), peak_db=peak_db)
@@ -173,7 +173,7 @@ class TestNormalize:
     def test_samplerate_preserved(self, tmp_path):
         data = np.ones((100, 1), dtype=np.float32)
         sf = _sf_mock(data, samplerate=48000)
-        from slappyengine.tools.audio_tools import normalize
+        from pharos_engine.tools.audio_tools import normalize
         with _patch_sf(sf):
             normalize("fake.wav", str(tmp_path / "out.wav"))
         sr_written = sf.write.call_args[0][2]
@@ -186,7 +186,7 @@ class TestNormalize:
 
 class TestLoopSeamless:
     def _call(self, data, out_path):
-        from slappyengine.tools.audio_tools import loop_seamless
+        from pharos_engine.tools.audio_tools import loop_seamless
         sf = _sf_mock(data)
         with _patch_sf(sf):
             result = loop_seamless("fake.wav", str(out_path))
@@ -245,7 +245,7 @@ class TestLoopSeamless:
     def test_samplerate_preserved(self, tmp_path):
         data = np.random.rand(4096, 1).astype(np.float32)
         sf = _sf_mock(data, samplerate=22050)
-        from slappyengine.tools.audio_tools import loop_seamless
+        from pharos_engine.tools.audio_tools import loop_seamless
         with _patch_sf(sf):
             loop_seamless("fake.wav", str(tmp_path / "out.wav"))
         sr_written = sf.write.call_args[0][2]

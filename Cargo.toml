@@ -1,13 +1,19 @@
-[package]
-name = "slappyengine"
-version = "0.3.0-beta.0"
+[workspace]
+resolver = "2"
+members = [
+    "crates/pharos_core",
+    "crates/pharos_render",
+    "crates/pharos_py",
+    "crates/pharos_bin",
+]
+
+[workspace.package]
+version = "0.3.0-beta.1"
 edition = "2021"
+license = "MIT"
+repository = "https://github.com/andrewkwatts-maker/SlapPyEngine"
 
-[lib]
-name = "_core"
-crate-type = ["cdylib"]
-
-[dependencies]
+[workspace.dependencies]
 pyo3 = { version = "0.22", features = ["extension-module"] }
 lz4 = "1.25"
 rayon = "1.10"
@@ -17,12 +23,9 @@ serde_yaml = "0.9"
 bytemuck = { version = "1", features = ["derive"] }
 rand = "0.8"
 half = "2"
-
-[features]
-default = ["3d"]
-3d = []
-gi = ["3d"]
-ibl = ["3d"]
+# GPU backend crates reserved for Sprint 4 / Sprint 6 landings.
+# wgpu = "0.20"
+# ash  = "0.38"
 
 [profile.release]
 opt-level = 3

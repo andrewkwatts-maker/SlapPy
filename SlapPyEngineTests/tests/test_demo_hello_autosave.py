@@ -21,7 +21,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from slappyengine.autosave import RecoveryPrompt
+from pharos_engine.autosave import RecoveryPrompt
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -88,7 +88,7 @@ def test_hello_autosave_writes_multiple_snapshots(demo, tmp_path):
 
 def test_hello_autosave_latest_snapshot_round_trips(demo, tmp_path):
     """The newest snapshot YAML-decodes to a dict with the expected shape."""
-    from slappyengine.autosave import _decode_payload, _yaml_loads
+    from pharos_engine.autosave import _decode_payload, _yaml_loads
 
     snap_dir = tmp_path / "snaps"
     demo.main(

@@ -21,7 +21,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.post_process.bloom import (
+from pharos_engine.post_process.bloom import (
     _TENT_3X3,
     KARIS13_W_CENTRE,
     KARIS13_W_INNER_CARD,
@@ -233,7 +233,7 @@ def test_existing_bloom_pass_threshold_still_works() -> None:
     Sanity check that importing the new helpers didn't break the legacy
     BloomPass smooth-threshold path.
     """
-    from slappyengine.post_process.bloom import BloomPass, synth_hdr_strip
+    from pharos_engine.post_process.bloom import BloomPass, synth_hdr_strip
 
     rgb = synth_hdr_strip([0.5, 1.0, 1.5, 2.0])
     bp = BloomPass(threshold=1.0, knee=0.2)

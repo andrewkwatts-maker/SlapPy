@@ -25,10 +25,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from slappyengine.post_process._pass_base import PostProcessPassBase
-from slappyengine.post_process.bloom import BloomPass
-from slappyengine.post_process.outline import OutlinePass
-from slappyengine.post_process.tonemap import TonemapPass
+from pharos_engine.post_process._pass_base import PostProcessPassBase
+from pharos_engine.post_process.bloom import BloomPass
+from pharos_engine.post_process.outline import OutlinePass
+from pharos_engine.post_process.tonemap import TonemapPass
 
 
 # ---------------------------------------------------------------------------

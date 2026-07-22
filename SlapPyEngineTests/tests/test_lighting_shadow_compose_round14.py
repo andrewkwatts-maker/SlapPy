@@ -41,7 +41,7 @@ import struct
 
 import pytest
 
-from slappyengine.post_process.contact_shadows import (
+from pharos_engine.post_process.contact_shadows import (
     ContactShadowsPass,
     compose_with_main_shadow,
 )

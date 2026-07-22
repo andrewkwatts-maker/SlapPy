@@ -4,7 +4,7 @@ The demo drives bullet-trace beam breaks through a skinned humanoid
 skeleton (skin > muscle > bone break order) and writes a GIF to
 ``examples/output/humanoid/humanoid_destruction.gif``.
 
-The demo imports from :mod:`slappyengine.softbody`, which is a WIP
+The demo imports from :mod:`pharos_engine.softbody`, which is a WIP
 subpackage. This test wakes up as soon as it lands — until then it
 skips with a clear reason so the gap remains visible in the test report.
 
@@ -35,12 +35,12 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP softbody / dynamics subpackages being unavailable.
     try:
-        from slappyengine.dynamics import (  # noqa: F401
+        from pharos_engine.dynamics import (  # noqa: F401
             make_humanoid,
             wrap_in_flesh,
         )
-        from slappyengine.softbody import SoftBodyWorld  # noqa: F401
-        from slappyengine.studio import (  # noqa: F401
+        from pharos_engine.softbody import SoftBodyWorld  # noqa: F401
+        from pharos_engine.studio import (  # noqa: F401
             Stage,
             humanoid_stage,
             output_path,
@@ -48,7 +48,7 @@ def demo():
         )
     except Exception as exc:
         pytest.skip(
-            "slappyengine.softbody / dynamics / studio unavailable (WIP): "
+            "pharos_engine.softbody / dynamics / studio unavailable (WIP): "
             f"{exc}"
         )
 

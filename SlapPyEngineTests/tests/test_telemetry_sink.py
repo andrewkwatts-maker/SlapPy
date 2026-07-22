@@ -1,5 +1,5 @@
 """
-Tests for :mod:`slappyengine.telemetry.sink`.
+Tests for :mod:`pharos_engine.telemetry.sink`.
 
 Covers:
 
@@ -20,9 +20,9 @@ from typing import List
 
 import pytest
 
-from slappyengine import telemetry
-from slappyengine.telemetry import sink as sink_mod
-from slappyengine.telemetry.sink import (
+from pharos_engine import telemetry
+from pharos_engine.telemetry import sink as sink_mod
+from pharos_engine.telemetry.sink import (
     SKIP_INSTRUMENT_MARKER,
     LayerSink,
     TelemetrySink,
@@ -402,7 +402,7 @@ def test_instrument_module_rejects_non_module():
 
 def test_payload_keys_match_dashboard_sniff():
     """Assert every emitted payload carries a key DD4 sniffs for."""
-    from slappyengine.ui.editor.notebook_telemetry_dashboard import (
+    from pharos_engine.ui.editor.notebook_telemetry_dashboard import (
         _classify_event,
     )
     sink = TelemetrySink("panel")

@@ -126,7 +126,7 @@ def stub_dpg(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def _clear_telemetry():
-    from slappyengine import telemetry as t
+    from pharos_engine import telemetry as t
     t.clear_history()
     # Best-effort: drop any stray subscribers from prior tests.
     for handle in list(t._subscribers.keys()):
@@ -138,7 +138,7 @@ def _clear_telemetry():
 
 
 def _make_panel(**kwargs):
-    from slappyengine.ui.editor.notebook_message_log import NotebookMessageLog
+    from pharos_engine.ui.editor.notebook_message_log import NotebookMessageLog
     return NotebookMessageLog(**kwargs)
 
 
@@ -168,7 +168,7 @@ class TestConstruction:
             _make_panel(max_rows=-5)
 
     def test_all_levels_visible_by_default(self):
-        from slappyengine.ui.editor.notebook_message_log import LEVELS
+        from pharos_engine.ui.editor.notebook_message_log import LEVELS
         panel = _make_panel()
         for lv in LEVELS:
             assert panel.is_level_visible(lv)
@@ -181,14 +181,14 @@ class TestConstruction:
 
 class TestLevelNormalisation:
     def test_string_levels_round_trip(self):
-        from slappyengine.ui.editor.notebook_message_log import normalise_level
+        from pharos_engine.ui.editor.notebook_message_log import normalise_level
         assert normalise_level("DEBUG") == "DEBUG"
         assert normalise_level("info") == "INFO"
         assert normalise_level("Warn") == "WARN"
         assert normalise_level("ERROR") == "ERROR"
 
     def test_stdlib_int_levels(self):
-        from slappyengine.ui.editor.notebook_message_log import normalise_level
+        from pharos_engine.ui.editor.notebook_message_log import normalise_level
         assert normalise_level(logging.DEBUG) == "DEBUG"
         assert normalise_level(logging.INFO) == "INFO"
         assert normalise_level(logging.WARNING) == "WARN"
@@ -196,18 +196,18 @@ class TestLevelNormalisation:
         assert normalise_level(logging.CRITICAL) == "ERROR"
 
     def test_string_aliases(self):
-        from slappyengine.ui.editor.notebook_message_log import normalise_level
+        from pharos_engine.ui.editor.notebook_message_log import normalise_level
         assert normalise_level("WARNING") == "WARN"
         assert normalise_level("FATAL") == "ERROR"
         assert normalise_level("CRITICAL") == "ERROR"
         assert normalise_level("trace") == "DEBUG"
 
     def test_unknown_falls_back_to_info(self):
-        from slappyengine.ui.editor.notebook_message_log import normalise_level
+        from pharos_engine.ui.editor.notebook_message_log import normalise_level
         assert normalise_level("HYPE") == "INFO"
 
     def test_bool_refused(self):
-        from slappyengine.ui.editor.notebook_message_log import normalise_level
+        from pharos_engine.ui.editor.notebook_message_log import normalise_level
         with pytest.raises(TypeError):
             normalise_level(True)
 
@@ -220,10 +220,10 @@ class TestLevelNormalisation:
 class TestAppend:
     def test_append_adds_row(self):
         panel = _make_panel()
-        msg = panel.append("INFO", "slappyengine.dynamics", "hello")
+        msg = panel.append("INFO", "pharos_engine.dynamics", "hello")
         assert msg is not None
         assert msg.level == "INFO"
-        assert msg.source == "slappyengine.dynamics"
+        assert msg.source == "pharos_engine.dynamics"
         assert msg.message == "hello"
         assert panel.messages == [msg]
 
@@ -321,8 +321,8 @@ class TestFilters:
 
     def test_search_filters_by_substring(self):
         panel = _make_panel()
-        panel.append("INFO", "slappyengine.dyn", "physics tick")
-        panel.append("INFO", "slappyengine.render", "frame drawn")
+        panel.append("INFO", "pharos_engine.dyn", "physics tick")
+        panel.append("INFO", "pharos_engine.render", "frame drawn")
         panel.set_search("physics")
         names = [m.message for m in panel.visible_messages]
         assert names == ["physics tick"]
@@ -335,7 +335,7 @@ class TestFilters:
 
     def test_search_matches_source(self):
         panel = _make_panel()
-        panel.append("INFO", "slappyengine.dynamics", "unrelated")
+        panel.append("INFO", "pharos_engine.dynamics", "unrelated")
         panel.set_search("dynamics")
         assert len(panel.visible_messages) == 1
 
@@ -577,7 +577,7 @@ class TestLoggingIntegration:
 
 class TestTelemetryIntegration:
     def test_telemetry_event_appears(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
         panel = _make_panel()
         panel.subscribe_to_telemetry()
         try:
@@ -603,7 +603,7 @@ class TestTelemetryIntegration:
         panel.unsubscribe_from_telemetry()  # no raise
 
     def test_telemetry_payload_preview(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
         panel = _make_panel()
         panel.subscribe_to_telemetry()
         try:
@@ -617,7 +617,7 @@ class TestTelemetryIntegration:
             panel.unsubscribe_from_telemetry()
 
     def test_telemetry_pattern_filter(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
         panel = _make_panel()
         panel.subscribe_to_telemetry("physics.*")
         try:
@@ -719,13 +719,13 @@ class TestBuild:
 class TestLazyRegistration:
     def test_lazy_import_works(self):
         # Force-remove the cached module so we hit the __getattr__ path.
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         assert "NotebookMessageLog" in editor_pkg.__all__
         cls = editor_pkg.NotebookMessageLog
         assert cls.__name__ == "NotebookMessageLog"
 
     def test_all_alphabetically_ordered_neighbors(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         idx = editor_pkg.__all__.index("NotebookMessageLog")
         # Neighbours are the alphabetically-adjacent entries.
         # Verify at least the immediate ordering.

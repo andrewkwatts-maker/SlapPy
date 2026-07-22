@@ -1,4 +1,4 @@
-"""Sprint BB6 — regression suite for :mod:`slappyengine.prefabs.preview_baker`.
+"""Sprint BB6 — regression suite for :mod:`pharos_engine.prefabs.preview_baker`.
 
 Covers the :class:`PreviewBaker` end-to-end:
 
@@ -21,8 +21,8 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from slappyengine.prefabs import Prefab, PrefabLibrary
-from slappyengine.prefabs.preview_baker import (
+from pharos_engine.prefabs import Prefab, PrefabLibrary
+from pharos_engine.prefabs.preview_baker import (
     DIARY_PALETTE,
     PreviewBaker,
     iter_baked_previews,
@@ -227,7 +227,7 @@ def test_palette_colour_shows_up_in_render(baker: PreviewBaker) -> None:
     # Every prefab produces a deterministic slot, so we just render a
     # circle prefab (large fill area) and confirm the mapped colour is a
     # pixel in the output.
-    from slappyengine.prefabs.preview_baker import _hash_slot
+    from pharos_engine.prefabs.preview_baker import _hash_slot
 
     prefab = _prefab_for_kind("circle")
     slot = _hash_slot(prefab.name)
@@ -239,7 +239,7 @@ def test_palette_colour_shows_up_in_render(baker: PreviewBaker) -> None:
 
 
 def test_hash_slot_is_stable() -> None:
-    from slappyengine.prefabs.preview_baker import _hash_slot
+    from pharos_engine.prefabs.preview_baker import _hash_slot
 
     assert _hash_slot("crate") == _hash_slot("crate")
     assert 0 <= _hash_slot("crate") < 8

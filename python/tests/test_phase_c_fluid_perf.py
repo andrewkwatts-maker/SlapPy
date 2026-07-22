@@ -24,14 +24,14 @@ import time
 import numpy as np
 import pytest
 
-from slappyengine.deform_modes import cell_material_for
-from slappyengine.physics import (
+from pharos_engine.deform_modes import cell_material_for
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.profile import baseline_scenarios, run_benchmark
-from slappyengine.physics.world import PhysicsWorld as _PW
+from pharos_engine.physics.profile import baseline_scenarios, run_benchmark
+from pharos_engine.physics.world import PhysicsWorld as _PW
 
 
 _MASK_THRESH = 0.05

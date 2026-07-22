@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _GAME_ROOT = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _GAME_STR = str(_GAME_ROOT)
@@ -30,7 +30,7 @@ class TestCollisionSystemInit:
         cs.teardown()
 
     def test_subscribes_to_pixel_result(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         from systems.collision_system import CollisionSystem
         before = global_bus.listener_count("Collision.Pixel.Result")
         cs = CollisionSystem([])
@@ -39,7 +39,7 @@ class TestCollisionSystemInit:
         cs.teardown()
 
     def test_teardown_unsubscribes(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         from systems.collision_system import CollisionSystem
         before = global_bus.listener_count("Collision.Pixel.Result")
         cs = CollisionSystem([])
@@ -205,7 +205,7 @@ class TestFogSystemUpdate:
         fs.teardown()
 
     def test_get_layer_returns_layer(self):
-        from slappyengine.layer import Layer2D
+        from pharos_engine.layer import Layer2D
         fs = self._fs()
         layer = fs.get_layer()
         assert isinstance(layer, Layer2D)
@@ -298,7 +298,7 @@ class TestWeatherSystemUpdate:
         ws._fs.teardown()
 
     def test_gust_fires_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ws = self._ws(interval=0.01)  # very short interval → gust fires fast
         received = []
         h = subscribe("Weather.Gust", lambda e: received.append(e))

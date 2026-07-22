@@ -1,6 +1,6 @@
 """SlapPyEngine — Hello Audio
 
-Minimal demo of :mod:`slappyengine.audio_runtime` and the
+Minimal demo of :mod:`pharos_engine.audio_runtime` and the
 ``sounddevice`` fallback path.
 
 The demo:
@@ -37,7 +37,7 @@ from typing import Any, Dict, Tuple
 
 import numpy as np
 
-from slappyengine import audio_runtime
+from pharos_engine import audio_runtime
 
 
 # ── Demo parameters ────────────────────────────────────────────────────────

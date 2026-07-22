@@ -1,4 +1,4 @@
-"""Input-validation tests for the public ``slappyengine.telemetry`` API.
+"""Input-validation tests for the public ``pharos_engine.telemetry`` API.
 
 Engineering policy: validate at system boundaries, refuse bad input loudly
 rather than silently coercing it to a default. Each test in this file
@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from slappyengine import telemetry
+from pharos_engine import telemetry
 
 
 @pytest.fixture(autouse=True)

@@ -22,14 +22,14 @@ import struct
 
 import pytest
 
-from slappyengine.post_process.contact_shadows import ContactShadowsPass
-from slappyengine.post_process.executor import _splice_runtime_params
-from slappyengine.post_process.gtao import GTAOPass
-from slappyengine.post_process.shadow_csm import ShadowCSM, _IDENTITY_MAT4
-from slappyengine.post_process.ssr import SSRPass, _SSR_UBO_FIELDS
-from slappyengine.post_process.taa import TAAPass
-from slappyengine.post_process.volumetric_fog import VolumetricFog
-from slappyengine.post_process._ubo import pack_struct
+from pharos_engine.post_process.contact_shadows import ContactShadowsPass
+from pharos_engine.post_process.executor import _splice_runtime_params
+from pharos_engine.post_process.gtao import GTAOPass
+from pharos_engine.post_process.shadow_csm import ShadowCSM, _IDENTITY_MAT4
+from pharos_engine.post_process.ssr import SSRPass, _SSR_UBO_FIELDS
+from pharos_engine.post_process.taa import TAAPass
+from pharos_engine.post_process.volumetric_fog import VolumetricFog
+from pharos_engine.post_process._ubo import pack_struct
 
 
 # ---------------------------------------------------------------------------

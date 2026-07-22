@@ -8,7 +8,7 @@ Pins the following behaviours of the NN7 export CLI Python surface:
 * The trace YAML carries all five expected top-level keys.
 * At least one file was excluded via the ``"**/*.log"`` pattern
   (``exclusion_count > 0``).
-* ``manifest.engine_version`` matches :data:`slappyengine.__version__`.
+* ``manifest.engine_version`` matches :data:`pharos_engine.__version__`.
 * Every file in the produced zip (bar the manifest itself) has a
   matching sha256 in the manifest.
 """
@@ -44,9 +44,9 @@ def _load_demo():
     if not _DEMO_PATH.exists():  # pragma: no cover — safety net
         pytest.skip(f"demo not found: {_DEMO_PATH}")
     try:
-        import slappyengine.exporter  # noqa: F401
+        import pharos_engine.exporter  # noqa: F401
     except Exception as exc:  # pragma: no cover — defensive
-        pytest.skip(f"slappyengine.exporter unavailable: {exc}")
+        pytest.skip(f"pharos_engine.exporter unavailable: {exc}")
 
     spec = importlib.util.spec_from_file_location(
         "hello_export_cli_demo", _DEMO_PATH
@@ -134,16 +134,16 @@ def test_exclusion_count_positive(trace_payload):
 
 
 # ---------------------------------------------------------------------------
-# Manifest engine_version pins slappyengine.__version__
+# Manifest engine_version pins pharos_engine.__version__
 # ---------------------------------------------------------------------------
 
 
-def test_manifest_engine_version_matches_slappyengine(trace_payload):
-    import slappyengine
+def test_manifest_engine_version_matches_pharos_engine(trace_payload):
+    import pharos_engine
 
-    assert trace_payload["manifest_engine_version"] == slappyengine.__version__, (
+    assert trace_payload["manifest_engine_version"] == pharos_engine.__version__, (
         f"manifest engine_version={trace_payload['manifest_engine_version']!r} "
-        f"but slappyengine.__version__={slappyengine.__version__!r}"
+        f"but pharos_engine.__version__={pharos_engine.__version__!r}"
     )
 
 

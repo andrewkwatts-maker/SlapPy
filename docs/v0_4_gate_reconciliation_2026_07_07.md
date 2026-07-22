@@ -40,7 +40,7 @@ Evidence column: commit SHA, file path, or grep result.
 
 | # | Gate | Status (RR6) | Delta vs OO7 | Evidence |
 |---|---|---|---|---|
-| 1 | Version constants aligned | **FAILING** | Unchanged | `pyproject.toml:7 = "0.3.0b0"`, `Cargo.toml:3 = "0.3.0-beta.0"`, `python/slappyengine/__init__.py:103 = "0.3.0b0"`. Bump audit `docs/version_bump_audit_2026_07_07.md` enumerates the 8-step commit sequence but has not been executed. |
+| 1 | Version constants aligned | **FAILING** | Unchanged | `pyproject.toml:7 = "0.3.0b0"`, `Cargo.toml:3 = "0.3.0-beta.0"`, `python/pharos_engine/__init__.py:103 = "0.3.0b0"`. Bump audit `docs/version_bump_audit_2026_07_07.md` enumerates the 8-step commit sequence but has not been executed. |
 | 2 | Engine surface doc matches `__all__` | **GREEN** | **Flipped by TT5** | `docs/engine_surface_v030.md` re-generated 2026-07-07 via `scripts/gen_engine_surface_doc.py`; 91 top-level names + 25 subpackages; 9 tripwire tests pass (`test_docs_engine_surface_complete.py` + `test_docs_inventory.py`). Delta since NN6: +3 top-level (`DiagnosticEvent`, `DiagnosticsCollector`, `get_global_collector`) + 3 subpackage-set entries (`math`, `visual_scripting`, live-parse count). App runtime surface documented for NN3/QQ4/SS6 additions. Re-regen needed after gate 1 tag-sprint version bump but is a one-command loop. |
 | 3 | `test_docs_inventory.py` green | **GREEN** | Maintained | Every new r5 doc indexed via `40a79bd` (RR6 will add this doc). |
 | 4 | `test_docs_links_resolve_all.py` green | **GREEN** | Maintained | Last confirmed at NN6 close. |
@@ -264,7 +264,7 @@ Only two ship-gates remain FAILING:
 **One atomic commit** flips three files:
 * `pyproject.toml` line 7: `"0.3.0b0"` → `"0.4.0"`.
 * `Cargo.toml` line 3: `"0.3.0-beta.0"` → `"0.4.0"`.
-* `python/slappyengine/__init__.py` line 103: `"0.3.0b0"` → `"0.4.0"`.
+* `python/pharos_engine/__init__.py` line 103: `"0.3.0b0"` → `"0.4.0"`.
 
 PP6's audit (`docs/version_bump_audit_2026_07_07.md`) documents an
 8-step atomic tag-sprint sequence that folds this bump together with
@@ -277,11 +277,11 @@ slot end-to-end.
 ### 4.2 Gate 11 — WIP unfreeze
 
 Still user-gated. The five WIP trees:
-* `python/slappyengine/softbody/` (BeamNG-style lattice XPBD).
-* `python/slappyengine/fluid/` (PBF solver refactor).
-* `python/slappyengine/physics/` (hierarchical-hull per-pixel — v1.0
+* `python/pharos_engine/softbody/` (BeamNG-style lattice XPBD).
+* `python/pharos_engine/fluid/` (PBF solver refactor).
+* `python/pharos_engine/physics/` (hierarchical-hull per-pixel — v1.0
   candidate; can defer with docs note rather than land).
-* `python/slappyengine/physics2/` (second-gen scratch — deletable /
+* `python/pharos_engine/physics2/` (second-gen scratch — deletable /
   archivable).
 * Four untracked Rust source files (`src/raster.rs`, `src/pbf_solver.rs`,
   `src/softbody_solver.rs`, `src/fluid_shader.rs`).
@@ -371,7 +371,7 @@ scrum agent. Sources: `docs/v0_4_release_readiness_2026_07_06.md`
 `docs/sprint_5_doc_inventory.md` (95 entries at RR6 walk),
 live `git status` + `git log --oneline -30` + `git ls-files "src/*.rs"`
 (14 tracked) + `grep '^mod ' src/lib.rs` (14 declarations) +
-`pyproject.toml:7` + `Cargo.toml:3` + `python/slappyengine/__init__.py:103`
+`pyproject.toml:7` + `Cargo.toml:3` + `python/pharos_engine/__init__.py:103`
 + demo/test cross-count (41 ↔ 41) at commit `40a79bd`.*
 
 ---

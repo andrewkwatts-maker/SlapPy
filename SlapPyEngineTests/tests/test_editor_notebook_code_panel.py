@@ -155,7 +155,7 @@ def force_ai_missing(monkeypatch):
     Patches :func:`_try_make_llm_client` to return ``None`` so the
     panel reports Ollama as missing regardless of the host environment.
     """
-    import slappyengine.ui.editor.notebook_code_panel as ncp
+    import pharos_engine.ui.editor.notebook_code_panel as ncp
     monkeypatch.setattr(ncp, "_try_make_llm_client", lambda: None)
     yield
 
@@ -167,7 +167,7 @@ def mock_ai(monkeypatch):
     The mock client just records the calls; the helper functions return
     canned strings so we can assert the panel routes data correctly.
     """
-    import slappyengine.ui.editor.notebook_code_panel as ncp
+    import pharos_engine.ui.editor.notebook_code_panel as ncp
 
     calls: dict[str, list] = {"prompt_to_code": [], "code_to_prompt": []}
 
@@ -200,7 +200,7 @@ def mock_ai(monkeypatch):
 
 
 try:
-    from slappyengine.ui.editor.notebook_code_panel import NotebookCodePanel
+    from pharos_engine.ui.editor.notebook_code_panel import NotebookCodePanel
 except Exception as _err:  # pragma: no cover
     pytest.skip(
         f"NotebookCodePanel not importable: {_err}",

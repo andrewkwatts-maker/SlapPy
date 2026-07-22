@@ -1,7 +1,7 @@
 """Regression tests for the round-13 screen-space contact-shadow pass.
 
 Round 13 adds :class:`ContactShadowsPass`
-(``python/slappyengine/post_process/contact_shadows.py``) plus the
+(``python/pharos_engine/post_process/contact_shadows.py``) plus the
 matching WGSL shader (``shaders/contact_shadows_depth.wgsl``) following
 Bouvier 2014, *Contact Shadows in The Order: 1886* (GDC 2014).
 
@@ -27,7 +27,7 @@ import struct
 
 import pytest
 
-from slappyengine.post_process.contact_shadows import (
+from pharos_engine.post_process.contact_shadows import (
     ContactShadowsPass,
     _exponential_step_distance,
     compose_with_main_shadow,

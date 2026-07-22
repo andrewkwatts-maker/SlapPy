@@ -6,7 +6,7 @@ import tempfile
 
 import pytest
 
-from slappyengine.render.material_graph import (
+from pharos_engine.render.material_graph import (
     AddNode,
     ConstColorNode,
     ConstFloatNode,
@@ -146,7 +146,7 @@ def test_yaml_round_trip_identical_wgsl() -> None:
 
 def test_bake_material_constants() -> None:
     try:
-        from slappyengine import _core  # type: ignore
+        from pharos_engine import _core  # type: ignore
     except ImportError:
         pytest.skip("_core not built")
     if not hasattr(_core, "bake_material_constants"):

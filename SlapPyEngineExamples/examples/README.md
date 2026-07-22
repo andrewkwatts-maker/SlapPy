@@ -17,7 +17,7 @@ The demos pair with the user-facing documentation:
 
 > Running a demo from a source checkout?  Either install the package
 > (`pip install -e .`) or prepend `python/` to `PYTHONPATH`.  The demos
-> all import from `slappyengine.physics`.
+> all import from `pharos_engine.physics`.
 
 ---
 

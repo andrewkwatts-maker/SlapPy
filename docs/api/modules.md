@@ -1,17 +1,17 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.modules — API Reference
+# pharos_engine.modules — API Reference
 
 > Hand-written reference for the shipped pixel-struct extension modules.
-> Each subclasses :class:`slappyengine.struct_registry.StructModule` to
+> Each subclasses :class:`pharos_engine.struct_registry.StructModule` to
 > reserve a named block of channels in the packed per-pixel WGSL struct
 > that drives the compute-shader per-pixel simulation. Sibling reference:
 > [`compute.md`](compute.md) is the dispatch layer that consumes the
 > assembled struct; the :class:`StructRegistry` that owns registration
-> lives in `slappyengine.struct_registry`.
+> lives in `pharos_engine.struct_registry`.
 
 ## Overview
 
-`slappyengine.modules` is a small catalogue of the "batteries-included"
+`pharos_engine.modules` is a small catalogue of the "batteries-included"
 pixel-struct modules the engine ships with. The per-pixel simulation
 runs on a single packed WGSL struct — one flat SoA record per pixel —
 and each :class:`StructModule` subclass reserves a named block of
@@ -28,7 +28,7 @@ to `1.0`).
 ## Public surface
 
 ```python
-from slappyengine.modules import (
+from pharos_engine.modules import (
     FluidParamsModule,
     HealthModule,
     PhysicsModule,
@@ -37,7 +37,7 @@ from slappyengine.modules import (
 ```
 
 Lazy-loaded via the module-level `__getattr__` — importing
-`slappyengine.modules` does **not** import the submodule for a module
+`pharos_engine.modules` does **not** import the submodule for a module
 class until you actually access its name.
 
 ## Module contract
@@ -61,7 +61,7 @@ metadata bundle registered into a :class:`StructRegistry`.
 
 ### `FluidParamsModule`
 
-_class — defined in `slappyengine.modules.fluid_params`_
+_class — defined in `pharos_engine.modules.fluid_params`_
 
 Per-pixel PBF fluid parameters. Channels:
 
@@ -76,7 +76,7 @@ Compute passes: `["fluid"]`.
 
 ### `HealthModule`
 
-_class — defined in `slappyengine.modules.health`_
+_class — defined in `pharos_engine.modules.health`_
 
 Per-pixel damage bookkeeping.
 
@@ -91,7 +91,7 @@ health-bar overlays.
 
 ### `PhysicsModule`
 
-_class — defined in `slappyengine.modules.physics`_
+_class — defined in `pharos_engine.modules.physics`_
 
 Per-pixel rigid-body physical properties. Kept minimal on purpose;
 callers that need the full velocity + friction + elasticity + phase
@@ -109,7 +109,7 @@ Compute passes: `["rigid"]`.
 
 ### `PixelPhysicsModule`
 
-_class — defined in `slappyengine.modules.pixel_physics`_
+_class — defined in `pharos_engine.modules.pixel_physics`_
 
 Full per-pixel physics record — packed to an 8-float / 32-byte layout
 for GPU alignment. Use this instead of :class:`PhysicsModule` when the
@@ -132,11 +132,11 @@ Compute passes: `["pixel_physics"]`.
 ## Usage
 
 ```python
-from slappyengine.modules import (
+from pharos_engine.modules import (
     FluidParamsModule, HealthModule,
     PhysicsModule, PixelPhysicsModule,
 )
-from slappyengine.struct_registry import StructRegistry
+from pharos_engine.struct_registry import StructRegistry
 
 # Assemble a registry with two modules; the always-present `color`
 # vec4f slot is added by StructRegistry itself.
@@ -164,13 +164,13 @@ assert "fluid" in FluidParamsModule.compute_passes
 
 ## Skip the wrapper
 
-`slappyengine.modules` is pure Python metadata — no runtime work.
-Grep of `slappyengine._core_facade.RUST_MODULE_MAP` shows **no**
+`pharos_engine.modules` is pure Python metadata — no runtime work.
+Grep of `pharos_engine._core_facade.RUST_MODULE_MAP` shows **no**
 `modules` entry.
 
 The `StructRegistry` that owns registration **does** call into the
 Rust-backed WGSL layout computer:
-:func:`slappyengine._core.struct_layout.compute_layout` (see
+:func:`pharos_engine._core.struct_layout.compute_layout` (see
 `RUST_MODULE_MAP["struct_layout"]` — `src/struct_layout.rs`). That
 lookup is fast enough that the pure-Python fallback in
 :meth:`StructRegistry._compute_layout` matches within a millisecond on
@@ -179,7 +179,7 @@ assemble correct layouts.
 
 Callers who want to bypass :class:`StructRegistry` and hand-assemble a
 struct layout can call
-:func:`slappyengine._core.struct_layout.compute_layout(channels)`
+:func:`pharos_engine._core.struct_layout.compute_layout(channels)`
 directly with an `[(name, wgsl_type), ...]` list — the module classes
 here are just curated payloads for that call.
 

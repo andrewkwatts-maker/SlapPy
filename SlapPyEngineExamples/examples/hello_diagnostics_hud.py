@@ -2,7 +2,7 @@
 
 QQ5 sprint deliverable: run a 90-frame headless demo that deliberately
 provokes warnings from real subsystems (``audio_3d`` + ``render``), lets
-the :class:`~slappyengine.DiagnosticsCollector` capture them, then at
+the :class:`~pharos_engine.DiagnosticsCollector` capture them, then at
 frame 45 mounts the diagnostics HUD widget so the last few events appear
 in-viewport.
 
@@ -17,17 +17,17 @@ Scene
 * On every ``on_tick``:
 
     - :class:`SoundBank.load` is called against a bogus filesystem path
-      to hit MM1's ``OSError`` warn path in ``slappyengine.audio_3d``
+      to hit MM1's ``OSError`` warn path in ``pharos_engine.audio_3d``
       (this actually emits *two* warnings per call — one for the
       ``OSError`` and one for the ``None`` handle fallback).
-    - A fresh :class:`~slappyengine.render.skybox.Skybox` is rendered
+    - A fresh :class:`~pharos_engine.render.skybox.Skybox` is rendered
       against a fresh no-op renderer that lacks
       ``draw_log`` / ``submit_skybox`` / ``draw_skybox`` — hitting the
-      warn-once fallback in ``slappyengine.render.skybox``. The renderer
+      warn-once fallback in ``pharos_engine.render.skybox``. The renderer
       is fresh each frame so each frame produces a new subsystem warning
       (the module dedupes on ``id(renderer)``).
 
-* At frame 45: :func:`slappyengine.hud_bridge.add_diagnostics_widget` is
+* At frame 45: :func:`pharos_engine.hud_bridge.add_diagnostics_widget` is
   called against the app; the trace records a
   ``("diagnostics_widget_mounted", frame_no)`` event so the smoke test
   can assert on the wiring.
@@ -86,9 +86,9 @@ def _triangle_path() -> str:
 
 def _headless_config() -> Any:
     """Build a headless :class:`AppConfig` sized for a 1280x720 HUD."""
-    import slappyengine
+    import pharos_engine
 
-    return slappyengine.AppConfig(
+    return pharos_engine.AppConfig(
         window_title="hello_diagnostics_hud",
         window_size=(1280, 720),
         enable_gpu=False,
@@ -153,10 +153,10 @@ def main(
             f"{widget_mount_frame} with max_frames={max_frames}"
         )
 
-    import slappyengine
-    from slappyengine import get_global_collector, hud_bridge
-    from slappyengine.audio_3d import SoundBank
-    from slappyengine.render.skybox import (
+    import pharos_engine
+    from pharos_engine import get_global_collector, hud_bridge
+    from pharos_engine.audio_3d import SoundBank
+    from pharos_engine.render.skybox import (
         Skybox,
         procedural_gradient_sky,
     )
@@ -246,7 +246,7 @@ def main(
         a.trace.append(("diagnostics_demo_end", int(a.frame_count)))
 
     # ---- Run ------------------------------------------------------------
-    app = slappyengine.launch(
+    app = pharos_engine.launch(
         on_begin=on_begin,
         on_tick=on_tick,
         on_end=on_end,

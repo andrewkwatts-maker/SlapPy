@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.ai — API Reference
+# pharos_engine.ai — API Reference
 
 > Hand-written reference for the SlapPyEngine LLM-backed authoring surface.
 > Owns the local-Ollama REST client, the entity-script generator, the
@@ -11,7 +11,7 @@
 
 ## Overview
 
-`slappyengine.ai` gates every LLM-backed authoring feature in the engine
+`pharos_engine.ai` gates every LLM-backed authoring feature in the engine
 behind a single structural Protocol, :class:`LLMBackendProtocol`, so the
 Code Mode panel, the entity-script generator, and the background
 prompt/code sync watcher all consume the same three-method interface.
@@ -23,11 +23,11 @@ The subpackage is opt-in — the `httpx` transport dependency ships behind
 the `[ai]` extra:
 
 ```bash
-pip install slappyengine[ai]
+pip install pharos_engine[ai]
 ```
 
 Symbols other than :class:`LLMBackendProtocol` are lazy-loaded via
-`__getattr__`; importing `slappyengine.ai` does **not** import `httpx`,
+`__getattr__`; importing `pharos_engine.ai` does **not** import `httpx`,
 so an install without the `[ai]` extra can still touch the Protocol
 (useful for tests). The `ImportError` with an install hint is raised
 inside :meth:`LLMClient.__init__`, not at module import time.
@@ -35,7 +35,7 @@ inside :meth:`LLMClient.__init__`, not at module import time.
 ## Public surface
 
 ```python
-from slappyengine.ai import (
+from pharos_engine.ai import (
     CodeSyncWatcher,
     LLMBackendProtocol,
     LLMClient,
@@ -57,7 +57,7 @@ from slappyengine.ai import (
 
 ### `LLMBackendProtocol`
 
-_Protocol — defined in `slappyengine.ai._protocol`_
+_Protocol — defined in `pharos_engine.ai._protocol`_
 
 Runtime-checkable structural type for anything that can drive
 :class:`ScriptGenerator`, :class:`CodeSyncWatcher`, or the Code Mode
@@ -72,7 +72,7 @@ conforms without pulling in the concrete client.
 
 ### `LLMClient`
 
-_class — defined in `slappyengine.ai.llm_client`_
+_class — defined in `pharos_engine.ai.llm_client`_
 
 Synchronous REST client for a locally running Ollama daemon. Reads
 `LLM_HOST` (default `http://localhost:11434`) and `LLM_MODEL` (default
@@ -99,7 +99,7 @@ Raises `ImportError` if the `[ai]` extra is not installed (deferred to
 
 ### `ScriptGenerator`
 
-_class — defined in `slappyengine.ai.script_gen`_
+_class — defined in `pharos_engine.ai.script_gen`_
 
 Wraps any `LLMBackendProtocol` implementer to produce `EntityScript`
 Python classes from natural-language prompts. The system prompt is a
@@ -123,7 +123,7 @@ Passing `None` constructs a default :class:`LLMClient` on first use.
 
 ### `CodeSyncWatcher`
 
-_class — defined in `slappyengine.ai.code_sync`_
+_class — defined in `pharos_engine.ai.code_sync`_
 
 Background polling thread that watches `.py` + `.prompt` sidecar pairs.
 When either file's mtime advances, waits `DEBOUNCE_SECS` (default 2 s)
@@ -155,14 +155,14 @@ CodeSyncWatcher(llm: LLMBackendProtocol, enabled: bool = True) -> None
 
 ### `prompt_to_code(prompt: str, current_code: str, llm) -> str` (async)
 
-_defined in `slappyengine.ai.code_sync`_
+_defined in `pharos_engine.ai.code_sync`_
 
 Rewrite `current_code` so it implements what `prompt` describes. Returns
 the new source; falls back to `current_code` on any AI failure.
 
 ### `code_to_prompt(code: str, llm) -> str` (async)
 
-_defined in `slappyengine.ai.code_sync`_
+_defined in `pharos_engine.ai.code_sync`_
 
 Generate a 2–4 sentence plain-English description of what `code` does.
 Returns `"(no description)"` on failure.
@@ -170,7 +170,7 @@ Returns `"(no description)"` on failure.
 ## Usage
 
 ```python
-from slappyengine.ai import LLMBackendProtocol, ScriptGenerator
+from pharos_engine.ai import LLMBackendProtocol, ScriptGenerator
 
 # Test with a hand-rolled backend — no httpx / Ollama required.
 class FakeBackend:
@@ -194,7 +194,7 @@ assert "on_tick" in source
 To run against a real Ollama daemon:
 
 ```python
-from slappyengine.ai import LLMClient, ScriptGenerator
+from pharos_engine.ai import LLMClient, ScriptGenerator
 
 client = LLMClient()  # reads LLM_HOST + LLM_MODEL from env
 if client.is_available():
@@ -204,8 +204,8 @@ if client.is_available():
 
 ## Skip the wrapper
 
-`slappyengine.ai` is pure Python. Grep of
-`slappyengine._core_facade.RUST_MODULE_MAP` shows **no** `ai` entry — the
+`pharos_engine.ai` is pure Python. Grep of
+`pharos_engine._core_facade.RUST_MODULE_MAP` shows **no** `ai` entry — the
 subpackage is a thin transport / prompt-templating layer; nothing runs
 per-frame, and there is nothing here worth porting to Rust. The
 inner loop (Ollama HTTP round-trip) is already dominated by model
@@ -221,7 +221,7 @@ watcher never touches :class:`LLMClient` directly, only the Protocol.
 
 - **Lazy import.** Every symbol other than :class:`LLMBackendProtocol`
   is materialised on first attribute access via the module-level
-  `__getattr__`. `import slappyengine.ai` is safe even without the
+  `__getattr__`. `import pharos_engine.ai` is safe even without the
   `[ai]` extra installed.
 - **Async where useful.** The two `code_sync` free functions are `async`
   so the watcher thread can drive them via `asyncio.get_event_loop()`;
@@ -238,5 +238,5 @@ watcher never touches :class:`LLMClient` directly, only the Protocol.
 - [`ext.md`](ext.md) — the `[ai]` extra ships alongside the other
   opt-in extension groups documented there.
 - [`../rust_migration_plan.md`](../rust_migration_plan.md) — Rust ROI
-  reference; `slappyengine.ai` is intentionally not on the migration
+  reference; `pharos_engine.ai` is intentionally not on the migration
   roadmap.

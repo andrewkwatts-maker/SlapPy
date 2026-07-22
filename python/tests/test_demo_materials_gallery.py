@@ -134,7 +134,7 @@ def test_demo_runs(gallery_run):
     "Legacy materials gallery — slated for removal in Phase D. The legacy "
     "PhysicsRenderer renders all soft/granular materials with effectively "
     "the same colour after the catalog was promoted to YAML; the rebuild "
-    "stack (slappyengine.softbody / slappyengine.fluid) uses its own "
+    "stack (pharos_engine.softbody / pharos_engine.fluid) uses its own "
     "renderers with distinct per-material palettes and has its own coverage."
 ))
 def test_all_materials_have_distinct_signatures(gallery_run):

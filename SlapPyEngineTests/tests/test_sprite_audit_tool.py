@@ -1,4 +1,4 @@
-"""Tests for ``slappyengine.tools.sprite_audit`` — the programmatic
+"""Tests for ``pharos_engine.tools.sprite_audit`` — the programmatic
 counterpart of ``docs/sprite_audit_recipe.md``.
 
 All tests are headless and synthesise their own sprite fixtures so they don't
@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.tools.sprite_audit import (
+from pharos_engine.tools.sprite_audit import (
     SpriteInventoryEntry,
     assess_quality,
     first_hit,
@@ -69,7 +69,7 @@ def test_inventory_returns_metrics_for_real_sprites(tmp_path: Path):
     """Walk a directory of real PNG files and assert the returned entries
     have the expected dataclass shape and plausible metrics.
 
-    The engine's own ``slappyengine/testing/baselines/`` is the canonical
+    The engine's own ``pharos_engine/testing/baselines/`` is the canonical
     target downstream, but it is added on a parallel branch — so this test
     builds its own baseline directory of vivid amber sprites at varying
     coverages, which gives the same surface guarantees and is independent

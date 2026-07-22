@@ -16,15 +16,15 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.particles import ParticleSystem
-from slappyengine.physics.post_process import default_post_process_chain
-from slappyengine.physics.render import PhysicsRenderer, PointLight, RenderConfig
-from slappyengine.physics.shadows import ShadowPass
+from pharos_engine.physics.particles import ParticleSystem
+from pharos_engine.physics.post_process import default_post_process_chain
+from pharos_engine.physics.render import PhysicsRenderer, PointLight, RenderConfig
+from pharos_engine.physics.shadows import ShadowPass
 
 
 # ----------------------------------------------------------------------------

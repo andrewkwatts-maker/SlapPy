@@ -1,7 +1,7 @@
 """Humanoid IK-to-terrain — feet plant on a sinewave ground.
 
 The humanoid skeleton is repositioned each frame so its feet sit on an
-undulating terrain. :func:`slappyengine.dynamics.place_feet_on_terrain`
+undulating terrain. :func:`pharos_engine.dynamics.place_feet_on_terrain`
 shifts the pelvis vertically so the lower foot rests on the ground
 beneath it, then runs 2-bone IK on each leg to plant the ankles on the
 surface. The character "walks" sideways across the terrain so both feet
@@ -32,8 +32,8 @@ import math
 import sys
 from pathlib import Path
 
-from slappyengine.dynamics import make_humanoid, place_feet_on_terrain
-from slappyengine.studio import (
+from pharos_engine.dynamics import make_humanoid, place_feet_on_terrain
+from pharos_engine.studio import (
     Stage, humanoid_stage, output_path, record, terrain_overlay,
 )
 
@@ -103,7 +103,7 @@ def main(frames: int = DEFAULT_FRAMES, capture_gif: bool = True,
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    from slappyengine.examples_common import build_demo_arg_parser
+    from pharos_engine.examples_common import build_demo_arg_parser
 
     parser = build_demo_arg_parser(
         "Humanoid IK-to-terrain — SlapPyEngine demo",

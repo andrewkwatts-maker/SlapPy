@@ -17,13 +17,13 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.cell import CELL_GRID_SIZE
-from slappyengine.physics.render import PhysicsRenderer, RenderConfig
+from pharos_engine.physics.cell import CELL_GRID_SIZE
+from pharos_engine.physics.render import PhysicsRenderer, RenderConfig
 
 
 # Cell-field channel indices (must match CELL_PIXEL_STRUCT in cell.py).

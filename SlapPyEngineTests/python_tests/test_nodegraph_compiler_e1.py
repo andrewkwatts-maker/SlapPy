@@ -4,7 +4,7 @@ Findings
 --------
 * There is NO compiler.py in the material package.
 * NodeMaterial.compile() delegates entirely to the Rust extension
-  ``slappyengine._core.compile_node_graph(json_str)``.  If _core is absent
+  ``pharos_engine._core.compile_node_graph(json_str)``.  If _core is absent
   (the common headless case) it raises RuntimeError — it does NOT produce any
   WGSL itself.
 * Output mode is determined purely by which terminal NodeDef type is present
@@ -25,7 +25,7 @@ import pytest
 # Helper: build a minimal NodeMaterial graph without importing from the
 # package-level __init__ (avoids the eager deform_modes import chain).
 # ---------------------------------------------------------------------------
-from slappyengine.material.node_material import (
+from pharos_engine.material.node_material import (
     NodeDef,
     NodeMaterial,
     UVNode,
@@ -132,7 +132,7 @@ class TestNodeGraphNodes:
 
     def test_no_constant_node_in_module(self):
         """ConstantNode is NOT defined; node computation is Rust-side only."""
-        import slappyengine.material.node_material as nm
+        import pharos_engine.material.node_material as nm
         assert not hasattr(nm, "ConstantNode"), (
             "ConstantNode now exists — update E1-I tests to cover evaluate()."
         )
@@ -209,8 +209,8 @@ class TestCompilerOutputModes:
 
     def test_render_mode_compile_raises_without_core(self):
         """compile() raises RuntimeError when _core is unavailable — not a stub."""
-        import slappyengine
-        if slappyengine.HAS_NATIVE:
+        import pharos_engine
+        if pharos_engine.HAS_NATIVE:
             pytest.skip("_core is present; compile() would attempt real WGSL generation")
         m = NodeMaterial("render_mat")
         m.node(FinalColorNode())
@@ -218,8 +218,8 @@ class TestCompilerOutputModes:
             m.compile()
 
     def test_sim_write_mode_compile_raises_without_core(self):
-        import slappyengine
-        if slappyengine.HAS_NATIVE:
+        import pharos_engine
+        if pharos_engine.HAS_NATIVE:
             pytest.skip("_core is present; compile() would attempt real WGSL generation")
         m = NodeMaterial("sim_mat")
         m.node(WriteFieldNode("density"))
@@ -227,8 +227,8 @@ class TestCompilerOutputModes:
             m.compile()
 
     def test_force_mode_compile_raises_without_core(self):
-        import slappyengine
-        if slappyengine.HAS_NATIVE:
+        import pharos_engine
+        if pharos_engine.HAS_NATIVE:
             pytest.skip("_core is present; compile() would attempt real WGSL generation")
         m = NodeMaterial("force_mat")
         m.node(ForceOutputNode())
@@ -244,8 +244,8 @@ class TestCompiledWGSL:
     """When _core IS present, compile() must return a non-empty WGSL string."""
 
     def _require_core(self):
-        import slappyengine
-        if not slappyengine.HAS_NATIVE:
+        import pharos_engine
+        if not pharos_engine.HAS_NATIVE:
             pytest.skip("_core Rust extension not available in this environment")
 
     def test_render_output_compile_returns_string(self):
@@ -367,12 +367,12 @@ class TestGraphSchemaRayMarch:
     """ray_march gap fixed: added to KNOWN_NODE_TYPES and KNOWN_PORT_TYPES in graph_schema.py."""
 
     def test_ray_march_in_known_node_types(self):
-        from slappyengine.material.graph_schema import KNOWN_NODE_TYPES
+        from pharos_engine.material.graph_schema import KNOWN_NODE_TYPES
         assert "ray_march" in KNOWN_NODE_TYPES
 
     def test_ray_march_validate_no_unknown_warning(self):
         """validate_node_graph() must not flag ray_march as unknown type."""
-        from slappyengine.material.graph_schema import validate_node_graph
+        from pharos_engine.material.graph_schema import validate_node_graph
         node = RayMarchNode()
         graph = {
             "nodes": [{"id": node.id, "type": node.node_type, "params": node.params}],

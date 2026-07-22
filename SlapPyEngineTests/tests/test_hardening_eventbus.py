@@ -14,7 +14,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "python"))
 
-from slappyengine.event_bus import EventBus, Observable  # noqa: E402
+from pharos_engine.event_bus import EventBus, Observable  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

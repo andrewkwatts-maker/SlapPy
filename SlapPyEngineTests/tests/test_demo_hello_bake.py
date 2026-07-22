@@ -30,7 +30,7 @@ _DEMO_PATH = _REPO_ROOT / "SlapPyEngineExamples" / "examples" / "hello_bake.py"
 
 
 def _install_engine_stubs(monkeypatch):
-    from slappyengine import engine as engine_mod
+    from pharos_engine import engine as engine_mod
 
     class _StubCanvas:
         def __init__(self, *_, **__):
@@ -87,9 +87,9 @@ def test_hello_bake_main_returns_zero(demo):
 
 def test_hello_bake_heightmap_displaces_vertices(demo):
     """Reproduce the demo's apply_heightmap call: scale=2.0 → Z range ~[0, 2]."""
-    from slappyengine.layer import Layer
-    from slappyengine.gpu.mesh import GpuMesh
-    from slappyengine.gpu.pbr_material import PbrMaterial
+    from pharos_engine.layer import Layer
+    from pharos_engine.gpu.mesh import GpuMesh
+    from pharos_engine.gpu.pbr_material import PbrMaterial
 
     quad = Layer.blank(256, 256, name="HeightQuad", mode="3D")
     quad.mesh_geometry = GpuMesh.unit_quad()

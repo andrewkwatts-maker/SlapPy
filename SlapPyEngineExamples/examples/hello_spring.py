@@ -1,6 +1,6 @@
 """SlapPyEngine - Hello Spring
 
-Minimal demo of :func:`slappyengine.dynamics.make_spring`.
+Minimal demo of :func:`pharos_engine.dynamics.make_spring`.
 
 A pinned anchor at ``(0, 4)`` holds a single ``mass = 1.0`` node attached by
 a Hooke-style spring (``rest_length = 2.0``, ``stiffness = 100``, light
@@ -36,7 +36,7 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.dynamics import World, make_spring
+from pharos_engine.dynamics import World, make_spring
 
 
 # -- Demo parameters --------------------------------------------------------

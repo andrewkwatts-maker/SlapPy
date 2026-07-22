@@ -25,7 +25,7 @@ from typing import Any
 
 import pytest
 
-from slappyengine.ui.editor.diary_shell import (
+from pharos_engine.ui.editor.diary_shell import (
     CMD_NEXT_PAGE,
     CMD_PREV_PAGE,
     DEFAULT_PAGES,
@@ -34,7 +34,7 @@ from slappyengine.ui.editor.diary_shell import (
     PANEL_ID_ALIAS,
     _resolve_panel_key,
 )
-from slappyengine.ui.editor.notebook_hotkeys import NotebookHotkeys
+from pharos_engine.ui.editor.notebook_hotkeys import NotebookHotkeys
 
 
 # ---------------------------------------------------------------------------
@@ -487,7 +487,7 @@ def test_panel_id_alias_dict_is_populated():
 def test_editor_shell_owns_diary_shell():
     # Import lazily so the module cost is only paid when the [editor]
     # extra is exercised.
-    from slappyengine.ui.editor.shell import EditorShell
+    from pharos_engine.ui.editor.shell import EditorShell
 
     class _Engine:
         scene = None
@@ -501,7 +501,7 @@ def test_editor_shell_owns_diary_shell():
 
 
 def test_editor_shell_dispatches_diary_commands():
-    from slappyengine.ui.editor.shell import EditorShell
+    from pharos_engine.ui.editor.shell import EditorShell
 
     class _Engine:
         scene = None

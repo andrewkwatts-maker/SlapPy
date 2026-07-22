@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _STRATA_ROOT = (
     Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Bullet Strata"
@@ -145,7 +145,7 @@ class TestPlayerEntityDamage:
 class TestPlayerEntityObservable:
     def test_is_observable(self):
         from entities.player import PlayerEntity
-        from slappyengine.event_bus import Observable
+        from pharos_engine.event_bus import Observable
         assert issubclass(PlayerEntity, Observable)
 
     def test_no_publish_attrs_excluded(self):

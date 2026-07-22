@@ -3,7 +3,7 @@
 The LL5 parity harness drives the full rigged-glTF stack: importer,
 skeleton runtime, animation clip, animator, directional light, CSM
 builder, orbiting camera, and a 120-frame tick loop through
-:class:`slappyengine.app.App`.
+:class:`pharos_engine.app.App`.
 
 Every test runs headless — the demo has no ``__main__`` viewport path;
 it just runs and writes ``hello_gltf_character_trace.yaml`` +

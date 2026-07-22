@@ -16,7 +16,7 @@ Behaviour contract
 ------------------
 
 * Headless-safe (``AppConfig(enable_gpu=False)``): the HUD folds through
-  the :class:`slappyengine.hud_bridge._HUDStubRenderer` when the
+  the :class:`pharos_engine.hud_bridge._HUDStubRenderer` when the
   underlying renderer lacks ``submit_sprite``; the screenshot façade
   reports ``"capture_unavailable"`` on the stub — the demo records the
   event either way so tests can pin the wiring.
@@ -76,9 +76,9 @@ def _bunny_path() -> str:
 
 def _headless_config() -> Any:
     """Build a headless :class:`AppConfig` sized for a 1280x720 HUD."""
-    import slappyengine
+    import pharos_engine
 
-    return slappyengine.AppConfig(
+    return pharos_engine.AppConfig(
         window_title="hello_render_real_hud",
         window_size=(1280, 720),
         enable_gpu=False,
@@ -149,14 +149,14 @@ def main(
     dict
         Summary dict — see the module docstring for the keys.
     """
-    import slappyengine
+    import pharos_engine
 
     # Where to write the mid-run screenshot. Resolve here so a caller
     # passing a ``tmp_path`` fixture gets the file where they expect.
     shot_out = Path(screenshot_path) if screenshot_path is not None else _DEFAULT_SHOT_PNG
     shot_out.parent.mkdir(parents=True, exist_ok=True)
 
-    app = slappyengine.App(config=_headless_config())
+    app = pharos_engine.App(config=_headless_config())
 
     # 1. Load the MM7 bunny mesh + record a model_load event.
     bunny = app.load_model(_bunny_path())

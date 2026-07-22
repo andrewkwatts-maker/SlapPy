@@ -10,7 +10,7 @@ from PIL import Image
 # ---------------------------------------------------------------------------
 
 def test_generate_rotation_strip(tmp_path):
-    from slappyengine.tools.sprite_tools import generate_rotation_strip
+    from pharos_engine.tools.sprite_tools import generate_rotation_strip
 
     src = tmp_path / "src.png"
     img = Image.new("RGBA", (32, 32), (255, 0, 0, 255))
@@ -22,7 +22,7 @@ def test_generate_rotation_strip(tmp_path):
 
 
 def test_generate_rotation_strip_16(tmp_path):
-    from slappyengine.tools.sprite_tools import generate_rotation_strip
+    from pharos_engine.tools.sprite_tools import generate_rotation_strip
 
     src = tmp_path / "src.png"
     img = Image.new("RGBA", (64, 64), (0, 255, 0, 255))
@@ -34,7 +34,7 @@ def test_generate_rotation_strip_16(tmp_path):
 
 
 def test_generate_noise_texture():
-    from slappyengine.tools.texture_tools import generate_noise_texture
+    from pharos_engine.tools.texture_tools import generate_noise_texture
 
     img = generate_noise_texture(mode="fbm", width=64, height=64, octaves=3)
     assert img.size == (64, 64)
@@ -42,7 +42,7 @@ def test_generate_noise_texture():
 
 
 def test_generate_noise_texture_worley():
-    from slappyengine.tools.texture_tools import generate_noise_texture
+    from pharos_engine.tools.texture_tools import generate_noise_texture
 
     img = generate_noise_texture(mode="worley", width=32, height=32)
     assert img.size == (32, 32)
@@ -52,14 +52,14 @@ def test_generate_noise_texture_worley():
 
 
 def test_generate_noise_texture_bad_mode():
-    from slappyengine.tools.texture_tools import generate_noise_texture
+    from pharos_engine.tools.texture_tools import generate_noise_texture
 
     with pytest.raises(ValueError):
         generate_noise_texture(mode="unknown")
 
 
 def test_extract_spritesheet(tmp_path):
-    from slappyengine.tools.sprite_tools import extract_spritesheet
+    from pharos_engine.tools.sprite_tools import extract_spritesheet
 
     sheet = Image.new("RGBA", (128, 64), (0, 0, 0, 0))
     for i in range(4):
@@ -76,7 +76,7 @@ def test_extract_spritesheet(tmp_path):
 
 
 def test_extract_spritesheet_with_names(tmp_path):
-    from slappyengine.tools.sprite_tools import extract_spritesheet
+    from pharos_engine.tools.sprite_tools import extract_spritesheet
 
     sheet = Image.new("RGBA", (64, 32), (128, 128, 128, 255))
     src = tmp_path / "sheet.png"
@@ -89,7 +89,7 @@ def test_extract_spritesheet_with_names(tmp_path):
 
 
 def test_recolor_sprite(tmp_path):
-    from slappyengine.tools.sprite_tools import recolor_sprite
+    from pharos_engine.tools.sprite_tools import recolor_sprite
 
     src = tmp_path / "red.png"
     img = Image.new("RGBA", (8, 8), (255, 0, 0, 255))
@@ -103,7 +103,7 @@ def test_recolor_sprite(tmp_path):
 
 
 def test_generate_tilt_sheet(tmp_path):
-    from slappyengine.tools.sprite_tools import generate_tilt_sheet
+    from pharos_engine.tools.sprite_tools import generate_tilt_sheet
 
     src = tmp_path / "car.png"
     img = Image.new("RGBA", (64, 64), (200, 100, 50, 255))
@@ -123,7 +123,7 @@ def test_generate_tilt_sheet(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_generate_gradient_horizontal():
-    from slappyengine.tools.texture_tools import generate_gradient
+    from pharos_engine.tools.texture_tools import generate_gradient
 
     img = generate_gradient(
         colors=[(255, 0, 0, 255), (0, 0, 255, 255)],
@@ -140,7 +140,7 @@ def test_generate_gradient_horizontal():
 
 
 def test_generate_gradient_vertical():
-    from slappyengine.tools.texture_tools import generate_gradient
+    from pharos_engine.tools.texture_tools import generate_gradient
 
     img = generate_gradient(
         colors=[(0, 255, 0, 255), (255, 0, 255, 255)],
@@ -152,7 +152,7 @@ def test_generate_gradient_vertical():
 
 
 def test_paint_decal(tmp_path):
-    from slappyengine.tools.texture_tools import paint_decal
+    from pharos_engine.tools.texture_tools import paint_decal
 
     target = Image.new("RGBA", (128, 128), (100, 100, 100, 255))
     decal  = Image.new("RGBA", (20, 20), (255, 0, 0, 255))
@@ -200,7 +200,7 @@ def _write_wav(path, duration=0.5, samplerate=22050):
 
 @_skip_audio
 def test_normalize_wav(tmp_path):
-    from slappyengine.tools.audio_tools import normalize
+    from pharos_engine.tools.audio_tools import normalize
 
     in_wav = tmp_path / "in.wav"
     out_wav = tmp_path / "out.wav"
@@ -216,7 +216,7 @@ def test_normalize_wav(tmp_path):
 
 @_skip_audio
 def test_trim_silence(tmp_path):
-    from slappyengine.tools.audio_tools import trim_silence
+    from pharos_engine.tools.audio_tools import trim_silence
     import soundfile as sf
     import numpy as np
 
@@ -238,7 +238,7 @@ def test_trim_silence(tmp_path):
 
 @_skip_audio
 def test_loop_seamless(tmp_path):
-    from slappyengine.tools.audio_tools import loop_seamless
+    from pharos_engine.tools.audio_tools import loop_seamless
     import soundfile as sf
 
     in_wav  = tmp_path / "loop_in.wav"

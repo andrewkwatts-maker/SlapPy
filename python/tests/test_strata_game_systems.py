@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _STRATA_ROOT = (
     Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Bullet Strata"
@@ -582,7 +582,7 @@ class TestWeaponPickup:
         assert wp.weapon_type == "rocket"
 
     def test_has_collision_shape(self):
-        from slappyengine.collision import AABBShape
+        from pharos_engine.collision import AABBShape
         wp = self._wp()
         assert isinstance(wp.collision_shape, AABBShape)
 

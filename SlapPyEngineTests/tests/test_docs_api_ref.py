@@ -95,7 +95,7 @@ def test_each_doc_has_required_sections(subpackage: str) -> None:
 
 
 def _public_names(subpackage: str) -> list[str]:
-    module = importlib.import_module(f"slappyengine.{subpackage}")
+    module = importlib.import_module(f"pharos_engine.{subpackage}")
     explicit = getattr(module, "__all__", None)
     if explicit:
         return sorted({n for n in explicit if not n.startswith("_") and n != "annotations"})
@@ -154,7 +154,7 @@ def test_generator_handles_missing_module_gracefully() -> None:
     """Rendering a non-existent subpackage should not crash."""
     body = gen._render_subpackage("definitely_not_a_real_subpackage_xyz")
     assert "Could not import" in body
-    assert "slappyengine.definitely_not_a_real_subpackage_xyz" in body
+    assert "pharos_engine.definitely_not_a_real_subpackage_xyz" in body
 
 
 # ---------------------------------------------------------------------------

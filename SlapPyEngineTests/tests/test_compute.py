@@ -1,4 +1,4 @@
-﻿"""Tests for M4 compute API (stats, bounds, pixel mutation).
+"""Tests for M4 compute API (stats, bounds, pixel mutation).
 
 GPU tests skip if no adapter available.
 """
@@ -27,9 +27,9 @@ def gpu():
 # --- AST compiler tests (no GPU needed) ---
 
 def test_ast_compiler_simple_expr():
-    from slappyengine.struct_registry import StructRegistry
-    from slappyengine.modules.health import HealthModule
-    from slappyengine.compute.ast_compiler import LambdaToWGSL
+    from pharos_engine.struct_registry import StructRegistry
+    from pharos_engine.modules.health import HealthModule
+    from pharos_engine.compute.ast_compiler import LambdaToWGSL
 
     reg = StructRegistry()
     reg.register(HealthModule)
@@ -41,9 +41,9 @@ def test_ast_compiler_simple_expr():
 
 
 def test_ast_compiler_arithmetic():
-    from slappyengine.struct_registry import StructRegistry
-    from slappyengine.modules.health import HealthModule
-    from slappyengine.compute.ast_compiler import LambdaToWGSL
+    from pharos_engine.struct_registry import StructRegistry
+    from pharos_engine.modules.health import HealthModule
+    from pharos_engine.compute.ast_compiler import LambdaToWGSL
 
     reg = StructRegistry()
     reg.register(HealthModule)
@@ -55,9 +55,9 @@ def test_ast_compiler_arithmetic():
 
 
 def test_ast_compiler_comparison():
-    from slappyengine.struct_registry import StructRegistry
-    from slappyengine.modules.health import HealthModule
-    from slappyengine.compute.ast_compiler import LambdaToWGSL
+    from pharos_engine.struct_registry import StructRegistry
+    from pharos_engine.modules.health import HealthModule
+    from pharos_engine.compute.ast_compiler import LambdaToWGSL
 
     reg = StructRegistry()
     reg.register(HealthModule)
@@ -68,9 +68,9 @@ def test_ast_compiler_comparison():
 
 
 def test_ast_compiler_unknown_channel_raises():
-    from slappyengine.struct_registry import StructRegistry
-    from slappyengine.modules.health import HealthModule
-    from slappyengine.compute.ast_compiler import LambdaToWGSL, ASTCompilerError
+    from pharos_engine.struct_registry import StructRegistry
+    from pharos_engine.modules.health import HealthModule
+    from pharos_engine.compute.ast_compiler import LambdaToWGSL, ASTCompilerError
 
     reg = StructRegistry()
     reg.register(HealthModule)
@@ -81,10 +81,10 @@ def test_ast_compiler_unknown_channel_raises():
 
 
 def test_ast_compiler_used_channels():
-    from slappyengine.struct_registry import StructRegistry
-    from slappyengine.modules.health import HealthModule
-    from slappyengine.modules.physics import PhysicsModule
-    from slappyengine.compute.ast_compiler import LambdaToWGSL
+    from pharos_engine.struct_registry import StructRegistry
+    from pharos_engine.modules.health import HealthModule
+    from pharos_engine.modules.physics import PhysicsModule
+    from pharos_engine.compute.ast_compiler import LambdaToWGSL
 
     reg = StructRegistry()
     reg.register(HealthModule)
@@ -99,9 +99,9 @@ def test_ast_compiler_used_channels():
 # --- Struct layout tests ---
 
 def test_pixel_mutator_channel_resolution():
-    from slappyengine.struct_registry import StructRegistry
-    from slappyengine.modules.health import HealthModule
-    from slappyengine.modules.physics import PhysicsModule
+    from pharos_engine.struct_registry import StructRegistry
+    from pharos_engine.modules.health import HealthModule
+    from pharos_engine.modules.physics import PhysicsModule
 
     reg = StructRegistry()
     reg.register(HealthModule)
@@ -115,14 +115,14 @@ def test_pixel_mutator_channel_resolution():
 
 
 def test_stats_result_dataclass():
-    from slappyengine.compute.stats import StatsResult
+    from pharos_engine.compute.stats import StatsResult
     r = StatsResult(mean=0.5, sum=50.0, min=0.0, max=1.0, count=100)
     assert r.mean == 0.5
     assert r.count == 100
 
 
 def test_aabb_methods():
-    from slappyengine.compute.spatial import AABB
+    from pharos_engine.compute.spatial import AABB
     aabb = AABB(10.0, 20.0, 50.0, 80.0)
     assert aabb.width() == 40.0
     assert aabb.height() == 60.0

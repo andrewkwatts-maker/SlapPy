@@ -1,4 +1,4 @@
-# slappyengine.tools — API Reference
+# pharos_engine.tools — API Reference
 
 > Auto-generated. Re-run `python scripts/gen_subpackage_api_docs.py`.
 > Do not hand-edit — every entry below comes from runtime introspection
@@ -19,10 +19,10 @@ _(none)_
 
 ## Inner modules
 
-- `slappyengine.tools.audio_tools`
-- `slappyengine.tools.gen_placeholders`
-- `slappyengine.tools.sprite_audit`
-- `slappyengine.tools.sprite_tools`
-- `slappyengine.tools.texture_tools`
-- `slappyengine.tools.track_tools`
-- `slappyengine.tools.video`
+- `pharos_engine.tools.audio_tools`
+- `pharos_engine.tools.gen_placeholders`
+- `pharos_engine.tools.sprite_audit`
+- `pharos_engine.tools.sprite_tools`
+- `pharos_engine.tools.texture_tools`
+- `pharos_engine.tools.track_tools`
+- `pharos_engine.tools.video`

@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.examples_common`.
+"""Tests for :mod:`pharos_engine.examples_common`.
 
 The helper exposes three public surfaces:
 
@@ -10,7 +10,7 @@ The helper exposes three public surfaces:
 
 These tests pin the parser surface (defaults + the three common flags
 the task brief asked for) and the fork logic in both directions using a
-stub :class:`slappyengine.studio.Stage`-shaped object.
+stub :class:`pharos_engine.studio.Stage`-shaped object.
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from slappyengine.examples_common import (
+from pharos_engine.examples_common import (
     build_demo_arg_parser,
     record_or_smoke,
     resolve_out_path,

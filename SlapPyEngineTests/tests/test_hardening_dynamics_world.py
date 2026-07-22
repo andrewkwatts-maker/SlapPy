@@ -1,4 +1,4 @@
-"""Input-validation tests for the public :class:`slappyengine.dynamics.World`
+"""Input-validation tests for the public :class:`pharos_engine.dynamics.World`
 API (hardening round 8).
 
 Mirrors the structure of ``test_hardening_audio.py``: positive paths are
@@ -22,7 +22,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "python"))
 
-from slappyengine.dynamics import (  # noqa: E402
+from pharos_engine.dynamics import (  # noqa: E402
     Body,
     JointSpec,
     World,

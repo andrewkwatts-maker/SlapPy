@@ -1,12 +1,12 @@
 """Smoke test for ``examples/detonate_gallery_demo.py`` (SS2 gap-close, batch 4).
 
 The demo renders six blast variants side-by-side using
-:func:`slappyengine.physics.blast.detonate` on
-:class:`slappyengine.physics.particle_field.ParticleField`, then writes
+:func:`pharos_engine.physics.blast.detonate` on
+:class:`pharos_engine.physics.particle_field.ParticleField`, then writes
 a GIF to ``examples/output/particles/detonate_gallery_<preset>.gif``.
 
-The demo imports from :mod:`slappyengine.physics.blast` and
-:mod:`slappyengine.physics.particle_field`, both WIP. This test wakes
+The demo imports from :mod:`pharos_engine.physics.blast` and
+:mod:`pharos_engine.physics.particle_field`, both WIP. This test wakes
 up as soon as those land — until then it skips with a clear reason.
 
 Pins (once WIP unblocks):
@@ -35,17 +35,17 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP physics subpackages being unavailable.
     try:
-        from slappyengine.physics.blast import (  # noqa: F401
+        from pharos_engine.physics.blast import (  # noqa: F401
             DetonateCurves,
             detonate,
         )
-        from slappyengine.physics.particle_field import ParticleField  # noqa: F401
-        from slappyengine.physics.splatter_presets import (  # noqa: F401
+        from pharos_engine.physics.particle_field import ParticleField  # noqa: F401
+        from pharos_engine.physics.splatter_presets import (  # noqa: F401
             PRESETS,
             get as get_preset,
         )
     except Exception as exc:
-        pytest.skip(f"slappyengine.physics.* unavailable (WIP): {exc}")
+        pytest.skip(f"pharos_engine.physics.* unavailable (WIP): {exc}")
 
     spec = importlib.util.spec_from_file_location(
         "detonate_gallery_demo_ss2", _DEMO_PATH

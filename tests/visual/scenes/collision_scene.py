@@ -6,7 +6,7 @@ post-impact change in cell state (heat, displacement, contact flash).
 """
 from __future__ import annotations
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,

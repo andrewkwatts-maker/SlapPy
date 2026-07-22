@@ -1,4 +1,4 @@
-"""Input-validation tests for the public ``slappyengine.dynamics`` API.
+"""Input-validation tests for the public ``pharos_engine.dynamics`` API.
 
 Engineering policy: validate at system boundaries, refuse bad input loudly
 rather than silently coercing it to a default. Each test in this file
@@ -15,7 +15,7 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import (
+from pharos_engine.dynamics import (
     BoneSpec,
     IKChainSpec,
     JointSpec,

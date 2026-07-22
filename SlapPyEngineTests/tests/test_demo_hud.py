@@ -28,7 +28,7 @@ _DEMO_PATH = _REPO_ROOT / "SlapPyEngineExamples" / "examples" / "hud_demo.py"
 
 
 def _install_engine_stubs(monkeypatch):
-    from slappyengine import engine as engine_mod
+    from pharos_engine import engine as engine_mod
 
     class _StubCanvas:
         def __init__(self, *_, **__):

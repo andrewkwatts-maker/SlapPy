@@ -7,7 +7,7 @@ with docs deferral."**
 
 This flips gate #11 from **FAILING** (uncommitted WIP work blocks
 v0.4.0 tag) to **DEFERRED** (WIP work stays out of tree; wheel ships
-without the subpackages; users install `slappy-engine==0.4.0` and get
+without the subpackages; users install `pharos-engine==0.4.0` and get
 a fully functional engine minus these four experimental modules).
 
 Docs-only — no source is touched. No WIP subpackage lands in the
@@ -44,7 +44,7 @@ Four Python subpackage trees + four Rust source modules are held out
 of the v0.4.0 wheel. All appear as `??` (untracked) under `git status`
 as of commit `c758122` (2026-07-08).
 
-### 2.1 `python/slappyengine/softbody/`
+### 2.1 `python/pharos_engine/softbody/`
 
 **Contents**: BeamNG-style soft-body lattice XPBD solver — 10 modules
 (`__init__.py`, `beam.py`, `body_builders.py`, `collision.py`,
@@ -52,7 +52,7 @@ as of commit `c758122` (2026-07-08).
 `world.py`).
 
 **History**: Started as the successor sprint-track to
-`slappyengine.dynamics.SoftBodyWorld` (which shipped in v0.3 and
+`pharos_engine.dynamics.SoftBodyWorld` (which shipped in v0.3 and
 remains the supported soft-body surface). The `softbody/` subpackage
 adds:
 
@@ -67,7 +67,7 @@ adds:
 
 Rust pair: `src/softbody_solver.rs` (2200 lines).
 
-### 2.2 `python/slappyengine/fluid/`
+### 2.2 `python/pharos_engine/fluid/`
 
 **Contents**: Position-Based Fluids (PBF) 2D particle simulator —
 12 modules (`__init__.py`, `buoyancy.py`, `contact.py`, `kernels.py`,
@@ -90,7 +90,7 @@ Rust pair: `src/softbody_solver.rs` (2200 lines).
 Rust pair: `src/pbf_solver.rs` (1509 lines) + `src/fluid_shader.rs`
 (1319 lines).
 
-### 2.3 `python/slappyengine/physics/`
+### 2.3 `python/pharos_engine/physics/`
 
 **Contents**: Hierarchical-hull per-pixel physics prototype —
 30 modules including `body.py`, `hull.py`, `cell.py`,
@@ -108,7 +108,7 @@ tree.
 materials-simulation prototype from the 2025 Q4 arc (nested hulls
 with √2 layers, state-disagreement subdivision criterion, transforms
 at hull level — see `docs/materials_hierarchical_hulls` memory entry).
-Long superseded by `slappyengine.physics3_bridge` (LL7 landing,
+Long superseded by `pharos_engine.physics3_bridge` (LL7 landing,
 BVH-accelerated 3D via wgpu + `_core.bvh`) for downstream games.
 Retained on disk as an archival artefact for anyone who wants to
 resume the per-pixel arc; not maintained.
@@ -119,7 +119,7 @@ but points at the (frozen, un-shipped) tree.
 Rust pair: none directly — `src/physics.rs` is a tracked module that
 covers the shipped physics3_bridge path.
 
-### 2.4 `python/slappyengine/physics2/`
+### 2.4 `python/pharos_engine/physics2/`
 
 **Contents**: One file — `material.py` (`Material2` dataclass with
 density / stiffness / viscosity / plasticity_rate / fracture_strain /
@@ -140,9 +140,9 @@ subpackages above:
 | Module | Lines | Pairs with |
 |---|---|---|
 | `src/raster.rs` | 915 | Currently orphan — was raster kernels for the physics/ per-pixel renderer; overlaps functionality now in `_core.raster`. |
-| `src/pbf_solver.rs` | 1509 | `python/slappyengine/fluid/` |
-| `src/fluid_shader.rs` | 1319 | `python/slappyengine/fluid/` (WGSL surface shading) |
-| `src/softbody_solver.rs` | 2200 | `python/slappyengine/softbody/` |
+| `src/pbf_solver.rs` | 1509 | `python/pharos_engine/fluid/` |
+| `src/fluid_shader.rs` | 1319 | `python/pharos_engine/fluid/` (WGSL surface shading) |
+| `src/softbody_solver.rs` | 2200 | `python/pharos_engine/softbody/` |
 
 None are declared in `src/lib.rs` (PP3 audit confirms 14 `mod`
 declarations vs 14 tracked `src/*.rs` files; the four modules above
@@ -183,7 +183,7 @@ production-readiness artefacts required for a public ship:
    Bullet Strata game-compat tripwire (gate #12, YY3 = 91.8% F1) is
    run against the *shipped* engine surface. Landing four uncovered
    subpackages after the tripwire runs would invalidate the recovery
-   arc's evidence — a downstream game could import `slappyengine.fluid`
+   arc's evidence — a downstream game could import `pharos_engine.fluid`
    and blow up in a way YY3's data never caught.
 
 All four gaps close together the day the user runs a landing sprint;
@@ -196,28 +196,28 @@ until then the trees are inert on disk.
 **Zero impact.** The engine ships and works without the WIP
 subpackages. Concretely:
 
-* `pip install slappy-engine==0.4.0` installs the wheel built from
+* `pip install pharos-engine==0.4.0` installs the wheel built from
   the tracked source tree. `git ls-files` = the wheel manifest set;
   untracked WIP dirs never enter the wheel.
 * Physics-adjacent public surfaces users depend on today are covered
   by shipped subpackages:
-  * Soft-body / rope / ragdoll → `slappyengine.dynamics.SoftBodyWorld`
+  * Soft-body / rope / ragdoll → `pharos_engine.dynamics.SoftBodyWorld`
     + `Body` + `JointSpec` + `build_*` / `make_*` helpers
     (see `docs/api/dynamics.md`).
-  * 3D rigid physics → `slappyengine.physics3_bridge`
+  * 3D rigid physics → `pharos_engine.physics3_bridge`
     (see `docs/api/physics3_bridge.md`).
-  * 2D top-down / iso combat → `slappyengine.iso.combat`
+  * 2D top-down / iso combat → `pharos_engine.iso.combat`
     (Stone Keep-tested; see `docs/api/iso.md`).
   * Post-process, GI, materials, numerics, thermal — all shipped and
-    surfaced in `slappyengine.__all__` (see `docs/engine_surface_v030.md`).
-* No import path in the shipped `slappyengine` namespace resolves to
-  a WIP subpackage. `import slappyengine.softbody` /
-  `import slappyengine.fluid` / `import slappyengine.physics` /
-  `import slappyengine.physics2` all raise `ModuleNotFoundError`.
+    surfaced in `pharos_engine.__all__` (see `docs/engine_surface_v030.md`).
+* No import path in the shipped `pharos_engine` namespace resolves to
+  a WIP subpackage. `import pharos_engine.softbody` /
+  `import pharos_engine.fluid` / `import pharos_engine.physics` /
+  `import pharos_engine.physics2` all raise `ModuleNotFoundError`.
   Downstream games that were previously touching those namespaces
-  (Ochema Circuit did briefly touch `slappyengine.softbody` — see
+  (Ochema Circuit did briefly touch `pharos_engine.softbody` — see
   AA3's `docs/diary_softbody_bridge_2026_07_04.md`) already have a
-  shim path via `slappyengine.dynamics.SoftBodyWorld`.
+  shim path via `pharos_engine.dynamics.SoftBodyWorld`.
 * Engine feature-map (`docs/feature_map_2026_06_03.md` + deltas
   through `feature_map_delta_2026_07_17.md`) does not depend on any
   WIP row; no WIRED count regresses.
@@ -235,10 +235,10 @@ directive until an explicit un-freeze commit lands per subpackage.
 
 | Subpackage | Target version | Landing scope |
 |---|---|---|
-| `python/slappyengine/softbody/` | **v0.5** | Paired with a new physics reconcile sprint that harmonises `softbody/` with the shipped `dynamics.SoftBodyWorld` — likely by promoting `softbody/` to the canonical XPBD substrate and thinning `dynamics.SoftBodyWorld` to a compatibility alias. Full test-suite + `docs/api/softbody.md` refresh. |
-| `python/slappyengine/fluid/` | **v0.5** | Sibling landing to `softbody/` since the two share XPBD contact projection. Ships together as the paired "rebuilt 2D physics layer" milestone. `src/pbf_solver.rs` + `src/fluid_shader.rs` land into `src/lib.rs` `mod` declarations at the same commit. Full test-suite + `docs/api/fluid.md` refresh. |
-| `python/slappyengine/physics/` | **v1.0 — marked for removal** | The hierarchical-hull per-pixel prototype is superseded by `slappyengine.physics3_bridge`. Target disposition is deletion (not un-freeze) unless the user revives the per-pixel arc explicitly. Retained on disk for archival read-only reference until the v1.0 tag sprint. |
-| `python/slappyengine/physics2/` | **v0.6** | Successor to `physics/` — needs actual solver + test coverage before it becomes a shipped subpackage. Currently one dataclass file; needs to grow into a real Rust-backed per-pixel dispatch layer paired with `_core.raster` or `src/raster.rs`. If growth stalls again, target flips to "delete" alongside `physics/` at v1.0. |
+| `python/pharos_engine/softbody/` | **v0.5** | Paired with a new physics reconcile sprint that harmonises `softbody/` with the shipped `dynamics.SoftBodyWorld` — likely by promoting `softbody/` to the canonical XPBD substrate and thinning `dynamics.SoftBodyWorld` to a compatibility alias. Full test-suite + `docs/api/softbody.md` refresh. |
+| `python/pharos_engine/fluid/` | **v0.5** | Sibling landing to `softbody/` since the two share XPBD contact projection. Ships together as the paired "rebuilt 2D physics layer" milestone. `src/pbf_solver.rs` + `src/fluid_shader.rs` land into `src/lib.rs` `mod` declarations at the same commit. Full test-suite + `docs/api/fluid.md` refresh. |
+| `python/pharos_engine/physics/` | **v1.0 — marked for removal** | The hierarchical-hull per-pixel prototype is superseded by `pharos_engine.physics3_bridge`. Target disposition is deletion (not un-freeze) unless the user revives the per-pixel arc explicitly. Retained on disk for archival read-only reference until the v1.0 tag sprint. |
+| `python/pharos_engine/physics2/` | **v0.6** | Successor to `physics/` — needs actual solver + test coverage before it becomes a shipped subpackage. Currently one dataclass file; needs to grow into a real Rust-backed per-pixel dispatch layer paired with `_core.raster` or `src/raster.rs`. If growth stalls again, target flips to "delete" alongside `physics/` at v1.0. |
 
 Rust source modules follow their Python pair: `src/softbody_solver.rs`
 + `src/pbf_solver.rs` + `src/fluid_shader.rs` land at v0.5.
@@ -276,18 +276,18 @@ Steps:
    ```
 2. **Copy the subpackage into your own project**:
    ```
-   cp -r python/slappyengine/softbody /path/to/your/project/vendor/softbody
+   cp -r python/pharos_engine/softbody /path/to/your/project/vendor/softbody
    # ...or fluid / physics / physics2 as needed
    ```
-3. **Import from your vendor path**, not from `slappyengine`:
+3. **Import from your vendor path**, not from `pharos_engine`:
    ```python
    from vendor.softbody import SoftBodyWorld  # your copy
-   # NOT: from slappyengine.softbody import ...  # will fail on pip install
+   # NOT: from pharos_engine.softbody import ...  # will fail on pip install
    ```
 
 **No warranty.** The trees:
 
-* May not work with any tagged version of `slappy-engine` on PyPI —
+* May not work with any tagged version of `pharos-engine` on PyPI —
   they read/write internal APIs that pip-installed users cannot see.
 * May be reorganised, renamed, or deleted between commits without a
   deprecation cycle. The `docs/backcompat_contract_2026_07_07.md`
@@ -348,7 +348,7 @@ artefact.
   formalises with a version-target roadmap.
 * [`docs/diary_softbody_bridge_2026_07_04.md`](diary_softbody_bridge_2026_07_04.md)
   — AA3 downstream shim for callers that were importing
-  `slappyengine.softbody`; the fallback path that lets the freeze
+  `pharos_engine.softbody`; the fallback path that lets the freeze
   hold without breaking Ochema Circuit's diary panel.
 * [`docs/sprint_5_doc_inventory.md`](sprint_5_doc_inventory.md) —
   updated by AAA5 to index this doc.

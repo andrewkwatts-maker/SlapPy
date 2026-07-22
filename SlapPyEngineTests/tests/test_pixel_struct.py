@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from slappyengine.pixel_struct import PixelStruct
+from pharos_engine.pixel_struct import PixelStruct
 
 
 def test_basic_struct():

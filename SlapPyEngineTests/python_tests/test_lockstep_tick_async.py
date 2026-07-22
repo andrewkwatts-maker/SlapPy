@@ -13,7 +13,7 @@ def _run(coro):
 
 
 def _make_sync(num_players=2, local_player_id=0, timeout_ms=50.0):
-    from slappyengine.net.sync import LockstepSync
+    from pharos_engine.net.sync import LockstepSync
     return LockstepSync(
         local_player_id=local_player_id,
         num_players=num_players,
@@ -22,7 +22,7 @@ def _make_sync(num_players=2, local_player_id=0, timeout_ms=50.0):
 
 
 def _frame(tick, player_id, actions=None, axes=None):
-    from slappyengine.net.sync import InputFrame
+    from pharos_engine.net.sync import InputFrame
     return InputFrame(tick=tick, player_id=player_id,
                       actions=actions or {}, axes=axes or {})
 
@@ -81,7 +81,7 @@ class TestTickAsyncSinglePlayer:
         f = _frame(0, 0, actions={"boost": True})
         _run(ls.tick_async(f, capture_send))
         # Reconstruct and verify
-        from slappyengine.net.sync import InputFrame
+        from pharos_engine.net.sync import InputFrame
         decoded = InputFrame.from_bytes(sent[0])
         assert decoded.actions["boost"] is True
 
@@ -202,45 +202,45 @@ class TestTickAsyncTimeout:
 
 class TestInputFrameSerialization:
     def test_to_bytes_returns_bytes(self):
-        from slappyengine.net.sync import InputFrame
+        from pharos_engine.net.sync import InputFrame
         f = InputFrame(tick=5, player_id=2, actions={"fire": True}, axes={"x": 0.5})
         assert isinstance(f.to_bytes(), bytes)
 
     def test_roundtrip_tick(self):
-        from slappyengine.net.sync import InputFrame
+        from pharos_engine.net.sync import InputFrame
         f = InputFrame(tick=42, player_id=0, actions={}, axes={})
         recovered = InputFrame.from_bytes(f.to_bytes())
         assert recovered.tick == 42
 
     def test_roundtrip_player_id(self):
-        from slappyengine.net.sync import InputFrame
+        from pharos_engine.net.sync import InputFrame
         f = InputFrame(tick=0, player_id=7, actions={}, axes={})
         recovered = InputFrame.from_bytes(f.to_bytes())
         assert recovered.player_id == 7
 
     def test_roundtrip_actions(self):
-        from slappyengine.net.sync import InputFrame
+        from pharos_engine.net.sync import InputFrame
         f = InputFrame(tick=0, player_id=0, actions={"fire": True, "jump": False}, axes={})
         recovered = InputFrame.from_bytes(f.to_bytes())
         assert recovered.actions["fire"] is True
         assert recovered.actions["jump"] is False
 
     def test_roundtrip_axes(self):
-        from slappyengine.net.sync import InputFrame
+        from pharos_engine.net.sync import InputFrame
         f = InputFrame(tick=0, player_id=0, actions={}, axes={"x": 0.5, "y": -0.25})
         recovered = InputFrame.from_bytes(f.to_bytes())
         assert recovered.axes["x"] == pytest.approx(0.5)
         assert recovered.axes["y"] == pytest.approx(-0.25)
 
     def test_roundtrip_empty_dicts(self):
-        from slappyengine.net.sync import InputFrame
+        from pharos_engine.net.sync import InputFrame
         f = InputFrame(tick=0, player_id=0, actions={}, axes={})
         recovered = InputFrame.from_bytes(f.to_bytes())
         assert recovered.actions == {}
         assert recovered.axes == {}
 
     def test_axes_rounded_to_3_decimals(self):
-        from slappyengine.net.sync import InputFrame
+        from pharos_engine.net.sync import InputFrame
         f = InputFrame(tick=0, player_id=0, actions={}, axes={"v": 0.123456789})
         recovered = InputFrame.from_bytes(f.to_bytes())
         assert abs(recovered.axes["v"] - 0.123) < 0.001

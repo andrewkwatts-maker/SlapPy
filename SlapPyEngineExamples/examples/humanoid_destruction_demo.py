@@ -20,9 +20,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from slappyengine.dynamics import make_humanoid, wrap_in_flesh
-from slappyengine.softbody import SoftBodyWorld
-from slappyengine.studio import (
+from pharos_engine.dynamics import make_humanoid, wrap_in_flesh
+from pharos_engine.softbody import SoftBodyWorld
+from pharos_engine.studio import (
     Stage, humanoid_stage, output_path, record,
 )
 

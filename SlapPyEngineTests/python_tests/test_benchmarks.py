@@ -1,6 +1,6 @@
 """Pytest-driven physics benchmark suite.
 
-These tests exercise :mod:`slappyengine.physics.profile`. They are
+These tests exercise :mod:`pharos_engine.physics.profile`. They are
 designed as smoke + performance guard-rails:
 
 - :func:`test_benchmarks_run_without_error` validates every baseline
@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import pytest
 
-from slappyengine.physics.profile import (
+from pharos_engine.physics.profile import (
     FrameTimer,
     baseline_scenarios,
     run_benchmark,

@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 
 # ===========================================================================
@@ -19,7 +19,7 @@ sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
 class TestAssetRecord:
     def _record(self):
         import tempfile
-        from slappyengine.assets.database import AssetRecord
+        from pharos_engine.assets.database import AssetRecord
         td = tempfile.mkdtemp()
         p = Path(td) / "dummy.yml"
         p.write_text("key: value")
@@ -56,7 +56,7 @@ class TestAssetRecord:
 
 class TestAssetDatabaseInit:
     def _db(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         return db
 
@@ -68,7 +68,7 @@ class TestAssetDatabaseInit:
         assert db.all_records() == []
 
     def test_singleton_returns_same_instance(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         AssetDatabase._instance = None  # reset
         a = AssetDatabase.instance()
         b = AssetDatabase.instance()
@@ -78,7 +78,7 @@ class TestAssetDatabaseInit:
 
 class TestAssetDatabaseLoad:
     def _db_and_dir(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         td = tempfile.mkdtemp()
         return db, Path(td)
@@ -139,7 +139,7 @@ class TestAssetDatabaseLoad:
 
 class TestAssetDatabaseGetRecord:
     def _db(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         return AssetDatabase()
 
     def test_returns_none_for_missing(self):
@@ -148,7 +148,7 @@ class TestAssetDatabaseGetRecord:
         assert db.get_record(Path(td) / "missing.yml") is None
 
     def test_returns_record_after_load(self):
-        from slappyengine.assets.database import AssetRecord
+        from pharos_engine.assets.database import AssetRecord
         db = self._db()
         td = tempfile.mkdtemp()
         f = Path(td) / "test.yml"
@@ -179,7 +179,7 @@ class TestAssetDatabaseGetRecord:
 
 class TestAssetDatabaseRegisterHandler:
     def test_custom_handler_called(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         td = tempfile.mkdtemp()
         f = Path(td) / "test.txt"
@@ -189,7 +189,7 @@ class TestAssetDatabaseRegisterHandler:
         assert result == "hello"
 
     def test_overwrite_handler(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         td = tempfile.mkdtemp()
         f = Path(td) / "data.txt"
@@ -201,20 +201,20 @@ class TestAssetDatabaseRegisterHandler:
 
 class TestAssetDatabaseWatch:
     def test_watch_no_crash(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         td = tempfile.mkdtemp()
         db.watch(td)  # should not raise
 
     def test_watch_twice_no_crash(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         td = tempfile.mkdtemp()
         db.watch(td)
         db.watch(td)  # duplicate should be harmless
 
     def test_watch_dir_added(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         td = tempfile.mkdtemp()
         db.watch(td)
@@ -227,7 +227,7 @@ class TestAssetDatabaseWatch:
 
 class TestDebugOverlayInit:
     def _d(self):
-        from slappyengine.ui.debug_overlay import DebugOverlay
+        from pharos_engine.ui.debug_overlay import DebugOverlay
         return DebugOverlay()
 
     def test_instantiates(self):
@@ -254,7 +254,7 @@ class TestDebugOverlayInit:
 
 class TestDebugOverlayToggles:
     def _d(self):
-        from slappyengine.ui.debug_overlay import DebugOverlay
+        from pharos_engine.ui.debug_overlay import DebugOverlay
         return DebugOverlay()
 
     def test_toggle_events_on(self):
@@ -302,7 +302,7 @@ class TestDebugOverlayToggles:
 
 class TestDebugOverlayReportPass:
     def _d(self):
-        from slappyengine.ui.debug_overlay import DebugOverlay
+        from pharos_engine.ui.debug_overlay import DebugOverlay
         return DebugOverlay()
 
     def test_report_skipping(self):
@@ -330,7 +330,7 @@ class TestDebugOverlayReportPass:
 
 class TestDebugOverlayHeatmap:
     def _d(self):
-        from slappyengine.ui.debug_overlay import DebugOverlay
+        from pharos_engine.ui.debug_overlay import DebugOverlay
         d = DebugOverlay()
         d.toggle_heatmap()  # must be enabled for record_attr_publish to track
         return d
@@ -362,7 +362,7 @@ class TestDebugOverlayHeatmap:
 
 class TestDebugOverlayRender:
     def _d(self):
-        from slappyengine.ui.debug_overlay import DebugOverlay
+        from pharos_engine.ui.debug_overlay import DebugOverlay
         return DebugOverlay()
 
     def test_render_none_when_all_hidden(self):
@@ -393,7 +393,7 @@ class TestDebugOverlayRender:
         self._d().begin_frame()  # should not raise
 
     def test_constants_defined(self):
-        from slappyengine.ui.debug_overlay import DebugOverlay
+        from pharos_engine.ui.debug_overlay import DebugOverlay
         assert DebugOverlay.MAX_EVENTS > 0
         assert DebugOverlay.FONT_SIZE > 0
         assert DebugOverlay.LINE_H > 0

@@ -19,8 +19,8 @@ from pathlib import Path
 
 def _boot_editor(width: int = 1920, height: int = 1080):
     import dearpygui.dearpygui as dpg
-    from slappyengine.engine import Engine
-    from slappyengine.ui.editor.shell import EditorShell
+    from pharos_engine.engine import Engine
+    from pharos_engine.ui.editor.shell import EditorShell
 
     engine = Engine()
     shell = EditorShell(engine, width=width, height=height)

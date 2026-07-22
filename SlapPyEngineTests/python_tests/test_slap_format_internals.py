@@ -28,32 +28,32 @@ class _FakeLayer:
 
 class TestPackU32:
     def test_zero(self):
-        from slappyengine.residency.slap_format import _pack_u32
+        from pharos_engine.residency.slap_format import _pack_u32
         assert _pack_u32(0) == b'\x00\x00\x00\x00'
 
     def test_one(self):
-        from slappyengine.residency.slap_format import _pack_u32
+        from pharos_engine.residency.slap_format import _pack_u32
         assert _pack_u32(1) == b'\x01\x00\x00\x00'
 
     def test_255(self):
-        from slappyengine.residency.slap_format import _pack_u32
+        from pharos_engine.residency.slap_format import _pack_u32
         assert _pack_u32(255) == b'\xff\x00\x00\x00'
 
     def test_max_value(self):
-        from slappyengine.residency.slap_format import _pack_u32
+        from pharos_engine.residency.slap_format import _pack_u32
         assert _pack_u32(2**32 - 1) == b'\xff\xff\xff\xff'
 
     def test_produces_four_bytes(self):
-        from slappyengine.residency.slap_format import _pack_u32
+        from pharos_engine.residency.slap_format import _pack_u32
         assert len(_pack_u32(12345)) == 4
 
     def test_little_endian(self):
-        from slappyengine.residency.slap_format import _pack_u32
+        from pharos_engine.residency.slap_format import _pack_u32
         result = _pack_u32(0x01020304)
         assert result == b'\x04\x03\x02\x01'
 
     def test_roundtrip_unpack(self):
-        from slappyengine.residency.slap_format import _pack_u32
+        from pharos_engine.residency.slap_format import _pack_u32
         v = 987654321
         assert struct.unpack("<I", _pack_u32(v))[0] == v
 
@@ -64,33 +64,33 @@ class TestPackU32:
 
 class TestPackU64:
     def test_zero(self):
-        from slappyengine.residency.slap_format import _pack_u64
+        from pharos_engine.residency.slap_format import _pack_u64
         assert _pack_u64(0) == b'\x00\x00\x00\x00\x00\x00\x00\x00'
 
     def test_one(self):
-        from slappyengine.residency.slap_format import _pack_u64
+        from pharos_engine.residency.slap_format import _pack_u64
         assert _pack_u64(1) == b'\x01\x00\x00\x00\x00\x00\x00\x00'
 
     def test_max_value(self):
-        from slappyengine.residency.slap_format import _pack_u64
+        from pharos_engine.residency.slap_format import _pack_u64
         assert _pack_u64(2**64 - 1) == b'\xff\xff\xff\xff\xff\xff\xff\xff'
 
     def test_produces_eight_bytes(self):
-        from slappyengine.residency.slap_format import _pack_u64
+        from pharos_engine.residency.slap_format import _pack_u64
         assert len(_pack_u64(99999)) == 8
 
     def test_little_endian(self):
-        from slappyengine.residency.slap_format import _pack_u64
+        from pharos_engine.residency.slap_format import _pack_u64
         result = _pack_u64(0x0102030405060708)
         assert result == b'\x08\x07\x06\x05\x04\x03\x02\x01'
 
     def test_roundtrip_unpack(self):
-        from slappyengine.residency.slap_format import _pack_u64
+        from pharos_engine.residency.slap_format import _pack_u64
         v = 1234567890123
         assert struct.unpack("<Q", _pack_u64(v))[0] == v
 
     def test_wider_than_u32(self):
-        from slappyengine.residency.slap_format import _pack_u64
+        from pharos_engine.residency.slap_format import _pack_u64
         v = 2**33
         assert struct.unpack("<Q", _pack_u64(v))[0] == v
 
@@ -101,12 +101,12 @@ class TestPackU64:
 
 class TestEncodeDecodeLayerRoundtrip:
     def _roundtrip(self, layer):
-        from slappyengine.residency.slap_format import _encode_layer, _decode_layer
+        from pharos_engine.residency.slap_format import _encode_layer, _decode_layer
         encoded = _encode_layer(layer)
         return _decode_layer(io.BytesIO(encoded))
 
     def test_encode_returns_bytes(self):
-        from slappyengine.residency.slap_format import _encode_layer
+        from pharos_engine.residency.slap_format import _encode_layer
         result = _encode_layer(_FakeLayer())
         assert isinstance(result, bytes)
         assert len(result) > 0
@@ -170,7 +170,7 @@ class TestEncodeDecodeLayerRoundtrip:
         assert decoded["image_data"].shape == (8, 16, 4)
 
     def test_no_image_data_returns_none(self):
-        from slappyengine.residency.slap_format import _encode_layer, _decode_layer
+        from pharos_engine.residency.slap_format import _encode_layer, _decode_layer
         layer = _FakeLayer()
         layer._image_data = None
         encoded = _encode_layer(layer)
@@ -178,7 +178,7 @@ class TestEncodeDecodeLayerRoundtrip:
         assert decoded["image_data"] is None
 
     def test_empty_image_array_returns_none(self):
-        from slappyengine.residency.slap_format import _encode_layer, _decode_layer
+        from pharos_engine.residency.slap_format import _encode_layer, _decode_layer
         layer = _FakeLayer()
         layer._image_data = np.zeros((0, 0, 4), dtype=np.uint8)
         encoded = _encode_layer(layer)
@@ -186,7 +186,7 @@ class TestEncodeDecodeLayerRoundtrip:
         assert decoded["image_data"] is None
 
     def test_pixel_data_roundtrip_shape(self):
-        from slappyengine.residency.slap_format import _encode_layer, _decode_layer
+        from pharos_engine.residency.slap_format import _encode_layer, _decode_layer
         layer = _FakeLayer(w=4, h=4)
         layer._image_data = None
         layer._pixel_data = np.arange(32, dtype=np.float32)  # 4*4*2 = 32
@@ -196,7 +196,7 @@ class TestEncodeDecodeLayerRoundtrip:
         assert decoded["pixel_data"].shape == (4, 4, 2)
 
     def test_pixel_data_roundtrip_values(self):
-        from slappyengine.residency.slap_format import _encode_layer, _decode_layer
+        from pharos_engine.residency.slap_format import _encode_layer, _decode_layer
         layer = _FakeLayer(w=4, h=4)
         layer._image_data = None
         arr = np.arange(32, dtype=np.float32)
@@ -230,14 +230,14 @@ class TestEncodeDecodeLayerRoundtrip:
 
 class TestBadVersionRaises:
     def test_bad_version_raises_valueerror(self, tmp_path):
-        from slappyengine.residency.slap_format import read_world_slap, SLAP_MAGIC, _HDR_FMT
+        from pharos_engine.residency.slap_format import read_world_slap, SLAP_MAGIC, _HDR_FMT
         bad_file = tmp_path / "bad_ver.slap"
         bad_file.write_bytes(struct.pack(_HDR_FMT, SLAP_MAGIC, 99, 0))
         with pytest.raises(ValueError, match="version"):
             read_world_slap(bad_file)
 
     def test_version_zero_raises(self, tmp_path):
-        from slappyengine.residency.slap_format import read_world_slap, SLAP_MAGIC, _HDR_FMT
+        from pharos_engine.residency.slap_format import read_world_slap, SLAP_MAGIC, _HDR_FMT
         bad_file = tmp_path / "ver0.slap"
         bad_file.write_bytes(struct.pack(_HDR_FMT, SLAP_MAGIC, 0, 0))
         with pytest.raises(ValueError, match="version"):

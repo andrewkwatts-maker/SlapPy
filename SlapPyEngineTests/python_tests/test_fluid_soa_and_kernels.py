@@ -11,7 +11,7 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.fluid import (
+from pharos_engine.fluid import (
     LAVA,
     MATERIALS,
     SAND,
@@ -73,7 +73,7 @@ def test_poly6_coefficient_matches_2d_normalisation():
 
 def test_poly6_scalar_matches_array_form():
     """The scalar convenience must give identical numbers to the array form."""
-    from slappyengine.fluid.kernels import poly6_scalar
+    from pharos_engine.fluid.kernels import poly6_scalar
     h = 0.2
     for r in (0.0, 0.05, 0.1, h):
         scalar_val = poly6_scalar(r * r, h)

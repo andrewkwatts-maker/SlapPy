@@ -10,7 +10,7 @@ batch).
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`slappyengine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `layer.new`               | `layer_lifecycle_actions.create_layer`               | layer |
 | `layer.delete`            | `layer_lifecycle_actions.delete_layer`               | layer |
@@ -20,13 +20,13 @@ Five more action ids landed in this tick, moving 5 rows from STUB
 
 New action modules:
 
-* `python/slappyengine/actions/layer_lifecycle_actions.py`
-* `python/slappyengine/actions/snap_set_grid_size_actions.py`
-* `python/slappyengine/actions/view_toggle_ruler_actions.py`
-* `python/slappyengine/actions/spawn_last_position_actions.py`
+* `python/pharos_engine/actions/layer_lifecycle_actions.py`
+* `python/pharos_engine/actions/snap_set_grid_size_actions.py`
+* `python/pharos_engine/actions/view_toggle_ruler_actions.py`
+* `python/pharos_engine/actions/spawn_last_position_actions.py`
 
 Router entries and `_fb_*` shims live in
-`python/slappyengine/tool_router.py` under the
+`python/pharos_engine/tool_router.py` under the
 `# ── VV4 STUB-triage: layer.new, layer.delete, snap.set_grid_size,
 view.toggle_ruler, spawn.at_last_position (round 23) ──` block.
 

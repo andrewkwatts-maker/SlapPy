@@ -4,7 +4,7 @@ Big-picture ship-gate audit for the SlapPyEngine v0.3.0b0 → v0.4.0
 transition. Written by OO7 (background scrum agent) after 20 Nova3D
 parity sprints (HH+II+JJ+KK+LL), MM salvage batch, and NN integration
 batch closed. Sources: `pyproject.toml`, `Cargo.toml`,
-`python/slappyengine/__init__.py`, `docs/roadmap.md`,
+`python/pharos_engine/__init__.py`, `docs/roadmap.md`,
 `docs/big_picture_2026_07_05.md`,
 `docs/feature_map_delta_2026_07_06.md`,
 `docs/sprint_rollup_2026_07_06.md`,
@@ -60,7 +60,7 @@ yet started.
 
 | Roadmap item | Status | Proof (commit / doc) |
 |---|---|---|
-| `ai` / `animation` exposure + docs | **WORKING** | `docs/api/animation.md` present; `slappyengine.ai` still un-documented in `docs/api/` |
+| `ai` / `animation` exposure + docs | **WORKING** | `docs/api/animation.md` present; `pharos_engine.ai` still un-documented in `docs/api/` |
 | ECS layer formalisation | **GAP** | No ECS narrative doc; light-weight `World` / `ZoneManager` managers still ad-hoc |
 | Audio backend hardening | **WORKING** | LL4 3D positional audio shipped (`8300cd8`); MM1 hardened `audio_3d.py`; backend sample-rate / underrun policy still un-audited |
 | Multiplayer rough patches | **GAP** | No `docs/api/network.md`; no `hello_multiplayer.py`; `[network]` extra advertised in README |
@@ -143,7 +143,7 @@ gate 6 status: GREEN.**
 
 ### API coverage vs top-level surface
 
-`python/slappyengine/__init__.py` declares `__version__ = "0.3.0b0"`
+`python/pharos_engine/__init__.py` declares `__version__ = "0.3.0b0"`
 and 22 subpackages (per `_subpackages` set, latest is HH5 `asset_import`
 addition). Per `docs/engine_surface_v030.md`:
 
@@ -231,39 +231,39 @@ setter, then routes all 9 STUB rows through it.
 The working tree at v0.4 audit time contains **five uncommitted / WIP
 subpackage trees** deliberately frozen out of the V→NN sprint window:
 
-### 6.1 `python/slappyengine/softbody/`
+### 6.1 `python/pharos_engine/softbody/`
 
 * **Freeze reason**: user has in-progress edits to the BeamNG-style
   lattice XPBD simulator dating from the 2026-06-01 fluid WIP branch.
-* **What ships today**: the shim `slappyengine.dynamics.SoftBodyWorld`
+* **What ships today**: the shim `pharos_engine.dynamics.SoftBodyWorld`
   + AA3's `diary_softbody_bridge.py` cover the diary-runner + Ochema /
   Bullet regression contracts.
 * **v0.4 unfreeze gate**: user resolves fluid WIP → stage tree → run
   full regression (Ochema Circuit 1124/1126 + Bullet Strata 54/54) →
   commit as one landing sprint.
 
-### 6.2 `python/slappyengine/fluid/`
+### 6.2 `python/pharos_engine/fluid/`
 
 * **Freeze reason**: matching PBF solver WIP branch, held for the same
   reason as softbody. `benchmarks/baseline_report.md` § 2026-06-01
   documents the freeze.
-* **What ships today**: `slappyengine.fluid_sim.GlobalFluidSim` covers
+* **What ships today**: `pharos_engine.fluid_sim.GlobalFluidSim` covers
   scene-wide fluid; the frozen subpackage is a refactor target, not a
   new capability.
 * **v0.4 unfreeze gate**: same as softbody.
 
-### 6.3 `python/slappyengine/physics/`
+### 6.3 `python/pharos_engine/physics/`
 
 * **Freeze reason**: hierarchical-hull per-pixel physics module tracked
   in memory `project_materials_hierarchical_hulls.md`. Convergence
   partial per that memory note; v1.0 candidate not v0.4.
-* **What ships today**: `slappyengine.dynamics` covers rigid-body /
-  joint / rope / ragdoll / IK; `slappyengine.physics3_bridge` (LL7)
+* **What ships today**: `pharos_engine.dynamics` covers rigid-body /
+  joint / rope / ragdoll / IK; `pharos_engine.physics3_bridge` (LL7)
   covers 3D physics soft-import + SAP fallback.
 * **v0.4 unfreeze gate**: NOT required for v0.4; explicitly a v1.0
   freeze candidate.
 
-### 6.4 `python/slappyengine/physics2/`
+### 6.4 `python/pharos_engine/physics2/`
 
 * **Freeze reason**: second-generation physics scratch dir; alternative
   architecture experiment.
@@ -302,7 +302,7 @@ gate belongs to.
 
 - [ ] **1. Version constants aligned** — bump
   `pyproject.toml` (`0.3.0b0` → `0.4.0`), `Cargo.toml`
-  (`0.3.0-beta.0` → `0.4.0`), and `python/slappyengine/__init__.py`
+  (`0.3.0-beta.0` → `0.4.0`), and `python/pharos_engine/__init__.py`
   (`__version__ = "0.3.0b0"` → `"0.4.0"`) in ONE commit.
   *Owner: release lead. Status: FAILING (needs bump sprint).*
 
@@ -425,7 +425,7 @@ into v0.4.1 without hurting the tag.
 
 *Audit generated 2026-07-06 by OO7 background scrum agent.
 Cross-referenced against pyproject.toml (`0.3.0b0`), Cargo.toml
-(`0.3.0-beta.0`), `python/slappyengine/__init__.py`
+(`0.3.0-beta.0`), `python/pharos_engine/__init__.py`
 (`__version__ = "0.3.0b0"`, `__all__` 88 names), git log −40 (V→NN
 window, ~120+ commits), `SlapPyEngineTests/tests/` inventory (343
 entries), `docs/sprint_5_doc_inventory.md` (94 entries),

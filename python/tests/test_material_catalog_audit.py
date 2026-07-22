@@ -16,12 +16,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from slappyengine.fluid.material import MATERIALS as FLUID_MATERIALS
-from slappyengine.fluid.material import FluidMaterial
-from slappyengine.fluid.material import load_catalog as load_fluid_catalog
-from slappyengine.softbody.material import MATERIALS as SOFT_MATERIALS
-from slappyengine.softbody.material import Material
-from slappyengine.softbody.material import load_catalog as load_soft_catalog
+from pharos_engine.fluid.material import MATERIALS as FLUID_MATERIALS
+from pharos_engine.fluid.material import FluidMaterial
+from pharos_engine.fluid.material import load_catalog as load_fluid_catalog
+from pharos_engine.softbody.material import MATERIALS as SOFT_MATERIALS
+from pharos_engine.softbody.material import Material
+from pharos_engine.softbody.material import load_catalog as load_soft_catalog
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _OCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _OCHEMA_STR = str(_OCHEMA_DIR)
@@ -109,7 +109,7 @@ class TestRaceManagerCountdown:
         assert rm.state == RaceState.RACING
 
     def test_race_started_event_published(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         rm = _make_rm()
         events = []
         h = subscribe("Race.Started", lambda e: events.append(e))
@@ -232,7 +232,7 @@ class TestRaceManagerFinish:
         assert rm.finish_order[0][0] is v
 
     def test_race_finished_event_published(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         v = _make_vehicle()
         rm = _make_rm(laps=1, vehicles=[v])
         _advance_past_countdown(rm)

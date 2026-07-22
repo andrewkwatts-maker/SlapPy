@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _OCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _OCHEMA_STR = str(_OCHEMA_DIR)
@@ -62,14 +62,14 @@ class TestGhostSystemRecording:
         return GhostSystem(tracked_vehicle=vehicle)
 
     def test_race_started_starts_recording(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         gs = self._gs()
         publish("Race.Started", publisher=None)
         assert gs._recording is True
         gs.teardown()
 
     def test_race_finished_stops_recording(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         gs = self._gs()
         publish("Race.Started", publisher=None)
         publish("Race.Finished", publisher=None)
@@ -119,7 +119,7 @@ class TestGhostSystemBestLap:
         return GhostSystem()
 
     def test_best_lap_event_saves_frames(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.ghost_system import GhostFrame
         gs = self._gs()
         gs._frames = [GhostFrame(t=0.0, x=1.0, y=2.0, rotation=0.0)]
@@ -128,7 +128,7 @@ class TestGhostSystemBestLap:
         gs.teardown()
 
     def test_best_lap_only_saves_faster_lap(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.ghost_system import GhostFrame
         gs = self._gs()
         gs._best_lap_time = 50.0
@@ -139,7 +139,7 @@ class TestGhostSystemBestLap:
         gs.teardown()
 
     def test_best_lap_updates_when_faster(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.ghost_system import GhostFrame
         gs = self._gs()
         gs._best_lap_time = 100.0
@@ -305,7 +305,7 @@ class TestCheckpointSystemGateCrossing:
         cs.teardown()
 
     def test_gate_crossing_publishes_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         cs = _three_gate_cs()
         e = MagicMock()
         cs.register(e)
@@ -326,7 +326,7 @@ class TestCheckpointSystemGateCrossing:
         cs.teardown()
 
     def test_complete_lap_publishes_lap_complete(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         cs = _three_gate_cs()
         e = MagicMock()
         cs.register(e)
@@ -391,7 +391,7 @@ class TestCheckpointSystemGateCrossing:
 
 class TestCheckpointSystemVehicleDestroyed:
     def test_destroyed_publishes_dnf(self):
-        from slappyengine.event_bus import subscribe, unsubscribe, publish
+        from pharos_engine.event_bus import subscribe, unsubscribe, publish
         cs = _three_gate_cs()
         e = MagicMock()
         cs.register(e)
@@ -403,7 +403,7 @@ class TestCheckpointSystemVehicleDestroyed:
         cs.teardown()
 
     def test_destroyed_marks_finished(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         cs = _three_gate_cs()
         e = MagicMock()
         cs.register(e)

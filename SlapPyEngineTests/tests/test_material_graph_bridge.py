@@ -47,7 +47,7 @@ class MockNodeEditor:
     """Placeholder node-editor with an in-memory graph."""
 
     def __init__(self) -> None:
-        from slappyengine.visual_scripting import NodeGraph
+        from pharos_engine.visual_scripting import NodeGraph
         self.graph = NodeGraph(name="mock_node_editor")
 
 
@@ -58,7 +58,7 @@ class MockNodeEditor:
 
 @pytest.fixture
 def bridge():
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     return MaterialGraphBridge()
@@ -67,7 +67,7 @@ def bridge():
 @pytest.fixture
 def two_node_graph():
     """A 2-node graph — MaterialOutput fed a constant vec3 default."""
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         AddNode, MaterialOutputNode, NodeGraph,
     )
     g = NodeGraph(name="two_node")
@@ -81,7 +81,7 @@ def two_node_graph():
 @pytest.fixture
 def five_node_graph():
     """A 5-node graph — Add + Multiply + Fresnel + MaterialOutput chained."""
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         AddNode, MultiplyNode, FresnelNode, MaterialOutputNode,
         SaturateNode, NodeGraph,
     )
@@ -107,7 +107,7 @@ def five_node_graph():
 
 
 def test_bridge_exports_public_surface() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge, MaterialGraphError,
         KEY_WGSL_SOURCE, KEY_UNIFORMS, KEY_OUTPUT_TYPE, RAW_WGSL_NODE_TYPE,
     )
@@ -120,7 +120,7 @@ def test_bridge_exports_public_surface() -> None:
 
 
 def test_bridge_re_exported_from_editor_package() -> None:
-    from slappyengine.ui.editor import (
+    from pharos_engine.ui.editor import (
         MaterialGraphBridge, MaterialGraphError,
     )
     assert MaterialGraphBridge is not None
@@ -128,7 +128,7 @@ def test_bridge_re_exported_from_editor_package() -> None:
 
 
 def test_bridge_accepts_none_arguments() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     b = MaterialGraphBridge(None, None)
@@ -157,7 +157,7 @@ def test_to_material_wgsl_source_is_str(bridge, two_node_graph) -> None:
 
 
 def test_to_material_empty_graph_returns_empty_source(bridge) -> None:
-    from slappyengine.visual_scripting import NodeGraph
+    from pharos_engine.visual_scripting import NodeGraph
     g = NodeGraph(name="empty")
     material = bridge.to_material(g)
     assert material["wgsl_source"] == ""
@@ -165,7 +165,7 @@ def test_to_material_empty_graph_returns_empty_source(bridge) -> None:
 
 
 def test_to_material_rejects_none(bridge) -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphError,
     )
     with pytest.raises(MaterialGraphError):
@@ -173,7 +173,7 @@ def test_to_material_rejects_none(bridge) -> None:
 
 
 def test_to_material_rejects_non_graph(bridge) -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphError,
     )
     with pytest.raises(MaterialGraphError):
@@ -205,7 +205,7 @@ def test_five_node_graph_compiles_without_error(
 
 
 def test_perlin_node_registers_uniform(bridge) -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, PerlinNoiseNode,
     )
     g = NodeGraph(name="perlin")
@@ -220,7 +220,7 @@ def test_perlin_node_registers_uniform(bridge) -> None:
 
 
 def test_emit_full_shader_contains_fragment_entrypoint(bridge) -> None:
-    from slappyengine.visual_scripting import MaterialOutputNode
+    from pharos_engine.visual_scripting import MaterialOutputNode
     n = MaterialOutputNode()
     src = bridge.emit_full_shader([n])
     assert "@fragment" in src
@@ -229,7 +229,7 @@ def test_emit_full_shader_contains_fragment_entrypoint(bridge) -> None:
 
 
 def test_emit_full_shader_wraps_uniforms(bridge) -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, TimeNode, MaterialOutputNode,
     )
     g = NodeGraph(name="uniforms")
@@ -242,7 +242,7 @@ def test_emit_full_shader_wraps_uniforms(bridge) -> None:
 
 
 def test_emit_full_shader_accepts_graph_or_iterable(bridge) -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         AddNode, MaterialOutputNode, NodeGraph,
     )
     g = NodeGraph(name="either")
@@ -275,7 +275,7 @@ def test_from_material_raw_wgsl_produces_single_node(bridge) -> None:
 
 
 def test_from_material_missing_source_raises(bridge) -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphError,
     )
     with pytest.raises(MaterialGraphError):
@@ -283,7 +283,7 @@ def test_from_material_missing_source_raises(bridge) -> None:
 
 
 def test_from_material_rejects_non_dict(bridge) -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphError,
     )
     with pytest.raises(MaterialGraphError):
@@ -321,7 +321,7 @@ def test_roundtrip_five_node(bridge, five_node_graph) -> None:
 
 
 def test_sync_to_editor_calls_set_material(two_node_graph) -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     editor = MockMaterialEditor()
@@ -333,7 +333,7 @@ def test_sync_to_editor_calls_set_material(two_node_graph) -> None:
 
 
 def test_sync_to_editor_without_editor_returns_false(two_node_graph) -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     bridge = MaterialGraphBridge(material_editor=None)
@@ -341,10 +341,10 @@ def test_sync_to_editor_without_editor_returns_false(two_node_graph) -> None:
 
 
 def test_sync_from_editor_returns_node_graph() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
-    from slappyengine.visual_scripting import NodeGraph
+    from pharos_engine.visual_scripting import NodeGraph
 
     editor = MockMaterialEditor()
     editor.target = {
@@ -359,10 +359,10 @@ def test_sync_from_editor_returns_node_graph() -> None:
 
 
 def test_sync_from_editor_uses_get_material_hook() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
-    from slappyengine.visual_scripting import NodeGraph
+    from pharos_engine.visual_scripting import NodeGraph
 
     editor = MockGetterEditor()
     editor.target = {
@@ -377,7 +377,7 @@ def test_sync_from_editor_uses_get_material_hook() -> None:
 
 
 def test_sync_from_editor_returns_none_when_no_editor() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     bridge = MaterialGraphBridge(material_editor=None)
@@ -385,7 +385,7 @@ def test_sync_from_editor_returns_none_when_no_editor() -> None:
 
 
 def test_sync_from_editor_returns_none_when_target_missing() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     editor = MockMaterialEditor()  # target defaults to None
@@ -399,7 +399,7 @@ def test_sync_from_editor_returns_none_when_target_missing() -> None:
 
 
 def test_material_graph_error_carries_per_node_lines() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphError,
     )
     err = MaterialGraphError(
@@ -416,10 +416,10 @@ def test_material_graph_error_carries_per_node_lines() -> None:
 
 def test_to_material_cycle_raises_material_graph_error() -> None:
     """A cyclic graph must fail with MaterialGraphError."""
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge, MaterialGraphError,
     )
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         AddNode, MultiplyNode, NodeGraph,
     )
 
@@ -437,7 +437,7 @@ def test_to_material_cycle_raises_material_graph_error() -> None:
 
 
 def test_material_graph_error_without_error_list() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphError,
     )
     err = MaterialGraphError("just a message")
@@ -451,7 +451,7 @@ def test_material_graph_error_without_error_list() -> None:
 
 
 def test_bridge_stores_call_log_for_sync_actions(two_node_graph) -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     editor = MockMaterialEditor()
@@ -463,18 +463,18 @@ def test_bridge_stores_call_log_for_sync_actions(two_node_graph) -> None:
 
 
 def test_bridge_default_output_type_is_vec4() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge, DEFAULT_OUTPUT_TYPE,
     )
     bridge = MaterialGraphBridge()
-    from slappyengine.visual_scripting import NodeGraph
+    from pharos_engine.visual_scripting import NodeGraph
     material = bridge.to_material(NodeGraph(name="empty"))
     assert material["output_type"] == DEFAULT_OUTPUT_TYPE
     assert "vec4" in DEFAULT_OUTPUT_TYPE
 
 
 def test_emit_full_shader_declares_material_output_struct(bridge) -> None:
-    from slappyengine.visual_scripting import MaterialOutputNode
+    from pharos_engine.visual_scripting import MaterialOutputNode
     src = bridge.emit_full_shader([MaterialOutputNode()])
     assert "struct MaterialOutput" in src
     assert "base_color" in src
@@ -488,7 +488,7 @@ def test_from_material_defaults_uniforms_when_missing(bridge) -> None:
 
 
 def test_to_material_uniforms_are_sorted(bridge) -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, TimeNode, TextureSampleNode,
     )
     g = NodeGraph(name="multi")
@@ -503,7 +503,7 @@ def test_to_material_uniforms_are_sorted(bridge) -> None:
 
 def test_wire_connection_propagates_symbol(bridge) -> None:
     """When an edge is wired, downstream node emits reference upstream symbol."""
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, AddNode, MultiplyNode,
     )
     g = NodeGraph(name="wired")

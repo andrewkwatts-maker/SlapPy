@@ -23,9 +23,9 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 
-from slappyengine.physics.blast import detonate
-from slappyengine.physics.particle_field import ParticleField
-from slappyengine.physics.splatter_presets import (
+from pharos_engine.physics.blast import detonate
+from pharos_engine.physics.particle_field import ParticleField
+from pharos_engine.physics.splatter_presets import (
     SplatterPreset,
     get as get_preset,
 )

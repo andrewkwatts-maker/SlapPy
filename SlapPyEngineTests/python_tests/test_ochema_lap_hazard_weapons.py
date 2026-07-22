@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _OCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _OCHEMA_STR = str(_OCHEMA_DIR)
@@ -353,7 +353,7 @@ class TestHardpointScriptNitro:
 # =============================================================================
 
 def _make_trigger_system():
-    from slappyengine.trigger import TriggerSystem
+    from pharos_engine.trigger import TriggerSystem
     return TriggerSystem()
 
 
@@ -393,7 +393,7 @@ class TestHazardSystemBoostPad:
 
     def test_add_boost_pad_returns_trigger_volume(self):
         from systems.hazard_system import HazardSystem
-        from slappyengine.trigger import TriggerVolume
+        from pharos_engine.trigger import TriggerVolume
         ts = _make_trigger_system()
         hs = HazardSystem(ts)
         vol = hs.add_boost_pad((100.0, 200.0))
@@ -401,7 +401,7 @@ class TestHazardSystemBoostPad:
 
     def test_add_boost_pad_custom_size(self):
         from systems.hazard_system import HazardSystem
-        from slappyengine.trigger import TriggerVolume
+        from pharos_engine.trigger import TriggerVolume
         ts = _make_trigger_system()
         hs = HazardSystem(ts)
         vol = hs.add_boost_pad((100.0, 200.0), size=(120, 60))
@@ -432,7 +432,7 @@ class TestHazardSystemDamageZone:
 
     def test_add_damage_zone_returns_trigger_volume(self):
         from systems.hazard_system import HazardSystem
-        from slappyengine.trigger import TriggerVolume
+        from pharos_engine.trigger import TriggerVolume
         ts = _make_trigger_system()
         hs = HazardSystem(ts)
         vol = hs.add_damage_zone((100.0, 100.0))

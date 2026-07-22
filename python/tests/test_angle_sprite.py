@@ -5,7 +5,7 @@ import pytest
 
 
 def _make_map_4way(blend_mode="lerp"):
-    from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+    from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
     amap = AngleSpriteMap(blend_mode=blend_mode)
     for i, angle in enumerate([0.0, 90.0, 180.0, 270.0]):
         amap.add_entry(AngleEntry(angle_deg=angle, layer_index=i))
@@ -25,31 +25,31 @@ class _FakeEntity:
 
 class TestAngleEntryBasic:
     def test_entry_stores_fields(self):
-        from slappyengine.angle_sprite import AngleEntry
+        from pharos_engine.angle_sprite import AngleEntry
         e = AngleEntry(angle_deg=45.0, layer_index=3, state_tag="boosting")
         assert e.angle_deg == pytest.approx(45.0)
         assert e.layer_index == 3
         assert e.state_tag == "boosting"
 
     def test_entry_default_state_tag(self):
-        from slappyengine.angle_sprite import AngleEntry
+        from pharos_engine.angle_sprite import AngleEntry
         e = AngleEntry(angle_deg=0.0, layer_index=0)
         assert e.state_tag == ""
 
 
 class TestAngleSpriteMapInit:
     def test_default_blend_mode_lerp(self):
-        from slappyengine.angle_sprite import AngleSpriteMap
+        from pharos_engine.angle_sprite import AngleSpriteMap
         amap = AngleSpriteMap()
         assert amap.blend_mode == "lerp"
 
     def test_entries_empty_initially(self):
-        from slappyengine.angle_sprite import AngleSpriteMap
+        from pharos_engine.angle_sprite import AngleSpriteMap
         amap = AngleSpriteMap()
         assert len(amap.entries) == 0
 
     def test_add_entry_increases_count(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         amap = AngleSpriteMap()
         amap.add_entry(AngleEntry(0.0, 0))
         amap.add_entry(AngleEntry(90.0, 1))
@@ -130,7 +130,7 @@ class TestResolveSnap:
 
 class TestResolveEdgeCases:
     def test_single_entry_returns_that_index(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         amap = AngleSpriteMap()
         amap.add_entry(AngleEntry(45.0, layer_index=7))
         a, b, t = amap.resolve(200.0)
@@ -139,7 +139,7 @@ class TestResolveEdgeCases:
         assert t == pytest.approx(0.0)
 
     def test_no_entries_returns_safe_default(self):
-        from slappyengine.angle_sprite import AngleSpriteMap
+        from pharos_engine.angle_sprite import AngleSpriteMap
         amap = AngleSpriteMap()
         a, b, t = amap.resolve(0.0)
         assert a == 0
@@ -157,7 +157,7 @@ class TestResolveEdgeCases:
 
 class TestStateTag:
     def test_state_tag_filters_entries(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         amap = AngleSpriteMap()
         amap.add_entry(AngleEntry(0.0, layer_index=0, state_tag=""))
         amap.add_entry(AngleEntry(0.0, layer_index=5, state_tag="damaged"))
@@ -165,7 +165,7 @@ class TestStateTag:
         assert a == 5
 
     def test_state_tag_fallback_to_base(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         amap = AngleSpriteMap()
         amap.add_entry(AngleEntry(0.0, layer_index=0))  # base state
         # Requesting "damaged" state falls back to base when no damaged entries
@@ -175,7 +175,7 @@ class TestStateTag:
 
 class TestCloneState:
     def test_clone_creates_entries_with_new_tag(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         amap = AngleSpriteMap()
         amap.add_entry(AngleEntry(0.0,   layer_index=0))
         amap.add_entry(AngleEntry(90.0,  layer_index=1))
@@ -184,7 +184,7 @@ class TestCloneState:
         assert len(damaged) == 2
 
     def test_clone_offsets_layer_index(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         amap = AngleSpriteMap()
         amap.add_entry(AngleEntry(0.0, layer_index=2))
         amap.clone_state("", "alt", layer_offset=8)
@@ -192,7 +192,7 @@ class TestCloneState:
         assert alt[0].layer_index == 10
 
     def test_clone_preserves_angles(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         amap = AngleSpriteMap()
         amap.add_entry(AngleEntry(45.0, layer_index=0))
         amap.clone_state("", "boosting", layer_offset=4)
@@ -230,29 +230,29 @@ class TestApply:
 
 class TestMakeAngleMapFromSpritesheet:
     def test_creates_correct_number_of_entries(self):
-        from slappyengine.angle_sprite import make_angle_map_from_spritesheet
+        from pharos_engine.angle_sprite import make_angle_map_from_spritesheet
         amap = make_angle_map_from_spritesheet(8)
         assert len(amap.entries) == 8
 
     def test_angles_evenly_spaced(self):
-        from slappyengine.angle_sprite import make_angle_map_from_spritesheet
+        from pharos_engine.angle_sprite import make_angle_map_from_spritesheet
         amap = make_angle_map_from_spritesheet(4)
         angles = sorted(e.angle_deg for e in amap.entries)
         assert angles == pytest.approx([0.0, 90.0, 180.0, 270.0])
 
     def test_layer_start_offset_applied(self):
-        from slappyengine.angle_sprite import make_angle_map_from_spritesheet
+        from pharos_engine.angle_sprite import make_angle_map_from_spritesheet
         amap = make_angle_map_from_spritesheet(4, layer_start=10)
         indices = sorted(e.layer_index for e in amap.entries)
         assert indices == [10, 11, 12, 13]
 
     def test_blend_mode_passed_through(self):
-        from slappyengine.angle_sprite import make_angle_map_from_spritesheet
+        from pharos_engine.angle_sprite import make_angle_map_from_spritesheet
         amap = make_angle_map_from_spritesheet(4, blend_mode="snap")
         assert amap.blend_mode == "snap"
 
     def test_angle_offset_shifts_all_angles(self):
-        from slappyengine.angle_sprite import make_angle_map_from_spritesheet
+        from pharos_engine.angle_sprite import make_angle_map_from_spritesheet
         amap = make_angle_map_from_spritesheet(4, angle_offset=45.0)
         angles = sorted(e.angle_deg for e in amap.entries)
         assert angles == pytest.approx([45.0, 135.0, 225.0, 315.0])

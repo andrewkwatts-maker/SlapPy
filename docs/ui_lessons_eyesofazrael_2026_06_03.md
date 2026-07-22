@@ -21,12 +21,12 @@ EoA reference paths (all read-only):
 
 SlapPyEngine cross-references (where each lesson lands):
 
-* U1 — `python/slappyengine/ui/theme/theme_spec.py` (semantic-token layer,
+* U1 — `python/pharos_engine/ui/theme/theme_spec.py` (semantic-token layer,
   spacing/radius/transition/z-index scales).
 * U2 — theme *variants* registry (`apply_theme(name)` in
-  `python/slappyengine/ui/theme/__init__.py`).
+  `python/pharos_engine/ui/theme/__init__.py`).
 * U5 — planned `ThemeSwitcherPanel` for the editor shell.
-* U6 — `glass_blur` shader effect in `python/slappyengine/ui/theme/shader_effects.py`.
+* U6 — `glass_blur` shader effect in `python/pharos_engine/ui/theme/shader_effects.py`.
 * Pattern audit:
   [`ui_pattern_audit_2026_06_03.md`](ui_pattern_audit_2026_06_03.md).
 * Diary theme family:
@@ -228,7 +228,7 @@ ready" — no build step required.
 
 ### How SlapPyEngine translates it
 
-`python/slappyengine/ui/widgets/` ships the analogue:
+`python/pharos_engine/ui/widgets/` ships the analogue:
 
 * `sticker_button.py`, `washi_panel.py`, `notebook_tab.py`,
   `highlighter_slider.py`, `heart_checkbox.py`, `doodle_separator.py`,
@@ -407,7 +407,7 @@ kernels (for the engine viewport). Implications:
 ### 8.2 Headless rendering (visual tests)
 
 EoA has no headless test harness (browser screenshots are
-out-of-band). SlapPyEngine's `slappyengine.testing` module provides
+out-of-band). SlapPyEngine's `pharos_engine.testing` module provides
 `render_scene_to_png` + `assert_scene_matches`, which means *every theme
 needs a headless baseline*. The TeenGirl Notebook theme should ship a
 baseline plate per sprint to catch palette / scale regressions.
@@ -535,7 +535,7 @@ by reflex.
 | Glassmorphism                           | ADOPTED       | `shader_effects.glass_blur`                    |
 | Theme picker UI                         | PLANNED (U5)  | `ThemeSwitcherPanel`                           |
 | Animation timing conventions            | ADOPTED       | `TransitionScale` shared between widgets + creatures |
-| Headless visual baselines               | PLANNED       | `slappyengine.testing` per-theme plates        |
+| Headless visual baselines               | PLANNED       | `pharos_engine.testing` per-theme plates        |
 | Hot-swap performance cache              | PLANNED       | Per-theme texture cache on `_REGISTRY`         |
 | Creature animation dispatch             | SLAPPY-ORIGINAL | `ui/theme/creatures/`                        |
 

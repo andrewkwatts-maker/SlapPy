@@ -1,6 +1,6 @@
 // mesh_frag_pbr_simple.wgsl
 // Minimal Cook-Torrance PBR fragment shader for the default `MeshPipeline`
-// (python/slappyengine/gpu/mesh_pipeline.py).
+// (python/pharos_engine/gpu/mesh_pipeline.py).
 //
 // This shader exposes ONLY the bindings the default pipeline layout provides:
 //   group(0) binding(0) — MeshUniforms      (model/view/proj/normal_matrix)

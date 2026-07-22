@@ -4,7 +4,7 @@
 
 Per the user directive *"ensure AAA quality shaders in default themes"*,
 the four *default* page-lining presets in
-`python/slappyengine/ui/theme/page_linings/` were upgraded from **flat
+`python/pharos_engine/ui/theme/page_linings/` were upgraded from **flat
 pixel-perfect line drawings** to **realistic hand-drawn / offset-print
 paper stock**. The upgrade covers:
 
@@ -71,7 +71,7 @@ texture variance):
 ## Public API
 
 ```python
-from slappyengine.ui.theme.page_linings import (
+from pharos_engine.ui.theme.page_linings import (
     AAAShaderQualityPreset, DEFAULT_AAA_PRESET, render_lining,
 )
 
@@ -100,7 +100,7 @@ pre-upgrade.
 Per the engine architectural directive
 (`project_architecture_pattern.md` — *every hot path ports to Rust;
 Python is glue*), the per-preset numpy fallbacks in
-`python/slappyengine/ui/theme/page_linings/renderer.py` are hot enough
+`python/pharos_engine/ui/theme/page_linings/renderer.py` are hot enough
 under editor-panel rebake (each panel resize triggers a fresh 256 × 128
 bake) that they are formally **marked as Rust-port candidates**.
 

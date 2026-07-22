@@ -19,14 +19,14 @@ from unittest.mock import MagicMock, patch
 
 def _fresh_library():
     """Return ComputeLibrary with a clean _registry (avoids cross-test bleed)."""
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     ComputeLibrary._registry = {}
     return ComputeLibrary
 
 
 def _make_pass(run_rule, event_name: str = "Test.Event"):
     """Build a ComputePass without importing wgpu at module level."""
-    from slappyengine.compute.pipeline import ComputePass
+    from pharos_engine.compute.pipeline import ComputePass
     return ComputePass(
         source="@compute @workgroup_size(64) fn main() {}",
         run_rule=run_rule,
@@ -41,7 +41,7 @@ def _make_pass(run_rule, event_name: str = "Test.Event"):
 class TestComputeLibraryListRegistered:
     def setup_method(self):
         # Isolate registry state for every test
-        from slappyengine.compute.library import ComputeLibrary
+        from pharos_engine.compute.library import ComputeLibrary
         ComputeLibrary._registry = {}
 
     def test_list_registered_returns_list(self):
@@ -86,18 +86,18 @@ class TestComputeLibraryListRegistered:
 class TestRunRuleOnSubscribed:
     def setup_method(self):
         # Clear all event-bus listeners between tests
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         global_bus.clear()
 
     def teardown_method(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         global_bus.clear()
 
     def test_zero_listeners_skips_dispatch(self):
         """ON_SUBSCRIBED with no listeners → should_run() returns False."""
-        from slappyengine.compute.pipeline import RunRule
+        from pharos_engine.compute.pipeline import RunRule
         # Patch global_bus.listener_count to return 0
-        with patch("slappyengine.event_bus.global_bus") as mock_bus:
+        with patch("pharos_engine.event_bus.global_bus") as mock_bus:
             mock_bus.listener_count.return_value = 0
             pass_ = _make_pass(RunRule.ON_SUBSCRIBED, "Test.Event")
             assert pass_.should_run() is False
@@ -105,22 +105,22 @@ class TestRunRuleOnSubscribed:
 
     def test_one_listener_triggers_dispatch(self):
         """ON_SUBSCRIBED with one listener → should_run() returns True."""
-        from slappyengine.compute.pipeline import RunRule
-        with patch("slappyengine.event_bus.global_bus") as mock_bus:
+        from pharos_engine.compute.pipeline import RunRule
+        with patch("pharos_engine.event_bus.global_bus") as mock_bus:
             mock_bus.listener_count.return_value = 1
             pass_ = _make_pass(RunRule.ON_SUBSCRIBED, "Test.Event")
             assert pass_.should_run() is True
 
     def test_on_subscribed_empty_event_name_returns_false(self):
         """ON_SUBSCRIBED with no event_name must return False (nothing to check)."""
-        from slappyengine.compute.pipeline import RunRule
+        from pharos_engine.compute.pipeline import RunRule
         pass_ = _make_pass(RunRule.ON_SUBSCRIBED, event_name="")
         assert pass_.should_run() is False
 
     def test_always_always_dispatches(self):
         """ALWAYS run rule → should_run() returns True regardless of listeners."""
-        from slappyengine.compute.pipeline import RunRule
-        with patch("slappyengine.event_bus.global_bus") as mock_bus:
+        from pharos_engine.compute.pipeline import RunRule
+        with patch("pharos_engine.event_bus.global_bus") as mock_bus:
             mock_bus.listener_count.return_value = 0
             pass_ = _make_pass(RunRule.ALWAYS, "Test.Event")
             assert pass_.should_run() is True
@@ -129,15 +129,15 @@ class TestRunRuleOnSubscribed:
 
     def test_on_subscribed_live_bus_zero(self):
         """Integration: ON_SUBSCRIBED against real global_bus with no subscribers."""
-        from slappyengine.compute.pipeline import RunRule
+        from pharos_engine.compute.pipeline import RunRule
         pass_ = _make_pass(RunRule.ON_SUBSCRIBED, "Live.Test.Event")
         # No subscribe() call → listener_count == 0
         assert pass_.should_run() is False
 
     def test_on_subscribed_live_bus_one(self):
         """Integration: ON_SUBSCRIBED against real global_bus with one subscriber."""
-        from slappyengine.compute.pipeline import RunRule
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.compute.pipeline import RunRule
+        from pharos_engine.event_bus import subscribe, unsubscribe
         handle = subscribe("Live.Test.Event", lambda e: None)
         try:
             pass_ = _make_pass(RunRule.ON_SUBSCRIBED, "Live.Test.Event")

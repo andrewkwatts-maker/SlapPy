@@ -1,5 +1,5 @@
 """Set the engine version consistently across pyproject.toml, Cargo.toml,
-and python/slappyengine/__init__.py.
+and python/pharos_engine/__init__.py.
 
 Usage:
     python scripts/set_version.py 0.3.0
@@ -18,7 +18,7 @@ from pathlib import Path
 _ROOT = Path(__file__).resolve().parent.parent
 _PYPROJECT = _ROOT / "pyproject.toml"
 _CARGO = _ROOT / "Cargo.toml"
-_INIT = _ROOT / "python" / "slappyengine" / "__init__.py"
+_INIT = _ROOT / "python" / "pharos_engine" / "__init__.py"
 
 
 def _to_pep440(v: str) -> str:

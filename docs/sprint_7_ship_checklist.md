@@ -86,7 +86,7 @@ maintainer cuts a tag and pushes wheels to PyPI.
    each of the three games and remove the names from the contract.
 
 2. **Runtime `__version__` is stale.** Update
-   `python/slappyengine/__init__.py:4` from `"0.1.0"` to `"0.2.0a0"`
+   `python/pharos_engine/__init__.py:4` from `"0.1.0"` to `"0.2.0a0"`
    (or to whatever release number sprint 7 ships under). The test
    added in this sprint will catch any future drift.
 

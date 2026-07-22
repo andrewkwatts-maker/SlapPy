@@ -1,5 +1,5 @@
 """
-Tests for :mod:`slappyengine.capture`.
+Tests for :mod:`pharos_engine.capture`.
 
 Covers the three backends (VideoCapture / GIFCapture / FrameDump), the
 CaptureManager dispatcher (format detection, timing, progress callback),
@@ -15,8 +15,8 @@ from typing import List, Tuple
 import numpy as np
 import pytest
 
-from slappyengine import capture
-from slappyengine.capture import (
+from pharos_engine import capture
+from pharos_engine.capture import (
     CaptureManager,
     CaptureResult,
     FFMPEG_AVAILABLE,
@@ -31,7 +31,7 @@ from slappyengine.capture import (
 # Fake renderer that ships an animated ramp
 # ---------------------------------------------------------------------------
 class _FakeRenderer:
-    """Minimal stand-in for :class:`slappyengine.render.NullRenderer`.
+    """Minimal stand-in for :class:`pharos_engine.render.NullRenderer`.
 
     Emits a solid colour that scrolls across frames so encoders have real
     inter-frame variation to work with.

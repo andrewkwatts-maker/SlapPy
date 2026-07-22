@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to SlapPyEngine (`slappy-engine` on PyPI).
+All notable changes to SlapPyEngine (`pharos-engine` on PyPI).
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [Semantic Versioning](https://semver.org/).
@@ -12,7 +12,7 @@ v0.4 lands the **Nova3D parity milestone** — SlapPyEngine graduates from a
 skinned glTF, animation, CSM shadows, IBL, SSAO, skybox, SDF text, HUD,
 capture, positional audio, instanced rendering, BVH culling, and a
 cross-platform game exporter. On top of that: a diary-themed notebook
-editor with 20+ panels, a `slappyengine.actions` 20-action subpackage
+editor with 20+ panels, a `pharos_engine.actions` 20-action subpackage
 plus router, six diary themes, three 15-shader WGSL libraries, six
 baked prefabs, and an autosave / crash-recovery layer.
 
@@ -21,7 +21,7 @@ Status per [OO7 release-readiness audit](docs/v0_4_release_readiness_2026_07_06.
 `physics2/`) are frozen, 13-row STUB backlog needs a triage pass, and
 the version bump is gated on the PP tag-prep sprints. Draft entry — the
 version string in `pyproject.toml`, `Cargo.toml`, and
-`python/slappyengine/__init__.py` is **still `0.3.0b0`** and this
+`python/pharos_engine/__init__.py` is **still `0.3.0b0`** and this
 section is not yet tagged.
 
 Ship-path decision recorded in
@@ -37,7 +37,7 @@ Twenty agent-scoped sprints (JJ1–LL7) translating the
 [II7 sprint plan](docs/nova3d_parity_sprint_plan_2026_07_05.md) into
 shipped surfaces:
 
-- **JJ1** — real wgpu forward pipeline (`slappyengine.render`).
+- **JJ1** — real wgpu forward pipeline (`pharos_engine.render`).
 - **JJ2** — MTL material resolution for the OBJ importer.
 - **JJ3** — skinned-mesh support in the glTF importer.
 - **JJ4** — skeleton runtime + `AnimationClip` + `Skinner`.
@@ -61,26 +61,26 @@ shipped surfaces:
 
 **New subpackages / top-level API:**
 
-- `slappyengine.render` — wgpu-based 2D + 3D forward renderer (HH4).
-- `slappyengine.projects` — multi-project management + registry +
-  scaffolder + CLI (`slappyengine.projects`, HH2 + M6 + F).
-- `slappyengine.actions` — 20-action subpackage + `ToolRouter` +
-  `slappyengine.tool_router` formal editor tool-routing contract.
-- `slappyengine.math` — Formula / `evaluate` / `compile_formula` backed
+- `pharos_engine.render` — wgpu-based 2D + 3D forward renderer (HH4).
+- `pharos_engine.projects` — multi-project management + registry +
+  scaffolder + CLI (`pharos_engine.projects`, HH2 + M6 + F).
+- `pharos_engine.actions` — 20-action subpackage + `ToolRouter` +
+  `pharos_engine.tool_router` formal editor tool-routing contract.
+- `pharos_engine.math` — Formula / `evaluate` / `compile_formula` backed
   by Arithma when `[math]` extra is installed, with locked-down Python
   eval sandbox fallback + `Vec2`/`Vec3`/`Vec4` + animation curves.
-- `slappyengine.visual_scripting` — Node + NodePort + `NodeRegistry` +
+- `pharos_engine.visual_scripting` — Node + NodePort + `NodeRegistry` +
   `NodeGraph` + YAML round-trip + `graph_to_python` codegen +
   `BUILTIN_NODES` 20-prototype starter palette.
-- `slappyengine.scenes` — YAML scene serialization (FF3).
-- `slappyengine.diagnostics` aggregator + HUD widget (OO6).
-- `slappyengine.exporter` + `slap export` CLI with dry-run + manifest +
+- `pharos_engine.scenes` — YAML scene serialization (FF3).
+- `pharos_engine.diagnostics` aggregator + HUD widget (OO6).
+- `pharos_engine.exporter` + `slap export` CLI with dry-run + manifest +
   exclude (LL6 + NN7).
-- `slappyengine.residency` — GPU/RAM/DISK three-tier asset residency.
-- `slappyengine.ui.editor` — diary-themed notebook editor + 20+ panels
-  (see below); `slappyengine.ui.theme` primitive infrastructure
-  (nine-slice / SVG / procedural shader); `slappyengine.ui.widgets`
-  Dear PyGui notebook primitives; `slappyengine.ui.runtime`.
+- `pharos_engine.residency` — GPU/RAM/DISK three-tier asset residency.
+- `pharos_engine.ui.editor` — diary-themed notebook editor + 20+ panels
+  (see below); `pharos_engine.ui.theme` primitive infrastructure
+  (nine-slice / SVG / procedural shader); `pharos_engine.ui.widgets`
+  Dear PyGui notebook primitives; `pharos_engine.ui.runtime`.
 - `App` + `launch()` + `load_model()` ergonomic top-level API (HH1).
 
 **Notebook editor + diary theme family (V, W, X, Y, Z, AA, BB, CC, DD,
@@ -192,7 +192,7 @@ EE, FF, GG batches):**
   [rust_bypass_2026_07_05.md](docs/rust_bypass_2026_07_05.md)).
 - Notebook editor usability polish — tooltips, right-click menus,
   breadcrumbs, multi-select.
-- `slappyengine.residency` / `slappyengine.exporter` / `slappyengine.render`
+- `pharos_engine.residency` / `pharos_engine.exporter` / `pharos_engine.render`
   wired into HH1 App → HH4 Renderer → HH5 asset-importer end-to-end.
 - 13 rounds of STUB action triage across the ToolRouter (65+ new WIRED
   action ids across rounds 2–16: X3, Y1, Z7, AA1, BB1, CC1, GG1, II5,
@@ -230,7 +230,7 @@ EE, FF, GG batches):**
 - **W1** — `hello_ragdoll` over-damping + regression tests.
 - **Z1** — `NotebookMessageLog` Windows-headless DPG segfault.
 - **AA3** — diary softbody import shim
-  (`slappyengine.softbody` → `slappyengine.dynamics.SoftBodyWorld`
+  (`pharos_engine.softbody` → `pharos_engine.dynamics.SoftBodyWorld`
   fallback path).
 - Editor DPG lifecycle: dock-on-release actually resizes / repositions,
   status-bar tick gated on `_running` to avoid `get_delta_time`
@@ -296,10 +296,10 @@ tripwires now guard the restored surface.
   ship path is **Option B — ship-after-full-recovery**.
 - **WIP subpackages** — `softbody/`, `fluid/`, `physics/`, `physics2/`
   remain frozen for this release; the 2D physics substrate ships
-  through `slappyengine.dynamics` (which the studio stages and Rust
+  through `pharos_engine.dynamics` (which the studio stages and Rust
   `_core` kernels back).
 - **Version strings** — `pyproject.toml`, `Cargo.toml`, and
-  `python/slappyengine/__init__.py` still read `0.3.0b0` /
+  `python/pharos_engine/__init__.py` still read `0.3.0b0` /
   `0.3.0-beta.0`; see the
   [PP6 version-bump audit](docs/version_bump_audit_2026_07_07.md) for
   the 8-step atomic tag sequence deferred to the release commit.
@@ -315,7 +315,7 @@ tripwires now guard the restored surface.
 v0.3 widens the public engine surface from physics + render kernels to a full
 set of game-side primitives: dynamics, zones, topology, numerics, thermal,
 iso, telemetry, and a visual-regression testing harness. Every new subpackage
-ships as a top-level lazy export so games can `import slappyengine as sle`
+ships as a top-level lazy export so games can `import pharos_engine as sle`
 and reach the contract without knowing the on-disk layout. Beta-tested vs
 Ochema Circuit (1124/1126) and Bullet Strata (54/54).
 
@@ -327,41 +327,41 @@ symbols across 19 declared subpackages.
 
 **New subpackages (top-level lazy exports):**
 
-- `slappyengine.dynamics` — unified XPBD primitives: `Body`, `Material`,
+- `pharos_engine.dynamics` — unified XPBD primitives: `Body`, `Material`,
   `JointSpec` (7 kinds), `RopeSpec`, `RagdollSpec`, `IKChainSpec`, `World`,
   `SoftBodyWorld`, plus authoring helpers `build_rope`, `build_ragdoll`,
   `make_spring`, `make_motor`, `solve_ik`, `resolve_joint`. JSON round-trip
   via `save_world` / `load_world` (byte-identical 0.0 step error, 20/20
   green). Reference: [`docs/dynamics_design.md`](docs/dynamics_design.md).
-- `slappyengine.dynamics.humanoid` — humanoid skeleton (`make_humanoid`,
+- `pharos_engine.dynamics.humanoid` — humanoid skeleton (`make_humanoid`,
   `Humanoid` dataclass), flesh-wrap (`wrap_in_flesh`, layer constants
   `LAYER_BONE` / `LAYER_MUSCLE` / `LAYER_SKIN`), and foot-IK terrain
   placement (`place_feet_on_terrain`). Sprint 2A.
-- `slappyengine.dynamics` joint authoring — `make_distance` factory for
+- `pharos_engine.dynamics` joint authoring — `make_distance` factory for
   distance constraints and `resolve_joint_specs` batch resolver round
   out the Sprint 7A joint surface alongside `resolve_joint`.
-- `slappyengine.zones` — generic zone primitives (`RectZone`,
+- `pharos_engine.zones` — generic zone primitives (`RectZone`,
   `ThresholdZone`, `ZoneManager`, enter/exit + threshold callbacks).
   Optional spatial-hash backend for 10.9x speedup at 1000 entities.
-- `slappyengine.topology` — connected-components / union-find primitives
+- `pharos_engine.topology` — connected-components / union-find primitives
   lifted from the bond solver.
-- `slappyengine.numerics` — generic numerical kernels: `vcycle_poisson`,
+- `pharos_engine.numerics` — generic numerical kernels: `vcycle_poisson`,
   `sor_smooth`, `compute_residual`.
-- `slappyengine.thermal` — `HeatField` plus `exchange_two_regions`
+- `pharos_engine.thermal` — `HeatField` plus `exchange_two_regions`
   pairwise boundary exchange.
-- `slappyengine.iso` — isometric 2D-grid-with-Z rendering: `IsoCamera`,
+- `pharos_engine.iso` — isometric 2D-grid-with-Z rendering: `IsoCamera`,
   `IsoCell`, `IsoEntity`, `IsoGrid`, `IsoScene`, `IsoTileDef`,
   `IsoViewpoint`, plus an `iso.combat` module (Phase C3 / Stone Keep).
-- `slappyengine.telemetry` — low-overhead event emission (86 ns when no
+- `pharos_engine.telemetry` — low-overhead event emission (86 ns when no
   subscriber is attached; 6.42x dispatch speedup with subscribers via
   first-segment bucket index). Design:
   [`docs/telemetry_design.md`](docs/telemetry_design.md).
-- `slappyengine.testing` — visual regression harness:
+- `pharos_engine.testing` — visual regression harness:
   `assert_scene_matches`, `render_scene_to_png`, `diff_pngs`,
   baseline/diff directory constants.
-- `slappyengine.tools.sprite_audit` — sprite-anchor / atlas audit utility
+- `pharos_engine.tools.sprite_audit` — sprite-anchor / atlas audit utility
   (CPU-only). Recipe: [`docs/sprite_audit_recipe.md`](docs/sprite_audit_recipe.md).
-- `slappyengine.audio_runtime` — soft-import with silent-stub fallback so
+- `pharos_engine.audio_runtime` — soft-import with silent-stub fallback so
   headless test environments load cleanly.
 
 **Ochema engine-surface registration (Phase C):**
@@ -383,14 +383,14 @@ symbols across 19 declared subpackages.
 
 **Studio / demo authoring (Sprint 7G):**
 
-- `slappyengine.studio.dynamics_stage` — turn-key Stage wrapper around a
+- `pharos_engine.studio.dynamics_stage` — turn-key Stage wrapper around a
   `dynamics.World` with a default PIL renderer, joining the existing
   `softbody_stage` / `fluid_stage` / `humanoid_stage` set so demos can
   record dynamics scenes with the same 3-line recipe.
 
 **Game-compat shims (Sprint 5B + R2S1-B):**
 
-- `slappyengine._compat` surfaces back-compat names lifted from retired
+- `pharos_engine._compat` surfaces back-compat names lifted from retired
   Ochema / Bullet Strata subsystems so downstream games keep importing
   cleanly: `MaterialPreset` and `CrackMode` enums, `SimState` and
   `SimFrequencyBudget` minimal stubs, `DeformController` no-op shim,
@@ -520,7 +520,7 @@ symbols across 19 declared subpackages.
 - Dynamics over-damp warning — fires once process-wide at
   `1 - (1 - damping)^iters > 0.5`, no longer spams the test suite.
 
-**Visual harness baselines** — `slappyengine.testing` underpins demo
+**Visual harness baselines** — `pharos_engine.testing` underpins demo
 baselines for `hello_rope`, `hello_ragdoll`, `hello_ik_chain`,
 `hello_motor`, `hello_spring`, `hello_joint`, `hello_thermal`,
 `hello_zone`, `hello_iso`, `hello_telemetry`, `hello_topology`,
@@ -564,7 +564,7 @@ baselines.
 
 ### Removed
 
-- Stale `slappyengine.compose` reference in the previous README.
+- Stale `pharos_engine.compose` reference in the previous README.
 - Legacy `mud_pool` demo (replaced by `ParticleField` polish series).
 - Phase D `Unreleased` placeholder section (work landed under this
   version).

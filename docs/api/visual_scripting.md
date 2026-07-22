@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.visual_scripting — API Reference
+# pharos_engine.visual_scripting — API Reference
 
 > Hand-written reference for the visual-scripting **backbone** —
 > the headless graph data model, validator, YAML round-trip, Python
@@ -11,7 +11,7 @@
 
 ## Overview
 
-`slappyengine.visual_scripting` owns the data model behind the editor's
+`pharos_engine.visual_scripting` owns the data model behind the editor's
 node-graph authoring surface. The runtime is intentionally minimal:
 
 * a typed :class:`Node` / :class:`NodePort` data model with eight
@@ -35,15 +35,15 @@ invariants, then either :meth:`NodeGraph.to_yaml` for persistence or
 
 Lazy-import contract: the subpackage is plain Python with no
 ``wgpu`` / Rust / heavy dependencies, so a bare
-``from slappyengine import visual_scripting`` is cheap. The top-level
-``slappyengine.__getattr__`` exposes the module via the
+``from pharos_engine import visual_scripting`` is cheap. The top-level
+``pharos_engine.__getattr__`` exposes the module via the
 ``_subpackages`` set; there is no ``_LAZY_MAP`` per-symbol entry
 because the per-class surface stays inside the subpackage.
 
 ## Public surface
 
 ```python
-from slappyengine.visual_scripting import (
+from pharos_engine.visual_scripting import (
     # primitives
     Node, NodeKind, NodePort, PortKind, NodeRegistry,
     NODE_KINDS, PORT_KINDS, ports_compatible,
@@ -57,7 +57,7 @@ from slappyengine.visual_scripting import (
 ```
 
 The eight builtin prototype names (e.g. ``ADD``, ``LERP``,
-``IF_NODE``) are also exported from :mod:`slappyengine.visual_scripting.palette`
+``IF_NODE``) are also exported from :mod:`pharos_engine.visual_scripting.palette`
 for callers that want to reference them by Python identifier instead
 of the ``node_type`` string.
 
@@ -65,7 +65,7 @@ of the ``node_type`` string.
 
 ### `NodePort`
 
-_dataclass — defined in `slappyengine.visual_scripting.node`_
+_dataclass — defined in `pharos_engine.visual_scripting.node`_
 
 A single typed port on a :class:`Node`. Inputs and outputs share the
 same record; direction is implied by which list the port lives in on
@@ -81,7 +81,7 @@ the port is unwired.
 
 ### `Node`
 
-_dataclass — defined in `slappyengine.visual_scripting.node`_
+_dataclass — defined in `pharos_engine.visual_scripting.node`_
 
 ```python
 Node(
@@ -114,7 +114,7 @@ template (see *Code generation* below).
 
 ### `NodeRegistry`
 
-_class — defined in `slappyengine.visual_scripting.node`_
+_class — defined in `pharos_engine.visual_scripting.node`_
 
 Registry of available node *prototypes* keyed by ``node_type``. The
 registry stores prototype `Node` records; callers should invoke
@@ -134,7 +134,7 @@ adding pre-spawned nodes to the graph.
 
 ### `Edge`
 
-_dataclass — defined in `slappyengine.visual_scripting.graph`_
+_dataclass — defined in `pharos_engine.visual_scripting.graph`_
 
 ```python
 Edge(from_node_id: str, from_port: str, to_node_id: str, to_port: str)
@@ -147,7 +147,7 @@ exist, the ports exist on them, the port kinds line up) live in
 
 ### `NodeGraph`
 
-_dataclass — defined in `slappyengine.visual_scripting.graph`_
+_dataclass — defined in `pharos_engine.visual_scripting.graph`_
 
 Ordered collection of :class:`Node` records plus a list of
 :class:`Edge` records. The graph is the *whole* serialisable artefact;
@@ -179,7 +179,7 @@ NodeGraph(nodes: list[Node] = [], edges: list[Edge] = [], name: str = "untitled"
 ### `GraphValidationError`
 
 _exception (subclass of `ValueError`) — defined in
-`slappyengine.visual_scripting.graph`_
+`pharos_engine.visual_scripting.graph`_
 
 Raised by :meth:`NodeGraph.validate` and
 :meth:`NodeGraph.topological_order`. Carries an ``errors: list[str]``
@@ -190,7 +190,7 @@ to the first message.
 
 ### `ports_compatible(from_kind: PortKind, to_kind: PortKind) -> bool`
 
-_defined in `slappyengine.visual_scripting.node`_
+_defined in `pharos_engine.visual_scripting.node`_
 
 Return `True` iff a `from_kind` output can drive a `to_kind` input.
 Widening rules:
@@ -204,7 +204,7 @@ site raises `ValueError` rather than silently returning `False`.
 
 ### `graph_to_python(graph: NodeGraph, *, function_name: str = "run", indent: str = "    ") -> str`
 
-_defined in `slappyengine.visual_scripting.codegen_python`_
+_defined in `pharos_engine.visual_scripting.codegen_python`_
 
 Walk `graph` in topological order and emit a Python function. Each
 node's `to_python_template` is substituted with bound variable names:
@@ -225,7 +225,7 @@ output bindings) so the caller can `exec` it and inspect the result.
 
 ### `python_to_graph(source: str, *, name: str = "imported") -> NodeGraph`
 
-_defined in `slappyengine.visual_scripting.codegen_python`_
+_defined in `pharos_engine.visual_scripting.codegen_python`_
 
 Best-effort inverse: parses `v_<id>_<port> = <expr>` assignments from
 `source` and rebuilds the topology — one synthesised `Node` per unique
@@ -238,14 +238,14 @@ Raises `ValueError` if `source` is not parseable Python.
 
 ### `get_node(node_type: str) -> Node`
 
-_defined in `slappyengine.visual_scripting.palette`_
+_defined in `pharos_engine.visual_scripting.palette`_
 
 Return the prototype `Node` for `node_type` from the builtin registry.
 Raises `KeyError` on miss.
 
 ### `list_nodes(*, kind: NodeKind | None = None) -> list[Node]`
 
-_defined in `slappyengine.visual_scripting.palette`_
+_defined in `pharos_engine.visual_scripting.palette`_
 
 Return the builtin prototypes, optionally filtered by `kind`.
 
@@ -253,21 +253,21 @@ Return the builtin prototypes, optionally filtered by `kind`.
 
 ### `NODE_KINDS`
 
-_frozenset[str] — defined in `slappyengine.visual_scripting.node`_
+_frozenset[str] — defined in `pharos_engine.visual_scripting.node`_
 
 Allow-list of node-kind tags: `compute`, `io`, `control`, `math`,
 `logic`, `render`, `audio`, `event`.
 
 ### `PORT_KINDS`
 
-_frozenset[str] — defined in `slappyengine.visual_scripting.node`_
+_frozenset[str] — defined in `pharos_engine.visual_scripting.node`_
 
 Allow-list of port-kind tags: `float`, `int`, `bool`, `str`, `vec2`,
 `vec3`, `vec4`, `any`.
 
 ### `BUILTIN_NODES`
 
-_tuple[Node, ...] — defined in `slappyengine.visual_scripting.palette`_
+_tuple[Node, ...] — defined in `pharos_engine.visual_scripting.palette`_
 
 The 20 starter prototypes. Composition:
 
@@ -281,7 +281,7 @@ The 20 starter prototypes. Composition:
 
 ### `BUILTIN_REGISTRY`
 
-_NodeRegistry — defined in `slappyengine.visual_scripting.palette`_
+_NodeRegistry — defined in `pharos_engine.visual_scripting.palette`_
 
 A process-wide `NodeRegistry` pre-populated with `BUILTIN_NODES`. The
 editor's spawn menu walks this registry; `get_node` /
@@ -320,10 +320,10 @@ unless a `control.return` short-circuits it earlier.
   drag-to-connect interactions consume the same `validate()` and
   `graph_to_python` entry points.
 - **Lazy import.** The subpackage is registered in the top-level
-  `_subpackages` set, so `slappyengine.visual_scripting` resolves on
+  `_subpackages` set, so `pharos_engine.visual_scripting` resolves on
   first access and is cached. There is no per-symbol `_LAZY_MAP` entry
   — every public name lives inside the subpackage.
-- **Validation.** Inputs reuse the shared `slappyengine._validation`
+- **Validation.** Inputs reuse the shared `pharos_engine._validation`
   helpers (`validate_non_empty_str`, `validate_str`); domain checks
   (cycle detection, port-kind table) stay inside this subpackage.
 - **Auto-id minting.** `Node.id` defaults to `n_<8-hex>` so callers can

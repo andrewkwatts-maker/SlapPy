@@ -1,10 +1,10 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.audio_runtime — API Reference
+# pharos_engine.audio_runtime — API Reference
 
 > Hand-written reference for the audio backend plumbing.
 > `audio_runtime` is the soft-import shim that decouples
-> `slappyengine.audio` from `sounddevice`. Games and the editor should
-> keep using `slappyengine.audio` (`AudioManager`, `SoundHandle`); this
+> `pharos_engine.audio` from `sounddevice`. Games and the editor should
+> keep using `pharos_engine.audio` (`AudioManager`, `SoundHandle`); this
 > module is the layer that lets that high-level API stay importable on
 > machines without PortAudio installed. Landed in Phase C2 as the
 > Bullet Strata unblock — see
@@ -12,7 +12,7 @@
 > sprint context.
 
 ```python
-from slappyengine.audio_runtime import (
+from pharos_engine.audio_runtime import (
     AudioBackend,         # Protocol
     get_backend,          # module accessor
 )
@@ -48,7 +48,7 @@ def _init_backend() -> AudioBackend:
   the canonical string:
 
   > `sounddevice not installed; audio playback is a no-op stub.
-  > Install slappy-engine[audio] to enable sound.`
+  > Install pharos-engine[audio] to enable sound.`
 
   This makes "we shipped muted" visible in CI logs without breaking
   the import.
@@ -104,12 +104,12 @@ audio calls in tight loops on a machine without PortAudio.
 ## `get_backend() -> AudioBackend`
 
 The only public entry point. Returns the process-wide cached
-backend. `AudioManager` (in `slappyengine.audio`) calls this on every
+backend. `AudioManager` (in `pharos_engine.audio`) calls this on every
 `play` / `play_spatial` / `stop_all` so test harnesses that monkey-
 patch `_BACKEND` (e.g. `audio_runtime._BACKEND = MyFakeBackend()`)
 take effect for the *next* manager call without rebuilding the
 manager. The module-level `play_sound(handle, sample_rate=None)`
-helper in `slappyengine.audio` uses the same hook for raw-buffer
+helper in `pharos_engine.audio` uses the same hook for raw-buffer
 playback without instantiating a manager.
 
 ## Sample-rate negotiation
@@ -132,15 +132,15 @@ exposing one would split the interface.
 
 ## Inner module surface
 
-- `slappyengine.audio_runtime.AudioBackend` — the public protocol.
-- `slappyengine.audio_runtime.get_backend` — the public accessor.
-- `slappyengine.audio_runtime._RealBackend` /
+- `pharos_engine.audio_runtime.AudioBackend` — the public protocol.
+- `pharos_engine.audio_runtime.get_backend` — the public accessor.
+- `pharos_engine.audio_runtime._RealBackend` /
   `_StubBackend` — concrete implementations; underscore-prefixed so
   the underscore communicates "use `get_backend()`, do not
   instantiate directly".
-- `slappyengine.audio_runtime._BACKEND` — module-level singleton;
+- `pharos_engine.audio_runtime._BACKEND` — module-level singleton;
   test harnesses may rebind this for fake-backend injection.
-- `slappyengine.audio_runtime._STUB_WARNING` — the canonical warning
+- `pharos_engine.audio_runtime._STUB_WARNING` — the canonical warning
   string; pinned by `SlapPyEngineTests/tests/test_audio_stub.py`.
 
 ## Design notes

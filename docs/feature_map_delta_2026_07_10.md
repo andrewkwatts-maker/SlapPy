@@ -10,7 +10,7 @@ QQ1's round-18 ``spawn.at_origin`` / ``selection.by_type`` /
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`slappyengine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `edit.select_similar`      | `edit_select_similar_actions.select_similar`              | edit |
 | `theme.reset_to_default`   | `theme_reset_default_actions.reset_to_default`            | theme |
@@ -20,14 +20,14 @@ Five more action ids landed in this tick, moving 5 rows from STUB
 
 New action modules:
 
-* `python/slappyengine/actions/edit_select_similar_actions.py`
-* `python/slappyengine/actions/theme_reset_default_actions.py`
-* `python/slappyengine/actions/layer_hide_others_actions.py`
-* `python/slappyengine/actions/layer_isolate_actions.py`
-* `python/slappyengine/actions/snap_toggle_incremental_actions.py`
+* `python/pharos_engine/actions/edit_select_similar_actions.py`
+* `python/pharos_engine/actions/theme_reset_default_actions.py`
+* `python/pharos_engine/actions/layer_hide_others_actions.py`
+* `python/pharos_engine/actions/layer_isolate_actions.py`
+* `python/pharos_engine/actions/snap_toggle_incremental_actions.py`
 
 Router entries and `_fb_*` shims live in
-`python/slappyengine/tool_router.py` under the
+`python/pharos_engine/tool_router.py` under the
 `# ── RR1 STUB-triage: select-similar, theme reset-to-default, layer
 hide-others + isolate, snap toggle-incremental (round 19) ──` block.
 

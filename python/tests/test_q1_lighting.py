@@ -1,7 +1,7 @@
 """Q1 Sprint — Lighting System Validation Tests.
 
 Tests that validate the LightingSystem, PointLight, ConeLight, DirectionalLight,
-and FlashLight objects from slappyengine.lighting.
+and FlashLight objects from pharos_engine.lighting.
 
 GPU dispatch (wgpu) is not available in headless CI, so pixel-render tests are
 skipped when wgpu is absent.  All structural, state-management, Observable-event,
@@ -19,7 +19,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def _make_ls(width: int = 64, height: int = 64):
-    from slappyengine.lighting import LightingSystem
+    from pharos_engine.lighting import LightingSystem
     gpu = MagicMock()
     gpu.device = MagicMock()
     return LightingSystem(gpu, width=width, height=height)
@@ -30,7 +30,7 @@ def _make_ls(width: int = 64, height: int = 64):
 # ---------------------------------------------------------------------------
 
 def test_pointlight_default_construction():
-    from slappyengine.lighting import PointLight
+    from pharos_engine.lighting import PointLight
     pl = PointLight()
     assert pl.intensity == 1.0
     assert pl.radius == 200.0
@@ -38,7 +38,7 @@ def test_pointlight_default_construction():
 
 
 def test_pointlight_custom_values():
-    from slappyengine.lighting import PointLight
+    from pharos_engine.lighting import PointLight
     pl = PointLight(position=(32.0, 32.0), radius=100.0, intensity=2.0,
                     color=(1.0, 0.0, 0.0))
     assert pl.position == (32.0, 32.0)
@@ -52,8 +52,8 @@ def test_pointlight_custom_values():
 # ---------------------------------------------------------------------------
 
 def test_pointlight_observable_intensity_event():
-    from slappyengine.lighting import PointLight
-    from slappyengine.event_bus import subscribe, unsubscribe
+    from pharos_engine.lighting import PointLight
+    from pharos_engine.event_bus import subscribe, unsubscribe
 
     received = []
     # Subscribe to the specific attribute path so listener_count check passes
@@ -67,8 +67,8 @@ def test_pointlight_observable_intensity_event():
 
 
 def test_pointlight_observable_color_event():
-    from slappyengine.lighting import PointLight
-    from slappyengine.event_bus import subscribe, unsubscribe
+    from pharos_engine.lighting import PointLight
+    from pharos_engine.event_bus import subscribe, unsubscribe
 
     received = []
     handle = subscribe("PointLight.color", lambda evt: received.append(evt))
@@ -82,8 +82,8 @@ def test_pointlight_observable_color_event():
 
 def test_pointlight_no_publish_tags():
     """tags and cast_shadows must NOT fire events (listed in __no_publish__)."""
-    from slappyengine.lighting import PointLight
-    from slappyengine.event_bus import subscribe, unsubscribe
+    from pharos_engine.lighting import PointLight
+    from pharos_engine.event_bus import subscribe, unsubscribe
 
     received = []
     handle = subscribe("PointLight", lambda evt: received.append(evt))
@@ -101,7 +101,7 @@ def test_pointlight_no_publish_tags():
 # ---------------------------------------------------------------------------
 
 def test_conelight_default_construction():
-    from slappyengine.lighting import ConeLight
+    from pharos_engine.lighting import ConeLight
     cl = ConeLight()
     assert cl.intensity == pytest.approx(2.0)
     assert cl.direction == (1.0, 0.0)
@@ -109,15 +109,15 @@ def test_conelight_default_construction():
 
 
 def test_conelight_custom_direction():
-    from slappyengine.lighting import ConeLight
+    from pharos_engine.lighting import ConeLight
     cl = ConeLight(direction=(0.0, 1.0), half_angle=0.2, outer_half_angle=0.4)
     assert cl.direction == (0.0, 1.0)
     assert cl.half_angle == pytest.approx(0.2)
 
 
 def test_conelight_is_observable():
-    from slappyengine.lighting import ConeLight
-    from slappyengine.event_bus import subscribe, unsubscribe
+    from pharos_engine.lighting import ConeLight
+    from pharos_engine.event_bus import subscribe, unsubscribe
 
     received = []
     handle = subscribe("ConeLight.intensity", lambda evt: received.append(evt))
@@ -134,7 +134,7 @@ def test_conelight_is_observable():
 # ---------------------------------------------------------------------------
 
 def test_directionallight_default_construction():
-    from slappyengine.lighting import DirectionalLight
+    from pharos_engine.lighting import DirectionalLight
     dl = DirectionalLight()
     assert dl.intensity == pytest.approx(1.0)
     assert len(dl.direction) == 2
@@ -142,8 +142,8 @@ def test_directionallight_default_construction():
 
 
 def test_directionallight_observable():
-    from slappyengine.lighting import DirectionalLight
-    from slappyengine.event_bus import subscribe, unsubscribe
+    from pharos_engine.lighting import DirectionalLight
+    from pharos_engine.event_bus import subscribe, unsubscribe
 
     received = []
     handle = subscribe("DirectionalLight.intensity", lambda evt: received.append(evt))
@@ -160,7 +160,7 @@ def test_directionallight_observable():
 # ---------------------------------------------------------------------------
 
 def test_lightingsystem_add_light():
-    from slappyengine.lighting import PointLight
+    from pharos_engine.lighting import PointLight
     ls = _make_ls()
     pl = PointLight(position=(10.0, 10.0))
     ls.add_light(pl)
@@ -168,7 +168,7 @@ def test_lightingsystem_add_light():
 
 
 def test_lightingsystem_remove_light():
-    from slappyengine.lighting import PointLight
+    from pharos_engine.lighting import PointLight
     ls = _make_ls()
     pl = PointLight()
     ls.add_light(pl)
@@ -177,14 +177,14 @@ def test_lightingsystem_remove_light():
 
 
 def test_lightingsystem_remove_nonexistent_no_crash():
-    from slappyengine.lighting import PointLight
+    from pharos_engine.lighting import PointLight
     ls = _make_ls()
     pl = PointLight()
     ls.remove_light(pl)  # never added — must not raise
 
 
 def test_lightingsystem_typed_accessors_directional():
-    from slappyengine.lighting import DirectionalLight, PointLight
+    from pharos_engine.lighting import DirectionalLight, PointLight
     ls = _make_ls()
     dl = DirectionalLight()
     pl = PointLight()
@@ -197,7 +197,7 @@ def test_lightingsystem_typed_accessors_directional():
 
 
 def test_lightingsystem_typed_accessors_cone():
-    from slappyengine.lighting import ConeLight
+    from pharos_engine.lighting import ConeLight
     ls = _make_ls()
     cl = ConeLight()
     ls.add_light(cl)
@@ -206,7 +206,7 @@ def test_lightingsystem_typed_accessors_cone():
 
 def test_lightingsystem_add_50_pointlights_no_crash():
     """Adding 50 PointLights and calling no GPU methods should not raise."""
-    from slappyengine.lighting import PointLight
+    from pharos_engine.lighting import PointLight
     ls = _make_ls()
     for i in range(50):
         ls.add_light(PointLight(position=(float(i), 0.0)))
@@ -268,20 +268,20 @@ def test_lightingsystem_load_profile_custom_dict():
 # ---------------------------------------------------------------------------
 
 def test_flashlight_not_active_before_trigger():
-    from slappyengine.lighting import FlashLight
+    from pharos_engine.lighting import FlashLight
     fl = FlashLight(duration=0.06)
     assert not fl.active
 
 
 def test_flashlight_active_after_trigger():
-    from slappyengine.lighting import FlashLight
+    from pharos_engine.lighting import FlashLight
     fl = FlashLight(duration=0.06)
     fl.trigger()
     assert fl.active
 
 
 def test_flashlight_expires_after_duration():
-    from slappyengine.lighting import FlashLight
+    from pharos_engine.lighting import FlashLight
     fl = FlashLight(duration=0.1)
     fl.trigger()
     expired = fl.tick(0.2)   # well past duration
@@ -290,7 +290,7 @@ def test_flashlight_expires_after_duration():
 
 
 def test_flashlight_still_active_during_duration():
-    from slappyengine.lighting import FlashLight
+    from pharos_engine.lighting import FlashLight
     fl = FlashLight(duration=0.5)
     fl.trigger()
     expired = fl.tick(0.1)
@@ -299,7 +299,7 @@ def test_flashlight_still_active_during_duration():
 
 
 def test_flashlight_tick_accumulates_elapsed():
-    from slappyengine.lighting import FlashLight
+    from pharos_engine.lighting import FlashLight
     fl = FlashLight(duration=1.0)
     fl.trigger()
     fl.tick(0.4)
@@ -307,7 +307,7 @@ def test_flashlight_tick_accumulates_elapsed():
 
 
 def test_lightingsystem_tick_flash_removes_expired():
-    from slappyengine.lighting import FlashLight
+    from pharos_engine.lighting import FlashLight
     ls = _make_ls()
     fl = FlashLight(duration=0.01)
     fl.trigger()
@@ -318,7 +318,7 @@ def test_lightingsystem_tick_flash_removes_expired():
 
 
 def test_lightingsystem_tick_flash_keeps_active():
-    from slappyengine.lighting import FlashLight
+    from pharos_engine.lighting import FlashLight
     ls = _make_ls()
     fl = FlashLight(duration=1.0)
     fl.trigger()
@@ -359,7 +359,7 @@ def test_gravitywarp_permanent_stays_active():
 # ---------------------------------------------------------------------------
 
 def test_radiance_cascade_config_defaults():
-    from slappyengine.lighting import RadianceCascadeConfig
+    from pharos_engine.lighting import RadianceCascadeConfig
     cfg = RadianceCascadeConfig()
     assert cfg.num_cascades == 4
     assert cfg.probe_spacing_px == 8
@@ -367,7 +367,7 @@ def test_radiance_cascade_config_defaults():
 
 
 def test_radiance_cascade_config_custom():
-    from slappyengine.lighting import RadianceCascadeConfig
+    from pharos_engine.lighting import RadianceCascadeConfig
     cfg = RadianceCascadeConfig(num_cascades=2, probe_spacing_px=16, rays_per_probe=32,
                                 max_ray_length_px=256.0)
     assert cfg.num_cascades == 2
@@ -375,7 +375,7 @@ def test_radiance_cascade_config_custom():
 
 
 def test_lightingsystem_set_radiance_config():
-    from slappyengine.lighting import RadianceCascadeConfig
+    from pharos_engine.lighting import RadianceCascadeConfig
     ls = _make_ls()
     cfg = RadianceCascadeConfig(num_cascades=3)
     ls.set_radiance_config(cfg)
@@ -387,7 +387,7 @@ def test_lightingsystem_set_radiance_config():
 # ---------------------------------------------------------------------------
 
 def test_lighting_context_add_remove():
-    from slappyengine.lighting import LightingContext, PointLight
+    from pharos_engine.lighting import LightingContext, PointLight
     ctx = LightingContext(ambient_intensity=0.3, mode="local")
     pl = PointLight()
     ctx.add_light(pl)
@@ -397,7 +397,7 @@ def test_lighting_context_add_remove():
 
 
 def test_lighting_context_clear():
-    from slappyengine.lighting import LightingContext, PointLight
+    from pharos_engine.lighting import LightingContext, PointLight
     ctx = LightingContext()
     ctx.add_light(PointLight())
     ctx.add_light(PointLight())
@@ -406,7 +406,7 @@ def test_lighting_context_clear():
 
 
 def test_lighting_context_mode():
-    from slappyengine.lighting import LightingContext
+    from pharos_engine.lighting import LightingContext
     ctx = LightingContext(mode="cross")
     assert ctx.mode == "cross"
 
@@ -416,7 +416,7 @@ def test_lighting_context_mode():
 # ---------------------------------------------------------------------------
 
 def test_shapelight_construction():
-    from slappyengine.lighting import ShapeLight
+    from pharos_engine.lighting import ShapeLight
     sl = ShapeLight(position=(10.0, 20.0), mask_path="mask.png",
                     color=(1.0, 0.8, 0.6), intensity=1.5)
     assert sl.intensity == pytest.approx(1.5)
@@ -424,7 +424,7 @@ def test_shapelight_construction():
 
 
 def test_gravity_warp_source_direct():
-    from slappyengine.lighting import GravityWarpSource
+    from pharos_engine.lighting import GravityWarpSource
     g = GravityWarpSource(position=(5.0, 5.0), mass=3.0, radius=10.0)
     assert g.active   # permanent by default (_remaining == -1)
     g.set_duration(0.2)

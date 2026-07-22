@@ -158,7 +158,7 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def reset_notebook_theme():
     """Reset the notebook theme registry between tests."""
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
 
     set_active_theme(None)
     yield
@@ -202,7 +202,7 @@ class _BodyLike:
 
 
 try:
-    from slappyengine.ui.editor.notebook_inspector import NotebookInspector
+    from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
 except Exception as _err:  # pragma: no cover
     pytest.skip(
         f"NotebookInspector not importable: {_err}",
@@ -416,7 +416,7 @@ class TestHelpPopup:
 class TestThemeSwitch:
     def test_theme_change_propagates_to_widgets(self, stub_dpg):
         """Switching the notebook theme rebinds widget palette slots."""
-        from slappyengine.ui.widgets.notebook_theme import (
+        from pharos_engine.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )
@@ -426,7 +426,7 @@ class TestThemeSwitch:
         inspector.build("parent_x")
 
         # Locate the WashiPanel for the Transform section.
-        from slappyengine.ui.widgets import WashiPanel
+        from pharos_engine.ui.widgets import WashiPanel
 
         washi_panels = [w for w in inspector._widgets if isinstance(w, WashiPanel)]
         assert washi_panels, "should have at least one washi panel"
@@ -584,7 +584,7 @@ class TestContractCompatibility:
 
     def test_transform_fields_categorise_correctly(self, stub_dpg):
         """Position / rotation / scale land in the Transform section."""
-        from slappyengine.ui.editor.property_inspector import TRANSFORM_FIELDS
+        from pharos_engine.ui.editor.property_inspector import TRANSFORM_FIELDS
 
         body = _BodyLike()
         inspector = NotebookInspector(target=body)

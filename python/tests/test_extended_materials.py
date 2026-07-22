@@ -1,7 +1,7 @@
 """Extended-material drop scenarios for the hierarchical-hull physics module.
 
 Companion to ``test_drop_scenarios.py``.  Adds coverage for the richer
-material palette registered in ``slappyengine.deform_modes``:
+material palette registered in ``pharos_engine.deform_modes``:
 
     CONCRETE, OIL, SLIME, DIAMOND, PAPER, STEAM, CORAL, GOLD, MAGMA, SNOW
 
@@ -23,12 +23,12 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.deform_modes import (
+from pharos_engine.deform_modes import (
     MATERIAL_CONFIGS,
     MaterialPreset,
     cell_material_for,
 )
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,

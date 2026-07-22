@@ -23,7 +23,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from slappyengine.testing import assert_scene_matches
+from pharos_engine.testing import assert_scene_matches
 
 # -- Load the demo as a module so we don't depend on examples/ being on path --
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -136,7 +136,7 @@ def test_hello_spring_no_nan(demo):
 def test_hello_spring_visual_baseline(demo):
     """Render the spring scene and diff against the committed baseline PNG.
 
-    First run writes ``python/slappyengine/testing/baselines/hello_spring.png``
+    First run writes ``python/pharos_engine/testing/baselines/hello_spring.png``
     and passes; subsequent runs require ``max_pixel_diff <= 0.05``.
     """
     world, anchor_idx, mass_idx = demo.build_world()

@@ -23,15 +23,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.particle_graph import ParticleGraph
-from slappyengine.physics.particles import ParticleSystem
-from slappyengine.physics.post_process import default_post_process_chain
-from slappyengine.physics.render import PhysicsRenderer, RenderConfig
+from pharos_engine.physics.particle_graph import ParticleGraph
+from pharos_engine.physics.particles import ParticleSystem
+from pharos_engine.physics.post_process import default_post_process_chain
+from pharos_engine.physics.render import PhysicsRenderer, RenderConfig
 
 
 WORLD_BOUNDS: tuple[float, float, float, float] = (-300.0, -100.0, 300.0, 250.0)
@@ -208,7 +208,7 @@ def run_demo(out_path=None, frame_count: int = FRAME_COUNT, verbose: bool = True
 
     # Best-effort MP4 via the unified media helper. Falls back to GIF
     # transparently (and silently here - GIF is already on disk).
-    from slappyengine.media import save_frames, have_ffmpeg
+    from pharos_engine.media import save_frames, have_ffmpeg
     mp4_path = None
     if have_ffmpeg():
         from PIL import Image

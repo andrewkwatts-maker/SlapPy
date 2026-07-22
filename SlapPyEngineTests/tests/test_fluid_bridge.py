@@ -7,7 +7,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.physics.fluid_bridge import (
+from pharos_engine.physics.fluid_bridge import (
     FluidBridgeConfig,
     bridge_step,
 )

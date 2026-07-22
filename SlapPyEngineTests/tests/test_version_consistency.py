@@ -6,7 +6,7 @@ one of them by hand:
 
 * ``pyproject.toml`` — PyPI metadata (read by ``pip install`` / ``maturin``).
 * ``Cargo.toml`` — Rust crate version (read by ``cargo`` / ``maturin``).
-* ``python/slappyengine/__init__.py`` — ``slappyengine.__version__`` at
+* ``python/pharos_engine/__init__.py`` — ``pharos_engine.__version__`` at
   runtime (what user code sees).
 
 These must match so the wheel users ``pip install`` reports the same string
@@ -24,7 +24,7 @@ import re
 import tomllib
 from pathlib import Path
 
-import slappyengine
+import pharos_engine
 
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -69,7 +69,7 @@ def test_versions_match_across_three_files() -> None:
     """
     py = _read_pyproject_version()
     rust = _read_cargo_version()
-    runtime = slappyengine.__version__
+    runtime = pharos_engine.__version__
 
     py_norm = _normalize(py)
     rust_norm = _normalize(rust)

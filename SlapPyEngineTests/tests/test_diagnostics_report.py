@@ -17,7 +17,7 @@ import time
 
 import pytest
 
-from slappyengine.diagnostics import DiagnosticEvent, DiagnosticsCollector
+from pharos_engine.diagnostics import DiagnosticEvent, DiagnosticsCollector
 
 
 # ---------------------------------------------------------------------------
@@ -298,7 +298,7 @@ def test_save_report_forwards_kwargs(tmp_path):
 
 
 def test_app_diagnostics_report_returns_empty_when_disabled():
-    from slappyengine.app import App, AppConfig
+    from pharos_engine.app import App, AppConfig
 
     app = App(AppConfig(enable_gpu=False, max_frames=1))
     # Diagnostics not enabled yet.
@@ -306,7 +306,7 @@ def test_app_diagnostics_report_returns_empty_when_disabled():
 
 
 def test_app_diagnostics_report_delegates_to_collector():
-    from slappyengine.app import App, AppConfig
+    from pharos_engine.app import App, AppConfig
 
     app = App(AppConfig(enable_gpu=False, max_frames=1))
     app.enable_diagnostics()
@@ -326,7 +326,7 @@ def test_app_diagnostics_report_delegates_to_collector():
 
 
 def test_app_diagnostics_report_forwards_group_by():
-    from slappyengine.app import App, AppConfig
+    from pharos_engine.app import App, AppConfig
 
     app = App(AppConfig(enable_gpu=False, max_frames=1))
     app.enable_diagnostics()

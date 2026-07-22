@@ -11,8 +11,8 @@ Run
 
 The canonical 2-line pattern::
 
-    pip install slappy-engine
-    python -c "from slappyengine.examples.hello_render import minimal; minimal()"
+    pip install pharos-engine
+    python -c "from pharos_engine.examples.hello_render import minimal; minimal()"
 
 Or directly from a checkout::
 
@@ -30,7 +30,7 @@ Headless
 --------
 
 All variants are headless-safe. They pass ``enable_gpu=False`` on the
-``AppConfig`` so the renderer falls back to :class:`slappyengine.app._StubRenderer`
+``AppConfig`` so the renderer falls back to :class:`pharos_engine.app._StubRenderer`
 which logs every draw call to ``app._renderer.log`` — that's what the
 test suite asserts on. The environment variable ``SLAPPY_HEADLESS=1`` is
 honoured as an override for CI setups that prefer env-flag toggles.
@@ -38,10 +38,10 @@ honoured as an override for CI setups that prefer env-flag toggles.
 Configuration
 -------------
 
-``slappyengine.App.from_config_dict`` does not yet exist as of 2026-07-05
+``pharos_engine.App.from_config_dict`` does not yet exist as of 2026-07-05
 (pending H1 sprint). :func:`with_config_yaml` therefore reads
-``slappyengine.config_defaults.load_config_with_defaults`` and hydrates an
-:class:`~slappyengine.AppConfig` field-by-field. Once
+``pharos_engine.config_defaults.load_config_with_defaults`` and hydrates an
+:class:`~pharos_engine.AppConfig` field-by-field. Once
 ``App.from_config_dict`` lands, this variant will collapse to a single
 call — the demo docstring is the seam.
 """
@@ -71,16 +71,16 @@ def _triangle_path() -> str:
 
 
 def _headless_config():
-    """Build a headless :class:`slappyengine.AppConfig` for the demos.
+    """Build a headless :class:`pharos_engine.AppConfig` for the demos.
 
     Every variant uses the same config: GPU disabled (stub renderer),
     ``renderer_backend="stub"``, telemetry off, editor off. The window
     settings are irrelevant when the stub renderer is active but we set
     them explicitly so the demo YAML round-trips cleanly.
     """
-    import slappyengine
+    import pharos_engine
 
-    return slappyengine.AppConfig(
+    return pharos_engine.AppConfig(
         window_title="hello_render",
         window_size=(640, 480),
         enable_gpu=False,
@@ -99,12 +99,12 @@ def _headless_config():
 def minimal() -> "Any":
     """The 2-line ask literally satisfied.
 
-    Returns the :class:`~slappyengine.App` so callers can inspect
+    Returns the :class:`~pharos_engine.App` so callers can inspect
     ``app.models`` / ``app.trace`` / ``app._renderer.log`` after the run.
     """
-    import slappyengine
+    import pharos_engine
 
-    return slappyengine.launch(
+    return pharos_engine.launch(
         on_begin=lambda app: app.load_model(_triangle_path()),
         max_frames=60,
         config=_headless_config(),
@@ -122,9 +122,9 @@ def with_light_and_camera() -> "Any":
     The returned app has one model, one light, one active camera, and the
     model's rotation.y has been incremented ``max_frames`` times.
     """
-    import slappyengine
+    import pharos_engine
 
-    app = slappyengine.App(config=_headless_config())
+    app = pharos_engine.App(config=_headless_config())
     model = app.load_model(_triangle_path())
     app.spawn_light((5.0, 5.0, 5.0))
     app.spawn_camera((0.0, 0.0, 3.0), look_at=(0.0, 0.0, 0.0))
@@ -144,18 +144,18 @@ def with_config_yaml(config_path: str | Path | None = None) -> "Any":
     """Config-driven variant.
 
     Reads a merged config dict from
-    :func:`slappyengine.config_defaults.load_config_with_defaults`. If
+    :func:`pharos_engine.config_defaults.load_config_with_defaults`. If
     ``config_path`` is ``None`` (or points at a missing file) the
     defaults dict is used verbatim -- perfect for first-run bootstrap.
 
     Note
     ----
-    Once ``slappyengine.App.from_config_dict`` lands (H1 sprint) this
+    Once ``pharos_engine.App.from_config_dict`` lands (H1 sprint) this
     variant collapses to a single call. Until then we hand-map the
-    ``[app]`` section into :class:`~slappyengine.AppConfig` fields.
+    ``[app]`` section into :class:`~pharos_engine.AppConfig` fields.
     """
-    import slappyengine
-    from slappyengine.config_defaults import load_config_with_defaults
+    import pharos_engine
+    from pharos_engine.config_defaults import load_config_with_defaults
 
     cfg = load_config_with_defaults(config_path or "config.yaml")
 
@@ -170,7 +170,7 @@ def with_config_yaml(config_path: str | Path | None = None) -> "Any":
         if isinstance(window_title, str):
             base.window_title = window_title
 
-    app = slappyengine.App(config=base)
+    app = pharos_engine.App(config=base)
     app.load_model(_triangle_path())
     app.run(max_frames=60)
     return app
@@ -187,9 +187,9 @@ def custom_lifecycle() -> "Any":
     Returns the app so tests can inspect the per-hook counters we stash
     on it (``app._begin_fired`` etc.).
     """
-    import slappyengine
+    import pharos_engine
 
-    app = slappyengine.App(config=_headless_config())
+    app = pharos_engine.App(config=_headless_config())
 
     # Counters — patched onto the app so callers can assert on them.
     app._begin_fired = 0        # type: ignore[attr-defined]
@@ -222,7 +222,7 @@ def custom_lifecycle() -> "Any":
 def _honour_headless_env() -> None:
     """Respect ``SLAPPY_HEADLESS=1`` as an env-flag override.
 
-    All variants already build a headless :class:`~slappyengine.AppConfig`
+    All variants already build a headless :class:`~pharos_engine.AppConfig`
     so this is belt-and-braces. We touch the env var only to normalise
     it (empty string → unset semantics) so downstream libraries see a
     consistent value.

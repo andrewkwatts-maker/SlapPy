@@ -8,13 +8,13 @@ otherwise.
 
 The contract lives in one module:
 
-* `python/slappyengine/tool_router.py` — `ToolAction` dataclass,
+* `python/pharos_engine/tool_router.py` — `ToolAction` dataclass,
   `ToolRouter` registry, `REGISTRY` singleton pre-populated at import
   time, `register_default_actions(router)` seed function.
 
 And is consumed by one call site:
 
-* `python/slappyengine/ui/editor/shell.py::EditorShell._dispatch_editor_command` —
+* `python/pharos_engine/ui/editor/shell.py::EditorShell._dispatch_editor_command` —
   routes hotkey / menu commands through `REGISTRY.dispatch(command, ctx)`.
 
 Provenance:
@@ -45,7 +45,7 @@ Every editor action is a `ToolAction` row with these fields:
 `ToolRouter.dispatch(action_id, ctx)` resolves in this order:
 
 1. **Rust backing**: if the dotted path resolves to a callable on
-   `slappyengine._core`, invoke as `backing(**ctx)`. If the call raises
+   `pharos_engine._core`, invoke as `backing(**ctx)`. If the call raises
    `TypeError` (signature mismatch), fall through to step 2.
 2. **Python fallback**: invoke as `fallback(ctx)` — the whole dict is
    passed as a single argument so shell handlers can pull whichever
@@ -102,8 +102,8 @@ top-level symbol per the audit §1.2):
 | `editor.toggle_panel_viewport`                | panel    | —                                                | `toggle_panel("viewport_panel")`                  |
 | `editor.toggle_panel_layer`                   | panel    | —                                                | `toggle_panel("layer_panel")`                     |
 | `editor.toggle_panel_behavior`                | panel    | —                                                | `toggle_panel("behavior_panel")`                  |
-| `spawn.rope`                                  | spawn    | `softbody_solver.slappyengine_step`              | `_on_spawn("rope", spec)`                         |
-| `spawn.ragdoll`                               | spawn    | `softbody_solver.slappyengine_step`              | `_on_spawn("ragdoll", spec)`                      |
+| `spawn.rope`                                  | spawn    | `softbody_solver.pharos_engine_step`              | `_on_spawn("rope", spec)`                         |
+| `spawn.ragdoll`                               | spawn    | `softbody_solver.pharos_engine_step`              | `_on_spawn("ragdoll", spec)`                      |
 | `spawn.humanoid`                              | spawn    | `ik_solver.solve_ik`                             | `_on_spawn("humanoid", spec)`                     |
 | `spawn.ik_chain`                              | spawn    | `ik_solver.solve_ik`                             | `_on_spawn("ik_chain", spec)`                     |
 | `spawn.zone_rect`                             | spawn    | —                                                | `_on_spawn("zone_rect", spec)`                    |
@@ -218,11 +218,11 @@ frame, freeing a full ms for other work.
 
 ## 6. Cross-references
 
-* `python/slappyengine/tool_router.py` — the module
-* `python/slappyengine/ui/editor/shell.py` — the call site
-* `python/slappyengine/ui/editor/notebook_hotkeys.py` — the hotkey table
-* `python/slappyengine/ui/editor/notebook_spawn_menu.py` — `SPAWN_CARDS`
-* `python/slappyengine/ui/editor/notebook_toolbar.py` — tool buttons
+* `python/pharos_engine/tool_router.py` — the module
+* `python/pharos_engine/ui/editor/shell.py` — the call site
+* `python/pharos_engine/ui/editor/notebook_hotkeys.py` — the hotkey table
+* `python/pharos_engine/ui/editor/notebook_spawn_menu.py` — `SPAWN_CARDS`
+* `python/pharos_engine/ui/editor/notebook_toolbar.py` — tool buttons
 * `SlapPyEngineTests/tests/test_tool_router.py` — 34-test suite
 * `docs/rust_port_audit_2026_06_02.md` — Rust surface inventory
 * `docs/rust_migration_plan.md` — migration steps

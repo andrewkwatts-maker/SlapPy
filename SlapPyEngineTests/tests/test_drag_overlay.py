@@ -15,8 +15,8 @@ from typing import Any
 
 import pytest
 
-from slappyengine.ui.editor.dock_zones import DockZone
-from slappyengine.ui.editor.snap_manager import SnapTarget
+from pharos_engine.ui.editor.dock_zones import DockZone
+from pharos_engine.ui.editor.snap_manager import SnapTarget
 
 
 # ---------------------------------------------------------------------------
@@ -26,7 +26,7 @@ from slappyengine.ui.editor.snap_manager import SnapTarget
 
 def _make_shell():
     """Build an :class:`EditorShell` with a minimal engine stub."""
-    from slappyengine.ui.editor.shell import EditorShell
+    from pharos_engine.ui.editor.shell import EditorShell
 
     class _StubEngine:
         def __init__(self):
@@ -368,7 +368,7 @@ def test_render_drag_overlay_draws_correct_zone_among_five(dpg_stub):
 
 
 def test_dock_zone_manager_is_active_reflects_drag_state():
-    from slappyengine.ui.editor.dock_zones import DockZoneManager
+    from pharos_engine.ui.editor.dock_zones import DockZoneManager
 
     dz = DockZoneManager((800, 600))
     assert dz.is_active() is False
@@ -379,7 +379,7 @@ def test_dock_zone_manager_is_active_reflects_drag_state():
 
 
 def test_dock_zone_manager_current_zone_tracks_on_drag_tick():
-    from slappyengine.ui.editor.dock_zones import DockZoneManager
+    from pharos_engine.ui.editor.dock_zones import DockZoneManager
 
     dz = DockZoneManager((800, 600))
     dz.on_drag_start("panel.a")

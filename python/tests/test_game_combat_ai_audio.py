@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _GAME_ROOT = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _GAME_STR = str(_GAME_ROOT)
@@ -309,7 +309,7 @@ class TestDecalSystemInit:
         ds.teardown()
 
     def test_subscribes_to_collision(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         before = global_bus.listener_count("Vehicle.Collision")
         ds = self._ds()
         after = global_bus.listener_count("Vehicle.Collision")
@@ -317,7 +317,7 @@ class TestDecalSystemInit:
         ds.teardown()
 
     def test_subscribes_to_weapon_hit(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         before = global_bus.listener_count("Weapon.Hit")
         ds = self._ds()
         after = global_bus.listener_count("Weapon.Hit")
@@ -325,7 +325,7 @@ class TestDecalSystemInit:
         ds.teardown()
 
     def test_teardown_unsubscribes(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         before_c = global_bus.listener_count("Vehicle.Collision")
         before_w = global_bus.listener_count("Weapon.Hit")
         ds = self._ds()
@@ -435,7 +435,7 @@ class TestScrapEntity:
             s.tick(0.016)
 
     def test_has_collision_shape(self):
-        from slappyengine.collision import AABBShape
+        from pharos_engine.collision import AABBShape
         s = self._s()
         assert isinstance(s.collision_shape, AABBShape)
 
@@ -457,7 +457,7 @@ class TestCockpitPodEntity:
         assert cp.hp > 0
 
     def test_has_collision_shape(self):
-        from slappyengine.collision import AABBShape
+        from pharos_engine.collision import AABBShape
         cp = self._cp()
         assert isinstance(cp.collision_shape, AABBShape)
 
@@ -546,7 +546,7 @@ class TestRadialRepairSystemInit:
         rrs.teardown()
 
     def test_subscribes_to_repair_events(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         before_r = global_bus.listener_count("Repair.Radial")
         before_p = global_bus.listener_count("Repair.Pixel")
         before_f = global_bus.listener_count("Repair.Full")
@@ -557,7 +557,7 @@ class TestRadialRepairSystemInit:
         rrs.teardown()
 
     def test_teardown_unsubscribes(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         before = global_bus.listener_count("Repair.Radial")
         rrs = self._rrs()
         rrs.teardown()
@@ -581,21 +581,21 @@ class TestRadialRepairSystemEvents:
         return RadialRepairSystem([])
 
     def test_radial_repair_event_no_target_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         rrs = self._rrs()
         publish("Repair.Radial", center_x=32, center_y=32, radius=20, rate=2.0)
         rrs.tick(0.016)
         rrs.teardown()
 
     def test_pixel_repair_event_no_target_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         rrs = self._rrs()
         publish("Repair.Pixel", x=10, y=10, rate=5.0)
         rrs.tick(0.016)
         rrs.teardown()
 
     def test_full_repair_event_no_target_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         rrs = self._rrs()
         publish("Repair.Full", rate=1.0)
         rrs.tick(0.016)
@@ -752,7 +752,7 @@ class TestRaceAudioSystemDoppler:
         ras.stop_all()
 
     def test_weather_changed_updates_volumes(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ras = self._ras()
         ras.subscribe_events()
         publish("Weather.Changed", wind_speed=80.0, intensity=0.5)
@@ -761,7 +761,7 @@ class TestRaceAudioSystemDoppler:
         ras.stop_all()
 
     def test_fog_density_event_updates(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ras = self._ras()
         ras.subscribe_events()
         publish("SimField.peak_density", value=0.75)

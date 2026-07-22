@@ -1,13 +1,13 @@
 """SlapPyEngine - Hello Autosave
 
-Minimal demo of :class:`slappyengine.autosave.AutosaveManager` (sprint Y6).
+Minimal demo of :class:`pharos_engine.autosave.AutosaveManager` (sprint Y6).
 
 Simulates ~6 seconds of editor activity — a dirty-flag toggles on and
 off as the user types, and a small dict of "unsaved" scene state
 mutates every tick. Snapshots are written every second into a
 temporary directory. Halfway through, the demo simulates a crash by
 dropping the in-memory state, then invokes
-:class:`slappyengine.autosave.RecoveryPrompt` to find the newest
+:class:`pharos_engine.autosave.RecoveryPrompt` to find the newest
 snapshot and restore it.
 
 The demo is deliberately headless: no dear-pygui viewport, no live
@@ -32,7 +32,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from slappyengine.autosave import (
+from pharos_engine.autosave import (
     AutosaveManager,
     AutosaveState,
     RecoveryOffer,

@@ -1,6 +1,6 @@
 @echo off
 REM SetVersion.bat — bump the engine version across pyproject.toml, Cargo.toml,
-REM and python\slappyengine\__init__.py in one call.
+REM and python\pharos_engine\__init__.py in one call.
 REM
 REM Usage:
 REM     SetVersion.bat 0.3.0

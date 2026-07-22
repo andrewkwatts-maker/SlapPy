@@ -4,7 +4,7 @@ The demo builds a 2D BeamNG-style softbody vehicle (chassis lattice +
 wheels + suspension), drops it onto a steel-lattice slope, applies full
 throttle, and renders a gif to ``examples/output/softbody/``.
 
-The demo imports from :mod:`slappyengine.softbody`, which is a WIP
+The demo imports from :mod:`pharos_engine.softbody`, which is a WIP
 subpackage. This test wakes up as soon as it lands — until then it
 skips with a clear reason so the gap remains visible in the test report.
 
@@ -34,8 +34,8 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP softbody subpackage being unavailable.
     try:
-        from slappyengine.media import save_frames  # noqa: F401
-        from slappyengine.softbody import (  # noqa: F401
+        from pharos_engine.media import save_frames  # noqa: F401
+        from pharos_engine.softbody import (  # noqa: F401
             SoftBodyRenderConfig,
             SoftBodyRenderer,
             SoftBodyWorld,
@@ -46,7 +46,7 @@ def demo():
         )
     except Exception as exc:
         pytest.skip(
-            "slappyengine.softbody / media unavailable (WIP): "
+            "pharos_engine.softbody / media unavailable (WIP): "
             f"{exc}"
         )
 

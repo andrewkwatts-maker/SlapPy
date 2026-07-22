@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.perf.tripwire` — the ragdoll perf tripwire.
+"""Tests for :mod:`pharos_engine.perf.tripwire` — the ragdoll perf tripwire.
 
 These tests pin the tripwire's contract without depending on absolute
 wall-clock numbers (which drift on shared CI runners). They cover:
@@ -34,14 +34,14 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine.perf import (
+from pharos_engine.perf import (
     DEFAULT_BASELINE_PATH,
     ComparisonReport,
     PerfResult,
     PerfTripwire,
 )
-from slappyengine.perf import cli as perf_cli
-from slappyengine.perf import tripwire as tripwire_mod
+from pharos_engine.perf import cli as perf_cli
+from pharos_engine.perf import tripwire as tripwire_mod
 
 
 # ---------------------------------------------------------------------------
@@ -381,7 +381,7 @@ def test_run_bench_accepts_custom_dt(tripwire: PerfTripwire) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 20. `python -m slappyengine.perf.tripwire --write-baseline` works end-to-end
+# 20. `python -m pharos_engine.perf.tripwire --write-baseline` works end-to-end
 # ---------------------------------------------------------------------------
 
 def test_module_cli_write_baseline(tmp_path: Path) -> None:
@@ -393,7 +393,7 @@ def test_module_cli_write_baseline(tmp_path: Path) -> None:
     baseline = tmp_path / "module_cli.yaml"
     proc = subprocess.run(
         [
-            sys.executable, "-m", "slappyengine.perf.tripwire",
+            sys.executable, "-m", "pharos_engine.perf.tripwire",
             "--steps", "3", "--warmup", "1", "--trials", "1",
             "--baseline", str(baseline), "--write-baseline",
         ],

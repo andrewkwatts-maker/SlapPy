@@ -3,13 +3,13 @@ name: Physics Test Suite
 on:
   push:
     paths:
-      - 'python/slappyengine/physics/**'
+      - 'python/pharos_engine/physics/**'
       - 'python/tests/test_*.py'
       - 'config/physics.yml'
       - '.github/workflows/physics-tests.yml'
   pull_request:
     paths:
-      - 'python/slappyengine/physics/**'
+      - 'python/pharos_engine/physics/**'
 
 jobs:
   physics-tests:

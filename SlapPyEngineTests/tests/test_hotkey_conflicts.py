@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.ui.hotkey_conflicts` (FF5).
+"""Tests for :mod:`pharos_engine.ui.hotkey_conflicts` (FF5).
 
 Covers:
 
@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import pytest
 
-from slappyengine.ui.hotkey_conflicts import (
+from pharos_engine.ui.hotkey_conflicts import (
     PLATFORM_SHORTCUTS,
     ConflictKind,
     ConflictReport,
@@ -26,7 +26,7 @@ from slappyengine.ui.hotkey_conflicts import (
     format_report,
     has_severity,
 )
-from slappyengine.ui.hotkey_remap import HotkeyBinding, HotkeyMap, apply_remap
+from pharos_engine.ui.hotkey_remap import HotkeyBinding, HotkeyMap, apply_remap
 
 
 # ---------------------------------------------------------------------------

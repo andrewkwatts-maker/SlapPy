@@ -25,7 +25,7 @@ _DEMO_PATH = _REPO_ROOT / "SlapPyEngineExamples" / "examples" / "hello_world.py"
 
 def _install_engine_stubs(monkeypatch):
     """Replace WgpuCanvas + Engine._setup_gpu + wgpu event loop with no-ops."""
-    from slappyengine import engine as engine_mod
+    from pharos_engine import engine as engine_mod
 
     class _StubCanvas:
         def __init__(self, *_, **__):
@@ -75,7 +75,7 @@ def test_hello_world_module_imports(demo):
     """The demo file loaded without raising under headless stubs."""
     assert demo is not None
     # Sanity — the module ran to completion (past ``engine.run()``).
-    import slappyengine as se
+    import pharos_engine as se
     assert hasattr(se, "Engine")
 
 
@@ -84,7 +84,7 @@ def test_hello_world_leaves_engine_on_module(demo):
     engine = getattr(demo, "engine", None)
     assert engine is not None, "demo did not expose ``engine``"
     # It really is an Engine instance (not a stub sentinel).
-    import slappyengine as se
+    import pharos_engine as se
     assert isinstance(engine, se.Engine)
 
 

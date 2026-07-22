@@ -1,4 +1,4 @@
-"""Tests for slappyengine.thermal — 2D heat field + pairwise exchange."""
+"""Tests for pharos_engine.thermal — 2D heat field + pairwise exchange."""
 from __future__ import annotations
 
 import warnings
@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.thermal import HeatField, exchange_two_regions
+from pharos_engine.thermal import HeatField, exchange_two_regions
 
 
 @pytest.fixture(autouse=True)
@@ -92,7 +92,7 @@ def test_heat_field_central_hotspot_diffuses_outward():
     Emits a GIF of the diffusion."""
     from python.tests._visual_snapshot import output_dir, save_heatmap
     from PIL import Image
-    from slappyengine.media import save_frames
+    from pharos_engine.media import save_frames
 
     f = HeatField(shape=(32, 32), diffusivity=0.5, cell_size=1.0)
     f.inject(16, 16, 100.0)

@@ -1,8 +1,8 @@
-"""Regression tests for ``slappyengine.event_bus`` backwards-compat surface.
+"""Regression tests for ``pharos_engine.event_bus`` backwards-compat surface.
 
 Downstream games (Ochema Circuit, Bullet Strata) rely on:
 
-1. Module symbol ``global_bus`` importable from ``slappyengine.event_bus``.
+1. Module symbol ``global_bus`` importable from ``pharos_engine.event_bus``.
 2. ``EventBus.unsubscribe(topic)`` — single-arg form that removes all
    listeners for the topic.
 3. ``EventBus.unsubscribe(topic, listener)`` — modern two-arg form that
@@ -18,13 +18,13 @@ from __future__ import annotations
 
 def test_global_bus_importable():
     """Legacy import path must resolve to an ``EventBus`` instance."""
-    from slappyengine.event_bus import global_bus, EventBus
+    from pharos_engine.event_bus import global_bus, EventBus
     assert isinstance(global_bus, EventBus)
 
 
 def test_unsubscribe_one_arg_removes_all_listeners_for_topic():
     """Legacy 1-arg form ``bus.unsubscribe("topic")`` drops every listener."""
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
     bus = EventBus()
     hits: list[str] = []
     bus.subscribe("topic", lambda _p: hits.append("a"))
@@ -40,7 +40,7 @@ def test_unsubscribe_one_arg_removes_all_listeners_for_topic():
 
 def test_unsubscribe_two_arg_removes_only_specific_listener():
     """Modern 2-arg form drops exactly one callback, leaves others alone."""
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
     bus = EventBus()
     hits: list[str] = []
 
@@ -60,9 +60,9 @@ def test_unsubscribe_two_arg_removes_only_specific_listener():
 
 def test_global_bus_is_process_wide_singleton():
     """Repeated imports must yield the identical bus object."""
-    from slappyengine.event_bus import global_bus as gb_first
-    from slappyengine.event_bus import global_bus as gb_second
-    from slappyengine.event_bus import get_default_bus
+    from pharos_engine.event_bus import global_bus as gb_first
+    from pharos_engine.event_bus import global_bus as gb_second
+    from pharos_engine.event_bus import get_default_bus
 
     assert gb_first is gb_second
     assert gb_first is get_default_bus()
@@ -70,7 +70,7 @@ def test_global_bus_is_process_wide_singleton():
 
 def test_module_level_unsubscribe_one_arg_form():
     """Module-level ``unsubscribe`` proxy also accepts the legacy 1-arg form."""
-    from slappyengine.event_bus import (
+    from pharos_engine.event_bus import (
         global_bus,
         subscribe,
         unsubscribe,

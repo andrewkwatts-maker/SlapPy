@@ -1,7 +1,7 @@
 # UI Nesting + Window-Separation Audit (2026-06-07)
 
 Read-only audit of the Nova3D legacy editor patterns still preserved
-under `python/slappyengine/ui/editor/*.py` (the pre-notebook shell,
+under `python/pharos_engine/ui/editor/*.py` (the pre-notebook shell,
 toolbar, outliner, inspector, gizmos, code mode, spawn menu, material
 editor). Produces an ADOPT / ADAPT / SKIP recommendation table for the
 Sprint T7 usability sweep and is a companion to
@@ -19,7 +19,7 @@ Cross-references:
 * [`docs/master_review_2026_06_07.md`](master_review_2026_06_07.md) —
   overall v0.4 refactor plan.
 
-Sources read (all under `python/slappyengine/ui/editor/`):
+Sources read (all under `python/pharos_engine/ui/editor/`):
 
 * `toolbar.py` — 4-button horizontal tool strip + snap + 2D/3D toggle.
 * `scene_outliner.py` — collapsing header + entity rows + dynamics
@@ -368,7 +368,7 @@ plain construction (data is set via `set_target` / `set_scene` / etc.).
 
 **Recommendation. ADOPT** — the shipping notebook panels already
 follow this. Enforce via a typing.Protocol declared in
-`slappyengine.ui.editor.panel_protocol` so linters catch drift.
+`pharos_engine.ui.editor.panel_protocol` so linters catch drift.
 
 **Effort.** small (~10 LOC to add the Protocol).
 
@@ -515,7 +515,7 @@ on `active_tool`:
 ```
 
 Wire via `NotebookToolbar.set_on_tool_change` → rebuild the options
-row. **Persist per-tool options** in `~/.slappyengine/tool_options.yaml`
+row. **Persist per-tool options** in `~/.pharos_engine/tool_options.yaml`
 so users don't reset snap-size every session.
 
 **Effort.** ~150 LOC — one options-row widget + tool-specific
@@ -571,7 +571,7 @@ Start minimal:
 * Ctrl+V deserialises the slot into a new entity, offsets position
   by `(8, 8)`, appends to the scene, selects it.
 * JSON round-trip (not pickle) so paste can go across editor
-  sessions via a `~/.slappyengine/clipboard.json` cache.
+  sessions via a `~/.pharos_engine/clipboard.json` cache.
 
 Later (T8): multi-entity clipboard, cross-project paste, prompt
 inheritance.
@@ -616,7 +616,7 @@ project root.
 
 `NotebookSpawnMenu` today shows all cards in a fixed order. Add a
 "Recently used" section at the top of the modal, populated from
-`~/.slappyengine/<project>/spawn_history.json`:
+`~/.pharos_engine/<project>/spawn_history.json`:
 
 * Track the last 5 successfully-spawned actions.
 * Order by recency, most-recent-first.

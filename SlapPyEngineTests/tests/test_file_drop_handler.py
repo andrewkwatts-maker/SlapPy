@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.ui.editor.file_drop_handler` (EE4).
+"""Tests for :mod:`pharos_engine.ui.editor.file_drop_handler` (EE4).
 
 Covers classification per extension, dispatch semantics, batch
 robustness (one failure doesn't abort the whole drop), and default
@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-from slappyengine.ui.editor.file_drop_handler import (
+from pharos_engine.ui.editor.file_drop_handler import (
     COMPOUND_SUFFIX_MAP,
     DEFAULT_SHADER_DIR,
     DropAction,
@@ -439,7 +439,7 @@ def test_default_theme_handler_copies_into_user_theme_store(tmp_path: Path) -> N
 
 
 def test_default_prefab_handler_registers_and_spawns(tmp_path: Path) -> None:
-    from slappyengine.prefabs import Prefab, PrefabLibrary
+    from pharos_engine.prefabs import Prefab, PrefabLibrary
 
     prefab = Prefab(
         name="drop_test_circle",
@@ -535,5 +535,5 @@ def test_extension_maps_are_disjoint() -> None:
 
 def test_default_shader_dir_is_under_home() -> None:
     assert DEFAULT_SHADER_DIR.is_absolute()
-    assert "slappyengine" in str(DEFAULT_SHADER_DIR).lower()
+    assert "pharos_engine" in str(DEFAULT_SHADER_DIR).lower()
 

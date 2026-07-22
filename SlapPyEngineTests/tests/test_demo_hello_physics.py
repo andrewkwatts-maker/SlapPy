@@ -6,7 +6,7 @@ setting ``scene.pixel_physics_enabled = True``. We stub wgpu +
 ``SLAPPYENGINE_MAX_FRAMES=2`` to run headlessly.
 
 Note: the demo imports :mod:`random` + :mod:`numpy` at module scope, NOT
-any ``slappyengine.physics``/``physics2`` WIP dir — the ``pixel_physics``
+any ``pharos_engine.physics``/``physics2`` WIP dir — the ``pixel_physics``
 pass lives in the compute pipeline, not the WIP scaffolding.
 
 Pins:
@@ -30,7 +30,7 @@ _DEMO_PATH = _REPO_ROOT / "SlapPyEngineExamples" / "examples" / "hello_physics.p
 
 
 def _install_engine_stubs(monkeypatch):
-    from slappyengine import engine as engine_mod
+    from pharos_engine import engine as engine_mod
 
     class _StubCanvas:
         def __init__(self, *_, **__):

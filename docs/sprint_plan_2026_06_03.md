@@ -106,13 +106,13 @@ not actually implemented (or actively frozen via the WIP-commit reminder).
 
 ### Sprint 1 — Editor UI Theme Overhaul (TeenGirl Notebook)
 
-**Goal:** ship a switchable "TeenGirl Notebook" theme for `slappyengine.ui.editor`
+**Goal:** ship a switchable "TeenGirl Notebook" theme for `pharos_engine.ui.editor`
 that achieves a hand-decorated-paper aesthetic via nine-slice / SVG /
 shaders — zero per-asset PNG bloat in the wheel.
 
 **Deliverables:**
 
-* `python/slappyengine/ui/editor/theme_notebook.py` — pastel palette
+* `python/pharos_engine/ui/editor/theme_notebook.py` — pastel palette
   (paper cream, sticker pink, washi mint, highlighter yellow) +
   `apply_notebook_theme()` companion to the existing
   `apply_glass_theme()` in `theme.py`.
@@ -128,15 +128,15 @@ shaders — zero per-asset PNG bloat in the wheel.
 * Highlighter selection overlay — a translucent yellow rectangle pass
   rendered over selected items in the scene outliner and viewport.
 * Handwritten font — Patrick Hand or Caveat (open-licensed) shipped as
-  TTF in `python/slappyengine/ui/editor/assets/` (~50 KB).
+  TTF in `python/pharos_engine/ui/editor/assets/` (~50 KB).
 * `ext/ui` shim entry so the theme is reachable as
-  `slappyengine.ext.ui.NotebookTheme`.
+  `pharos_engine.ext.ui.NotebookTheme`.
 * Wheel-size delta target: **≤ +200 KB** (font + 6 washi tapes +
   shader source). Per `docs/wheel_size_audit_2026_06_02.md` the
   current wheel is ~1.45 MB; budget is 50 MB.
 
 **Dependencies:** none. Reads the v0.3 Nova3D glassmorphism theme
-(`python/slappyengine/ui/editor/theme.py`) as the reference pattern.
+(`python/pharos_engine/ui/editor/theme.py`) as the reference pattern.
 
 **Test plan:**
 
@@ -182,11 +182,11 @@ tripwires.
 
 **Deliverables:**
 
-* `python/slappyengine/ecs/registry.py` — `ComponentRegistry` (name
+* `python/pharos_engine/ecs/registry.py` — `ComponentRegistry` (name
   → type, schema introspection, system-opt-in flag).
-* `python/slappyengine/ecs/storage.py` — sparse-set component storage
+* `python/pharos_engine/ecs/storage.py` — sparse-set component storage
   back-end, opt-in per registered component.
-* `python/slappyengine/ecs/system.py` — `System` base + lifecycle
+* `python/pharos_engine/ecs/system.py` — `System` base + lifecycle
   hooks (`on_attach_scene`, `pre_tick`, `tick`, `post_tick`,
   `on_detach_scene`), plus `Scheduler` walking systems in declared
   order.
@@ -246,26 +246,26 @@ manifest plumbing.
 
 ### Sprint 3 — Animation Graph + IK Retargeting
 
-**Goal:** promote `slappyengine.animation` from "graph + procedural
+**Goal:** promote `pharos_engine.animation` from "graph + procedural
 rig" to a full authoring surface — blend trees, keyframe interpolation,
 FBX / GLTF import (via `[animation] extra`), and IK retargeting
 between skeletons.
 
 **Deliverables:**
 
-* `python/slappyengine/animation/blend_tree.py` — `BlendNode`,
+* `python/pharos_engine/animation/blend_tree.py` — `BlendNode`,
   `BlendNode1D`, `BlendNode2D` (Cartesian blend), `BlendTree`
   evaluator producing per-bone transforms.
-* `python/slappyengine/animation/keyframe.py` — `Keyframe`,
+* `python/pharos_engine/animation/keyframe.py` — `Keyframe`,
   `KeyframeTrack`, `interpolate_linear`, `interpolate_hermite`,
   `interpolate_bezier`.
-* `python/slappyengine/animation/import_gltf.py` — optional import of
+* `python/pharos_engine/animation/import_gltf.py` — optional import of
   GLTF/GLB animation channels onto `ProceduralRig` skeletons
   (depends on `pygltflib`, gated by `[animation]` extra).
-* `python/slappyengine/animation/import_fbx.py` — optional FBX import
+* `python/pharos_engine/animation/import_fbx.py` — optional FBX import
   via `fbx-sdk-python` (gated by `[animation-fbx]` extra,
   large dependency).
-* `python/slappyengine/animation/retarget.py` — `BoneMap` between
+* `python/pharos_engine/animation/retarget.py` — `BoneMap` between
   source and target rigs, `retarget_clip(clip, bone_map)` producing
   a new clip aligned to the target's bind pose.
 * Integration with the existing `dynamics.IKChainSpec` + `solve_ik`
@@ -319,10 +319,10 @@ inside the editor's `MaterialEditor` panel, with live preview and
 
 **Deliverables:**
 
-* `python/slappyengine/ui/editor/material_graph_canvas.py` — graph
+* `python/pharos_engine/ui/editor/material_graph_canvas.py` — graph
   canvas with draggable nodes, connection lines, context menu to
   add nodes from `KNOWN_NODE_TYPES`, click-to-edit param fields.
-* `python/slappyengine/material/serialize.py` — `save_material`,
+* `python/pharos_engine/material/serialize.py` — `save_material`,
   `load_material` round-trip to `.material` YAML files (same envelope
   as `dynamics.save_world`).
 * Live preview pane — a 256x256 swatch rendering the material onto a
@@ -387,16 +387,16 @@ curves over life, one-shot vs looping cues, editor preview.
 
 **Deliverables:**
 
-* `python/slappyengine/vfx/emitter.py` — `Emitter`, `EmitterShape`
+* `python/pharos_engine/vfx/emitter.py` — `Emitter`, `EmitterShape`
   (Point / Line / Disc / Box / Mesh), `EmitterRate` (per-second /
   burst / curve), `EmitterCue` (one-shot / looping / trigger-on-event).
-* `python/slappyengine/vfx/force_field.py` — `Gravity`,
+* `python/pharos_engine/vfx/force_field.py` — `Gravity`,
   `Drag`, `Vortex`, `Turbulence`, `Attractor` force-field classes
   composed into an `EffectStack`.
-* `python/slappyengine/vfx/curves.py` — `Curve` (key-value spline)
+* `python/pharos_engine/vfx/curves.py` — `Curve` (key-value spline)
   driving color-over-life, size-over-life, alpha-over-life,
   rotation-over-life.
-* `python/slappyengine/vfx/effect.py` — top-level `Effect` bundling
+* `python/pharos_engine/vfx/effect.py` — top-level `Effect` bundling
   emitter + force-field stack + curves; `Effect.play()`,
   `Effect.stop()`, `Effect.is_playing`.
 * `.effect` YAML file format for save/load (same envelope as
@@ -448,15 +448,15 @@ preview panel, ~300 tests, ~150 docs).
 ### Sprint 6 — Profiler + Debug HUD overlay
 
 **Goal:** ship an in-editor + in-game live profiler overlay consuming
-`slappyengine.telemetry` events: per-frame timeline, allocation rate,
+`pharos_engine.telemetry` events: per-frame timeline, allocation rate,
 GPU vs CPU split, hot-path flame graph. Toggle with F3.
 
 **Deliverables:**
 
-* `python/slappyengine/telemetry/profiler.py` —
+* `python/pharos_engine/telemetry/profiler.py` —
   `FrameProfiler.begin(name)` / `.end(name)` context-manager pair
   emitting bracketed `telemetry.emit` events; thread-safe.
-* `python/slappyengine/ui/debug_overlay.py` (extend the existing
+* `python/pharos_engine/ui/debug_overlay.py` (extend the existing
   module) — `ProfilerOverlay` widget drawing:
   * Per-frame timeline (last 240 frames, ~4 s @ 60 fps).
   * CPU vs GPU split bar (uses wgpu timestamp queries when
@@ -520,25 +520,25 @@ build pipeline UI, profiler integration, docs sweep, full CHANGELOG.
 
 **Deliverables:**
 
-* `python/slappyengine/i18n.py` — `StringTable`, `set_locale`,
+* `python/pharos_engine/i18n.py` — `StringTable`, `set_locale`,
   `tr(key, **kwargs)`, YAML loader for `strings.<locale>.yml`.
 * Editor + HUD widget pass — wrap every literal in `tr(...)`. Ship
   English baseline + Spanish + Japanese sample translations.
-* `python/slappyengine/ui/editor/input_remap_panel.py` — UI to
+* `python/pharos_engine/ui/editor/input_remap_panel.py` — UI to
   rebind `ActionMap` keys, with conflict detection. YAML round-trip
   into the existing `ActionMap` data class.
 * Audio backend hardening round — close the un-audited boundary path
   from `docs/roadmap.md` mid-term (sample-rate conversion,
   mono/stereo, ring-buffer underrun). Adds
   `test_hardening_audio_backend.py`.
-* `python/slappyengine/scene/loader.py` — `SceneLoader` with
+* `python/pharos_engine/scene/loader.py` — `SceneLoader` with
   progress callback (`on_progress(fraction, message)`), integrated
   with the editor's scene-load action and exposed via
   `Engine.load_scene_async`.
-* `python/slappyengine/save_version.py` — `SAVE_SCHEMA_VERSION`,
+* `python/pharos_engine/save_version.py` — `SAVE_SCHEMA_VERSION`,
   `migrate_save(blob)` chain so old `save_world` blobs round-trip
   forward without raising.
-* `python/slappyengine/ui/editor/build_panel.py` — visual wrapper
+* `python/pharos_engine/ui/editor/build_panel.py` — visual wrapper
   over `build_gen.py` + `content_encrypt.py`: select platforms,
   toggle 3D extra, encrypt content, hit Build, see output.
 * Profiler integration into the editor — Sprint 6's overlay is

@@ -1,7 +1,7 @@
 """Regression test pinning the Phase D step 6 unblock port.
 
 ``CellMaterial`` and ``cell_material_for`` moved from
-``slappyengine.deform_modes`` into ``slappyengine._compat`` so the five
+``pharos_engine.deform_modes`` into ``pharos_engine._compat`` so the five
 legacy ``physics/*`` consumers (``body.py``, ``boundary_exchange.py``,
 ``pressure_multigrid.py``, ``scene_loader.py``, ``world.py``) survive
 the eventual deletion of ``deform_modes.py``.
@@ -21,11 +21,11 @@ import dataclasses
 
 import pytest
 
-from slappyengine._compat import CellMaterial, cell_material_for
+from pharos_engine._compat import CellMaterial, cell_material_for
 
 
 # Expected default values for every field on the CellMaterial dataclass.
-# Sourced verbatim from python/slappyengine/deform_modes.py (the
+# Sourced verbatim from python/pharos_engine/deform_modes.py (the
 # pre-port reference) so the port stays a true verbatim copy.
 _EXPECTED_DEFAULTS = {
     # Mechanical

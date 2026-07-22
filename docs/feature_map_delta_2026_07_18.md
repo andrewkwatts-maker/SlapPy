@@ -10,7 +10,7 @@ batch).
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`slappyengine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `view.toggle_camera_bounds`   | `view_toggle_camera_bounds_actions.toggle_camera_bounds`   | view  |
 | `edit.select_last_spawned`    | `edit_select_last_spawned_actions.select_last_spawned`     | edit  |
@@ -20,14 +20,14 @@ Five more action ids landed in this tick, moving 5 rows from STUB
 
 New action modules:
 
-* `python/slappyengine/actions/view_toggle_camera_bounds_actions.py`
-* `python/slappyengine/actions/edit_select_last_spawned_actions.py`
-* `python/slappyengine/actions/spawn_at_previous_click_actions.py`
-* `python/slappyengine/actions/layer_sort_by_z_actions.py`
-* `python/slappyengine/actions/snap_toggle_pixel_perfect_actions.py`
+* `python/pharos_engine/actions/view_toggle_camera_bounds_actions.py`
+* `python/pharos_engine/actions/edit_select_last_spawned_actions.py`
+* `python/pharos_engine/actions/spawn_at_previous_click_actions.py`
+* `python/pharos_engine/actions/layer_sort_by_z_actions.py`
+* `python/pharos_engine/actions/snap_toggle_pixel_perfect_actions.py`
 
 Router entries and `_fb_*` shims live in
-`python/slappyengine/tool_router.py` under the
+`python/pharos_engine/tool_router.py` under the
 `# ── AAA4 STUB-triage: view.toggle_camera_bounds,
 edit.select_last_spawned, spawn.at_previous_click, layer.sort_by_z,
 snap.toggle_pixel_perfect (round 27) ──` block.

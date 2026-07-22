@@ -1,14 +1,14 @@
 # ParticleField GPU Buffer Layout
 
 Design document for the upcoming GPU compute port of
-`slappyengine.physics.particle_field.ParticleField`. Covers std430 storage
+`pharos_engine.physics.particle_field.ParticleField`. Covers std430 storage
 buffer layouts for the per-particle SoA, 2D textures for the per-pixel state,
 growth + readback strategies, workgroup sizing, and a migration order.
 
 This is a **design** doc — no code is committed against it yet. The shape of
 each buffer is dictated by the existing CPU SoA on `ParticleField`
-(see `python/slappyengine/physics/particle_field.py`, `__post_init__` at line
-482) and the lazy-loaded `slappyengine.compute` API
+(see `python/pharos_engine/physics/particle_field.py`, `__post_init__` at line
+482) and the lazy-loaded `pharos_engine.compute` API
 (`ComputePipeline`, `ReadbackBuffer`, etc.).
 
 ---

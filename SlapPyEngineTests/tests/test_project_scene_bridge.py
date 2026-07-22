@@ -1,4 +1,4 @@
-"""Tripwire suite for :mod:`slappyengine.project_scene_bridge` (GG2).
+"""Tripwire suite for :mod:`pharos_engine.project_scene_bridge` (GG2).
 
 Covers the surface exposed to the notebook editor:
 
@@ -10,7 +10,7 @@ Covers the surface exposed to the notebook editor:
 
 Every test uses ``tmp_path`` for both the project directory *and* an
 isolated :class:`ProjectRegistry` ``store_path`` so the suite never
-touches the user's ``~/.slappyengine/projects.yaml``.
+touches the user's ``~/.pharos_engine/projects.yaml``.
 """
 from __future__ import annotations
 
@@ -18,18 +18,18 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine.project_registry import (
+from pharos_engine.project_registry import (
     ProjectRegistry,
     RegisteredProject,
 )
-from slappyengine.project_scene_bridge import (
+from pharos_engine.project_scene_bridge import (
     PROJECT_MANIFEST_NAME,
     SCENES_SUBDIR,
     ProjectSceneBridge,
     ProjectSceneIndex,
     create_project_with_scene,
 )
-from slappyengine.scenes import SCENE_SUFFIX, Scene, SceneFile
+from pharos_engine.scenes import SCENE_SUFFIX, Scene, SceneFile
 
 
 # ─────────────────────────────────────────────────────────────────────────────

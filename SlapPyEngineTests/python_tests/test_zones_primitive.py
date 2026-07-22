@@ -1,4 +1,4 @@
-"""Tests for slappyengine.zones — generic zone primitive.
+"""Tests for pharos_engine.zones — generic zone primitive.
 
 Covers the Phase B contract:
 
@@ -8,13 +8,13 @@ Covers the Phase B contract:
 * :class:`ZoneManager.update` emits ``on_enter`` / ``on_exit`` correctly
   for entities moving across zone boundaries between frames.
 * Material-tag round-trips through the data model.
-* The public surface is reachable via ``from slappyengine import zones``.
+* The public surface is reachable via ``from pharos_engine import zones``.
 """
 from __future__ import annotations
 
 import pytest
 
-from slappyengine.zones import RectZone, ThresholdZone, ZoneManager
+from pharos_engine.zones import RectZone, ThresholdZone, ZoneManager
 
 
 # ── RectZone geometry ─────────────────────────────────────────────────────
@@ -263,15 +263,15 @@ class TestZoneManagerBookkeeping:
         assert not mgr.is_fired("t")
 
 
-# ── Public surface reachable from slappyengine root ───────────────────────
+# ── Public surface reachable from pharos_engine root ───────────────────────
 
 
 class TestPublicSurface:
-    """`from slappyengine import zones` exposes the canonical types."""
+    """`from pharos_engine import zones` exposes the canonical types."""
 
     def test_lazy_import_via_root_package(self):
-        import slappyengine
-        zones_mod = slappyengine.zones
+        import pharos_engine
+        zones_mod = pharos_engine.zones
         assert zones_mod.RectZone is RectZone
         assert zones_mod.ThresholdZone is ThresholdZone
         assert zones_mod.ZoneManager is ZoneManager

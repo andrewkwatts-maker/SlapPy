@@ -1,4 +1,4 @@
-"""Tests for the ``slappyengine.ui.theme.washi_tape`` shader library.
+"""Tests for the ``pharos_engine.ui.theme.washi_tape`` shader library.
 
 Covers:
 
@@ -15,7 +15,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.ui.theme.washi_tape import (
+from pharos_engine.ui.theme.washi_tape import (
     WASHI_TAPES,
     WashiTapeStyle,
     bake_tape_texture,
@@ -304,7 +304,7 @@ def test_bake_tape_texture_rejects_unknown_kwarg():
 
 
 def test_washi_corner_spec_accepts_tape_style_id():
-    from slappyengine.ui.editor.panel_decor import (
+    from pharos_engine.ui.editor.panel_decor import (
         WashiCornerSpec, WashiCornerStyle,
     )
 
@@ -317,7 +317,7 @@ def test_washi_corner_spec_accepts_tape_style_id():
 
 
 def test_washi_corner_spec_rejects_unknown_tape_style_id():
-    from slappyengine.ui.editor.panel_decor import (
+    from pharos_engine.ui.editor.panel_decor import (
         WashiCornerSpec, WashiCornerStyle,
     )
 
@@ -330,7 +330,7 @@ def test_washi_corner_spec_rejects_unknown_tape_style_id():
 
 
 def test_washi_corner_spec_none_tape_style_id_keeps_legacy_path():
-    from slappyengine.ui.editor.panel_decor import (
+    from pharos_engine.ui.editor.panel_decor import (
         WashiCornerSpec, WashiCornerStyle,
     )
 

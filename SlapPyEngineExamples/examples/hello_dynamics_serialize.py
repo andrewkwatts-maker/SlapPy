@@ -1,6 +1,6 @@
 """SlapPyEngine — Hello Dynamics Serialize
 
-Demo of :func:`slappyengine.dynamics.serialize.save_world` /
+Demo of :func:`pharos_engine.dynamics.serialize.save_world` /
 :func:`load_world`. A 16-node rope is built, stepped 60 frames, saved
 to JSON, then loaded into a second world. Both worlds are stepped
 another 60 frames in parallel; the final positions must match within
@@ -20,8 +20,8 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.dynamics import RopeSpec, World, build_rope
-from slappyengine.dynamics.serialize import save_world, load_world
+from pharos_engine.dynamics import RopeSpec, World, build_rope
+from pharos_engine.dynamics.serialize import save_world, load_world
 
 
 def build_world() -> tuple[World, object]:

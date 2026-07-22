@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.text import (
+from pharos_engine.text import (
     SDF_TEXT_WGSL,
     SDFGlyph,
     SDFGlyphAtlas,

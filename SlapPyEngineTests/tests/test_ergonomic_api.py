@@ -1,18 +1,18 @@
 """Tripwire suite for the HH1 ergonomic top-level API.
 
-Covers :mod:`slappyengine.app`:
+Covers :mod:`pharos_engine.app`:
 
-* Two-line ``slappyengine.launch(...)`` render pattern.
-* :class:`slappyengine.App` lifecycle (``begin`` / ``tick`` / ``end``).
+* Two-line ``pharos_engine.launch(...)`` render pattern.
+* :class:`pharos_engine.App` lifecycle (``begin`` / ``tick`` / ``end``).
 * :class:`ModelHandle` mutation + trace log.
 * Multi-extension model loader dispatch (``.obj`` / ``.gltf`` / ``.glb`` /
   ``.fbx``).
 * :class:`AppConfig` YAML round-trip + missing-file first-run scaffold.
 * Headless fallback fires all hooks (``enable_gpu=False``).
 * :meth:`App.close` idempotency + post-close guard.
-* Module-level ``slappyengine.load_model`` implicit global.
+* Module-level ``pharos_engine.load_model`` implicit global.
 
-See ``python/slappyengine/app.py`` for the surface under test.
+See ``python/pharos_engine/app.py`` for the surface under test.
 """
 from __future__ import annotations
 
@@ -21,8 +21,8 @@ from pathlib import Path
 
 import pytest
 
-import slappyengine
-from slappyengine.app import (
+import pharos_engine
+from pharos_engine.app import (
     App,
     AppConfig,
     CameraHandle,
@@ -53,7 +53,7 @@ def test_top_level_exports_present():
         "load_model",
         "load_texture",
     ):
-        assert hasattr(slappyengine, name), f"missing top-level export: {name}"
+        assert hasattr(pharos_engine, name), f"missing top-level export: {name}"
 
 
 def test_top_level_exports_in_all():
@@ -64,7 +64,7 @@ def test_top_level_exports_in_all():
         "load_model",
         "load_texture",
     ):
-        assert name in slappyengine.__all__
+        assert name in pharos_engine.__all__
 
 
 # ---------------------------------------------------------------------------
@@ -74,7 +74,7 @@ def test_top_level_exports_in_all():
 
 def test_two_line_render_pattern():
     """The whole point of the HH1 sprint — 2 lines to render."""
-    app = slappyengine.launch(
+    app = pharos_engine.launch(
         on_begin=lambda a: a.load_model("bunny.obj"),
         max_frames=60,
     )

@@ -21,8 +21,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.post_process.chain import PostProcessChain
-from slappyengine.post_process.vignette import (
+from pharos_engine.post_process.chain import PostProcessChain
+from pharos_engine.post_process.vignette import (
     VignettePass,
     synth_grey_frame,
     vignette_factor,
@@ -360,7 +360,7 @@ def test_executor_packs_vignette_params() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Visual baseline — uses slappyengine.testing.assert_scene_matches
+# Visual baseline — uses pharos_engine.testing.assert_scene_matches
 # ---------------------------------------------------------------------------
 
 class _StaticVignetteScene:
@@ -380,7 +380,7 @@ class _StaticVignetteScene:
 
 def test_vignette_visual_baseline_smooth_shoulder() -> None:
     """Golden-master visual regression for the round-4 smooth shoulder."""
-    from slappyengine.testing import assert_scene_matches
+    from pharos_engine.testing import assert_scene_matches
 
     vp = VignettePass(strength=1.0, inner_radius=0.25, feather=0.5)
     scene = _StaticVignetteScene(128, 128, vp)
@@ -399,7 +399,7 @@ def test_vignette_visual_baseline_legacy_shoulder() -> None:
     Locks the legacy ``pow(d*s, 2)`` shoulder so any future change to
     the legacy branch trips this and the explicit numeric tests above.
     """
-    from slappyengine.testing import assert_scene_matches
+    from pharos_engine.testing import assert_scene_matches
 
     vp = VignettePass(strength=1.0, inner_radius=0.5, feather=0.0)
     scene = _StaticVignetteScene(128, 128, vp)

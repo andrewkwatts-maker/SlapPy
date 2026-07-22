@@ -1,12 +1,12 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.testing — API Reference
+# pharos_engine.testing — API Reference
 
 > Hand-curated reference for the testing subpackage. The auto-generator
 > (`scripts/gen_subpackage_api_docs.py`) skips files carrying the
 > `<!-- handauthored: do not regenerate -->` marker above.
 
 ```python
-from slappyengine.testing import (
+from pharos_engine.testing import (
     assert_scene_matches,
     render_scene_to_png,
     diff_pngs,
@@ -17,12 +17,12 @@ from slappyengine.testing import (
 
 ## Overview
 
-`slappyengine.testing` is the engine's **visual regression harness**.
+`pharos_engine.testing` is the engine's **visual regression harness**.
 Any engine change can be screenshot-verified with a single line of
 test code:
 
 ```python
-from slappyengine.testing import assert_scene_matches
+from pharos_engine.testing import assert_scene_matches
 assert_scene_matches(my_scene, "hello_softbody")
 ```
 
@@ -156,7 +156,7 @@ Raises:
 ### `BASELINES_DIR`
 
 `Path(__file__).parent / "baselines"`. Resolves to
-`python/slappyengine/testing/baselines/`. Ships **inside the wheel** so
+`python/pharos_engine/testing/baselines/`. Ships **inside the wheel** so
 downstream games can run the same harness against their own scenes
 without depending on the source tree.
 
@@ -197,11 +197,11 @@ three conventions:
 
 ## Inner module surface
 
-- `slappyengine.testing.assert_scene_matches` /
+- `pharos_engine.testing.assert_scene_matches` /
   `render_scene_to_png` / `diff_pngs` — public entry points.
-- `slappyengine.testing.BASELINES_DIR` / `DIFF_DIR` — directory
+- `pharos_engine.testing.BASELINES_DIR` / `DIFF_DIR` — directory
   constants resolved at import.
-- `slappyengine.testing._validation` — private input-validation
+- `pharos_engine.testing._validation` — private input-validation
   helpers. Re-exported for introspection only; not part of the
   contract.
 

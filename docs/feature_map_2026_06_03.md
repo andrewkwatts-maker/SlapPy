@@ -10,7 +10,7 @@
 > Nova3D pattern audit ([`ui_pattern_audit_2026_06_03.md`](ui_pattern_audit_2026_06_03.md)).
 >
 > WIP-frozen perimeters per memory note `project_sprint_2026_05_29.md`:
-> `python/slappyengine/softbody/` and `python/slappyengine/fluid/` are
+> `python/pharos_engine/softbody/` and `python/pharos_engine/fluid/` are
 > NOT touched — surfaces listed below were read from `__init__.py`
 > without exercising the modules.
 
@@ -115,7 +115,7 @@ Behaviour vocabulary:
 
 ### 2.1 `NotebookToolbar` — stationery-tray reskin
 
-`python/slappyengine/ui/editor/notebook_toolbar.py` — `NotebookToolbar`
+`python/pharos_engine/ui/editor/notebook_toolbar.py` — `NotebookToolbar`
 
 | Widget | Label | Type | Line | Behaviour | Spec target |
 |---|---|---|---|---|---|
@@ -130,7 +130,7 @@ Behaviour vocabulary:
 
 ### 2.2 `NotebookOutliner` — pressed-flowers bestiary
 
-`python/slappyengine/ui/editor/notebook_outliner.py` — `NotebookOutliner`
+`python/pharos_engine/ui/editor/notebook_outliner.py` — `NotebookOutliner`
 
 | Widget | Label | Type | Line | Behaviour | Spec target |
 |---|---|---|---|---|---|
@@ -147,7 +147,7 @@ Behaviour vocabulary:
 
 ### 2.3 `NotebookInspector` — field-journal entry
 
-`python/slappyengine/ui/editor/notebook_inspector.py` — `NotebookInspector`
+`python/pharos_engine/ui/editor/notebook_inspector.py` — `NotebookInspector`
 
 Sections render dynamically via `_render_body` based on `_iter_fields()`; the widget choice is dispatched by `_render_field`. The table enumerates dispatch types, not literal widgets (count varies per target).
 
@@ -173,7 +173,7 @@ Sections render dynamically via `_render_body` based on `_iter_fields()`; the wi
 
 ### 2.4 `NotebookGizmoOverlay` — coloured-pencil sketches
 
-`python/slappyengine/ui/editor/notebook_gizmos.py` — `NotebookGizmoOverlay`
+`python/pharos_engine/ui/editor/notebook_gizmos.py` — `NotebookGizmoOverlay`
 
 The overlay paints into a draw-list-protocol object (DPG drawlist OR mock) and does its own hit-testing. There are no DPG buttons; the "widgets" below are the *handle keys* exposed by `hit_test`.
 
@@ -193,7 +193,7 @@ The overlay paints into a draw-list-protocol object (DPG drawlist OR mock) and d
 
 ### 2.5 `NotebookCodePanel` — diary-page Code Mode
 
-`python/slappyengine/ui/editor/notebook_code_panel.py` — `NotebookCodePanel`
+`python/pharos_engine/ui/editor/notebook_code_panel.py` — `NotebookCodePanel`
 
 | Widget | Label | Type | Line | Behaviour | Spec target |
 |---|---|---|---|---|---|
@@ -210,7 +210,7 @@ The overlay paints into a draw-list-protocol object (DPG drawlist OR mock) and d
 
 ### 2.6 `NotebookSpawnMenu` — trading-card deck
 
-`python/slappyengine/ui/editor/notebook_spawn_menu.py` — `NotebookSpawnMenu` + `SPAWN_CARDS` (10 entries)
+`python/pharos_engine/ui/editor/notebook_spawn_menu.py` — `NotebookSpawnMenu` + `SPAWN_CARDS` (10 entries)
 
 | Widget | Label | Type | Line | Behaviour | Spec target |
 |---|---|---|---|---|---|
@@ -231,7 +231,7 @@ The overlay paints into a draw-list-protocol object (DPG drawlist OR mock) and d
 
 ### 2.7 `NotebookMaterialEditor` — colour-story page
 
-`python/slappyengine/ui/editor/notebook_material_editor.py` — `NotebookMaterialEditor`
+`python/pharos_engine/ui/editor/notebook_material_editor.py` — `NotebookMaterialEditor`
 
 | Widget | Label | Type | Line | Behaviour | Spec target |
 |---|---|---|---|---|---|
@@ -248,7 +248,7 @@ The overlay paints into a draw-list-protocol object (DPG drawlist OR mock) and d
 
 ### 2.8 `NotebookWelcome` — diary front cover
 
-`python/slappyengine/ui/editor/notebook_welcome.py` — `NotebookWelcome`
+`python/pharos_engine/ui/editor/notebook_welcome.py` — `NotebookWelcome`
 
 | Widget | Label | Type | Line | Behaviour | Spec target |
 |---|---|---|---|---|---|
@@ -266,7 +266,7 @@ The overlay paints into a draw-list-protocol object (DPG drawlist OR mock) and d
 
 ### 2.9 `NotebookStatusBar` — marginalia row
 
-`python/slappyengine/ui/editor/notebook_status_bar.py` — `NotebookStatusBar`
+`python/pharos_engine/ui/editor/notebook_status_bar.py` — `NotebookStatusBar`
 
 | Widget | Label / role | Type | Line | Behaviour | Spec target |
 |---|---|---|---|---|---|
@@ -284,7 +284,7 @@ The overlay paints into a draw-list-protocol object (DPG drawlist OR mock) and d
 
 ### 2.10 `NotebookHotkeys` — global hotkey table
 
-`python/slappyengine/ui/editor/notebook_hotkeys.py` — `NotebookHotkeys` + `BINDINGS` (16 entries)
+`python/pharos_engine/ui/editor/notebook_hotkeys.py` — `NotebookHotkeys` + `BINDINGS` (16 entries)
 
 | Key | Command id | Behaviour | Notes |
 |---|---|---|---|
@@ -307,7 +307,7 @@ The overlay paints into a draw-list-protocol object (DPG drawlist OR mock) and d
 
 ### 2.11 `ThemeSwitcherPanel` — live theme hot-swap
 
-`python/slappyengine/ui/editor/theme_switcher_panel.py` — `ThemeSwitcherPanel`
+`python/pharos_engine/ui/editor/theme_switcher_panel.py` — `ThemeSwitcherPanel`
 
 | Widget | Label | Type | Line | Behaviour | Spec target |
 |---|---|---|---|---|---|
@@ -330,7 +330,7 @@ The overlay paints into a draw-list-protocol object (DPG drawlist OR mock) and d
 ### 3.1 First-run → welcome → pick project → enter editor
 
 1. `Engine.run_editor()` → `EditorShell.setup_theme_subsystem()`
-   ([shell.py:210](../python/slappyengine/ui/editor/shell.py#L210)) registers the six diary themes, applies `ui_settings.default_theme`, builds the `CreatureScheduler`, registers built-in creatures, installs the `CreatureBusAdapter`, spawns the `IdleEventEmitter`, and stages the `ThemeSwitcherPanel`.
+   ([shell.py:210](../python/pharos_engine/ui/editor/shell.py#L210)) registers the six diary themes, applies `ui_settings.default_theme`, builds the `CreatureScheduler`, registers built-in creatures, installs the `CreatureBusAdapter`, spawns the `IdleEventEmitter`, and stages the `ThemeSwitcherPanel`.
 2. `EditorShell.setup()` calls `setup_notebook_panels()` which constructs the toolbar, outliner, inspector, and gizmo overlay.
 3. `dpg.create_context()` runs (line 384) and the layout is built.
 4. If `ui_settings.welcome_shown == False`, the shell calls `show_welcome()` which lazily constructs `NotebookWelcome` and binds it to the creature scheduler.
@@ -341,7 +341,7 @@ The overlay paints into a draw-list-protocol object (DPG drawlist OR mock) and d
 
 ### 3.2 Select entity in outliner → property inspector populates
 
-1. User clicks the per-row name button → `_handle_select(entity)` ([notebook_outliner.py:657](../python/slappyengine/ui/editor/notebook_outliner.py#L657)).
+1. User clicks the per-row name button → `_handle_select(entity)` ([notebook_outliner.py:657](../python/pharos_engine/ui/editor/notebook_outliner.py#L657)).
 2. `_on_select` chained callback fires → `EditorShell._on_entity_selected(entity)`.
 3. Shell stashes `self._selected_entity = entity`, pushes `set_selection_count(1)` to the status bar, calls `_inspector.set_target(entity)` and `_gizmo_overlay.set_entity(entity)`.
 4. `NotebookInspector.set_target` triggers `refresh()` which wipes the current body and re-runs `_render_body` → categorises fields into Transform / Properties / References → builds three `WashiPanel`s with the appropriate widget per type.
@@ -378,7 +378,7 @@ The overlay paints into a draw-list-protocol object (DPG drawlist OR mock) and d
 2. Clicks "Summon!" on a Rope card → `NotebookSpawnMenu.summon("rope")` → `_open_summon_modal` → modal with embedded `NotebookInspector` on a `RopeSpawnSpec`.
 3. User adjusts fields → inspector writes back to the spec.
 4. User clicks modal "Summon!" → `submit_modal()` → `on_spawn("rope", spec_dict)` callback fires.
-5. `EditorShell._on_spawn_action_*` (per-card-id handler) builds the dynamics entity via `slappyengine.dynamics.build_rope(...)`, adds it to `engine.scene`, and notifies the outliner.
+5. `EditorShell._on_spawn_action_*` (per-card-id handler) builds the dynamics entity via `pharos_engine.dynamics.build_rope(...)`, adds it to `engine.scene`, and notifies the outliner.
 6. Outliner picks up the new entity on its next `refresh()` call.
 
 **Flow status:** WORKS for the dynamics-builder cards (rope / ragdoll / humanoid / ik_chain). **STUB for non-dynamics cards** (lights / material / emitter / zones) — the modal opens and the `on_spawn` callback fires, but the shell does not have a handler that consumes the resulting spec dict for these card ids. See §4 below.
@@ -391,39 +391,39 @@ The overlay paints into a draw-list-protocol object (DPG drawlist OR mock) and d
 
 | Panel | Widget | Source line | Why it's dead |
 |---|---|---|---|
-| `NotebookCodePanel` | `+ New` tab | [521-545](../python/slappyengine/ui/editor/notebook_code_panel.py#L521) | Only appends `("new_file_clicked",)` to `call_log` |
-| `NotebookCodePanel` | "Saved" footer button | [745-751](../python/slappyengine/ui/editor/notebook_code_panel.py#L745) | Only flips `_saved_indicator` local bool — no engine save |
-| `NotebookInspector` | "[clip]" path picker | [659-665](../python/slappyengine/ui/editor/notebook_inspector.py#L659) | Only logs `("path_picker", name)` — no OS file dialog |
-| `NotebookInspector` | `?` help popup | [880-898](../python/slappyengine/ui/editor/notebook_inspector.py#L880) | Pops a popup but doc lookup is naive class-docstring substring search |
-| `NotebookSpawnMenu` | Point Light card | [771-858](../python/slappyengine/ui/editor/notebook_spawn_menu.py#L771) | Modal opens; `on_spawn("light_point", ...)` fires; shell has no handler |
-| `NotebookSpawnMenu` | Sun card | [771-858](../python/slappyengine/ui/editor/notebook_spawn_menu.py#L771) | Same — no `light_directional` handler |
-| `NotebookSpawnMenu` | Material card | [771-858](../python/slappyengine/ui/editor/notebook_spawn_menu.py#L771) | Same — no material registration path |
-| `NotebookSpawnMenu` | Particle Emitter card | [771-858](../python/slappyengine/ui/editor/notebook_spawn_menu.py#L771) | No `vfx` system to bind to |
-| `NotebookHotkeys` | `ctrl+y` (redo) | BINDINGS line [70](../python/slappyengine/ui/editor/notebook_hotkeys.py#L70) | No engine hook; status message only |
-| `NotebookHotkeys` | `ctrl+n` (new) | BINDINGS line [71](../python/slappyengine/ui/editor/notebook_hotkeys.py#L71) | Same |
-| `NotebookHotkeys` | `ctrl+o` (open) | BINDINGS line [72](../python/slappyengine/ui/editor/notebook_hotkeys.py#L72) | Same |
-| `NotebookHotkeys` | `f1` (help) | BINDINGS line [73](../python/slappyengine/ui/editor/notebook_hotkeys.py#L73) | Same |
-| `NotebookHotkeys` | `f3` (profiler) | BINDINGS line [74](../python/slappyengine/ui/editor/notebook_hotkeys.py#L74) | Sprint 6 GAP |
-| `NotebookHotkeys` | `f11` (fullscreen) | BINDINGS line [76](../python/slappyengine/ui/editor/notebook_hotkeys.py#L76) | Same |
-| `NotebookHotkeys` | `s` / `t` / `r` / `c` (tool letters) | BINDINGS [77-80](../python/slappyengine/ui/editor/notebook_hotkeys.py#L77) | Hotkey table routes to missing `editor.tool_*` handlers; toolbar has its own `handle_shortcut` |
-| `NotebookHotkeys` | `h` (HUD toggle) | BINDINGS line [81](../python/slappyengine/ui/editor/notebook_hotkeys.py#L81) | No HUD toggle in shell |
-| `NotebookMaterialEditor` | 96×96 preview pane | [546-555](../python/slappyengine/ui/editor/notebook_material_editor.py#L546) | Placeholder text token; no actual radial-gradient draw |
-| `NotebookToolbar` | Creature slot | [233-240](../python/slappyengine/ui/editor/notebook_toolbar.py#L233) | Region reserved; no scheduler render call from inside the toolbar |
-| `NotebookStatusBar` | `set_world_cursor` | [289-294](../python/slappyengine/ui/editor/notebook_status_bar.py#L289) | Exposed; shell doesn't push values |
-| `NotebookStatusBar` | `set_fps` | [296-302](../python/slappyengine/ui/editor/notebook_status_bar.py#L296) | Same |
-| `NotebookWelcome` | sparkle pulse via `tick_sparkle` | [187-227](../python/slappyengine/ui/editor/notebook_welcome.py#L187) | Method exists; shell doesn't tick it |
+| `NotebookCodePanel` | `+ New` tab | [521-545](../python/pharos_engine/ui/editor/notebook_code_panel.py#L521) | Only appends `("new_file_clicked",)` to `call_log` |
+| `NotebookCodePanel` | "Saved" footer button | [745-751](../python/pharos_engine/ui/editor/notebook_code_panel.py#L745) | Only flips `_saved_indicator` local bool — no engine save |
+| `NotebookInspector` | "[clip]" path picker | [659-665](../python/pharos_engine/ui/editor/notebook_inspector.py#L659) | Only logs `("path_picker", name)` — no OS file dialog |
+| `NotebookInspector` | `?` help popup | [880-898](../python/pharos_engine/ui/editor/notebook_inspector.py#L880) | Pops a popup but doc lookup is naive class-docstring substring search |
+| `NotebookSpawnMenu` | Point Light card | [771-858](../python/pharos_engine/ui/editor/notebook_spawn_menu.py#L771) | Modal opens; `on_spawn("light_point", ...)` fires; shell has no handler |
+| `NotebookSpawnMenu` | Sun card | [771-858](../python/pharos_engine/ui/editor/notebook_spawn_menu.py#L771) | Same — no `light_directional` handler |
+| `NotebookSpawnMenu` | Material card | [771-858](../python/pharos_engine/ui/editor/notebook_spawn_menu.py#L771) | Same — no material registration path |
+| `NotebookSpawnMenu` | Particle Emitter card | [771-858](../python/pharos_engine/ui/editor/notebook_spawn_menu.py#L771) | No `vfx` system to bind to |
+| `NotebookHotkeys` | `ctrl+y` (redo) | BINDINGS line [70](../python/pharos_engine/ui/editor/notebook_hotkeys.py#L70) | No engine hook; status message only |
+| `NotebookHotkeys` | `ctrl+n` (new) | BINDINGS line [71](../python/pharos_engine/ui/editor/notebook_hotkeys.py#L71) | Same |
+| `NotebookHotkeys` | `ctrl+o` (open) | BINDINGS line [72](../python/pharos_engine/ui/editor/notebook_hotkeys.py#L72) | Same |
+| `NotebookHotkeys` | `f1` (help) | BINDINGS line [73](../python/pharos_engine/ui/editor/notebook_hotkeys.py#L73) | Same |
+| `NotebookHotkeys` | `f3` (profiler) | BINDINGS line [74](../python/pharos_engine/ui/editor/notebook_hotkeys.py#L74) | Sprint 6 GAP |
+| `NotebookHotkeys` | `f11` (fullscreen) | BINDINGS line [76](../python/pharos_engine/ui/editor/notebook_hotkeys.py#L76) | Same |
+| `NotebookHotkeys` | `s` / `t` / `r` / `c` (tool letters) | BINDINGS [77-80](../python/pharos_engine/ui/editor/notebook_hotkeys.py#L77) | Hotkey table routes to missing `editor.tool_*` handlers; toolbar has its own `handle_shortcut` |
+| `NotebookHotkeys` | `h` (HUD toggle) | BINDINGS line [81](../python/pharos_engine/ui/editor/notebook_hotkeys.py#L81) | No HUD toggle in shell |
+| `NotebookMaterialEditor` | 96×96 preview pane | [546-555](../python/pharos_engine/ui/editor/notebook_material_editor.py#L546) | Placeholder text token; no actual radial-gradient draw |
+| `NotebookToolbar` | Creature slot | [233-240](../python/pharos_engine/ui/editor/notebook_toolbar.py#L233) | Region reserved; no scheduler render call from inside the toolbar |
+| `NotebookStatusBar` | `set_world_cursor` | [289-294](../python/pharos_engine/ui/editor/notebook_status_bar.py#L289) | Exposed; shell doesn't push values |
+| `NotebookStatusBar` | `set_fps` | [296-302](../python/pharos_engine/ui/editor/notebook_status_bar.py#L296) | Same |
+| `NotebookWelcome` | sparkle pulse via `tick_sparkle` | [187-227](../python/pharos_engine/ui/editor/notebook_welcome.py#L187) | Method exists; shell doesn't tick it |
 
 ### 4.2 Lifecycle hooks that fail silently
 
 | Hook | Where | Failure mode |
 |---|---|---|
-| `EditorShell._dispatch_editor_command` | [shell.py:154-191](../python/slappyengine/ui/editor/shell.py#L154) | Catches every exception silently — pre-`__init__` engine state crashes simply set the status bar to a "cmd: …" hint |
-| `NotebookInspector._write_back` | [958-952](../python/slappyengine/ui/editor/notebook_inspector.py#L943) | Catches `AttributeError` / `TypeError` and swallows — read-only or `__slots__` attributes silently fail |
-| `NotebookInspector.refresh` | [251-294](../python/slappyengine/ui/editor/notebook_inspector.py#L251) | Headless `dpg` failures broadly try / except — when a widget destroy fails the panel leaks theme listeners |
+| `EditorShell._dispatch_editor_command` | [shell.py:154-191](../python/pharos_engine/ui/editor/shell.py#L154) | Catches every exception silently — pre-`__init__` engine state crashes simply set the status bar to a "cmd: …" hint |
+| `NotebookInspector._write_back` | [958-952](../python/pharos_engine/ui/editor/notebook_inspector.py#L943) | Catches `AttributeError` / `TypeError` and swallows — read-only or `__slots__` attributes silently fail |
+| `NotebookInspector.refresh` | [251-294](../python/pharos_engine/ui/editor/notebook_inspector.py#L251) | Headless `dpg` failures broadly try / except — when a widget destroy fails the panel leaks theme listeners |
 | `CreatureBusAdapter` event handlers | (per [`idle_animation_system_2026_06_03.md`](idle_animation_system_2026_06_03.md)) | Animation lookup miss is silently swallowed by the scheduler |
-| `NotebookHotkeys._dispatcher` | [322-326](../python/slappyengine/ui/editor/notebook_hotkeys.py#L322) | Catches `Exception` around the dispatch call; user can't see which command failed |
-| `NotebookCodePanel.regenerate` | [349-390](../python/slappyengine/ui/editor/notebook_code_panel.py#L349) | Async Ollama failure becomes a status line; no error log to disk |
-| `NotebookSpawnMenu.submit_modal` | [605-624](../python/slappyengine/ui/editor/notebook_spawn_menu.py#L605) | Catches every callback exception so "Summon!" appears to succeed even when the shell handler crashed |
+| `NotebookHotkeys._dispatcher` | [322-326](../python/pharos_engine/ui/editor/notebook_hotkeys.py#L322) | Catches `Exception` around the dispatch call; user can't see which command failed |
+| `NotebookCodePanel.regenerate` | [349-390](../python/pharos_engine/ui/editor/notebook_code_panel.py#L349) | Async Ollama failure becomes a status line; no error log to disk |
+| `NotebookSpawnMenu.submit_modal` | [605-624](../python/pharos_engine/ui/editor/notebook_spawn_menu.py#L605) | Catches every callback exception so "Summon!" appears to succeed even when the shell handler crashed |
 
 ### 4.3 Subsystems lacking editor surfaces
 
@@ -450,7 +450,7 @@ Ranked by impact / unlock-the-next-sprint dependency, sourced from §4.1-4.3 + [
 3. **Hotkey table routing** — wire `ctrl+y` / `ctrl+n` / `ctrl+o` / `f11` / `s`-`t`-`r`-`c` / `h` to actual shell or engine actions. Today they all dead-end into "cmd: …" status messages.
 4. **Visual node-graph canvas for `material.NodeMaterial`** — Sprint 4 deliverable; today's `NotebookMaterialEditor` only reflects fields, has no graph authoring (no canvas, no connection lines, no node library palette).
 5. **Animation graph editor + IK retargeting** — Sprint 3; `animation` subpackage is WORKING but lacks the editor canvas, blend-tree types, and GLTF importer.
-6. **VFX system (`slappyengine.vfx`) + emitter authoring panel** — Sprint 5; `particles.py` exists but no high-level Effect / Emitter / ForceField / Curve API and no editor panel.
+6. **VFX system (`pharos_engine.vfx`) + emitter authoring panel** — Sprint 5; `particles.py` exists but no high-level Effect / Emitter / ForceField / Curve API and no editor panel.
 7. **Profiler overlay (F3)** — Sprint 6; `telemetry` ships events; need a `FrameProfiler` + DPG overlay widget.
 8. **OS file picker for `NotebookInspector` Path fields and for `ctrl+o`** — single shared helper; covers two dead buttons.
 9. **`docs/api/ai.md` + `docs/api/network.md`** — two subpackage references missing from the doc-inventory tripwire (catches the next `test_docs_inventory.py` lockfile bump).

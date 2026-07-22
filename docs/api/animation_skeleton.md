@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.animation.skeleton_runtime — API Reference
+# pharos_engine.animation.skeleton_runtime — API Reference
 
 > Hand-written reference for the JJ4 skinned skeleton runtime.
 > Adds bone-hierarchy pose + linear-blend skinning + clip playback on
@@ -11,7 +11,7 @@
 
 ## Overview
 
-`slappyengine.animation.skeleton_runtime` (plus its two siblings
+`pharos_engine.animation.skeleton_runtime` (plus its two siblings
 `clip.py` and `skinner.py`) is the JJ4 skinned-mesh runtime. It builds
 on the following contract:
 
@@ -28,13 +28,13 @@ on the following contract:
   :class:`Animator`, which is the ergonomic entry point most callers
   should reach for.
 
-Every symbol is re-exported at :mod:`slappyengine.animation` top level
+Every symbol is re-exported at :mod:`pharos_engine.animation` top level
 so users import from there.
 
 ## Public surface
 
 ```python
-from slappyengine.animation import (
+from pharos_engine.animation import (
     Skeleton, SkeletonNode, SkinnedMeshData,
     PoseState, PosedSkeleton,
     AnimationChannel, AnimationClip,
@@ -47,7 +47,7 @@ from slappyengine.animation import (
 
 ### `SkeletonNode`
 
-_dataclass — defined in `slappyengine.animation.skeleton_runtime`_
+_dataclass — defined in `pharos_engine.animation.skeleton_runtime`_
 
 One bone. Carries `name: str`, `parent_index: int` (-1 for root),
 `translation`, `rotation` (quaternion `x, y, z, w`), `scale`, and a
@@ -55,7 +55,7 @@ cached `local_matrix` computed by :func:`compose_trs`.
 
 ### `Skeleton`
 
-_dataclass — defined in `slappyengine.animation.skeleton_runtime`_
+_dataclass — defined in `pharos_engine.animation.skeleton_runtime`_
 
 Ordered list of :class:`SkeletonNode` plus per-joint
 `inverse_bind_matrices: np.ndarray[N, 4, 4]`. Joints must be listed in
@@ -69,7 +69,7 @@ Exposes:
 
 ### `SkinnedMeshData`
 
-_dataclass — defined in `slappyengine.animation.skeleton_runtime`_
+_dataclass — defined in `pharos_engine.animation.skeleton_runtime`_
 
 Vertex-side skinning payload.
 
@@ -83,7 +83,7 @@ Vertex-side skinning payload.
 
 ### `PoseState`
 
-_dataclass — defined in `slappyengine.animation.skeleton_runtime`_
+_dataclass — defined in `pharos_engine.animation.skeleton_runtime`_
 
 Per-joint TRS overrides applied on top of the bind pose. Constructed
 via `PoseState.from_skeleton(skeleton)` — returns a zero-delta pose that
@@ -91,7 +91,7 @@ via `PoseState.from_skeleton(skeleton)` — returns a zero-delta pose that
 
 ### `PosedSkeleton`
 
-_class — defined in `slappyengine.animation.skeleton_runtime`_
+_class — defined in `pharos_engine.animation.skeleton_runtime`_
 
 ```python
 PosedSkeleton(skeleton: Skeleton)
@@ -108,7 +108,7 @@ Methods:
 
 ### `AnimationChannel`
 
-_dataclass — defined in `slappyengine.animation.clip`_
+_dataclass — defined in `pharos_engine.animation.clip`_
 
 One (joint, path) sampling channel — `joint_index`, `path` in
 `{"translation", "rotation", "scale"}`, `times: np.ndarray`,
@@ -117,7 +117,7 @@ One (joint, path) sampling channel — `joint_index`, `path` in
 
 ### `AnimationClip`
 
-_dataclass — defined in `slappyengine.animation.clip`_
+_dataclass — defined in `pharos_engine.animation.clip`_
 
 Named list of channels + duration.
 
@@ -128,7 +128,7 @@ Named list of channels + duration.
 
 ### `Skinner`
 
-_class — defined in `slappyengine.animation.skinner`_
+_class — defined in `pharos_engine.animation.skinner`_
 
 CPU linear blend skinner. Consumes a :class:`SkinnedMeshData` on
 construction. Call `skin(palette=palette) -> np.ndarray[V, 3]` per frame.
@@ -141,7 +141,7 @@ Raises:
 
 ### `Animator`
 
-_class — defined in `slappyengine.animation.skinner`_
+_class — defined in `pharos_engine.animation.skinner`_
 
 ```python
 Animator(
@@ -163,22 +163,22 @@ Raises `KeyError` on unknown clip name, `ValueError` on empty clip name.
 
 ### `compose_trs(t, r, s) -> np.ndarray[4, 4]`
 
-_defined in `slappyengine.animation.skeleton_runtime`_
+_defined in `pharos_engine.animation.skeleton_runtime`_
 
 Build a TRS matrix from a translation 3-vector, rotation quaternion
 `(x, y, z, w)`, and scale 3-vector.
 
 ### `quat_slerp(q0, q1, t) -> np.ndarray[4]`
 
-_defined in `slappyengine.animation.clip`_
+_defined in `pharos_engine.animation.clip`_
 
 Standard shortest-arc spherical linear quaternion interpolation.
 
 ## Usage
 
 ```python
-from slappyengine.asset_import import import_gltf
-from slappyengine.animation import Animator
+from pharos_engine.asset_import import import_gltf
+from pharos_engine.animation import Animator
 
 result = import_gltf("assets/hero.gltf")
 mesh = result.primary_mesh          # SkinnedMeshData
@@ -195,8 +195,8 @@ for _ in range(60):
 
 ## Skip the wrapper
 
-`slappyengine.animation.skeleton_runtime` / `.clip` / `.skinner` are
-Python-only. There is **no** Rust equivalent under `slappyengine._core`
+`pharos_engine.animation.skeleton_runtime` / `.clip` / `.skinner` are
+Python-only. There is **no** Rust equivalent under `pharos_engine._core`
 today; every LBS deform and clip sample runs in numpy. `Skinner.skin`
 is the obvious future rust-kernel candidate — the JJ4 landing
 deliberately sketched a `palette + bind_positions + joints + weights`

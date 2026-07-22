@@ -1,7 +1,7 @@
 """App lifecycle stress test suite (RR7).
 
-Hardens the contract of :func:`slappyengine.launch` /
-:meth:`slappyengine.app.App.run` under:
+Hardens the contract of :func:`pharos_engine.launch` /
+:meth:`pharos_engine.app.App.run` under:
 
 * 500-frame bare loops,
 * strict begin/tick/end ordering,
@@ -28,8 +28,8 @@ from typing import Any
 
 import pytest
 
-import slappyengine
-from slappyengine.app import App, AppConfig
+import pharos_engine
+from pharos_engine.app import App, AppConfig
 
 
 # ---------------------------------------------------------------------------
@@ -90,7 +90,7 @@ def test_500_frame_bare_lifecycle() -> None:
     def tick(app: App, dt: float) -> None:
         counter["n"] += 1
 
-    app = slappyengine.launch(
+    app = pharos_engine.launch(
         on_tick=tick,
         config=_headless_config(),
         max_frames=500,
@@ -123,7 +123,7 @@ def test_lifecycle_hook_ordering() -> None:
     rec = _LifecycleRecorder()
     N = 25
 
-    app = slappyengine.launch(
+    app = pharos_engine.launch(
         on_begin=rec.on_begin,
         on_tick=rec.on_tick,
         on_end=rec.on_end,
@@ -162,7 +162,7 @@ def test_all_subsystems_active_50_frames(tmp_path) -> None:
                 warn_records.append(record)
 
     handler = _WarnCounter(level=logging.WARNING)
-    root_slappy = logging.getLogger("slappyengine")
+    root_slappy = logging.getLogger("pharos_engine")
     root_slappy.addHandler(handler)
 
     app = App(_headless_config())
@@ -184,7 +184,7 @@ def test_all_subsystems_active_50_frames(tmp_path) -> None:
 
         # --- Physics3 world (LL7)
         try:
-            from slappyengine.physics3_bridge import Body3D, World3D
+            from pharos_engine.physics3_bridge import Body3D, World3D
             world3d = World3D(backend="fallback")
             # A handful of falling spheres for load.
             for i in range(4):
@@ -194,7 +194,7 @@ def test_all_subsystems_active_50_frames(tmp_path) -> None:
 
         # --- Audio listener (LL4)
         try:
-            from slappyengine.audio_3d import Audio3DEngine, AudioListener
+            from pharos_engine.audio_3d import Audio3DEngine, AudioListener
             listener = AudioListener(position=(0.0, 1.5, 0.0))
             audio_engine = Audio3DEngine()
             audio_engine.set_listener(listener)
@@ -265,7 +265,7 @@ def test_lifecycle_hook_exceptions_dont_crash_engine(caplog) -> None:
     app = App(_headless_config())
     caught: BaseException | None = None
     try:
-        with caplog.at_level(logging.DEBUG, logger="slappyengine"):
+        with caplog.at_level(logging.DEBUG, logger="pharos_engine"):
             try:
                 app.run(on_tick=bad_tick, on_end=on_end, max_frames=500)
             except RuntimeError as exc:
@@ -306,7 +306,7 @@ def test_lifecycle_no_hook_variants() -> None:
     def only_begin(app: App) -> None:
         begin_hits["n"] += 1
 
-    app1 = slappyengine.launch(
+    app1 = pharos_engine.launch(
         on_begin=only_begin,
         config=_headless_config(),
         max_frames=5,
@@ -322,7 +322,7 @@ def test_lifecycle_no_hook_variants() -> None:
     def only_end(app: App) -> None:
         end_hits["n"] += 1
 
-    app2 = slappyengine.launch(
+    app2 = pharos_engine.launch(
         on_end=only_end,
         config=_headless_config(),
         max_frames=5,
@@ -334,7 +334,7 @@ def test_lifecycle_no_hook_variants() -> None:
         app2.close()
 
     # And the fully-empty variant — must at least advance frame_count.
-    app3 = slappyengine.launch(config=_headless_config(), max_frames=3)
+    app3 = pharos_engine.launch(config=_headless_config(), max_frames=3)
     try:
         assert app3.frame_count == 3
     finally:
@@ -355,7 +355,7 @@ def test_lifecycle_deterministic_dt() -> None:
     def tick(app: App, dt: float) -> None:
         dts.append(dt)
 
-    app = slappyengine.launch(
+    app = pharos_engine.launch(
         on_tick=tick,
         config=_headless_config(),
         max_frames=20,
@@ -395,7 +395,7 @@ def test_lifecycle_max_frames_env(monkeypatch) -> None:
     def tick(app: App, dt: float) -> None:
         tick_count["n"] += 1
 
-    app = slappyengine.launch(
+    app = pharos_engine.launch(
         on_tick=tick,
         config=_headless_config(),
         max_frames=cap,

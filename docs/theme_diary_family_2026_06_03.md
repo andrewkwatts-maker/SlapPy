@@ -75,7 +75,7 @@ ui:
 
 The settings keys map 1:1 to the `Settings.ui` dataclass (Phase A
 work). Headless / CI runs force `creature_animations = False` and
-`stickers.enabled = False` via the existing `slappyengine.testing`
+`stickers.enabled = False` via the existing `pharos_engine.testing`
 fixture chain.
 
 ---
@@ -625,7 +625,7 @@ the transition.
 ### 4.1 API sketch
 
 ```python
-# python/slappyengine/ui/editor/theme.py (Phase A scaffold)
+# python/pharos_engine/ui/editor/theme.py (Phase A scaffold)
 def apply_diary_theme(
     theme_id: Literal[
         "teengirl_notebook",
@@ -710,7 +710,7 @@ ui:
    `reduced_motion = true` regardless of the YAML value.
 2. CI / headless detection → force `creature_animations = false` and
    `stickers.enabled = false`.
-3. `config/editor_theme.yml` (user file under `~/.config/slappyengine/`).
+3. `config/editor_theme.yml` (user file under `~/.config/pharos_engine/`).
 4. Built-in theme default (the per-theme manifest at §3.x).
 
 ### 5.3 Per-creature opt-out semantics
@@ -766,7 +766,7 @@ sample ✅).
   - `apply_teengirl_notebook_theme()` round-trips with the baseline
     in a `pytest -k theme_switch` test.
   - Idle creature tick ≤ 1 ms / frame measured by
-    `slappyengine.telemetry`.
+    `pharos_engine.telemetry`.
   - One visual-regression baseline per panel (toolbar, scene
     outliner, inspector, code mode) at 1080p.
 

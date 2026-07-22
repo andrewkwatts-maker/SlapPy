@@ -1,11 +1,11 @@
 """
-Tests for `slappyengine.audio_runtime` — the sounddevice shim.
+Tests for `pharos_engine.audio_runtime` — the sounddevice shim.
 
 These tests cover:
   - Real backend selection when `sounddevice` is importable.
   - Stub backend fallback when `sounddevice` is missing.
   - Exactly one WARNING is logged on stub-mode import.
-  - `slappyengine.audio` routes playback through `audio_runtime.get_backend()`.
+  - `pharos_engine.audio` routes playback through `audio_runtime.get_backend()`.
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ import pytest
 
 def _reload_runtime():
     """Force-reimport `audio_runtime` so module-import side-effects re-run."""
-    import slappyengine.audio_runtime as ar
+    import pharos_engine.audio_runtime as ar
     importlib.reload(ar)
     return ar
 
@@ -78,15 +78,15 @@ def test_stub_backend_when_sounddevice_absent():
 def test_warning_logged_once_for_stub(caplog):
     expected = (
         "sounddevice not installed; audio playback is a no-op stub. "
-        "Install slappy-engine[audio] to enable sound."
+        "Install pharos-engine[audio] to enable sound."
     )
     with mock.patch.dict(sys.modules, {"sounddevice": None}):
-        with caplog.at_level(logging.WARNING, logger="slappyengine.audio"):
+        with caplog.at_level(logging.WARNING, logger="pharos_engine.audio"):
             ar = _reload_runtime()
             warnings = [
                 r for r in caplog.records
                 if r.levelno == logging.WARNING
-                and r.name == "slappyengine.audio"
+                and r.name == "pharos_engine.audio"
                 and r.getMessage() == expected
             ]
             assert len(warnings) == 1, (
@@ -113,7 +113,7 @@ def test_warning_logged_once_for_stub(caplog):
 
 def test_audio_module_uses_runtime():
     """`audio.play_sound(...)` must route through audio_runtime.get_backend()."""
-    from slappyengine import audio, audio_runtime
+    from pharos_engine import audio, audio_runtime
 
     mock_backend = mock.MagicMock()
     mock_backend.is_real.return_value = True

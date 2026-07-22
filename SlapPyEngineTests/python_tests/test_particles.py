@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.physics.particles`.
+"""Tests for :mod:`pharos_engine.physics.particles`.
 
 These cover the public surface promised by the visual particle system:
 emission, motion integration (gravity + drag), life-decay culling, the
@@ -13,7 +13,7 @@ import random
 import numpy as np
 import pytest
 
-from slappyengine.physics.particles import (
+from pharos_engine.physics.particles import (
     Particle,
     ParticleSystem,
     style_for_material,

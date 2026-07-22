@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from slappyengine.softbody import (
+from pharos_engine.softbody import (
     SoftBodyRenderConfig, SoftBodyRenderer, SoftBodyWorld,
     VehicleSpec, build_vehicle, make_lattice_body, step,
 )

@@ -13,9 +13,9 @@ import warnings
 
 import pytest
 
-from slappyengine.fluid import FluidWorld
-from slappyengine.softbody import SoftBodyWorld
-from slappyengine.ui.editor.spawn_menu import (
+from pharos_engine.fluid import FluidWorld
+from pharos_engine.softbody import SoftBodyWorld
+from pharos_engine.ui.editor.spawn_menu import (
     SpawnAction,
     SpawnMenu,
     create_spawn_menu,
@@ -243,7 +243,7 @@ def test_add_fluid_pool_adds_particles():
 
 def test_add_sand_pile_uses_sand_material():
     """add_sand_pile is a convenience wrapper that pins material to 'sand'."""
-    from slappyengine.fluid import SAND
+    from pharos_engine.fluid import SAND
 
     menu = create_spawn_menu()
     fworld = FluidWorld()

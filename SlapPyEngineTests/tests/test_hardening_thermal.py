@@ -1,10 +1,10 @@
-"""Input-validation tests for the public ``slappyengine.thermal`` API."""
+"""Input-validation tests for the public ``pharos_engine.thermal`` API."""
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from slappyengine.thermal import HeatField
+from pharos_engine.thermal import HeatField
 
 
 # ---------------------------------------------------------------------------

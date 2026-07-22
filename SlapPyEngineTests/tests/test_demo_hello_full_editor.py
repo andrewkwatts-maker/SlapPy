@@ -222,7 +222,7 @@ def test_fx_dreamy_preset_loaded(trace_events) -> None:
 
 
 def test_code_expression_evaluated(trace_events) -> None:
-    """``slappyengine.math.evaluate`` must return a real number."""
+    """``pharos_engine.math.evaluate`` must return a real number."""
     evt = next(
         (e for e in trace_events if e["kind"] == "code_evaluated"),
         None,

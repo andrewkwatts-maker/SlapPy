@@ -46,7 +46,7 @@ def test_event_bus_publish_returns_payload_with_attrs() -> None:
     Bullet Strata's reactive HUD and Ochema Circuit's Sprint 3 telemetry
     both depend on.
     """
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
 
     bus = EventBus()
     result = bus.publish("test.topic", publisher="unit", value=42)
@@ -78,7 +78,7 @@ def test_event_bus_publish_returns_payload_with_dict_access() -> None:
     Ochema Circuit's Sprint 3 audio system uses this pattern (see
     ``docs/game_compat_2026_07_07.md`` §10-11).
     """
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
 
     bus = EventBus()
     result = bus.publish("test.topic", publisher="unit", value=42)
@@ -109,7 +109,7 @@ def test_audio_manager_play_loop_returns_handle_with_control_methods() -> None:
     .set_volume() / .set_pitch()``.  This test documents the contract and
     ``xfail``s cleanly until the lightweight-wrapper backfill lands.
     """
-    from slappyengine.audio import AudioManager
+    from pharos_engine.audio import AudioManager
 
     mgr = AudioManager()
     handle = mgr.play_loop(None, volume=0.5, pitch=1.0)
@@ -143,7 +143,7 @@ def test_lighting_system_load_profile_night_rally_returns_config() -> None:
     against silent behaviour change and ``xfail``s cleanly if the return
     is still ``None``.
     """
-    from slappyengine.lighting import LightingSystem
+    from pharos_engine.lighting import LightingSystem
 
     # LightingSystem requires (gpu, width, height); a plain stub gpu is
     # sufficient because load_profile only mutates in-memory ambient
@@ -200,7 +200,7 @@ def test_render_target_add_layer_accepts_dict_layer_spec() -> None:
     aspirational contract — if the engine still requires a Layer instance
     we ``xfail`` cleanly and pin the current behaviour for regressions.
     """
-    from slappyengine.render_target import RenderTarget
+    from pharos_engine.render_target import RenderTarget
 
     rt = RenderTarget(name="dict_spec_test", size=(32, 32))
 
@@ -210,7 +210,7 @@ def test_render_target_add_layer_accepts_dict_layer_spec() -> None:
     except AttributeError:
         # Layer-only contract still holds: verify the *positive* path
         # so we don't silently regress add_layer(Layer(...)) either.
-        from slappyengine.layer import Layer
+        from pharos_engine.layer import Layer
         added = rt.add_layer(Layer(name="fallback"))
         assert added is not None
         assert len(rt.layers) == 1
@@ -235,8 +235,8 @@ def test_observable_dynamic_subclass_with_asset_chain() -> None:
     construction — this is the exact pattern Bullet Strata's reactive
     HUD uses to build per-widget observable-backed assets at runtime.
     """
-    from slappyengine.asset import Asset
-    from slappyengine.event_bus import Observable
+    from pharos_engine.asset import Asset
+    from pharos_engine.event_bus import Observable
 
     # Dynamic subclass — no explicit __init__, so cooperative chain
     # must resolve both Observable AND Asset attribute init.
@@ -270,7 +270,7 @@ def test_cache_mode_offscreen_serialize_value_is_str() -> None:
     literals from disk (`"offscreen_serialize"`).  VV1 restored the str
     shape after +26 game-compat sites regressed on int shape.
     """
-    residency = pytest.importorskip("slappyengine.residency.manager")
+    residency = pytest.importorskip("pharos_engine.residency.manager")
     CacheMode = getattr(residency, "CacheMode", None)
     if CacheMode is None:
         pytest.skip("CacheMode not exported (older engine build)")
@@ -290,7 +290,7 @@ def test_cache_mode_always_cached_value_is_str_if_present() -> None:
     string-typed variant VV1 restored. Skip cleanly if the variant is
     absent so this test doesn't block older builds.
     """
-    residency = pytest.importorskip("slappyengine.residency.manager")
+    residency = pytest.importorskip("pharos_engine.residency.manager")
     CacheMode = getattr(residency, "CacheMode", None)
     if CacheMode is None:
         pytest.skip("CacheMode not exported")
@@ -313,7 +313,7 @@ def test_cache_mode_all_variants_are_str_valued() -> None:
     Prevents a future 'clean-up' pass from flipping one variant to int
     and shipping the mixed-type breakage the game-compat runs caught.
     """
-    residency = pytest.importorskip("slappyengine.residency.manager")
+    residency = pytest.importorskip("pharos_engine.residency.manager")
     CacheMode = getattr(residency, "CacheMode", None)
     if CacheMode is None:
         pytest.skip("CacheMode not exported")

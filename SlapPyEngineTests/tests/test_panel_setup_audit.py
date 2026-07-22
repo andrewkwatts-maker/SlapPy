@@ -163,9 +163,9 @@ def stub_dpg(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def reset_theme_registry():
-    from slappyengine.ui.theme import _reset_registry_for_tests
-    from slappyengine.ui.widgets import notebook_theme
-    from slappyengine.ui.theme.creatures import (
+    from pharos_engine.ui.theme import _reset_registry_for_tests
+    from pharos_engine.ui.widgets import notebook_theme
+    from pharos_engine.ui.theme.creatures import (
         _reset_default_scheduler_for_tests,
     )
 
@@ -185,7 +185,7 @@ def reset_theme_registry():
 
 def _make_shell():
     """Build an :class:`EditorShell` against a minimal engine stub."""
-    from slappyengine.ui.editor.shell import EditorShell
+    from pharos_engine.ui.editor.shell import EditorShell
 
     class _StubEngine:
         def __init__(self):
@@ -200,7 +200,7 @@ def _wire_default_panels(shell):
     shell.setup_notebook_panels()
     # Content browser is lazily built by setup() — instantiate one
     # manually so compose_default_panel_layout has a target to wrap.
-    from slappyengine.ui.editor.notebook_content_browser import (
+    from pharos_engine.ui.editor.notebook_content_browser import (
         NotebookContentBrowser,
     )
     shell._content_browser = NotebookContentBrowser(
@@ -319,7 +319,7 @@ class TestPanelRegistry:
 
     def test_register_panel_routes_to_slot_for_known_kind(self):
         """A ``NotebookInspector`` passed to register_panel fills ``_inspector``."""
-        from slappyengine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
 
         shell = _make_shell()
         shell.setup_theme_subsystem()
@@ -368,14 +368,14 @@ class TestFloatingPanelVisibility:
         shell = _wire_default_panels(_make_shell())
         # Wire the optional floating panels — compose_default_panel_layout
         # only emits a wrapper when the underlying panel is non-None.
-        from slappyengine.ui.editor.notebook_welcome import NotebookWelcome
-        from slappyengine.ui.editor.notebook_project_picker import (
+        from pharos_engine.ui.editor.notebook_welcome import NotebookWelcome
+        from pharos_engine.ui.editor.notebook_project_picker import (
             NotebookProjectPicker,
         )
-        from slappyengine.ui.editor.notebook_material_editor import (
+        from pharos_engine.ui.editor.notebook_material_editor import (
             NotebookMaterialEditor,
         )
-        from slappyengine.ui.editor.notebook_code_panel import (
+        from pharos_engine.ui.editor.notebook_code_panel import (
             NotebookCodePanel,
         )
 
@@ -472,7 +472,7 @@ class TestTogglePanel:
 class TestMinSizeClamp:
     def test_set_size_clamps_to_min(self):
         """Audit fix #4 — set_size enforces min before configure_item."""
-        from slappyengine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
 
         class _Panel:
             def build(self, parent_tag):
@@ -484,7 +484,7 @@ class TestMinSizeClamp:
 
     def test_min_size_passed_to_dpg_window(self, stub_dpg):
         """``min_size`` flows through to ``dpg.window`` as a 2-list."""
-        from slappyengine.ui.editor.movable_panel import MovablePanelWindow
+        from pharos_engine.ui.editor.movable_panel import MovablePanelWindow
 
         class _Panel:
             def build(self, parent_tag):

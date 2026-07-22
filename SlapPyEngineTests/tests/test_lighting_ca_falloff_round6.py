@@ -20,14 +20,14 @@ import pytest
 # Bare-import so the test exits cleanly on environments where post_process
 # is unavailable, mirroring the pattern used by tests/test_postprocess.py.
 try:
-    from slappyengine.post_process.chain import (
+    from pharos_engine.post_process.chain import (
         PostProcessChain,
         PostProcessPass,
     )
-    from slappyengine.post_process.executor import PostProcessExecutor  # noqa: F401
+    from pharos_engine.post_process.executor import PostProcessExecutor  # noqa: F401
 except ImportError as _pp_err:  # pragma: no cover - guarded fallback only
     pytest.skip(
-        f"slappyengine.post_process not importable: {_pp_err}",
+        f"pharos_engine.post_process not importable: {_pp_err}",
         allow_module_level=True,
     )
 

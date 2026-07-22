@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _OCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _OCHEMA_STR = str(_OCHEMA_DIR)
@@ -58,7 +58,7 @@ class TestPlayerProfileCoins:
         assert p.spend(60) is True
 
     def test_earn_publishes_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         p = self._profile()
         events = []
         h = subscribe("PlayerProfile.CoinsEarned", lambda e: events.append(e))
@@ -67,7 +67,7 @@ class TestPlayerProfileCoins:
         assert len(events) == 1
 
     def test_spend_publishes_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         p = self._profile()
         p.earn(100)
         events = []
@@ -231,7 +231,7 @@ class TestAchievementSystemUnlock:
         ach.teardown()
 
     def test_unlock_publishes_event(self, tmp_path):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ach = self._ach(tmp_path)
         events = []
         h = subscribe("Achievement.Unlocked|speed_demon", lambda e: events.append(e))
@@ -255,7 +255,7 @@ class TestAchievementSystemEventHandlers:
         return ach
 
     def test_race_started_resets_state(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ach = self._ach(tmp_path)
         vehicle = MagicMock()
         ach.set_player_vehicle(vehicle)
@@ -268,7 +268,7 @@ class TestAchievementSystemEventHandlers:
         ach.teardown()
 
     def test_speed_demon_unlocked_at_threshold(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.achievement_system import MAX_SPEED_CFG
         ach = self._ach(tmp_path)
         vehicle = MagicMock()
@@ -279,7 +279,7 @@ class TestAchievementSystemEventHandlers:
         ach.teardown()
 
     def test_speed_below_threshold_no_unlock(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.achievement_system import MAX_SPEED_CFG
         ach = self._ach(tmp_path)
         vehicle = MagicMock()
@@ -290,7 +290,7 @@ class TestAchievementSystemEventHandlers:
         ach.teardown()
 
     def test_collision_sets_lap_had_collision(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ach = self._ach(tmp_path)
         vehicle = MagicMock()
         ach.set_player_vehicle(vehicle)
@@ -299,7 +299,7 @@ class TestAchievementSystemEventHandlers:
         ach.teardown()
 
     def test_nitro_junkie_after_ten_uses(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ach = self._ach(tmp_path)
         vehicle = MagicMock()
         ach.set_player_vehicle(vehicle)
@@ -310,7 +310,7 @@ class TestAchievementSystemEventHandlers:
         ach.teardown()
 
     def test_collector_after_500_coins(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ach = self._ach(tmp_path)
         publish("Race.CoinCollected", publisher=None, amount=500)
         ach_obj = next(a for a in ach.get_all() if a.id == "collector")
@@ -318,7 +318,7 @@ class TestAchievementSystemEventHandlers:
         ach.teardown()
 
     def test_hat_trick_after_three_laps(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ach = self._ach(tmp_path)
         vehicle = MagicMock()
         ach.set_player_vehicle(vehicle)
@@ -330,7 +330,7 @@ class TestAchievementSystemEventHandlers:
         ach.teardown()
 
     def test_integrity_tracks_minimum(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ach = self._ach(tmp_path)
         vehicle = MagicMock()
         ach.set_player_vehicle(vehicle)
@@ -340,7 +340,7 @@ class TestAchievementSystemEventHandlers:
         ach.teardown()
 
     def test_vehicle_destroyed_increments_count(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ach = self._ach(tmp_path)
         vehicle = MagicMock()
         ai = MagicMock()
@@ -350,7 +350,7 @@ class TestAchievementSystemEventHandlers:
         ach.teardown()
 
     def test_player_destroyed_not_counted(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ach = self._ach(tmp_path)
         vehicle = MagicMock()
         ach.set_player_vehicle(vehicle)
@@ -359,7 +359,7 @@ class TestAchievementSystemEventHandlers:
         ach.teardown()
 
     def test_race_finished_unlocks_first_win(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ach = self._ach(tmp_path)
         vehicle = MagicMock()
         ach.set_player_vehicle(vehicle)
@@ -384,7 +384,7 @@ class TestAchievementSystemPersistence:
 
     def test_coins_persisted(self, tmp_path):
         from systems.achievement_system import AchievementSystem
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ach1 = AchievementSystem(save_dir=str(tmp_path))
         publish("Race.CoinCollected", publisher=None, amount=200)
         ach1.teardown()

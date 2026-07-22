@@ -18,8 +18,8 @@ sys.path.insert(
     0, str(Path(__file__).resolve().parent.parent.parent / "python")
 )
 
-from slappyengine.layer import Layer, Layer2D, Layer3D, Camera3D  # noqa: E402
-from slappyengine.scene import Scene  # noqa: E402
+from pharos_engine.layer import Layer, Layer2D, Layer3D, Camera3D  # noqa: E402
+from pharos_engine.scene import Scene  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

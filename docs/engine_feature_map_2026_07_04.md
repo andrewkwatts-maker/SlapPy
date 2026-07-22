@@ -3,17 +3,17 @@
 Comprehensive audit mapping every user-facing editor action to its
 implementation status. Rows are drawn from:
 
-* `python/slappyengine/tool_router.py` — the canonical
+* `python/pharos_engine/tool_router.py` — the canonical
   `REGISTRY` of 53 `ToolAction`s that gate every hotkey / spawn /
   menu invocation.
-* `python/slappyengine/ui/editor/shell.py` — DPG viewport menu bar
+* `python/pharos_engine/ui/editor/shell.py` — DPG viewport menu bar
   (`File` / `Edit` / `View` / `Help`) + left-panel tool buttons +
   About modal.
-* `python/slappyengine/ui/editor/notebook_toolbar.py` — Select /
+* `python/pharos_engine/ui/editor/notebook_toolbar.py` — Select /
   Move / Rotate / Scale sticker-button toolbar.
-* `python/slappyengine/ui/editor/notebook_spawn_menu.py` — 10 spawn
+* `python/pharos_engine/ui/editor/notebook_spawn_menu.py` — 10 spawn
   cards with Summon / Cancel modal buttons.
-* `python/slappyengine/ui/editor/notebook_diary_page.py` — Run /
+* `python/pharos_engine/ui/editor/notebook_diary_page.py` — Run /
   Stop / mode-toggle / Save / Open... footer ribbon +
   Generate-Python-from-Nodes stub.
 * Notebook panels (`notebook_outliner`, `notebook_inspector`,
@@ -27,7 +27,7 @@ implementation status. Rows are drawn from:
   `anim_graph_panel`, `code_mode_panel`, `content_browser`,
   `material_editor`, `node_graph_panel`, `property_inspector`,
   `script_binding_panel`).
-* `python/slappyengine/ui/editor/notebook_hotkeys.py` —
+* `python/pharos_engine/ui/editor/notebook_hotkeys.py` —
   `_BINDINGS_FROZEN` 27 keyboard shortcuts.
 
 Status legend:
@@ -103,7 +103,7 @@ Status legend:
 | 54 | Welcome menu | `Help → Welcome` | WIRED | `shell.py:1496` → `show_welcome` | Same as F1. |
 | 55 | About menu | `Help → About` | WIRED | `shell.py:1501` → `menu_about` | Renders modal + returns info dict. |
 | 56 | About modal Close | `Help → About → Close` | WIRED | `shell.py:3139` → `dpg.delete_item(modal_tag)` | |
-| 57 | Spawn Rope | Spawn card Summon | WIRED | `notebook_spawn_menu.py:186` + `tool_router.py:892` | Rust `softbody_solver.slappyengine_step`. |
+| 57 | Spawn Rope | Spawn card Summon | WIRED | `notebook_spawn_menu.py:186` + `tool_router.py:892` | Rust `softbody_solver.pharos_engine_step`. |
 | 58 | Spawn Ragdoll | Spawn card Summon | WIRED | `notebook_spawn_menu.py:193` + `tool_router.py:900` | |
 | 59 | Spawn Humanoid | Spawn card Summon | WIRED | `notebook_spawn_menu.py:200` + `tool_router.py:908` | Rust `ik_solver.solve_ik`. |
 | 60 | Spawn IK Chain | Spawn card Summon | WIRED | `notebook_spawn_menu.py:207` + `tool_router.py:916` | |
@@ -126,7 +126,7 @@ Status legend:
 | 77 | Diary: Save | Footer `Save` button | WIRED | `notebook_diary_page.py:894` → `save()` | Writes .py + meta.yaml. |
 | 78 | Diary: Open… | Footer `Open...` button | STUB | `notebook_diary_page.py:903` → `_open_clicked` | Only routes to `engine.open_diary_picker` if hook present; otherwise sets "file picker not bound" status. |
 | 79 | Diary: Generate Python from nodes | Nodes-pane button | STUB | `notebook_diary_page.py:965` → `_generate_python_from_nodes` | Emits a placeholder snippet; module docstring says "stub". |
-| 80 | Diary: run script (imports softbody) | Diary tick | BROKEN | `notebook_diary_page.py:497` `from slappyengine.softbody import step` | Import happens per-tick; softbody/ is uncommitted WIP and won't resolve on a fresh checkout. |
+| 80 | Diary: run script (imports softbody) | Diary tick | BROKEN | `notebook_diary_page.py:497` `from pharos_engine.softbody import step` | Import happens per-tick; softbody/ is uncommitted WIP and won't resolve on a fresh checkout. |
 | 81 | Outliner: Row click (select) | Left-click row | WIRED | `notebook_outliner.py:958` → `_handle_select` | |
 | 82 | Outliner: Ctrl-click / Shift-click | Multi-select modifiers | WIRED | `notebook_outliner.py:654-657` → `toggle_in_selection` / `extend_selection_to` | |
 | 83 | Outliner: Right-click context menu | Context modal | WIRED | `notebook_outliner.py:600` → `invoke_context_action(act)` | Runs the 6 action handlers below. |
@@ -358,25 +358,25 @@ Status legend:
 | 309 | `edit.mirror_selection_z` action | Router action id (KK7) | WIRED | `tool_router.py` → `_fb_mirror_selection_z` → `actions/edit_mirror_actions.py::mirror_selection_z` | Blender `Ctrl+M Z` — 3D-scene mirror. For 2D shells the `z_height` slot is written when the position stays length-2 so pixel-art tilemaps still round-trip. Same pivot / scale / return contract as rows 307-308. |
 | 310 | `view.orbit_selection` action | Router action id (KK7) | WIRED | `tool_router.py` → `_fb_orbit_selection` → `actions/view_orbit_actions.py::orbit_selection` | Blender `Numpad 4/6/8/2` — spins the viewport camera around the selection centroid. Increments `_cam_yaw` / `_cam_pitch` by `ctx["yaw_deg"]` (default 15°) / `ctx["pitch_deg"]` (default 0°). Pitch clamped to `[-π/2 + ε, π/2 - ε]` so the up-vector never inverts. Retargets `_cam_target` to the selection centroid on every fire (mirrors AA1 `view.center_on_selection`). Returns `no_camera` / `no_selection` / `no_positions` / success `orbited` (with `yaw` / `pitch` in radians + degrees). |
 | 311 | `view.top_down_view` action | Router action id (KK7) | WIRED | `tool_router.py` → `_fb_top_down_view` → `actions/view_snap_actions.py::top_down_view` | Blender `Numpad 7` — snaps the viewport camera to a top-down orthographic pose. Writes `_cam_yaw = 0`, `_cam_pitch = -π/2`, and (when the slot exists) `_cam_projection = "ortho"` (pass `ctx["projection"]="perspective"` to keep perspective). Optional `ctx["selection"]` / `ctx["entities"]` retargets `_cam_target` to the centroid; when omitted the previous look-at is kept so the snap only changes orientation. Returns `no_camera` / success `snapped` (with `view = "top_down"`, `yaw`, `pitch`, `projection`, `target`). |
-| 312 | Real wgpu forward pipeline (JJ1) | `slappyengine.render.Renderer` + `PipelineCache` | WIRED | `render/pipeline.py:213` (`PipelineCache`), `render/pipeline.py:406` (`create_forward_pipeline`), `render/renderer.py:90` (`Renderer`) | Nova3D parity Sprint 1 (commit `3ea1432`). Replaces the HH4 null-fallback stub with a real wgpu-backed forward pipeline — vertex-attribute descriptors, blend-mode LUT, forward + sprite + line bind-group layouts, PSO cache keyed on `_PipelineKey`. Backed by 587 tests (`test_render_pipeline_wgpu.py`); `Renderer.begin_frame`/`draw_mesh`/`end_frame` walk the cache when `is_wgpu_available()` succeeds, else return `NullRenderer` sentinel. |
-| 313 | MTL material resolver for OBJ (JJ2) | `slappyengine.asset_import` OBJ dispatch | WIRED | `asset_import/mtl_resolver.py:174` (`parse_mtl`), `asset_import/mtl_resolver.py:61` (`MtlMaterialDef`), `asset_import/dispatcher.py` | Nova3D parity Sprint 2 (commit `544317f`). Parses Wavefront `.mtl` sidecars — Kd/Ks/Ka/Ns/Ni/d/Tr + map_* tokens, path resolution relative to the OBJ. `Ns → roughness` conversion (`_ns_to_roughness`) so parsed materials feed the render/material module directly. 384-line regression suite; sample assets under `asset_import/samples/`. |
-| 314 | Skinned mesh + skeleton glTF import (JJ3) | `slappyengine.asset_import.gltf_importer` | WIRED | `asset_import/skinned_mesh.py:45` (`SkeletonNode`), `asset_import/skinned_mesh.py:92` (`Skeleton`), `asset_import/skinned_mesh.py:139` (`SkinnedMeshData`), `asset_import/gltf_importer.py` | Nova3D parity Sprint 3 (commit `8d10f91`). Extends the `pygltflib` importer with skin/joint/inverseBindMatrix parsing — accessor-agnostic joint/weight buffer decode, hierarchical `Skeleton` build, `SkinnedMeshData` output for the JJ4 runtime. 353-test suite plus `skinned_two_bone.gltf` fixture (194 lines) + generator script. |
-| 315 | Skeletal animation runtime (JJ4) | `slappyengine.animation` + `render.shadows` | WIRED | `animation/skeleton_runtime.py:65` (`Skeleton`), `animation/skeleton_runtime.py:219` (`PosedSkeleton`), `animation/clip.py`, `animation/skinner.py`, `render/shadows.py:63` (`CSMBuilder`) | Nova3D parity Sprint 4 (commit `9b457e6`) — bundled with the JJ7 CSM shadows landing. `AnimationClip` + keyframe interpolation, `PosedSkeleton` local→world matrix cascade, `Skinner` CPU-side skinning path. 674-line skeleton test suite. `render/shadows.py` ships `CSMBuilder` + `pack_cascade_ubo` for the sun-cascade shadow-map pipeline (rows 316 covers the pass wiring). |
-| 316 | Scene → drawcall walker + frustum culling (JJ5) | `slappyengine.render.SceneWalker` | WIRED | `render/scene_walker.py:480` (`SceneWalker`), `render/scene_walker.py:91` (`Frustum`), `render/scene_walker.py:51` (`EntityDrawInfo`), `render/scene_walker.py:180` (`AssetCache`) | Nova3D parity Sprint 5 (commit `1867012`). Walks `Scene` → per-entity `EntityDrawInfo` (transform, mesh handle, material, LOD flags), performs 6-plane `Frustum` culling against per-entity AABB, caches asset lookups via `AssetCache`, tallies `RenderStats`. Consumed by the JJ1 renderer's per-frame draw list. 715-test suite. |
-| 317 | Cascaded shadow maps (JJ7) | `slappyengine.render.shadows` | WIRED | `render/shadows.py:63` (`CSMBuilder`), `render/shadows.py:306` (`pack_cascade_ubo`), `render/shadows.py:319` (`find_cascade_for_world_pos`) | Nova3D parity Sprint 7 — landed alongside JJ4 in commit `9b457e6`. Sun-directional CSM with configurable split scheme (`CascadeSplit`), depth-only pass rasterises into per-cascade texture atlas, `pack_cascade_ubo` emits the shader-facing 4-cascade layout, `find_cascade_for_world_pos` selects the tightest cascade at sample time. 347-line shadow test suite. |
-| 318 | 3D BVH broadphase (KK1) | `slappyengine.render.BVH3D` | WIRED | `render/bvh_3d.py:256` (`BVH3D`), `render/bvh_3d.py:70` (`AABB3D`), `render/bvh_3d.py:226` (`BVHNode`) | Nova3D parity Sprint 6 (commit `47950ba`). Surface-area-heuristic bounding-volume hierarchy for 3D scene culling. Feeds JJ5 `SceneWalker.frustum_query` as a preflight so >10k-entity scenes skip the linear AABB scan. `AABB3D` ships fast merge / ray / plane predicates. 451-line regression suite. |
-| 319 | Depth prepass + MSAA resolve + pass chain (KK2) | `slappyengine.render.passes` | WIRED | `render/passes.py:96` (`DepthPrepass`), `render/passes.py:210` (`MSAAResolvePass`), `render/passes.py:320` (`EarlyZPass`), `render/passes.py:417` (`PassChain`), `render/passes.py:532` (`install_default_passes`) | Nova3D parity Sprints 8+9 (commit `d282c17`). `RenderPass` protocol + concrete depth-prepass / MSAA-resolve / EarlyZ passes chained via `PassChain`. `install_default_passes` wires the canonical GBuffer→shading→resolve order onto `Renderer`. 421-test suite. |
-| 320 | SSAO screen-space ambient occlusion (KK3) | `slappyengine.render.SSAOPass` | WIRED | `render/ssao.py:100` (`SSAOPass`), `render/ssao.py:26` (`SSAOConfig`), `render/ssao.py:69` (`reconstruct_position_from_depth`) | Nova3D parity Sprint 10 (commit `0078382`). Screen-space ambient occlusion pass — depth-buffer hemisphere sampling, view-space position reconstruction, bilateral blur. `SSAOConfig` exposes radius / bias / kernel / intensity. 224-test regression. |
-| 321 | Skybox + cubemap import (KK4) | `slappyengine.render.Skybox` + `asset_import.cubemap_importer` | WIRED | `render/skybox.py:363` (`Skybox`), `render/skybox.py:85` (`CubemapData`), `render/skybox.py:272` (`procedural_gradient_sky`), `asset_import/cubemap_importer.py` | Nova3D parity Sprint 11 (commit `7f80f9e`). 6-face cubemap loader (HDR + LDR), procedural gradient sky fallback, `Skybox` renderable emits full-screen inverse-projection quad. `asset_import/dispatcher.py` gains cubemap routing. 312-test suite. |
-| 322 | IBL prefilter chain (KK5) | `slappyengine.gpu.ibl_prefilter` | WIRED | `gpu/ibl_prefilter.py:212` (`prefilter_cubemap`), `gpu/ibl_prefilter.py:147` (`PrefilteredCubemap`), `gpu/ibl_prefilter.py:107` (`importance_sample_ggx`), `gpu/ibl_prefilter.wgsl` | Nova3D parity Sprint 12 (commit `bb7392a`). GGX importance-sampled cubemap mip chain — Hammersley sequence, roughness-per-mip, TBN construction. WGSL shader ships alongside CPU reference path. Consumed by the KK4 `Skybox` for image-based lighting probes. 220-test suite. |
-| 323 | SDF text rendering (KK6) | `slappyengine.text` subpackage | WIRED | `text/atlas.py`, `text/sdf_generator.py`, `text/sdf_glyph.py`, `text/text_render.py:67` (`SDFTextRenderer`) | Nova3D parity Sprint 13 (commit `27f9c88`). Signed-distance-field text renderer — glyph atlas builder, per-glyph SDF generator, `SDFTextRenderer` emits a `TextMesh` for the KK2 pass chain. Backs both HUD (`LL1`) and in-world text quads. 240-test suite. |
-| 324 | Instanced rendering + factory helpers (LL3) | `slappyengine.render.InstancedMesh` | WIRED | `render/instanced.py:76` (`InstancedMesh`), `render/instanced.py:36` (`InstanceData`), `render/instanced.py:140` (`grid`), `render/instanced.py:164` (`random_scatter`), `render/instanced.py:193` (`circle`), `render/instanced.py:332` (`pack_instance_ubo`) | Nova3D parity Sprint 16 (commit `bdb9547`). GPU instancing for `Mesh` — per-instance transform + colour tint packed into an SSBO/UBO, `grid` / `random_scatter` / `circle` / `from_transforms` factories for common layouts. Bounding-box precompute so instanced draws still frustum-cull cleanly. 344-test suite. |
-| 325 | Runtime HUD overlay (LL1) | `slappyengine.ui.runtime.HUDOverlay` | WIRED | `ui/runtime/hud_overlay.py:152` (`HUDOverlay`), `ui/runtime/hud_registry.py:95` (`HUDRegistry`), `ui/runtime/hud_kit_extra.py` | Nova3D parity Sprint 14 (commit `6afa7d6`). In-game HUD layer distinct from the DPG editor. `HUDOverlay` accepts draw-command batches, routes text through the KK6 SDF renderer, sprites through the KK2 pass chain. `HUDRegistry` catalogues named widgets (health bar, minimap, crosshair, ...) with 3 new widgets in `hud_kit_extra`. Flips row 50 (`H` hotkey Toggle HUD) into a real reader. 644-test suite. |
-| 326 | Video/GIF/frame capture (LL2) | `slappyengine.capture.CaptureManager` | WIRED | `capture/capture_manager.py:56` (`CaptureManager`), `capture/video_capture.py`, `capture/gif_capture.py`, `capture/frame_dump.py` | Nova3D parity Sprint 15 (commit `47bc7f0`). Runtime capture — MP4 via `imageio-ffmpeg`, GIF via Pillow, raw PNG frame dump fallback. `CaptureManager.start/stop/tick` cooperates with the LL6 exporter's replay bundler. 428-test suite covering fallback chain + duration/limit contracts. |
-| 327 | 3D positional audio + doppler (LL4) | `slappyengine.audio_3d.Audio3DEngine` | WIRED | `audio_3d.py:366` (`Audio3DEngine`), `audio_3d.py:110` (`Audio3DSource`), `audio_3d.py:93` (`AudioListener`), `audio_3d.py:145` (`SoundBank`), `audio_3d.py:198` (`attenuation`) | Nova3D parity Sprint 17 (commit `8300cd8`). Full 3D audio — listener orientation vectors, source position + velocity, distance attenuation (`_vlen`+`attenuation`), doppler shift via listener/source velocity delta, stereo panning from listener-space azimuth. Soft-imports `sounddevice`; silent stub when the `[audio]` extra is absent. 523-test suite. |
+| 312 | Real wgpu forward pipeline (JJ1) | `pharos_engine.render.Renderer` + `PipelineCache` | WIRED | `render/pipeline.py:213` (`PipelineCache`), `render/pipeline.py:406` (`create_forward_pipeline`), `render/renderer.py:90` (`Renderer`) | Nova3D parity Sprint 1 (commit `3ea1432`). Replaces the HH4 null-fallback stub with a real wgpu-backed forward pipeline — vertex-attribute descriptors, blend-mode LUT, forward + sprite + line bind-group layouts, PSO cache keyed on `_PipelineKey`. Backed by 587 tests (`test_render_pipeline_wgpu.py`); `Renderer.begin_frame`/`draw_mesh`/`end_frame` walk the cache when `is_wgpu_available()` succeeds, else return `NullRenderer` sentinel. |
+| 313 | MTL material resolver for OBJ (JJ2) | `pharos_engine.asset_import` OBJ dispatch | WIRED | `asset_import/mtl_resolver.py:174` (`parse_mtl`), `asset_import/mtl_resolver.py:61` (`MtlMaterialDef`), `asset_import/dispatcher.py` | Nova3D parity Sprint 2 (commit `544317f`). Parses Wavefront `.mtl` sidecars — Kd/Ks/Ka/Ns/Ni/d/Tr + map_* tokens, path resolution relative to the OBJ. `Ns → roughness` conversion (`_ns_to_roughness`) so parsed materials feed the render/material module directly. 384-line regression suite; sample assets under `asset_import/samples/`. |
+| 314 | Skinned mesh + skeleton glTF import (JJ3) | `pharos_engine.asset_import.gltf_importer` | WIRED | `asset_import/skinned_mesh.py:45` (`SkeletonNode`), `asset_import/skinned_mesh.py:92` (`Skeleton`), `asset_import/skinned_mesh.py:139` (`SkinnedMeshData`), `asset_import/gltf_importer.py` | Nova3D parity Sprint 3 (commit `8d10f91`). Extends the `pygltflib` importer with skin/joint/inverseBindMatrix parsing — accessor-agnostic joint/weight buffer decode, hierarchical `Skeleton` build, `SkinnedMeshData` output for the JJ4 runtime. 353-test suite plus `skinned_two_bone.gltf` fixture (194 lines) + generator script. |
+| 315 | Skeletal animation runtime (JJ4) | `pharos_engine.animation` + `render.shadows` | WIRED | `animation/skeleton_runtime.py:65` (`Skeleton`), `animation/skeleton_runtime.py:219` (`PosedSkeleton`), `animation/clip.py`, `animation/skinner.py`, `render/shadows.py:63` (`CSMBuilder`) | Nova3D parity Sprint 4 (commit `9b457e6`) — bundled with the JJ7 CSM shadows landing. `AnimationClip` + keyframe interpolation, `PosedSkeleton` local→world matrix cascade, `Skinner` CPU-side skinning path. 674-line skeleton test suite. `render/shadows.py` ships `CSMBuilder` + `pack_cascade_ubo` for the sun-cascade shadow-map pipeline (rows 316 covers the pass wiring). |
+| 316 | Scene → drawcall walker + frustum culling (JJ5) | `pharos_engine.render.SceneWalker` | WIRED | `render/scene_walker.py:480` (`SceneWalker`), `render/scene_walker.py:91` (`Frustum`), `render/scene_walker.py:51` (`EntityDrawInfo`), `render/scene_walker.py:180` (`AssetCache`) | Nova3D parity Sprint 5 (commit `1867012`). Walks `Scene` → per-entity `EntityDrawInfo` (transform, mesh handle, material, LOD flags), performs 6-plane `Frustum` culling against per-entity AABB, caches asset lookups via `AssetCache`, tallies `RenderStats`. Consumed by the JJ1 renderer's per-frame draw list. 715-test suite. |
+| 317 | Cascaded shadow maps (JJ7) | `pharos_engine.render.shadows` | WIRED | `render/shadows.py:63` (`CSMBuilder`), `render/shadows.py:306` (`pack_cascade_ubo`), `render/shadows.py:319` (`find_cascade_for_world_pos`) | Nova3D parity Sprint 7 — landed alongside JJ4 in commit `9b457e6`. Sun-directional CSM with configurable split scheme (`CascadeSplit`), depth-only pass rasterises into per-cascade texture atlas, `pack_cascade_ubo` emits the shader-facing 4-cascade layout, `find_cascade_for_world_pos` selects the tightest cascade at sample time. 347-line shadow test suite. |
+| 318 | 3D BVH broadphase (KK1) | `pharos_engine.render.BVH3D` | WIRED | `render/bvh_3d.py:256` (`BVH3D`), `render/bvh_3d.py:70` (`AABB3D`), `render/bvh_3d.py:226` (`BVHNode`) | Nova3D parity Sprint 6 (commit `47950ba`). Surface-area-heuristic bounding-volume hierarchy for 3D scene culling. Feeds JJ5 `SceneWalker.frustum_query` as a preflight so >10k-entity scenes skip the linear AABB scan. `AABB3D` ships fast merge / ray / plane predicates. 451-line regression suite. |
+| 319 | Depth prepass + MSAA resolve + pass chain (KK2) | `pharos_engine.render.passes` | WIRED | `render/passes.py:96` (`DepthPrepass`), `render/passes.py:210` (`MSAAResolvePass`), `render/passes.py:320` (`EarlyZPass`), `render/passes.py:417` (`PassChain`), `render/passes.py:532` (`install_default_passes`) | Nova3D parity Sprints 8+9 (commit `d282c17`). `RenderPass` protocol + concrete depth-prepass / MSAA-resolve / EarlyZ passes chained via `PassChain`. `install_default_passes` wires the canonical GBuffer→shading→resolve order onto `Renderer`. 421-test suite. |
+| 320 | SSAO screen-space ambient occlusion (KK3) | `pharos_engine.render.SSAOPass` | WIRED | `render/ssao.py:100` (`SSAOPass`), `render/ssao.py:26` (`SSAOConfig`), `render/ssao.py:69` (`reconstruct_position_from_depth`) | Nova3D parity Sprint 10 (commit `0078382`). Screen-space ambient occlusion pass — depth-buffer hemisphere sampling, view-space position reconstruction, bilateral blur. `SSAOConfig` exposes radius / bias / kernel / intensity. 224-test regression. |
+| 321 | Skybox + cubemap import (KK4) | `pharos_engine.render.Skybox` + `asset_import.cubemap_importer` | WIRED | `render/skybox.py:363` (`Skybox`), `render/skybox.py:85` (`CubemapData`), `render/skybox.py:272` (`procedural_gradient_sky`), `asset_import/cubemap_importer.py` | Nova3D parity Sprint 11 (commit `7f80f9e`). 6-face cubemap loader (HDR + LDR), procedural gradient sky fallback, `Skybox` renderable emits full-screen inverse-projection quad. `asset_import/dispatcher.py` gains cubemap routing. 312-test suite. |
+| 322 | IBL prefilter chain (KK5) | `pharos_engine.gpu.ibl_prefilter` | WIRED | `gpu/ibl_prefilter.py:212` (`prefilter_cubemap`), `gpu/ibl_prefilter.py:147` (`PrefilteredCubemap`), `gpu/ibl_prefilter.py:107` (`importance_sample_ggx`), `gpu/ibl_prefilter.wgsl` | Nova3D parity Sprint 12 (commit `bb7392a`). GGX importance-sampled cubemap mip chain — Hammersley sequence, roughness-per-mip, TBN construction. WGSL shader ships alongside CPU reference path. Consumed by the KK4 `Skybox` for image-based lighting probes. 220-test suite. |
+| 323 | SDF text rendering (KK6) | `pharos_engine.text` subpackage | WIRED | `text/atlas.py`, `text/sdf_generator.py`, `text/sdf_glyph.py`, `text/text_render.py:67` (`SDFTextRenderer`) | Nova3D parity Sprint 13 (commit `27f9c88`). Signed-distance-field text renderer — glyph atlas builder, per-glyph SDF generator, `SDFTextRenderer` emits a `TextMesh` for the KK2 pass chain. Backs both HUD (`LL1`) and in-world text quads. 240-test suite. |
+| 324 | Instanced rendering + factory helpers (LL3) | `pharos_engine.render.InstancedMesh` | WIRED | `render/instanced.py:76` (`InstancedMesh`), `render/instanced.py:36` (`InstanceData`), `render/instanced.py:140` (`grid`), `render/instanced.py:164` (`random_scatter`), `render/instanced.py:193` (`circle`), `render/instanced.py:332` (`pack_instance_ubo`) | Nova3D parity Sprint 16 (commit `bdb9547`). GPU instancing for `Mesh` — per-instance transform + colour tint packed into an SSBO/UBO, `grid` / `random_scatter` / `circle` / `from_transforms` factories for common layouts. Bounding-box precompute so instanced draws still frustum-cull cleanly. 344-test suite. |
+| 325 | Runtime HUD overlay (LL1) | `pharos_engine.ui.runtime.HUDOverlay` | WIRED | `ui/runtime/hud_overlay.py:152` (`HUDOverlay`), `ui/runtime/hud_registry.py:95` (`HUDRegistry`), `ui/runtime/hud_kit_extra.py` | Nova3D parity Sprint 14 (commit `6afa7d6`). In-game HUD layer distinct from the DPG editor. `HUDOverlay` accepts draw-command batches, routes text through the KK6 SDF renderer, sprites through the KK2 pass chain. `HUDRegistry` catalogues named widgets (health bar, minimap, crosshair, ...) with 3 new widgets in `hud_kit_extra`. Flips row 50 (`H` hotkey Toggle HUD) into a real reader. 644-test suite. |
+| 326 | Video/GIF/frame capture (LL2) | `pharos_engine.capture.CaptureManager` | WIRED | `capture/capture_manager.py:56` (`CaptureManager`), `capture/video_capture.py`, `capture/gif_capture.py`, `capture/frame_dump.py` | Nova3D parity Sprint 15 (commit `47bc7f0`). Runtime capture — MP4 via `imageio-ffmpeg`, GIF via Pillow, raw PNG frame dump fallback. `CaptureManager.start/stop/tick` cooperates with the LL6 exporter's replay bundler. 428-test suite covering fallback chain + duration/limit contracts. |
+| 327 | 3D positional audio + doppler (LL4) | `pharos_engine.audio_3d.Audio3DEngine` | WIRED | `audio_3d.py:366` (`Audio3DEngine`), `audio_3d.py:110` (`Audio3DSource`), `audio_3d.py:93` (`AudioListener`), `audio_3d.py:145` (`SoundBank`), `audio_3d.py:198` (`attenuation`) | Nova3D parity Sprint 17 (commit `8300cd8`). Full 3D audio — listener orientation vectors, source position + velocity, distance attenuation (`_vlen`+`attenuation`), doppler shift via listener/source velocity delta, stereo panning from listener-space azimuth. Soft-imports `sounddevice`; silent stub when the `[audio]` extra is absent. 523-test suite. |
 | 328 | hello_gltf_character parity harness (LL5) | `SlapPyEngineExamples/examples/hello_gltf_character.py` | WIRED | `SlapPyEngineExamples/examples/hello_gltf_character.py`, `SlapPyEngineExamples/examples/assets/skinned_two_bone.gltf`, `SlapPyEngineExamples/tests/test_demo_hello_gltf_character.py` | Nova3D parity Sprint 20 (commit `670d91c`). End-to-end 3D demo — imports a rigged glTF (JJ3), poses via the JJ4 skeleton runtime, walks through JJ5 `SceneWalker`, shades under JJ7 CSM shadows, renders via the JJ1 wgpu forward pipeline. 958-line demo + trace YAML + PNG baseline + 283-line demo regression. |
-| 329 | Cross-platform game exporter (LL6) | `slappyengine.exporter` + `slap export` CLI | WIRED | `exporter/__init__.py:69` (`export_project`), `exporter/binary_exporter.py`, `exporter/zip_bundler.py`, `exporter/manifest.py`, `exporter/platform_targets.py`, `cli.py:188` (`cmd_export`) | Nova3D parity Sprint 19 (commit `7f4f0f4`). Ship-a-game surface — `zip` produces a portable Python + assets bundle; `windows`/`macos`/`linux` route through the PyInstaller binary exporter (soft-imported); missing-PyInstaller writes just the spec and returns cleanly. `slap export --target ...` is the CLI entry. 355-test suite. |
-| 330 | 3D physics soft-import bridge (LL7) | `slappyengine.physics3_bridge` | WIRED | `physics3_bridge.py:238` (`World3D`), `physics3_bridge.py:124` (`Body3D`), `physics3_bridge.py:93` (`resolve_physics3_backend`), `physics3_bridge.py:408` (`World3D.broadphase_pairs` — SAP) | Nova3D parity Sprint 18 (commit `8376e7e`). Try-import chain: PyBullet → PyODE → in-tree SAP fallback. `resolve_physics3_backend` picks the first available; SAP fallback ships a sweep-and-prune broadphase + sphere-sphere narrowphase so headless CI still simulates. Same `Body3D`/`World3D` surface across all three backends. 381-test suite. |
+| 329 | Cross-platform game exporter (LL6) | `pharos_engine.exporter` + `slap export` CLI | WIRED | `exporter/__init__.py:69` (`export_project`), `exporter/binary_exporter.py`, `exporter/zip_bundler.py`, `exporter/manifest.py`, `exporter/platform_targets.py`, `cli.py:188` (`cmd_export`) | Nova3D parity Sprint 19 (commit `7f4f0f4`). Ship-a-game surface — `zip` produces a portable Python + assets bundle; `windows`/`macos`/`linux` route through the PyInstaller binary exporter (soft-imported); missing-PyInstaller writes just the spec and returns cleanly. `slap export --target ...` is the CLI entry. 355-test suite. |
+| 330 | 3D physics soft-import bridge (LL7) | `pharos_engine.physics3_bridge` | WIRED | `physics3_bridge.py:238` (`World3D`), `physics3_bridge.py:124` (`Body3D`), `physics3_bridge.py:93` (`resolve_physics3_backend`), `physics3_bridge.py:408` (`World3D.broadphase_pairs` — SAP) | Nova3D parity Sprint 18 (commit `8376e7e`). Try-import chain: PyBullet → PyODE → in-tree SAP fallback. `resolve_physics3_backend` picks the first available; SAP fallback ships a sweep-and-prune broadphase + sphere-sphere narrowphase so headless CI still simulates. Same `Body3D`/`World3D` surface across all three backends. 381-test suite. |
 
 **Total rows: 330.** Status tally:
 
@@ -390,7 +390,7 @@ Deduplicated broken count: **2** import/attribute paths.
 
 ## Top 10 Broken/Stub Fixes to Prioritize
 
-1. **Row 80 — Diary `tick` imports `slappyengine.softbody.step`** —
+1. **Row 80 — Diary `tick` imports `pharos_engine.softbody.step`** —
    this fails on a clean checkout because `softbody/` is uncommitted
    WIP. Gate the import behind `HAS_NATIVE` / try-except so running a
    diary in vanilla-master doesn't blow up.
@@ -430,7 +430,7 @@ Deduplicated broken count: **2** import/attribute paths.
 
 *Audit generated 2026-07-04. Sources: `tool_router.py` REGISTRY
 (53 actions), `notebook_hotkeys.py` `_BINDINGS_FROZEN` (27 bindings),
-34 editor UI modules under `python/slappyengine/ui/editor/`.*
+34 editor UI modules under `python/pharos_engine/ui/editor/`.*
 
 ---
 
@@ -439,11 +439,11 @@ Deduplicated broken count: **2** import/attribute paths.
 Five new action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED:
 
-* `editor.save_project` → `slappyengine.actions.project_actions.save_project`
-* `editor.new_project` → `slappyengine.actions.project_actions.new_project`
-* `editor.open_recent` → `slappyengine.actions.project_actions.open_recent`
-* `view.reset_layout` → `slappyengine.actions.view_actions.reset_layout`
-* `edit.duplicate_selection` → `slappyengine.actions.edit_actions.duplicate_selection`
+* `editor.save_project` → `pharos_engine.actions.project_actions.save_project`
+* `editor.new_project` → `pharos_engine.actions.project_actions.new_project`
+* `editor.open_recent` → `pharos_engine.actions.project_actions.open_recent`
+* `view.reset_layout` → `pharos_engine.actions.view_actions.reset_layout`
+* `edit.duplicate_selection` → `pharos_engine.actions.edit_actions.duplicate_selection`
 
 Regression tests: `SlapPyEngineTests/tests/test_stub_triage_x3.py`
 (25 tests, all passing).
@@ -474,14 +474,14 @@ Highest-impact remaining STUBs after Y7:
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 252-256):
 
-* `tool.select_all` → `slappyengine.actions.selection_actions.select_all`
-* `tool.deselect_all` → `slappyengine.actions.selection_actions.deselect_all`
-* `editor.copy_selection` → `slappyengine.actions.selection_actions.copy_selection`
-* `editor.paste_selection` → `slappyengine.actions.selection_actions.paste_selection`
-* `theme.cycle` → `slappyengine.actions.theme_actions.cycle_theme`
+* `tool.select_all` → `pharos_engine.actions.selection_actions.select_all`
+* `tool.deselect_all` → `pharos_engine.actions.selection_actions.deselect_all`
+* `editor.copy_selection` → `pharos_engine.actions.selection_actions.copy_selection`
+* `editor.paste_selection` → `pharos_engine.actions.selection_actions.paste_selection`
+* `theme.cycle` → `pharos_engine.actions.theme_actions.cycle_theme`
 
-New subpackages: `python/slappyengine/actions/selection_actions.py`
-+ `python/slappyengine/actions/theme_actions.py`.
+New subpackages: `python/pharos_engine/actions/selection_actions.py`
++ `python/pharos_engine/actions/theme_actions.py`.
 
 Regression tests: `SlapPyEngineTests/tests/test_stub_triage_y1.py`
 (29 tests, all passing). Combined X3+Y1 wiring now covers 10 previously-
@@ -496,15 +496,15 @@ absent router action ids across 5 category buckets (`file`, `edit`,
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 257-261):
 
-* `tool.snap_to_grid` → `slappyengine.actions.tool_settings_actions.toggle_snap_to_grid`
-* `view.zoom_in` → `slappyengine.actions.camera_actions.zoom_in`
-* `view.zoom_out` → `slappyengine.actions.camera_actions.zoom_out`
-* `view.zoom_reset` → `slappyengine.actions.camera_actions.zoom_reset`
-* `theme.export_current` → `slappyengine.actions.theme_io_actions.export_current_theme`
+* `tool.snap_to_grid` → `pharos_engine.actions.tool_settings_actions.toggle_snap_to_grid`
+* `view.zoom_in` → `pharos_engine.actions.camera_actions.zoom_in`
+* `view.zoom_out` → `pharos_engine.actions.camera_actions.zoom_out`
+* `view.zoom_reset` → `pharos_engine.actions.camera_actions.zoom_reset`
+* `theme.export_current` → `pharos_engine.actions.theme_io_actions.export_current_theme`
 
-New subpackages: `python/slappyengine/actions/tool_settings_actions.py`
-+ `python/slappyengine/actions/camera_actions.py` +
-`python/slappyengine/actions/theme_io_actions.py`.
+New subpackages: `python/pharos_engine/actions/tool_settings_actions.py`
++ `python/pharos_engine/actions/camera_actions.py` +
+`python/pharos_engine/actions/theme_io_actions.py`.
 
 Behavioural notes for Z7:
 
@@ -540,15 +540,15 @@ previously-absent router action ids across 5 category buckets
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 262-266):
 
-* `edit.cut_selection` → `slappyengine.actions.destructive_edit_actions.cut_selection`
-* `edit.delete_selection` → `slappyengine.actions.destructive_edit_actions.delete_selection`
-* `view.center_on_selection` → `slappyengine.actions.viewport_framing_actions.center_on_selection`
-* `view.frame_all` → `slappyengine.actions.viewport_framing_actions.frame_all`
-* `tool.pan` → `slappyengine.actions.tool_mode_actions.activate_pan_tool`
+* `edit.cut_selection` → `pharos_engine.actions.destructive_edit_actions.cut_selection`
+* `edit.delete_selection` → `pharos_engine.actions.destructive_edit_actions.delete_selection`
+* `view.center_on_selection` → `pharos_engine.actions.viewport_framing_actions.center_on_selection`
+* `view.frame_all` → `pharos_engine.actions.viewport_framing_actions.frame_all`
+* `tool.pan` → `pharos_engine.actions.tool_mode_actions.activate_pan_tool`
 
-New subpackages: `python/slappyengine/actions/destructive_edit_actions.py`
-+ `python/slappyengine/actions/viewport_framing_actions.py` +
-`python/slappyengine/actions/tool_mode_actions.py`.
+New subpackages: `python/pharos_engine/actions/destructive_edit_actions.py`
++ `python/pharos_engine/actions/viewport_framing_actions.py` +
+`python/pharos_engine/actions/tool_mode_actions.py`.
 
 Behavioural notes for AA1:
 
@@ -589,15 +589,15 @@ previously-absent router action ids across 5 category buckets
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 267-271):
 
-* `theme.import_from_file` → `slappyengine.actions.theme_import_actions.import_from_file`
-* `file.save_layout_as` → `slappyengine.actions.layout_io_actions.save_layout_as`
-* `file.load_layout_from_file` → `slappyengine.actions.layout_io_actions.load_layout_from_file`
-* `edit.undo` → `slappyengine.actions.history_actions.undo`
-* `edit.redo` → `slappyengine.actions.history_actions.redo`
+* `theme.import_from_file` → `pharos_engine.actions.theme_import_actions.import_from_file`
+* `file.save_layout_as` → `pharos_engine.actions.layout_io_actions.save_layout_as`
+* `file.load_layout_from_file` → `pharos_engine.actions.layout_io_actions.load_layout_from_file`
+* `edit.undo` → `pharos_engine.actions.history_actions.undo`
+* `edit.redo` → `pharos_engine.actions.history_actions.redo`
 
-New subpackages: `python/slappyengine/actions/theme_import_actions.py`
-+ `python/slappyengine/actions/layout_io_actions.py`
-+ `python/slappyengine/actions/history_actions.py`.
+New subpackages: `python/pharos_engine/actions/theme_import_actions.py`
++ `python/pharos_engine/actions/layout_io_actions.py`
++ `python/pharos_engine/actions/history_actions.py`.
 
 Behavioural notes for BB1:
 
@@ -648,16 +648,16 @@ Regression tests: `SlapPyEngineTests/tests/test_stub_triage_bb1.py`
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 272-276):
 
-* `edit.select_by_name` → `slappyengine.actions.edit_by_name_actions.select_by_name`
-* `spawn.repeat_last` → `slappyengine.actions.spawn_history_actions.repeat_last`
-* `view.toggle_grid` → `slappyengine.actions.view_toggle_actions.toggle_grid`
-* `view.toggle_gizmos` → `slappyengine.actions.view_toggle_actions.toggle_gizmos`
-* `content.copy_asset_path` → `slappyengine.actions.content_shell_actions.copy_asset_path`
+* `edit.select_by_name` → `pharos_engine.actions.edit_by_name_actions.select_by_name`
+* `spawn.repeat_last` → `pharos_engine.actions.spawn_history_actions.repeat_last`
+* `view.toggle_grid` → `pharos_engine.actions.view_toggle_actions.toggle_grid`
+* `view.toggle_gizmos` → `pharos_engine.actions.view_toggle_actions.toggle_gizmos`
+* `content.copy_asset_path` → `pharos_engine.actions.content_shell_actions.copy_asset_path`
 
-New subpackages: `python/slappyengine/actions/edit_by_name_actions.py`
-+ `python/slappyengine/actions/spawn_history_actions.py`
-+ `python/slappyengine/actions/view_toggle_actions.py`
-+ `python/slappyengine/actions/content_shell_actions.py`.
+New subpackages: `python/pharos_engine/actions/edit_by_name_actions.py`
++ `python/pharos_engine/actions/spawn_history_actions.py`
++ `python/pharos_engine/actions/view_toggle_actions.py`
++ `python/pharos_engine/actions/content_shell_actions.py`.
 
 Behavioural notes for CC1:
 
@@ -704,16 +704,16 @@ buckets (`file`, `edit`, `tool`, `view`, `theme`, `spawn`,
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 277-281):
 
-* `edit.duplicate_layer` → `slappyengine.actions.layer_duplicate_actions.duplicate_layer`
-* `theme.cycle_reverse` → `slappyengine.actions.theme_cycle_reverse_actions.cycle_theme_reverse`
-* `panel.close_all` → `slappyengine.actions.panel_visibility_actions.close_all_panels`
-* `panel.restore_last_hidden` → `slappyengine.actions.panel_visibility_actions.restore_last_hidden_panel`
-* `spawn.repeat_last_batch` → `slappyengine.actions.spawn_batch_actions.repeat_last_batch`
+* `edit.duplicate_layer` → `pharos_engine.actions.layer_duplicate_actions.duplicate_layer`
+* `theme.cycle_reverse` → `pharos_engine.actions.theme_cycle_reverse_actions.cycle_theme_reverse`
+* `panel.close_all` → `pharos_engine.actions.panel_visibility_actions.close_all_panels`
+* `panel.restore_last_hidden` → `pharos_engine.actions.panel_visibility_actions.restore_last_hidden_panel`
+* `spawn.repeat_last_batch` → `pharos_engine.actions.spawn_batch_actions.repeat_last_batch`
 
-New subpackages: `python/slappyengine/actions/layer_duplicate_actions.py`
-+ `python/slappyengine/actions/theme_cycle_reverse_actions.py`
-+ `python/slappyengine/actions/panel_visibility_actions.py`
-+ `python/slappyengine/actions/spawn_batch_actions.py`.
+New subpackages: `python/pharos_engine/actions/layer_duplicate_actions.py`
++ `python/pharos_engine/actions/theme_cycle_reverse_actions.py`
++ `python/pharos_engine/actions/panel_visibility_actions.py`
++ `python/pharos_engine/actions/spawn_batch_actions.py`.
 
 Behavioural notes for DD1:
 
@@ -768,16 +768,16 @@ buckets (`file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`,
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 282-286):
 
-* `edit.group_selection` → `slappyengine.actions.edit_group_actions.group_selection`
-* `edit.ungroup_selection` → `slappyengine.actions.edit_group_actions.ungroup_selection`
-* `theme.random` → `slappyengine.actions.theme_random_actions.random_theme`
-* `spawn.spawn_at_cursor` → `slappyengine.actions.spawn_cursor_actions.spawn_at_cursor`
-* `edit.snap_to_pixel_grid` → `slappyengine.actions.edit_snap_pixel_actions.snap_to_pixel_grid`
+* `edit.group_selection` → `pharos_engine.actions.edit_group_actions.group_selection`
+* `edit.ungroup_selection` → `pharos_engine.actions.edit_group_actions.ungroup_selection`
+* `theme.random` → `pharos_engine.actions.theme_random_actions.random_theme`
+* `spawn.spawn_at_cursor` → `pharos_engine.actions.spawn_cursor_actions.spawn_at_cursor`
+* `edit.snap_to_pixel_grid` → `pharos_engine.actions.edit_snap_pixel_actions.snap_to_pixel_grid`
 
-New subpackages: `python/slappyengine/actions/edit_group_actions.py`
-+ `python/slappyengine/actions/theme_random_actions.py`
-+ `python/slappyengine/actions/spawn_cursor_actions.py`
-+ `python/slappyengine/actions/edit_snap_pixel_actions.py`.
+New subpackages: `python/pharos_engine/actions/edit_group_actions.py`
++ `python/pharos_engine/actions/theme_random_actions.py`
++ `python/pharos_engine/actions/spawn_cursor_actions.py`
++ `python/pharos_engine/actions/edit_snap_pixel_actions.py`.
 
 Behavioural notes for EE1:
 
@@ -839,17 +839,17 @@ buckets (`file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`,
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 287-291):
 
-* `content.new_folder` → `slappyengine.actions.content_folder_actions.new_folder`
-* `content.rename_asset` → `slappyengine.actions.content_rename_actions.rename_asset`
-* `panel.close_others` → `slappyengine.actions.panel_close_others_actions.close_other_panels`
-* `edit.select_children` → `slappyengine.actions.edit_select_children_actions.select_children`
-* `theme.reload_all` → `slappyengine.actions.theme_reload_actions.reload_all_themes`
+* `content.new_folder` → `pharos_engine.actions.content_folder_actions.new_folder`
+* `content.rename_asset` → `pharos_engine.actions.content_rename_actions.rename_asset`
+* `panel.close_others` → `pharos_engine.actions.panel_close_others_actions.close_other_panels`
+* `edit.select_children` → `pharos_engine.actions.edit_select_children_actions.select_children`
+* `theme.reload_all` → `pharos_engine.actions.theme_reload_actions.reload_all_themes`
 
-New subpackages: `python/slappyengine/actions/content_folder_actions.py`
-+ `python/slappyengine/actions/content_rename_actions.py`
-+ `python/slappyengine/actions/panel_close_others_actions.py`
-+ `python/slappyengine/actions/edit_select_children_actions.py`
-+ `python/slappyengine/actions/theme_reload_actions.py`.
+New subpackages: `python/pharos_engine/actions/content_folder_actions.py`
++ `python/pharos_engine/actions/content_rename_actions.py`
++ `python/pharos_engine/actions/panel_close_others_actions.py`
++ `python/pharos_engine/actions/edit_select_children_actions.py`
++ `python/pharos_engine/actions/theme_reload_actions.py`.
 
 Behavioural notes for FF1:
 
@@ -918,17 +918,17 @@ absent router action ids across 7 category buckets (`file`, `edit`,
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered) to WIRED (rows 297-301):
 
-* `edit.select_next` → `slappyengine.actions.edit_select_next_actions.select_next`
-* `edit.select_previous` → `slappyengine.actions.edit_select_next_actions.select_previous`
-* `edit.paste_at_original_position` → `slappyengine.actions.edit_paste_original_actions.paste_at_original_position`
-* `spawn.spawn_batch_row` → `slappyengine.actions.spawn_batch_row_actions.spawn_batch_row`
-* `content.duplicate_asset` → `slappyengine.actions.content_duplicate_asset_actions.duplicate_asset`
+* `edit.select_next` → `pharos_engine.actions.edit_select_next_actions.select_next`
+* `edit.select_previous` → `pharos_engine.actions.edit_select_next_actions.select_previous`
+* `edit.paste_at_original_position` → `pharos_engine.actions.edit_paste_original_actions.paste_at_original_position`
+* `spawn.spawn_batch_row` → `pharos_engine.actions.spawn_batch_row_actions.spawn_batch_row`
+* `content.duplicate_asset` → `pharos_engine.actions.content_duplicate_asset_actions.duplicate_asset`
 
 New subpackages:
-`python/slappyengine/actions/edit_select_next_actions.py`
-+ `python/slappyengine/actions/edit_paste_original_actions.py`
-+ `python/slappyengine/actions/spawn_batch_row_actions.py`
-+ `python/slappyengine/actions/content_duplicate_asset_actions.py`.
+`python/pharos_engine/actions/edit_select_next_actions.py`
++ `python/pharos_engine/actions/edit_paste_original_actions.py`
++ `python/pharos_engine/actions/spawn_batch_row_actions.py`
++ `python/pharos_engine/actions/content_duplicate_asset_actions.py`.
 
 Behavioural notes for II5:
 
@@ -993,16 +993,16 @@ save-as-new / import / export modals). This round wires common QoL
 actions that don't need the DPG shell — hide/show/lock/unlock plus
 Blender-style "select similar":
 
-* `edit.hide_selection` → `slappyengine.actions.edit_hide_show_actions.hide_selection`
-* `edit.show_all` → `slappyengine.actions.edit_hide_show_actions.show_all`
-* `edit.lock_selection` → `slappyengine.actions.edit_lock_unlock_actions.lock_selection`
-* `edit.unlock_all` → `slappyengine.actions.edit_lock_unlock_actions.unlock_all`
-* `edit.select_by_prefab_kind` → `slappyengine.actions.edit_select_by_kind_actions.select_by_prefab_kind`
+* `edit.hide_selection` → `pharos_engine.actions.edit_hide_show_actions.hide_selection`
+* `edit.show_all` → `pharos_engine.actions.edit_hide_show_actions.show_all`
+* `edit.lock_selection` → `pharos_engine.actions.edit_lock_unlock_actions.lock_selection`
+* `edit.unlock_all` → `pharos_engine.actions.edit_lock_unlock_actions.unlock_all`
+* `edit.select_by_prefab_kind` → `pharos_engine.actions.edit_select_by_kind_actions.select_by_prefab_kind`
 
 New subpackages:
-`python/slappyengine/actions/edit_hide_show_actions.py`
-+ `python/slappyengine/actions/edit_lock_unlock_actions.py`
-+ `python/slappyengine/actions/edit_select_by_kind_actions.py`.
+`python/pharos_engine/actions/edit_hide_show_actions.py`
++ `python/pharos_engine/actions/edit_lock_unlock_actions.py`
++ `python/pharos_engine/actions/edit_select_by_kind_actions.py`.
 
 Behavioural notes for JJ6:
 
@@ -1069,16 +1069,16 @@ save-as-new / import / export modals). This round wires the last set of
 common DCC QoL actions that don't need the DPG shell — the mirror-X/Y/Z
 trio plus two camera-orientation snaps:
 
-* `edit.mirror_selection_x` → `slappyengine.actions.edit_mirror_actions.mirror_selection_x`
-* `edit.mirror_selection_y` → `slappyengine.actions.edit_mirror_actions.mirror_selection_y`
-* `edit.mirror_selection_z` → `slappyengine.actions.edit_mirror_actions.mirror_selection_z`
-* `view.orbit_selection` → `slappyengine.actions.view_orbit_actions.orbit_selection`
-* `view.top_down_view` → `slappyengine.actions.view_snap_actions.top_down_view`
+* `edit.mirror_selection_x` → `pharos_engine.actions.edit_mirror_actions.mirror_selection_x`
+* `edit.mirror_selection_y` → `pharos_engine.actions.edit_mirror_actions.mirror_selection_y`
+* `edit.mirror_selection_z` → `pharos_engine.actions.edit_mirror_actions.mirror_selection_z`
+* `view.orbit_selection` → `pharos_engine.actions.view_orbit_actions.orbit_selection`
+* `view.top_down_view` → `pharos_engine.actions.view_snap_actions.top_down_view`
 
 New subpackages:
-`python/slappyengine/actions/edit_mirror_actions.py`
-+ `python/slappyengine/actions/view_orbit_actions.py`
-+ `python/slappyengine/actions/view_snap_actions.py`.
+`python/pharos_engine/actions/edit_mirror_actions.py`
++ `python/pharos_engine/actions/view_orbit_actions.py`
++ `python/pharos_engine/actions/view_snap_actions.py`.
 
 Behavioural notes for KK7:
 

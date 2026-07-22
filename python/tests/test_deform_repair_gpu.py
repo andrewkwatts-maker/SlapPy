@@ -54,7 +54,7 @@ class TestDeformRepairerGPU:
     def test_dispatch_takes_gpu_path(self, gpu_ctx):
         """With a real device the dispatch must take the GPU path,
         NOT silently fall back to CPU."""
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         layer = _make_layer(alpha=100)
         original = np.full((32, 32), 255, dtype=np.float32)
         dr = DeformRepairer(layer, original_alpha=original)
@@ -67,7 +67,7 @@ class TestDeformRepairerGPU:
 
     def test_no_pending_marks_none(self, gpu_ctx):
         """Empty queue means no work; last_path should be 'none'."""
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         layer = _make_layer()
         dr = DeformRepairer(layer)
         dr.dispatch(gpu_ctx=gpu_ctx)
@@ -75,7 +75,7 @@ class TestDeformRepairerGPU:
 
     def test_no_gpu_ctx_uses_cpu(self):
         """Without a gpu_ctx the CPU path runs; last_path should be 'cpu'."""
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         layer = _make_layer(alpha=100)
         dr = DeformRepairer(layer)
         dr.queue_full(rate=5.0)
@@ -86,7 +86,7 @@ class TestDeformRepairerGPU:
         """A full-layer repair on GPU must raise alpha above the starting
         value when readback is available.  Skipped if the device can't
         round-trip the texture."""
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         layer = _make_layer(alpha=50)
         original = np.full((32, 32), 255, dtype=np.float32)
         dr = DeformRepairer(layer, original_alpha=original)
@@ -104,7 +104,7 @@ class TestDeformRepairerGPU:
     def test_radial_event_encodes_and_dispatches(self, gpu_ctx):
         """Queue a radial + a pixel event together; both must encode cleanly
         and the dispatch must take the GPU path."""
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         layer = _make_layer(alpha=80)
         original = np.full((32, 32), 255, dtype=np.float32)
         dr = DeformRepairer(layer, original_alpha=original)

@@ -1,10 +1,10 @@
 """Smoke test for ``examples/glass_fracture_demo.py`` (SS2 gap-close, batch 4).
 
-The demo drops a brittle "glass" cube via the ``slappyengine.studio``
+The demo drops a brittle "glass" cube via the ``pharos_engine.studio``
 high-level API; on impact the cube splits into multiple connected
-components tracked via :func:`slappyengine.topology.connected_components`.
+components tracked via :func:`pharos_engine.topology.connected_components`.
 
-The demo imports from :mod:`slappyengine.softbody`, which is a WIP
+The demo imports from :mod:`pharos_engine.softbody`, which is a WIP
 subpackage. This test wakes up as soon as it lands — until then it
 skips with a clear reason.
 
@@ -34,17 +34,17 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP softbody subpackage being unavailable.
     try:
-        from slappyengine.softbody import (  # noqa: F401
+        from pharos_engine.softbody import (  # noqa: F401
             SoftBodyWorld,
             make_lattice_body,
         )
-        from slappyengine.studio import (  # noqa: F401
+        from pharos_engine.studio import (  # noqa: F401
             output_path,
             record,
             softbody_stage,
         )
     except Exception as exc:
-        pytest.skip(f"slappyengine.softbody / studio unavailable (WIP): {exc}")
+        pytest.skip(f"pharos_engine.softbody / studio unavailable (WIP): {exc}")
 
     spec = importlib.util.spec_from_file_location(
         "glass_fracture_demo_ss2", _DEMO_PATH

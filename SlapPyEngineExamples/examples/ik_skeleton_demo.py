@@ -21,9 +21,9 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from slappyengine.dynamics import IKChainSpec, make_distance, resolve_joint_specs, solve_ik
-from slappyengine.media import save_frames
-from slappyengine.softbody import (
+from pharos_engine.dynamics import IKChainSpec, make_distance, resolve_joint_specs, solve_ik
+from pharos_engine.media import save_frames
+from pharos_engine.softbody import (
     SoftBodyRenderConfig,
     SoftBodyRenderer,
     SoftBodyWorld,

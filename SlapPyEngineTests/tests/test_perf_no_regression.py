@@ -140,7 +140,7 @@ def _assert_within_band(key: str, measured_ns: float, *,
 # ---------------------------------------------------------------------------
 def test_thermal_heatfield_step_32x32_within_band() -> None:
     """HeatField.step on a 32x32 grid -- numpy stencil hot path."""
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     rng = np.random.default_rng(0)
     grid = rng.standard_normal((32, 32)).astype(np.float64)
@@ -151,7 +151,7 @@ def test_thermal_heatfield_step_32x32_within_band() -> None:
 
 def test_topology_cc_200_nodes_within_band() -> None:
     """connected_components on a 200-node graph -- union-find Python loop."""
-    from slappyengine.topology import connected_components
+    from pharos_engine.topology import connected_components
 
     rng = np.random.default_rng(0xC0FFEE)
     edges = rng.integers(0, 200, size=(400, 2), dtype=np.int64)
@@ -161,7 +161,7 @@ def test_topology_cc_200_nodes_within_band() -> None:
 
 def test_numerics_vcycle_32x32_within_band() -> None:
     """vcycle_poisson on a 32x32 grid, 1 V-cycle -- restrict/prolong alloc path."""
-    from slappyengine.numerics import vcycle_poisson
+    from pharos_engine.numerics import vcycle_poisson
 
     rng = np.random.default_rng(0xBEEF)
     rhs = rng.standard_normal((32, 32)).astype(np.float32)
@@ -172,7 +172,7 @@ def test_numerics_vcycle_32x32_within_band() -> None:
 
 def test_dynamics_rope20_step_within_band() -> None:
     """World.step on a 20-node distance-joint rope at steady state."""
-    from slappyengine.dynamics import JointSpec, World
+    from pharos_engine.dynamics import JointSpec, World
 
     world = World(gravity=(0.0, -9.81))
     pos = np.array([(float(i), 0.0) for i in range(20)], dtype=np.float64)
@@ -195,7 +195,7 @@ def test_dynamics_rope20_step_within_band() -> None:
 
 def test_eventbus_publish_no_subscriber_within_band() -> None:
     """EventBus.publish dispatch with no subscribers -- per-emit Python overhead."""
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
 
     bus = EventBus()
 
@@ -219,9 +219,9 @@ def test_pbf_bridge_step_scenario_b_within_band() -> None:
     on the CPU path; we step both fields once per measurement to mirror
     the harness in ``benchmarks/refresh_2026_05_31.py``.
     """
-    from slappyengine.physics.blast import detonate
-    from slappyengine.physics.particle_field import ParticleField
-    from slappyengine.physics.splatter_presets import get as get_preset
+    from pharos_engine.physics.blast import detonate
+    from pharos_engine.physics.particle_field import ParticleField
+    from pharos_engine.physics.splatter_presets import get as get_preset
 
     W, H, GROUND_Y, DT = 640, 360, 280, 1.0 / 60.0
 
@@ -271,7 +271,7 @@ def test_eventbus_publish_inline_fast_path_within_band() -> None:
     tripwires even if the other's wider band would have swallowed the
     drift.
     """
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
 
     bus = EventBus()
 
@@ -293,7 +293,7 @@ def test_softbody_world_step_20n_within_band() -> None:
     entry points so each can fail independently when surgery happens to
     one wrapper but not the other.
     """
-    from slappyengine.dynamics import JointSpec, World
+    from pharos_engine.dynamics import JointSpec, World
 
     world = World(gravity=(0.0, -9.81))
     pos = np.array([(float(i), 0.0) for i in range(20)], dtype=np.float64)

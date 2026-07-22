@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.smoke_runner`.
+"""Tests for :mod:`pharos_engine.smoke_runner`.
 
 The runner is deliberately thin, so we exercise it against ``tmp_path``
 fixtures that stand in for the real ``SlapPyEngineExamples/examples``
@@ -18,7 +18,7 @@ from unittest import mock
 import pytest
 import yaml
 
-from slappyengine.smoke_runner import (
+from pharos_engine.smoke_runner import (
     DEFAULT_MAX_WORKERS,
     DEFAULT_TIMEOUT_S,
     SKIP_LIST,

@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.ui.theme.page_linings — API Reference
+# pharos_engine.ui.theme.page_linings — API Reference
 
 > Library of **WGSL page-lining shaders** — the background patterns
 > that make each theme feel like a real paper stock (ruled notebook,
@@ -29,7 +29,7 @@ small tolerance (≤ 8 / 255 per channel), enforced by
 ## Public surface
 
 ```python
-from slappyengine.ui.theme.page_linings import (
+from pharos_engine.ui.theme.page_linings import (
     # data
     LiningStyle, PAGE_LININGS,
     # access
@@ -243,7 +243,7 @@ get seamless output on any panel size.
 
 * [`ui_theme.md`](ui_theme.md) — Parent theme subpackage overview.
 * [`ui_editor.md`](ui_editor.md) — Editor shell that consumes baked backgrounds.
-* `slappyengine.ui.theme.wgsl_backgrounds` — Freeform WGSL background
+* `pharos_engine.ui.theme.wgsl_backgrounds` — Freeform WGSL background
   hook that shares the same soft-import / numpy-fallback pattern.
-* `slappyengine.ui.theme.shader_effects` — Numpy-only recipe helpers
+* `pharos_engine.ui.theme.shader_effects` — Numpy-only recipe helpers
   (ruled_paper, dot_grid, highlighter_stroke, paper_shadow, ...).

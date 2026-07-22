@@ -4,7 +4,7 @@ Follows up on UU2 (`test_event_bus_backcompat.py`) and UU3's
 `docs/game_compat_2026_07_07.md` § 9.4 residual game-compat list. This
 file locks in the four shims VV2 landed so downstream games (Ochema
 Circuit + Bullet Strata) keep importing / running against
-`slappyengine.*`:
+`pharos_engine.*`:
 
 1. ``event_bus.EventDetails`` — legacy payload-dict type alias.
 2. ``config.DeformConfig`` + ``config._parse_deform`` — legacy deform
@@ -35,8 +35,8 @@ from unittest.mock import MagicMock
 # ---------------------------------------------------------------------------
 
 def test_event_bus_event_details_importable():
-    """`from slappyengine.event_bus import EventDetails` resolves."""
-    from slappyengine.event_bus import EventDetails
+    """`from pharos_engine.event_bus import EventDetails` resolves."""
+    from pharos_engine.event_bus import EventDetails
     # It is a type alias for dict[str, Any]. We do not lock the exact
     # generic form so future refactors can widen without breaking us,
     # but it must be usable as a type hint and behave dict-shaped.
@@ -52,7 +52,7 @@ def test_event_bus_event_details_importable():
 
 def test_deform_config_defaults_match_legacy_yaml():
     """DeformConfig() reports F1-era defaults for every legacy field."""
-    from slappyengine.config import DeformConfig
+    from pharos_engine.config import DeformConfig
     dc = DeformConfig()
     assert dc.sim_mode == "collision_triggered"
     assert dc.decay_mode == "curve"
@@ -77,7 +77,7 @@ def test_deform_config_defaults_match_legacy_yaml():
 
 def test_parse_deform_maps_partial_dict_and_keeps_defaults():
     """_parse_deform overrides supplied keys, keeps defaults for the rest."""
-    from slappyengine.config import DeformConfig, _parse_deform
+    from pharos_engine.config import DeformConfig, _parse_deform
     raw = {
         "sim_mode": "always_on",
         "spring_decay": 0.88,
@@ -100,7 +100,7 @@ def test_parse_deform_maps_partial_dict_and_keeps_defaults():
 
 
 def test_parse_deform_empty_dict_all_defaults():
-    from slappyengine.config import DeformConfig, _parse_deform
+    from pharos_engine.config import DeformConfig, _parse_deform
     dc = _parse_deform({})
     d = DeformConfig()
     assert dc.sim_mode == d.sim_mode
@@ -115,7 +115,7 @@ def test_parse_deform_empty_dict_all_defaults():
 
 def test_config_has_deform_field_typed_as_deform_config():
     """Root Config exposes a `deform: DeformConfig` field."""
-    from slappyengine.config import Config, DeformConfig
+    from pharos_engine.config import Config, DeformConfig
     fields = {f.name: f for f in dataclasses.fields(Config)}
     assert "deform" in fields
     field = fields["deform"]
@@ -130,7 +130,7 @@ def test_config_has_deform_field_typed_as_deform_config():
 
 def test_deformable_layer_component_swallows_legacy_kwargs():
     """Ochema's per-class deform kwargs (spring_decay etc.) don't raise."""
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     comp = DeformableLayerComponent(
         layer=None,
         elastic_threshold=70.0,
@@ -152,7 +152,7 @@ def test_deformable_layer_component_swallows_legacy_kwargs():
 
 def test_deformable_layer_component_legacy_defaults():
     """Omitting legacy kwargs falls back to F1-era defaults."""
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     comp = DeformableLayerComponent(layer=None)
     assert comp.spring_decay == pytest.approx(0.94)
     assert comp.material_preset == "metal"
@@ -180,7 +180,7 @@ def _make_entity_with_layer(width: int, height: int, filled: bool = True,
 
 def test_pixel_collision_pass_class_level_2_arg_hit():
     """Legacy PixelCollisionPass.test(a, b) returns hit=True on full overlap."""
-    from slappyengine.collision_pixel import PixelCollisionPass
+    from pharos_engine.collision_pixel import PixelCollisionPass
     a = _make_entity_with_layer(64, 64, filled=True, position=(0.0, 0.0))
     b = _make_entity_with_layer(64, 64, filled=True, position=(0.0, 0.0))
     result = PixelCollisionPass.test(a, b)
@@ -190,7 +190,7 @@ def test_pixel_collision_pass_class_level_2_arg_hit():
 
 def test_pixel_collision_pass_class_level_2_arg_no_hit():
     """Legacy PixelCollisionPass.test(a, b) returns hit=False when far apart."""
-    from slappyengine.collision_pixel import PixelCollisionPass
+    from pharos_engine.collision_pixel import PixelCollisionPass
     a = _make_entity_with_layer(32, 32, filled=True, position=(0.0, 0.0))
     b = _make_entity_with_layer(32, 32, filled=True, position=(5000.0, 5000.0))
     result = PixelCollisionPass.test(a, b)
@@ -201,7 +201,7 @@ def test_pixel_collision_pass_class_level_2_arg_no_hit():
 def test_pixel_collision_pass_normal_is_unit_vector_on_hit():
     """When a hit is reported the contact normal has unit magnitude."""
     import math
-    from slappyengine.collision_pixel import PixelCollisionPass
+    from pharos_engine.collision_pixel import PixelCollisionPass
     a = _make_entity_with_layer(64, 64, filled=True, position=(0.0, 0.0))
     b = _make_entity_with_layer(64, 64, filled=True, position=(30.0, 0.0))
     result = PixelCollisionPass.test(a, b)
@@ -212,7 +212,7 @@ def test_pixel_collision_pass_normal_is_unit_vector_on_hit():
 
 def test_pixel_collision_pass_transparent_layers_no_hit():
     """Two fully-transparent layers report no contact."""
-    from slappyengine.collision_pixel import PixelCollisionPass
+    from pharos_engine.collision_pixel import PixelCollisionPass
     a = _make_entity_with_layer(64, 64, filled=False, position=(0.0, 0.0))
     b = _make_entity_with_layer(64, 64, filled=False, position=(0.0, 0.0))
     result = PixelCollisionPass.test(a, b)
@@ -225,7 +225,7 @@ def test_pixel_collision_pass_instance_gpu_form_still_returns_result():
     Without a real GPU context it degrades to the no-contact fallback,
     which is what the modern smoke tests already assert.
     """
-    from slappyengine.collision_pixel import PixelCollisionPass
+    from pharos_engine.collision_pixel import PixelCollisionPass
     pass_ = PixelCollisionPass()
     # Empty rects + None textures — should not raise, returns a result.
     result = pass_.test(None, None, (0, 0, 0, 0), None, (0, 0, 0, 0))

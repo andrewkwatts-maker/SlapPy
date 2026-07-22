@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.capture — API Reference
+# pharos_engine.capture — API Reference
 
 > Hand-written reference for the LL2 capture subpackage.
 > Records renderer output to MP4, GIF, or a per-frame PNG sequence with
@@ -12,7 +12,7 @@
 
 ## Overview
 
-`slappyengine.capture` was promoted to the public engine surface for
+`pharos_engine.capture` was promoted to the public engine surface for
 Nova3D parity Sprint 15 so games, tutorials, and CI produce reproducible
 video artefacts from any renderer exposing an HxWx4 `uint8`
 `read_pixels()` return.
@@ -30,7 +30,7 @@ Cross-platform: on Windows, the subprocess is spawned with
 ## Public surface
 
 ```python
-from slappyengine.capture import (
+from pharos_engine.capture import (
     CaptureManager, CaptureResult,
     VideoCapture, GIFCapture, FrameDump,
     FFmpegNotFoundError, FFMPEG_AVAILABLE, get_ffmpeg_executable,
@@ -41,7 +41,7 @@ from slappyengine.capture import (
 
 ### `CaptureManager`
 
-_class — defined in `slappyengine.capture.capture_manager`_
+_class — defined in `pharos_engine.capture.capture_manager`_
 
 High-level `record(renderer, path, frames=180, fps=30, progress=None)`
 API. Auto-selects the backend from the output extension:
@@ -56,7 +56,7 @@ Returns a :class:`CaptureResult` describing what was written.
 
 ### `CaptureResult`
 
-_dataclass — defined in `slappyengine.capture.capture_manager`_
+_dataclass — defined in `pharos_engine.capture.capture_manager`_
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -68,7 +68,7 @@ _dataclass — defined in `slappyengine.capture.capture_manager`_
 
 ### `VideoCapture`
 
-_class — defined in `slappyengine.capture.video_capture`_
+_class — defined in `pharos_engine.capture.video_capture`_
 
 FFmpeg-backed MP4 / MOV writer.
 
@@ -89,7 +89,7 @@ FFmpeg binary is found.
 
 ### `GIFCapture`
 
-_class — defined in `slappyengine.capture.gif_capture`_
+_class — defined in `pharos_engine.capture.gif_capture`_
 
 Pure-PIL animated-GIF writer. Zero FFmpeg dependency.
 
@@ -105,7 +105,7 @@ GIFCapture(
 
 ### `FrameDump`
 
-_class — defined in `slappyengine.capture.frame_dump`_
+_class — defined in `pharos_engine.capture.frame_dump`_
 
 Per-frame PNG dump to a directory. Filenames are
 `frame_{index:05d}.png`.
@@ -119,12 +119,12 @@ FrameDump(
 )
 ```
 
-Used by the visual regression harness (`slappyengine.testing`) to
+Used by the visual regression harness (`pharos_engine.testing`) to
 generate baseline frames.
 
 ### `FFmpegNotFoundError`
 
-_exception — defined in `slappyengine.capture.video_capture`_
+_exception — defined in `pharos_engine.capture.video_capture`_
 
 Raised by :class:`VideoCapture` when no FFmpeg binary is discoverable.
 The message names both probe paths (`imageio-ffmpeg` and the system
@@ -134,7 +134,7 @@ The message names both probe paths (`imageio-ffmpeg` and the system
 
 ### `get_ffmpeg_executable() -> str | None`
 
-_defined in `slappyengine.capture.video_capture`_
+_defined in `pharos_engine.capture.video_capture`_
 
 Resolve the FFmpeg binary path, checking `imageio-ffmpeg` first, then
 the system `PATH`. Returns `None` when both fail — pair with
@@ -144,7 +144,7 @@ the system `PATH`. Returns `None` when both fail — pair with
 
 ### `FFMPEG_AVAILABLE`
 
-_bool — defined in `slappyengine.capture.video_capture`_
+_bool — defined in `pharos_engine.capture.video_capture`_
 
 Value: `True` when :func:`get_ffmpeg_executable` resolves at import
 time. Callers can gate feature detection on this without needing a
@@ -153,8 +153,8 @@ try/except.
 ## Usage
 
 ```python
-from slappyengine.capture import CaptureManager
-from slappyengine.render import NullRenderer
+from pharos_engine.capture import CaptureManager
+from pharos_engine.render import NullRenderer
 
 renderer = NullRenderer(width=320, height=240)
 manager = CaptureManager()
@@ -164,15 +164,15 @@ result = manager.record(renderer, "out/spin.gif", frames=60, fps=30)
 assert result.frames_written == 60
 
 # MP4 — soft-imports FFmpeg; skips cleanly when unavailable.
-from slappyengine.capture import FFMPEG_AVAILABLE
+from pharos_engine.capture import FFMPEG_AVAILABLE
 if FFMPEG_AVAILABLE:
     manager.record(renderer, "out/spin.mp4", frames=60, fps=30)
 ```
 
 ## Skip the wrapper
 
-`slappyengine.capture` is Python-only. There is **no** Rust equivalent
-under `slappyengine._core`; the writers are thin lifecycle wrappers
+`pharos_engine.capture` is Python-only. There is **no** Rust equivalent
+under `pharos_engine._core`; the writers are thin lifecycle wrappers
 around FFmpeg subprocess pipes and PIL's `Image.save`. Bypassing the
 wrapper is only useful when you already own an FFmpeg / GStreamer /
 NVENC pipeline and want to feed it your renderer's `read_pixels()`

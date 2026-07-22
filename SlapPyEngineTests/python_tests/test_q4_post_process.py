@@ -16,7 +16,7 @@ if str(_ENGINE) not in sys.path:
     sys.path.insert(0, str(_ENGINE))
 
 import pytest
-from slappyengine.post_process.chain import (
+from pharos_engine.post_process.chain import (
     PostProcessPass,
     PostProcessChain,
     ChromaticAberrationPass,

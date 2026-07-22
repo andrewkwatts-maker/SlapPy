@@ -28,7 +28,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from slappyengine.testing import assert_scene_matches
+from pharos_engine.testing import assert_scene_matches
 
 # ── Load the demo as a module so we don't depend on examples/ being on path ──
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -117,7 +117,7 @@ def test_hello_ragdoll_no_nan_in_step(demo):
 def test_hello_ragdoll_visual_baseline(demo):
     """Render the skeleton and diff against the committed baseline PNG.
 
-    First run writes ``python/slappyengine/testing/baselines/hello_ragdoll.png``
+    First run writes ``python/pharos_engine/testing/baselines/hello_ragdoll.png``
     and passes; subsequent runs require a max per-channel diff <= 0.05.
     """
     world, body, spec = demo.build_world()
@@ -165,7 +165,7 @@ def _com_velocity(world, body):
 def test_hello_ragdoll_60_steps_no_runtime_warning(demo):
     """Stepping the world 60 frames must not raise any ``RuntimeWarning``.
 
-    The over-damp diagnostic in :mod:`slappyengine.dynamics.world` is the
+    The over-damp diagnostic in :mod:`pharos_engine.dynamics.world` is the
     usual culprit: keeps a lid on ``iters * damping``. Any future edit that
     silently drives the product above 0.3 will fail this test.
     """

@@ -12,12 +12,12 @@ import pytest
 
 class TestDirectionalLight:
     def test_instantiates(self):
-        from slappyengine.lighting import DirectionalLight
+        from pharos_engine.lighting import DirectionalLight
         l = DirectionalLight()
         assert l is not None
 
     def test_defaults(self):
-        from slappyengine.lighting import DirectionalLight
+        from pharos_engine.lighting import DirectionalLight
         l = DirectionalLight()
         assert l.direction == (0.707, 0.707)
         assert l.elevation == pytest.approx(0.785)
@@ -26,7 +26,7 @@ class TestDirectionalLight:
         assert l.cast_shadows is True
 
     def test_custom_values(self):
-        from slappyengine.lighting import DirectionalLight
+        from pharos_engine.lighting import DirectionalLight
         l = DirectionalLight(direction=(1.0, 0.0), intensity=2.0,
                              color=(0.8, 0.8, 1.0), cast_shadows=False)
         assert l.direction == (1.0, 0.0)
@@ -34,13 +34,13 @@ class TestDirectionalLight:
         assert l.cast_shadows is False
 
     def test_mutable_intensity(self):
-        from slappyengine.lighting import DirectionalLight
+        from pharos_engine.lighting import DirectionalLight
         l = DirectionalLight()
         l.intensity = 0.5
         assert l.intensity == pytest.approx(0.5)
 
     def test_tags_empty_set(self):
-        from slappyengine.lighting import DirectionalLight
+        from pharos_engine.lighting import DirectionalLight
         l = DirectionalLight()
         assert l.tags == set()
 
@@ -51,12 +51,12 @@ class TestDirectionalLight:
 
 class TestPointLight:
     def test_instantiates(self):
-        from slappyengine.lighting import PointLight
+        from pharos_engine.lighting import PointLight
         l = PointLight()
         assert l is not None
 
     def test_defaults(self):
-        from slappyengine.lighting import PointLight
+        from pharos_engine.lighting import PointLight
         l = PointLight()
         assert l.position == (0.0, 0.0)
         assert l.z == pytest.approx(100.0)
@@ -66,18 +66,18 @@ class TestPointLight:
         assert l.cast_shadows is False
 
     def test_custom_position(self):
-        from slappyengine.lighting import PointLight
+        from pharos_engine.lighting import PointLight
         l = PointLight(position=(320.0, 240.0), radius=150.0)
         assert l.position == (320.0, 240.0)
         assert l.radius == pytest.approx(150.0)
 
     def test_tags_default_empty(self):
-        from slappyengine.lighting import PointLight
+        from pharos_engine.lighting import PointLight
         l = PointLight()
         assert l.tags == set()
 
     def test_intensity_mutable(self):
-        from slappyengine.lighting import PointLight
+        from pharos_engine.lighting import PointLight
         l = PointLight()
         l.intensity = 3.0
         assert l.intensity == pytest.approx(3.0)
@@ -89,12 +89,12 @@ class TestPointLight:
 
 class TestConeLight:
     def test_instantiates(self):
-        from slappyengine.lighting import ConeLight
+        from pharos_engine.lighting import ConeLight
         l = ConeLight()
         assert l is not None
 
     def test_defaults(self):
-        from slappyengine.lighting import ConeLight
+        from pharos_engine.lighting import ConeLight
         l = ConeLight()
         assert l.position == (0.0, 0.0)
         assert l.direction == (1.0, 0.0)
@@ -107,12 +107,12 @@ class TestConeLight:
         assert l.volumetric is False
 
     def test_volumetric_flag(self):
-        from slappyengine.lighting import ConeLight
+        from pharos_engine.lighting import ConeLight
         l = ConeLight(volumetric=True)
         assert l.volumetric is True
 
     def test_custom_values(self):
-        from slappyengine.lighting import ConeLight
+        from pharos_engine.lighting import ConeLight
         l = ConeLight(position=(100.0, 200.0), direction=(0.0, 1.0),
                       half_angle=0.2, radius=200.0, intensity=3.0)
         assert l.position == (100.0, 200.0)
@@ -127,12 +127,12 @@ class TestConeLight:
 
 class TestShapeLight:
     def test_instantiates(self):
-        from slappyengine.lighting import ShapeLight
+        from pharos_engine.lighting import ShapeLight
         l = ShapeLight()
         assert l is not None
 
     def test_defaults(self):
-        from slappyengine.lighting import ShapeLight
+        from pharos_engine.lighting import ShapeLight
         l = ShapeLight()
         assert l.position == (0.0, 0.0)
         assert l.mask_path == ""
@@ -142,7 +142,7 @@ class TestShapeLight:
         assert l.falloff == pytest.approx(1.0)
 
     def test_custom_mask_path(self):
-        from slappyengine.lighting import ShapeLight
+        from pharos_engine.lighting import ShapeLight
         l = ShapeLight(mask_path="assets/lights/torch.png")
         assert l.mask_path == "assets/lights/torch.png"
 
@@ -153,12 +153,12 @@ class TestShapeLight:
 
 class TestFlashLight:
     def test_instantiates(self):
-        from slappyengine.lighting import FlashLight
+        from pharos_engine.lighting import FlashLight
         l = FlashLight()
         assert l is not None
 
     def test_defaults(self):
-        from slappyengine.lighting import FlashLight
+        from pharos_engine.lighting import FlashLight
         l = FlashLight()
         assert l.radius == pytest.approx(80.0)
         assert l.color == (1.0, 0.8, 0.4)
@@ -167,18 +167,18 @@ class TestFlashLight:
         assert l.elapsed == pytest.approx(0.0)
 
     def test_not_active_before_trigger(self):
-        from slappyengine.lighting import FlashLight
+        from pharos_engine.lighting import FlashLight
         l = FlashLight()
         assert l.active is False
 
     def test_trigger_activates(self):
-        from slappyengine.lighting import FlashLight
+        from pharos_engine.lighting import FlashLight
         l = FlashLight()
         l.trigger()
         assert l.active is True
 
     def test_tick_expires(self):
-        from slappyengine.lighting import FlashLight
+        from pharos_engine.lighting import FlashLight
         l = FlashLight(duration=0.1)
         l.trigger()
         expired = l.tick(0.2)
@@ -186,7 +186,7 @@ class TestFlashLight:
         assert l.active is False
 
     def test_tick_not_yet_expired(self):
-        from slappyengine.lighting import FlashLight
+        from pharos_engine.lighting import FlashLight
         l = FlashLight(duration=0.5)
         l.trigger()
         expired = l.tick(0.1)
@@ -194,14 +194,14 @@ class TestFlashLight:
         assert l.active is True
 
     def test_tick_advances_elapsed(self):
-        from slappyengine.lighting import FlashLight
+        from pharos_engine.lighting import FlashLight
         l = FlashLight(duration=1.0)
         l.trigger()
         l.tick(0.3)
         assert l.elapsed == pytest.approx(0.3)
 
     def test_multiple_triggers_reset(self):
-        from slappyengine.lighting import FlashLight
+        from pharos_engine.lighting import FlashLight
         l = FlashLight(duration=0.1)
         l.trigger()
         l.tick(0.2)
@@ -216,12 +216,12 @@ class TestFlashLight:
 
 class TestGravityWarpSource:
     def test_instantiates(self):
-        from slappyengine.lighting import GravityWarpSource
+        from pharos_engine.lighting import GravityWarpSource
         g = GravityWarpSource()
         assert g is not None
 
     def test_defaults(self):
-        from slappyengine.lighting import GravityWarpSource
+        from pharos_engine.lighting import GravityWarpSource
         g = GravityWarpSource()
         assert g.position == (0.0, 0.0)
         assert g.mass == pytest.approx(1.0)
@@ -229,18 +229,18 @@ class TestGravityWarpSource:
         assert g.falloff == pytest.approx(5000.0)
 
     def test_permanent_is_active(self):
-        from slappyengine.lighting import GravityWarpSource
+        from pharos_engine.lighting import GravityWarpSource
         g = GravityWarpSource()
         assert g.active is True  # _remaining = -1 → permanent
 
     def test_set_duration(self):
-        from slappyengine.lighting import GravityWarpSource
+        from pharos_engine.lighting import GravityWarpSource
         g = GravityWarpSource()
         g.set_duration(2.0)
         assert g.active is True
 
     def test_duration_expires(self):
-        from slappyengine.lighting import GravityWarpSource
+        from pharos_engine.lighting import GravityWarpSource
         g = GravityWarpSource()
         g.set_duration(0.1)
         g.tick(0.2)
@@ -249,14 +249,14 @@ class TestGravityWarpSource:
         assert g._remaining == pytest.approx(0.0)
 
     def test_tick_decrements(self):
-        from slappyengine.lighting import GravityWarpSource
+        from pharos_engine.lighting import GravityWarpSource
         g = GravityWarpSource()
         g.set_duration(1.0)
         g.tick(0.3)
         assert g._remaining == pytest.approx(0.7)
 
     def test_negative_mass_repulsive(self):
-        from slappyengine.lighting import GravityWarpSource
+        from pharos_engine.lighting import GravityWarpSource
         g = GravityWarpSource(mass=-1.5)
         assert g.mass == pytest.approx(-1.5)
 
@@ -267,12 +267,12 @@ class TestGravityWarpSource:
 
 class TestRadianceCascadeConfig:
     def test_instantiates(self):
-        from slappyengine.lighting import RadianceCascadeConfig
+        from pharos_engine.lighting import RadianceCascadeConfig
         c = RadianceCascadeConfig()
         assert c is not None
 
     def test_defaults(self):
-        from slappyengine.lighting import RadianceCascadeConfig
+        from pharos_engine.lighting import RadianceCascadeConfig
         c = RadianceCascadeConfig()
         assert c.num_cascades == 4
         assert c.probe_spacing_px == 8
@@ -280,7 +280,7 @@ class TestRadianceCascadeConfig:
         assert c.max_ray_length_px == pytest.approx(512.0)
 
     def test_custom_values(self):
-        from slappyengine.lighting import RadianceCascadeConfig
+        from pharos_engine.lighting import RadianceCascadeConfig
         c = RadianceCascadeConfig(num_cascades=6, rays_per_probe=128)
         assert c.num_cascades == 6
         assert c.rays_per_probe == 128
@@ -292,26 +292,26 @@ class TestRadianceCascadeConfig:
 
 class TestLightingContext:
     def test_instantiates(self):
-        from slappyengine.lighting import LightingContext
+        from pharos_engine.lighting import LightingContext
         lc = LightingContext()
         assert lc is not None
 
     def test_defaults(self):
-        from slappyengine.lighting import LightingContext
+        from pharos_engine.lighting import LightingContext
         lc = LightingContext()
         assert lc.ambient_intensity == pytest.approx(0.15)
         assert lc.mode == "local"
         assert lc.lights == []
 
     def test_add_light(self):
-        from slappyengine.lighting import LightingContext, PointLight
+        from pharos_engine.lighting import LightingContext, PointLight
         lc = LightingContext()
         l = PointLight()
         lc.add_light(l)
         assert l in lc.lights
 
     def test_remove_light(self):
-        from slappyengine.lighting import LightingContext, PointLight
+        from pharos_engine.lighting import LightingContext, PointLight
         lc = LightingContext()
         l = PointLight()
         lc.add_light(l)
@@ -319,18 +319,18 @@ class TestLightingContext:
         assert l not in lc.lights
 
     def test_custom_ambient(self):
-        from slappyengine.lighting import LightingContext
+        from pharos_engine.lighting import LightingContext
         lc = LightingContext(ambient_color=(0.3, 0.3, 0.4), ambient_intensity=0.4)
         assert lc.ambient_color == (0.3, 0.3, 0.4)
         assert lc.ambient_intensity == pytest.approx(0.4)
 
     def test_mode_global(self):
-        from slappyengine.lighting import LightingContext
+        from pharos_engine.lighting import LightingContext
         lc = LightingContext(mode="global")
         assert lc.mode == "global"
 
     def test_multiple_lights(self):
-        from slappyengine.lighting import LightingContext, PointLight, ConeLight
+        from pharos_engine.lighting import LightingContext, PointLight, ConeLight
         lc = LightingContext()
         lc.add_light(PointLight())
         lc.add_light(ConeLight())

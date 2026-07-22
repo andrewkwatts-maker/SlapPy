@@ -20,13 +20,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from slappyengine.autosave import (
+from pharos_engine.autosave import (
     AutosaveManager,
     AutosaveReadError,
     AutosaveState,
 )
-from slappyengine.dynamics import World
-from slappyengine.prefabs import Prefab, PrefabLibrary
+from pharos_engine.dynamics import World
+from pharos_engine.prefabs import Prefab, PrefabLibrary
 
 
 # ---------------------------------------------------------------------------

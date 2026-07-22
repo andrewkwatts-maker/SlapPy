@@ -1,0 +1,17 @@
+[package]
+name = "pharos_core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Pharos engine core: physics, fluid, softbody, geometry kernels (pure Rust, no GPU)."
+
+[lib]
+name = "pharos_core"
+crate-type = ["rlib"]
+
+[dependencies]
+rayon.workspace = true
+serde.workspace = true
+bytemuck.workspace = true
+half.workspace = true

@@ -20,9 +20,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.physics.blast import DetonateCurves, detonate
-from slappyengine.physics.particle_field import ParticleField
-from slappyengine.physics.splatter_presets import get as get_preset
+from pharos_engine.physics.blast import DetonateCurves, detonate
+from pharos_engine.physics.particle_field import ParticleField
+from pharos_engine.physics.splatter_presets import get as get_preset
 
 
 def _run_blast_to_completion(

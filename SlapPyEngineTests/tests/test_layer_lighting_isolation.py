@@ -1,4 +1,4 @@
-﻿"""Comprehensive per-layer lighting isolation tests.
+"""Comprehensive per-layer lighting isolation tests.
 
 Proves that two layers can have completely independent lighting with no
 bleed-through. All tests are pure Python — no GPU, no wgpu required.
@@ -11,8 +11,8 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def _imports():
-    from slappyengine.layer import Layer
-    from slappyengine.lighting import (
+    from pharos_engine.layer import Layer
+    from pharos_engine.lighting import (
         LightingContext, DirectionalLight, PointLight, ConeLight,
     )
     return Layer, LightingContext, DirectionalLight, PointLight, ConeLight

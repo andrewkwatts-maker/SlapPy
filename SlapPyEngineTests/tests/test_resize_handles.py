@@ -1,4 +1,4 @@
-"""Tests for ``slappyengine.ui.editor.resize_handles``.
+"""Tests for ``pharos_engine.ui.editor.resize_handles``.
 
 Covers the contract in the sprint brief:
 
@@ -21,7 +21,7 @@ from __future__ import annotations
 import pytest
 
 try:
-    from slappyengine.ui.editor.resize_handles import (
+    from pharos_engine.ui.editor.resize_handles import (
         MinSize,
         PANEL_MIN_SIZES,
         ResizeHandle,

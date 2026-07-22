@@ -26,7 +26,7 @@ import pytest
 
 def test_unsubscribe_none_topic_removes_listener_from_all_topics():
     """``unsubscribe(None, listener)`` drops ``listener`` from every topic."""
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
     bus = EventBus()
     hits: list[str] = []
 
@@ -58,7 +58,7 @@ def test_unsubscribe_none_topic_removes_listener_from_all_topics():
 
 def test_unsubscribe_no_args_is_noop():
     """Bare ``unsubscribe()`` returns cleanly without touching state."""
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
     bus = EventBus()
     bus.subscribe("topic", lambda _p: None)
     assert bus.listener_count("topic") == 1
@@ -70,7 +70,7 @@ def test_unsubscribe_no_args_is_noop():
 
 def test_unsubscribe_none_none_is_noop():
     """``unsubscribe(None, None)`` is an explicit no-op."""
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
     bus = EventBus()
     bus.subscribe("topic", lambda _p: None)
     assert bus.listener_count("topic") == 1
@@ -82,7 +82,7 @@ def test_unsubscribe_none_none_is_noop():
 
 def test_unsubscribe_two_arg_form_still_works():
     """Modern 2-arg form drops exactly the matching listener."""
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
     bus = EventBus()
     hits: list[str] = []
 
@@ -102,7 +102,7 @@ def test_unsubscribe_two_arg_form_still_works():
 
 def test_unsubscribe_one_arg_form_still_works():
     """Legacy 1-arg form drops every listener for the topic."""
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
     bus = EventBus()
     bus.subscribe("topic", lambda _p: None)
     bus.subscribe("topic", lambda _p: None)
@@ -115,7 +115,7 @@ def test_unsubscribe_one_arg_form_still_works():
 
 def test_unsubscribe_non_str_non_none_event_type_raises():
     """Integer event_type still raises TypeError — validator remains strict."""
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
     bus = EventBus()
     listener = lambda _p: None
     bus.subscribe("topic", listener)
@@ -126,7 +126,7 @@ def test_unsubscribe_non_str_non_none_event_type_raises():
 
 def test_module_level_unsubscribe_none_teardown():
     """Module-level proxy also honours the ``unsubscribe(None, listener)`` shape."""
-    from slappyengine.event_bus import (
+    from pharos_engine.event_bus import (
         global_bus,
         subscribe,
         unsubscribe,

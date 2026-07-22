@@ -15,7 +15,7 @@ import time
 
 import pytest
 
-from slappyengine.diagnostics import DiagnosticEvent, DiagnosticsCollector
+from pharos_engine.diagnostics import DiagnosticEvent, DiagnosticsCollector
 
 
 # ---------------------------------------------------------------------------
@@ -165,7 +165,7 @@ def test_count_by_time_window_zero_seconds_only_exact_now():
 
 
 def test_app_widget_summary_returns_empty_defaults_when_disabled():
-    from slappyengine.app import App, AppConfig
+    from pharos_engine.app import App, AppConfig
 
     app = App(AppConfig(enable_gpu=False, max_frames=1))
     summary = app.diagnostics_widget_summary()
@@ -179,7 +179,7 @@ def test_app_widget_summary_returns_empty_defaults_when_disabled():
 
 
 def test_app_widget_summary_reports_totals_and_top_subsystem():
-    from slappyengine.app import App, AppConfig
+    from pharos_engine.app import App, AppConfig
 
     app = App(AppConfig(enable_gpu=False, max_frames=1))
     app.enable_diagnostics()
@@ -227,7 +227,7 @@ def test_app_widget_summary_reports_totals_and_top_subsystem():
 
 
 def test_app_widget_summary_counts_critical_as_error():
-    from slappyengine.app import App, AppConfig
+    from pharos_engine.app import App, AppConfig
 
     app = App(AppConfig(enable_gpu=False, max_frames=1))
     app.enable_diagnostics()
@@ -251,7 +251,7 @@ def test_app_widget_summary_counts_critical_as_error():
 
 
 def test_app_widget_summary_empty_collector_returns_none_message():
-    from slappyengine.app import App, AppConfig
+    from pharos_engine.app import App, AppConfig
 
     app = App(AppConfig(enable_gpu=False, max_frames=1))
     app.enable_diagnostics()

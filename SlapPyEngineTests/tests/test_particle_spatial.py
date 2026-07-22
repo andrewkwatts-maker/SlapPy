@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.physics.particle_spatial import SpatialHash
+from pharos_engine.physics.particle_spatial import SpatialHash
 
 
 def test_rebuild_partitions_particles_correctly():

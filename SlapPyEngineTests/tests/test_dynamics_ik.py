@@ -6,7 +6,7 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import IKChainSpec, World, solve_ik
+from pharos_engine.dynamics import IKChainSpec, World, solve_ik
 
 
 def _make_chain(world: World, lengths: list[float]) -> list[int]:

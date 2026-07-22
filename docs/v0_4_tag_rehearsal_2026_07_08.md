@@ -7,7 +7,7 @@ YES to VV7's Q1 (ship-with-known-issues acceptable) and Q2
 
 Written by **ZZ7** background scrum agent, 2026-07-08 batch.
 **Docs-only.** No version strings, `pyproject.toml`, `Cargo.toml`,
-`CHANGELOG.md`, `python/slappyengine/__init__.py`, or Python source
+`CHANGELOG.md`, `python/pharos_engine/__init__.py`, or Python source
 touched. This doc is a rehearsal — the operator copy-pastes the
 commands below in order once the ship-decision gate clears.
 
@@ -98,8 +98,8 @@ version = "0.4.0"
 ```
 
 ```
-$ sed -i 's/__version__ = "0.3.0b0"/__version__ = "0.4.0"/' python/slappyengine/__init__.py
-$ grep '__version__' python/slappyengine/__init__.py
+$ sed -i 's/__version__ = "0.3.0b0"/__version__ = "0.4.0"/' python/pharos_engine/__init__.py
+$ grep '__version__' python/pharos_engine/__init__.py
 __version__ = "0.4.0"
 ```
 
@@ -150,12 +150,12 @@ Single atomic commit for Step 1 + Step 2, then annotated tag,
 then push both branch and tag.
 
 ```
-$ git add pyproject.toml Cargo.toml python/slappyengine/__init__.py CHANGELOG.md
+$ git add pyproject.toml Cargo.toml python/pharos_engine/__init__.py CHANGELOG.md
 $ git status --short
 M CHANGELOG.md
 M Cargo.toml
 M pyproject.toml
-M python/slappyengine/__init__.py
+M python/pharos_engine/__init__.py
 $ git commit -m "Release v0.4.0"
 $ git tag -a v0.4.0 -m "SlapPyEngine v0.4.0"
 $ git push origin master
@@ -178,10 +178,10 @@ Build the release wheel and publish to PyPI.
 ```
 $ maturin build --release
 $ ls -lh target/wheels/
-(expect: slappyengine-0.4.0-<py>-<abi>-<plat>.whl, ≤ 50 MB)
+(expect: pharos_engine-0.4.0-<py>-<abi>-<plat>.whl, ≤ 50 MB)
 $ maturin publish --release
 (expect: PyPI upload returns 200; wheel appears at
- https://pypi.org/project/slappyengine/0.4.0/)
+ https://pypi.org/project/pharos_engine/0.4.0/)
 ```
 
 `maturin publish` prompts for PyPI credentials (or reads
@@ -195,10 +195,10 @@ Fresh venv smoke, one demo run, GitHub release notes.
 
 ```
 $ python -m venv /tmp/slap-verify && source /tmp/slap-verify/bin/activate
-$ pip install --upgrade slappy-engine==0.4.0
-$ python -c "import slappyengine; print(slappyengine.__version__)"
+$ pip install --upgrade pharos-engine==0.4.0
+$ python -c "import pharos_engine; print(pharos_engine.__version__)"
 0.4.0
-$ python -m slappyengine.demo.hello_studio
+$ python -m pharos_engine.demo.hello_studio
 (expect: window opens, demo runs to completion)
 ```
 
@@ -223,7 +223,7 @@ published `v0.4.0` tag — PyPI and GitHub treat tags as immutable.
 Discard version bump + CHANGELOG edit:
 
 ```
-$ git checkout -- pyproject.toml Cargo.toml python/slappyengine/__init__.py CHANGELOG.md
+$ git checkout -- pyproject.toml Cargo.toml python/pharos_engine/__init__.py CHANGELOG.md
 $ git status --short
 (expect: empty)
 ```
@@ -282,7 +282,7 @@ $ git push origin v0.4.0.post1
 Then add a `[0.4.0.post1]` entry to `CHANGELOG.md` documenting
 the post-release fix. Never re-use the `v0.4.0` tag name at a new
 SHA once PyPI has served the wheel — `pip install
-slappy-engine==0.4.0` reproducibility depends on immutability.
+pharos-engine==0.4.0` reproducibility depends on immutability.
 
 ---
 
@@ -338,6 +338,6 @@ doc (`docs/v0_4_ship_decision_2026_07_07.md`), PP6 version-bump
 audit (`docs/version_bump_audit_2026_07_07.md`), WW7 CHANGELOG
 draft (`CHANGELOG.md:8`), YY3 F1 recovery arc
 (`docs/game_compat_2026_07_07.md` § 12), live `pyproject.toml:7`
-+ `Cargo.toml:3` + `python/slappyengine/__init__.py:103` version
++ `Cargo.toml:3` + `python/pharos_engine/__init__.py:103` version
 cross-check. Docs-only — no version strings or Python source
 touched.*

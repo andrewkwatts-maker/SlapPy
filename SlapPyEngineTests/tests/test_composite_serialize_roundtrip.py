@@ -1,7 +1,7 @@
 """Composite-scene serialize round-trip test (Sprint 4).
 
 This module exercises the dynamics-world serializer
-(:func:`slappyengine.dynamics.serialize.save_world` /
+(:func:`pharos_engine.dynamics.serialize.save_world` /
 :func:`load_world`) against the multi-subsystem ``hello_composite`` scene
 and documents exactly which subsystem state is — and is NOT — captured by
 the on-disk format.
@@ -35,9 +35,9 @@ Phase C-like surface gaps documented in
   reset to ambient on reload.
 * :class:`ZoneManager` occupancy + per-zone enter/exit counters — no
   serializer; live entity membership is lost across save/load.
-* :mod:`slappyengine.iso.combat` ``Defender`` / ``Attacker`` / ongoing
+* :mod:`pharos_engine.iso.combat` ``Defender`` / ``Attacker`` / ongoing
   ``WaveSchedule.elapsed`` — no serializer; an in-flight wave restarts.
-* :mod:`slappyengine.telemetry` history ring buffer — has clear-able
+* :mod:`pharos_engine.telemetry` history ring buffer — has clear-able
   in-process history but no JSON round-trip; subscribers are reattached
   by the demo on each run.
 
@@ -55,9 +55,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import slappyengine.telemetry as telemetry
-from slappyengine.dynamics import World
-from slappyengine.dynamics.serialize import (
+import pharos_engine.telemetry as telemetry
+from pharos_engine.dynamics import World
+from pharos_engine.dynamics.serialize import (
     SCHEMA_VERSION,
     load_world,
     save_world,

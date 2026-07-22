@@ -1,4 +1,4 @@
-"""Tests for slappyengine.render.ssao — screen-space AO for the forward renderer.
+"""Tests for pharos_engine.render.ssao — screen-space AO for the forward renderer.
 
 All checks are pure numpy + WGSL source-string introspection. The GPU path
 is exercised through :class:`NullRenderer` so no wgpu adapter is needed.
@@ -8,8 +8,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.render import Camera3D, NullRenderer
-from slappyengine.render.ssao import (
+from pharos_engine.render import Camera3D, NullRenderer
+from pharos_engine.render.ssao import (
     SSAOConfig,
     SSAOPass,
     depth_to_view_z,

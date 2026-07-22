@@ -169,7 +169,7 @@ def stub_dpg(monkeypatch):
 @pytest.fixture
 def force_studio_missing(monkeypatch):
     """Force the studio module probe to soft-fail."""
-    import slappyengine.ui.editor.notebook_diary_page as ndp
+    import pharos_engine.ui.editor.notebook_diary_page as ndp
     monkeypatch.setattr(ndp, "_try_import_studio", lambda: None)
     yield
 
@@ -180,7 +180,7 @@ def force_studio_missing(monkeypatch):
 
 
 try:
-    from slappyengine.ui.editor.notebook_diary_page import (
+    from pharos_engine.ui.editor.notebook_diary_page import (
         NODES_MODE,
         PYTHON_MODE,
         NotebookDiaryPage,
@@ -468,7 +468,7 @@ class TestThemeSwitch:
 class TestContentBrowserIcon:
     def test_diary_py_uses_diary_icon(self):
         """``*.diary.py`` files surface the new diary icon, not the script one."""
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             icon_for_path,
         )
         assert icon_for_path(Path("notes.diary.py")) == "diary"

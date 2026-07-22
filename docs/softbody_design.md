@@ -390,7 +390,7 @@ operational the whole way.
 
 - The softbody subpackage does not ship a dedicated `docs/api/` ref —
   its public surface is documented inline in the source module's
-  docstring (`python/slappyengine/softbody/__init__.py`) and via the
+  docstring (`python/pharos_engine/softbody/__init__.py`) and via the
   auto-generated entries in [`engine_surface_v030.md`](engine_surface_v030.md).
 - [`dynamics_design.md`](dynamics_design.md) — the unifying XPBD
   substrate that softbody, dynamics, and humanoid all share.

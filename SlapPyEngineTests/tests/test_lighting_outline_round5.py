@@ -34,14 +34,14 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.post_process.chain import PostProcessChain
-from slappyengine.post_process.outline import (
+from pharos_engine.post_process.chain import PostProcessChain
+from pharos_engine.post_process.outline import (
     OutlinePass,
     edge_factor_cardinal,
     edge_factor_sobel,
     synth_disc_alpha,
 )
-from slappyengine.testing import assert_scene_matches
+from pharos_engine.testing import assert_scene_matches
 
 
 # ---------------------------------------------------------------------------
@@ -334,7 +334,7 @@ def test_executor_packs_outline_uniform_correctly() -> None:
     expects (48 bytes, std140-compatible).
     """
     import struct as _s
-    from slappyengine.post_process.chain import PostProcessPass
+    from pharos_engine.post_process.chain import PostProcessPass
 
     # Build a pass record the way PostProcessChain.add_outline would.
     chain = PostProcessChain()

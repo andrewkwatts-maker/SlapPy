@@ -1,14 +1,14 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.compute — API Reference
+# pharos_engine.compute — API Reference
 
 > Hand-written reference for the GPU compute subpackage.
 > Covers the dispatch pipeline, bulk pixel mutation, stats reduction,
 > spatial primitives, and the per-asset compute API. For the renderer
-> side of the GPU surface see `slappyengine.gpu`; for the lighting
+> side of the GPU surface see `pharos_engine.gpu`; for the lighting
 > compute kernels see [`gi.md`](gi.md).
 
 ```python
-from slappyengine.compute import (
+from pharos_engine.compute import (
     ComputePass, ComputePipeline,
     ReadbackBuffer,
     StatsCompute, StatsResult,
@@ -21,7 +21,7 @@ from slappyengine.compute import (
 ## Overview
 
 All names are lazy-loaded via `__getattr__` — importing
-`slappyengine.compute` is cheap, the wgpu / numpy modules only land when
+`pharos_engine.compute` is cheap, the wgpu / numpy modules only land when
 you actually touch a symbol. This keeps headless CI fast.
 
 ## Shared infrastructure
@@ -159,7 +159,7 @@ an asset before the GPU is up does not fail.
 `apply(*, filter, mutation, target_channel, layer=0)`. The
 `apply` entrypoint compiles a pair of Python lambdas
 (`filter`, `mutation`) into WGSL via
-`slappyengine.compute.ast_compiler.compile_apply_shader` and
+`pharos_engine.compute.ast_compiler.compile_apply_shader` and
 dispatches them against `shaders/pixel_apply_expr.wgsl`. Lambda
 compilation failures raise `ValueError` wrapping the underlying
 `ASTCompilerError`.
@@ -187,15 +187,15 @@ public method validates channel names against the asset's
 
 ## Inner modules
 
-- `slappyengine.compute.pipeline` — `ComputePass`, `ComputePipeline`.
-- `slappyengine.compute.readback` — `ReadbackBuffer`.
-- `slappyengine.compute.stats` — `StatsCompute`, `StatsResult`.
-- `slappyengine.compute.spatial` — `SpatialCompute`, `AABB`.
-- `slappyengine.compute.mutator` — `PixelMutator`.
-- `slappyengine.compute.asset_compute` — `AssetComputeAPI`, `PixelAPI`.
-- `slappyengine.compute.ast_compiler` — lambda → WGSL transpiler used
+- `pharos_engine.compute.pipeline` — `ComputePass`, `ComputePipeline`.
+- `pharos_engine.compute.readback` — `ReadbackBuffer`.
+- `pharos_engine.compute.stats` — `StatsCompute`, `StatsResult`.
+- `pharos_engine.compute.spatial` — `SpatialCompute`, `AABB`.
+- `pharos_engine.compute.mutator` — `PixelMutator`.
+- `pharos_engine.compute.asset_compute` — `AssetComputeAPI`, `PixelAPI`.
+- `pharos_engine.compute.ast_compiler` — lambda → WGSL transpiler used
   by `PixelAPI.apply`; `ASTCompilerError` surfaces authoring errors.
-- `slappyengine.compute.effect` / `hull` / `library` / `shader_cache`
+- `pharos_engine.compute.effect` / `hull` / `library` / `shader_cache`
   / `wgsl_chunks` — internal helpers, not part of the public surface.
 
 ## Design notes

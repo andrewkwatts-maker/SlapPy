@@ -50,7 +50,7 @@ each column. Times in `Australia/Sydney` (AEST +1000).
 | Batch | SHA range | Sprint slots | Date range | Notable landings |
 |-------|-----------|--------------|------------|------------------|
 | **GG** | *(in-flight — this doc is GG7)* | 7 dispatched | 2026-07-05 late | GG7 (this big-picture report); other GG slots pending or in-flight. |
-| **FF** | `5fd475d` (salvage FF1+FF2) → `29f7552` (FF7) | 7 landed | 2026-07-05 12:26 → 15:12 | FF1 STUB triage r9 (5 more actions — `content.new_folder`, `content.rename_asset`, `panel.close_others`, `edit.select_children`, `theme.reload_all`). FF2 MaterialGraphBridge binding-heuristic fix + regenerated hello_material_graph WGSL. FF3 `slappyengine.scenes` subpackage (Scene / SceneRegistry / SceneFile YAML). FF4 Rust migration re-audit (17 shipped kernels, top-3 next: `_slide`, `_sor_sweep`, `connected_components`). FF5 hotkey conflict detector (duplicates + platform shadow). FF6 NotebookMinimap top-down viewport. FF7 hello_scene_reg demo. |
+| **FF** | `5fd475d` (salvage FF1+FF2) → `29f7552` (FF7) | 7 landed | 2026-07-05 12:26 → 15:12 | FF1 STUB triage r9 (5 more actions — `content.new_folder`, `content.rename_asset`, `panel.close_others`, `edit.select_children`, `theme.reload_all`). FF2 MaterialGraphBridge binding-heuristic fix + regenerated hello_material_graph WGSL. FF3 `pharos_engine.scenes` subpackage (Scene / SceneRegistry / SceneFile YAML). FF4 Rust migration re-audit (17 shipped kernels, top-3 next: `_slide`, `_sor_sweep`, `connected_components`). FF5 hotkey conflict detector (duplicates + platform shadow). FF6 NotebookMinimap top-down viewport. FF7 hello_scene_reg demo. |
 | **EE** | `69f4407` (EE7) → `77ac09b` (EE2) | 7 landed | 2026-07-05 11:15 → 11:20 | EE1 STUB triage r8 (5 more actions — `theme.random`, `spawn.spawn_at_cursor`, `edit.snap_to_pixel_grid` + 2 more). EE2 hello_v2_showcase mega-demo (15+ subsystems). EE3 NotebookMenuBar (categorised auto-generated from ToolRouter). EE4 FileDropHandler (OS drag-and-drop routing). EE5 rollup doc extension (CC + DD landings). EE6 NotebookPPPreviewPanel (live post-process chain preview). EE7 TelemetrySink helper (per-panel counter/gauge/perf sink API). |
 | **DD** | `7be6617` (salvage DD1/3/5) → `324e8e6` (DD2) | 6 landed / 7 dispatched (DD7 lost) | 2026-07-05 08:00 → 10:09 | DD1 STUB triage r7 (5 more actions — `layer.duplicate`, `panel.close_all`, `panel.restore_last_hidden`, `spawn.repeat_last_batch`, `theme.cycle_reverse`). DD3 SmokeRunner + parallel runner. DD5 NotebookTimelineEditor (keyframe curves, cubic/linear/step, YAML round-trip). DD2 hello_toast_animation demo. DD4 NotebookTelemetryDashboard (4 views + CSV export). DD6 shader batch validator + Markdown/YAML report. |
 | **CC** | `06620e8` (CC1) → `2b835c3` (CC4) | 7 landed | 2026-07-05 06:51 → 06:55 | CC1 STUB triage r6 (5 more actions — `edit.select_by_name`, `spawn.repeat_last`, `view.toggle_grid`, `view.toggle_gizmos`, `content.copy_asset_path`). CC2 hello_material_graph demo. CC3 NotebookAssetInspector (7 asset kinds). CC4 baked layout presets + LayoutBaker. CC5 NotebookToastManager. CC6 camera animation tweens + `view.focus_on_selection_animated` / `view.frame_all_animated`. CC7 NotebookCommandPalette (Ctrl+Shift+P). |
@@ -58,9 +58,9 @@ each column. Times in `Australia/Sydney` (AEST +1000).
 | **AA** | `9997cdd` (AA5) → `f6bb3f0` (AA1) | 7 landed | 2026-07-05 04:00 → 05:00 (approx) | AA1 STUB triage r4 (5 more actions — `edit.cut_selection`, `edit.delete_selection`, `view.center_on_selection`, `view.frame_all`, `tool.pan`). AA2 PrefabLibrary API polish (spawn / entity_count / bake_and_load) + AutosaveManager.read_snapshot. AA3 diary_softbody_bridge shim + investigation doc. AA4 MaterialGraphBridge (V5↔NotebookMaterialEditor). AA5 hello_full_editor demo (6 pages + prefabs + material + autosave + 6 themes). AA6 WGSL shader lint (53-shader coverage). AA7 hotkey_remap + 3 baked presets. |
 | **Z**  | `39cad69` (Z7) → `fb073f4` (Z1) | 7 landed | 2026-07-04 late → 2026-07-05 03:00 (approx) | Z1 NotebookMessageLog Windows-headless DPG segfault fix. Z2 NotebookPrefabMenu. Z3 6 baked post-process chain presets. Z4 hello_prefab + hello_autosave demos. Z5 README + quickstart + onboarding polish. Z6 EditorAutosaveIntegration. Z7 STUB triage r3 (5 more actions — `tool.snap_to_grid`, `view.zoom_in` / `zoom_out` / `zoom_reset`, `theme.export_current`). |
 | **Y**  | `61d6b83` (Y7 followup) → `48eb8ee` (Y7) | 7 landed | 2026-07-04 mid | Y1 STUB triage r2 (5 more actions — `tool.select_all` / `deselect_all`, `editor.copy_selection` / `paste_selection`, `theme.cycle`). Y2 hello_joint over-damping fix + regression tests. Y3 prefab library. Y4 gizmo overlay polish (move/rotate/scale). Y5 NotebookMessageLog. Y6 autosave + crash-recovery subsystem. Y7 feature-map delta re-audit doc. |
-| **X**  | `194a0c9` (X7) → `d339995` (X2) | 7 landed | 2026-07-04 early | X2 hello_rope over-damping fix. X3 STUB triage r1 (5 actions — `editor.save_project` / `new_project` / `open_recent`, `view.reset_layout`, `edit.duplicate_selection`) + `slappyengine.actions.*` subpackage bootstrap. X4 NotebookContentBrowser project asset tree. X5 post-process chain manifest (declarative pass ordering). X6 UserOverrideLoader `watch_dir` / `autoreload`. X7 6 widget primitives (GlitterProgressBar / RibbonTab / PaperClipAttachment / WashiTapeDivider / SketchButton / InkStampBadge). |
+| **X**  | `194a0c9` (X7) → `d339995` (X2) | 7 landed | 2026-07-04 early | X2 hello_rope over-damping fix. X3 STUB triage r1 (5 actions — `editor.save_project` / `new_project` / `open_recent`, `view.reset_layout`, `edit.duplicate_selection`) + `pharos_engine.actions.*` subpackage bootstrap. X4 NotebookContentBrowser project asset tree. X5 post-process chain manifest (declarative pass ordering). X6 UserOverrideLoader `watch_dir` / `autoreload`. X7 6 widget primitives (GlitterProgressBar / RibbonTab / PaperClipAttachment / WashiTapeDivider / SketchButton / InkStampBadge). |
 | **W**  | `f59a6f9` (W2) + `b019bdb` (tag_painter) → `607bffe` (W1) | 6 landed | 2026-07-04 dawn | W1 hello_ragdoll over-damping fix. W2 four-panel silent-acceptance hardening (material / theming / spawn / diary — 31 fixed bug classes; row 189 STUB → WIRED via UserThemeStore rewire). W3 TAA polish (YCoCg variance clip + Halton(2,3)-8 + velocity blend + rejection heuristics). W4 bloom polish (Karis 13-tap downsample + tent upsample + firefly filter — committed twice as `894266a` + `7c23a87`). W6 hello_integrated_notebook demo. Post-V1 `editor.toggle_panel_tag_painter` registration in `b019bdb`. |
-| **V**  | `a714b3a` salvage rollup covering 7 disjoint scopes; plus `8205368` → `1467f91` for T/U pre-work that V1 audited | ~7 landed | 2026-07-03 → 2026-07-04 | V1 feature-map audit (233-row baseline). V2 `slappyengine.project_registry` + startup-prompt panel + project-registry panel. V3 inspector dataclass row dispatch. V4 NotebookSnapOverlay (drag ghost + dock zone arrows). V5 18+ WGSL material graph nodes. V6 Python AST ↔ Graph bidirectional codegen. V7 8 animated washi tape shaders (heart_pulse / sparkle_shimmer / rainbow_flow / marching_dots / wave_shift / dashed_scroll / stars_twinkle / music_notes_flow); shader budget widened to 1000B. |
+| **V**  | `a714b3a` salvage rollup covering 7 disjoint scopes; plus `8205368` → `1467f91` for T/U pre-work that V1 audited | ~7 landed | 2026-07-03 → 2026-07-04 | V1 feature-map audit (233-row baseline). V2 `pharos_engine.project_registry` + startup-prompt panel + project-registry panel. V3 inspector dataclass row dispatch. V4 NotebookSnapOverlay (drag ghost + dock zone arrows). V5 18+ WGSL material graph nodes. V6 Python AST ↔ Graph bidirectional codegen. V7 8 animated washi tape shaders (heart_pulse / sparkle_shimmer / rainbow_flow / marching_dots / wave_shift / dashed_scroll / stars_twinkle / music_notes_flow); shader budget widened to 1000B. |
 
 **Batch cadence**: batches ran approximately every 4–8 hours through
 2026-07-04 / 2026-07-05, with rate-limit-induced silent drops in DD7,
@@ -77,14 +77,14 @@ rate limits.
 | **Editor UI (notebook panels)** | mature — ~30 shipped panels + widgets | pre-V, V2, V4, W2, X4, X7, Y4, Y5, Z2, Z6, AA5, BB3, BB7, CC3, CC5, CC7, DD4, DD5, EE3, EE6, FF6 | Primary user surface. DiaryShell + StartupPrompt + ProjectRegistry + SnapOverlay + GizmoOverlay + MessageLog + PrefabMenu + AssetInspector + ToastManager + CommandPalette + AutosavePanel + HotkeyHelp + TelemetryDashboard + TimelineEditor + MenuBar + PPPreviewPanel + Minimap. All movable/resizable via `MovablePanelWindow`. |
 | **Theming (declarative / washi / linings / strokes / animated)** | mature | T2, U3, U4, V7, W2, AA6, AA7, BB4, DD6 | DeclarativeTheme spec parser. 3× 15-shader WGSL libraries (washi tape 15 + 8 animated / page linings 15 / edge strokes 15) → 53 total. Shader lint (AA6) + hot-reload watcher (BB4) + batch validator (DD6). UserThemeStore + 3 baked hotkey presets (AA7). |
 | **Post-process (bloom / TAA / chain manifest / baker)** | mature | W3, W4, X5, Z3, EE6 | TAA (YCoCg variance clip + Halton(2,3)-8 + rejection heuristics). Bloom (Karis 13-tap + tent upsample + firefly filter). Chain manifest = declarative YAML pass ordering with `apply_manifest` CPU dispatcher and `executor.from_manifest`. 6 baked chain presets (default/crisp/dreamy/neon/retro_film/debug). EE6 live preview panel. |
-| **Content pipeline (prefabs / autosave / project registry / scene subpackage)** | new + mature | V2, Y3, Y6, Z6, AA2, BB6, FF3, FF7 | `slappyengine.project_registry` (V2). `slappyengine.prefabs` — Prefab / PrefabLibrary + 7 body kinds + 6 baked previews + preview_baker (BB6). `slappyengine.autosave` — AutosaveManager threading.Timer + RecoveryPrompt + `read_snapshot` (AA2). EditorAutosaveIntegration lifecycle wiring (Z6). `slappyengine.scenes` — Scene / SceneRegistry / SceneFile YAML round-trip (FF3). hello_scene_reg demo (FF7). |
+| **Content pipeline (prefabs / autosave / project registry / scene subpackage)** | new + mature | V2, Y3, Y6, Z6, AA2, BB6, FF3, FF7 | `pharos_engine.project_registry` (V2). `pharos_engine.prefabs` — Prefab / PrefabLibrary + 7 body kinds + 6 baked previews + preview_baker (BB6). `pharos_engine.autosave` — AutosaveManager threading.Timer + RecoveryPrompt + `read_snapshot` (AA2). EditorAutosaveIntegration lifecycle wiring (Z6). `pharos_engine.scenes` — Scene / SceneRegistry / SceneFile YAML round-trip (FF3). hello_scene_reg demo (FF7). |
 | **Visual scripting (material nodes / codegen / goldens)** | new + mature | V5, V6, AA4, CC2, FF2 | 18+ WGSL-emitting material graph nodes (V5). Python AST ↔ Graph bidirectional codegen (V6) with golden fixtures under `SlapPyEngineTests/goldens/visual_scripting/`. MaterialGraphBridge round-trip between V5 nodes and NotebookMaterialEditor (AA4). hello_material_graph demo (4 WGSL graphs — simple diffuse / fresnel tint / Perlin ramp / textured PBR) (CC2). FF2 binding-heuristic fix (texture / sampler suffix classification). |
-| **Action / tool routing (10 rounds of STUB triage → 45 actions)** | mature | X3 → Y1 → Z7 → AA1 → BB1 → CC1 → DD1 → EE1 → FF1 (9 rounds); plus pre-V `editor.toggle_panel_tag_painter` (`b019bdb`) | `slappyengine.actions.*` subpackage bootstrapped in X3, expanded across every subsequent batch. 45 previously-absent router action ids across 8 buckets: `file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`, `content`. Each round adds 5 wirings + ~30 regression tests + feature-map footer update. |
-| **User customization (overrides / hotkeys / themes bake)** | mature | X6, AA7, BB1, W2 | UserOverrideLoader `watch_dir` + `autoreload` + WatcherHandle (X6). `slappyengine.ui.hotkey_remap` HotkeyBinding + HotkeyMap + `load_user_hotkeys` + `bake_defaults` + 3 baked presets (AA7). UserThemeStore rewire in W2. `~/.slappyengine/ui/` panel / hotkey / spawn card / shader override folders. Layout IO in BB1 (`file.save_layout_as` / `file.load_layout_from_file`). |
+| **Action / tool routing (10 rounds of STUB triage → 45 actions)** | mature | X3 → Y1 → Z7 → AA1 → BB1 → CC1 → DD1 → EE1 → FF1 (9 rounds); plus pre-V `editor.toggle_panel_tag_painter` (`b019bdb`) | `pharos_engine.actions.*` subpackage bootstrapped in X3, expanded across every subsequent batch. 45 previously-absent router action ids across 8 buckets: `file`, `edit`, `tool`, `view`, `theme`, `panel`, `spawn`, `content`. Each round adds 5 wirings + ~30 regression tests + feature-map footer update. |
+| **User customization (overrides / hotkeys / themes bake)** | mature | X6, AA7, BB1, W2 | UserOverrideLoader `watch_dir` + `autoreload` + WatcherHandle (X6). `pharos_engine.ui.hotkey_remap` HotkeyBinding + HotkeyMap + `load_user_hotkeys` + `bake_defaults` + 3 baked presets (AA7). UserThemeStore rewire in W2. `~/.pharos_engine/ui/` panel / hotkey / spawn card / shader override folders. Layout IO in BB1 (`file.save_layout_as` / `file.load_layout_from_file`). |
 | **Demos** | mature — 12+ hello_* runners | W1, W6, X2, Y2, Z4, AA5, CC2, DD2, EE2, FF7 + pre-existing hello_ragdoll / hello_rope / hello_joint | Full-stack: hello_integrated_notebook (W6), hello_full_editor (AA5 — 6 pages + prefabs + material + autosave + 6 themes + 37 events), hello_v2_showcase (EE2 — 15+ subsystem mega-demo). Subsystem: hello_prefab / hello_autosave (Z4), hello_material_graph (CC2), hello_toast_animation (DD2), hello_scene_reg (FF7). Regression fixes: hello_ragdoll (W1) / hello_rope (X2) / hello_joint (Y2). |
 | **Infrastructure (smoke runner / shader validator / perf tripwire / plugin registry)** | new (partial) | DD3, DD6, FF4, FF5, EE7 | SmokeRunner (DD3 — discover / run_one / run_all_parallel + format_summary + write_report). Shader batch validator (DD6 — walks 3 libraries + all `*.wgsl` + Markdown / YAML report). Rust migration re-audit (FF4 — 17 shipped kernels + 10-tier ranking). Hotkey conflict detector (FF5 — duplicates + platform shadow). TelemetrySink helper (EE7 — per-panel counter / gauge / perf sink API). Plugin registry present as untracked `ui/plugin_registry.py` — not yet landed. |
 | **Rust kernels (softbody / fluid / raster / other)** | mature (17 kernels, ~53 exports) | FF4 audit | 13 tracked in `src/lib.rs` (hull / ik_solver / math / node_compiler / slap_format / struct_layout / tile_cache / physics / sdf_collision / math_3d / bvh / sdf / gi / ibl). 4 orphaned files exported by shipping wheel but not `mod`-declared in `src/lib.rs` (raster / softbody_solver / pbf_solver / fluid_shader — F1 build-reproducibility bug documented). |
-| **Softbody / fluid / physics** | pinned / uncommitted WIP | (none — deferred to un-pin sprint) | Entire `python/slappyengine/softbody/`, `python/slappyengine/fluid/`, `python/slappyengine/physics/`, `python/slappyengine/physics2/`, `src/fluid_shader.rs`, `src/pbf_solver.rs`, `src/raster.rs`, `src/softbody_solver.rs` still uncommitted in the local tree. AA3's `diary_softbody_bridge` shim was built specifically to unblock the diary runner while these stay pinned. |
+| **Softbody / fluid / physics** | pinned / uncommitted WIP | (none — deferred to un-pin sprint) | Entire `python/pharos_engine/softbody/`, `python/pharos_engine/fluid/`, `python/pharos_engine/physics/`, `python/pharos_engine/physics2/`, `src/fluid_shader.rs`, `src/pbf_solver.rs`, `src/raster.rs`, `src/softbody_solver.rs` still uncommitted in the local tree. AA3's `diary_softbody_bridge` shim was built specifically to unblock the diary runner while these stay pinned. |
 | **Nova3D legacy** | pinned | (blocked by test pins) | Ten legacy panels (`layer_panel`, `layer_lighting_panel`, `behavior_panel`, `anim_graph_panel`, `code_mode_panel`, `content_browser`, `material_editor`, `node_graph_panel`, `property_inspector`, `script_binding_panel`) remain in-tree because their live tests were pinned per W5 sprint scoping notes. Deletion blockers catalogued in `docs/consolidation_2026_06_07.md`. |
 
 ---
@@ -132,8 +132,8 @@ regression tests.
 
 * **Commits since `db56df3`**: ~89 (V through FF batches). GG-batch
   commits pending as of GG7 time.
-* **New Python files**: ~110+ new modules under `python/slappyengine/`
-  and `python/slappyengine/actions/`, `ui/editor/`, `ui/theme/*/`,
+* **New Python files**: ~110+ new modules under `python/pharos_engine/`
+  and `python/pharos_engine/actions/`, `ui/editor/`, `ui/theme/*/`,
   `prefabs/`, `scenes/`, `autosave.py`, `shader_lint.py`,
   `smoke_runner.py`, etc.
 * **New test files**: ~60+ new files under `SlapPyEngineTests/tests/`.
@@ -153,9 +153,9 @@ regression tests.
 ## 5. What's still pinned / blocked
 
 1. **Softbody / fluid / physics untracked WIP** — `git status` at
-   GG7-open shows uncommitted trees for `python/slappyengine/softbody/`,
-   `python/slappyengine/fluid/`, `python/slappyengine/physics/`,
-   `python/slappyengine/physics2/`, `python/slappyengine/perf/`,
+   GG7-open shows uncommitted trees for `python/pharos_engine/softbody/`,
+   `python/pharos_engine/fluid/`, `python/pharos_engine/physics/`,
+   `python/pharos_engine/physics2/`, `python/pharos_engine/perf/`,
    `src/fluid_shader.rs`, `src/pbf_solver.rs`, `src/raster.rs`,
    `src/softbody_solver.rs`, plus ~40 physics module files (`body.py`,
    `broadphase.py`, `ccd.py`, `cell.py`, `constraints.py`, `hull.py`,
@@ -201,7 +201,7 @@ regression tests.
 6. **Chain manifest wiring into NotebookPostProcessPanel** — X5 landed
    the manifest infrastructure and Z3 landed the baked presets. A
    follow-up sprint should wire the panel's preset combo to load from
-   `~/.slappyengine/postprocess_chains/` instead of the hardcoded
+   `~/.pharos_engine/postprocess_chains/` instead of the hardcoded
    preset registry.
 
 7. **Plugin registry not landed** — `ui/plugin_registry.py` shows up
@@ -240,7 +240,7 @@ regression tests.
 5. **Chain-manifest wiring into `NotebookPostProcessPanel`** — X5 + Z3
    shipped the plumbing but the panel preset combo still hits the
    hardcoded preset registry. Wiring it through
-   `~/.slappyengine/postprocess_chains/` closes the user-override loop
+   `~/.pharos_engine/postprocess_chains/` closes the user-override loop
    for post-process chains and matches the pattern used by hotkeys /
    themes / layouts / prefabs. Priority: **P2** — half-sprint slot.
 
@@ -259,14 +259,14 @@ regression tests.
 | **Float-precision drift on future Rust ports** | Med | High | `rust_migration_plan.md` risk register documents softbody `np.add.at` iteration-order regressions. Every new port must preserve iteration order, and add a canonical-scene regression test that pins a scalar (chassis x, particle centroid, V-cycle L2 residual) to a 1e-3 tolerance on the first step. |
 | **Untracked-file bloat** | Med | Low | `git status` currently shows 60+ untracked files: WIP softbody / fluid / physics / physics2 (expected), 2 script scratchpads (`new_script_1.py` / `new_script_2.py`), `.claude/`, plus a couple of new docs. Should be cleaned before the next PR round. |
 | **`src/lib.rs` mod-declaration lag** | Low | Med | 4 Rust files (`raster.rs`, `softbody_solver.rs`, `pbf_solver.rs`, `fluid_shader.rs`) are exported by the shipping wheel but not `mod`-declared in `src/lib.rs` (FF4 finding §1.2, first flagged in `rust_port_audit_2026_06_02.md` F1). A clean `maturin develop` on the current commit produces a wheel missing 20+ symbols. Fix: add the four `mod` + `::register(m)?` lines. |
-| **Nova3D deletion pending** | Low | Low | Ten legacy panels + their pinned tests still ship. Blast radius is bounded to `python/slappyengine/ui/editor/legacy/*`; no other code paths import them. Removal is a scoped follow-up sprint. |
+| **Nova3D deletion pending** | Low | Low | Ten legacy panels + their pinned tests still ship. Blast radius is bounded to `python/pharos_engine/ui/editor/legacy/*`; no other code paths import them. Removal is a scoped follow-up sprint. |
 
 ---
 
 ## 8. Contributor guidance (where each subsystem lives)
 
 ### Editor UI
-* `H:\Github\SlapPyEngine\python\slappyengine\ui\editor\` — every notebook
+* `H:\Github\SlapPyEngine\python\pharos_engine\ui\editor\` — every notebook
   panel. Nomenclature: `notebook_<name>.py` for panels;
   `<name>_bridge.py` for cross-system glue; `<name>_baker.py` for the
   bake-into-YAML side of any config-baking pattern.
@@ -276,57 +276,57 @@ regression tests.
   tests for a compact reference.
 
 ### Theming
-* `H:\Github\SlapPyEngine\python\slappyengine\ui\theme\` — three sub-libraries
+* `H:\Github\SlapPyEngine\python\pharos_engine\ui\theme\` — three sub-libraries
   (`washi_tape/`, `page_linings/`, `edge_strokes/`) each with `library.py`
   (WGSL shader source) + `renderer.py` (wgpu-preferred, numpy fallback)
   + `library_spec.py` (metadata dict).
 * Testing pattern: shader_lint via
-  `python/slappyengine/shader_lint.py::lint_wgsl` + AA6 test at
+  `python/pharos_engine/shader_lint.py::lint_wgsl` + AA6 test at
   `SlapPyEngineTests/tests/test_shader_lint.py` (244 tests covering all
   53 shaders). DD6 batch validator writes Markdown + YAML manifests
   under `docs/shader_validation/` for CI tracking.
 
 ### Post-process
-* `H:\Github\SlapPyEngine\python\slappyengine\post_process\` — TAA / bloom
+* `H:\Github\SlapPyEngine\python\pharos_engine\post_process\` — TAA / bloom
   / chain manifest + executor + chain baker. Baked chain presets under
-  `python/slappyengine/post_process/baked_chains/*.chain.yaml`.
+  `python/pharos_engine/post_process/baked_chains/*.chain.yaml`.
 * Testing pattern: `apply_manifest` CPU dispatcher runs headless via
   numpy fallback. Every pass has both a WGSL runtime path (preferred
   when wgpu is present) and a numpy fallback for CI.
 
 ### Content pipeline
-* `H:\Github\SlapPyEngine\python\slappyengine\prefabs\` — Y3 prefab
+* `H:\Github\SlapPyEngine\python\pharos_engine\prefabs\` — Y3 prefab
   library + AA2 API polish + BB6 preview baker. Baked artifacts under
-  `python/slappyengine/prefabs/baked/` (YAML + PNG previews).
-* `H:\Github\SlapPyEngine\python\slappyengine\autosave.py` — Y6 module.
-* `H:\Github\SlapPyEngine\python\slappyengine\project_registry.py` — V2.
-* `H:\Github\SlapPyEngine\python\slappyengine\scenes\` — FF3 subpackage
+  `python/pharos_engine/prefabs/baked/` (YAML + PNG previews).
+* `H:\Github\SlapPyEngine\python\pharos_engine\autosave.py` — Y6 module.
+* `H:\Github\SlapPyEngine\python\pharos_engine\project_registry.py` — V2.
+* `H:\Github\SlapPyEngine\python\pharos_engine\scenes\` — FF3 subpackage
   (`__init__.py`, `scene.py`, `scene_file.py`, `scene_registry.py`).
 
 ### Visual scripting
-* `H:\Github\SlapPyEngine\python\slappyengine\visual_scripting\material_nodes.py`
+* `H:\Github\SlapPyEngine\python\pharos_engine\visual_scripting\material_nodes.py`
   — V5 WGSL-emitting graph nodes.
-* `H:\Github\SlapPyEngine\python\slappyengine\visual_scripting\codegen.py`
+* `H:\Github\SlapPyEngine\python\pharos_engine\visual_scripting\codegen.py`
   — V6 Python ↔ Graph bidirectional codegen.
-* `H:\Github\SlapPyEngine\python\slappyengine\ui\editor\material_graph_bridge.py`
+* `H:\Github\SlapPyEngine\python\pharos_engine\ui\editor\material_graph_bridge.py`
   — AA4 + FF2 fix for texture / sampler binding heuristics.
 * Golden fixtures: `SlapPyEngineTests\goldens\visual_scripting\`.
 
 ### Action / tool routing
-* `H:\Github\SlapPyEngine\python\slappyengine\actions\` — every wired
+* `H:\Github\SlapPyEngine\python\pharos_engine\actions\` — every wired
   action module. Nomenclature: `<verb>_<noun>_actions.py`. Each round
   of triage adds 5 new files. Backing tests at
   `SlapPyEngineTests\tests\test_stub_triage_<batch>.py`.
-* `H:\Github\SlapPyEngine\python\slappyengine\tool_router.py` — the
+* `H:\Github\SlapPyEngine\python\pharos_engine\tool_router.py` — the
   central registry. Every new action registers via
   `_fb_<action_name>` + `REGISTRY[<action_id>] = ...`.
 
 ### User customization
-* `~/.slappyengine/ui/panels/` — panel overrides.
-* `~/.slappyengine/ui/hotkeys/` — hotkey overrides + bake target.
-* `~/.slappyengine/ui/spawn_cards/` — spawn menu overrides.
-* `~/.slappyengine/ui/shaders/` — WGSL overrides.
-* `~/.slappyengine/projects.yaml` — recent projects (V2).
+* `~/.pharos_engine/ui/panels/` — panel overrides.
+* `~/.pharos_engine/ui/hotkeys/` — hotkey overrides + bake target.
+* `~/.pharos_engine/ui/spawn_cards/` — spawn menu overrides.
+* `~/.pharos_engine/ui/shaders/` — WGSL overrides.
+* `~/.pharos_engine/projects.yaml` — recent projects (V2).
 * See `docs/user_customization_2026_06_07.md` for full guide.
 
 ### Demos
@@ -337,12 +337,12 @@ regression tests.
   Tests at `SlapPyEngineTests\tests\test_demo_hello_*.py`.
 
 ### Infrastructure
-* `H:\Github\SlapPyEngine\python\slappyengine\smoke_runner.py` — DD3.
-* `H:\Github\SlapPyEngine\python\slappyengine\ui\theme\shader_batch_validator.py`
+* `H:\Github\SlapPyEngine\python\pharos_engine\smoke_runner.py` — DD3.
+* `H:\Github\SlapPyEngine\python\pharos_engine\ui\theme\shader_batch_validator.py`
   — DD6.
-* `H:\Github\SlapPyEngine\python\slappyengine\ui\hotkey_conflicts.py`
+* `H:\Github\SlapPyEngine\python\pharos_engine\ui\hotkey_conflicts.py`
   — FF5.
-* `H:\Github\SlapPyEngine\python\slappyengine\telemetry\sink.py` — EE7.
+* `H:\Github\SlapPyEngine\python\pharos_engine\telemetry\sink.py` — EE7.
 
 ### Rust kernels
 * `H:\Github\SlapPyEngine\src\` — every `.rs` file. `src/lib.rs` is
@@ -381,7 +381,7 @@ Historical cross-references:
 * `H:\Github\SlapPyEngine\docs\consolidation_2026_06_07.md` — Nova3D
   legacy inventory + deletion blockers.
 * `H:\Github\SlapPyEngine\docs\user_customization_2026_06_07.md` —
-  `~/.slappyengine/ui/` override folder guide (X6 landing).
+  `~/.pharos_engine/ui/` override folder guide (X6 landing).
 * `H:\Github\SlapPyEngine\docs\rust_migration_plan.md` — original
   7-step plan (Steps 1-6 shipped).
 * `H:\Github\SlapPyEngine\docs\rust_port_audit_2026_06_02.md` — previous

@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.physics.particle_graph`.
+"""Tests for :mod:`pharos_engine.physics.particle_graph`.
 
 The graph builds on top of the existing :class:`ParticleSystem` -- these
 tests therefore exercise *only* the new node-graph behaviour
@@ -13,12 +13,12 @@ import random
 
 import pytest
 
-from slappyengine.physics.particle_graph import (
+from pharos_engine.physics.particle_graph import (
     EmitterNode,
     ParticleGraph,
     interpolate_color_ramp,
 )
-from slappyengine.physics.particles import ParticleSystem
+from pharos_engine.physics.particles import ParticleSystem
 
 
 # ---------------------------------------------------------------------------

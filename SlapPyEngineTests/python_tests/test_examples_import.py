@@ -3,7 +3,7 @@
 Each demo must:
 
 1. **Parse as valid Python** (catches syntax errors).
-2. **Resolve every `slappyengine.*` symbol it references** (catches
+2. **Resolve every `pharos_engine.*` symbol it references** (catches
    stale imports of deleted modules).
 
 Tests do NOT execute the demo's body — `engine.run()` calls would
@@ -12,7 +12,7 @@ import chain?", not "does the demo run end-to-end" (a separate
 manual-run task per the project culture of GIF/PNG outputs).
 
 Demos under `examples/legacy/` are intentionally skipped — they
-remain on the old `slappyengine.physics.*` surface, gated for
+remain on the old `pharos_engine.physics.*` surface, gated for
 removal in Phase D.
 """
 from __future__ import annotations
@@ -37,18 +37,18 @@ def _live_demos() -> list[Path]:
     )
 
 
-def _slappyengine_imports(source: str) -> list[str]:
-    """Return every fully-qualified `slappyengine.<dotted>` import seen."""
+def _pharos_engine_imports(source: str) -> list[str]:
+    """Return every fully-qualified `pharos_engine.<dotted>` import seen."""
     tree = ast.parse(source)
     out: list[str] = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                if alias.name == "slappyengine" or alias.name.startswith("slappyengine."):
+                if alias.name == "pharos_engine" or alias.name.startswith("pharos_engine."):
                     out.append(alias.name)
         elif isinstance(node, ast.ImportFrom):
             mod = node.module or ""
-            if mod == "slappyengine" or mod.startswith("slappyengine."):
+            if mod == "pharos_engine" or mod.startswith("pharos_engine."):
                 out.append(mod)
     return out
 
@@ -62,9 +62,9 @@ def test_demo_parses(demo_path: Path) -> None:
 
 @pytest.mark.parametrize("demo_path", _live_demos(), ids=lambda p: p.name)
 def test_demo_imports_resolvable(demo_path: Path) -> None:
-    """Every `slappyengine.*` module a demo imports must exist now."""
+    """Every `pharos_engine.*` module a demo imports must exist now."""
     source = demo_path.read_text(encoding="utf-8")
-    for mod_name in _slappyengine_imports(source):
+    for mod_name in _pharos_engine_imports(source):
         spec = importlib.util.find_spec(mod_name)
         assert spec is not None, (
             f"{demo_path.name}: imports {mod_name!r} which is not findable"

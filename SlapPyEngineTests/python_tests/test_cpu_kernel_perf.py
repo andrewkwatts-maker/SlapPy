@@ -27,7 +27,7 @@ Tests
   to confirm the optimisations did not change per-cell state.
 * ``test_kernel_no_warnings_with_filter`` — runs the
   ``fluid_pool`` scenario for 60 frames with
-  ``-W error::RuntimeWarning:slappyengine.physics`` semantics enforced
+  ``-W error::RuntimeWarning:pharos_engine.physics`` semantics enforced
   via ``warnings.catch_warnings``; no warning may be raised.
 """
 from __future__ import annotations
@@ -38,12 +38,12 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.world import PhysicsWorld as _PW
+from pharos_engine.physics.world import PhysicsWorld as _PW
 
 
 # --- helpers ----------------------------------------------------------------
@@ -191,8 +191,8 @@ def test_kernel_no_warnings_with_filter():
     """60 ``fluid_pool``-style frames must not raise a RuntimeWarning.
 
     Activates a filter that promotes every ``RuntimeWarning`` from
-    ``slappyengine.physics`` to an error — the same semantics as
-    ``pytest -W error::RuntimeWarning:slappyengine.physics``.  Catches
+    ``pharos_engine.physics`` to an error — the same semantics as
+    ``pytest -W error::RuntimeWarning:pharos_engine.physics``.  Catches
     regressions like an in-place ``np.clip(..., out=...)`` accidentally
     being called with an integer ``out`` or a float64 ``out`` against a
     float32 input, both of which numpy 1.24+ flags as a RuntimeWarning.
@@ -212,10 +212,10 @@ def test_kernel_no_warnings_with_filter():
     )
     with warnings.catch_warnings():
         warnings.simplefilter("error", RuntimeWarning)
-        # Restrict to the slappyengine.physics module so unrelated
+        # Restrict to the pharos_engine.physics module so unrelated
         # third-party warnings (e.g. tracemalloc) don't fire.
         warnings.filterwarnings(
-            "error", category=RuntimeWarning, module=r"slappyengine\.physics.*",
+            "error", category=RuntimeWarning, module=r"pharos_engine\.physics.*",
         )
         for _ in range(60):
             w.step()

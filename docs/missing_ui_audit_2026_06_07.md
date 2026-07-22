@@ -1,6 +1,6 @@
 # Missing UI Audit — SlapPyEngine (2026-06-07)
 
-> Audit of every subpackage in :mod:`slappyengine` against the notebook
+> Audit of every subpackage in :mod:`pharos_engine` against the notebook
 > editor surface.  Tracks which subsystems already have a dedicated
 > editor panel, which lack one, and what the top-impact gaps look like.
 >
@@ -16,7 +16,7 @@
 >   — end-user docs for the panel family.
 >
 > WIP-frozen perimeter (per memory note ``project_sprint_2026_05_29.md``):
-> :mod:`slappyengine.softbody` and :mod:`slappyengine.fluid` are **not
+> :mod:`pharos_engine.softbody` and :mod:`pharos_engine.fluid` are **not
 > touched** by this audit — surfaces listed via ``__init__.py`` only.
 
 ---
@@ -181,7 +181,7 @@ dependency.
 
 ### 3.1 `NotebookTelemetryPanel`
 
-File: `python/slappyengine/ui/editor/notebook_telemetry_panel.py`
+File: `python/pharos_engine/ui/editor/notebook_telemetry_panel.py`
 
 * Subscribes to `telemetry.subscribe("*", self._on_event)` at
   `build()` time; unsubscribes in `destroy()`.  Idempotent across
@@ -201,7 +201,7 @@ File: `python/slappyengine/ui/editor/notebook_telemetry_panel.py`
 
 ### 3.2 `NotebookPostProcessPanel`
 
-File: `python/slappyengine/ui/editor/notebook_post_process_panel.py`
+File: `python/pharos_engine/ui/editor/notebook_post_process_panel.py`
 
 * Binds to a `PostProcessChain` (creates an empty one if `None`).
 * Per-pass row: `HeartCheckbox` for `enabled`, `up` / `down` /
@@ -217,7 +217,7 @@ File: `python/slappyengine/ui/editor/notebook_post_process_panel.py`
 
 ### 3.3 `NotebookAnimationPanel`
 
-File: `python/slappyengine/ui/editor/notebook_animation_panel.py`
+File: `python/pharos_engine/ui/editor/notebook_animation_panel.py`
 
 * Owns a list of `Track`s; each `Track` wraps a list of `Keyframe`s
   and a cached `AnimationCurve` (rebuilt on every mutation).

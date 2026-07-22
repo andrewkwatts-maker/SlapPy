@@ -1,9 +1,9 @@
-﻿"""Tests for per-layer LightingContext independence."""
+"""Tests for per-layer LightingContext independence."""
 
 
 def test_layer_lighting_independent():
-    from slappyengine.layer import Layer
-    from slappyengine.lighting import LightingContext, DirectionalLight
+    from pharos_engine.layer import Layer
+    from pharos_engine.lighting import LightingContext, DirectionalLight
 
     layer_a = Layer.blank(64, 64, name="A")
     layer_b = Layer.blank(64, 64, name="B")
@@ -21,7 +21,7 @@ def test_layer_lighting_independent():
 
 
 def test_layer_lighting_none_inherits_scene():
-    from slappyengine.layer import Layer
+    from pharos_engine.layer import Layer
 
     layer = Layer.blank(64, 64, name="C")
     assert layer.lighting is None  # defaults to scene-global

@@ -1,8 +1,8 @@
 # ParticleField GPU port — 7-sprint architecture
 
-Authoritative design for migrating `slappyengine.physics.particle_field` from
+Authoritative design for migrating `pharos_engine.physics.particle_field` from
 its NumPy/Rust hybrid CPU implementation onto WGSL compute shaders running
-through the existing `slappyengine.compute.pipeline.ComputePipeline`.
+through the existing `pharos_engine.compute.pipeline.ComputePipeline`.
 
 Companion docs (written in parallel):
 

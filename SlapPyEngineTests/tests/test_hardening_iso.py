@@ -1,11 +1,11 @@
-"""Input-validation tests for ``slappyengine.iso.combat`` public API."""
+"""Input-validation tests for ``pharos_engine.iso.combat`` public API."""
 from __future__ import annotations
 
 from types import SimpleNamespace
 
 import pytest
 
-from slappyengine.iso.combat import (
+from pharos_engine.iso.combat import (
     Attacker,
     Defender,
     WaveSchedule,

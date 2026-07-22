@@ -1,9 +1,9 @@
-﻿"""Tests for FlashLight auto-expiry and LightingSystem.tick_flash_lights."""
+"""Tests for FlashLight auto-expiry and LightingSystem.tick_flash_lights."""
 import pytest
 
 
 def test_flash_light_tick_not_expired():
-    from slappyengine.lighting import FlashLight
+    from pharos_engine.lighting import FlashLight
 
     fl = FlashLight(duration=0.1)
     fl.trigger()
@@ -13,7 +13,7 @@ def test_flash_light_tick_not_expired():
 
 
 def test_flash_light_tick_expired():
-    from slappyengine.lighting import FlashLight
+    from pharos_engine.lighting import FlashLight
 
     fl = FlashLight(duration=0.1)
     fl.trigger()
@@ -24,14 +24,14 @@ def test_flash_light_tick_expired():
 
 
 def test_flash_light_elapsed_starts_zero():
-    from slappyengine.lighting import FlashLight
+    from pharos_engine.lighting import FlashLight
 
     fl = FlashLight(duration=0.1)
     assert fl.elapsed == 0.0
 
 
 def test_flash_light_trigger_resets_elapsed():
-    from slappyengine.lighting import FlashLight
+    from pharos_engine.lighting import FlashLight
 
     fl = FlashLight(duration=0.1)
     fl.trigger()
@@ -43,7 +43,7 @@ def test_flash_light_trigger_resets_elapsed():
 
 def test_tick_flash_lights_removes_only_expired():
     """tick_flash_lights removes expired FlashLights and returns the count removed."""
-    from slappyengine.lighting import FlashLight, LightingSystem
+    from pharos_engine.lighting import FlashLight, LightingSystem
 
     # Build a LightingSystem without a real GPU by bypassing __init__.
     # We only need the _lights list and the tick_flash_lights method.
@@ -72,7 +72,7 @@ def test_tick_flash_lights_removes_only_expired():
 
 
 def test_tick_flash_lights_returns_zero_when_none_expire():
-    from slappyengine.lighting import FlashLight, LightingSystem
+    from pharos_engine.lighting import FlashLight, LightingSystem
 
     ls = object.__new__(LightingSystem)
     ls._lights = []

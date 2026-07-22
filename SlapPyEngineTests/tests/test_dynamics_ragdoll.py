@@ -6,7 +6,7 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import BoneSpec, RagdollSpec, World, build_ragdoll
+from pharos_engine.dynamics import BoneSpec, RagdollSpec, World, build_ragdoll
 
 
 def _humanoid_spec() -> RagdollSpec:

@@ -1,16 +1,16 @@
 """hello_scene_reg - FF3 scene subpackage walkthrough (task FF7).
 
 Demo of the *shape* of the upcoming FF3 scene subpackage
-(``slappyengine.scene``) — the ``Scene`` / ``SceneFile`` / ``SceneRegistry``
+(``pharos_engine.scene``) — the ``Scene`` / ``SceneFile`` / ``SceneRegistry``
 triple that lets an editor persist entity graphs to disk, discover them
-in a project folder, and round-trip through a :class:`~slappyengine.dynamics.World`.
+in a project folder, and round-trip through a :class:`~pharos_engine.dynamics.World`.
 
 Because FF3 is landing in parallel with this FF7 demo, the surface is
 defined *locally* here as a self-contained mini-package. When FF3 lands
-in ``python/slappyengine/scene/`` the top-of-file imports flip from the
+in ``python/pharos_engine/scene/`` the top-of-file imports flip from the
 in-module classes to::
 
-    from slappyengine.scene import Scene, SceneFile, SceneRegistry, SceneValidationError
+    from pharos_engine.scene import Scene, SceneFile, SceneRegistry, SceneValidationError
 
 and every other line stays untouched.
 
@@ -20,7 +20,7 @@ What the demo does
 1. Builds a :class:`Scene` programmatically with 5 entities — 2 crates,
    2 balls, and a 1-chain rope; the crates + balls are declared via
    ``prefab_ref="crate"`` / ``"ball"`` so they resolve through the
-   :class:`~slappyengine.prefabs.PrefabLibrary` at apply-time.
+   :class:`~pharos_engine.prefabs.PrefabLibrary` at apply-time.
 2. Serialises to ``scene1.scene.yaml`` in a temp directory via
    :class:`SceneFile`.
 3. Reads the file back and asserts round-trip equality.
@@ -28,7 +28,7 @@ What the demo does
 5. Writes 3 more scenes (small / medium / large) so the registry has 4
    files on disk.
 6. Runs :meth:`SceneRegistry.discover` and confirms all 4 are seen.
-7. Applies ``scene1`` to a fresh :class:`~slappyengine.dynamics.World`
+7. Applies ``scene1`` to a fresh :class:`~pharos_engine.dynamics.World`
    and verifies the body count.
 8. Snapshots the world back into a fresh :class:`Scene` and diffs entity
    counts against the original.
@@ -58,7 +58,7 @@ from typing import Any
 # FF3 shape — local definitions.
 #
 # These four classes mirror the surface FF3 is landing in
-# ``slappyengine.scene``. Keeping the demo self-contained means FF7 can
+# ``pharos_engine.scene``. Keeping the demo self-contained means FF7 can
 # ship before FF3 without a race; the imports flip in one line when FF3
 # arrives.
 # ---------------------------------------------------------------------------
@@ -86,7 +86,7 @@ class SceneEntity:
     """One entity in a :class:`Scene`.
 
     Either ``prefab_ref`` points at a name in a
-    :class:`~slappyengine.prefabs.PrefabLibrary` (the common case) OR
+    :class:`~pharos_engine.prefabs.PrefabLibrary` (the common case) OR
     ``inline_spec`` carries a full body-spec dict (for one-off entities
     that never leave the scene). Exactly one must be set.
     """
@@ -149,7 +149,7 @@ class Scene:
     Mirrors the FF3 landing shape: a name, a version stamp, and an
     ordered list of :class:`SceneEntity` records. ``apply`` walks the
     list against a :class:`PrefabLibrary` to spawn everything into a
-    live :class:`~slappyengine.dynamics.World`.
+    live :class:`~pharos_engine.dynamics.World`.
     """
 
     name: str
@@ -252,7 +252,7 @@ class Scene:
             elif entity.inline_spec is not None:
                 # Inline specs bypass the library — for demo purposes
                 # we lean on the dynamics.World node/body API directly.
-                from slappyengine.dynamics import Body
+                from pharos_engine.dynamics import Body
                 kind = str(entity.inline_spec.get("kind", "point"))
                 mass = float(entity.inline_spec.get("mass", 1.0))
                 idx = world.add_node(entity.position, mass)
@@ -494,8 +494,8 @@ def run_demo(*, temp_root: Path | None = None) -> DemoTrace:
 
     Returns the populated :class:`DemoTrace` so tests can assert on it.
     """
-    from slappyengine.dynamics import World
-    from slappyengine.prefabs import PrefabLibrary
+    from pharos_engine.dynamics import World
+    from pharos_engine.prefabs import PrefabLibrary
 
     trace = DemoTrace()
     trace.record(

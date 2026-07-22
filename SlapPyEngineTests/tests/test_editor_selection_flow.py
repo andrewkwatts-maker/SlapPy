@@ -151,9 +151,9 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def clear_theme(stub_dpg):
     """Drop any cached theme + listener state between tests."""
-    from slappyengine.ui.widgets import notebook_theme
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
-    from slappyengine.ui.widgets.sticker_corner import _active_stickers
+    from pharos_engine.ui.widgets import notebook_theme
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine.ui.widgets.sticker_corner import _active_stickers
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -204,7 +204,7 @@ class _FakeScene:
 
 
 class _FakeEngine:
-    """Stand-in for :class:`slappyengine.engine.Engine`.
+    """Stand-in for :class:`pharos_engine.engine.Engine`.
 
     ``EditorShell.setup_notebook_panels`` reads ``getattr(engine, "scene", None)``
     from inside the world_getter lambda; nothing else is required.
@@ -221,10 +221,10 @@ class _FakeEngine:
 
 def _make_harness(entities: list[Any]) -> Any:
     """Return a populated shell-like harness for selection-flow tests."""
-    from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
-    from slappyengine.ui.editor.notebook_inspector import NotebookInspector
-    from slappyengine.ui.editor.notebook_gizmos import NotebookGizmoOverlay
-    from slappyengine.ui.editor.notebook_status_bar import NotebookStatusBar
+    from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
+    from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+    from pharos_engine.ui.editor.notebook_gizmos import NotebookGizmoOverlay
+    from pharos_engine.ui.editor.notebook_status_bar import NotebookStatusBar
 
     engine = _FakeEngine(_FakeScene(entities))
     inspector = NotebookInspector()
@@ -383,7 +383,7 @@ class TestChangeSelection:
 
 class TestInspectorRendersEngineObjects:
     def test_inspector_renders_body_fields(self) -> None:
-        from slappyengine.dynamics.body import Body
+        from pharos_engine.dynamics.body import Body
 
         body = Body(kind="rope", label="my_rope")
         h = _make_harness([body])
@@ -400,7 +400,7 @@ class TestInspectorRendersEngineObjects:
         assert "label" in names
 
     def test_inspector_renders_ropespec_fields(self) -> None:
-        from slappyengine.dynamics.rope import RopeSpec
+        from pharos_engine.dynamics.rope import RopeSpec
 
         spec = RopeSpec(node_count=8, total_length=2.0)
         h = _make_harness([spec])
@@ -417,7 +417,7 @@ class TestInspectorRendersEngineObjects:
         assert "damping" in names
 
     def test_inspector_renders_ragdollspec_fields(self) -> None:
-        from slappyengine.dynamics.ragdoll import BoneSpec, RagdollSpec
+        from pharos_engine.dynamics.ragdoll import BoneSpec, RagdollSpec
 
         # RagdollSpec requires at least one bone (the root); supply a
         # minimal default so __post_init__ validates.
@@ -447,7 +447,7 @@ class _VisibleEntity:
 
 class TestVisibilityHeart:
     def test_heart_checkbox_starts_unchecked_for_invisible_entity(self) -> None:
-        from slappyengine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
 
         ent = _VisibleEntity(name="ghost", visible=False)
         inspector = NotebookInspector()
@@ -463,7 +463,7 @@ class TestVisibilityHeart:
         assert bool_events[0][2] == "bool"
 
     def test_writeback_mutates_visible_attribute(self) -> None:
-        from slappyengine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
 
         ent = _VisibleEntity(name="ghost", visible=False)
         inspector = NotebookInspector()
@@ -488,7 +488,7 @@ class TestChainedOnSelect:
         """``Engine.run_editor`` calls ``set_on_select(gizmo.set_entity)`` after
         the shell's ``_on_entity_selected`` is already wired. The chain must
         fire BOTH callbacks per selection so the inspector still updates."""
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         captured_prev: list[Any] = []
         captured_new: list[Any] = []
@@ -515,7 +515,7 @@ class TestEditorShellWiring:
     """Cover the actual ``EditorShell._on_entity_selected`` codepath."""
 
     def _build_shell(self, entities: list[Any]) -> Any:
-        from slappyengine.ui.editor.shell import EditorShell
+        from pharos_engine.ui.editor.shell import EditorShell
 
         engine = _FakeEngine(_FakeScene(entities))
         shell = EditorShell(engine)

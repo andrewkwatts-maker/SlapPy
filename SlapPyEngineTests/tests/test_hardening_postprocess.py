@@ -11,10 +11,10 @@ import math
 
 import pytest
 
-from slappyengine.post_process.bloom import BloomPass
-from slappyengine.post_process.gtao import GTAOPass
-from slappyengine.post_process.taa import TAAPass
-from slappyengine.post_process.vignette import VignettePass
+from pharos_engine.post_process.bloom import BloomPass
+from pharos_engine.post_process.gtao import GTAOPass
+from pharos_engine.post_process.taa import TAAPass
+from pharos_engine.post_process.vignette import VignettePass
 
 
 # ---------------------------------------------------------------------------

@@ -1,9 +1,9 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.ui.runtime.hud_overlay — API Reference
+# pharos_engine.ui.runtime.hud_overlay — API Reference
 
 > Hand-written reference for the LL1 HUD overlay + registry surface plus
-> the MM2 :mod:`slappyengine.hud_bridge` glue that mounts it onto the
-> :class:`~slappyengine.App` lifecycle. Sibling references:
+> the MM2 :mod:`pharos_engine.hud_bridge` glue that mounts it onto the
+> :class:`~pharos_engine.App` lifecycle. Sibling references:
 > [`ui_widgets.md`](ui_widgets.md) documents the notebook-themed DPG
 > primitives that back editor UIs (a separate axis from the game HUD);
 > [`render_instanced.md`](render_instanced.md) covers the
@@ -14,7 +14,7 @@
 
 ## Overview
 
-`slappyengine.ui.runtime.hud_overlay` is the LL1 landing. It gives games
+`pharos_engine.ui.runtime.hud_overlay` is the LL1 landing. It gives games
 a screen-space overlay that sits on top of the rendered 3D scene,
 managed as a per-frame `begin → build widgets → end → submit` pipeline:
 
@@ -31,8 +31,8 @@ managed as a per-frame `begin → build widgets → end → submit` pipeline:
   stateless helpers that convert a :class:`DrawCommand` into a
   renderer submission payload.
 
-The MM2 :mod:`slappyengine.hud_bridge` glue module wires an overlay
-into :class:`~slappyengine.App`'s ``after_tick`` +
+The MM2 :mod:`pharos_engine.hud_bridge` glue module wires an overlay
+into :class:`~pharos_engine.App`'s ``after_tick`` +
 ``before_frame_render`` hook chains so a caller opts in with a single
 :func:`mount_hud(app)` call and never writes lifecycle plumbing.
 
@@ -40,14 +40,14 @@ into :class:`~slappyengine.App`'s ``after_tick`` +
 
 ```python
 # LL1 — core overlay surface
-from slappyengine.ui.runtime.hud_overlay import (
+from pharos_engine.ui.runtime.hud_overlay import (
     HUDOverlay, SpriteSubmission,
     hud_command_to_sprite, hud_command_to_text,
 )
-from slappyengine.ui.runtime.hud_registry import HUDRegistry, WidgetFactory
+from pharos_engine.ui.runtime.hud_registry import HUDRegistry, WidgetFactory
 
 # MM2 — App-lifecycle glue + diagnostics widget
-from slappyengine.hud_bridge import (
+from pharos_engine.hud_bridge import (
     mount_hud, unmount_hud,
     default_game_hud_widgets,
     add_diagnostics_widget,
@@ -58,7 +58,7 @@ from slappyengine.hud_bridge import (
 
 ### `HUDOverlay`
 
-_class — defined in `slappyengine.ui.runtime.hud_overlay`_
+_class — defined in `pharos_engine.ui.runtime.hud_overlay`_
 
 Screen-space HUD manager that renders on top of the 3D viewport.
 
@@ -102,7 +102,7 @@ Attributes: `visible: bool`, `command_count -> int` (last frame),
 
 ### `SpriteSubmission`
 
-_dataclass — defined in `slappyengine.ui.runtime.hud_overlay`_
+_dataclass — defined in `pharos_engine.ui.runtime.hud_overlay`_
 
 Payload for a `Renderer.submit_sprite` call.
 
@@ -114,7 +114,7 @@ Payload for a `Renderer.submit_sprite` call.
 
 ### `HUDRegistry`
 
-_class — defined in `slappyengine.ui.runtime.hud_registry`_
+_class — defined in `pharos_engine.ui.runtime.hud_registry`_
 
 Named-factory registry for HUD widgets. Ships with the nine first-party
 widgets pre-registered.
@@ -132,7 +132,7 @@ widgets pre-registered.
 
 ### `hud_command_to_sprite(cmd) -> SpriteSubmission`
 
-_defined in `slappyengine.ui.runtime.hud_overlay`_
+_defined in `pharos_engine.ui.runtime.hud_overlay`_
 
 Convert a `rect` or `textured_quad` :class:`DrawCommand` into a
 :class:`SpriteSubmission`. `size == (0, 0)` is treated as fullscreen
@@ -141,15 +141,15 @@ Convert a `rect` or `textured_quad` :class:`DrawCommand` into a
 
 ### `hud_command_to_text(cmd, atlas) -> TextMesh | None`
 
-_defined in `slappyengine.ui.runtime.hud_overlay`_
+_defined in `pharos_engine.ui.runtime.hud_overlay`_
 
 Convert a `text` :class:`DrawCommand` into an SDF `TextMesh` via the
-KK6 `slappyengine.text` renderer. Returns `None` when *atlas* is
+KK6 `pharos_engine.text` renderer. Returns `None` when *atlas* is
 `None` (headless-safe). Raises `ValueError` for the wrong kind.
 
 ### `mount_hud(app, *, widgets=None) -> HUDOverlay`
 
-_defined in `slappyengine.hud_bridge`_
+_defined in `pharos_engine.hud_bridge`_
 
 Instantiate an :class:`HUDOverlay` bound to *app*, attach *widgets*
 (defaults to :func:`default_game_hud_widgets`), and hook the overlay
@@ -173,14 +173,14 @@ cmd_count)`, `("hud_submit", n)` per frame.
 
 ### `unmount_hud(app) -> bool`
 
-_defined in `slappyengine.hud_bridge`_
+_defined in `pharos_engine.hud_bridge`_
 
 Detach the HUD. Returns `True` when a HUD was actually detached,
 `False` when nothing was mounted. Emits a `("hud_unmount",)` trace.
 
 ### `default_game_hud_widgets() -> list[Any]`
 
-_defined in `slappyengine.hud_bridge`_
+_defined in `pharos_engine.hud_bridge`_
 
 Return a fresh list of five default widgets (HealthBar, StaminaBar,
 AmmoCounter, Compass, Crosshair) laid out for a 1280x720 viewport.
@@ -188,12 +188,12 @@ Fresh instances each call — safe to mutate.
 
 ### `add_diagnostics_widget(app, collector=None) -> _DiagnosticsHUDWidget`
 
-_defined in `slappyengine.hud_bridge`_
+_defined in `pharos_engine.hud_bridge`_
 
 Attach a compact diagnostics readout widget (OO6). Mounts an
 :class:`HUDOverlay` via :func:`mount_hud` if none is present, then
 attaches the widget bound to *collector* (or the module-level
-:func:`slappyengine.diagnostics.get_global_collector` singleton if
+:func:`pharos_engine.diagnostics.get_global_collector` singleton if
 `None`). The widget renders one summary line
 (``ERROR: n | WARN: m``) plus up to three most-recent event messages.
 
@@ -202,8 +202,8 @@ Raises `ValueError` when *app* is `None`.
 ## Usage
 
 ```python
-from slappyengine.app import App
-from slappyengine.hud_bridge import mount_hud, default_game_hud_widgets
+from pharos_engine.app import App
+from pharos_engine.hud_bridge import mount_hud, default_game_hud_widgets
 
 app = App()   # HH1 lifecycle host
 overlay = mount_hud(app, widgets=default_game_hud_widgets())
@@ -217,8 +217,8 @@ assert ("hud_mount", 5) in app.trace
 Direct overlay use (bypassing the bridge):
 
 ```python
-from slappyengine.ui.runtime.hud_overlay import HUDOverlay
-from slappyengine.ui.runtime.hud_registry import HUDRegistry
+from pharos_engine.ui.runtime.hud_overlay import HUDOverlay
+from pharos_engine.ui.runtime.hud_registry import HUDRegistry
 
 registry = HUDRegistry()
 overlay = HUDOverlay(renderer=my_renderer, camera_2d=my_camera_2d)
@@ -231,8 +231,8 @@ n = overlay.submit_to_renderer()
 
 ## Skip the wrapper
 
-`slappyengine.ui.runtime.hud_overlay` and `slappyengine.hud_bridge` are
-Python-only. Grep of `slappyengine._core_facade.RUST_MODULE_MAP` shows
+`pharos_engine.ui.runtime.hud_overlay` and `pharos_engine.hud_bridge` are
+Python-only. Grep of `pharos_engine._core_facade.RUST_MODULE_MAP` shows
 **no** `hud_overlay` / `hud_bridge` entry — the per-frame work is
 `ImmediateUI.begin_frame` bookkeeping + a handful of DrawCommand
 translations, dwarfed by the actual renderer submission cost.

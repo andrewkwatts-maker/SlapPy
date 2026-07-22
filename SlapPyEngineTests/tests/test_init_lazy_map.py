@@ -2,9 +2,9 @@
 
 The six Phase-D-doomed symbols (``MaterialPreset``, ``CrackMode``,
 ``SimFrequencyBudget``, ``SimState``, ``DeformController``, ``ZoneMap``)
-used to route through ``slappyengine.deform_modes`` /
-``slappyengine.deform_controller`` / ``slappyengine.deform_zones`` via
-the top-level ``_LAZY_MAP`` in ``python/slappyengine/__init__.py``.
+used to route through ``pharos_engine.deform_modes`` /
+``pharos_engine.deform_controller`` / ``pharos_engine.deform_zones`` via
+the top-level ``_LAZY_MAP`` in ``python/pharos_engine/__init__.py``.
 
 Phase D step 5+ deletes ``deform_modes.py`` and ``deform_controller.py``
 entirely; step 6 deletes ``deform_zones.py``. The lazy-map MUST stop
@@ -12,8 +12,8 @@ importing them before those deletions can land.
 
 This file pins the decoupling so it cannot regress:
 
-* :func:`test_import_slappyengine_does_not_load_deform_modules` —
-  ``import slappyengine`` followed by ``dir(slappyengine)`` must not
+* :func:`test_import_pharos_engine_does_not_load_deform_modules` —
+  ``import pharos_engine`` followed by ``dir(pharos_engine)`` must not
   put any of the three doomed modules into ``sys.modules``.
 * :func:`test_doomed_symbols_still_resolve` — each of the six symbols
   must still be resolvable off the public surface (per the
@@ -22,10 +22,10 @@ This file pins the decoupling so it cannot regress:
 * :func:`test_resolved_symbols_route_through_compat_not_legacy` — after
   the six symbols have been accessed, the legacy module names must
   STILL be absent from ``sys.modules`` (proving the lazy-map routes
-  through ``slappyengine._compat`` and not through the doomed
+  through ``pharos_engine._compat`` and not through the doomed
   modules).
 * :func:`test_zone_map_aliases_zone_manager` — the ``ZoneMap`` alias
-  must resolve to ``slappyengine.zones.ZoneManager`` so legacy
+  must resolve to ``pharos_engine.zones.ZoneManager`` so legacy
   Bullet Strata code (per ``project_bullet_strata.md``) keeps working.
 """
 from __future__ import annotations
@@ -36,13 +36,13 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def _restore_slappyengine_modules():
-    """Snapshot ``sys.modules`` for ``slappyengine.*`` and restore on teardown.
+def _restore_pharos_engine_modules():
+    """Snapshot ``sys.modules`` for ``pharos_engine.*`` and restore on teardown.
 
     Every test in this file calls :func:`_purge_modules` to force a clean
-    re-import of ``slappyengine``. Without restoring the originals,
+    re-import of ``pharos_engine``. Without restoring the originals,
     downstream tests that captured class identities at module-import time
-    (e.g. ``from slappyengine.dynamics import JointSpec``) end up holding
+    (e.g. ``from pharos_engine.dynamics import JointSpec``) end up holding
     pre-purge classes while the engine's internal validators look up the
     *new* post-purge classes via lazy import — producing confusing
     ``isinstance`` failures like ``"must be a JointSpec; got JointSpec"``.
@@ -54,7 +54,7 @@ def _restore_slappyengine_modules():
     saved = {
         name: mod
         for name, mod in sys.modules.items()
-        if name == "slappyengine" or name.startswith("slappyengine.")
+        if name == "pharos_engine" or name.startswith("pharos_engine.")
     }
     try:
         yield
@@ -63,7 +63,7 @@ def _restore_slappyengine_modules():
         # originals so class identities survive across the test boundary.
         current = [
             name for name in sys.modules
-            if name == "slappyengine" or name.startswith("slappyengine.")
+            if name == "pharos_engine" or name.startswith("pharos_engine.")
         ]
         for name in current:
             del sys.modules[name]
@@ -71,13 +71,13 @@ def _restore_slappyengine_modules():
 
 
 # Names of the legacy modules that MUST NOT be auto-imported by
-# ``import slappyengine`` or by ``dir(slappyengine)``. Phase D step 5+
+# ``import pharos_engine`` or by ``dir(pharos_engine)``. Phase D step 5+
 # deletes these modules outright; once that lands, leaving them in
-# the lazy-map would hard-break ``import slappyengine``.
+# the lazy-map would hard-break ``import pharos_engine``.
 _DOOMED_MODULES: tuple[str, ...] = (
-    "slappyengine.deform_modes",
-    "slappyengine.deform_controller",
-    "slappyengine.deform_zones",
+    "pharos_engine.deform_modes",
+    "pharos_engine.deform_controller",
+    "pharos_engine.deform_zones",
 )
 
 
@@ -105,7 +105,7 @@ def _purge_modules(prefix: str) -> None:
 
     Each test below needs a clean import to assert the on-import
     behaviour; without this purge a sibling test that already
-    triggered ``slappyengine.deform_modes`` would falsely indicate a
+    triggered ``pharos_engine.deform_modes`` would falsely indicate a
     leak here.
     """
     doomed = [m for m in sys.modules if m == prefix or m.startswith(prefix + ".")]
@@ -118,52 +118,52 @@ def _purge_modules(prefix: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_import_slappyengine_does_not_load_deform_modules() -> None:
-    """``import slappyengine`` + ``dir()`` must not import the doomed modules.
+def test_import_pharos_engine_does_not_load_deform_modules() -> None:
+    """``import pharos_engine`` + ``dir()`` must not import the doomed modules.
 
     PEP 562 lazy resolution is only invoked on attribute access, so
-    ``import slappyengine; dir(slappyengine)`` should leave
+    ``import pharos_engine; dir(pharos_engine)`` should leave
     ``sys.modules`` clean of every name in :data:`_DOOMED_MODULES`.
     """
-    _purge_modules("slappyengine")
-    import slappyengine  # noqa: F401  (import-only side-effect test)
+    _purge_modules("pharos_engine")
+    import pharos_engine  # noqa: F401  (import-only side-effect test)
 
     # ``dir()`` must not trigger lazy resolution either.
-    _ = dir(slappyengine)
+    _ = dir(pharos_engine)
 
     for mod in _DOOMED_MODULES:
         assert mod not in sys.modules, (
-            f"import slappyengine pulled {mod} into sys.modules — the "
+            f"import pharos_engine pulled {mod} into sys.modules — the "
             f"Phase D step 4 lazy-map decoupling has regressed. The "
-            f"_LAZY_MAP in slappyengine/__init__.py must route the six "
-            f"Phase-D-doomed symbols through slappyengine._compat (or "
-            f"slappyengine.zones for ZoneMap) — never through "
+            f"_LAZY_MAP in pharos_engine/__init__.py must route the six "
+            f"Phase-D-doomed symbols through pharos_engine._compat (or "
+            f"pharos_engine.zones for ZoneMap) — never through "
             f"deform_modes / deform_controller / deform_zones."
         )
 
 
 @pytest.mark.parametrize("name", _DOOMED_SYMBOLS)
 def test_doomed_symbols_still_resolve(name: str) -> None:
-    """Each of the six symbols must still resolve off ``slappyengine``.
+    """Each of the six symbols must still resolve off ``pharos_engine``.
 
     The multi-game compat tripwire
     (``tests/test_game_compat_tripwire.py``) treats these as required
     surface for Bullet Strata + Ochema Circuit. Phase D step 4 only
     decouples the *route* — the symbols themselves stay public.
     """
-    _purge_modules("slappyengine")
-    import slappyengine
+    _purge_modules("pharos_engine")
+    import pharos_engine
 
-    assert hasattr(slappyengine, name), (
-        f"slappyengine.{name} no longer resolves — Phase D step 4 must "
+    assert hasattr(pharos_engine, name), (
+        f"pharos_engine.{name} no longer resolves — Phase D step 4 must "
         f"PRESERVE the public surface, only re-home the route. The "
-        f"symbol should live in slappyengine._compat (or "
-        f"slappyengine.zones.ZoneManager for ZoneMap)."
+        f"symbol should live in pharos_engine._compat (or "
+        f"pharos_engine.zones.ZoneManager for ZoneMap)."
     )
 
     # Attribute access must not raise (verifies the lazy module loads
     # cleanly and the symbol is bound on it).
-    resolved = getattr(slappyengine, name)
+    resolved = getattr(pharos_engine, name)
     assert resolved is not None
 
 
@@ -172,26 +172,26 @@ def test_resolved_symbols_route_through_compat_not_legacy() -> None:
 
     This is the strongest form of the decoupling assertion: even when
     a consumer touches all six names, the lazy-map must route through
-    ``slappyengine._compat`` (or ``slappyengine.zones``), never through
+    ``pharos_engine._compat`` (or ``pharos_engine.zones``), never through
     ``deform_modes`` / ``deform_controller`` / ``deform_zones``.
     """
-    _purge_modules("slappyengine")
-    import slappyengine
+    _purge_modules("pharos_engine")
+    import pharos_engine
 
     for name in _DOOMED_SYMBOLS:
-        getattr(slappyengine, name)
+        getattr(pharos_engine, name)
 
     for mod in _DOOMED_MODULES:
         assert mod not in sys.modules, (
             f"Resolving the Phase-D-doomed symbols pulled {mod} into "
             f"sys.modules. The lazy-map is still routing through the "
-            f"legacy module; repoint to slappyengine._compat (or "
-            f"slappyengine.zones for ZoneMap)."
+            f"legacy module; repoint to pharos_engine._compat (or "
+            f"pharos_engine.zones for ZoneMap)."
         )
 
 
 def test_zone_map_aliases_zone_manager() -> None:
-    """``slappyengine.ZoneMap is slappyengine.zones.ZoneManager``.
+    """``pharos_engine.ZoneMap is pharos_engine.zones.ZoneManager``.
 
     The migration matrix in
     ``docs/phase_d_strip_plan_2026_05_31.md`` §(b) repoints ZoneMap
@@ -200,13 +200,13 @@ def test_zone_map_aliases_zone_manager() -> None:
     code changes. Pin the alias so a future repoint that breaks the
     identity will fail this test.
     """
-    _purge_modules("slappyengine")
-    import slappyengine
-    from slappyengine.zones import ZoneManager
+    _purge_modules("pharos_engine")
+    import pharos_engine
+    from pharos_engine.zones import ZoneManager
 
-    assert slappyengine.ZoneMap is ZoneManager, (
-        "slappyengine.ZoneMap must be an alias for "
-        "slappyengine.zones.ZoneManager — the migration matrix in "
+    assert pharos_engine.ZoneMap is ZoneManager, (
+        "pharos_engine.ZoneMap must be an alias for "
+        "pharos_engine.zones.ZoneManager — the migration matrix in "
         "the Phase D plan documents this as the *one* doomed symbol "
         "with a real replacement (vs the five retired-feature stubs)."
     )

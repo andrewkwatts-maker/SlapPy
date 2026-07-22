@@ -27,7 +27,7 @@ Behaviour contract
 * Publishes 5 events per frame through
   ``global_bus.publish("player.pos", ...)`` for 30 frames = 150 total
   events. A second ``PlayerVehicle`` subscribes and counts deliveries.
-* Uses :func:`slappyengine.launch` for the tick loop when the App
+* Uses :func:`pharos_engine.launch` for the tick loop when the App
   subsystem is available; falls back to a plain loop if launch()
   cannot boot headless.
 
@@ -80,12 +80,12 @@ EVENT_TOPIC: str = "player.pos"
 # NOTE: These imports intentionally live at module top so that the demo
 # fails loudly at import time if the engine drops Observable / Asset /
 # CacheMode / global_bus. Downstream games do the same — a silent
-# ``ImportError`` at ``import slappyengine`` is the fastest signal that
+# ``ImportError`` at ``import pharos_engine`` is the fastest signal that
 # a rename happened.
-from slappyengine.asset import Asset
-from slappyengine.event_bus import Observable, global_bus
-from slappyengine.layer import Layer
-from slappyengine.residency.manager import CacheMode
+from pharos_engine.asset import Asset
+from pharos_engine.event_bus import Observable, global_bus
+from pharos_engine.layer import Layer
+from pharos_engine.residency.manager import CacheMode
 
 
 class PlayerVehicle(Observable, Asset):
@@ -127,9 +127,9 @@ class PlayerVehicle(Observable, Asset):
 
 def _headless_config() -> Any:
     """Build a headless :class:`AppConfig` if the App subsystem is present."""
-    import slappyengine
+    import pharos_engine
 
-    return slappyengine.AppConfig(
+    return pharos_engine.AppConfig(
         window_title="hello_downstream_pattern",
         window_size=(320, 240),
         enable_gpu=False,
@@ -250,15 +250,15 @@ def main(
                 )
         state["frame_count"] = frame + 1
 
-    # Preferred path: use slappyengine.launch() for the tick loop.
+    # Preferred path: use pharos_engine.launch() for the tick loop.
     launch_used = False
     try:
-        import slappyengine
+        import pharos_engine
 
         def on_tick(a: Any, dt: float) -> None:
             _tick_body(int(a.frame_count))
 
-        app = slappyengine.launch(
+        app = pharos_engine.launch(
             on_tick=on_tick,
             max_frames=max_frames,
             config=_headless_config(),

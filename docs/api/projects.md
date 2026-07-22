@@ -1,13 +1,13 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.projects — API Reference
+# pharos_engine.projects — API Reference
 
 > Hand-written reference for the `projects` subpackage — Nova3D-style
 > multi-project management with persistent recents storage.
 > Owns the on-disk `project.slap_proj` manifest format and the
-> per-user `~/.slappyengine/projects.yaml` registry. Does **not**
+> per-user `~/.pharos_engine/projects.yaml` registry. Does **not**
 > own scene serialisation (see [`studio.md`](studio.md) for stage
 > bundles) or asset databases (see runtime
-> `slappyengine.assets.AssetDatabase` — discoverable via the registry's
+> `pharos_engine.assets.AssetDatabase` — discoverable via the registry's
 > opened-project paths, not duplicated here).
 
 ## Overview
@@ -23,7 +23,7 @@ editor passes around once a project has been opened; mutating
 manifest atomically.
 
 The :class:`ProjectRegistry` persists a per-user "recently opened
-projects" list to ``~/.slappyengine/projects.yaml`` so the editor's
+projects" list to ``~/.pharos_engine/projects.yaml`` so the editor's
 welcome screen can restore the user's session across launches. The
 registry is *not* the canonical project record — the manifest in each
 project directory is — it only tracks discovery state. Corrupt registry
@@ -39,7 +39,7 @@ a partially populated project preserves user content.
 ## Public surface
 
 ```python
-from slappyengine.projects import (
+from pharos_engine.projects import (
     Project,
     ProjectMetadata,
     ProjectRegistry,
@@ -58,7 +58,7 @@ from slappyengine.projects import (
 |---|---|
 | `Project` | In-memory project handle. Owns `path` (root dir) + `metadata`. |
 | `ProjectMetadata` | YAML-backed manifest dataclass. |
-| `ProjectRegistry` | Persistent recents tracker (`~/.slappyengine/projects.yaml`). |
+| `ProjectRegistry` | Persistent recents tracker (`~/.pharos_engine/projects.yaml`). |
 | `get_default_registry` | Lazy singleton accessor for the per-process registry. |
 | `read_project` / `write_project` | Manifest I/O — atomic rename on write. |
 | `is_project_dir` / `find_project_root` | Directory discovery helpers. |
@@ -70,7 +70,7 @@ from slappyengine.projects import (
 
 ### `ProjectMetadata`
 
-_dataclass — defined in `slappyengine.projects.project`_
+_dataclass — defined in `pharos_engine.projects.project`_
 
 Manifest fields written verbatim to `project.slap_proj`. Every field
 is a plain Python primitive (string only — no `datetime` / `Path`
@@ -108,7 +108,7 @@ ProjectMetadata(
 
 ### `Project`
 
-_dataclass — defined in `slappyengine.projects.project`_
+_dataclass — defined in `pharos_engine.projects.project`_
 
 The in-memory handle the editor passes around once a project has been
 opened. Binds the on-disk root directory to its loaded metadata. Path
@@ -127,7 +127,7 @@ Project(path: Path, metadata: ProjectMetadata) -> None
 - `new(root, name, *, version=None, description="", scaffold=True) -> Project`
   — create a fresh project at `root`. Writes the manifest, optionally
   runs `scaffold_project`, and returns the handle. `version` defaults
-  to the running `slappyengine.__version__`.
+  to the running `pharos_engine.__version__`.
 
 #### Properties
 
@@ -150,10 +150,10 @@ Project(path: Path, metadata: ProjectMetadata) -> None
 
 ### `ProjectRegistry`
 
-_class — defined in `slappyengine.projects.registry`_
+_class — defined in `pharos_engine.projects.registry`_
 
 Persistent recents tracker. Stores a per-user YAML list of
-recently opened projects at `~/.slappyengine/projects.yaml` (or any
+recently opened projects at `~/.pharos_engine/projects.yaml` (or any
 override passed via `store_path`). All writes are atomic.
 
 #### Constructor signature
@@ -162,7 +162,7 @@ override passed via `store_path`). All writes are atomic.
 ProjectRegistry(store_path: Path | str | None = None) -> None
 ```
 
-`store_path=None` resolves to `Path.home() / ".slappyengine" /
+`store_path=None` resolves to `Path.home() / ".pharos_engine" /
 "projects.yaml"` on first access. Existing data is loaded on
 construction so `list_recent()` works out of the box.
 
@@ -199,7 +199,7 @@ Supports `len()` and `path in registry` membership. Membership accepts
 
 ### `RegistryEntry`
 
-_dataclass — defined in `slappyengine.projects.registry`_
+_dataclass — defined in `pharos_engine.projects.registry`_
 
 One row in the recents list — denormalised path + last-opened
 timestamp + project name. Storing the name lets the welcome screen
@@ -215,7 +215,7 @@ RegistryEntry(path: str, last_opened_at: str, name: str = "") -> None
 
 ### `read_project(path) -> Project`
 
-_defined in `slappyengine.projects.format`_
+_defined in `pharos_engine.projects.format`_
 
 Load a `Project` from a directory containing `project.slap_proj`.
 
@@ -228,7 +228,7 @@ Raises:
 
 ### `write_project(project) -> None`
 
-_defined in `slappyengine.projects.format`_
+_defined in `pharos_engine.projects.format`_
 
 Atomically write `project`'s manifest to disk. Renders with
 `yaml.safe_dump` and uses a temp-file + rename so a crash mid-write
@@ -236,14 +236,14 @@ never leaves a partially serialised manifest.
 
 ### `is_project_dir(path) -> bool`
 
-_defined in `slappyengine.projects.format`_
+_defined in `pharos_engine.projects.format`_
 
 Pure filesystem check — `True` iff *path* is a directory containing a
 file literally named `project.slap_proj`. Does not parse the manifest.
 
 ### `find_project_root(path) -> Path | None`
 
-_defined in `slappyengine.projects.format`_
+_defined in `pharos_engine.projects.format`_
 
 Walk upward from *path* (or its parent if *path* is a file) looking
 for an ancestor that contains `project.slap_proj`. Returns `None` if
@@ -252,7 +252,7 @@ symlink cycles via a resolved-path visited set.
 
 ### `scaffold_project(project) -> dict[str, Path]`
 
-_defined in `slappyengine.projects.scaffolding`_
+_defined in `pharos_engine.projects.scaffolding`_
 
 Create the default directory tree under `project.path`:
 
@@ -276,11 +276,11 @@ Idempotent — existing files are never overwritten.
 
 ### `get_default_registry() -> ProjectRegistry`
 
-_defined in `slappyengine.projects.registry`_
+_defined in `pharos_engine.projects.registry`_
 
 Return the process-wide singleton `ProjectRegistry`, lazy-constructed
-on first call so importing `slappyengine.projects` does not touch
-`~/.slappyengine/` (relevant for headless CI / sandboxed builds).
+on first call so importing `pharos_engine.projects` does not touch
+`~/.pharos_engine/` (relevant for headless CI / sandboxed builds).
 Tests that need a fresh registry should construct one directly with a
 temp `store_path` rather than mutating the singleton.
 
@@ -288,7 +288,7 @@ temp `store_path` rather than mutating the singleton.
 
 ### `PROJECT_FILE_NAME`
 
-_str — defined in `slappyengine.projects.format`_
+_str — defined in `pharos_engine.projects.format`_
 
 Value: `"project.slap_proj"`. The engine never tries alternates — no
 `.yaml` / `.yml` ambiguity, no case folding. Editors should suggest
@@ -296,24 +296,24 @@ this filename verbatim when authoring outside the engine helpers.
 
 ## Inner modules
 
-- `slappyengine.projects.project` — `Project` / `ProjectMetadata`
+- `pharos_engine.projects.project` — `Project` / `ProjectMetadata`
   dataclasses, ISO 8601 helper.
-- `slappyengine.projects.format` — YAML I/O + directory-walk helpers.
-- `slappyengine.projects.registry` — `ProjectRegistry` +
+- `pharos_engine.projects.format` — YAML I/O + directory-walk helpers.
+- `pharos_engine.projects.registry` — `ProjectRegistry` +
   `RegistryEntry` + singleton accessor.
-- `slappyengine.projects.scaffolding` — default-tree scaffolder with
+- `pharos_engine.projects.scaffolding` — default-tree scaffolder with
   PIL-soft icon rendering.
 
 ## Conventions
 
 - **Validation.** All public entry points run their string / path
-  arguments through `slappyengine._validation` so malformed input
+  arguments through `pharos_engine._validation` so malformed input
   surfaces a `TypeError` / `ValueError` at the boundary rather than
   inside the YAML parser.
 - **Atomic writes.** Both `write_project` and `ProjectRegistry.save`
   go through a temp-file + `Path.replace` so a crash mid-write never
   leaves a half-rendered manifest on disk.
-- **Resilient bootstrap.** A corrupt `~/.slappyengine/projects.yaml`
+- **Resilient bootstrap.** A corrupt `~/.pharos_engine/projects.yaml`
   silently degrades to "empty registry" rather than raising — the
   editor must still launch even if the recents list is bad.
 - **YAML safety.** All reads use `yaml.safe_load`; all writes use

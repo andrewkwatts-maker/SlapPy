@@ -2,7 +2,7 @@
 
 Audit triggered by `docs/phase_d_strip_plan_2026_05_31.md` §c. Goal:
 prove which conditional branches in
-`python/slappyengine/physics/shaders/per_pixel_sim.wgsl` (429 LOC) are
+`python/pharos_engine/physics/shaders/per_pixel_sim.wgsl` (429 LOC) are
 unreachable now that Phase D's `CellMaterial` strip is imminent, and
 trim any whose gating field the uploader no longer populates.
 
@@ -19,12 +19,12 @@ No trim is justified. The shader stays at 429 LOC. The `SlapPyEngineTests/tests/
 
 ## Uploader evidence
 
-Source: `python/slappyengine/physics/world.py::_pack_params`, lines
+Source: `python/pharos_engine/physics/world.py::_pack_params`, lines
 2743-2792. Packs `<4I 36f` (4 u32 + 36 f32 = 160 B) per hull. Every
 `HullParams` field in `per_pixel_sim.wgsl:28-88` has a corresponding
 `float(mat.<field>)` or `float(cell.<field>)` write at the call site.
 
-`CellMaterial` itself is alive at `python/slappyengine/deform_modes.py:284`
+`CellMaterial` itself is alive at `python/pharos_engine/deform_modes.py:284`
 with defaults still set (`brittle_modulus: float = 999.0`,
 `tear_strength: float = 999.0`, `Y: float`, `is_fluid: bool`, melt /
 ductile / brittle rates, etc.). The MATERIAL presets (GLASS

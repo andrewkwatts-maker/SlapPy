@@ -8,7 +8,7 @@ r14's `capture_actions` + `render_toggle_actions` landings).
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`slappyengine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `view.frame_selected`  | `view_frame_selected_actions.frame_selected` | view |
 | `view.reset_view`      | `view_reset_view_actions.reset_view`         | view |
@@ -18,12 +18,12 @@ Five more action ids landed in this tick, moving 5 rows from STUB
 
 New action modules:
 
-* `python/slappyengine/actions/view_frame_selected_actions.py`
-* `python/slappyengine/actions/view_reset_view_actions.py`
-* `python/slappyengine/actions/panel_dock_actions.py`
-* `python/slappyengine/actions/theme_hot_swap_actions.py`
+* `python/pharos_engine/actions/view_frame_selected_actions.py`
+* `python/pharos_engine/actions/view_reset_view_actions.py`
+* `python/pharos_engine/actions/panel_dock_actions.py`
+* `python/pharos_engine/actions/theme_hot_swap_actions.py`
 
-Router entries and `_fb_*` shims live in `python/slappyengine/tool_router.py`
+Router entries and `_fb_*` shims live in `python/pharos_engine/tool_router.py`
 under the `# ── NN2 STUB-triage: frame-selected + reset-view + panel dock
 L/R + theme hot-swap (round 15) ──` block.
 
@@ -59,9 +59,9 @@ L/R + theme hot-swap (round 15) ──` block.
 * **`theme.hot_swap`** — Unity Preferences → Themes dropdown, Blender
   Preferences → load theme preset. Applies the theme named
   `ctx["theme"]` (required str) directly, without cycling. Resolves via
-  `slappyengine.ui.theme.list_registered_themes` (and `get_theme` when
+  `pharos_engine.ui.theme.list_registered_themes` (and `get_theme` when
   present); dispatches through `shell.apply_theme` when the shell
-  exposes it, else `slappyengine.ui.theme.apply_theme`. Mirrors the
+  exposes it, else `pharos_engine.ui.theme.apply_theme`. Mirrors the
   new active theme onto `shell._active_theme` /
   `shell._current_theme` / `shell._theme_cursor` so subsequent
   `theme.cycle` calls continue from the new anchor. Return contract:

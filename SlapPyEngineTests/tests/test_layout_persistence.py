@@ -1,4 +1,4 @@
-"""Tests for ``slappyengine.ui.editor.layout_persistence``.
+"""Tests for ``pharos_engine.ui.editor.layout_persistence``.
 
 The persistence layer is Dear PyGui-free and operates exclusively on
 plain Python objects, so every test in this module runs headlessly
@@ -19,14 +19,14 @@ try:
 except Exception as exc:  # pragma: no cover - exotic install matrix
     pytest.skip(f"yaml not importable: {exc}", allow_module_level=True)
 
-from slappyengine.ui.editor.layout_persistence import (
+from pharos_engine.ui.editor.layout_persistence import (
     EditorLayout,
     LayoutPersistence,
     PanelLayoutState,
     SCHEMA_VERSION,
     VALID_DOCK_SIDES,
 )
-from slappyengine.ui.editor.default_layouts import (
+from pharos_engine.ui.editor.default_layouts import (
     DEFAULT_LAYOUT,
     PRESET_LAYOUTS,
     TRIPLE_PANE_LAYOUT,
@@ -248,7 +248,7 @@ class TestLayoutPersistenceFileOps:
         monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
         lp = LayoutPersistence(None)
         assert lp.get_file_path() == (
-            tmp_path / ".slappyengine" / "default_layout.yaml"
+            tmp_path / ".pharos_engine" / "default_layout.yaml"
         )
 
     # 13

@@ -10,7 +10,7 @@ VV4's round-23 ``layer.new`` / ``layer.delete`` /
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`slappyengine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `view.toggle_axes`       | `view_toggle_axes_actions.toggle_axes`             | view  |
 | `view.toggle_background` | `view_toggle_background_actions.toggle_background` | view  |
@@ -20,14 +20,14 @@ Five more action ids landed in this tick, moving 5 rows from STUB
 
 New action modules:
 
-* `python/slappyengine/actions/view_toggle_axes_actions.py`
-* `python/slappyengine/actions/view_toggle_background_actions.py`
-* `python/slappyengine/actions/selection_by_tag_actions.py`
-* `python/slappyengine/actions/spawn_at_grid_actions.py`
-* `python/slappyengine/actions/layer_clear_actions.py`
+* `python/pharos_engine/actions/view_toggle_axes_actions.py`
+* `python/pharos_engine/actions/view_toggle_background_actions.py`
+* `python/pharos_engine/actions/selection_by_tag_actions.py`
+* `python/pharos_engine/actions/spawn_at_grid_actions.py`
+* `python/pharos_engine/actions/layer_clear_actions.py`
 
 Router entries and `_fb_*` shims live in
-`python/slappyengine/tool_router.py` under the
+`python/pharos_engine/tool_router.py` under the
 `# ── WW4 STUB-triage: view.toggle_axes, view.toggle_background,
 edit.select_by_tag, spawn.at_grid, layer.clear (round 24) ──` block.
 

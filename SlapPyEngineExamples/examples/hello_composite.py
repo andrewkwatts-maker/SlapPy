@@ -2,29 +2,29 @@
 
 Composes four engine subsystems into a single "defended foundry" demo:
 
-* :mod:`slappyengine.iso.combat` -- two stationary defenders are attacked
-  by a :class:`~slappyengine.iso.combat.WaveSchedule` that emits four
+* :mod:`pharos_engine.iso.combat` -- two stationary defenders are attacked
+  by a :class:`~pharos_engine.iso.combat.WaveSchedule` that emits four
   attackers from the east/west arena edges. Attackers home toward the
   nearest living defender at :data:`ATTACKER_SPEED` and call
-  :func:`~slappyengine.iso.combat.resolve_attack` on contact; defenders
+  :func:`~pharos_engine.iso.combat.resolve_attack` on contact; defenders
   shoot back inside their reach.
-* :mod:`slappyengine.dynamics` -- a 16-node rope hangs between
+* :mod:`pharos_engine.dynamics` -- a 16-node rope hangs between
   ``(1, 1)`` and ``(9, 1)``. It is purely decorative -- it doesn't
   collide with attackers -- and proves the dynamics ``World`` integrates
   alongside the rest of the loop without churn.
-* :mod:`slappyengine.zones` -- a single :class:`RectZone` at
+* :mod:`pharos_engine.zones` -- a single :class:`RectZone` at
   ``(4, 4, 2, 2)`` tracks every attacker's iso position via
   :meth:`ZoneManager.update`. Its ``on_enter`` callback ticks an
   internal counter, exposing how many distinct attackers ever crossed
   into the foundry's defended quad.
-* :mod:`slappyengine.thermal` -- a 32x32 :class:`HeatField` blankets the
+* :mod:`pharos_engine.thermal` -- a 32x32 :class:`HeatField` blankets the
   arena at ambient ``T = 20``. The two defenders are pinned hot spots at
   ``T = 300`` (re-emitted every frame so diffusion can't cool them).
   Live attackers exchange heat with the field via
   :meth:`HeatField.exchange_with` against a one-cell scratch field so
   they slowly absorb the foundry's warmth as they close in.
-* :mod:`slappyengine.topology` -- after every dynamics step
-  :func:`~slappyengine.topology.connected_components` is run on the
+* :mod:`pharos_engine.topology` -- after every dynamics step
+  :func:`~pharos_engine.topology.connected_components` is run on the
   rope's joint edges to assert the cable is still one connected piece.
 
 Frame loop at ``dt = 1/30`` for 180 frames:
@@ -75,18 +75,18 @@ from typing import List, Tuple
 
 import numpy as np
 
-import slappyengine.telemetry as telemetry
-from slappyengine.dynamics import RopeSpec, World, build_rope
-from slappyengine.iso.combat import (
+import pharos_engine.telemetry as telemetry
+from pharos_engine.dynamics import RopeSpec, World, build_rope
+from pharos_engine.iso.combat import (
     Attacker,
     Defender,
     WaveSchedule,
     WaveSpec,
     resolve_attack,
 )
-from slappyengine.thermal import HeatField
-from slappyengine.topology import connected_components
-from slappyengine.zones import RectZone, ZoneManager
+from pharos_engine.thermal import HeatField
+from pharos_engine.topology import connected_components
+from pharos_engine.zones import RectZone, ZoneManager
 
 
 # -- Arena layout ------------------------------------------------------------

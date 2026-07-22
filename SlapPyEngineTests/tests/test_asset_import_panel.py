@@ -22,14 +22,14 @@ import pytest
 
 
 # ---------------------------------------------------------------------------
-# Sample assets shipped under slappyengine.asset_import.samples
+# Sample assets shipped under pharos_engine.asset_import.samples
 # ---------------------------------------------------------------------------
 
-from slappyengine.asset_import.samples import (
+from pharos_engine.asset_import.samples import (
     TRIANGLE_MTL,
     TRIANGLE_OBJ,
 )
-from slappyengine.asset_import.type_router import (
+from pharos_engine.asset_import.type_router import (
     THUMBNAIL_SIZE,
     ImportRouteResult,
     ScriptHandle,
@@ -354,7 +354,7 @@ def stub_dpg(monkeypatch):
 
 
 try:
-    from slappyengine.ui.editor.asset_import_panel import (
+    from pharos_engine.ui.editor.asset_import_panel import (
         AssetImportPanel,
         ImportedAssetCard,
         type_badge,

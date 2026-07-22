@@ -29,7 +29,7 @@ from typing import Any
 
 import pytest
 
-from slappyengine.ui.editor.notebook_minimap import (
+from pharos_engine.ui.editor.notebook_minimap import (
     ENTITY_KIND_COLORS,
     NotebookMinimap,
     classify_entity,
@@ -678,13 +678,13 @@ class TestBuild:
 
 class TestLazyRegistration:
     def test_lazy_import_works(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         assert "NotebookMinimap" in editor_pkg.__all__
         cls = editor_pkg.NotebookMinimap
         assert cls.__name__ == "NotebookMinimap"
 
     def test_alphabetical_position(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         idx = editor_pkg.__all__.index("NotebookMinimap")
         prev_entry = editor_pkg.__all__[idx - 1]
         next_entry = editor_pkg.__all__[idx + 1]

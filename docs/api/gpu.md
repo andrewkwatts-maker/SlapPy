@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.gpu — API Reference
+# pharos_engine.gpu — API Reference
 
 > Hand-written reference for the renderer GPU subpackage. Covers the
 > wgpu context wrapper, the entity / mesh render pipelines, the
@@ -11,7 +11,7 @@
 > kernels see [`gi.md`](gi.md).
 
 ```python
-from slappyengine.gpu import (
+from pharos_engine.gpu import (
     GPUContext, BufferManager, TextureManager, MaterialBuffer,
     RenderPipeline, EntityRenderer,
     MeshPipeline, MeshRenderer, GpuMesh, MeshVertex, PbrMaterial,
@@ -22,7 +22,7 @@ from slappyengine.gpu import (
 ## Overview
 
 Every name is **lazy-loaded** via `__getattr__` (see `gpu/__init__.py`'s
-`_LAZY_MAP`), so importing `slappyengine.gpu` is cheap — wgpu does not
+`_LAZY_MAP`), so importing `pharos_engine.gpu` is cheap — wgpu does not
 land until you actually touch a class. Headless CI imports the engine
 without ever instantiating any GPU symbol.
 

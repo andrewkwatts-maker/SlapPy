@@ -1,4 +1,4 @@
-﻿"""
+"""
 Multiplayer demo -- two players, P2P via DHT, no server needed.
 
 Player 1 (host):   python multiplayer_demo.py host
@@ -16,8 +16,8 @@ Architecture notes:
 import asyncio
 import sys
 
-from slappyengine.net import GameSession, SessionConfig, InputFrame
-from slappyengine.input import ActionMap
+from pharos_engine.net import GameSession, SessionConfig, InputFrame
+from pharos_engine.input import ActionMap
 
 
 async def main():

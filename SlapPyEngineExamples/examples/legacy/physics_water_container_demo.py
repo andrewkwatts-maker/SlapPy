@@ -22,14 +22,14 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.particles import ParticleSystem
-from slappyengine.physics.post_process import default_post_process_chain
-from slappyengine.physics.render import (
+from pharos_engine.physics.particles import ParticleSystem
+from pharos_engine.physics.post_process import default_post_process_chain
+from pharos_engine.physics.render import (
     PhysicsRenderer,
     PointLight,
     RenderConfig,

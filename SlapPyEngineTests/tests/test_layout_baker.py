@@ -1,6 +1,6 @@
 """Sprint CC4 — baked editor-layout preset regression suite.
 
-Covers :class:`slappyengine.ui.editor.layout_baker.LayoutBaker`
+Covers :class:`pharos_engine.ui.editor.layout_baker.LayoutBaker`
 end-to-end:
 
 * ``bake_defaults`` copies every baked file into the user dir
@@ -22,12 +22,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from slappyengine.ui.editor.layout_baker import (
+from pharos_engine.ui.editor.layout_baker import (
     BakerResult,
     LayoutBaker,
     LayoutBakerError,
 )
-from slappyengine.ui.editor.layout_persistence import (
+from pharos_engine.ui.editor.layout_persistence import (
     EditorLayout,
     LayoutPersistence,
     PanelLayoutState,
@@ -331,7 +331,7 @@ def test_presentation_hides_toolbar(baker: LayoutBaker) -> None:
 
 
 def test_default_matches_default_layout_constant(baker: LayoutBaker) -> None:
-    from slappyengine.ui.editor.default_layouts import DEFAULT_LAYOUT
+    from pharos_engine.ui.editor.default_layouts import DEFAULT_LAYOUT
     layout = baker.load("default")
     assert layout.theme == DEFAULT_LAYOUT.theme
     assert layout.viewport_size == DEFAULT_LAYOUT.viewport_size

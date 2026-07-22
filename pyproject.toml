@@ -3,8 +3,8 @@ requires = ["maturin>=1.4,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "slappy-engine"
-version = "0.3.0b0"
+name = "pharos-engine"
+version = "0.3.0b1"
 description = "2D pixel-art game engine with optional 3D layers, Rust backends, and wgpu rendering"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -31,7 +31,7 @@ dependencies = [
 ]
 
 [project.scripts]
-slap = "slappyengine.cli:main"
+pharos = "pharos_engine.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/andrewkwatts-maker/SlapPyEngine"
@@ -96,7 +96,7 @@ ai = [
     "torch>=2.0",
     "transformers>=4.30",
 ]
-# Symbolic + numeric formula evaluation surface for `slappyengine.math`.
+# Symbolic + numeric formula evaluation surface for `pharos_engine.math`.
 # When this extra is installed `Formula` / `evaluate` / `compile_formula`
 # route through arithma's Rust-backed `Expression`. Without it the math
 # subpackage still imports — it falls back to a locked-down Python eval
@@ -115,30 +115,30 @@ network = [
 # wgpu is already a core dependency, so no additional Python packages are needed.
 # The _core Rust crate's "3d" feature flag is activated at build time:
 #   maturin build --features 3d
-# Install with: pip install slappyengine[3d]
+# Install with: pip install pharos-engine[3d]
 3d = []
 # Meta-extra: pull in every optional runtime dep except the (~800 MB)
 # ``ai`` bundle. This is the "install everything I might reasonably
 # want" bucket; the heavy torch + transformers path stays opt-in.
-all = ["slappy-engine[editor,assets,hud,math,video,audio,network]"]
+all = ["pharos-engine[editor,assets,hud,math,video,audio,network]"]
 
 [tool.maturin]
 python-source = "python"
-module-name = "slappyengine._core"
+module-name = "pharos_engine._core"
 features = ["pyo3/extension-module"]
 # Non-Python package data that must ship inside the wheel. Maturin auto-
 # includes ``*.py`` files under ``python-source`` but skips other file
 # types unless they are named here. The baked diary themes are
-# copied on first launch by ``slappyengine.ui.theme.user_themes``.
+# copied on first launch by ``pharos_engine.ui.theme.user_themes``.
 include = [
-    "python/slappyengine/ui/theme/themes/_baked/*.theme.yaml",
-    "python/slappyengine/prefabs/baked/*.prefab.yaml",
-    "python/slappyengine/prefabs/baked/previews/*.png",
-    "python/slappyengine/post_process/baked_chains/*.chain.yaml",
-    "python/slappyengine/ui/hotkeys/baked/*.yaml",
-    "python/slappyengine/ui/editor/baked_layouts/*.layout.yaml",
-    "python/slappyengine/ui/plugin_samples/**/*.py",
-    "python/slappyengine/ui/plugin_samples/**/*.yaml",
+    "python/pharos_engine/ui/theme/themes/_baked/*.theme.yaml",
+    "python/pharos_engine/prefabs/baked/*.prefab.yaml",
+    "python/pharos_engine/prefabs/baked/previews/*.png",
+    "python/pharos_engine/post_process/baked_chains/*.chain.yaml",
+    "python/pharos_engine/ui/hotkeys/baked/*.yaml",
+    "python/pharos_engine/ui/editor/baked_layouts/*.layout.yaml",
+    "python/pharos_engine/ui/plugin_samples/**/*.py",
+    "python/pharos_engine/ui/plugin_samples/**/*.yaml",
 ]
 # Strip debug symbols from the compiled _core extension to shrink wheel size.
 # Combined with [profile.release] strip = true in Cargo.toml, this drops the
@@ -148,12 +148,12 @@ strip = true
 #
 # Wheel-size audit 2026-06-02: maturin's `exclude` accepts glob patterns
 # relative to the project root. `**/tests` matches top-level `tests/` but
-# does not consistently match the inner `python/slappyengine/tests/`
+# does not consistently match the inner `python/pharos_engine/tests/`
 # subpackage, so we list that explicit path too. Same story for `.pdb`
 # debug symbols.
 #
-# We intentionally KEEP `python/slappyengine/testing/baselines/` — those
-# PNG/NPY files are runtime data for the public `slappyengine.testing`
+# We intentionally KEEP `python/pharos_engine/testing/baselines/` — those
+# PNG/NPY files are runtime data for the public `pharos_engine.testing`
 # golden-master API. Downstream test suites (Ochema Circuit, Bullet
 # Strata) call `assert_scene_matches(...)` and need the committed
 # baselines on disk; without them every first run silently bootstraps a
@@ -170,8 +170,8 @@ exclude = [
     "**/.ruff_cache",
     # Inner test subpackages — explicit paths because `**/tests` alone
     # didn't catch them through maturin's globbing.
-    "python/slappyengine/tests",
-    "python/slappyengine/tests/**",
+    "python/pharos_engine/tests",
+    "python/pharos_engine/tests/**",
     # Repo-root artefacts that should never ship.
     "_audit_snapshots",
     "_audit_snapshots/**",

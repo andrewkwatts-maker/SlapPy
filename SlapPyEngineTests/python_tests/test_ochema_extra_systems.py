@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _GAME_ROOT = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _GAME_STR = str(_GAME_ROOT)
@@ -198,7 +198,7 @@ class TestProjectileSystemUpdate:
         assert len(vehicle._damage_calls) == 0
 
     def test_expire_event_published(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         received = []
         h = global_bus.subscribe("projectile:expired", lambda e: received.append(e))
         ps = self._ps()
@@ -232,7 +232,7 @@ class TestRadialRepairSystemInit:
         rs.teardown()
 
     def test_subscribes_repair_events(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         before = (
             global_bus.listener_count("Repair.Radial"),
             global_bus.listener_count("Repair.Pixel"),
@@ -250,7 +250,7 @@ class TestRadialRepairSystemInit:
         rs.teardown()
 
     def test_teardown_unsubscribes(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         before = global_bus.listener_count("Repair.Radial")
         rs = self._rs()
         rs.teardown()
@@ -274,28 +274,28 @@ class TestRadialRepairSystemHandlers:
         return RadialRepairSystem(vehicles or [])
 
     def test_radial_no_target_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         rs = self._rs()
         publish("Repair.Radial", center_x=50, center_y=50, radius=20, rate=2.0)
         rs.tick(0.016)
         rs.teardown()
 
     def test_pixel_no_target_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         rs = self._rs()
         publish("Repair.Pixel", x=10, y=10, rate=5.0)
         rs.tick(0.016)
         rs.teardown()
 
     def test_full_no_target_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         rs = self._rs()
         publish("Repair.Full", rate=1.0)
         rs.tick(0.016)
         rs.teardown()
 
     def test_radial_missing_deform_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         target = MagicMock()
         target._deform = None
         rs = self._rs()
@@ -340,7 +340,7 @@ class TestScrapEntity:
             se.tick(0.016)
 
     def test_collision_shape_set(self):
-        from slappyengine.collision import AABBShape
+        from pharos_engine.collision import AABBShape
         se = self._se()
         assert isinstance(se.collision_shape, AABBShape)
 
@@ -364,7 +364,7 @@ class TestCockpitPodEntity:
         assert pod.velocity[1] == _EJECT["velocity_kick"]
 
     def test_collision_shape_set(self):
-        from slappyengine.collision import AABBShape
+        from pharos_engine.collision import AABBShape
         pod = self._pod()
         assert isinstance(pod.collision_shape, AABBShape)
 

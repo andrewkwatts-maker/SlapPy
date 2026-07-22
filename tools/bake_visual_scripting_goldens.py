@@ -18,11 +18,11 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
-from slappyengine.visual_scripting.codegen import (
+from pharos_engine.visual_scripting.codegen import (
     python_to_graph,
     graph_to_python,
 )
-from slappyengine.visual_scripting.golden_utils import (
+from pharos_engine.visual_scripting.golden_utils import (
     canonical_graph_yaml,
     goldens_root,
 )

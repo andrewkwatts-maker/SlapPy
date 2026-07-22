@@ -1,8 +1,8 @@
 """Visual regression: humanoid plants both feet on a sinusoidal terrain.
 
 Mirror of ``examples/humanoid_ik_terrain_demo.py``. Spawns a humanoid via
-:func:`slappyengine.dynamics.make_humanoid` above a sinewave ground, calls
-:func:`slappyengine.dynamics.place_feet_on_terrain` once, then asserts the
+:func:`pharos_engine.dynamics.make_humanoid` above a sinewave ground, calls
+:func:`pharos_engine.dynamics.place_feet_on_terrain` once, then asserts the
 four documented invariants of the IK pose:
 
   (a) each ankle lands within ``0.02`` of the terrain height at its own x
@@ -15,7 +15,7 @@ four documented invariants of the IK pose:
 Solver tuning: ``SoftBodyWorld`` defaults ``iters=4``; bone damping is the
 ``make_humanoid`` default ``0.05`` → ``iters * damping == 0.20``, which
 sits comfortably under the documented ``0.3`` over-damp threshold the
-dynamics layer guards on its slim :class:`slappyengine.dynamics.World`.
+dynamics layer guards on its slim :class:`pharos_engine.dynamics.World`.
 
 The test also renders one frame through ``SoftBodyRenderer`` and asserts
 the silhouette is non-empty so a regression in beam/node rendering would
@@ -29,8 +29,8 @@ import warnings
 import numpy as np
 from PIL import Image
 
-from slappyengine.dynamics import make_humanoid, place_feet_on_terrain
-from slappyengine.softbody import (
+from pharos_engine.dynamics import make_humanoid, place_feet_on_terrain
+from pharos_engine.softbody import (
     SoftBodyRenderConfig, SoftBodyRenderer, SoftBodyWorld,
 )
 

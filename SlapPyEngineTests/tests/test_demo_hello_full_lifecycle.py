@@ -50,14 +50,14 @@ def _load_demo():
     # useful skip message rather than an opaque ImportError at exec_module.
     pytest.importorskip("yaml")
     try:
-        import slappyengine  # noqa: F401
-        import slappyengine.audio_3d  # noqa: F401
-        import slappyengine.diagnostics  # noqa: F401
-        import slappyengine.physics3_bridge  # noqa: F401
-        import slappyengine.render.skybox  # noqa: F401
-        import slappyengine.hud_bridge  # noqa: F401
+        import pharos_engine  # noqa: F401
+        import pharos_engine.audio_3d  # noqa: F401
+        import pharos_engine.diagnostics  # noqa: F401
+        import pharos_engine.physics3_bridge  # noqa: F401
+        import pharos_engine.render.skybox  # noqa: F401
+        import pharos_engine.hud_bridge  # noqa: F401
     except Exception as exc:  # pragma: no cover — defensive
-        pytest.skip(f"slappyengine subsystems unavailable: {exc}")
+        pytest.skip(f"pharos_engine subsystems unavailable: {exc}")
 
     spec = importlib.util.spec_from_file_location(
         "hello_full_lifecycle_demo", _DEMO_PATH

@@ -19,11 +19,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
 )
-from slappyengine.physics.render import (
+from pharos_engine.physics.render import (
     PhysicsRenderer,
     RenderConfig,
 )

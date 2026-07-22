@@ -5,9 +5,9 @@ import warnings
 
 import pytest
 
-from slappyengine.fluid import FluidWorld
-from slappyengine.softbody import SoftBodyWorld
-from slappyengine.ui.editor.scene_outliner import SceneOutliner
+from pharos_engine.fluid import FluidWorld
+from pharos_engine.softbody import SoftBodyWorld
+from pharos_engine.ui.editor.scene_outliner import SceneOutliner
 
 
 @pytest.fixture(autouse=True)

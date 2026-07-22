@@ -25,10 +25,10 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-import slappyengine as se
-from slappyengine.layer import Layer
-from slappyengine.lighting import LightingContext, PointLight, RadianceCascadeConfig
-from slappyengine.gi.svgf import SVGFDenoiser
+import pharos_engine as se
+from pharos_engine.layer import Layer
+from pharos_engine.lighting import LightingContext, PointLight, RadianceCascadeConfig
+from pharos_engine.gi.svgf import SVGFDenoiser
 
 W, H = 320, 240
 OUT = Path(__file__).parent / "output" / "hello_gi" / "hello_gi.png"

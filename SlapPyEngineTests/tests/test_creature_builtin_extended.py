@@ -20,13 +20,13 @@ from __future__ import annotations
 import pytest
 
 try:
-    from slappyengine.ui.theme import Color
-    from slappyengine.ui.theme.creatures import (
+    from pharos_engine.ui.theme import Color
+    from pharos_engine.ui.theme.creatures import (
         AnimationCurve,
         CreatureScheduler,
         _reset_default_scheduler_for_tests,
     )
-    from slappyengine.ui.theme.creatures.builtin import (
+    from pharos_engine.ui.theme.creatures.builtin import (
         butterfly_01,
         butterfly_01_slot,
         butterfly_02,
@@ -52,7 +52,7 @@ try:
     )
 except Exception as e:  # pragma: no cover — defensive import skip
     pytest.skip(
-        f"slappyengine.ui.theme.creatures.builtin not importable: {e}",
+        f"pharos_engine.ui.theme.creatures.builtin not importable: {e}",
         allow_module_level=True,
     )
 

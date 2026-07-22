@@ -2,7 +2,7 @@
 
 A wood block (density 600 kg/m^3) and a steel block (7800) of the same
 size are dropped into a pool of water. The engine's
-:func:`slappyengine.fluid.apply_fluid_buoyancy` applies per-node
+:func:`pharos_engine.fluid.apply_fluid_buoyancy` applies per-node
 Archimedes upthrust to every submerged node; nodes lighter than the
 water they displace rise, denser ones fall.
 
@@ -25,17 +25,17 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from slappyengine.fluid import (
+from pharos_engine.fluid import (
     FluidRenderConfig,
     FluidRenderer,
     apply_fluid_buoyancy,
     apply_fluid_buoyancy_iterative,
 )
-from slappyengine.media import save_frames
-from slappyengine.softbody import make_lattice_body
-from slappyengine.softbody import step as softbody_step
-from slappyengine.fluid import pbf_step
-from slappyengine.studio import fluid_with_softbody_stage, output_path
+from pharos_engine.media import save_frames
+from pharos_engine.softbody import make_lattice_body
+from pharos_engine.softbody import step as softbody_step
+from pharos_engine.fluid import pbf_step
+from pharos_engine.studio import fluid_with_softbody_stage, output_path
 
 
 _DIVIDER_PX = 4

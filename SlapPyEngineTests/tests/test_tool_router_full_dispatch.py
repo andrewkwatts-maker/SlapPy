@@ -1,6 +1,6 @@
 """YY5 omnibus integration test — dispatch every registered ToolRouter action.
 
-Every ``action_id`` in :data:`slappyengine.tool_router.REGISTRY` is
+Every ``action_id`` in :data:`pharos_engine.tool_router.REGISTRY` is
 dispatched through :meth:`ToolRouter.dispatch` with a synthetic ``ctx``
 dict. The test asserts that:
 
@@ -22,7 +22,7 @@ Design provenance
 -----------------
 
 STUB-triage rounds r14-r24 landed 60+ action ids with Python fallbacks
-across ``slappyengine.actions``. Each individual round shipped its own
+across ``pharos_engine.actions``. Each individual round shipped its own
 targeted test module (``test_actions_stub_triage_r15`` …
 ``test_actions_stub_triage_r24``) exercising the ~5 action ids added
 that round. This omnibus test is the load-bearing regression net that
@@ -41,7 +41,7 @@ from typing import Any
 
 import pytest
 
-from slappyengine.tool_router import (
+from pharos_engine.tool_router import (
     REGISTRY,
     ToolAction,
     ToolRouter,

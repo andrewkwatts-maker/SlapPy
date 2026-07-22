@@ -8,9 +8,9 @@ from __future__ import annotations
 import threading
 import pytest
 
-from slappyengine.audio import AudioManager, LoopHandle
-from slappyengine.trigger import ReverbZone, TriggerSystem
-from slappyengine.event_bus import (
+from pharos_engine.audio import AudioManager, LoopHandle
+from pharos_engine.trigger import ReverbZone, TriggerSystem
+from pharos_engine.event_bus import (
     subscribe as bus_subscribe,
     unsubscribe as bus_unsubscribe,
 )

@@ -1,9 +1,9 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.audio_3d — API Reference
+# pharos_engine.audio_3d — API Reference
 
 > Hand-written reference for the LL4 3D positional-audio surface.
 > Adds attenuation, doppler pitch shift, and equal-power stereo
-> panning on top of the 2D :mod:`slappyengine.audio` one-shot layer.
+> panning on top of the 2D :mod:`pharos_engine.audio` one-shot layer.
 > Sibling references: [`audio_runtime.md`](audio_runtime.md) documents
 > the sounddevice soft-import shim this module ultimately plays through;
 > [`telemetry.md`](telemetry.md) is the recommended emitter for
@@ -11,7 +11,7 @@
 
 ## Overview
 
-`slappyengine.audio_3d` is the Nova3D parity Sprint 17 landing (task
+`pharos_engine.audio_3d` is the Nova3D parity Sprint 17 landing (task
 LL4). It gives games the vocabulary and DSP a 3D scene needs:
 
 * :class:`AudioListener` — pose (`position`, `forward`, `up`) plus
@@ -35,7 +35,7 @@ engine (e.g. ~1480 m/s for underwater scenes).
 ## Public surface
 
 ```python
-from slappyengine.audio_3d import (
+from pharos_engine.audio_3d import (
     AudioListener, Audio3DSource,
     SoundBank, Audio3DEngine,
     attenuation, doppler_shift, stereo_pan,
@@ -47,7 +47,7 @@ from slappyengine.audio_3d import (
 
 ### `AudioListener`
 
-_dataclass — defined in `slappyengine.audio_3d`_
+_dataclass — defined in `pharos_engine.audio_3d`_
 
 | Field | Type | Default | Notes |
 |-------|------|---------|-------|
@@ -58,7 +58,7 @@ _dataclass — defined in `slappyengine.audio_3d`_
 
 ### `Audio3DSource`
 
-_dataclass — defined in `slappyengine.audio_3d`_
+_dataclass — defined in `pharos_engine.audio_3d`_
 
 Emitter *config*; does not track voice state (many voices can share
 one source). Fields include `sound_id: str`, `position`, `velocity`,
@@ -68,7 +68,7 @@ one source). Fields include `sound_id: str`, `position`, `velocity`,
 
 ### `SoundBank`
 
-_class — defined in `slappyengine.audio_3d`_
+_class — defined in `pharos_engine.audio_3d`_
 
 ```python
 SoundBank(manager: audio.AudioManager | None = None)
@@ -86,7 +86,7 @@ Raises `ValueError` when `name` or `path` is empty / non-str.
 
 ### `Audio3DEngine`
 
-_class — defined in `slappyengine.audio_3d`_
+_class — defined in `pharos_engine.audio_3d`_
 
 ```python
 Audio3DEngine(
@@ -114,7 +114,7 @@ Manages the listener, the bank, and a pool of live voices. Methods:
 
 ### `attenuation(distance, min_dist, max_dist, curve="inverse") -> float`
 
-_defined in `slappyengine.audio_3d`_
+_defined in `pharos_engine.audio_3d`_
 
 0..1 volume factor. Curves: `"linear"`, `"inverse"` (OpenAL
 `AL_INVERSE_DISTANCE_CLAMPED`-ish), `"exponential"`. Full volume
@@ -123,7 +123,7 @@ negative distances, `max_dist <= min_dist`, or an unknown curve.
 
 ### `doppler_shift(source_vel, listener_vel, source_to_listener, sound_speed=SPEED_OF_SOUND) -> float`
 
-_defined in `slappyengine.audio_3d`_
+_defined in `pharos_engine.audio_3d`_
 
 Classical `f' = f * (c - v_listener) / (c - v_source)` projected onto
 the source→listener unit axis. Approaching → pitch > 1; receding →
@@ -132,7 +132,7 @@ pitch < 1. Clamped to `[0.05, 20.0]` for numerical safety. Raises
 
 ### `stereo_pan(listener, source_dir) -> tuple[left, right]`
 
-_defined in `slappyengine.audio_3d`_
+_defined in `pharos_engine.audio_3d`_
 
 Equal-power stereo pan based on the angle between the listener's
 forward vector and the source direction (right derived via
@@ -143,14 +143,14 @@ hard left → `(1.0, 0.0)`.
 
 ### `SPEED_OF_SOUND`
 
-_float — defined in `slappyengine.audio_3d`_
+_float — defined in `pharos_engine.audio_3d`_
 
 Value: `343.0` (m/s). Default sound speed used by
 :func:`doppler_shift`.
 
 ### `ATTENUATION_CURVES`
 
-_tuple[str, ...] — defined in `slappyengine.audio_3d`_
+_tuple[str, ...] — defined in `pharos_engine.audio_3d`_
 
 Value: `("linear", "inverse", "exponential")`. Legal
 `attenuation_curve` tags for :class:`Audio3DSource`.
@@ -158,7 +158,7 @@ Value: `("linear", "inverse", "exponential")`. Legal
 ## Usage
 
 ```python
-from slappyengine.audio_3d import (
+from pharos_engine.audio_3d import (
     AudioListener, Audio3DSource, SoundBank, Audio3DEngine,
 )
 
@@ -179,8 +179,8 @@ assert 0.05 <= state["pitch"] <= 20.0
 
 ## Skip the wrapper
 
-`slappyengine.audio_3d` is Python-only. Grep of
-`slappyengine._core_facade.RUST_MODULE_MAP` shows **no** `audio_3d`
+`pharos_engine.audio_3d` is Python-only. Grep of
+`pharos_engine._core_facade.RUST_MODULE_MAP` shows **no** `audio_3d`
 entry — the DSP helpers are `math.sqrt` / `math.cos` scalars, and
 `update()` walks at most a handful of live voices per frame. Rewriting
 in Rust would not move any measurable frame-time needle.

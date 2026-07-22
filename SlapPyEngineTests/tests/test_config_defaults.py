@@ -1,4 +1,4 @@
-"""Tripwire suite for :mod:`slappyengine.config_defaults` — HH6.
+"""Tripwire suite for :mod:`pharos_engine.config_defaults` — HH6.
 
 Covers the default-config YAML generator + validator:
 
@@ -28,7 +28,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from slappyengine.config_defaults import (
+from pharos_engine.config_defaults import (
     DEFAULT_CONFIG_OPTIONS,
     ConfigOption,
     generate_default_yaml,
@@ -84,7 +84,7 @@ def test_keys_are_category_prefixed():
 
 
 def test_defaults_pass_their_own_type_check():
-    from slappyengine.config_defaults import _type_ok
+    from pharos_engine.config_defaults import _type_ok
     for opt in DEFAULT_CONFIG_OPTIONS:
         assert _type_ok(opt.default, opt.type_name), (
             f"{opt.key}: default {opt.default!r} not of type_name={opt.type_name}"

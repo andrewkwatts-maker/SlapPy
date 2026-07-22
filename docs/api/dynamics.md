@@ -1,4 +1,4 @@
-# slappyengine.dynamics — API Reference
+# pharos_engine.dynamics — API Reference
 
 > Auto-generated. Re-run `python scripts/gen_subpackage_api_docs.py`.
 > Do not hand-edit — every entry below comes from runtime introspection
@@ -11,7 +11,7 @@ Unified dynamics primitives layered on top of the XPBD substrate.
 
 ### `Body`
 
-_dataclass — defined in `slappyengine.dynamics.body`_
+_dataclass — defined in `pharos_engine.dynamics.body`_
 
 Generic body record.
 
@@ -31,7 +31,7 @@ Body(kind: 'str' = 'lattice', parameters: 'dict[str, Any]' = <factory>, node_off
 
 ### `BoneSpec`
 
-_dataclass — defined in `slappyengine.dynamics.ragdoll`_
+_dataclass — defined in `pharos_engine.dynamics.ragdoll`_
 
 One bone in a ragdoll skeleton.
 
@@ -56,7 +56,7 @@ BoneSpec(parent_idx: 'int' = -1, length: 'float' = 1.0, mass: 'float' = 1.0, ang
 
 ### `DynamicsWorldLike`
 
-_class — defined in `slappyengine.dynamics.world`_
+_class — defined in `pharos_engine.dynamics.world`_
 
 Tighter Protocol — a :class:`World`-shaped object.
 
@@ -72,7 +72,7 @@ DynamicsWorldLike(*args, **kwargs)
 
 ### `Humanoid`
 
-_dataclass — defined in `slappyengine.dynamics.humanoid`_
+_dataclass — defined in `pharos_engine.dynamics.humanoid`_
 
 Named handle returned by :func:`make_humanoid`.
 
@@ -108,7 +108,7 @@ Humanoid(pelvis: 'int' = -1, neck: 'int' = -1, head: 'int' = -1, shoulder_l: 'in
 
 ### `IKChainSpec`
 
-_dataclass — defined in `slappyengine.dynamics.ik`_
+_dataclass — defined in `pharos_engine.dynamics.ik`_
 
 Description of a kinematic chain + target point.
 
@@ -132,7 +132,7 @@ IKChainSpec(node_indices: 'list[int]', target: 'tuple[float, float]', fixed_root
 
 ### `JointSpec`
 
-_dataclass — defined in `slappyengine.dynamics.joint`_
+_dataclass — defined in `pharos_engine.dynamics.joint`_
 
 Generic two-node constraint.
 
@@ -161,7 +161,7 @@ JointSpec(kind: 'str', node_a: 'int', node_b: 'int', rest_length: 'float' = 0.0,
 
 ### `Material`
 
-_dataclass — defined in `slappyengine.dynamics.material`_
+_dataclass — defined in `pharos_engine.dynamics.material`_
 
 Bulk physical parameters for a :class:`Body`.
 
@@ -184,7 +184,7 @@ Material(name: 'str' = 'default', density: 'float' = 1000.0, stiffness: 'float' 
 
 ### `MotorSpec`
 
-_dataclass — defined in `slappyengine.dynamics.motor`_
+_dataclass — defined in `pharos_engine.dynamics.motor`_
 
 Pure-data record for a motor joint.
 
@@ -209,7 +209,7 @@ MotorSpec(hub: 'int', rim_a: 'int', rim_b: 'int', target_omega: 'float', max_tor
 
 ### `RagdollSpec`
 
-_dataclass — defined in `slappyengine.dynamics.ragdoll`_
+_dataclass — defined in `pharos_engine.dynamics.ragdoll`_
 
 Skeleton description for :func:`build_ragdoll`.
 
@@ -233,7 +233,7 @@ RagdollSpec(bones: 'list[BoneSpec]' = <factory>, joints: 'list[JointSpec]' = <fa
 
 ### `RopeSpec`
 
-_dataclass — defined in `slappyengine.dynamics.rope`_
+_dataclass — defined in `pharos_engine.dynamics.rope`_
 
 Description of a rope between two anchor points.
 
@@ -262,7 +262,7 @@ RopeSpec(node_count: 'int', total_length: 'float', mass_per_node: 'float' = 0.1,
 
 ### `SoftBodyWorld`
 
-_class — defined in `slappyengine.dynamics.world`_
+_class — defined in `pharos_engine.dynamics.world`_
 
 Container of nodes + bodies + joints with a single :meth:`step` loop.
 
@@ -282,7 +282,7 @@ SoftBodyWorld(gravity: 'tuple[float, float]' = (0.0, -9.81)) -> 'None'
 
 ### `SpringSpec`
 
-_dataclass — defined in `slappyengine.dynamics.spring`_
+_dataclass — defined in `pharos_engine.dynamics.spring`_
 
 Pure-data record for a spring; resolves to ``JointSpec(kind='spring')``.
 
@@ -303,7 +303,7 @@ SpringSpec(node_a: int, node_b: int, rest_length: float, stiffness: float = 1000
 
 ### `World`
 
-_class — defined in `slappyengine.dynamics.world`_
+_class — defined in `pharos_engine.dynamics.world`_
 
 Container of nodes + bodies + joints with a single :meth:`step` loop.
 
@@ -323,7 +323,7 @@ World(gravity: 'tuple[float, float]' = (0.0, -9.81)) -> 'None'
 
 ### `WorldLike`
 
-_class — defined in `slappyengine.dynamics.world`_
+_class — defined in `pharos_engine.dynamics.world`_
 
 Structural type accepted by dynamics solvers, IK, and studio helpers.
 
@@ -337,43 +337,43 @@ WorldLike(*args, **kwargs)
 
 ### `body_from_dict(d: 'dict[str, Any]') -> 'Body'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Inverse of :func:`body_to_dict`.
 
 ### `body_to_dict(body: 'Body') -> 'dict[str, Any]'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Encode a :class:`Body` as a JSON-compatible dict.
 
 ### `bone_spec_from_dict(d: 'dict[str, Any]') -> 'BoneSpec'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Inverse of :func:`bone_spec_to_dict`.
 
 ### `bone_spec_to_dict(bone: 'BoneSpec') -> 'dict[str, Any]'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Encode a single :class:`BoneSpec`.
 
 ### `build_flesh_wrap(world, humanoid: 'Humanoid', *, muscle_offset: 'float' = 0.1, skin_offset: 'float' = 0.18, muscle_stiffness: 'float' = 1000000.0, skin_stiffness: 'float' = 250000.0, muscle_damping: 'float' = 0.05, skin_damping: 'float' = 0.05, flesh_break_strain: 'float' = 0.18) -> 'Humanoid'`
 
-_defined in `slappyengine.dynamics.humanoid`_
+_defined in `pharos_engine.dynamics.humanoid`_
 
 Wrap a humanoid skeleton in muscle (layer 1) + skin (layer 2) shells.
 
 ### `build_humanoid(world, root_position: 'tuple[float, float]' = (0.0, 1.0), *, proportions: 'dict[str, float] | None' = None, bone_mass: 'float' = 1.0, head_mass: 'float' = 1.5, bone_stiffness: 'float' = 5000000.0, bone_damping: 'float' = 0.05, bone_break_strain: 'float' = 0.25) -> 'Humanoid'`
 
-_defined in `slappyengine.dynamics.humanoid`_
+_defined in `pharos_engine.dynamics.humanoid`_
 
 Spawn a 13-node humanoid skeleton in ``world``.
 
 ### `build_ragdoll(spec: 'RagdollSpec', world, anchor_pos: 'tuple[float, float]', pin_root: 'bool' = False) -> 'Body'`
 
-_defined in `slappyengine.dynamics.ragdoll`_
+_defined in `pharos_engine.dynamics.ragdoll`_
 
 Spawn nodes + joints for the ragdoll skeleton.
 
@@ -384,7 +384,7 @@ Spawn nodes + joints for the ragdoll skeleton.
 
 ### `build_rope(spec: 'RopeSpec', world, anchor_a: 'tuple[float, float]', anchor_b: 'tuple[float, float]') -> 'Body'`
 
-_defined in `slappyengine.dynamics.rope`_
+_defined in `pharos_engine.dynamics.rope`_
 
 Spawn nodes + joints describing the rope.
 
@@ -395,49 +395,49 @@ Spawn nodes + joints describing the rope.
 
 ### `estimate_effective_damping(damping: 'float', iters: 'int') -> 'float'`
 
-_defined in `slappyengine.dynamics.world`_
+_defined in `pharos_engine.dynamics.world`_
 
 Effective per-step damping ratio after N iterations of multiplicative per-iter damping.
 
 ### `humanoid_from_dict(d: 'dict[str, Any]') -> 'Humanoid'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Inverse of :func:`humanoid_to_dict`.
 
 ### `humanoid_to_dict(humanoid: 'Humanoid') -> 'dict[str, Any]'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Encode a :class:`Humanoid` handle.
 
 ### `ik_chain_from_dict(d: 'dict[str, Any]') -> 'IKChainSpec'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Inverse of :func:`ik_chain_to_dict`.
 
 ### `ik_chain_to_dict(spec: 'IKChainSpec') -> 'dict[str, Any]'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Encode an :class:`IKChainSpec`.
 
 ### `joint_from_dict(d: 'dict[str, Any]') -> 'JointSpec'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Inverse of :func:`joint_to_dict`.
 
 ### `joint_to_dict(joint: 'JointSpec') -> 'dict[str, Any]'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Encode a :class:`JointSpec` as a JSON-compatible dict.
 
 ### `load_world(path: 'Path | str') -> 'World'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Read a JSON world file and deserialise it.
 
@@ -448,7 +448,7 @@ Read a JSON world file and deserialise it.
 
 ### `make_distance(node_a: 'int', node_b: 'int', rest_length: 'float', stiffness: 'float' = 1000000000.0, damping: 'float' = 0.02) -> 'JointSpec'`
 
-_defined in `slappyengine.dynamics.joint`_
+_defined in `pharos_engine.dynamics.joint`_
 
 Build a rigid distance constraint between two nodes.
 
@@ -459,13 +459,13 @@ Build a rigid distance constraint between two nodes.
 
 ### `make_humanoid(world, root_position: 'tuple[float, float]' = (0.0, 1.0), *, proportions: 'dict[str, float] | None' = None, bone_mass: 'float' = 1.0, head_mass: 'float' = 1.5, bone_stiffness: 'float' = 5000000.0, bone_damping: 'float' = 0.05, bone_break_strain: 'float' = 0.25) -> 'Humanoid'`
 
-_defined in `slappyengine.dynamics.humanoid`_
+_defined in `pharos_engine.dynamics.humanoid`_
 
 Deprecated alias for :func:`build_humanoid`.
 
 ### `make_motor(hub: 'int', rim_a: 'int', rim_b: 'int', target_omega: 'float', max_torque: 'float', radius: 'float' = 0.0, axis: 'tuple[float, float]' = (1.0, 0.0), stiffness: 'float' = 100000000.0, damping: 'float' = 0.02) -> 'JointSpec'`
 
-_defined in `slappyengine.dynamics.motor`_
+_defined in `pharos_engine.dynamics.motor`_
 
 Construct a motor :class:`JointSpec` between hub and the two rim nodes.
 
@@ -474,9 +474,9 @@ Construct a motor :class:`JointSpec` between hub and the two rim nodes.
 - `TypeError` — If any index is not int-coercible, or ``axis`` is not a 2-sequence.
 - `ValueError` — If indices are negative, the hub coincides with a rim, the two rims coincide, ``target_omega`` is non-finite, ``max_torque <= 0``, ``radius < 0``, ``stiffness <= 0``, or ``damping`` is outside ``[0, 1]``.
 
-### `make_spring(node_a: int, node_b: int, rest_length: float, stiffness: float = 1000000.0, damping: float = 0.05) -> slappyengine.dynamics.joint.JointSpec`
+### `make_spring(node_a: int, node_b: int, rest_length: float, stiffness: float = 1000000.0, damping: float = 0.05) -> pharos_engine.dynamics.joint.JointSpec`
 
-_defined in `slappyengine.dynamics.spring`_
+_defined in `pharos_engine.dynamics.spring`_
 
 Build a spring constraint between two nodes.
 
@@ -487,55 +487,55 @@ Build a spring constraint between two nodes.
 
 ### `material_from_dict(d: 'dict[str, Any]') -> 'Material'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Inverse of :func:`material_to_dict`.
 
 ### `material_to_dict(mat: 'Material') -> 'dict[str, Any]'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Encode a :class:`Material` as a JSON-compatible dict.
 
 ### `motor_from_dict(d: 'dict[str, Any]') -> 'MotorSpec'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Inverse of :func:`motor_to_dict`.
 
 ### `motor_to_dict(spec: 'MotorSpec') -> 'dict[str, Any]'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Encode a :class:`MotorSpec` preset.
 
 ### `place_feet_on_terrain(world, humanoid: 'Humanoid', terrain_height_fn: 'Callable[[float], float]', *, pelvis_height_above_terrain: 'float' = 0.9, max_iterations: 'int' = 4, tolerance: 'float' = 0.005) -> 'bool'`
 
-_defined in `slappyengine.dynamics.humanoid`_
+_defined in `pharos_engine.dynamics.humanoid`_
 
 Adjust pelvis + legs so both ankles plant on the terrain surface.
 
 ### `ragdoll_spec_from_dict(d: 'dict[str, Any]') -> 'RagdollSpec'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Inverse of :func:`ragdoll_spec_to_dict`.
 
 ### `ragdoll_spec_to_dict(spec: 'RagdollSpec') -> 'dict[str, Any]'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Encode a :class:`RagdollSpec` preset (bones + extra joints).
 
 ### `resolve_joint(joint: 'JointSpec', world: "'World'", dt: 'float') -> 'float'`
 
-_defined in `slappyengine.dynamics.joint`_
+_defined in `pharos_engine.dynamics.joint`_
 
 Dispatch a joint to its XPBD projection. Returns correction magnitude.
 
 ### `resolve_joint_specs(world: 'WorldLike', specs: 'list[JointSpec]') -> 'list[int]'`
 
-_defined in `slappyengine.dynamics.joint`_
+_defined in `pharos_engine.dynamics.joint`_
 
 Install a batch of :class:`JointSpec` records into ``world``.
 
@@ -545,19 +545,19 @@ Install a batch of :class:`JointSpec` records into ``world``.
 
 ### `rope_spec_from_dict(d: 'dict[str, Any]') -> 'RopeSpec'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Inverse of :func:`rope_spec_to_dict`.
 
 ### `rope_spec_to_dict(spec: 'RopeSpec') -> 'dict[str, Any]'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Encode a :class:`RopeSpec` preset.
 
 ### `save_world(world: 'World', path: 'Path | str') -> 'None'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 JSON-encode ``world`` and write it to ``path``.
 
@@ -568,7 +568,7 @@ JSON-encode ``world`` and write it to ``path``.
 
 ### `solve_ik(spec: 'IKChainSpec', world: 'WorldLike', iterations: 'int' = 10, tolerance: 'float' = 0.01) -> 'bool'`
 
-_defined in `slappyengine.dynamics.ik`_
+_defined in `pharos_engine.dynamics.ik`_
 
 Solve the chain toward the target using CCD.
 
@@ -579,19 +579,19 @@ Solve the chain toward the target using CCD.
 
 ### `spring_from_dict(d: 'dict[str, Any]') -> 'SpringSpec'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Inverse of :func:`spring_to_dict`.
 
 ### `spring_to_dict(spec: 'SpringSpec') -> 'dict[str, Any]'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Encode a :class:`SpringSpec` preset.
 
 ### `world_from_dict(d: 'dict') -> 'World'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Reconstruct a :class:`World` from a dict produced by :func:`world_to_dict`.
 
@@ -601,7 +601,7 @@ Reconstruct a :class:`World` from a dict produced by :func:`world_to_dict`.
 
 ### `world_to_dict(world: 'World') -> 'dict[str, Any]'`
 
-_defined in `slappyengine.dynamics.serialize`_
+_defined in `pharos_engine.dynamics.serialize`_
 
 Serialise ``world`` into a JSON-compatible dict.
 
@@ -611,7 +611,7 @@ Serialise ``world`` into a JSON-compatible dict.
 
 ### `wrap_in_flesh(world, humanoid: 'Humanoid', *, muscle_offset: 'float' = 0.1, skin_offset: 'float' = 0.18, muscle_stiffness: 'float' = 1000000.0, skin_stiffness: 'float' = 250000.0, muscle_damping: 'float' = 0.05, skin_damping: 'float' = 0.05, flesh_break_strain: 'float' = 0.18) -> 'Humanoid'`
 
-_defined in `slappyengine.dynamics.humanoid`_
+_defined in `pharos_engine.dynamics.humanoid`_
 
 Deprecated alias for :func:`build_flesh_wrap`.
 
@@ -619,50 +619,50 @@ Deprecated alias for :func:`build_flesh_wrap`.
 
 ### `KIND_PARAM_KEYS`
 
-_dict — defined in `slappyengine.dynamics`_
+_dict — defined in `pharos_engine.dynamics`_
 
 Value: `{'distance': set(), 'spring': set(), 'weld': {'rest_offset'}, 'ball': set(), ...`
 
 ### `LAYER_BONE`
 
-_int — defined in `slappyengine.dynamics`_
+_int — defined in `pharos_engine.dynamics`_
 
 Value: `0`
 
 ### `LAYER_MUSCLE`
 
-_int — defined in `slappyengine.dynamics`_
+_int — defined in `pharos_engine.dynamics`_
 
 Value: `1`
 
 ### `LAYER_SKIN`
 
-_int — defined in `slappyengine.dynamics`_
+_int — defined in `pharos_engine.dynamics`_
 
 Value: `2`
 
 ### `OVERDAMPING_THRESHOLD`
 
-_float — defined in `slappyengine.dynamics`_
+_float — defined in `pharos_engine.dynamics`_
 
 Value: `0.5`
 
 ### `SCHEMA_VERSION`
 
-_int — defined in `slappyengine.dynamics`_
+_int — defined in `pharos_engine.dynamics`_
 
 Value: `1`
 
 ## Inner modules
 
-- `slappyengine.dynamics.body`
-- `slappyengine.dynamics.humanoid`
-- `slappyengine.dynamics.ik`
-- `slappyengine.dynamics.joint`
-- `slappyengine.dynamics.material`
-- `slappyengine.dynamics.motor`
-- `slappyengine.dynamics.ragdoll`
-- `slappyengine.dynamics.rope`
-- `slappyengine.dynamics.serialize`
-- `slappyengine.dynamics.spring`
-- `slappyengine.dynamics.world`
+- `pharos_engine.dynamics.body`
+- `pharos_engine.dynamics.humanoid`
+- `pharos_engine.dynamics.ik`
+- `pharos_engine.dynamics.joint`
+- `pharos_engine.dynamics.material`
+- `pharos_engine.dynamics.motor`
+- `pharos_engine.dynamics.ragdoll`
+- `pharos_engine.dynamics.rope`
+- `pharos_engine.dynamics.serialize`
+- `pharos_engine.dynamics.spring`
+- `pharos_engine.dynamics.world`

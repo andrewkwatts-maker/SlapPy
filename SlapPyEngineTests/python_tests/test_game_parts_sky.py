@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _GAME_ROOT = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _GAME_STR = str(_GAME_ROOT)
@@ -303,12 +303,12 @@ class TestSkyEntityMode:
         assert s._layer is not None
 
     def test_sky_is_observable(self):
-        from slappyengine.event_bus import Observable
+        from pharos_engine.event_bus import Observable
         from entities.sky import SkyEntity
         assert issubclass(SkyEntity, Observable)
 
     def test_time_of_day_is_tracked_attr(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         from entities.sky import SkyEntity
         s = SkyEntity(width=64, height=48, mode="night")
         received = []

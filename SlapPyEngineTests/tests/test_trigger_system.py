@@ -3,7 +3,7 @@ import pytest
 
 
 def test_trigger_enter_exit():
-    from slappyengine.trigger import TriggerSystem, TriggerVolume
+    from pharos_engine.trigger import TriggerSystem, TriggerVolume
 
     entered, exited = [], []
     vol = TriggerVolume(
@@ -33,7 +33,7 @@ def test_trigger_enter_exit():
 
 def test_trigger_stay():
     """on_stay is called each frame while entity remains inside."""
-    from slappyengine.trigger import TriggerSystem, TriggerVolume
+    from pharos_engine.trigger import TriggerSystem, TriggerVolume
 
     stayed = []
     vol = TriggerVolume(
@@ -65,7 +65,7 @@ def test_trigger_stay():
 
 def test_trigger_no_double_enter_exit():
     """Enter and exit fire exactly once per crossing."""
-    from slappyengine.trigger import TriggerSystem, TriggerVolume
+    from pharos_engine.trigger import TriggerSystem, TriggerVolume
 
     enters, exits = [], []
     vol = TriggerVolume(
@@ -98,7 +98,7 @@ def test_trigger_no_double_enter_exit():
 
 def test_trigger_add_remove():
     """Removing a volume stops its callbacks from firing."""
-    from slappyengine.trigger import TriggerSystem, TriggerVolume
+    from pharos_engine.trigger import TriggerSystem, TriggerVolume
 
     fired = []
     vol = TriggerVolume(
@@ -126,7 +126,7 @@ def test_trigger_add_remove():
 
 def test_trigger_aabb_boundary():
     """Entity exactly at the boundary edge should overlap (half-extent check)."""
-    from slappyengine.trigger import TriggerSystem, TriggerVolume
+    from pharos_engine.trigger import TriggerSystem, TriggerVolume
 
     fired = []
     # Vol centred at (100,100), size 50×50 → extends from 75 to 125

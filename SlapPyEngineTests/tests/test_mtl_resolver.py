@@ -1,4 +1,4 @@
-"""Tests for slappyengine.asset_import.mtl_resolver (JJ2 — Nova3D parity sprint 2)."""
+"""Tests for pharos_engine.asset_import.mtl_resolver (JJ2 — Nova3D parity sprint 2)."""
 from __future__ import annotations
 
 import textwrap
@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine.asset_import import (
+from pharos_engine.asset_import import (
     ImportResult,
     MtlMaterialDef,
     import_obj,
@@ -15,8 +15,8 @@ from slappyengine.asset_import import (
     parse_mtl,
     resolve_mtl_references,
 )
-from slappyengine.asset_import.mtl_resolver import _ns_to_roughness
-from slappyengine.asset_import.samples import (
+from pharos_engine.asset_import.mtl_resolver import _ns_to_roughness
+from pharos_engine.asset_import.samples import (
     TRIANGLE_MTL,
     TRIANGLE_MTL_OBJ,
     TRIANGLE_OBJ,
@@ -368,14 +368,14 @@ def test_missing_texture_path_still_produces_handle(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_dispatcher_classifies_mtl():
-    from slappyengine.asset_import import AssetImportDispatcher
+    from pharos_engine.asset_import import AssetImportDispatcher
 
     d = AssetImportDispatcher()
     assert d.classify("foo.mtl") == "material"
 
 
 def test_dispatcher_imports_mtl():
-    from slappyengine.asset_import import AssetImportDispatcher
+    from pharos_engine.asset_import import AssetImportDispatcher
 
     d = AssetImportDispatcher()
     result = d.import_asset(TRIANGLE_MTL)

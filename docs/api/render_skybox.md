@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.render.skybox — API Reference
+# pharos_engine.render.skybox — API Reference
 
 > Hand-written reference for the KK4 cubemap skybox surface.
 > Draws a full-screen cube whose vertices are pushed to the far plane
@@ -12,7 +12,7 @@
 
 ## Overview
 
-`slappyengine.render.skybox` is the Nova3D parity Sprint 11 landing
+`pharos_engine.render.skybox` is the Nova3D parity Sprint 11 landing
 (task KK4). It packages:
 
 * :class:`CubeFace` — the six-face enum in standard GPU order
@@ -35,7 +35,7 @@ the module docstring holds the full axis / UV table.
 ## Public surface
 
 ```python
-from slappyengine.render.skybox import (
+from pharos_engine.render.skybox import (
     CubeFace, CubemapData, Skybox,
     procedural_gradient_sky,
     sample_direction_from_cubemap,
@@ -48,7 +48,7 @@ from slappyengine.render.skybox import (
 
 ### `CubeFace`
 
-_IntEnum — defined in `slappyengine.render.skybox`_
+_IntEnum — defined in `pharos_engine.render.skybox`_
 
 Six values in the standard GPU order:
 
@@ -63,7 +63,7 @@ Six values in the standard GPU order:
 
 ### `CubemapData`
 
-_dataclass — defined in `slappyengine.render.skybox`_
+_dataclass — defined in `pharos_engine.render.skybox`_
 
 ```python
 CubemapData(
@@ -88,7 +88,7 @@ wrong shape / wrong `resolution`, or `format != "rgba8"`.
 
 ### `Skybox`
 
-_dataclass — defined in `slappyengine.render.skybox`_
+_dataclass — defined in `pharos_engine.render.skybox`_
 
 ```python
 Skybox(
@@ -116,7 +116,7 @@ Owns the 36-vertex unit-cube geometry and the cubemap. Exposes:
 
 ### `sample_direction_from_cubemap(direction, cubemap) -> tuple[r, g, b, a]`
 
-_defined in `slappyengine.render.skybox`_
+_defined in `pharos_engine.render.skybox`_
 
 CPU-side nearest-texel sample of `cubemap` along `direction`. Returns
 RGBA components in `[0, 1]`. Picks the face whose axis has the largest
@@ -125,7 +125,7 @@ two components by that axis to get UV in `[0, 1]`.
 
 ### `procedural_gradient_sky(top_color, horizon_color, ground_color, resolution=256) -> CubemapData`
 
-_defined in `slappyengine.render.skybox`_
+_defined in `pharos_engine.render.skybox`_
 
 Build a three-stop gradient cubemap. The gradient is computed per
 fragment as a function of the world-space Y component:
@@ -138,7 +138,7 @@ colour. Raises `ValueError` when `resolution <= 0`.
 
 ### `SKYBOX_WGSL`
 
-_str — defined in `slappyengine.render.skybox`_
+_str — defined in `pharos_engine.render.skybox`_
 
 Vertex + fragment WGSL that pushes the cube to the far plane
 (`c.z = c.w`) and samples the cubemap with the normalised world-space
@@ -146,15 +146,15 @@ direction of the fragment.
 
 ### `ALL_FACES`
 
-_tuple[CubeFace, ...] — defined in `slappyengine.render.skybox`_
+_tuple[CubeFace, ...] — defined in `pharos_engine.render.skybox`_
 
 Immutable tuple of the six faces in enum order — useful for iteration.
 
 ## Usage
 
 ```python
-from slappyengine.render.skybox import Skybox, procedural_gradient_sky
-from slappyengine.render.null_renderer import NullRenderer
+from pharos_engine.render.skybox import Skybox, procedural_gradient_sky
+from pharos_engine.render.null_renderer import NullRenderer
 
 cubemap = procedural_gradient_sky(
     top_color=(0.35, 0.55, 0.90),
@@ -175,8 +175,8 @@ assert call.payload["resolution"] == 128
 
 ## Skip the wrapper
 
-`slappyengine.render.skybox` is Python-only. Grep of
-`slappyengine._core_facade.RUST_MODULE_MAP` shows **no** `skybox`
+`pharos_engine.render.skybox` is Python-only. Grep of
+`pharos_engine._core_facade.RUST_MODULE_MAP` shows **no** `skybox`
 entry — the gradient builder is a one-shot numpy vectorised pass
 (runs in µs for 256²) and the CPU sampler exists only for tests.
 

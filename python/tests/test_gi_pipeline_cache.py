@@ -11,8 +11,8 @@ and the dispatch methods consult it before doing work.
 """
 from __future__ import annotations
 
-from slappyengine.gi.cascade import RadianceCascadeSystem
-from slappyengine.gi.restir import ReSTIRSystem
+from pharos_engine.gi.cascade import RadianceCascadeSystem
+from pharos_engine.gi.restir import ReSTIRSystem
 
 
 def test_cascade_has_pipeline_cache_attr_post_init_failure():

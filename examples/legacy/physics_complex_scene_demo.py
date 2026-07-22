@@ -4,7 +4,7 @@ Scene
 -----
 A U-shaped stone container (floor + two walls) holds a water pool.  Two ice
 blocks float on the surface, connected to each other by a
-:class:`~slappyengine.physics.constraints.PinConstraint` (the "chained ice"
+:class:`~pharos_engine.physics.constraints.PinConstraint` (the "chained ice"
 demonstrating the joint system).  Off to the left a fixed ice pad holds a
 small lava drop sitting in light contact with it — gentle gravity + zero
 closing velocity keep the impact-heating term quiet so the cell-grid
@@ -43,20 +43,20 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.constraints import ConstraintSolver, PinConstraint
-from slappyengine.physics.particle_graph import ParticleGraph
-from slappyengine.physics.particles import ParticleSystem
-from slappyengine.physics.post_process import (
+from pharos_engine.physics.constraints import ConstraintSolver, PinConstraint
+from pharos_engine.physics.particle_graph import ParticleGraph
+from pharos_engine.physics.particles import ParticleSystem
+from pharos_engine.physics.post_process import (
     BloomPass,
     PostProcessChain,
     TonemapPass,
 )
-from slappyengine.physics.render import PhysicsRenderer, PointLight, RenderConfig
+from pharos_engine.physics.render import PhysicsRenderer, PointLight, RenderConfig
 
 
 # --- cell channel indices (mirror CELL_PIXEL_STRUCT) -----------------------
@@ -160,7 +160,7 @@ def build_world() -> tuple[PhysicsWorld, dict[str, object], ConstraintSolver]:
     # the only knob that keeps the conduction visible above the noise.
     # Ball + lava initial velocities are tuned compensatingly so the
     # scene still feels dynamic.
-    from slappyengine.physics.world import WorldConfig
+    from pharos_engine.physics.world import WorldConfig
     base = world.config.world
     world.config.world = WorldConfig(
         default_dt=base.default_dt,
@@ -569,7 +569,7 @@ def run_demo(
         # Prefer the unified media helper for the optional MP4; it picks the
         # ffmpeg backend transparently and silently falls back if unavailable
         # (we already wrote the GIF above, so no warning is needed).
-        from slappyengine.media import save_frames, have_ffmpeg
+        from pharos_engine.media import save_frames, have_ffmpeg
         mp4_path = None
         if have_ffmpeg():
             from PIL import Image

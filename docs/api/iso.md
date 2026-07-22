@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.iso — API Reference
+# pharos_engine.iso — API Reference
 
 > Hand-curated reference. Format mirrors the auto-generated subpackage
 > dumps but extends them with the `combat` surface added by Sprint 1C
@@ -39,7 +39,7 @@ the auto-generated dump; the short version:
   replacement; `add_iso_entity`, `remove_iso_entity`, `add_z_layer`,
   `remove_z_layer`, `sorted_render_list`, `update(dt)`.
 
-Projection helpers in `slappyengine.iso.projection`:
+Projection helpers in `pharos_engine.iso.projection`:
 
 - `world_to_screen(gx, gy, gz, vp, tile_w=64, tile_h=32, z_scale=16.0, cam_x=0, cam_y=0) -> (sx, sy)`
 - `screen_to_world(sx, sy, vp, tile_w=64, tile_h=32, cam_x=0, cam_y=0) -> (gx, gy)`
@@ -47,7 +47,7 @@ Projection helpers in `slappyengine.iso.projection`:
 - `depth_key(gx, gy, gz, vp) -> float` — painter's sort key; `gz` as
   fractional tie-breaker.
 
-## Combat surface (`slappyengine.iso.combat`)
+## Combat surface (`pharos_engine.iso.combat`)
 
 Pure-logic combat primitives for iso games. No rendering imports, no
 RNG, no game-side dependencies. Determinism is a contract — same
@@ -58,7 +58,7 @@ RNG, no game-side dependencies. Determinism is a contract — same
 
 #### `Attacker`
 
-_dataclass — `slappyengine.iso.combat`_
+_dataclass — `pharos_engine.iso.combat`_
 
 An entity that can deal damage in iso world space.
 
@@ -73,7 +73,7 @@ Attacker(pos: tuple[float, float], damage: float, reach: float, team: str = 'pla
 
 #### `Defender`
 
-_dataclass — `slappyengine.iso.combat`_
+_dataclass — `pharos_engine.iso.combat`_
 
 An entity that can receive damage in iso world space.
 
@@ -87,7 +87,7 @@ Defender(pos: tuple[float, float], hp: float, team: str = 'enemy') -> None
 
 #### `WaveSpec`
 
-_dataclass — `slappyengine.iso.combat`_
+_dataclass — `pharos_engine.iso.combat`_
 
 Describes a single wave of defenders to be spawned over time.
 
@@ -109,7 +109,7 @@ empty `spawn_points`, `hp_each <= 0`, or negative / non-finite
 
 #### `WaveSchedule`
 
-_class — `slappyengine.iso.combat`_
+_class — `pharos_engine.iso.combat`_
 
 Deterministic sequential scheduler for a list of `WaveSpec`. Each wave
 runs to completion (all `count` defenders spawned) before the next
@@ -161,8 +161,8 @@ fresh list of `Defender` instances spawned on that tick. Game code
 typically threads this into its iso scene:
 
 ```python
-from slappyengine.iso import IsoEntity
-from slappyengine.iso.combat import WaveSpec, WaveSchedule
+from pharos_engine.iso import IsoEntity
+from pharos_engine.iso.combat import WaveSpec, WaveSchedule
 
 schedule = WaveSchedule([
     WaveSpec(count=5, spawn_points=[(0.0, 0.0), (10.0, 0.0)],
@@ -184,12 +184,12 @@ sequence.
 
 ## Inner modules
 
-- `slappyengine.iso.combat`
-- `slappyengine.iso.iso_camera`
-- `slappyengine.iso.iso_entity`
-- `slappyengine.iso.iso_grid`
-- `slappyengine.iso.iso_scene`
-- `slappyengine.iso.projection`
+- `pharos_engine.iso.combat`
+- `pharos_engine.iso.iso_camera`
+- `pharos_engine.iso.iso_entity`
+- `pharos_engine.iso.iso_grid`
+- `pharos_engine.iso.iso_scene`
+- `pharos_engine.iso.projection`
 
 ## Design notes
 
@@ -207,6 +207,6 @@ networked wave scheduling, promote that material to a dedicated
 
 ## See also
 
-- [`ext.md`](ext.md) — `slappyengine.ext.iso` re-exports the same
+- [`ext.md`](ext.md) — `pharos_engine.ext.iso` re-exports the same
   surface for back-compat imports.
 - [`gpu.md`](gpu.md) — the renderer side the iso scene composes onto.

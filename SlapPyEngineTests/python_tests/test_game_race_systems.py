@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 
 # ── Mock heavy dependencies before any game imports ───────────────────────────
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 # ── Add game root to sys.path so game imports resolve ─────────────────────────
 # H:\Github\SlapPyEngine\python\tests  → go up 4 levels to reach H:\
@@ -217,7 +217,7 @@ class TestAchievementSystemUnlock:
         a.unlock("nonexistent_achievement")  # should not raise
 
     def test_unlock_publishes_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         a = self._a()
         received = []
         h = subscribe("Achievement.Unlocked|speed_demon", lambda e: received.append(e))
@@ -266,7 +266,7 @@ class TestAchievementSystemPersistence:
 class TestAchievementSystemSpeed:
     def test_speed_demon_via_event(self):
         from systems.achievement_system import AchievementSystem, MAX_SPEED_CFG
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         td = tempfile.mkdtemp()
         a = AchievementSystem(save_dir=td)
         mock_vehicle = object()
@@ -281,7 +281,7 @@ class TestAchievementSystemSpeed:
 
     def test_speed_below_threshold_not_unlocked(self):
         from systems.achievement_system import AchievementSystem, MAX_SPEED_CFG
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         td = tempfile.mkdtemp()
         a = AchievementSystem(save_dir=td)
         mock_vehicle = object()
@@ -297,7 +297,7 @@ class TestAchievementSystemSpeed:
 class TestAchievementSystemNitro:
     def test_nitro_junkie_after_10_uses(self):
         from systems.achievement_system import AchievementSystem
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         td = tempfile.mkdtemp()
         a = AchievementSystem(save_dir=td)
         mock_vehicle = object()
@@ -311,7 +311,7 @@ class TestAchievementSystemNitro:
 
     def test_nitro_junkie_not_before_10(self):
         from systems.achievement_system import AchievementSystem
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         td = tempfile.mkdtemp()
         a = AchievementSystem(save_dir=td)
         mock_vehicle = object()
@@ -418,7 +418,7 @@ class TestSaveSystemKeyValue:
 
     def test_total_races_increments_via_event(self):
         from systems.save_system import SaveSystem
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         td = tempfile.mkdtemp()
         ss = SaveSystem(save_dir=td)
         publish("Race.Finished", publisher=None, track_name="t1", results=[])
@@ -541,7 +541,7 @@ class TestCheckpointSystemGateCrossing:
         return cp, v
 
     def test_gate_enter_fires_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         cp, v = self._cp_with_vehicle()
         received = []
         h = subscribe("Race.CheckpointCrossed", lambda e: received.append(e))
@@ -645,7 +645,7 @@ class TestRaceManagerCountdown:
         assert rm.state == RaceState.RACING
 
     def test_race_started_event_fires(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         from systems.race_manager import RaceManager
         received = []
         h = subscribe("Race.Started", lambda e: received.append(e))

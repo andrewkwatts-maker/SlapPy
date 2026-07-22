@@ -1,9 +1,9 @@
-﻿"""Thorough tests for the lambda→WGSL AST compiler."""
+"""Thorough tests for the lambda→WGSL AST compiler."""
 import pytest
-from slappyengine.struct_registry import StructRegistry
-from slappyengine.modules.health import HealthModule
-from slappyengine.modules.physics import PhysicsModule
-from slappyengine.compute.ast_compiler import LambdaToWGSL, ASTCompilerError
+from pharos_engine.struct_registry import StructRegistry
+from pharos_engine.modules.health import HealthModule
+from pharos_engine.modules.physics import PhysicsModule
+from pharos_engine.compute.ast_compiler import LambdaToWGSL, ASTCompilerError
 
 
 @pytest.fixture

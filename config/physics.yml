@@ -139,7 +139,7 @@ boundary_exchange:
 
 gi:
   # SVGF (spatiotemporal variance-guided filter) denoiser tunables. Consumed by
-  # slappyengine.gi.svgf.SVGFDenoiser and the matching WGSL shaders. See
+  # pharos_engine.gi.svgf.SVGFDenoiser and the matching WGSL shaders. See
   # docs/svgf.md for derivations.
   svgf:
     phi_color: 10.0                     # luminance edge-stopping numerator (paired with sigma_lum*sqrt(variance))
@@ -157,19 +157,19 @@ events:
   # Threshold used by PhysicsEngineBridge's auto-publisher: contacts whose
   # estimated impulse exceeds this fire "Physics.Impact" on the engine bus.
   # Raise in production to filter chatter from resting stacks; lower for
-  # event-density debugging.  See slappyengine.physics.event_publisher.
+  # event-density debugging.  See pharos_engine.physics.event_publisher.
   impact_impulse_threshold: 1.0
 
 profile:
   # Hardware/performance preset to overlay on the values above. One of:
   #   desktop | mobile | web | high_end | auto
   # "auto" picks `mobile` on constrained devices (<=4 cores AND <=4 GiB RAM)
-  # and `desktop` everywhere else. Applied via slappyengine.physics.load_with_profile().
+  # and `desktop` everywhere else. Applied via pharos_engine.physics.load_with_profile().
   active: "desktop"
 
 memory:
   # Hard caps to prevent unattended scenes from allocating gigabytes of
-  # cell-grid storage. Enforced via slappyengine.physics.MemoryBudget.
+  # cell-grid storage. Enforced via pharos_engine.physics.MemoryBudget.
   max_bodies: 4096                      # cap on PhysicsWorld.bodies count
   max_cell_pool_slots: 4096             # each slot is 64 KB -> 256 MB ceiling
                                          # bumped from 1024: multi_body_50
@@ -180,7 +180,7 @@ memory:
   warn_at_fraction: 0.80                # warn when usage crosses 80% of any cap
 
 media:
-  # Defaults consumed by slappyengine.media.save_frames(). Override per-call
+  # Defaults consumed by pharos_engine.media.save_frames(). Override per-call
   # by passing the matching kwarg; this section sets the engine-wide fallback.
   fps: 30                               # playback frames per second for both .mp4 and .gif
   quality: 7                            # MP4 quality knob (0-10; higher = better, larger)

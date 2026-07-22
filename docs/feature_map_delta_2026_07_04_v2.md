@@ -87,7 +87,7 @@ read-only for the pending un-pin sprint.
 * **Chain manifest wiring in NotebookPostProcessPanel** — X5 + Z3
   landed the infrastructure and presets; the panel still uses the
   hardcoded preset registry rather than loading from
-  `~/.slappyengine/postprocess_chains/`.
+  `~/.pharos_engine/postprocess_chains/`.
 
 ---
 

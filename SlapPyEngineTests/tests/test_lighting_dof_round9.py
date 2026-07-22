@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.post_process.dof import DofPass
+from pharos_engine.post_process.dof import DofPass
 
 
 def test_dof_backward_compat_linear_at_transition_1() -> None:

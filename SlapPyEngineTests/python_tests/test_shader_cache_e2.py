@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from slappyengine.compute.shader_cache import ShaderCache
+from pharos_engine.compute.shader_cache import ShaderCache
 
 
 # ---------------------------------------------------------------------------

@@ -1,9 +1,9 @@
-"""Input-validation tests for the public ``slappyengine.zones`` API."""
+"""Input-validation tests for the public ``pharos_engine.zones`` API."""
 from __future__ import annotations
 
 import pytest
 
-from slappyengine.zones import RectZone, ThresholdZone, ZoneManager
+from pharos_engine.zones import RectZone, ThresholdZone, ZoneManager
 
 
 # ---------------------------------------------------------------------------

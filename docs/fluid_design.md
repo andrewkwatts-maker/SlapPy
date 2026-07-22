@@ -252,7 +252,7 @@ calibrated Coulomb coefficient.
 The old `physics2/` and `physics/` fluid scaffolds are intentionally
 not touched here. PBF lives in its own module so it can be wired up
 in demos without disturbing the legacy tests. The next tick is to
-swap the demo-facing fluid call-sites over to `slappyengine.fluid`
+swap the demo-facing fluid call-sites over to `pharos_engine.fluid`
 and then delete the per-pixel fluid scaffolding once nothing imports
 it.
 
@@ -260,7 +260,7 @@ it.
 
 - The fluid subpackage does not ship a dedicated `docs/api/` ref — its
   public surface is documented inline in the source module's docstring
-  (`python/slappyengine/fluid/__init__.py`) and via the auto-generated
+  (`python/pharos_engine/fluid/__init__.py`) and via the auto-generated
   entries in [`engine_surface_v030.md`](engine_surface_v030.md).
 - [`softbody_design.md`](softbody_design.md) — the sibling XPBD
   subpackage; PBF + softbody compose via `apply_fluid_buoyancy`.

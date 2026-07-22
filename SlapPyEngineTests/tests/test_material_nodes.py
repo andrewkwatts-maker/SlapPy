@@ -23,7 +23,7 @@ import pytest
 
 @pytest.fixture
 def ctx():
-    from slappyengine.visual_scripting import DefaultWgslEmitContext
+    from pharos_engine.visual_scripting import DefaultWgslEmitContext
     return DefaultWgslEmitContext()
 
 
@@ -33,7 +33,7 @@ def ctx():
 
 
 def test_module_exports_material_symbols() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         MaterialNode,
         WgslEmitContext,
         DefaultWgslEmitContext,
@@ -60,7 +60,7 @@ def test_module_exports_material_symbols() -> None:
 
 
 def test_all_material_node_types_subclass_node() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         MATERIAL_NODE_TYPES, Node, MaterialNode,
     )
     for cls in MATERIAL_NODE_TYPES:
@@ -69,14 +69,14 @@ def test_all_material_node_types_subclass_node() -> None:
 
 
 def test_material_node_count_meets_spec() -> None:
-    from slappyengine.visual_scripting import MATERIAL_NODE_TYPES
+    from pharos_engine.visual_scripting import MATERIAL_NODE_TYPES
     assert len(MATERIAL_NODE_TYPES) >= 18
     # the shipped palette is 19 (18 body nodes + MaterialOutput root)
     assert len(MATERIAL_NODE_TYPES) == 19
 
 
 def test_sampler2d_added_to_port_kinds() -> None:
-    from slappyengine.visual_scripting import PORT_KINDS, ports_compatible
+    from pharos_engine.visual_scripting import PORT_KINDS, ports_compatible
     assert "sampler2d" in PORT_KINDS
     assert ports_compatible("sampler2d", "sampler2d")
     assert ports_compatible("any", "sampler2d")
@@ -101,7 +101,7 @@ def _assert_ports(node, in_names, in_kinds, out_names, out_kinds):
 
 
 def test_add_node_ports() -> None:
-    from slappyengine.visual_scripting import AddNode
+    from pharos_engine.visual_scripting import AddNode
     n = AddNode()
     _assert_ports(n, ["a", "b"], ["float", "float"], ["out"], ["float"])
     assert n.node_type == "material.add"
@@ -109,14 +109,14 @@ def test_add_node_ports() -> None:
 
 
 def test_multiply_node_ports() -> None:
-    from slappyengine.visual_scripting import MultiplyNode
+    from pharos_engine.visual_scripting import MultiplyNode
     n = MultiplyNode()
     _assert_ports(n, ["a", "b"], ["float", "float"], ["out"], ["float"])
     assert n.node_type == "material.multiply"
 
 
 def test_lerp_node_ports() -> None:
-    from slappyengine.visual_scripting import LerpNode
+    from pharos_engine.visual_scripting import LerpNode
     n = LerpNode()
     _assert_ports(n, ["a", "b", "t"], ["float", "float", "float"],
                   ["out"], ["float"])
@@ -124,14 +124,14 @@ def test_lerp_node_ports() -> None:
 
 
 def test_saturate_node_ports() -> None:
-    from slappyengine.visual_scripting import SaturateNode
+    from pharos_engine.visual_scripting import SaturateNode
     n = SaturateNode()
     _assert_ports(n, ["x"], ["float"], ["out"], ["float"])
     assert n.node_type == "material.saturate"
 
 
 def test_clamp_node_ports_and_defaults() -> None:
-    from slappyengine.visual_scripting import ClampNode
+    from pharos_engine.visual_scripting import ClampNode
     n = ClampNode()
     _assert_ports(n, ["x"], ["float"], ["out"], ["float"])
     assert n.default_params == {"min": 0.0, "max": 1.0}
@@ -140,44 +140,44 @@ def test_clamp_node_ports_and_defaults() -> None:
 
 
 def test_power_node_ports() -> None:
-    from slappyengine.visual_scripting import PowerNode
+    from pharos_engine.visual_scripting import PowerNode
     n = PowerNode()
     _assert_ports(n, ["base", "exp"], ["float", "float"],
                   ["out"], ["float"])
 
 
 def test_sqrt_node_ports() -> None:
-    from slappyengine.visual_scripting import SqrtNode
+    from pharos_engine.visual_scripting import SqrtNode
     n = SqrtNode()
     _assert_ports(n, ["x"], ["float"], ["out"], ["float"])
 
 
 def test_abs_node_ports() -> None:
-    from slappyengine.visual_scripting import AbsNode
+    from pharos_engine.visual_scripting import AbsNode
     n = AbsNode()
     _assert_ports(n, ["x"], ["float"], ["out"], ["float"])
 
 
 def test_dot_node_ports() -> None:
-    from slappyengine.visual_scripting import DotNode
+    from pharos_engine.visual_scripting import DotNode
     n = DotNode()
     _assert_ports(n, ["a", "b"], ["vec3", "vec3"], ["out"], ["float"])
 
 
 def test_normalize_node_ports() -> None:
-    from slappyengine.visual_scripting import NormalizeNode
+    from pharos_engine.visual_scripting import NormalizeNode
     n = NormalizeNode()
     _assert_ports(n, ["v"], ["vec3"], ["out"], ["vec3"])
 
 
 def test_cross_node_ports() -> None:
-    from slappyengine.visual_scripting import CrossNode
+    from pharos_engine.visual_scripting import CrossNode
     n = CrossNode()
     _assert_ports(n, ["a", "b"], ["vec3", "vec3"], ["out"], ["vec3"])
 
 
 def test_fresnel_node_ports_and_default_strength() -> None:
-    from slappyengine.visual_scripting import FresnelNode
+    from pharos_engine.visual_scripting import FresnelNode
     n = FresnelNode()
     _assert_ports(n, ["normal", "view"], ["vec3", "vec3"],
                   ["out"], ["float"])
@@ -186,21 +186,21 @@ def test_fresnel_node_ports_and_default_strength() -> None:
 
 
 def test_perlin_noise_node_ports_and_params() -> None:
-    from slappyengine.visual_scripting import PerlinNoiseNode
+    from pharos_engine.visual_scripting import PerlinNoiseNode
     n = PerlinNoiseNode()
     _assert_ports(n, ["uv"], ["vec2"], ["out"], ["float"])
     assert n.default_params == {"frequency": 1.0, "octaves": 1}
 
 
 def test_worley_noise_node_ports_and_params() -> None:
-    from slappyengine.visual_scripting import WorleyNoiseNode
+    from pharos_engine.visual_scripting import WorleyNoiseNode
     n = WorleyNoiseNode()
     _assert_ports(n, ["uv"], ["vec2"], ["out"], ["float"])
     assert n.default_params == {"frequency": 4.0}
 
 
 def test_gradient_ramp_node_ports_and_stops() -> None:
-    from slappyengine.visual_scripting import GradientRampNode
+    from pharos_engine.visual_scripting import GradientRampNode
     n = GradientRampNode()
     _assert_ports(n, ["t"], ["float"], ["out"], ["vec4"])
     stops = n.default_params["stops"]
@@ -210,7 +210,7 @@ def test_gradient_ramp_node_ports_and_stops() -> None:
 
 
 def test_texture_sample_node_ports() -> None:
-    from slappyengine.visual_scripting import TextureSampleNode
+    from pharos_engine.visual_scripting import TextureSampleNode
     n = TextureSampleNode()
     _assert_ports(n, ["tex", "uv"], ["sampler2d", "vec2"],
                   ["out"], ["vec4"])
@@ -219,20 +219,20 @@ def test_texture_sample_node_ports() -> None:
 
 
 def test_uv_offset_node_ports() -> None:
-    from slappyengine.visual_scripting import UVOffsetNode
+    from pharos_engine.visual_scripting import UVOffsetNode
     n = UVOffsetNode()
     _assert_ports(n, ["uv", "offset"], ["vec2", "vec2"],
                   ["out"], ["vec2"])
 
 
 def test_time_node_ports() -> None:
-    from slappyengine.visual_scripting import TimeNode
+    from pharos_engine.visual_scripting import TimeNode
     n = TimeNode()
     _assert_ports(n, [], [], ["out"], ["float"])
 
 
 def test_material_output_node_ports() -> None:
-    from slappyengine.visual_scripting import MaterialOutputNode
+    from pharos_engine.visual_scripting import MaterialOutputNode
     n = MaterialOutputNode()
     _assert_ports(
         n,
@@ -248,7 +248,7 @@ def test_material_output_node_ports() -> None:
 
 
 def test_register_material_nodes_fills_registry() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeRegistry, register_material_nodes, MATERIAL_NODE_TYPES,
     )
     reg = NodeRegistry()
@@ -261,7 +261,7 @@ def test_register_material_nodes_fills_registry() -> None:
 
 
 def test_register_material_nodes_tags_material_category() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeRegistry, register_material_nodes, MATERIAL_CATEGORY,
     )
     reg = NodeRegistry()
@@ -271,13 +271,13 @@ def test_register_material_nodes_tags_material_category() -> None:
 
 
 def test_register_material_nodes_rejects_non_registry() -> None:
-    from slappyengine.visual_scripting import register_material_nodes
+    from pharos_engine.visual_scripting import register_material_nodes
     with pytest.raises(TypeError):
         register_material_nodes("not_a_registry")
 
 
 def test_register_material_nodes_double_register_raises() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeRegistry, register_material_nodes,
     )
     reg = NodeRegistry()
@@ -287,7 +287,7 @@ def test_register_material_nodes_double_register_raises() -> None:
 
 
 def test_registered_prototypes_can_be_spawned() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeRegistry, register_material_nodes,
     )
     reg = NodeRegistry()
@@ -305,7 +305,7 @@ def test_registered_prototypes_can_be_spawned() -> None:
 
 
 def test_material_graph_yaml_round_trip() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, NodeRegistry, register_material_nodes,
     )
     reg = NodeRegistry()
@@ -340,7 +340,7 @@ def test_material_graph_yaml_round_trip() -> None:
 
 
 def test_emit_wgsl_add(ctx) -> None:
-    from slappyengine.visual_scripting import AddNode
+    from pharos_engine.visual_scripting import AddNode
     src = AddNode().emit_wgsl(ctx, inputs={"a": "x", "b": "y"})
     assert "let add_" in src
     assert "+" in src
@@ -348,26 +348,26 @@ def test_emit_wgsl_add(ctx) -> None:
 
 
 def test_emit_wgsl_multiply(ctx) -> None:
-    from slappyengine.visual_scripting import MultiplyNode
+    from pharos_engine.visual_scripting import MultiplyNode
     src = MultiplyNode().emit_wgsl(ctx, inputs={"a": "u", "b": "v"})
     assert "let mul_" in src
     assert "*" in src
 
 
 def test_emit_wgsl_lerp_uses_mix(ctx) -> None:
-    from slappyengine.visual_scripting import LerpNode
+    from pharos_engine.visual_scripting import LerpNode
     src = LerpNode().emit_wgsl(ctx, inputs={"a": "aa", "b": "bb", "t": "tt"})
     assert "mix(aa, bb, tt)" in src
 
 
 def test_emit_wgsl_saturate_clamps_unit_range(ctx) -> None:
-    from slappyengine.visual_scripting import SaturateNode
+    from pharos_engine.visual_scripting import SaturateNode
     src = SaturateNode().emit_wgsl(ctx, inputs={"x": "q"})
     assert "clamp(q, 0.0, 1.0)" in src
 
 
 def test_emit_wgsl_clamp_uses_param_range(ctx) -> None:
-    from slappyengine.visual_scripting import ClampNode
+    from pharos_engine.visual_scripting import ClampNode
     n = ClampNode()
     n.params["min"] = -2.0
     n.params["max"] = 3.0
@@ -377,43 +377,43 @@ def test_emit_wgsl_clamp_uses_param_range(ctx) -> None:
 
 
 def test_emit_wgsl_power_uses_pow(ctx) -> None:
-    from slappyengine.visual_scripting import PowerNode
+    from pharos_engine.visual_scripting import PowerNode
     src = PowerNode().emit_wgsl(ctx, inputs={"base": "b", "exp": "e"})
     assert "pow(b, e)" in src
 
 
 def test_emit_wgsl_sqrt_uses_sqrt(ctx) -> None:
-    from slappyengine.visual_scripting import SqrtNode
+    from pharos_engine.visual_scripting import SqrtNode
     src = SqrtNode().emit_wgsl(ctx, inputs={"x": "q"})
     assert "sqrt(" in src
 
 
 def test_emit_wgsl_abs_uses_abs(ctx) -> None:
-    from slappyengine.visual_scripting import AbsNode
+    from pharos_engine.visual_scripting import AbsNode
     src = AbsNode().emit_wgsl(ctx, inputs={"x": "q"})
     assert "abs(q)" in src
 
 
 def test_emit_wgsl_dot_uses_dot(ctx) -> None:
-    from slappyengine.visual_scripting import DotNode
+    from pharos_engine.visual_scripting import DotNode
     src = DotNode().emit_wgsl(ctx, inputs={"a": "n", "b": "v"})
     assert "dot(n, v)" in src
 
 
 def test_emit_wgsl_normalize_uses_normalize(ctx) -> None:
-    from slappyengine.visual_scripting import NormalizeNode
+    from pharos_engine.visual_scripting import NormalizeNode
     src = NormalizeNode().emit_wgsl(ctx, inputs={"v": "vv"})
     assert "normalize(vv)" in src
 
 
 def test_emit_wgsl_cross_uses_cross(ctx) -> None:
-    from slappyengine.visual_scripting import CrossNode
+    from pharos_engine.visual_scripting import CrossNode
     src = CrossNode().emit_wgsl(ctx, inputs={"a": "aa", "b": "bb"})
     assert "cross(aa, bb)" in src
 
 
 def test_emit_wgsl_fresnel_uses_pow_5(ctx) -> None:
-    from slappyengine.visual_scripting import FresnelNode
+    from pharos_engine.visual_scripting import FresnelNode
     n = FresnelNode()
     n.params["strength"] = 0.75
     src = n.emit_wgsl(ctx, inputs={"normal": "N", "view": "V"})
@@ -426,7 +426,7 @@ def test_emit_wgsl_fresnel_uses_pow_5(ctx) -> None:
 
 
 def test_emit_wgsl_perlin_uses_helper_and_octaves(ctx) -> None:
-    from slappyengine.visual_scripting import PerlinNoiseNode
+    from pharos_engine.visual_scripting import PerlinNoiseNode
     n = PerlinNoiseNode()
     n.params["octaves"] = 4
     n.params["frequency"] = 2.0
@@ -440,14 +440,14 @@ def test_emit_wgsl_perlin_uses_helper_and_octaves(ctx) -> None:
 
 
 def test_emit_wgsl_worley_uses_distance_search(ctx) -> None:
-    from slappyengine.visual_scripting import WorleyNoiseNode
+    from pharos_engine.visual_scripting import WorleyNoiseNode
     src = WorleyNoiseNode().emit_wgsl(ctx, inputs={"uv": "uv0"})
     assert "distance" in src
     assert "for" in src
 
 
 def test_emit_wgsl_gradient_ramp_builds_mix_chain(ctx) -> None:
-    from slappyengine.visual_scripting import GradientRampNode
+    from pharos_engine.visual_scripting import GradientRampNode
     n = GradientRampNode()
     n.params["stops"] = [
         (0.0, 1.0, 0.0, 0.0),
@@ -461,7 +461,7 @@ def test_emit_wgsl_gradient_ramp_builds_mix_chain(ctx) -> None:
 
 
 def test_emit_wgsl_texture_sample_uses_texture_sample(ctx) -> None:
-    from slappyengine.visual_scripting import TextureSampleNode
+    from pharos_engine.visual_scripting import TextureSampleNode
     src = TextureSampleNode().emit_wgsl(ctx, inputs={"uv": "uv0"})
     assert "textureSample(" in src
     # binding names registered as uniforms
@@ -470,21 +470,21 @@ def test_emit_wgsl_texture_sample_uses_texture_sample(ctx) -> None:
 
 
 def test_emit_wgsl_uv_offset_is_vec_add(ctx) -> None:
-    from slappyengine.visual_scripting import UVOffsetNode
+    from pharos_engine.visual_scripting import UVOffsetNode
     src = UVOffsetNode().emit_wgsl(ctx,
                                     inputs={"uv": "uv0", "offset": "d"})
     assert "uv0 + d" in src
 
 
 def test_emit_wgsl_time_registers_uniform(ctx) -> None:
-    from slappyengine.visual_scripting import TimeNode
+    from pharos_engine.visual_scripting import TimeNode
     src = TimeNode().emit_wgsl(ctx)
     assert "u_time" in src
     assert "u_time" in ctx.used_uniforms
 
 
 def test_emit_wgsl_material_output_writes_channels(ctx) -> None:
-    from slappyengine.visual_scripting import MaterialOutputNode
+    from pharos_engine.visual_scripting import MaterialOutputNode
     src = MaterialOutputNode().emit_wgsl(ctx, inputs={
         "base_color": "col",
         "metallic": "m",
@@ -505,7 +505,7 @@ def test_emit_wgsl_material_output_writes_channels(ctx) -> None:
 
 
 def test_default_wgsl_context_allocates_unique_symbols() -> None:
-    from slappyengine.visual_scripting import DefaultWgslEmitContext
+    from pharos_engine.visual_scripting import DefaultWgslEmitContext
     ctx = DefaultWgslEmitContext()
     s1 = ctx.alloc_symbol("foo")
     s2 = ctx.alloc_symbol("foo")
@@ -515,7 +515,7 @@ def test_default_wgsl_context_allocates_unique_symbols() -> None:
 
 
 def test_default_wgsl_context_sanitises_bad_prefix() -> None:
-    from slappyengine.visual_scripting import DefaultWgslEmitContext
+    from pharos_engine.visual_scripting import DefaultWgslEmitContext
     ctx = DefaultWgslEmitContext()
     s = ctx.alloc_symbol("hi there!")
     # symbol is a valid WGSL identifier (no spaces / punctuation)
@@ -524,7 +524,7 @@ def test_default_wgsl_context_sanitises_bad_prefix() -> None:
 
 
 def test_default_wgsl_context_tracks_uniforms() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         DefaultWgslEmitContext, TimeNode, TextureSampleNode,
     )
     ctx = DefaultWgslEmitContext()
@@ -541,14 +541,14 @@ def test_default_wgsl_context_tracks_uniforms() -> None:
 
 
 def test_material_nodes_use_render_kind() -> None:
-    from slappyengine.visual_scripting import MATERIAL_NODE_TYPES
+    from pharos_engine.visual_scripting import MATERIAL_NODE_TYPES
     for cls in MATERIAL_NODE_TYPES:
         n = cls()
         assert n.kind == "render"
 
 
 def test_material_node_types_have_unique_node_type_keys() -> None:
-    from slappyengine.visual_scripting import MATERIAL_NODE_TYPES
+    from pharos_engine.visual_scripting import MATERIAL_NODE_TYPES
     keys = [cls.NODE_TYPE for cls in MATERIAL_NODE_TYPES]
     assert len(keys) == len(set(keys))
     for k in keys:
@@ -556,7 +556,7 @@ def test_material_node_types_have_unique_node_type_keys() -> None:
 
 
 def test_material_node_clone_mints_new_id() -> None:
-    from slappyengine.visual_scripting import FresnelNode
+    from pharos_engine.visual_scripting import FresnelNode
     n = FresnelNode()
     c = n.clone()
     assert c.id != n.id
@@ -564,7 +564,7 @@ def test_material_node_clone_mints_new_id() -> None:
 
 
 def test_material_node_default_params_is_a_copy() -> None:
-    from slappyengine.visual_scripting import FresnelNode
+    from pharos_engine.visual_scripting import FresnelNode
     n = FresnelNode()
     dp = n.default_params
     dp["strength"] = 999.0

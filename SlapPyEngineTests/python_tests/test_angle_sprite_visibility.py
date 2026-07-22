@@ -13,48 +13,48 @@ import numpy as np
 
 class TestAngleEntry:
     def test_instantiates(self):
-        from slappyengine.angle_sprite import AngleEntry
+        from pharos_engine.angle_sprite import AngleEntry
         e = AngleEntry(angle_deg=0.0, layer_index=0)
         assert e is not None
 
     def test_defaults(self):
-        from slappyengine.angle_sprite import AngleEntry
+        from pharos_engine.angle_sprite import AngleEntry
         e = AngleEntry(angle_deg=90.0, layer_index=2)
         assert e.state_tag == ""
 
     def test_custom_state_tag(self):
-        from slappyengine.angle_sprite import AngleEntry
+        from pharos_engine.angle_sprite import AngleEntry
         e = AngleEntry(angle_deg=45.0, layer_index=1, state_tag="damaged")
         assert e.state_tag == "damaged"
 
 
 class TestAngleSpriteMapBasics:
     def test_instantiates(self):
-        from slappyengine.angle_sprite import AngleSpriteMap
+        from pharos_engine.angle_sprite import AngleSpriteMap
         m = AngleSpriteMap()
         assert m is not None
 
     def test_defaults(self):
-        from slappyengine.angle_sprite import AngleSpriteMap
+        from pharos_engine.angle_sprite import AngleSpriteMap
         m = AngleSpriteMap()
         assert m.blend_mode == "lerp"
         assert m.entries == []
 
     def test_add_entry(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         m = AngleSpriteMap()
         m.add_entry(AngleEntry(angle_deg=0.0, layer_index=0))
         assert len(m.entries) == 1
 
     def test_add_multiple_entries(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         m = AngleSpriteMap()
         for angle in [0, 90, 180, 270]:
             m.add_entry(AngleEntry(angle_deg=float(angle), layer_index=angle // 90))
         assert len(m.entries) == 4
 
     def test_clone_state(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         m = AngleSpriteMap()
         m.add_entry(AngleEntry(angle_deg=0.0, layer_index=0, state_tag=""))
         m.add_entry(AngleEntry(angle_deg=90.0, layer_index=1, state_tag=""))
@@ -67,7 +67,7 @@ class TestAngleSpriteMapBasics:
 
 class TestAngleSpriteMapResolveSnap:
     def _make_4dir_snap(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         m = AngleSpriteMap(blend_mode="snap")
         for i, angle in enumerate([0.0, 90.0, 180.0, 270.0]):
             m.add_entry(AngleEntry(angle_deg=angle, layer_index=i))
@@ -100,13 +100,13 @@ class TestAngleSpriteMapResolveSnap:
         assert t == pytest.approx(0.0)
 
     def test_no_entries_returns_safe_default(self):
-        from slappyengine.angle_sprite import AngleSpriteMap
+        from pharos_engine.angle_sprite import AngleSpriteMap
         m = AngleSpriteMap()
         a, b, t = m.resolve(0.0)
         assert a == 0 and b == 0 and t == pytest.approx(0.0)
 
     def test_single_entry_returns_same_layer(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         m = AngleSpriteMap(blend_mode="snap")
         m.add_entry(AngleEntry(angle_deg=0.0, layer_index=3))
         a, b, t = m.resolve(180.0)
@@ -115,7 +115,7 @@ class TestAngleSpriteMapResolveSnap:
 
 class TestAngleSpriteMapResolveLerp:
     def _make_4dir_lerp(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         m = AngleSpriteMap(blend_mode="lerp")
         for i, angle in enumerate([0.0, 90.0, 180.0, 270.0]):
             m.add_entry(AngleEntry(angle_deg=angle, layer_index=i))
@@ -146,7 +146,7 @@ class TestAngleSpriteMapResolveLerp:
             assert 0.0 <= t <= 1.0, f"t={t} out of range at angle={angle}"
 
     def test_state_tag_filtering(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         m = AngleSpriteMap(blend_mode="snap")
         m.add_entry(AngleEntry(angle_deg=0.0, layer_index=0, state_tag=""))
         m.add_entry(AngleEntry(angle_deg=0.0, layer_index=5, state_tag="boosting"))
@@ -154,7 +154,7 @@ class TestAngleSpriteMapResolveLerp:
         assert a == 5
 
     def test_state_tag_fallback_to_base(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         m = AngleSpriteMap(blend_mode="snap")
         m.add_entry(AngleEntry(angle_deg=0.0, layer_index=0, state_tag=""))
         a, b, t = m.resolve(0.0, state_tag="nonexistent")
@@ -175,7 +175,7 @@ class TestAngleSpriteMapApply:
         return FakeEntity(n_layers)
 
     def test_apply_sets_visible_layer(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         m = AngleSpriteMap(blend_mode="snap")
         for i in range(4):
             m.add_entry(AngleEntry(angle_deg=float(i * 90), layer_index=i))
@@ -186,7 +186,7 @@ class TestAngleSpriteMapApply:
         assert entity.layers[1].opacity == pytest.approx(0.0)
 
     def test_apply_empty_layers_no_crash(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         m = AngleSpriteMap()
         m.add_entry(AngleEntry(angle_deg=0.0, layer_index=0))
 
@@ -197,7 +197,7 @@ class TestAngleSpriteMapApply:
         m.apply(FakeEntity())
 
     def test_apply_lerp_distributes_opacity(self):
-        from slappyengine.angle_sprite import AngleSpriteMap, AngleEntry
+        from pharos_engine.angle_sprite import AngleSpriteMap, AngleEntry
         m = AngleSpriteMap(blend_mode="lerp")
         m.add_entry(AngleEntry(angle_deg=0.0, layer_index=0))
         m.add_entry(AngleEntry(angle_deg=90.0, layer_index=1))
@@ -220,13 +220,13 @@ class _FakeEntity:
 
 class TestVisibilityObserver:
     def test_instantiates(self):
-        from slappyengine.visibility import VisibilityObserver
+        from pharos_engine.visibility import VisibilityObserver
         e = _FakeEntity()
         obs = VisibilityObserver(entity=e)
         assert obs is not None
 
     def test_defaults(self):
-        from slappyengine.visibility import VisibilityObserver
+        from pharos_engine.visibility import VisibilityObserver
         obs = VisibilityObserver(entity=_FakeEntity())
         assert obs.range == pytest.approx(200.0)
         assert obs.mode == "circle"
@@ -237,55 +237,55 @@ class TestVisibilityObserver:
 
 class TestVisibilityFieldBasics:
     def test_instantiates(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         assert vf is not None
 
     def test_defaults(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         assert vf.blend_radius == pytest.approx(20.0)
         assert vf.overlap_mode == "max"
         assert vf.decay_rate == pytest.approx(0.0)
 
     def test_initial_field_all_zero(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(32, 32))
         assert np.all(vf._field == 0.0)
 
     def test_sample_initially_zero(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         assert vf.sample((10.0, 10.0)) == pytest.approx(0.0)
 
     def test_add_observer_returns_handle(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64))
         obs = VisibilityObserver(entity=_FakeEntity(32, 32))
         h = vf.add_observer(obs)
         assert isinstance(h, int)
 
     def test_remove_observer_no_crash(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64))
         obs = VisibilityObserver(entity=_FakeEntity(32, 32))
         h = vf.add_observer(obs)
         vf.remove_observer(h)
 
     def test_remove_nonexistent_no_crash(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         vf.remove_observer(9999)  # should not raise
 
 
 class TestVisibilityFieldUpdate:
     def test_update_no_observers_no_crash(self):
-        from slappyengine.visibility import VisibilityField
+        from pharos_engine.visibility import VisibilityField
         vf = VisibilityField(size=(64, 64))
         vf.update()
 
     def test_update_circle_observer_reveals_center(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64), blend_radius=0)
         entity = _FakeEntity(32.0, 32.0)
         obs = VisibilityObserver(entity=entity, range=10.0, mode="circle")
@@ -295,7 +295,7 @@ class TestVisibilityFieldUpdate:
         assert vf.sample((32.0, 32.0)) > 0.0
 
     def test_update_circle_does_not_reveal_far(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(128, 128), blend_radius=0)
         entity = _FakeEntity(64.0, 64.0)
         obs = VisibilityObserver(entity=entity, range=5.0, mode="circle")
@@ -305,7 +305,7 @@ class TestVisibilityFieldUpdate:
         assert vf.sample((0.0, 0.0)) == pytest.approx(0.0)
 
     def test_overlap_mode_max(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64), blend_radius=0, overlap_mode="max")
         vf.add_observer(VisibilityObserver(entity=_FakeEntity(32, 32), range=15))
         vf.update()
@@ -313,7 +313,7 @@ class TestVisibilityFieldUpdate:
         assert 0.0 <= val <= 1.0
 
     def test_overlap_mode_add(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64), blend_radius=0, overlap_mode="add")
         vf.add_observer(VisibilityObserver(entity=_FakeEntity(32, 32), range=15))
         vf.update()
@@ -321,7 +321,7 @@ class TestVisibilityFieldUpdate:
         assert 0.0 <= val <= 1.0
 
     def test_decay_rate_zero_permanent(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64), blend_radius=0, decay_rate=0.0)
         e = _FakeEntity(32, 32)
         obs = VisibilityObserver(entity=e, range=10, mode="circle")
@@ -335,7 +335,7 @@ class TestVisibilityFieldUpdate:
         assert val_after >= val_before
 
     def test_decay_reduces_visibility(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64), blend_radius=0, decay_rate=0.5)
         e = _FakeEntity(32, 32)
         obs = VisibilityObserver(entity=e, range=10, mode="circle")
@@ -349,7 +349,7 @@ class TestVisibilityFieldUpdate:
         assert val_second <= val_first
 
     def test_cone_mode_no_crash(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64))
         obs = VisibilityObserver(entity=_FakeEntity(32, 32), range=15,
                                  mode="cone", cone_angle=90.0)
@@ -357,7 +357,7 @@ class TestVisibilityFieldUpdate:
         vf.update()  # should not raise
 
     def test_get_layer_no_crash(self):
-        from slappyengine.visibility import VisibilityField, VisibilityObserver
+        from pharos_engine.visibility import VisibilityField, VisibilityObserver
         vf = VisibilityField(size=(64, 64))
         obs = VisibilityObserver(entity=_FakeEntity(32, 32), range=10)
         vf.add_observer(obs)

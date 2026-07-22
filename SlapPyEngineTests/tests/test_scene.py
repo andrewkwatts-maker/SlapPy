@@ -1,4 +1,4 @@
-"""Tests for the ``slappyengine.scenes`` YAML scene serialisation subpackage
+"""Tests for the ``pharos_engine.scenes`` YAML scene serialisation subpackage
 (sprint FF3).
 
 Covers:
@@ -20,8 +20,8 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine.dynamics import Body, World
-from slappyengine.scenes import (
+from pharos_engine.dynamics import Body, World
+from pharos_engine.scenes import (
     SCENE_SUFFIX,
     SCHEMA_VERSION,
     Scene,

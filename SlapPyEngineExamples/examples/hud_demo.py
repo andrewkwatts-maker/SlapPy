@@ -1,4 +1,4 @@
-﻿"""
+"""
 HUD demo — in-game HUD using SceneUIEntity.
 
 Shows how to:
@@ -11,12 +11,12 @@ Run: python examples/hud_demo.py
 """
 
 try:
-    import slappyengine as se
-    from slappyengine.engine import Engine
-    from slappyengine.scene import Scene
-    from slappyengine.asset import Asset
-    from slappyengine.layer import Layer
-    from slappyengine.ui.scene_ui import SceneUIEntity
+    import pharos_engine as se
+    from pharos_engine.engine import Engine
+    from pharos_engine.scene import Scene
+    from pharos_engine.asset import Asset
+    from pharos_engine.layer import Layer
+    from pharos_engine.ui.scene_ui import SceneUIEntity
 except ImportError as e:
     print(f"Import error: {e}")
     print("Run 'maturin develop' to build the Rust extension first.")

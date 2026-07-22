@@ -1,4 +1,4 @@
-"""Builder naming + return-shape conventions for ``slappyengine.dynamics``.
+"""Builder naming + return-shape conventions for ``pharos_engine.dynamics``.
 
 The package has two builder prefixes with distinct contracts:
 
@@ -22,8 +22,8 @@ from dataclasses import is_dataclass
 
 import pytest
 
-import slappyengine.dynamics as dyn
-from slappyengine.dynamics import (
+import pharos_engine.dynamics as dyn
+from pharos_engine.dynamics import (
     Body,
     BoneSpec,
     Humanoid,
@@ -124,8 +124,8 @@ def test_build_ragdoll_accepts_world_and_mutates_it():
 
 
 def test_build_humanoid_accepts_world_and_mutates_it():
-    pytest.importorskip("slappyengine.softbody")
-    from slappyengine.softbody import SoftBodyWorld
+    pytest.importorskip("pharos_engine.softbody")
+    from pharos_engine.softbody import SoftBodyWorld
 
     world = SoftBodyWorld()
     before_nodes = world.nodes.count
@@ -137,8 +137,8 @@ def test_build_humanoid_accepts_world_and_mutates_it():
 
 
 def test_build_flesh_wrap_accepts_world_and_mutates_it():
-    pytest.importorskip("slappyengine.softbody")
-    from slappyengine.softbody import SoftBodyWorld
+    pytest.importorskip("pharos_engine.softbody")
+    from pharos_engine.softbody import SoftBodyWorld
 
     world = SoftBodyWorld()
     hum = build_humanoid(world, root_position=(0.0, 1.0))
@@ -184,8 +184,8 @@ def test_every_public_build_builder_takes_a_world_positionally():
 
 
 def test_make_humanoid_alias_emits_deprecation_warning():
-    pytest.importorskip("slappyengine.softbody")
-    from slappyengine.softbody import SoftBodyWorld
+    pytest.importorskip("pharos_engine.softbody")
+    from pharos_engine.softbody import SoftBodyWorld
 
     world = SoftBodyWorld()
     with warnings.catch_warnings(record=True) as caught:
@@ -200,8 +200,8 @@ def test_make_humanoid_alias_emits_deprecation_warning():
 
 
 def test_wrap_in_flesh_alias_emits_deprecation_warning():
-    pytest.importorskip("slappyengine.softbody")
-    from slappyengine.softbody import SoftBodyWorld
+    pytest.importorskip("pharos_engine.softbody")
+    from pharos_engine.softbody import SoftBodyWorld
 
     world = SoftBodyWorld()
     # Build via the new name so the wrap call is the only deprecation.
@@ -219,8 +219,8 @@ def test_wrap_in_flesh_alias_emits_deprecation_warning():
 
 def test_deprecated_aliases_forward_to_canonical_builders():
     """The legacy callables must produce the same Humanoid the build_* form does."""
-    pytest.importorskip("slappyengine.softbody")
-    from slappyengine.softbody import SoftBodyWorld
+    pytest.importorskip("pharos_engine.softbody")
+    from pharos_engine.softbody import SoftBodyWorld
 
     w1 = SoftBodyWorld()
     w2 = SoftBodyWorld()

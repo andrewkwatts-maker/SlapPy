@@ -11,8 +11,8 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.media import save_frames
-from slappyengine.softbody import (
+from pharos_engine.media import save_frames
+from pharos_engine.softbody import (
     SoftBodyRenderConfig,
     SoftBodyRenderer,
     SoftBodyWorld,

@@ -9,7 +9,7 @@ flagship game looks supported by SlapPyEngine.
 Import path:
 
 ```python
-from slappyengine.post_process import (
+from pharos_engine.post_process import (
     cinematic_chain,
     arcade_chain,
     iso_strategy_chain,

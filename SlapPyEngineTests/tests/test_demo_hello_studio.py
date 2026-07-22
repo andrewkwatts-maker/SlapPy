@@ -1,7 +1,7 @@
 """Smoke tests for ``examples/hello_studio.py`` (PP4 gap-close).
 
 Hangs a 24-node rope between two pinned anchors using the unified
-:mod:`slappyengine.studio` API and records it. In-process; no wgpu.
+:mod:`pharos_engine.studio` API and records it. In-process; no wgpu.
 
 Pins:
 1. Demo module imports cleanly.

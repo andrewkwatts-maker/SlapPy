@@ -15,8 +15,8 @@ import copy
 import numpy as np
 import pytest
 
-from slappyengine.post_process.bloom import apply_bloom
-from slappyengine.post_process.chain_manifest import (
+from pharos_engine.post_process.bloom import apply_bloom
+from pharos_engine.post_process.chain_manifest import (
     DEFAULT_CHAIN,
     KNOWN_KINDS,
     ChainManifest,
@@ -29,8 +29,8 @@ from slappyengine.post_process.chain_manifest import (
     apply_manifest,
     register_pass_handler,
 )
-from slappyengine.post_process.executor import PostProcessExecutor
-from slappyengine.post_process.taa import TAAPass
+from pharos_engine.post_process.executor import PostProcessExecutor
+from pharos_engine.post_process.taa import TAAPass
 
 
 # ---------------------------------------------------------------------------
@@ -472,7 +472,7 @@ def test_legacy_executor_manifest_is_none():
     gracefully when wgpu can't spin one up.
     """
     try:
-        from slappyengine.gpu.context import GPUContext
+        from pharos_engine.gpu.context import GPUContext
     except Exception:
         pytest.skip("GPUContext unavailable in this environment")
     try:

@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.ui.theme — API Reference
+# pharos_engine.ui.theme — API Reference
 
 > Hand-written reference for the **PRIMITIVE infrastructure** that any
 > SlapPyEngine UI theme builds on. Owns the nine-slice texture renderer,
@@ -32,7 +32,7 @@ everything at runtime.
 ## Public surface
 
 ```python
-from slappyengine.ui.theme import (
+from pharos_engine.ui.theme import (
     # data classes
     Color, Font, Gradient, NineSlice, Palette, ShaderEffect, SVGIcon,
     SemanticTokens, SpacingScale, RadiusScale, TransitionScale, ZIndexScale,
@@ -47,14 +47,14 @@ from slappyengine.ui.theme import (
 ```
 
 `__all__` is alphabetised. Every public function performs input
-validation through the shared ``slappyengine._validation`` helpers per
+validation through the shared ``pharos_engine._validation`` helpers per
 [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 
 ## Classes
 
 ### `Color`
 
-_dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+_dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
 
 An sRGB colour with 8-bit per-channel `r`/`g`/`b` (`[0, 255]`) plus a
 unit-float alpha (`[0.0, 1.0]`). Two accessors:
@@ -65,7 +65,7 @@ unit-float alpha (`[0.0, 1.0]`). Two accessors:
 
 ### `Palette`
 
-_dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+_dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
 
 A named bag of `Color` entries keyed by semantic role
 (`"primary"`, `"surface"`, `"accent"`, …). Validation refuses
@@ -74,14 +74,14 @@ rather than at render time.
 
 ### `Font`
 
-_frozen dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+_frozen dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
 
 A `(family, size, weight)` record. No rasterisation is implied — fonts
 are *named* and resolved by the host renderer.
 
 ### `NineSlice`
 
-_dataclass — defined in `slappyengine.ui.theme.nine_slice`_
+_dataclass — defined in `pharos_engine.ui.theme.nine_slice`_
 
 Nine-slice texture renderer.
 
@@ -110,7 +110,7 @@ deserialise if needed.
 
 ### `SVGIcon`
 
-_dataclass — defined in `slappyengine.ui.theme.svg_icon`_
+_dataclass — defined in `pharos_engine.ui.theme.svg_icon`_
 
 Minimal SVG rasteriser. Parses a useful subset of SVG without pulling
 in `cairosvg` / `pyrsvg` / a Qt runtime:
@@ -138,11 +138,11 @@ Colour parsing covers `#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb(r,g,b)`,
   not installed.
 
 Texture cache is shared module-globally; call
-`slappyengine.ui.theme.svg_icon.clear_cache()` between tests.
+`pharos_engine.ui.theme.svg_icon.clear_cache()` between tests.
 
 ### `ShaderEffect`
 
-_dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+_dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
 
 A *named* procedural-texture recipe: an effect name + a kwargs bag.
 Pure data — the registry-side dispatcher (typically one of the helpers
@@ -150,7 +150,7 @@ in `shader_effects`) resolves the name to a generator.
 
 ### `Gradient`
 
-_frozen dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+_frozen dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
 
 A two-stop linear gradient (`start: Color`, `end: Color`, `angle_deg:
 float = 135.0`). `135°` matches the EyesOfAzrael `--theme-gradient`
@@ -162,7 +162,7 @@ convention (top-left to bottom-right sweep).
 
 ### `SemanticTokens`
 
-_dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+_dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
 
 A **named contract** above the raw palette. Widget code should read
 from this layer so swapping themes only requires rebinding the token
@@ -196,7 +196,7 @@ class SemanticTokens:
 
 ### `SpacingScale`
 
-_frozen dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+_frozen dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
 
 Six-step spacing scale in DPG pixels: `xs=4`, `sm=8`, `md=16`, `lg=24`,
 `xl=32`, `xxl=48`. Each field must be a non-negative finite number.
@@ -204,7 +204,7 @@ Tracks EyesOfAzrael's `--spacing-*` token family.
 
 ### `RadiusScale`
 
-_frozen dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+_frozen dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
 
 Five-step border-radius scale in DPG pixels: `sm=4`, `md=8`, `lg=12`,
 `xl=16`, `pill=999`. `pill` is intentionally over-sized so it can be
@@ -212,7 +212,7 @@ applied directly as `border-radius: 9999px`-style "fully rounded".
 
 ### `TransitionScale`
 
-_frozen dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+_frozen dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
 
 Three-step transition-duration scale in seconds: `fast=0.15`,
 `normal=0.25`, `slow=0.5`. Each field must be a *positive* finite
@@ -220,7 +220,7 @@ number (a zero-duration transition is rejected).
 
 ### `ZIndexScale`
 
-_frozen dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+_frozen dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
 
 Four-tier z-index scale: `base=1`, `dropdown=100`, `modal=1000`,
 `toast=2000`. Tiers must rise monotonically; a typo that would push a
@@ -228,7 +228,7 @@ toast under a modal raises `ValueError` at construction.
 
 ### `ThemeSpec`
 
-_dataclass — defined in `slappyengine.ui.theme.theme_spec`_
+_dataclass — defined in `pharos_engine.ui.theme.theme_spec`_
 
 The top-level declarative theme:
 
@@ -360,15 +360,15 @@ given `opacity`, and blends them additively over a transparent canvas.
 ## Starter themes
 
 The concrete theme content built on the primitives ships in the
-`slappyengine.ui.theme.themes` subpackage. **Six** `ThemeSpec` constants
+`pharos_engine.ui.theme.themes` subpackage. **Six** `ThemeSpec` constants
 demonstrate the full diary-family contract documented under
 [`docs/theme_diary_family_2026_06_03.md`](../theme_diary_family_2026_06_03.md)
 and the base brief at
 [`docs/theme_teengirl_notebook_2026_06_03.md`](../theme_teengirl_notebook_2026_06_03.md).
 
 ```python
-from slappyengine.ui.theme import apply_theme
-from slappyengine.ui.theme.themes import (
+from pharos_engine.ui.theme import apply_theme
+from pharos_engine.ui.theme.themes import (
     # The three original starters (Phase A + B):
     BULLET_JOURNAL, COZY_DIARY, TEENGIRL_NOTEBOOK,
     # The three v0.4 Phase C extended variants:
@@ -382,12 +382,12 @@ apply_theme("scrapbook_summer")
 
 | Constant | Theme name | Source file | Vibe | Background shader | Roster |
 |---|---|---|---|---|---|
-| `TEENGIRL_NOTEBOOK` | `teengirl_notebook` | `python/slappyengine/ui/theme/themes/teengirl_notebook.py` | Lined-paper + washi tape, bubblegum-pink + lilac | `ruled_paper` (lilac rules, pink margin) | `fox_01`, `butterfly_01` |
-| `COZY_DIARY` | `cozy_diary` | `python/slappyengine/ui/theme/themes/cozy_diary.py` | Warm autumn / leather-journal, sepia ink | `ruled_paper` parametrised as parchment | `red_panda_01`, `fox_01`, `leaf_01` |
-| `BULLET_JOURNAL` | `bullet_journal` | `python/slappyengine/ui/theme/themes/bullet_journal.py` | Minimal grid + pastel highlights, no script | `dot_grid` (1 px every 8 px) | `hedgehog_01`, `porcupine_01` |
-| `SCRAPBOOK_SUMMER` | `scrapbook_summer` | `python/slappyengine/ui/theme/themes/scrapbook_summer.py` | Bright photographic holiday vibes — sky-blue + sunshine-yellow + watermelon-pink | `watercolor_wash` (sky-blue + sunshine-yellow @ 30 %) | `golden_01`, `butterfly_01`, `bee_01` |
-| `COTTAGECORE_GARDEN` | `cottagecore_garden` | `python/slappyengine/ui/theme/themes/cottagecore_garden.py` | Floral / herbal / embroidered linen — mossy-green + cream + lavender + peach | `parchment` with sage `noise_glitter` weave overlay | `rabbit_01`, `deer_01`, `mushroom_01`, `flower_01` |
-| `KAWAII_PLANNER` | `kawaii_planner` | `python/slappyengine/ui/theme/themes/kawaii_planner.py` | Sticker-overload neon-pastel — pastel pink + mint + lavender + butter yellow | `dot_grid` (16 px spacing) + `noise_glitter` confetti | `cat_01`, `panda_01`, `porcupine_01` |
+| `TEENGIRL_NOTEBOOK` | `teengirl_notebook` | `python/pharos_engine/ui/theme/themes/teengirl_notebook.py` | Lined-paper + washi tape, bubblegum-pink + lilac | `ruled_paper` (lilac rules, pink margin) | `fox_01`, `butterfly_01` |
+| `COZY_DIARY` | `cozy_diary` | `python/pharos_engine/ui/theme/themes/cozy_diary.py` | Warm autumn / leather-journal, sepia ink | `ruled_paper` parametrised as parchment | `red_panda_01`, `fox_01`, `leaf_01` |
+| `BULLET_JOURNAL` | `bullet_journal` | `python/pharos_engine/ui/theme/themes/bullet_journal.py` | Minimal grid + pastel highlights, no script | `dot_grid` (1 px every 8 px) | `hedgehog_01`, `porcupine_01` |
+| `SCRAPBOOK_SUMMER` | `scrapbook_summer` | `python/pharos_engine/ui/theme/themes/scrapbook_summer.py` | Bright photographic holiday vibes — sky-blue + sunshine-yellow + watermelon-pink | `watercolor_wash` (sky-blue + sunshine-yellow @ 30 %) | `golden_01`, `butterfly_01`, `bee_01` |
+| `COTTAGECORE_GARDEN` | `cottagecore_garden` | `python/pharos_engine/ui/theme/themes/cottagecore_garden.py` | Floral / herbal / embroidered linen — mossy-green + cream + lavender + peach | `parchment` with sage `noise_glitter` weave overlay | `rabbit_01`, `deer_01`, `mushroom_01`, `flower_01` |
+| `KAWAII_PLANNER` | `kawaii_planner` | `python/pharos_engine/ui/theme/themes/kawaii_planner.py` | Sticker-overload neon-pastel — pastel pink + mint + lavender + butter yellow | `dot_grid` (16 px spacing) + `noise_glitter` confetti | `cat_01`, `panda_01`, `porcupine_01` |
 
 Each constant carries a full `SemanticTokens` block plus a populated
 `palette`, `fonts`, `nine_slices` (procedural — no PNGs), `icons`
@@ -405,41 +405,41 @@ so existing callers automatically pick up the v0.4 Phase C additions.
 
 YAML location: each theme serialises through `ThemeSpec.to_yaml()`
 without on-disk content. The source-of-truth Python files live under
-`python/slappyengine/ui/theme/themes/` per the table above; users who
+`python/pharos_engine/ui/theme/themes/` per the table above; users who
 want YAML can dump on demand:
 
 ```python
 from pathlib import Path
-from slappyengine.ui.theme.themes import TEENGIRL_NOTEBOOK
+from pharos_engine.ui.theme.themes import TEENGIRL_NOTEBOOK
 Path("teengirl_notebook.yml").write_text(TEENGIRL_NOTEBOOK.to_yaml())
 ```
 
 ## Inner modules
 
-- `slappyengine.ui.theme.theme_spec` — `Color`, `Font`, `Gradient`,
+- `pharos_engine.ui.theme.theme_spec` — `Color`, `Font`, `Gradient`,
   `Palette`, `SemanticTokens`, `SpacingScale`, `RadiusScale`,
   `TransitionScale`, `ZIndexScale`, `ShaderEffect`, `ThemeSpec`
   dataclasses + YAML round-trip.
-- `slappyengine.ui.theme.nine_slice` — image-backed +
+- `pharos_engine.ui.theme.nine_slice` — image-backed +
   procedural nine-slice renderer.
-- `slappyengine.ui.theme.svg_icon` — SVG parser, rasteriser,
+- `pharos_engine.ui.theme.svg_icon` — SVG parser, rasteriser,
   DPG texture bridge, module-global rasterised-texture cache.
-- `slappyengine.ui.theme.shader_effects` — pure-numpy procedural
+- `pharos_engine.ui.theme.shader_effects` — pure-numpy procedural
   texture helpers (`ruled_paper`, `highlighter_stroke`,
   `paper_shadow`, `noise_glitter`, `glass_blur`, `frosted_panel`,
   `dot_grid`, `parchment`, `watercolor_wash`).
-- `slappyengine.ui.theme.themes` — six diary-family `ThemeSpec`
+- `pharos_engine.ui.theme.themes` — six diary-family `ThemeSpec`
   constants (`TEENGIRL_NOTEBOOK`, `COZY_DIARY`, `BULLET_JOURNAL`,
   `SCRAPBOOK_SUMMER`, `COTTAGECORE_GARDEN`, `KAWAII_PLANNER`) +
   `register_all_themes()` / `register_starter_themes()`.
 
 ## Conventions
 
-- **Lazy import.** The parent `slappyengine.ui` package resolves
-  `theme` through its `__getattr__` so importing `slappyengine.ui`
+- **Lazy import.** The parent `pharos_engine.ui` package resolves
+  `theme` through its `__getattr__` so importing `pharos_engine.ui`
   alone does not eagerly load this subpackage.
 - **Validation.** Every public boundary calls the shared
-  `slappyengine._validation` helpers per `CONTRIBUTING.md` — no
+  `pharos_engine._validation` helpers per `CONTRIBUTING.md` — no
   duplicate `_theme_validation.py` module.
 - **No GPU dependency.** Every primitive returns ``np.uint8`` RGBA
   ndarrays. The DPG bridge (`SVGIcon.to_dpg_texture`) lives in
@@ -451,7 +451,7 @@ Path("teengirl_notebook.yml").write_text(TEENGIRL_NOTEBOOK.to_yaml())
 
 ## Creatures
 
-The optional `slappyengine.ui.theme.creatures` subpackage layers the
+The optional `pharos_engine.ui.theme.creatures` subpackage layers the
 **woodland-creature animation system** on top of the primitives above.
 A theme may register zero or more `Creature` records and the
 `CreatureScheduler` drives their per-frame state machine — idle
@@ -467,7 +467,7 @@ drawlist handle, the test suite passes a recording mock.
 ### Public surface
 
 ```python
-from slappyengine.ui.theme.creatures import (
+from pharos_engine.ui.theme.creatures import (
     AnimationCurve, Keyframe,
     Creature, DrawList, RenderFn,
     CreatureScheduler,
@@ -475,7 +475,7 @@ from slappyengine.ui.theme.creatures import (
     # module-level singleton wrappers
     register_creature, trigger, tick, set_enabled, set_reduced_motion,
 )
-from slappyengine.ui.theme.creatures.builtin import (
+from pharos_engine.ui.theme.creatures.builtin import (
     register_builtins,
     fox_01, fox_01_slot,
     butterfly_01, butterfly_01_slot,
@@ -592,7 +592,7 @@ catalog's slot-assignment table (toolbar / status bar / panel corner).
 
 ## Event bindings
 
-The `slappyengine.ui.theme.creatures` subpackage wires engine events to
+The `pharos_engine.ui.theme.creatures` subpackage wires engine events to
 woodland-creature animations. The integration is opt-in — instantiate
 :class:`CreatureBusAdapter` against a scheduler + bus, call
 :meth:`install`, and engine events start lighting up creatures.
@@ -600,7 +600,7 @@ woodland-creature animations. The integration is opt-in — instantiate
 ### Public surface
 
 ```python
-from slappyengine.ui.theme.creatures import (
+from pharos_engine.ui.theme.creatures import (
     CreatureBusAdapter,
     EVENT_TO_CREATURE_ANIMS,
     IdleEventEmitter,

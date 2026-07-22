@@ -9,7 +9,7 @@ NN2's round-15 ``view.frame_selected`` / ``view.reset_view`` /
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`slappyengine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `layer.solo`              | `layer_solo_actions.solo_layer`               | layer |
 | `layer.merge_down`        | `layer_merge_down_actions.merge_down`         | layer |
@@ -19,13 +19,13 @@ Five more action ids landed in this tick, moving 5 rows from STUB
 
 New action modules:
 
-* `python/slappyengine/actions/layer_solo_actions.py`
-* `python/slappyengine/actions/layer_merge_down_actions.py`
-* `python/slappyengine/actions/selection_grow_actions.py`
-* `python/slappyengine/actions/snap_grid_size_actions.py`
+* `python/pharos_engine/actions/layer_solo_actions.py`
+* `python/pharos_engine/actions/layer_merge_down_actions.py`
+* `python/pharos_engine/actions/selection_grow_actions.py`
+* `python/pharos_engine/actions/snap_grid_size_actions.py`
 
 Router entries and `_fb_*` shims live in
-`python/slappyengine/tool_router.py` under the
+`python/pharos_engine/tool_router.py` under the
 `# ── OO1 STUB-triage: layer solo + merge-down + selection grow + snap
 grid-size increment / decrement (round 16) ──` block.
 

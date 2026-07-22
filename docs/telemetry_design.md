@@ -1,6 +1,6 @@
-# `slappyengine.telemetry` — Engine Event Bus
+# `pharos_engine.telemetry` — Engine Event Bus
 
-`slappyengine.telemetry` is a tiny, single-process publish/subscribe API for
+`pharos_engine.telemetry` is a tiny, single-process publish/subscribe API for
 engine events. It exists so games can hook into the engine for debugging,
 profiling, and save-state diffing without engine code needing to know what the
 game wants. Bullet Strata's reactive HUD dirty flag is the canonical example:
@@ -26,7 +26,7 @@ are the cleanest way to learn that.
 ## Usage
 
 ```python
-from slappyengine import telemetry
+from pharos_engine import telemetry
 
 # --- Producer side (engine code) -----------------------------------------
 def physics_step(dt: float) -> None:
@@ -127,7 +127,7 @@ the same cost as the unindexed 100-subscriber case, because only ~100
 subscribers actually match each emit.
 
 ```python
-from slappyengine import telemetry
+from pharos_engine import telemetry
 
 telemetry.enable_pattern_index(True)   # opt-in; default is OFF
 assert telemetry.is_pattern_index_enabled()

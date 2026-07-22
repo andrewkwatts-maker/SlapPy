@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _STRATA_ROOT = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Bullet Strata"
 _STRATA_STR = str(_STRATA_ROOT)
@@ -258,7 +258,7 @@ class TestPlayerEntityKill:
 class TestProjectileLayer:
     def test_returns_layer_object(self):
         from entities.projectile import _projectile_layer
-        from slappyengine.layer import Layer
+        from pharos_engine.layer import Layer
         layer = _projectile_layer("pistol")
         assert isinstance(layer, Layer)
 

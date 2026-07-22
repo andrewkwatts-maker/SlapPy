@@ -124,7 +124,7 @@ Reasons:
 - **A. Validate with real game content.** Run Ochema Circuit and
   Bullet Strata against the current Rust build. If their actual
   scenes are slow, we have a perf bug to investigate. If they're
-  fast enough, ship the current build to PyPI as `slappy-engine
+  fast enough, ship the current build to PyPI as `pharos-engine
   v1.0` and let the Tier 11 conversation be driven by a real user
   complaint.
 - **B. Profile the editor.** A common indie-engine bottleneck is

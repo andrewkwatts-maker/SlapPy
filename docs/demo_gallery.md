@@ -52,7 +52,7 @@ entry in
 ## Hello Studio
 
 **What it shows.** The smallest possible end-to-end demo of the unified
-`slappyengine.studio` API. A 24-node rope is hung between two pinned
+`pharos_engine.studio` API. A 24-node rope is hung between two pinned
 anchors at y = 2.0 m with span 4 m / total length 6 m, then recorded
 into a 120-frame GIF with a single `stage.record(out, frames=120,
 fps=30)` call. The point is the API surface, not the simulation —
@@ -172,7 +172,7 @@ PYTHONPATH=python python examples/hello_gi.py
 - [`examples_smoke_2026_06_01_v3.md`](examples_smoke_2026_06_01_v3.md)
   — read-only smoke audit of every `SlapPyEngineExamples/examples/*.py` (47/47 GREEN).
 - [`studio_quickstart.md`](studio_quickstart.md) — 5-minute tour of
-  the `slappyengine.studio` surface used by `hello_studio`.
+  the `pharos_engine.studio` surface used by `hello_studio`.
 - [`getting_started.md`](getting_started.md) — game-dev tutorial that
   builds a runnable mini-game in 15 minutes.
 - [`dynamics_quickstart.md`](dynamics_quickstart.md) — 10-minute

@@ -139,14 +139,14 @@ def stub_dpg(monkeypatch):
 
 
 def _make_editor(**kw):
-    from slappyengine.ui.editor.notebook_timeline_editor import (
+    from pharos_engine.ui.editor.notebook_timeline_editor import (
         NotebookTimelineEditor,
     )
     return NotebookTimelineEditor(**kw)
 
 
 def _make_timeline(**kw):
-    from slappyengine.ui.editor.notebook_timeline_editor import Timeline
+    from pharos_engine.ui.editor.notebook_timeline_editor import Timeline
     return Timeline(**kw)
 
 
@@ -161,7 +161,7 @@ class TestConstruction:
         assert ed.timeline is not None
 
     def test_default_duration(self):
-        from slappyengine.ui.editor.notebook_timeline_editor import (
+        from pharos_engine.ui.editor.notebook_timeline_editor import (
             DEFAULT_DURATION_S,
         )
         ed = _make_editor()
@@ -184,13 +184,13 @@ class TestConstruction:
         assert ed.duration_s == 8.0
 
     def test_interp_kinds_constant(self):
-        from slappyengine.ui.editor.notebook_timeline_editor import (
+        from pharos_engine.ui.editor.notebook_timeline_editor import (
             INTERP_KINDS,
         )
         assert set(INTERP_KINDS) == {"linear", "step", "cubic_hermite"}
 
     def test_title_constant(self):
-        from slappyengine.ui.editor.notebook_timeline_editor import (
+        from pharos_engine.ui.editor.notebook_timeline_editor import (
             NotebookTimelineEditor,
         )
         assert NotebookTimelineEditor.TITLE == "Timeline"
@@ -571,7 +571,7 @@ class TestTimelineSwap:
 
 class TestYamlRoundTrip:
     def test_roundtrip_empty_timeline(self):
-        from slappyengine.ui.editor.notebook_timeline_editor import Timeline
+        from pharos_engine.ui.editor.notebook_timeline_editor import Timeline
         tl = _make_timeline(duration_s=3.0, bpm=90.0, fps=24.0)
         text = tl.to_yaml()
         tl2 = Timeline.from_yaml(text)
@@ -581,7 +581,7 @@ class TestYamlRoundTrip:
         assert tl2.tracks == []
 
     def test_roundtrip_preserves_keyframes(self):
-        from slappyengine.ui.editor.notebook_timeline_editor import Timeline
+        from pharos_engine.ui.editor.notebook_timeline_editor import Timeline
         tl = _make_timeline(duration_s=4.0)
         tr = tl.add_track("camera.zoom")
         tr.add_keyframe(0.0, 1.0, "linear")
@@ -608,7 +608,7 @@ class TestYamlRoundTrip:
         assert len(ed.timeline.tracks[0].keyframes) == 2
 
     def test_from_yaml_preserves_ids(self):
-        from slappyengine.ui.editor.notebook_timeline_editor import Timeline
+        from pharos_engine.ui.editor.notebook_timeline_editor import Timeline
         tl = _make_timeline()
         tr = tl.add_track("v")
         kf1 = tr.add_keyframe(0.0, 0.0)
@@ -776,19 +776,19 @@ class TestSelection:
 
 class TestRegistration:
     def test_all_exports_contains_editor(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         assert "NotebookTimelineEditor" in editor_pkg.__all__
 
     def test_lazy_map_has_editor(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         assert "NotebookTimelineEditor" in editor_pkg._LAZY_MAP
 
     def test_lazy_import_yields_class(self):
-        from slappyengine.ui.editor import NotebookTimelineEditor
+        from pharos_engine.ui.editor import NotebookTimelineEditor
         assert NotebookTimelineEditor.__name__ == "NotebookTimelineEditor"
 
     def test_all_list_alphabetical_neighbourhood(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         names = editor_pkg.__all__
         idx = names.index("NotebookTimelineEditor")
         assert names[idx - 1] < "NotebookTimelineEditor"

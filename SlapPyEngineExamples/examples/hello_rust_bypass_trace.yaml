@@ -58,8 +58,8 @@ timings:
   wrapper_seconds: 1.1200027074664831e-05
   speedup: 18.666569654637176
 notes:
-- 'Bypass path: `from slappyengine import _core` then call the kernel directly on
+- 'Bypass path: `from pharos_engine import _core` then call the kernel directly on
   the same argument tuple/list.'
-- 'Wrapper path: pure-Python reference implementation matching what slappyengine falls
+- 'Wrapper path: pure-Python reference implementation matching what pharos_engine falls
   back to when _core is missing.'
 - Speedup > 1.0 means the Rust kernel is faster than the equivalent Python fallback.

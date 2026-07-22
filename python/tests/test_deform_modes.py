@@ -5,33 +5,33 @@ import pytest
 
 class TestDeformSimMode:
     def test_all_values_present(self):
-        from slappyengine.deform_modes import DeformSimMode
+        from pharos_engine.deform_modes import DeformSimMode
         names = {m.value for m in DeformSimMode}
         assert "always_on" in names
         assert "collision_triggered" in names
         assert "manual" in names
 
     def test_enum_by_value(self):
-        from slappyengine.deform_modes import DeformSimMode
+        from pharos_engine.deform_modes import DeformSimMode
         assert DeformSimMode("always_on") is DeformSimMode.ALWAYS_ON
 
 
 class TestDecayMode:
     def test_all_values_present(self):
-        from slappyengine.deform_modes import DecayMode
+        from pharos_engine.deform_modes import DecayMode
         names = {m.value for m in DecayMode}
         assert "constant" in names
         assert "curve" in names
         assert "none" in names
 
     def test_enum_identity(self):
-        from slappyengine.deform_modes import DecayMode
+        from pharos_engine.deform_modes import DecayMode
         assert DecayMode.CURVE is not DecayMode.CONSTANT
 
 
 class TestDestroyMode:
     def test_expected_modes(self):
-        from slappyengine.deform_modes import DestroyMode
+        from pharos_engine.deform_modes import DestroyMode
         names = {m.value for m in DestroyMode}
         assert "persist" in names
         assert "fragment" in names
@@ -42,7 +42,7 @@ class TestDestroyMode:
 
 class TestCrackMode:
     def test_expected_modes(self):
-        from slappyengine.deform_modes import CrackMode
+        from pharos_engine.deform_modes import CrackMode
         names = {m.value for m in CrackMode}
         assert "none" in names
         assert "radial" in names
@@ -52,7 +52,7 @@ class TestCrackMode:
 
 class TestPhysicsCoupling:
     def test_expected_modes(self):
-        from slappyengine.deform_modes import PhysicsCoupling
+        from pharos_engine.deform_modes import PhysicsCoupling
         names = {m.value for m in PhysicsCoupling}
         assert "isolated" in names
         assert "mass" in names
@@ -63,7 +63,7 @@ class TestPhysicsCoupling:
 
 class TestRepairMode:
     def test_expected_modes(self):
-        from slappyengine.deform_modes import RepairMode
+        from pharos_engine.deform_modes import RepairMode
         names = {m.value for m in RepairMode}
         assert "none" in names
         assert "auto" in names
@@ -73,7 +73,7 @@ class TestRepairMode:
 
 class TestMaterialPreset:
     def test_expected_presets(self):
-        from slappyengine.deform_modes import MaterialPreset
+        from pharos_engine.deform_modes import MaterialPreset
         names = {m.value for m in MaterialPreset}
         for expected in ["metal", "glass", "rubber", "wood", "stone", "cloth", "ice", "organic", "custom"]:
             assert expected in names, f"Missing preset: {expected}"
@@ -81,13 +81,13 @@ class TestMaterialPreset:
 
 class TestMaterialConfig:
     def test_default_instantiation(self):
-        from slappyengine.deform_modes import MaterialConfig
+        from pharos_engine.deform_modes import MaterialConfig
         cfg = MaterialConfig()
         assert cfg.elastic_threshold == pytest.approx(80.0)
         assert cfg.spring_decay == pytest.approx(0.94)
 
     def test_custom_values(self):
-        from slappyengine.deform_modes import MaterialConfig, CrackMode, DestroyMode
+        from pharos_engine.deform_modes import MaterialConfig, CrackMode, DestroyMode
         cfg = MaterialConfig(
             elastic_threshold=10.0,
             crack_mode=CrackMode.RADIAL,
@@ -98,67 +98,67 @@ class TestMaterialConfig:
         assert cfg.destroy_mode is DestroyMode.FRAGMENT
 
     def test_decay_curve_default_none(self):
-        from slappyengine.deform_modes import MaterialConfig
+        from pharos_engine.deform_modes import MaterialConfig
         cfg = MaterialConfig()
         assert cfg.decay_curve is None
 
     def test_physics_coupling_default(self):
-        from slappyengine.deform_modes import MaterialConfig, PhysicsCoupling
+        from pharos_engine.deform_modes import MaterialConfig, PhysicsCoupling
         cfg = MaterialConfig()
         assert cfg.physics_coupling is PhysicsCoupling.ISOLATED
 
 
 class TestMaterialConfigs:
     def test_all_presets_have_config(self):
-        from slappyengine.deform_modes import MaterialPreset, MATERIAL_CONFIGS
+        from pharos_engine.deform_modes import MaterialPreset, MATERIAL_CONFIGS
         for preset in MaterialPreset:
             assert preset in MATERIAL_CONFIGS, f"Missing config for {preset}"
 
     def test_metal_high_threshold(self):
-        from slappyengine.deform_modes import MaterialPreset, MATERIAL_CONFIGS
+        from pharos_engine.deform_modes import MaterialPreset, MATERIAL_CONFIGS
         cfg = MATERIAL_CONFIGS[MaterialPreset.METAL]
         assert cfg.elastic_threshold >= 50.0
 
     def test_glass_low_threshold(self):
-        from slappyengine.deform_modes import MaterialPreset, MATERIAL_CONFIGS
+        from pharos_engine.deform_modes import MaterialPreset, MATERIAL_CONFIGS
         cfg = MATERIAL_CONFIGS[MaterialPreset.GLASS]
         assert cfg.elastic_threshold < 20.0
 
     def test_rubber_high_threshold(self):
-        from slappyengine.deform_modes import MaterialPreset, MATERIAL_CONFIGS
+        from pharos_engine.deform_modes import MaterialPreset, MATERIAL_CONFIGS
         cfg = MATERIAL_CONFIGS[MaterialPreset.RUBBER]
         assert cfg.elastic_threshold > 100.0
 
     def test_glass_fragments(self):
-        from slappyengine.deform_modes import MaterialPreset, MATERIAL_CONFIGS, DestroyMode
+        from pharos_engine.deform_modes import MaterialPreset, MATERIAL_CONFIGS, DestroyMode
         cfg = MATERIAL_CONFIGS[MaterialPreset.GLASS]
         assert cfg.destroy_mode is DestroyMode.FRAGMENT
 
     def test_rubber_auto_repairs(self):
-        from slappyengine.deform_modes import MaterialPreset, MATERIAL_CONFIGS, RepairMode
+        from pharos_engine.deform_modes import MaterialPreset, MATERIAL_CONFIGS, RepairMode
         cfg = MATERIAL_CONFIGS[MaterialPreset.RUBBER]
         assert cfg.repair_mode is RepairMode.AUTO
 
     def test_stone_cracks_structurally(self):
-        from slappyengine.deform_modes import MaterialPreset, MATERIAL_CONFIGS, CrackMode
+        from pharos_engine.deform_modes import MaterialPreset, MATERIAL_CONFIGS, CrackMode
         cfg = MATERIAL_CONFIGS[MaterialPreset.STONE]
         assert cfg.crack_mode is CrackMode.STRUCTURAL
 
 
 class TestResolveMaterial:
     def test_returns_base_config_without_overrides(self):
-        from slappyengine.deform_modes import MaterialPreset, MATERIAL_CONFIGS, resolve_material
+        from pharos_engine.deform_modes import MaterialPreset, MATERIAL_CONFIGS, resolve_material
         base = MATERIAL_CONFIGS[MaterialPreset.METAL]
         result = resolve_material(MaterialPreset.METAL)
         assert result.elastic_threshold == pytest.approx(base.elastic_threshold)
 
     def test_override_applied(self):
-        from slappyengine.deform_modes import MaterialPreset, resolve_material
+        from pharos_engine.deform_modes import MaterialPreset, resolve_material
         cfg = resolve_material(MaterialPreset.METAL, elastic_threshold=60.0)
         assert cfg.elastic_threshold == pytest.approx(60.0)
 
     def test_override_does_not_mutate_original(self):
-        from slappyengine.deform_modes import MaterialPreset, MATERIAL_CONFIGS, resolve_material
+        from pharos_engine.deform_modes import MaterialPreset, MATERIAL_CONFIGS, resolve_material
         original = MATERIAL_CONFIGS[MaterialPreset.METAL].elastic_threshold
         resolve_material(MaterialPreset.METAL, elastic_threshold=999.0)
         assert MATERIAL_CONFIGS[MaterialPreset.METAL].elastic_threshold == pytest.approx(original)
@@ -166,7 +166,7 @@ class TestResolveMaterial:
 
 class TestCustomMaterialRegistry:
     def test_register_and_get(self):
-        from slappyengine.deform_modes import register_material, get_material, MaterialConfig
+        from pharos_engine.deform_modes import register_material, get_material, MaterialConfig
         cfg = MaterialConfig(elastic_threshold=42.0)
         register_material("test_custom_mat", cfg)
         result = get_material("test_custom_mat")
@@ -174,30 +174,30 @@ class TestCustomMaterialRegistry:
         assert result.elastic_threshold == pytest.approx(42.0)
 
     def test_unregister(self):
-        from slappyengine.deform_modes import register_material, unregister_material, get_material, MaterialConfig
+        from pharos_engine.deform_modes import register_material, unregister_material, get_material, MaterialConfig
         register_material("_temp_mat", MaterialConfig())
         unregister_material("_temp_mat")
         assert get_material("_temp_mat") is None
 
     def test_get_builtin_by_name_string(self):
-        from slappyengine.deform_modes import get_material
+        from pharos_engine.deform_modes import get_material
         cfg = get_material("metal")
         assert cfg is not None
         assert cfg.elastic_threshold >= 50.0
 
     def test_get_unknown_returns_none(self):
-        from slappyengine.deform_modes import get_material
+        from pharos_engine.deform_modes import get_material
         assert get_material("nonexistent_xyz_material") is None
 
     def test_list_materials_contains_builtins(self):
-        from slappyengine.deform_modes import list_materials
+        from pharos_engine.deform_modes import list_materials
         names = list_materials()
         assert "metal" in names
         assert "glass" in names
         assert "custom" in names
 
     def test_list_materials_includes_custom(self):
-        from slappyengine.deform_modes import register_material, list_materials, MaterialConfig, unregister_material
+        from pharos_engine.deform_modes import register_material, list_materials, MaterialConfig, unregister_material
         register_material("_survey_test_mat", MaterialConfig())
         names = list_materials()
         assert "_survey_test_mat" in names
@@ -206,7 +206,7 @@ class TestCustomMaterialRegistry:
 
 class TestZoneConfig:
     def test_default_values(self):
-        from slappyengine.deform_modes import ZoneConfig
+        from pharos_engine.deform_modes import ZoneConfig
         zc = ZoneConfig(name="bumper")
         assert zc.name == "bumper"
         assert zc.integrity_threshold == pytest.approx(0.0)
@@ -215,7 +215,7 @@ class TestZoneConfig:
         assert zc.on_destroy_event == "Deform.ZoneDestroyed"
 
     def test_custom_zone(self):
-        from slappyengine.deform_modes import ZoneConfig, MaterialPreset
+        from pharos_engine.deform_modes import ZoneConfig, MaterialPreset
         zc = ZoneConfig(
             name="windshield",
             integrity_threshold=0.3,

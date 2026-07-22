@@ -8,14 +8,14 @@ Covers the five new action ids added by the 2026-07-05 CC1 sprint tick
   selection slots.
 * ``spawn.repeat_last`` — re-invoke the ``(card_id, spec)`` tuple that
   the last ``_on_spawn`` dispatch recorded via
-  :func:`~slappyengine.actions.spawn_history_actions.record_last_spawn`.
+  :func:`~pharos_engine.actions.spawn_history_actions.record_last_spawn`.
 * ``view.toggle_grid`` — flip ``shell._grid_visible``.
 * ``view.toggle_gizmos`` — flip ``shell._gizmos_visible``.
 * ``content.copy_asset_path`` — route through the content browser's
   ``copy_path`` (or the pyperclip / tkinter fallback chain) so the
   asset path lands on the OS clipboard.
 
-Every test dispatches through :class:`~slappyengine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
 so the wire-up (``action_id`` -> Python fallback) is exercised end-to-end.
 No DPG context is required — the fixtures use :class:`SimpleNamespace`
 stand-ins for the shell / scene / browser handles.
@@ -28,7 +28,7 @@ from typing import Any
 
 import pytest
 
-from slappyengine.tool_router import (
+from pharos_engine.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -62,7 +62,7 @@ class _FakeEntity:
 class _FakeScene:
     """Scene that exposes both ``entities`` and ``find_by_name``.
 
-    Mirrors :class:`slappyengine.scene.Scene` closely enough that the
+    Mirrors :class:`pharos_engine.scene.Scene` closely enough that the
     action helpers exercise their preferred code paths (``find_by_name``
     then walk fallback).
     """
@@ -251,7 +251,7 @@ class TestRepeatLastSpawn:
         assert result["spec"]["position"] == [1.5, 2.0, 3.0]
 
     def test_record_last_spawn_helper(self) -> None:
-        from slappyengine.actions.spawn_history_actions import (
+        from pharos_engine.actions.spawn_history_actions import (
             record_last_spawn,
         )
         shell = _shell()
@@ -431,13 +431,13 @@ class TestCtxGuards:
     def test_none_ctx_raises(self, action_id: str) -> None:
         # ToolRouter.dispatch converts ``None`` to ``{}`` — call the
         # helper directly to reach the guard.
-        from slappyengine.actions.edit_by_name_actions import select_by_name
-        from slappyengine.actions.spawn_history_actions import repeat_last
-        from slappyengine.actions.view_toggle_actions import (
+        from pharos_engine.actions.edit_by_name_actions import select_by_name
+        from pharos_engine.actions.spawn_history_actions import repeat_last
+        from pharos_engine.actions.view_toggle_actions import (
             toggle_grid,
             toggle_gizmos,
         )
-        from slappyengine.actions.content_shell_actions import copy_asset_path
+        from pharos_engine.actions.content_shell_actions import copy_asset_path
 
         mapping = {
             "edit.select_by_name": select_by_name,
@@ -460,13 +460,13 @@ class TestCtxGuards:
         ],
     )
     def test_list_ctx_raises(self, action_id: str) -> None:
-        from slappyengine.actions.edit_by_name_actions import select_by_name
-        from slappyengine.actions.spawn_history_actions import repeat_last
-        from slappyengine.actions.view_toggle_actions import (
+        from pharos_engine.actions.edit_by_name_actions import select_by_name
+        from pharos_engine.actions.spawn_history_actions import repeat_last
+        from pharos_engine.actions.view_toggle_actions import (
             toggle_grid,
             toggle_gizmos,
         )
-        from slappyengine.actions.content_shell_actions import copy_asset_path
+        from pharos_engine.actions.content_shell_actions import copy_asset_path
 
         mapping = {
             "edit.select_by_name": select_by_name,

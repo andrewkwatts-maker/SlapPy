@@ -11,7 +11,7 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.physics.particles import ParticleSystem
+from pharos_engine.physics.particles import ParticleSystem
 
 try:
     from PIL import Image

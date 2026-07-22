@@ -1,9 +1,9 @@
-"""Tests for ``slappyengine.math`` — formula sandbox, curves, vectors.
+"""Tests for ``pharos_engine.math`` — formula sandbox, curves, vectors.
 
 The package is the engine's Arithma-roundtrip surface; in this test env
 Arithma is *not* installed (it's an optional `[math]` extra), so the
 sandbox path is the default. Where the Arithma-installed branch needs
-coverage we monkeypatch ``slappyengine.math._HAS_ARITHMA`` directly.
+coverage we monkeypatch ``pharos_engine.math._HAS_ARITHMA`` directly.
 """
 from __future__ import annotations
 
@@ -13,8 +13,8 @@ import sys
 
 import pytest
 
-import slappyengine.math as semath
-from slappyengine.math import (
+import pharos_engine.math as semath
+from pharos_engine.math import (
     AnimationCurve,
     Bezier,
     Catmull,
@@ -36,7 +36,7 @@ from slappyengine.math import (
 
 
 def test_module_imports_cleanly() -> None:
-    # Bare ``from slappyengine.math import ...`` already succeeded at the
+    # Bare ``from pharos_engine.math import ...`` already succeeded at the
     # top of the file. This test pins the public surface.
     assert isinstance(semath._HAS_ARITHMA, bool)
     # In this CI env arithma is absent.
@@ -47,11 +47,11 @@ def test_module_imports_cleanly() -> None:
 
 
 def test_subpackage_resolvable_from_top_level() -> None:
-    import slappyengine
-    mod = slappyengine.math
+    import pharos_engine
+    mod = pharos_engine.math
     assert mod is semath
     # And the lazy resolver caches it.
-    assert slappyengine.math is mod
+    assert pharos_engine.math is mod
 
 
 def test_all_exports_present() -> None:

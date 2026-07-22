@@ -6,7 +6,7 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import (
+from pharos_engine.dynamics import (
     BoneSpec,
     RagdollSpec,
     RopeSpec,

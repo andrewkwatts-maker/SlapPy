@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.residency — API Reference
+# pharos_engine.residency — API Reference
 
 > Hand-written reference for the asset-streaming + on-disk-format
 > subpackage. Covers the GPU/RAM/DISK three-tier residency manager,
@@ -8,7 +8,7 @@
 > saves.
 
 ```python
-from slappyengine.residency import (
+from pharos_engine.residency import (
     ResidencyManager,
     compress_array, decompress_array,
     compress_raw, decompress_raw,

@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.ui.widgets — API Reference
+# pharos_engine.ui.widgets — API Reference
 
 > Hand-written reference for the notebook-themed Dear PyGui widget primitives.
 > These widgets are a theme-agnostic structural layer above DPG; concrete
@@ -10,7 +10,7 @@
 
 ## Overview
 
-The `slappyengine.ui.widgets` subpackage layers a *notebook flavour* on
+The `pharos_engine.ui.widgets` subpackage layers a *notebook flavour* on
 top of Dear PyGui without binding to any one visual theme.  Every widget
 queries the active [`NotebookTheme`](#notebooktheme) at construction time
 for its palette, nine-slice path, sticker glyph, and ASCII fallback.
@@ -32,7 +32,7 @@ installed.
 ## Public surface
 
 ```python
-from slappyengine.ui.widgets import (
+from pharos_engine.ui.widgets import (
     # Theme registry
     NotebookTheme,
     get_active_theme,
@@ -62,7 +62,7 @@ in `__all__`.
 
 ### `NotebookTheme`
 
-_dataclass — defined in `slappyengine.ui.widgets.notebook_theme`_
+_dataclass — defined in `pharos_engine.ui.widgets.notebook_theme`_
 
 The asset bundle every notebook widget queries at construction time.
 
@@ -113,7 +113,7 @@ poison the registry.
 
 ### `StickerButton`
 
-_class — defined in `slappyengine.ui.widgets.sticker_button`_
+_class — defined in `pharos_engine.ui.widgets.sticker_button`_
 
 Sticker-style button.  Renders consistently as a peeled sticker via
 `palette["accent"]` + `nine_slice["sticker_button"]` + a tilted DPG
@@ -136,7 +136,7 @@ Read-only properties: `accent_color`, `sticker_path`, `fallback_icon`,
 
 ### `WashiPanel`
 
-_class — defined in `slappyengine.ui.widgets.washi_panel`_
+_class — defined in `pharos_engine.ui.widgets.washi_panel`_
 
 Bordered panel with a washi-tape strip above the title.
 
@@ -156,7 +156,7 @@ single broken builder doesn't break its siblings.
 
 ### `NotebookTab`
 
-_class — defined in `slappyengine.ui.widgets.notebook_tab`_
+_class — defined in `pharos_engine.ui.widgets.notebook_tab`_
 
 Tab with a torn-paper edge.  Prefers the real DPG `tab` primitive when
 the parent is a `tab_bar`; degrades to a labelled `child_window` for
@@ -171,7 +171,7 @@ NotebookTab(
 
 ### `HighlighterSlider`
 
-_class — defined in `slappyengine.ui.widgets.highlighter_slider`_
+_class — defined in `pharos_engine.ui.widgets.highlighter_slider`_
 
 Float slider rendered as a highlighter strip.  Clamps its initial value
 to `[min, max]` on construction.
@@ -190,7 +190,7 @@ Programmatic update: `set_value(v)` re-clamps and fires the callback.
 
 ### `HeartCheckbox`
 
-_class — defined in `slappyengine.ui.widgets.heart_checkbox`_
+_class — defined in `pharos_engine.ui.widgets.heart_checkbox`_
 
 Boolean checkbox styled as a heart — fills when checked.
 
@@ -207,7 +207,7 @@ slider's pattern.
 
 ### `DoodleSeparator`
 
-_class — defined in `slappyengine.ui.widgets.doodle_separator`_
+_class — defined in `pharos_engine.ui.widgets.doodle_separator`_
 
 Decorative horizontal divider.
 
@@ -240,17 +240,17 @@ List active sticker handles, optionally filtered by parent tag.
 
 ## Inner modules
 
-- `slappyengine.ui.widgets.notebook_theme` — `NotebookTheme`, the
+- `pharos_engine.ui.widgets.notebook_theme` — `NotebookTheme`, the
   registry, the fallback palette.
-- `slappyengine.ui.widgets._dpg_base` — `_NotebookWidget` base class
+- `pharos_engine.ui.widgets._dpg_base` — `_NotebookWidget` base class
   (theme snapshot + build / destroy lifecycle).
-- `slappyengine.ui.widgets.sticker_button` — `StickerButton`.
-- `slappyengine.ui.widgets.washi_panel` — `WashiPanel`.
-- `slappyengine.ui.widgets.notebook_tab` — `NotebookTab`.
-- `slappyengine.ui.widgets.highlighter_slider` — `HighlighterSlider`.
-- `slappyengine.ui.widgets.heart_checkbox` — `HeartCheckbox`.
-- `slappyengine.ui.widgets.doodle_separator` — `DoodleSeparator`.
-- `slappyengine.ui.widgets.sticker_corner` —
+- `pharos_engine.ui.widgets.sticker_button` — `StickerButton`.
+- `pharos_engine.ui.widgets.washi_panel` — `WashiPanel`.
+- `pharos_engine.ui.widgets.notebook_tab` — `NotebookTab`.
+- `pharos_engine.ui.widgets.highlighter_slider` — `HighlighterSlider`.
+- `pharos_engine.ui.widgets.heart_checkbox` — `HeartCheckbox`.
+- `pharos_engine.ui.widgets.doodle_separator` — `DoodleSeparator`.
+- `pharos_engine.ui.widgets.sticker_corner` —
   `add_sticker_corner` / `remove_sticker_corner` /
   `list_sticker_corners`.
 
@@ -261,7 +261,7 @@ List active sticker handles, optionally filtered by parent tag.
   in headless code paths.  This keeps the package importable on CI
   runners without the `[editor]` extra.
 - **Validation.** Every constructor routes its arguments through the
-  shared `slappyengine._validation` helpers (`validate_non_empty_str`,
+  shared `pharos_engine._validation` helpers (`validate_non_empty_str`,
   `validate_callable`, `validate_bool`, `validate_finite_float`, …).
   Bad inputs raise `TypeError` / `ValueError` with a clear `{fn}: {name}
   ...` prefix.

@@ -1,7 +1,7 @@
 """hello_positional_audio — 3D positional audio (LL4) showcase.
 
 NN5 sprint deliverable (2026-07-06): showcase the newly landed
-:mod:`slappyengine.audio_3d` module — the LL4 landing that added
+:mod:`pharos_engine.audio_3d` module — the LL4 landing that added
 :class:`AudioListener`, :class:`Audio3DSource`, :class:`SoundBank`, and
 :class:`Audio3DEngine` with equal-power stereo pan + doppler pitch
 shift.
@@ -91,12 +91,12 @@ def _headless_config() -> Any:
     """Build a headless :class:`AppConfig`.
 
     Nothing about the audio pipeline needs a window, but we launch via
-    :func:`slappyengine.launch` for parity with the ``hello_render``
+    :func:`pharos_engine.launch` for parity with the ``hello_render``
     demos — so we still hand a stub config in.
     """
-    import slappyengine
+    import pharos_engine
 
-    return slappyengine.AppConfig(
+    return pharos_engine.AppConfig(
         window_title="hello_positional_audio",
         window_size=(320, 240),
         enable_gpu=False,
@@ -117,7 +117,7 @@ def _orbit_position(
     *in front* of the listener (``+Z``); angle ``π/2`` swings the source
     to ``+X`` (which is the world-*left* channel given the listener's
     default ``forward=+Z`` / ``up=+Y`` — see
-    :func:`slappyengine.audio_3d.stereo_pan`).
+    :func:`pharos_engine.audio_3d.stereo_pan`).
     """
     return (a * math.sin(angle), 0.0, b * math.cos(angle))
 
@@ -130,7 +130,7 @@ def _orbit_velocity(
     ``d/dt (a*sin θ, 0, b*cos θ) = (a*ω*cos θ, 0, -b*ω*sin θ)``.
 
     With ``a ≠ b`` this velocity is **not** perpendicular to the radial
-    direction, so :func:`slappyengine.audio_3d.doppler_shift` produces
+    direction, so :func:`pharos_engine.audio_3d.doppler_shift` produces
     a non-trivial pitch multiplier at every step of the orbit.
     """
     return (
@@ -188,8 +188,8 @@ def main(
     if dt <= 0:
         raise ValueError(f"dt must be > 0 (got {dt})")
 
-    import slappyengine
-    from slappyengine.audio_3d import (
+    import pharos_engine
+    from pharos_engine.audio_3d import (
         Audio3DEngine,
         Audio3DSource,
         AudioListener,
@@ -287,7 +287,7 @@ def main(
         state["frame"] = frame + 1
 
     # ---- Launch via the same lambda pattern as hello_render.minimal -----
-    slappyengine.launch(
+    pharos_engine.launch(
         on_begin=lambda app: None,
         on_tick=_tick,
         on_end=lambda app: None,

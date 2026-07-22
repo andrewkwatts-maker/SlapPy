@@ -10,18 +10,18 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     FrontierConfig,
     FrontierSolver,
     PhysicsWorld,
     make_rect_silhouette,
 )
-from slappyengine.physics.frontier import (
+from pharos_engine.physics.frontier import (
     _CH_DAMAGE,
     _CH_VX,
     _CH_VY,
 )
-from slappyengine.physics.hull import NO_CELL_GRID
+from pharos_engine.physics.hull import NO_CELL_GRID
 
 
 # --- helpers ----------------------------------------------------------------
@@ -264,7 +264,7 @@ def test_solver_skips_t0_hulls():
     """A hull with NO_CELL_GRID gets disagreement 0 and is never subdivided."""
     w = _world()
     # T0 body has no cell grid by construction.
-    from slappyengine.physics import TIER_T0
+    from pharos_engine.physics import TIER_T0
     sil = make_rect_silhouette(32, 32)
     body = w.create_body(sil, "iron", tier=TIER_T0)
     hid = body.root_hull_id

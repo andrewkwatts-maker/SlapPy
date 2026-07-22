@@ -25,13 +25,13 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from slappyengine.fluid import (
+from pharos_engine.fluid import (
     FluidRenderConfig,
     FluidRenderer,
     FluidWorld,
     pbf_step,
 )
-from slappyengine.media import save_frames
+from pharos_engine.media import save_frames
 
 
 def _make_pool() -> FluidWorld:

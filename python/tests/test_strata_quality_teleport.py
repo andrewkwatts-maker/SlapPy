@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, call
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _STRATA_ROOT = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Bullet Strata"
 _STRATA_STR = str(_STRATA_ROOT)
@@ -193,7 +193,7 @@ class TestQualityManagerApplyTier:
         budget.allocate_budget.assert_called()
 
     def test_apply_tier_publishes_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         received = []
         h = subscribe("Quality.TierChanged", lambda e: received.append(e))
         qm = self._qm()

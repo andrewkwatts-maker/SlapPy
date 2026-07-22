@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.post_process.bloom import (
+from pharos_engine.post_process.bloom import (
     BloomPass,
     smooth_threshold,
     synth_hdr_strip,

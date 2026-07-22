@@ -24,7 +24,7 @@ _DEMO_PATH = _REPO_ROOT / "SlapPyEngineExamples" / "examples" / "hello_lighting.
 
 
 def _install_engine_stubs(monkeypatch):
-    from slappyengine import engine as engine_mod
+    from pharos_engine import engine as engine_mod
 
     class _StubCanvas:
         def __init__(self, *_, **__):
@@ -86,7 +86,7 @@ def test_hello_lighting_both_layers_attached(demo):
 
 def test_hello_lighting_light_types_are_distinct(demo):
     """bg layer has a DirectionalLight; fg layer has a PointLight."""
-    from slappyengine.lighting import DirectionalLight, PointLight
+    from pharos_engine.lighting import DirectionalLight, PointLight
 
     bg_lights = demo.bg.lighting.lights
     fg_lights = demo.fg.lighting.lights

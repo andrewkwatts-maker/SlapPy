@@ -40,13 +40,13 @@ def _load_demo():
 
     pytest.importorskip("yaml")
     try:
-        import slappyengine  # noqa: F401
-        import slappyengine.asset  # noqa: F401
-        import slappyengine.event_bus  # noqa: F401
-        import slappyengine.layer  # noqa: F401
-        import slappyengine.residency.manager  # noqa: F401
+        import pharos_engine  # noqa: F401
+        import pharos_engine.asset  # noqa: F401
+        import pharos_engine.event_bus  # noqa: F401
+        import pharos_engine.layer  # noqa: F401
+        import pharos_engine.residency.manager  # noqa: F401
     except Exception as exc:  # pragma: no cover — defensive
-        pytest.skip(f"slappyengine subsystems unavailable: {exc}")
+        pytest.skip(f"pharos_engine subsystems unavailable: {exc}")
 
     spec = importlib.util.spec_from_file_location(
         "hello_downstream_pattern_demo", _DEMO_PATH

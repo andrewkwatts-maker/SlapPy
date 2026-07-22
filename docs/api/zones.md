@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.zones — API Reference
+# pharos_engine.zones — API Reference
 
 > Auto-generated. Re-run `python scripts/gen_subpackage_api_docs.py`.
 > Do not hand-edit — every entry below comes from runtime introspection
@@ -8,13 +8,13 @@
 
 ## Overview
 
-slappyengine.zones — Generic zone primitives.
+pharos_engine.zones — Generic zone primitives.
 
 ## Classes
 
 ### `RectZone`
 
-_dataclass — defined in `slappyengine.zones`_
+_dataclass — defined in `pharos_engine.zones`_
 
 An axis-aligned rectangular zone with optional enter/exit callbacks.
 
@@ -46,7 +46,7 @@ RectZone(name: 'str', x: 'float', y: 'float', w: 'float', h: 'float', material: 
 
 ### `ThresholdZone`
 
-_dataclass — defined in `slappyengine.zones`_
+_dataclass — defined in `pharos_engine.zones`_
 
 A :class:`RectZone` with a scalar measurement + threshold event.
 
@@ -83,7 +83,7 @@ ThresholdZone(name: 'str', x: 'float', y: 'float', w: 'float', h: 'float', mater
 
 ### `ZoneManager`
 
-_class — defined in `slappyengine.zones`_
+_class — defined in `pharos_engine.zones`_
 
 Tracks a collection of zones and dispatches lifecycle events.
 

@@ -19,8 +19,8 @@ Output:
 """
 from __future__ import annotations
 
-from slappyengine.dynamics import make_humanoid, place_feet_on_terrain
-from slappyengine.studio import humanoid_stage, output_path, record
+from pharos_engine.dynamics import make_humanoid, place_feet_on_terrain
+from pharos_engine.studio import humanoid_stage, output_path, record
 
 
 def main(frames: int = 60) -> None:

@@ -16,10 +16,10 @@ from dataclasses import replace
 
 import pytest
 
-from slappyengine.deform_modes import (
+from pharos_engine.deform_modes import (
     cell_material_for,
 )
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
@@ -248,7 +248,7 @@ def test_stiction_zone_smaller_than_kinetic():
     _make_ground(w_b, material="stone")
     # Inject our flat-cone material via a registered name so create_body
     # picks it up.
-    from slappyengine.deform_modes import MaterialConfig, register_material
+    from pharos_engine.deform_modes import MaterialConfig, register_material
     register_material("steel_flat", MaterialConfig(cell=flat_mat))
     try:
         ball_b = _make_ball(w_b, material="steel_flat", position=(0.0, 150.0))
@@ -290,7 +290,7 @@ def test_stiction_zone_smaller_than_kinetic():
             f"vx_stiction={vx_a:.5f}, vx_flat={vx_b:.5f}"
         )
     finally:
-        from slappyengine.deform_modes import unregister_material
+        from pharos_engine.deform_modes import unregister_material
         unregister_material("steel_flat")
 
 
@@ -323,7 +323,7 @@ def test_per_material_friction_in_registry():
     assert water.kinetic_friction_coefficient == pytest.approx(0.0, abs=1e-6)
 
     # Universal invariant: μ_s ≥ μ_k for every named material.
-    from slappyengine.deform_modes import MATERIAL_CONFIGS
+    from pharos_engine.deform_modes import MATERIAL_CONFIGS
     for preset, cfg in MATERIAL_CONFIGS.items():
         if cfg.cell is None:
             continue

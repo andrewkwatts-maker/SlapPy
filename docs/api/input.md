@@ -1,7 +1,7 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.input — API Reference
+# pharos_engine.input — API Reference
 
-> Hand-written reference for `slappyengine.input` — keyboard, mouse,
+> Hand-written reference for `pharos_engine.input` — keyboard, mouse,
 > and gamepad input for the runtime. Two classes: a low-level
 > per-frame `InputManager` and a higher-level per-player `ActionMap`.
 > Sibling references: [`ui_editor.md`](ui_editor.md) is the notebook
@@ -11,7 +11,7 @@
 
 ## Overview
 
-`slappyengine.input` covers the two input questions the engine core
+`pharos_engine.input` covers the two input questions the engine core
 needs to answer on every frame:
 
 1. **"Is a specific physical key / button held right now?"** —
@@ -29,7 +29,7 @@ needs to answer on every frame:
    boolean actions into a signed float for movement.
 
 Both classes route their public arguments through
-`slappyengine.input._validation` and `_manager_validation`, so bad
+`pharos_engine.input._validation` and `_manager_validation`, so bad
 input (empty key name, negative gamepad id, non-string action) fails
 loudly with a canonical `TypeError` / `ValueError` at the call site
 rather than silently no-op-ing inside the state machine.
@@ -49,7 +49,7 @@ with no guard.
 ## Public surface
 
 ```python
-from slappyengine.input import ActionMap, InputManager
+from pharos_engine.input import ActionMap, InputManager
 ```
 
 * :class:`InputManager` — per-frame held / just-pressed / just-released
@@ -63,7 +63,7 @@ from slappyengine.input import ActionMap, InputManager
 
 ### `InputManager`
 
-_class — defined in `slappyengine.input._manager`_
+_class — defined in `pharos_engine.input._manager`_
 
 Low-level per-frame input state. The engine registers `InputManager`
 against the canvas in `Engine._setup_gpu()` via `add_event_handler`,
@@ -99,7 +99,7 @@ returns `bytes` and would silently never match the state sets).
 
 ### `ActionMap`
 
-_dataclass — defined in `slappyengine.input.action_map`_
+_dataclass — defined in `pharos_engine.input.action_map`_
 
 Per-player mapping from action names (`"fire"`, `"move_up"`, …) to
 canonical key names. The engine calls the internal `_press(key)` /
@@ -153,7 +153,7 @@ first entry as the canonical bind.
 ## Usage
 
 ```python
-from slappyengine.input import ActionMap, InputManager
+from pharos_engine.input import ActionMap, InputManager
 
 # --- Low-level: per-frame key state ---------------------------------
 im = InputManager()
@@ -189,8 +189,8 @@ assert p2.actions_for_key("space") == ["jump"]
 
 ## Skip the wrapper
 
-`slappyengine.input` is Python-only. Grep of
-`slappyengine._core_facade.RUST_MODULE_MAP` shows **no** `input` entry —
+`pharos_engine.input` is Python-only. Grep of
+`pharos_engine._core_facade.RUST_MODULE_MAP` shows **no** `input` entry —
 the per-frame hot path is a couple of `set` operations plus a dict
 lookup per key event, already O(1). Rewriting in Rust would move no
 measurable frame-time needle even on gamepad-heavy scenes.

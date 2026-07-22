@@ -20,7 +20,7 @@ you are ready to touch engine internals.
 - **Rust toolchain** (stable) only if you plan to build from source. The
   wheel on PyPI already ships the compiled `_core` extension.
 - *(Optional)* [`arithma>=2.0.2`](https://pypi.org/project/arithma/) — the
-  symbolic-math sibling library. `slappyengine.math.Formula` transparently
+  symbolic-math sibling library. `pharos_engine.math.Formula` transparently
   upgrades to Arithma's Rust-backed `Expression` when installed;
   otherwise it stays in a locked-down `math` sandbox.
 
@@ -33,13 +33,13 @@ notebook shell + pywebview + Arithma.
 
 ```bash
 # Core engine only (headless-safe subpackages + Rust core)
-pip install slappy-engine==0.3.0b0
+pip install pharos-engine==0.3.0b0
 
 # Recommended for new contributors — brings the notebook editor + Arithma
-pip install "slappy-engine[editor]"
+pip install "pharos-engine[editor]"
 
 # Full contributor rig
-pip install "slappy-engine[editor,audio,dev,math]"
+pip install "pharos-engine[editor,audio,dev,math]"
 ```
 
 **Windows note:** if `pip` warns about missing wheels, upgrade pip first
@@ -69,7 +69,7 @@ python SlapPyEngineExamples/examples/hello_ragdoll.py --no-gif
 python SlapPyEngineExamples/examples/hello_ragdoll.py --frames 120 --out ragdoll.gif
 ```
 
-Every demo uses the shared `slappyengine.examples_common` argparse helper,
+Every demo uses the shared `pharos_engine.examples_common` argparse helper,
 so `--frames` / `--out` / `--no-gif` / `--render` behave the same across
 the 47-demo gallery. If you installed via `pip`, download the demo
 scripts from the [SlapPyEngineExamples folder on GitHub](https://github.com/andrewkwatts-maker/SlapPyEngine/tree/master/SlapPyEngineExamples/examples)
@@ -84,7 +84,7 @@ Two entry points, pick whichever suits you:
 **A. From Python (recommended for first-timers):**
 
 ```python
-import slappyengine as se
+import pharos_engine as se
 
 engine = se.Engine()          # loads config/engine.yml defaults
 engine.run_editor()            # opens the DearPyGui notebook shell
@@ -102,7 +102,7 @@ This variant prepopulates a demo scene (terrain, material map, animation
 graph) so every panel has content to show.
 
 On the first launch the editor calls `UserOverrideLoader.ensure_scaffolded()`
-and creates `~/.slappyengine/` on disk — you will use those folders in
+and creates `~/.pharos_engine/` on disk — you will use those folders in
 the next three sections.
 
 ---
@@ -116,11 +116,11 @@ theme:
 
 ```bash
 # Baked themes are copied here on first editor launch.
-ls ~/.slappyengine/themes/
+ls ~/.pharos_engine/themes/
 # → cozy_diary.theme.yaml  teengirl_notebook.theme.yaml  …
 
-cp ~/.slappyengine/themes/cozy_diary.theme.yaml \
-   ~/.slappyengine/themes/my_diary.theme.yaml
+cp ~/.pharos_engine/themes/cozy_diary.theme.yaml \
+   ~/.pharos_engine/themes/my_diary.theme.yaml
 ```
 
 Edit `my_diary.theme.yaml` — palette colours, font, page-lining shader
@@ -128,18 +128,18 @@ id, edge-stroke id, washi-tape id are all top-level YAML keys.
 References:
 
 - 15 page-lining shaders (`PAGE_LININGS` in
-  `python/slappyengine/ui/theme/page_linings/library.py`) —
+  `python/pharos_engine/ui/theme/page_linings/library.py`) —
   ruled_paper, dot_grid, graph_grid, isometric_grid, hex_grid, music_staff,
   blank_cream, parchment_aged, kraft_paper, watercolor_paper,
   graph_engineering, polka_dot_soft, star_scatter, linen_woven,
   notebook_college.
 - 15 edge-stroke shaders (`EDGE_STROKES` in
-  `python/slappyengine/ui/theme/edge_strokes/library.py`) — ballpoint,
+  `python/pharos_engine/ui/theme/edge_strokes/library.py`) — ballpoint,
   gel, pencil_2b, pencil_hb, marker, highlighter, brush_watercolor,
   chalk, charcoal, crayon, ink_wash, sharpie, colored_pencil,
   fountain_pen, quill.
 - 23 washi-tape shaders (`WASHI_TAPES` in
-  `python/slappyengine/ui/theme/washi_tape/library.py`) — 15 static
+  `python/pharos_engine/ui/theme/washi_tape/library.py`) — 15 static
   patterns plus 8 animated (heart_pulse, sparkle_shimmer,
   rainbow_flow, marching_dots, wave_shift, dashed_scroll, stars_twinkle,
   music_notes_flow).
@@ -150,7 +150,7 @@ theme appears in the theme-switcher dropdown.
 Programmatic access:
 
 ```python
-from slappyengine.ui.theme.user_themes import UserThemeStore
+from pharos_engine.ui.theme.user_themes import UserThemeStore
 
 store = UserThemeStore()
 store.bake_defaults()          # idempotent copy of baked themes
@@ -161,24 +161,24 @@ print(store.list_names())      # includes "my_diary" once saved
 
 ## 6. First custom hotkey
 
-The `~/.slappyengine/ui/hotkeys/` folder holds both YAML bindings and a
+The `~/.pharos_engine/ui/hotkeys/` folder holds both YAML bindings and a
 sibling `commands.py` for `user.*` command handlers.
 
-**`~/.slappyengine/ui/hotkeys/my_hotkeys.yaml`:**
+**`~/.pharos_engine/ui/hotkeys/my_hotkeys.yaml`:**
 
 ```yaml
 ctrl+shift+m: user.mark_bookmark
 ctrl+alt+p:   editor.profiler_toggle   # rebind an existing built-in
 ```
 
-**`~/.slappyengine/ui/hotkeys/commands.py`:**
+**`~/.pharos_engine/ui/hotkeys/commands.py`:**
 
 ```python
 """Callables invoked by user.* command ids."""
 
 
 def mark_bookmark() -> None:
-    from slappyengine.ui.editor.editor_undo import global_stack
+    from pharos_engine.ui.editor.editor_undo import global_stack
     global_stack().push_bookmark("user_bookmark")
 ```
 
@@ -191,7 +191,7 @@ Rules:
 - Keys are case-normalised — `Ctrl+Shift+M`, `ctrl+shift+m`, and
   `SHIFT+ctrl+m` all resolve to the same binding.
 - The 27 built-in bindings live frozen in
-  `python/slappyengine/ui/editor/notebook_hotkeys.py::_BINDINGS_FROZEN`.
+  `python/pharos_engine/ui/editor/notebook_hotkeys.py::_BINDINGS_FROZEN`.
 
 For the full customisation contract, see
 [`docs/user_customization_2026_06_07.md`](user_customization_2026_06_07.md).
@@ -202,15 +202,15 @@ For the full customisation contract, see
 
 The prefab library ships six baked entries out of the box — `ball`,
 `bridge`, `chain`, `crate`, `ragdoll`, `windmill` — under
-`python/slappyengine/prefabs/baked/`. On first use, `PrefabLibrary`
-copies them into `~/.slappyengine/prefabs/` so you can edit them
+`python/pharos_engine/prefabs/baked/`. On first use, `PrefabLibrary`
+copies them into `~/.pharos_engine/prefabs/` so you can edit them
 without touching the installed wheel.
 
 Programmatic drop into a scene:
 
 ```python
-from slappyengine.prefabs import PrefabLibrary
-from slappyengine import studio
+from pharos_engine.prefabs import PrefabLibrary
+from pharos_engine import studio
 
 library = PrefabLibrary()
 library.bake_defaults()                    # copy baked → user dir
@@ -231,8 +231,8 @@ Editor drop:
 Author a new prefab by copying one of the YAML files:
 
 ```bash
-cp ~/.slappyengine/prefabs/chain.prefab.yaml \
-   ~/.slappyengine/prefabs/my_chain.prefab.yaml
+cp ~/.pharos_engine/prefabs/chain.prefab.yaml \
+   ~/.pharos_engine/prefabs/my_chain.prefab.yaml
 ```
 
 Edit the top-level `name`, `category`, and `spec` keys; the library
@@ -244,14 +244,14 @@ picks it up on next `load_from_dir` call.
 
 | Symptom | Fix |
 |---|---|
-| **`ImportError: slappyengine._core`** — the Rust extension is missing. | You are on a source checkout; run `maturin develop` (set `$env:PYO3_PYTHON` on Windows if the wrong interpreter is picked). Pure-Python fallbacks exist for every critical path, but performance drops sharply. |
-| **`dearpygui not found` when calling `engine.run_editor()`** | Install the editor extra: `pip install "slappy-engine[editor]"`. `dearpygui`, `pywebview`, and `arithma` land together. |
+| **`ImportError: pharos_engine._core`** — the Rust extension is missing. | You are on a source checkout; run `maturin develop` (set `$env:PYO3_PYTHON` on Windows if the wrong interpreter is picked). Pure-Python fallbacks exist for every critical path, but performance drops sharply. |
+| **`dearpygui not found` when calling `engine.run_editor()`** | Install the editor extra: `pip install "pharos-engine[editor]"`. `dearpygui`, `pywebview`, and `arithma` land together. |
 | **Editor boots but the window is dark grey with no panels.** | The Nova3D fallback layout is active. Press `Ctrl+0` (Reset Layout) or pick `View → Layout Presets → Default`. |
 | **A hotkey doesn't fire.** | Confirm the key string is lower-case in the YAML and the command id exists in `tool_router.REGISTRY` (or in your `commands.py` if `user.*`). Failures are logged via `logging.WARNING` — inspect the console. |
 | **A custom theme does not appear.** | Check the filename ends in `.theme.yaml` and the top-level `id:` field is unique. `UserThemeStore.list_names()` returns everything the store can see. |
 | **`hello_*` demo runs but no GIF is written.** | Pillow needs to be installed (`pip install Pillow>=10`). Pass `--no-gif` to run headless only. |
 | **`wgpu` fails to initialise on Windows.** | Update your GPU driver, or force a backend via `config/engine.yml → rendering.backend: "vulkan"` (or `"dx12"`). |
-| **Autosave keeps prompting me on boot.** | Delete stale snapshots in `~/.slappyengine/autosave/` or disable the timer via `AutosaveManager(enabled=False)` in your own boot script. |
+| **Autosave keeps prompting me on boot.** | Delete stale snapshots in `~/.pharos_engine/autosave/` or disable the timer via `AutosaveManager(enabled=False)` in your own boot script. |
 
 ---
 
@@ -271,7 +271,7 @@ picks it up on next `load_from_dir` call.
 - [`docs/demo_gallery.md`](demo_gallery.md) — 6 curated flagship demos
   with reproducible commands.
 - [`docs/studio_quickstart.md`](studio_quickstart.md) — the 5-minute
-  tour of the `slappyengine.studio` scaffolding helpers.
+  tour of the `pharos_engine.studio` scaffolding helpers.
 - [`docs/notebook_editor_manual_2026_06_03.md`](notebook_editor_manual_2026_06_03.md)
   — panel-by-panel tour of the diary shell.
 - [`docs/CONTRIBUTING.md`](CONTRIBUTING.md) — the hardening pattern,

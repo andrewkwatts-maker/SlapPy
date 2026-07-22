@@ -1,4 +1,4 @@
-"""Tests for the high-level :mod:`slappyengine.studio` helpers.
+"""Tests for the high-level :mod:`pharos_engine.studio` helpers.
 
 The studio module is sugar over softbody/fluid/render — these tests verify
 the helpers wire things up correctly without trying to re-test the underlying
@@ -11,8 +11,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.softbody import SoftBodyWorld, make_lattice_body
-from slappyengine.studio import (
+from pharos_engine.softbody import SoftBodyWorld, make_lattice_body
+from pharos_engine.studio import (
     Stage,
     anchor,
     centroid,

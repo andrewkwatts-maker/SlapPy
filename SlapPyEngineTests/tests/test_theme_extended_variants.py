@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 
 try:
-    from slappyengine.ui.theme import (
+    from pharos_engine.ui.theme import (
         Color,
         Font,
         NineSlice,
@@ -24,9 +24,9 @@ try:
         get_active_theme,
         list_registered_themes,
     )
-    from slappyengine.ui.theme import _reset_registry_for_tests
-    from slappyengine.ui.theme.svg_icon import clear_cache as clear_svg_cache
-    from slappyengine.ui.theme.themes import (
+    from pharos_engine.ui.theme import _reset_registry_for_tests
+    from pharos_engine.ui.theme.svg_icon import clear_cache as clear_svg_cache
+    from pharos_engine.ui.theme.themes import (
         COTTAGECORE_GARDEN,
         KAWAII_PLANNER,
         SCRAPBOOK_SUMMER,
@@ -35,7 +35,7 @@ try:
     )
 except Exception as e:  # pragma: no cover - skip if subpackage missing
     pytest.skip(
-        f"slappyengine.ui.theme.themes extended variants not importable: {e}",
+        f"pharos_engine.ui.theme.themes extended variants not importable: {e}",
         allow_module_level=True,
     )
 

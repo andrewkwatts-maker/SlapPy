@@ -8,7 +8,7 @@ contract that :mod:`hello_hud` relies on.
 Coverage
 --------
 
-* :func:`slappyengine.hud_bridge.default_game_hud_widgets` returns the
+* :func:`pharos_engine.hud_bridge.default_game_hud_widgets` returns the
   documented 5-widget lineup (HealthBar / StaminaBar / AmmoCounter /
   Compass / Crosshair).
 * :meth:`App.enable_hud` mounts that lineup by default and exposes the
@@ -49,9 +49,9 @@ def demo():
 
 def _headless_app():
     """Boot an :class:`App` with the same headless config the demo uses."""
-    import slappyengine
+    import pharos_engine
 
-    config = slappyengine.AppConfig(
+    config = pharos_engine.AppConfig(
         window_title="hello_hud_smoke",
         window_size=(1280, 720),
         enable_gpu=False,
@@ -61,7 +61,7 @@ def _headless_app():
         enable_audio=False,
         target_fps=60,
     )
-    return slappyengine.App(config=config)
+    return pharos_engine.App(config=config)
 
 
 # ---------------------------------------------------------------------------
@@ -70,7 +70,7 @@ def _headless_app():
 
 
 def test_default_game_hud_widgets_lineup():
-    hud_bridge = pytest.importorskip("slappyengine.hud_bridge")
+    hud_bridge = pytest.importorskip("pharos_engine.hud_bridge")
     widgets = hud_bridge.default_game_hud_widgets()
     assert isinstance(widgets, list)
     # Documented lineup: HealthBar, StaminaBar, AmmoCounter, Compass, Crosshair.
@@ -89,7 +89,7 @@ def test_default_game_hud_widgets_lineup():
 
 
 def test_default_game_hud_widgets_returns_fresh_instances():
-    hud_bridge = pytest.importorskip("slappyengine.hud_bridge")
+    hud_bridge = pytest.importorskip("pharos_engine.hud_bridge")
     a = hud_bridge.default_game_hud_widgets()
     b = hud_bridge.default_game_hud_widgets()
     # No shared identity between calls — spooky-action-at-a-distance guard.
@@ -103,7 +103,7 @@ def test_default_game_hud_widgets_returns_fresh_instances():
 
 
 def test_app_enable_hud_mounts_default_lineup():
-    pytest.importorskip("slappyengine")
+    pytest.importorskip("pharos_engine")
     app = _headless_app()
     overlay = app.enable_hud()
     assert overlay is not None
@@ -122,8 +122,8 @@ def test_app_enable_hud_mounts_default_lineup():
 
 
 def test_app_enable_hud_accepts_custom_widgets():
-    pytest.importorskip("slappyengine")
-    from slappyengine.ui.runtime.hud_kit import HealthBar
+    pytest.importorskip("pharos_engine")
+    from pharos_engine.ui.runtime.hud_kit import HealthBar
 
     app = _headless_app()
     custom = [HealthBar(position=(8.0, 8.0), value=42.0, max_value=100.0, label="HP")]
@@ -141,7 +141,7 @@ def test_app_enable_hud_accepts_custom_widgets():
 
 
 def test_app_enable_hud_is_idempotent():
-    pytest.importorskip("slappyengine")
+    pytest.importorskip("pharos_engine")
     app = _headless_app()
     first = app.enable_hud()
     second = app.enable_hud()
@@ -158,7 +158,7 @@ def test_app_enable_hud_is_idempotent():
 def test_hello_hud_demo_defaults_are_consistent(demo):
     # The demo's HP window should straddle the range enforced by the
     # default HealthBar widget from hud_bridge.
-    hud_bridge = pytest.importorskip("slappyengine.hud_bridge")
+    hud_bridge = pytest.importorskip("pharos_engine.hud_bridge")
     widgets = hud_bridge.default_game_hud_widgets()
     health = next(w for w in widgets if type(w).__name__ == "HealthBar")
 

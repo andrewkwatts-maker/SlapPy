@@ -1,7 +1,7 @@
 """hello_hud — rotating 3D scene with a live game HUD overlay.
 
 MM2 sprint deliverable (2026-07-05): showcase the newly wired
-:func:`slappyengine.hud_bridge.mount_hud` glue by booting an :class:`App`,
+:func:`pharos_engine.hud_bridge.mount_hud` glue by booting an :class:`App`,
 loading a real 3D model, enabling the default game HUD via
 :meth:`App.enable_hud`, then running a 60-frame tick loop that:
 
@@ -20,7 +20,7 @@ Run
     python SlapPyEngineExamples/examples/hello_hud.py
 
 The demo is headless-safe (``AppConfig(enable_gpu=False)``) — the HUD
-plumbs into :class:`slappyengine.hud_bridge._HUDStubRenderer` when the
+plumbs into :class:`pharos_engine.hud_bridge._HUDStubRenderer` when the
 real renderer lacks the ``submit_sprite`` surface, so trace assertions
 still fire in CI.
 
@@ -69,9 +69,9 @@ def _triangle_path() -> str:
 
 def _headless_config() -> Any:
     """Build a headless :class:`AppConfig` sized for a 1280x720 HUD."""
-    import slappyengine
+    import pharos_engine
 
-    return slappyengine.AppConfig(
+    return pharos_engine.AppConfig(
         window_title="hello_hud",
         window_size=(1280, 720),
         enable_gpu=False,
@@ -130,9 +130,9 @@ def main(
         ``health_bar_final``, ``ammo_counter_final``,
         ``compass_final_deg``, ``hud_command_count``, ``trace_path``.
     """
-    import slappyengine
+    import pharos_engine
 
-    app = slappyengine.App(config=_headless_config())
+    app = pharos_engine.App(config=_headless_config())
 
     # 1. Load a real 3D model via HH5.
     model = app.load_model(_triangle_path())
@@ -150,13 +150,13 @@ def main(
 
     # Locate the widgets we want to drive each frame. The default set is
     # ordered [HealthBar, StaminaBar, AmmoCounter, Compass, Crosshair].
-    from slappyengine.ui.runtime.hud_kit import (
+    from pharos_engine.ui.runtime.hud_kit import (
         AmmoCounter,
         Compass,
         HealthBar,
         StaminaBar,
     )
-    from slappyengine.ui.runtime.hud_kit_extra import Crosshair
+    from pharos_engine.ui.runtime.hud_kit_extra import Crosshair
 
     health_bar: HealthBar = next(w for w in widgets if isinstance(w, HealthBar))
     stamina_bar: StaminaBar = next(w for w in widgets if isinstance(w, StaminaBar))

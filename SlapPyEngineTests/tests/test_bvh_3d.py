@@ -1,4 +1,4 @@
-"""Tests for slappyengine.render.bvh_3d — KK1 Nova3D parity Sprint 6.
+"""Tests for pharos_engine.render.bvh_3d — KK1 Nova3D parity Sprint 6.
 
 Coverage:
 * AABB3D union / expand / contains_point / surface_area / overlaps.
@@ -19,9 +19,9 @@ import random
 import numpy as np
 import pytest
 
-from slappyengine.render.bvh_3d import AABB3D, BVH3D, BVHNode
-from slappyengine.render.camera import Camera3D
-from slappyengine.render.scene_walker import Frustum
+from pharos_engine.render.bvh_3d import AABB3D, BVH3D, BVHNode
+from pharos_engine.render.camera import Camera3D
+from pharos_engine.render.scene_walker import Frustum
 
 
 # ---------------------------------------------------------------------------

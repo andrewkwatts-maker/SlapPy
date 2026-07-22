@@ -1,7 +1,7 @@
 """Multi-grid V-cycle pressure projection — unit + integration tests.
 
 These tests own the contract that the new ``vcycle_project_v`` solver in
-:mod:`slappyengine.physics.pressure_multigrid` is faster per unit of work
+:mod:`pharos_engine.physics.pressure_multigrid` is faster per unit of work
 than the single-grid Red-Black SOR path for long-wavelength divergence
 fields, that both methods agree at convergence, that the silhouette
 mask is honoured (no NaNs), that the water_container demo still moves
@@ -15,13 +15,13 @@ import dataclasses
 import numpy as np
 import pytest
 
-from slappyengine.deform_modes import CellMaterial, cell_material_for
-from slappyengine.physics import (
+from pharos_engine.deform_modes import CellMaterial, cell_material_for
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.pressure_multigrid import (
+from pharos_engine.physics.pressure_multigrid import (
     vcycle_project,
     vcycle_project_v,
 )

@@ -7,7 +7,7 @@ session" a real user experiences on their first boot of the editor:
 1. Boots :class:`DiaryShell` seeded with the 6 default pages
    (Scene / Code / Material / Animation / FX / Settings).
 2. Spawns 3 baked prefabs (crate, ball, chain) into a shared
-   :class:`slappyengine.dynamics.World` via :class:`PrefabLibrary`.
+   :class:`pharos_engine.dynamics.World` via :class:`PrefabLibrary`.
    Prefers ``lib.spawn(name, world, pos)`` (AA2 shape) if it exists,
    otherwise falls back to ``lib.get(name).spawn(world, pos)``.
 3. Switches to the Scene page + fires 5 outliner selects.
@@ -18,7 +18,7 @@ session" a real user experiences on their first boot of the editor:
 5. Switches to the FX page + loads the "dreamy" baked post-process
    chain preset via :class:`ChainBaker`.
 6. Switches to the Code page + evaluates a Python expression via
-   :func:`slappyengine.math.evaluate`.
+   :func:`pharos_engine.math.evaluate`.
 7. Wires an :class:`AutosaveManager` with ``interval_seconds=1``,
    ticks it three times via :meth:`force_save`, and prints the last
    snapshot path.
@@ -75,22 +75,22 @@ def _headless_env_active() -> bool:
 # Non-DPG engine imports — safe to eager-load.
 # ---------------------------------------------------------------------------
 
-from slappyengine.autosave import AutosaveManager, AutosaveState
-from slappyengine.dynamics import World
-from slappyengine.math import evaluate
-from slappyengine.prefabs import PrefabLibrary
-from slappyengine.ui.editor.diary_shell import (
+from pharos_engine.autosave import AutosaveManager, AutosaveState
+from pharos_engine.dynamics import World
+from pharos_engine.math import evaluate
+from pharos_engine.prefabs import PrefabLibrary
+from pharos_engine.ui.editor.diary_shell import (
     DEFAULT_PAGES,
     DiaryShell,
     _resolve_panel_key,
 )
-from slappyengine.ui.editor.notebook_inspector import NotebookInspector
-from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
-from slappyengine.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
-from slappyengine.ui.theme import apply_theme, get_active_theme
-from slappyengine.ui.theme.themes import register_all_themes
-from slappyengine.visual_scripting.graph import NodeGraph
-from slappyengine.visual_scripting.node import Node, NodePort
+from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
+from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
+from pharos_engine.ui.editor.theme_switcher_panel import ThemeSwitcherPanel
+from pharos_engine.ui.theme import apply_theme, get_active_theme
+from pharos_engine.ui.theme.themes import register_all_themes
+from pharos_engine.visual_scripting.graph import NodeGraph
+from pharos_engine.visual_scripting.node import Node, NodePort
 
 
 # ---------------------------------------------------------------------------
@@ -149,7 +149,7 @@ MATERIAL_NODE_SPEC: tuple[dict[str, Any], ...] = (
 # Baked PP chain preset that step 5 loads.
 FX_PRESET_NAME: str = "dreamy"
 
-# The Python expression step 6 asks slappyengine.math.evaluate to run.
+# The Python expression step 6 asks pharos_engine.math.evaluate to run.
 CODE_EXPRESSION: str = "sin(x) * a + b"
 
 
@@ -408,7 +408,7 @@ def _build_material_graph(trace: DemoTrace) -> NodeGraph:
     used_bridge = False
     bridge_result: dict[str, Any] | None = None
     try:  # pragma: no cover — AA4 optional
-        from slappyengine.ui.editor.material_graph_bridge import (
+        from pharos_engine.ui.editor.material_graph_bridge import (
             MaterialGraphBridge,  # type: ignore
         )
         try:
@@ -441,7 +441,7 @@ def _load_fx_preset(trace: DemoTrace) -> str:
     """
     tmp_user = Path(tempfile.mkdtemp(prefix="hello_full_editor_fx_"))
     try:
-        from slappyengine.post_process import ChainBaker
+        from pharos_engine.post_process import ChainBaker
 
         baker = ChainBaker(user_dir=tmp_user)
         baker.bake_defaults()

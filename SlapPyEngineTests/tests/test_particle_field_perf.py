@@ -16,7 +16,7 @@ import time
 import numpy as np
 import pytest
 
-from slappyengine.physics.particle_field import ParticleField, SAND_MAT
+from pharos_engine.physics.particle_field import ParticleField, SAND_MAT
 
 
 def _spawn_random(

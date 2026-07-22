@@ -11,7 +11,7 @@
 > 2026-06-07.
 >
 > WIP-frozen perimeters (per memory note `project_sprint_2026_05_29.md`):
-> `python/slappyengine/softbody/` and `python/slappyengine/fluid/` are not
+> `python/pharos_engine/softbody/` and `python/pharos_engine/fluid/` are not
 > touched in any sprint defined below. References to those subpackages
 > are read-only.
 
@@ -23,15 +23,15 @@ SlapPyEngine — June 2026 snapshot:
 
 | Metric | Value | Source |
 |---|---|---|
-| Engine Python modules | 389 | `Get-ChildItem python/slappyengine -Filter *.py -Recurse` |
+| Engine Python modules | 389 | `Get-ChildItem python/pharos_engine -Filter *.py -Recurse` |
 | Test modules | 228 | `Get-ChildItem SlapPyEngineTests/tests -Filter test_*.py -Recurse` |
 | Subpackages mapped | 30 + 8 planned | [`feature_map_2026_06_03.md`](feature_map_2026_06_03.md) §1.1-1.5 |
 | Top-level surface | 75 names across 19 subpackages | [`engine_surface_v030.md`](engine_surface_v030.md) |
 | Docs (`docs/**/*.md`) | 70 markdown files | [`sprint_5_doc_inventory.md`](sprint_5_doc_inventory.md) |
-| Notebook editor panels | 13 `notebook_*` modules | `Glob python/slappyengine/ui/editor/notebook_*.py` |
+| Notebook editor panels | 13 `notebook_*` modules | `Glob python/pharos_engine/ui/editor/notebook_*.py` |
 | Rust kernels landed | 18 (Tiers 1-10) | memory note `project_rust_migration_final_2026_05.md` |
 | End-to-end perf | fluid 1176 fps / softbody 544 fps | memory note `project_rust_migration_final_2026_05.md` |
-| Engine version | `0.3.0b0` (pre-v0.4) | `python/slappyengine/__init__.py` line 98 |
+| Engine version | `0.3.0b0` (pre-v0.4) | `python/pharos_engine/__init__.py` line 98 |
 
 **State of play.** The engine has reached "engine-as-library" maturity:
 all 12 ship-checklist milestones are complete; Rust migration delivered
@@ -45,7 +45,7 @@ gaps remain at three altitudes:
    handlers (counted from [`feature_map_2026_06_03.md`](feature_map_2026_06_03.md) §4.1).
    The biggest hole is the absence of a true visual node-graph canvas
    (material + script + shader).
-2. **Symbolic math + script authoring** — `slappyengine.math` does not
+2. **Symbolic math + script authoring** — `pharos_engine.math` does not
    exist; animation curves, particle force fields, material node
    compilation, and IK target formulas each re-implement small
    arithmetic helpers in isolation. The sibling Rust-backed `arithma`
@@ -77,10 +77,10 @@ sequences seven sprints to v0.4.
 |   Ochema Circuit  |  Bullet Strata  |  Stone Keep                  |
 +--------------------------------------------------------------------+
                             |
-                            | imports `slappyengine.*` (lazy __getattr__)
+                            | imports `pharos_engine.*` (lazy __getattr__)
                             v
 +--------------------------------------------------------------------+
-|     PROJECT LIFECYCLE (slappyengine.projects + slappyengine.cli)   |
+|     PROJECT LIFECYCLE (pharos_engine.projects + pharos_engine.cli)   |
 |       Project / SceneManifest / AssetManifest / ScriptBinding      |
 |       first_run scaffold / docs_gen / build_gen / content_encrypt  |
 +--------------------------------------------------------------------+
@@ -90,7 +90,7 @@ sequences seven sprints to v0.4.
 |                       UI / AUTHORING (Python)                      |
 |                                                                    |
 |  +-----------------------------------+  +----------------------+   |
-|  |       slappyengine.ui.editor      |  |  slappyengine.studio |   |
+|  |       pharos_engine.ui.editor      |  |  pharos_engine.studio |   |
 |  |  - EditorShell (2689 LOC -- big)  |  |  - Stage / record()  |   |
 |  |  - 13 notebook_* panels           |  |  - softbody_stage    |   |
 |  |  - 18 Nova3D-legacy panels        |  |  - fluid_stage       |   |
@@ -99,10 +99,10 @@ sequences seven sprints to v0.4.
 |  +-----------------------------------+                             |
 |                                                                    |
 |  +-----------------------------------+                             |
-|  |       slappyengine.ui.theme       |  6 diary themes + creatures |
+|  |       pharos_engine.ui.theme       |  6 diary themes + creatures |
 |  +-----------------------------------+                             |
 |  +-----------------------------------+                             |
-|  |       slappyengine.ui.widgets     |  29 notebook widgets         |
+|  |       pharos_engine.ui.widgets     |  29 notebook widgets         |
 |  +-----------------------------------+                             |
 +--------------------------------------------------------------------+
                             |
@@ -158,7 +158,7 @@ sequences seven sprints to v0.4.
 Layer contracts:
 
 * **Games → Project lifecycle** — games import the top-level surface
-  via PEP 562 lazy `__getattr__` ([`__init__.py`](../python/slappyengine/__init__.py) line 411).
+  via PEP 562 lazy `__getattr__` ([`__init__.py`](../python/pharos_engine/__init__.py) line 411).
   No game touches Rust kernels directly.
 * **Project lifecycle → UI / Authoring** — `Engine.run_editor()` boots
   `EditorShell`. YAML manifests drive everything dynamic; no panel
@@ -167,7 +167,7 @@ Layer contracts:
   implements `build(parent_tag)` and reads engine state by direct
   attribute access (per [`ui_pattern_audit_2026_06_03.md`](ui_pattern_audit_2026_06_03.md) §8).
 * **Python → Rust** — hot paths route through PyO3 functions on
-  `slappyengine._core`. The `HAS_NATIVE` flag at module import time
+  `pharos_engine._core`. The `HAS_NATIVE` flag at module import time
   decides whether a kernel takes the Python fallback path.
 * **Rust → Platform** — wgpu is reached through the Python `wgpu`
   bindings, not directly from Rust today (decision deferred per
@@ -240,7 +240,7 @@ against the 2026-06-07 working tree.
 
 ### Tier H — ship-blocker for v0.4
 
-1. **`python/slappyengine/ui/editor/shell.py` (2689 LOC) — split into
+1. **`python/pharos_engine/ui/editor/shell.py` (2689 LOC) — split into
    four focused modules.**
    `EditorShell` mixes layout orchestration, hotkey dispatch, project
    lifecycle, theme management, and creature scheduler glue. Proposed
@@ -248,19 +248,19 @@ against the 2026-06-07 working tree.
    * `shell.py` — class skeleton + `setup` / `run` (~700 LOC).
    * `shell_panels.py` — panel registry + dock zone wiring (~600 LOC).
    * `shell_hotkeys.py` — `_dispatch_editor_command` + hotkey routing
-     ([shell.py:214-280](../python/slappyengine/ui/editor/shell.py#L214)) (~500 LOC).
+     ([shell.py:214-280](../python/pharos_engine/ui/editor/shell.py#L214)) (~500 LOC).
    * `shell_lifecycle.py` — project pick / save / undo / play
      toggle (~700 LOC).
-   No public API change; the import line is `from slappyengine.ui.editor.shell import EditorShell`.
+   No public API change; the import line is `from pharos_engine.ui.editor.shell import EditorShell`.
 
-2. **`shell._dispatch_editor_command` ([shell.py:214-280](../python/slappyengine/ui/editor/shell.py#L214))**
+2. **`shell._dispatch_editor_command` ([shell.py:214-280](../python/pharos_engine/ui/editor/shell.py#L214))**
    — bare `except Exception: pass` on lines 228-229, 244-246, 261-263,
    268-270, 278-279. Each swallow leaves the user with no signal that
    a command failed. Replace with `_log_dispatch_error(cmd, exc)` that
    writes to a rolling diagnostic ring buffer surfaced in the status
    bar.
 
-3. **`python/slappyengine/ui/editor/notebook_spawn_menu.py` (813 LOC) —
+3. **`python/pharos_engine/ui/editor/notebook_spawn_menu.py` (813 LOC) —
    wire the four dead cards.**
    Per [`feature_map_2026_06_03.md`](feature_map_2026_06_03.md) §4.1,
    the Point Light / Sun / Material / Particle Emitter cards fire
@@ -269,7 +269,7 @@ against the 2026-06-07 working tree.
    that consume the spec dict and call the appropriate factory
    (`LightingSystem.add_point_light`, `Material.create_from_spec`, etc.).
 
-4. **`python/slappyengine/material/node_material.py` — promote
+4. **`python/pharos_engine/material/node_material.py` — promote
    `NodeMaterial` from "runtime + factories" to "round-trippable graph".**
    Today's surface (20 names per
    [`feature_map_2026_06_03.md`](feature_map_2026_06_03.md) §1.2)
@@ -277,34 +277,34 @@ against the 2026-06-07 working tree.
    following the `dynamics.save_world` envelope, then the Sprint 4
    canvas can save its work.
 
-5. **`python/slappyengine/animation/` — extract curve evaluation into
-   `slappyengine.math.curves`.**
+5. **`python/pharos_engine/animation/` — extract curve evaluation into
+   `pharos_engine.math.curves`.**
    `AnimationGraph.tick` / `ProceduralRig.tick` each implement small
    easing helpers. Once Sprint 1 lands, replace local easings with
-   `slappyengine.math.curves.evaluate(curve, t)` so the same Arithma-
+   `pharos_engine.math.curves.evaluate(curve, t)` so the same Arithma-
    backed evaluator drives animation, particle force fields,
    material node compilation, and IK target formulas.
 
 ### Tier M — important, not blocking v0.4
 
-6. **`python/slappyengine/ui/editor/notebook_inspector.py` (843 LOC) —
+6. **`python/pharos_engine/ui/editor/notebook_inspector.py` (843 LOC) —
    extract per-type field renderers.**
    `_render_field` dispatches on Python type. Each branch
-   ([lines 530-770](../python/slappyengine/ui/editor/notebook_inspector.py#L530))
+   ([lines 530-770](../python/pharos_engine/ui/editor/notebook_inspector.py#L530))
    is 20-50 LOC; the file is unreadable because of it. Move each
    branch to `field_renderers/{bool,int,float,str,path,color,list}.py`
    with a `FieldRenderer` protocol.
 
-7. **`python/slappyengine/ui/editor/notebook_inspector.py` —
+7. **`python/pharos_engine/ui/editor/notebook_inspector.py` —
    replace the "[clip]" path picker stub
-   ([line 644-669](../python/slappyengine/ui/editor/notebook_inspector.py#L644))
+   ([line 644-669](../python/pharos_engine/ui/editor/notebook_inspector.py#L644))
    with a real OS file dialog.** A single shared helper
-   (`slappyengine.ui.editor.file_picker.pick_file(filters, parent)`)
+   (`pharos_engine.ui.editor.file_picker.pick_file(filters, parent)`)
    covers the Inspector path field AND the `ctrl+o` hotkey
    (item §8 of feature map 4.4).
 
-8. **`python/slappyengine/ui/editor/notebook_hotkeys.py` BINDINGS
-   ([lines 70-81](../python/slappyengine/ui/editor/notebook_hotkeys.py#L70))
+8. **`python/pharos_engine/ui/editor/notebook_hotkeys.py` BINDINGS
+   ([lines 70-81](../python/pharos_engine/ui/editor/notebook_hotkeys.py#L70))
    — route the 10 dead bindings.**
    `ctrl+y` / `ctrl+n` / `ctrl+o` / `f1` / `f3` / `f11` /
    `s` / `t` / `r` / `c` / `h` all dead-end into "cmd: …" status
@@ -312,72 +312,72 @@ against the 2026-06-07 working tree.
    help panel toggle, fullscreen toggle, profiler overlay toggle,
    tool selection, HUD toggle). Item §3 of feature map 4.4.
 
-9. **`python/slappyengine/ui/editor/notebook_status_bar.py` —
+9. **`python/pharos_engine/ui/editor/notebook_status_bar.py` —
    plumb `tick(dt)` / `set_world_cursor(x,y)` / `set_fps(fps)` from
    shell render loop.**
    Three setters exist on the bar
-   ([lines 289-302](../python/slappyengine/ui/editor/notebook_status_bar.py#L289))
+   ([lines 289-302](../python/pharos_engine/ui/editor/notebook_status_bar.py#L289))
    but the shell doesn't pump them. Trivial fix; lights up the
    marginalia row. Item §2 of feature map 4.4.
 
-10. **`python/slappyengine/ui/editor/notebook_code_panel.py` (769 LOC)
+10. **`python/pharos_engine/ui/editor/notebook_code_panel.py` (769 LOC)
     — wire the `+ New` tab
-    ([lines 521-545](../python/slappyengine/ui/editor/notebook_code_panel.py#L521))
+    ([lines 521-545](../python/pharos_engine/ui/editor/notebook_code_panel.py#L521))
     and the "Saved" footer
-    ([lines 745-751](../python/slappyengine/ui/editor/notebook_code_panel.py#L745))
+    ([lines 745-751](../python/pharos_engine/ui/editor/notebook_code_panel.py#L745))
     to engine actions.** Both are local-bookkeeping stubs today.
 
-11. **`python/slappyengine/ui/editor/notebook_gizmos.py` (731 LOC) —
+11. **`python/pharos_engine/ui/editor/notebook_gizmos.py` (731 LOC) —
     extract 3D-mode triad behind feature flag.**
     `set_mode("3D")` currently records the state and is ignored
-    ([lines 422-452](../python/slappyengine/ui/editor/notebook_gizmos.py#L422)).
+    ([lines 422-452](../python/pharos_engine/ui/editor/notebook_gizmos.py#L422)).
     Either implement (Sprint 7 polish) or document the gap in
     [`ui_pattern_audit_2026_06_03.md`](ui_pattern_audit_2026_06_03.md).
 
-12. **`python/slappyengine/ui/editor/notebook_project_picker.py` (794 LOC)
+12. **`python/pharos_engine/ui/editor/notebook_project_picker.py` (794 LOC)
     — split UI from project registry.**
-    The picker mixes DPG layout with `~/.slappyengine/projects.yaml`
-    registry IO. Extract `slappyengine.projects.registry` as a pure
+    The picker mixes DPG layout with `~/.pharos_engine/projects.yaml`
+    registry IO. Extract `pharos_engine.projects.registry` as a pure
     data module so the picker becomes presentation-only.
 
-13. **`python/slappyengine/ui/editor/resize_handles.py` (744 LOC) +
+13. **`python/pharos_engine/ui/editor/resize_handles.py` (744 LOC) +
     `dock_zones.py` (417 LOC) + `snap_manager.py` (283 LOC) +
     `movable_panel.py` (412 LOC) — consolidate as
-    `slappyengine.ui.editor.docking/`.**
+    `pharos_engine.ui.editor.docking/`.**
     Five files implement one feature (movable / dockable panels with
     snap + resize); they import each other in a brittle cycle. Move
     each to `docking/handles.py`, `docking/zones.py`, etc., with a
     single `docking/__init__.py` re-export.
 
-14. **`python/slappyengine/ui/editor/layout_persistence.py` (619 LOC) —
+14. **`python/pharos_engine/ui/editor/layout_persistence.py` (619 LOC) —
     20 silent `pass` swallows
-    ([lines 546-711](../python/slappyengine/ui/editor/layout_persistence.py#L546)).**
-    Layout reads from `~/.slappyengine/layout.yaml`; every IO failure
+    ([lines 546-711](../python/pharos_engine/ui/editor/layout_persistence.py#L546)).**
+    Layout reads from `~/.pharos_engine/layout.yaml`; every IO failure
     silently drops the layout. Replace with `logger.warning(...)`
-    against `slappyengine.telemetry` so the user can see why their
+    against `pharos_engine.telemetry` so the user can see why their
     layout reverted.
 
-15. **`python/slappyengine/ui/editor/notebook_material_editor.py` (642 LOC) —
+15. **`python/pharos_engine/ui/editor/notebook_material_editor.py` (642 LOC) —
     real radial-gradient preview
-    ([lines 544-555](../python/slappyengine/ui/editor/notebook_material_editor.py#L544)).**
+    ([lines 544-555](../python/pharos_engine/ui/editor/notebook_material_editor.py#L544)).**
     Placeholder text token today. Use `dpg.draw_image` against a
     256×256 PIL render of the material onto a reference sphere — same
     pattern Sprint 4 needs for the visual graph preview pane.
 
 ### Tier L — carry-over to v0.5 / cleanup hygiene
 
-16. **`python/slappyengine/_compat.py` — strip eight zero-caller
+16. **`python/pharos_engine/_compat.py` — strip eight zero-caller
     aliases.** Per [`dead_code_audit_2026_06_02.md`](dead_code_audit_2026_06_02.md)
     `MaterialPreset` / `CrackMode` / `SimState` /
     `SimFrequencyBudget` / `DeformController` / `ZoneMap` /
     `CellMaterial` / `cell_material_for` resolve through `_LAZY_MAP` →
     `_compat.py` purely to satisfy the game-compat tripwire test. No
-    direct `from slappyengine import` callers exist on master today.
+    direct `from pharos_engine import` callers exist on master today.
     Migrate the tripwire to import from canonical homes; drop the
     aliases.
 
-17. **`python/slappyengine/__init__.py` line 287
-    ([_LAZY_MAP duplicate `CacheMode`](../python/slappyengine/__init__.py#L287))**
+17. **`python/pharos_engine/__init__.py` line 287
+    ([_LAZY_MAP duplicate `CacheMode`](../python/pharos_engine/__init__.py#L287))**
     — the duplicate key dates from a 2026-05 merge. Already flagged
     in [`dead_code_audit_2026_06_02.md`](dead_code_audit_2026_06_02.md).
     One-line fix.
@@ -392,13 +392,13 @@ against the 2026-06-07 working tree.
     `gizmo_overlay.py` / `code_mode_panel.py` / `spawn_menu.py` /
     `material_editor.py` / `content_browser.py`.
 
-19. **`python/slappyengine/physics/` — 36 modules under Phase D
+19. **`python/pharos_engine/physics/` — 36 modules under Phase D
     strip plan.** Per
     [`phase_d_strip_plan_2026_05_31.md`](phase_d_strip_plan_2026_05_31.md)
     steps 6+, gated on Ochema Circuit CI greenness. Sprint 6
     consolidation sweep will walk the remaining cuts.
 
-20. **`python/slappyengine/ai/` (6 modules) — add
+20. **`python/pharos_engine/ai/` (6 modules) — add
     `docs/api/ai.md` + top-level surface entry for `ScriptGenerator`.**
     Per [`feature_map_2026_06_03.md`](feature_map_2026_06_03.md) §1.3
     the `ai` subpackage works but has no doc and no surface entry.
@@ -410,11 +410,11 @@ against the 2026-06-07 working tree.
 
 ### 5.1 Duplicate validators
 
-`python/slappyengine/compute/_validation.py` exists alongside scattered
+`python/pharos_engine/compute/_validation.py` exists alongside scattered
 validation helpers in `dynamics/_validation.py`, `assets/_validation.py`,
 and `post_process/_validation.py`. Each validates similar shapes
 (positive int, range, dtype). Consolidate as
-`slappyengine._common/validation.py` with `require_positive`,
+`pharos_engine._common/validation.py` with `require_positive`,
 `require_range`, `require_dtype`, `require_shape`. Each subpackage's
 shim re-exports for back-compat.
 
@@ -424,8 +424,8 @@ The notebook panels each open with the same boilerplate:
 
 ```
 import dearpygui.dearpygui as dpg
-from slappyengine.ui.theme import get_active_theme
-from slappyengine.ui.widgets import StickerButton, WashiPanel
+from pharos_engine.ui.theme import get_active_theme
+from pharos_engine.ui.widgets import StickerButton, WashiPanel
 ...
 def __init__(...):
     self._panel_tag = f"{cls_name}_panel_{id(self)}"
@@ -434,7 +434,7 @@ def __init__(...):
 ```
 
 Extract a `NotebookPanelBase` mixin under
-`slappyengine.ui.editor.notebook_panel_base.py`. Eight panels would
+`pharos_engine.ui.editor.notebook_panel_base.py`. Eight panels would
 shed ~40 LOC each (~320 LOC saved).
 
 ### 5.3 Spec-modal pattern
@@ -446,7 +446,7 @@ bound to a spawn-spec dataclass. The same pattern would serve:
 * New "Save effect as…" modal (Sprint 5 deferred to v0.5).
 * New "Create script…" modal (Sprint 2 — DiaryPagePanel new-script).
 
-Extract `slappyengine.ui.editor.spec_modal.open_spec_modal(spec, on_ok)`.
+Extract `pharos_engine.ui.editor.spec_modal.open_spec_modal(spec, on_ok)`.
 
 ### 5.4 Dead Nova3D fallbacks ready for retirement
 
@@ -470,7 +470,7 @@ Extract `slappyengine.ui.editor.spec_modal.open_spec_modal(spec, on_ok)`.
 ### 5.5 Duplicate `pass` clusters in editor
 
 Survey: 50+ bare `pass` statements across editor modules (count via
-`Grep "^\s*pass\s*$" python/slappyengine/ui/editor/`). The biggest
+`Grep "^\s*pass\s*$" python/pharos_engine/ui/editor/`). The biggest
 clusters are `layout_persistence.py` (20), `movable_panel.py` (8),
 `dock_zones.py` (5), `notebook_gizmos.py` (4),
 `layer_lighting_panel.py` (5), `code_mode_panel.py` (5). Each is a
@@ -514,12 +514,12 @@ math = [
 The extra is opt-in; the engine never hard-imports `arithma`, so
 existing installs and headless CI runs keep their existing footprint.
 
-### 6.3 New `slappyengine.math` subpackage
+### 6.3 New `pharos_engine.math` subpackage
 
 Layout:
 
 ```
-python/slappyengine/math/
+python/pharos_engine/math/
     __init__.py        # public surface; soft-imports arithma
     formula.py         # high-level formula evaluator (vectors / matrices)
     curves.py          # curve evaluation backed by Expression
@@ -545,12 +545,12 @@ Surface (`__all__`):
 
 ### 6.4 Engine consumers
 
-Replace local arithmetic with `slappyengine.math` calls:
+Replace local arithmetic with `pharos_engine.math` calls:
 
 | Caller | What it does today | After Sprint 1 |
 |---|---|---|
-| `animation.AnimationGraph._eval_curve` | Inline easing helper | `slappyengine.math.curves.evaluate(curve, t)` |
-| `animation.ProceduralRig.tick` | Local sin / lerp | `slappyengine.math.curves` |
+| `animation.AnimationGraph._eval_curve` | Inline easing helper | `pharos_engine.math.curves.evaluate(curve, t)` |
+| `animation.ProceduralRig.tick` | Local sin / lerp | `pharos_engine.math.curves` |
 | `particles.GpuParticleSystem.apply_force_field` | Hard-coded gravity / drag formulas | `Formula` parsed once at load |
 | `material.node_material._compile_node_graph` | Manual arithmetic on `Add` / `Multiply` / `Lerp` / `Clamp` nodes | `Expression` simplification + codegen |
 | `dynamics.solve_ik` target formulas | Hand-coded targeting | `Formula("...")` per-target |
@@ -560,7 +560,7 @@ Replace local arithmetic with `slappyengine.math` calls:
 Same pattern as `audio_runtime`:
 
 ```python
-# python/slappyengine/math/__init__.py
+# python/pharos_engine/math/__init__.py
 try:
     from arithma import Expression, Integer, Variable, is_rust_backend
     HAS_ARITHMA = is_rust_backend()
@@ -569,7 +569,7 @@ except ImportError:
     class _MissingArithma:
         def __init__(self, *_a, **_kw):
             raise ImportError(
-                "slappyengine.math advanced features require the [math] extra: "
+                "pharos_engine.math advanced features require the [math] extra: "
                 "pip install slap-py-engine[math]"
             )
     class Expression(_MissingArithma): ...
@@ -590,7 +590,7 @@ namespace-restricted globals dict.
   evaluation parity vs numpy.
 * `docs/math_design.md` — design doc.
 * `docs/api/math.md` — hand-authored API ref.
-* CHANGELOG entry under v0.4 — "Added `slappyengine.math` (optional
+* CHANGELOG entry under v0.4 — "Added `pharos_engine.math` (optional
   Arithma backend)".
 
 ---
@@ -637,7 +637,7 @@ graph; toggle button at the spine of the spread).
   corner (`add_sticker_corner` from `ui.widgets`).
 * **Paper background** — `ruled_paper(...)` for the live viewport;
   `dot_grid(...)` for the code / node side. Both are already shipped
-  procedural shader effects under `slappyengine.ui.theme`.
+  procedural shader effects under `pharos_engine.ui.theme`.
 * **Handwritten font** — already shipped via `theme_teengirl_notebook`
   (Patrick Hand / Caveat).
 * **Status ribbon** — reuses `NotebookStatusBar` pattern; per-script
@@ -649,7 +649,7 @@ graph; toggle button at the spine of the spread).
   carrying viewport hints:
   ```python
   # diary: viewport=2d, target=particles, fps=60
-  from slappyengine import GpuParticleSystem
+  from pharos_engine import GpuParticleSystem
   ...
   ```
 * `.diary.nodes.yaml` — companion file authored from the node graph
@@ -662,7 +662,7 @@ graph; toggle button at the spine of the spread).
   script through `importlib.reload` and re-binds the viewport target.
 * If the reload raises, the previous frame stays on the viewport and
   the status ribbon shows the exception in italics.
-* The editor uses `slappyengine.ai.CodeSyncWatcher` (already shipped)
+* The editor uses `pharos_engine.ai.CodeSyncWatcher` (already shipped)
   for the watcher infrastructure.
 
 ### 7.6 Lifecycle hooks
@@ -681,10 +681,10 @@ All four are optional; the engine probes via `hasattr` at load time.
 ### 7.7 Implementation surface (Sprint 2 deliverable)
 
 ```
-python/slappyengine/ui/editor/diary_page_panel.py    # ~600 LOC
-python/slappyengine/scripting/diary_loader.py        # ~250 LOC
-python/slappyengine/scripting/diary_viewport.py      # ~200 LOC
-python/slappyengine/scripting/__init__.py            # ~50 LOC surface
+python/pharos_engine/ui/editor/diary_page_panel.py    # ~600 LOC
+python/pharos_engine/scripting/diary_loader.py        # ~250 LOC
+python/pharos_engine/scripting/diary_viewport.py      # ~200 LOC
+python/pharos_engine/scripting/__init__.py            # ~50 LOC surface
 ```
 
 Tests:
@@ -843,18 +843,18 @@ The Sprint 5 visual material graph extends the Sprint 3 backbone:
 
 One sprint per calendar week, mapping to v0.4.
 
-### Sprint 1 — Arithma integration + `slappyengine.math` subpackage
+### Sprint 1 — Arithma integration + `pharos_engine.math` subpackage
 
 **Goal:** ship the math substrate that subsequent sprints all read.
 
 **Deliverables.**
-* `python/slappyengine/math/` subpackage per §6.3.
+* `python/pharos_engine/math/` subpackage per §6.3.
 * `pyproject.toml` `[math]` extra per §6.2.
 * Top-level `__init__.py` lazy entry for `math` subpackage.
 * `docs/math_design.md`, `docs/api/math.md`.
 * Test suite per §6.6.
 * Refactor target #5: migrate `animation` curves onto
-  `slappyengine.math.curves`.
+  `pharos_engine.math.curves`.
 
 **Dependencies.** None on prior sprints. Reads Arithma 2.0.2+.
 
@@ -863,7 +863,7 @@ One sprint per calendar week, mapping to v0.4.
 
 **Risk.** Arithma soft-import contract must work without the extra
 installed (engine cannot hard-require `arithma`). Mitigation: every
-public name in `slappyengine.math` has a fallback path tested without
+public name in `pharos_engine.math` has a fallback path tested without
 arithma installed.
 
 ### Sprint 2 — Diary Page Script Editor (code-only)
@@ -872,8 +872,8 @@ arithma installed.
 node graph yet); hot-reload on save.
 
 **Deliverables.**
-* `python/slappyengine/ui/editor/diary_page_panel.py` per §7.7.
-* `python/slappyengine/scripting/` new subpackage.
+* `python/pharos_engine/ui/editor/diary_page_panel.py` per §7.7.
+* `python/pharos_engine/scripting/` new subpackage.
 * `.diary.py` file format + `setup` / `tick` / `render` / `shutdown`
   lifecycle.
 * `Ctrl+S` reload through `CodeSyncWatcher`.
@@ -882,7 +882,7 @@ node graph yet); hot-reload on save.
   `set_fps` plumbing (the Diary Page status ribbon reuses the same
   pump).
 
-**Dependencies.** Sprint 1 (`slappyengine.math` for any in-script
+**Dependencies.** Sprint 1 (`pharos_engine.math` for any in-script
 formula); refactor target #1 must land first to make shell space for
 the new panel.
 
@@ -891,7 +891,7 @@ the new panel.
 
 **Risk.** Hot-reload of a script that has bound to GPU resources can
 leak; mitigation is mandatory `shutdown` hook + ref-counted resource
-manager (already exists in `slappyengine.residency`).
+manager (already exists in `pharos_engine.residency`).
 
 ### Sprint 3 — Node graph backbone
 
@@ -899,9 +899,9 @@ manager (already exists in `slappyengine.residency`).
 canvas, and a minimal 20-node palette. No bidirectional codegen yet.
 
 **Deliverables.**
-* `python/slappyengine/scripting/nodes/` package — `Node`, `NodeGraph`,
+* `python/pharos_engine/scripting/nodes/` package — `Node`, `NodeGraph`,
   `NodeKind`, `Port`, 20 starter kinds per §8.4.
-* `python/slappyengine/ui/editor/node_graph_canvas.py` — drag-and-drop
+* `python/pharos_engine/ui/editor/node_graph_canvas.py` — drag-and-drop
   canvas, washi-tape connections, sticker-card nodes, snap-to-grid.
 * `.diary.nodes.yaml` round-trip.
 * Refactor target #13: consolidate docking helpers (the canvas reuses
@@ -964,7 +964,7 @@ specialisation.
 ~250 tests, ~150 docs).
 
 **Risk.** Preview pane shares GPU context with the main viewport;
-re-entrant guard needed. Pattern already proven in `slappyengine.gpu`.
+re-entrant guard needed. Pattern already proven in `pharos_engine.gpu`.
 
 ### Sprint 6 — Consolidation sweep
 
@@ -974,7 +974,7 @@ boilerplate; sweep `pass` swallows.
 **Deliverables.**
 * Retire 8 Nova3D legacy panels per §5.4.
 * `NotebookPanelBase` mixin per §5.2.
-* `slappyengine._common/validation.py` per §5.1.
+* `pharos_engine._common/validation.py` per §5.1.
 * Replace 50+ bare `pass` swallows with `_swallow(exc, where=...)`
   per §5.5.
 * Refactor targets #2 (silent exception handlers), #8 (hotkey
@@ -1060,7 +1060,7 @@ Sprint 7 (different file sets).
 
 1. **Soft-import discipline.** Arithma is opt-in; any consumer that
    forgets to handle the missing case breaks headless CI. Mitigation:
-   every `slappyengine.math` consumer has a fallback path; CI runs
+   every `pharos_engine.math` consumer has a fallback path; CI runs
    without `[math]` extra installed on at least one matrix entry.
 
 2. **Hot-reload resource leaks.** Diary scripts may bind GPU
@@ -1094,9 +1094,9 @@ script / node work:
   remain; no scheduler / sparse-set storage. Re-evaluate after Sprint 7.
 * **Animation blend tree + IK retargeting + GLTF / FBX import.**
   `animation` subpackage stays at "graph + procedural rig" surface;
-  `slappyengine.math.curves` consolidates the easing helpers but no
+  `pharos_engine.math.curves` consolidates the easing helpers but no
   new evaluators land.
-* **VFX system (`slappyengine.vfx`).** `particles.py` continues
+* **VFX system (`pharos_engine.vfx`).** `particles.py` continues
   serving; no `Effect` / `Emitter` / `ForceField` / `Curve`
   high-level API.
 * **Profiler overlay.** `telemetry` ships events; no F3 flame graph.

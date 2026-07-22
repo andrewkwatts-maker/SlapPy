@@ -23,7 +23,7 @@ class FakeEntity:
 
 
 def test_rigid_body_force():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
 
     rb = RigidBodyComponent(mass=1.0, damping=1.0)  # damping=1 → no damping
     entity = FakeEntity()
@@ -37,7 +37,7 @@ def test_rigid_body_force():
 
 
 def test_rigid_body_integrates_position():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
 
     rb = RigidBodyComponent(mass=1.0, damping=1.0)
     entity = FakeEntity(pos=[0.0, 0.0])
@@ -51,7 +51,7 @@ def test_rigid_body_integrates_position():
 
 
 def test_rigid_body_mass_scaling():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
 
     rb = RigidBodyComponent(mass=2.0, damping=1.0)
     entity = FakeEntity()
@@ -65,7 +65,7 @@ def test_rigid_body_mass_scaling():
 
 
 def test_rigid_body_max_speed():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
 
     rb = RigidBodyComponent(mass=1.0, damping=1.0, max_speed=10.0)
     entity = FakeEntity()
@@ -80,7 +80,7 @@ def test_rigid_body_max_speed():
 
 
 def test_rigid_body_damping():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
 
     rb = RigidBodyComponent(mass=1.0, damping=0.5)
     entity = FakeEntity()
@@ -96,7 +96,7 @@ def test_rigid_body_damping():
 
 
 def test_rigid_body_impulse():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
 
     rb = RigidBodyComponent(mass=2.0, damping=1.0)
     entity = FakeEntity()
@@ -109,7 +109,7 @@ def test_rigid_body_impulse():
 
 def test_rigid_body_reset_accumulators():
     """Force accumulator should be reset each tick (no carry-over)."""
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
 
     rb = RigidBodyComponent(mass=1.0, damping=1.0)
     entity = FakeEntity()
@@ -135,7 +135,7 @@ class FakeLayer:
 
 
 def test_deformable_impact():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
 
     layer = FakeLayer()
     comp = DeformableLayerComponent(layer, elastic_threshold=50)
@@ -147,7 +147,7 @@ def test_deformable_impact():
 
 
 def test_deformable_plastic_reduces_alpha():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
 
     layer = FakeLayer(w=32, h=32)
     comp = DeformableLayerComponent(layer, elastic_threshold=50)
@@ -160,7 +160,7 @@ def test_deformable_plastic_reduces_alpha():
 
 
 def test_deformable_integrity_property():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
 
     layer = FakeLayer()
     comp = DeformableLayerComponent(layer)
@@ -173,7 +173,7 @@ def test_deformable_integrity_property():
 
 def test_deformable_auto_mode():
     """mode='auto' selects elastic below threshold, plastic above."""
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
 
     layer = FakeLayer()
     comp = DeformableLayerComponent(layer, elastic_threshold=100)
@@ -199,7 +199,7 @@ class FakeInputProvider:
 
 
 def test_input_driven_applies_force():
-    from slappyengine.components import RigidBodyComponent, InputDrivenComponent
+    from pharos_engine.components import RigidBodyComponent, InputDrivenComponent
 
     entity = FakeEntity()
     rb = entity.add_component(RigidBodyComponent(mass=1.0, damping=1.0))
@@ -218,7 +218,7 @@ def test_input_driven_applies_force():
 
 
 def test_input_driven_torque():
-    from slappyengine.components import RigidBodyComponent, InputDrivenComponent
+    from pharos_engine.components import RigidBodyComponent, InputDrivenComponent
 
     entity = FakeEntity()
     rb = entity.add_component(RigidBodyComponent(mass=1.0, damping=1.0,
@@ -238,7 +238,7 @@ def test_input_driven_torque():
 
 def test_input_driven_no_rb():
     """InputDrivenComponent is silent when no RigidBodyComponent is attached."""
-    from slappyengine.components import InputDrivenComponent
+    from pharos_engine.components import InputDrivenComponent
 
     entity = FakeEntity()
     provider = FakeInputProvider({"throttle": 1.0})

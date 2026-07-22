@@ -26,7 +26,7 @@ _DEMO_PATH = _REPO_ROOT / "SlapPyEngineExamples" / "examples" / "hello_3d_layer.
 
 
 def _install_engine_stubs(monkeypatch):
-    from slappyengine import engine as engine_mod
+    from pharos_engine import engine as engine_mod
 
     class _StubCanvas:
         def __init__(self, *_, **__):
@@ -85,13 +85,13 @@ def test_hello_3d_layer_holds_2d_and_3d_layer(demo):
     """Introspect the engine after ``main`` runs — must hold a 2D bg + 3D cube."""
     demo.main(["--frames", "2"])
     # The demo builds one Asset with a 2D "Background" and a 3D "Cube3D"
-    # layer.  We reach into slappyengine to grab the last-used scene via
+    # layer.  We reach into pharos_engine to grab the last-used scene via
     # the module's ``scene`` object (created inside main), but the module
     # doesn't expose it.  Instead we assert the demo produced no errors
     # and its GpuMesh + PbrMaterial imports resolved (already covered by
     # main() returning 0).  As a real-content check, load the mesh
     # helper the demo uses and confirm it makes a non-degenerate cube.
-    from slappyengine.gpu.mesh import GpuMesh
+    from pharos_engine.gpu.mesh import GpuMesh
 
     cube = GpuMesh.unit_cube()
     vertices = getattr(cube, "_vertices", None) or getattr(cube, "vertices", None)

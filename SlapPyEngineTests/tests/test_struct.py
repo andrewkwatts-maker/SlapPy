@@ -1,12 +1,12 @@
-﻿"""
+"""
 Tests for struct registry and shader generation — no GPU required.
 """
 import pytest
 
-from slappyengine.struct_registry import StructRegistry, StructModule
-from slappyengine.shader_gen import ShaderGen
-from slappyengine.modules.health import HealthModule
-from slappyengine.modules.physics import PhysicsModule
+from pharos_engine.struct_registry import StructRegistry, StructModule
+from pharos_engine.shader_gen import ShaderGen
+from pharos_engine.modules.health import HealthModule
+from pharos_engine.modules.physics import PhysicsModule
 
 
 # ---------------------------------------------------------------------------

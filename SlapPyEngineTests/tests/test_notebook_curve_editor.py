@@ -136,12 +136,12 @@ def stub_dpg(monkeypatch):
 
 
 def _make_track(name: str = "camera.zoom"):
-    from slappyengine.ui.editor.notebook_timeline_editor import TimelineTrack
+    from pharos_engine.ui.editor.notebook_timeline_editor import TimelineTrack
     return TimelineTrack(name)
 
 
 def _make_editor(track=None, **kw):
-    from slappyengine.ui.editor.notebook_curve_editor import NotebookCurveEditor
+    from pharos_engine.ui.editor.notebook_curve_editor import NotebookCurveEditor
     return NotebookCurveEditor(track=track, **kw)
 
 
@@ -169,7 +169,7 @@ class TestConstruction:
         assert ed.track is tr
 
     def test_title_constant(self):
-        from slappyengine.ui.editor.notebook_curve_editor import (
+        from pharos_engine.ui.editor.notebook_curve_editor import (
             NotebookCurveEditor,
         )
         assert NotebookCurveEditor.TITLE == "Curve Editor"
@@ -188,7 +188,7 @@ class TestConstruction:
         assert ed.view.auto_fit is True
 
     def test_curve_kinds_constant(self):
-        from slappyengine.ui.editor.notebook_curve_editor import CURVE_KINDS
+        from pharos_engine.ui.editor.notebook_curve_editor import CURVE_KINDS
         assert set(CURVE_KINDS) == {"linear", "step", "hermite", "bezier"}
 
     def test_rejects_non_track(self):
@@ -455,14 +455,14 @@ class TestZoom:
         assert ed.view.zoom == pytest.approx(0.5)
 
     def test_zoom_clamped_max(self):
-        from slappyengine.ui.editor.notebook_curve_editor import MAX_ZOOM
+        from pharos_engine.ui.editor.notebook_curve_editor import MAX_ZOOM
         ed = _make_editor()
         # Try to shoot past max in one call.
         ed.zoom(1e6)
         assert ed.view.zoom == pytest.approx(MAX_ZOOM)
 
     def test_zoom_clamped_min(self):
-        from slappyengine.ui.editor.notebook_curve_editor import MIN_ZOOM
+        from pharos_engine.ui.editor.notebook_curve_editor import MIN_ZOOM
         ed = _make_editor()
         ed.zoom(1e-6)
         assert ed.view.zoom == pytest.approx(MIN_ZOOM)
@@ -771,26 +771,26 @@ class TestHeadlessDPG:
 
 class TestRegistration:
     def test_all_exports_contains_editor(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         assert "NotebookCurveEditor" in editor_pkg.__all__
 
     def test_lazy_map_has_editor(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         assert "NotebookCurveEditor" in editor_pkg._LAZY_MAP
 
     def test_lazy_import_yields_class(self):
-        from slappyengine.ui.editor import NotebookCurveEditor
+        from pharos_engine.ui.editor import NotebookCurveEditor
         assert NotebookCurveEditor.__name__ == "NotebookCurveEditor"
 
     def test_all_list_alphabetical_neighbourhood(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         names = editor_pkg.__all__
         idx = names.index("NotebookCurveEditor")
         assert names[idx - 1] < "NotebookCurveEditor"
         assert names[idx + 1] > "NotebookCurveEditor"
 
     def test_lazy_map_alphabetical_neighbourhood(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         keys = list(editor_pkg._LAZY_MAP.keys())
         idx = keys.index("NotebookCurveEditor")
         assert keys[idx - 1] < "NotebookCurveEditor"
@@ -804,7 +804,7 @@ class TestRegistration:
 
 class TestCurveView:
     def test_view_defaults(self):
-        from slappyengine.ui.editor.notebook_curve_editor import CurveView
+        from pharos_engine.ui.editor.notebook_curve_editor import CurveView
         v = CurveView()
         assert v.y_min == pytest.approx(0.0)
         assert v.y_max == pytest.approx(1.0)
@@ -812,17 +812,17 @@ class TestCurveView:
         assert v.auto_fit is True
 
     def test_view_degenerate_range_inflated(self):
-        from slappyengine.ui.editor.notebook_curve_editor import CurveView
+        from pharos_engine.ui.editor.notebook_curve_editor import CurveView
         v = CurveView(y_min=1.0, y_max=1.0)
         assert v.y_max > v.y_min
 
     def test_view_rejects_non_finite(self):
-        from slappyengine.ui.editor.notebook_curve_editor import CurveView
+        from pharos_engine.ui.editor.notebook_curve_editor import CurveView
         with pytest.raises(ValueError):
             CurveView(y_min=math.nan)
 
     def test_view_clone(self):
-        from slappyengine.ui.editor.notebook_curve_editor import CurveView
+        from pharos_engine.ui.editor.notebook_curve_editor import CurveView
         v = CurveView(y_min=-1.0, y_max=2.0, pan_time=0.5, zoom=2.0)
         c = v.clone()
         assert c is not v

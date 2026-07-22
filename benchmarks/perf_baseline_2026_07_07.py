@@ -137,7 +137,7 @@ def _try_import_core_raster():
     even before the WIP unfreeze lands.
     """
     try:
-        import slappyengine._core as core  # type: ignore
+        import pharos_engine._core as core  # type: ignore
     except ImportError:
         return None
     return getattr(core, "raster", None)
@@ -276,9 +276,9 @@ def body_circle_batch(state):
 
 def setup_convex_hull():
     try:
-        import slappyengine._core as core  # type: ignore
+        import pharos_engine._core as core  # type: ignore
     except ImportError:
-        raise _SkipBench("slappyengine._core extension not built (maturin develop --release)")
+        raise _SkipBench("pharos_engine._core extension not built (maturin develop --release)")
     if not hasattr(core, "convex_hull"):
         raise _SkipBench("_core.convex_hull missing (hull.rs not compiled)")
     rng = random.Random(20260707)
@@ -297,9 +297,9 @@ def body_convex_hull(state):
 
 def setup_ik_solve():
     try:
-        import slappyengine._core as core  # type: ignore
+        import pharos_engine._core as core  # type: ignore
     except ImportError:
-        raise _SkipBench("slappyengine._core extension not built (maturin develop --release)")
+        raise _SkipBench("pharos_engine._core extension not built (maturin develop --release)")
     if not hasattr(core, "solve_ik"):
         raise _SkipBench("_core.solve_ik missing (ik_solver.rs not compiled)")
     N = 20
@@ -332,7 +332,7 @@ def body_ik_solve(state):
 
 
 def _build_world_for_raycast(N: int):
-    from slappyengine.physics3_bridge import Body3D, World3D
+    from pharos_engine.physics3_bridge import Body3D, World3D
 
     rng = random.Random(20260707)
     world = World3D(backend="fallback")
@@ -402,12 +402,12 @@ def body_raycast_linear(state):
 
 def setup_diagnostics():
     try:
-        from slappyengine.diagnostics import DiagnosticsCollector
+        from pharos_engine.diagnostics import DiagnosticsCollector
     except ImportError as exc:
-        raise _SkipBench(f"slappyengine.diagnostics unavailable: {exc}")
+        raise _SkipBench(f"pharos_engine.diagnostics unavailable: {exc}")
     return {
         "DiagnosticsCollector": DiagnosticsCollector,
-        "logger": logging.getLogger("slappyengine.perf_baseline_ss4"),
+        "logger": logging.getLogger("pharos_engine.perf_baseline_ss4"),
         "N": 10_000,
     }
 

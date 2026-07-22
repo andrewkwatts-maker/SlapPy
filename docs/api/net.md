@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.net — API Reference
+# pharos_engine.net — API Reference
 
 > Hand-written reference for the SlapPyEngine peer-to-peer multiplayer
 > stack. Owns the deterministic lockstep sync layer, the UDP transport
@@ -10,7 +10,7 @@
 
 ## Overview
 
-`slappyengine.net` is the shipped multiplayer transport for SlapPyEngine
+`pharos_engine.net` is the shipped multiplayer transport for SlapPyEngine
 games. It targets 2–8 player cooperative and competitive sessions over
 consumer NATs and exposes exactly one deterministic sync model —
 **frame-accurate lockstep** with input prediction across timeout windows.
@@ -35,7 +35,7 @@ loop inside `asyncio.run`.
 ## Public surface
 
 ```python
-from slappyengine.net import (
+from pharos_engine.net import (
     GameSession,
     InputFrame,
     LockstepSync,
@@ -56,7 +56,7 @@ from slappyengine.net import (
 
 ### `GameSession`
 
-_class — defined in `slappyengine.net.session`_
+_class — defined in `pharos_engine.net.session`_
 
 High-level session object. Constructs a UDP socket, runs peer discovery,
 performs hole-punching, and holds the :class:`LockstepSync` once enabled.
@@ -94,7 +94,7 @@ inviting host.
 
 ### `SessionConfig`
 
-_dataclass — defined in `slappyengine.net.session`_
+_dataclass — defined in `pharos_engine.net.session`_
 
 | Field | Type | Default | Notes |
 |---|---|---|---|
@@ -107,7 +107,7 @@ _dataclass — defined in `slappyengine.net.session`_
 
 ### `LockstepSync`
 
-_class — defined in `slappyengine.net.sync`_
+_class — defined in `pharos_engine.net.sync`_
 
 Deterministic lockstep synchronisation. Each tick:
 
@@ -138,7 +138,7 @@ LockstepSync(local_player_id: int, num_players: int,
 
 ### `InputFrame`
 
-_dataclass — defined in `slappyengine.net.sync`_
+_dataclass — defined in `pharos_engine.net.sync`_
 
 One player's inputs for one simulation tick.
 
@@ -155,7 +155,7 @@ Serialises via `to_bytes()` (2-byte length prefix + JSON payload) and
 
 ### `Peer`
 
-_dataclass — defined in `slappyengine.net.peer`_
+_dataclass — defined in `pharos_engine.net.peer`_
 
 Per-peer connection bookkeeping.
 
@@ -174,14 +174,14 @@ Per-peer connection bookkeeping.
 
 ### `PeerState`
 
-_enum — defined in `slappyengine.net.peer`_
+_enum — defined in `pharos_engine.net.peer`_
 
 `CONNECTING` → `HOLE_PUNCHING` → `CONNECTED` (happy path); or
 `DISCONNECTED` / `FAILED` on symmetric-NAT collision or timeout.
 
 ### `RoomCode`
 
-_class — defined in `slappyengine.net.room`_
+_class — defined in `pharos_engine.net.room`_
 
 Human-readable 6-character room code that internally hashes into a
 160-bit DHT key. Character alphabet excludes confusables (`O`, `0`,
@@ -196,7 +196,7 @@ Human-readable 6-character room code that internally hashes into a
 
 ```python
 import asyncio
-from slappyengine.net import (
+from pharos_engine.net import (
     GameSession, InputFrame, RoomCode, SessionConfig,
 )
 
@@ -227,8 +227,8 @@ assert len(code.dht_key) == 20  # 160 bits
 
 ## Skip the wrapper
 
-`slappyengine.net` is pure Python (asyncio + stdlib `socket` + SHA-1 in
-`hashlib`). Grep of `slappyengine._core_facade.RUST_MODULE_MAP` shows
+`pharos_engine.net` is pure Python (asyncio + stdlib `socket` + SHA-1 in
+`hashlib`). Grep of `pharos_engine._core_facade.RUST_MODULE_MAP` shows
 **no** `net` entry — the subpackage is I/O-bound (UDP + STUN + DHT) and
 throughput is dominated by network round-trip time, not CPU work. A Rust
 port would move no measurable frame-time needle.
@@ -258,5 +258,5 @@ determinism model.
 - [`telemetry.md`](telemetry.md) — per-tick net events (peer join / leave,
   RTT gauges) surface through the telemetry ring buffer.
 - [`../rust_migration_plan.md`](../rust_migration_plan.md) — Rust ROI
-  reference; `slappyengine.net` is intentionally not on the migration
+  reference; `pharos_engine.net` is intentionally not on the migration
   roadmap (I/O-bound).

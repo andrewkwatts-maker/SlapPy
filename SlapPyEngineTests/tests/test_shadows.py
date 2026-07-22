@@ -1,4 +1,4 @@
-"""Tests for slappyengine.render.shadows — CSM math + PCF WGSL (JJ7).
+"""Tests for pharos_engine.render.shadows — CSM math + PCF WGSL (JJ7).
 
 All tests are pure math + WGSL source-string checks. No wgpu needed.
 """
@@ -9,8 +9,8 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.render import Camera3D, Light
-from slappyengine.render.shadows import (
+from pharos_engine.render import Camera3D, Light
+from pharos_engine.render.shadows import (
     CSMBuilder,
     CascadeSplit,
     SHADOW_DEPTH_ONLY_WGSL,

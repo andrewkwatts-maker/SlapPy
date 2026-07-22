@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
 )
@@ -213,7 +213,7 @@ def test_wall_contact_preserves_zero_mean_invariant():
     assert cells is not None
     cs_x = float(w.hulls.cell_size_x[hid])
     cs_y = float(w.hulls.cell_size_y[hid])
-    from slappyengine.physics import CELL_GRID_SIZE
+    from pharos_engine.physics import CELL_GRID_SIZE
     yy, xx = np.mgrid[0:CELL_GRID_SIZE, 0:CELL_GRID_SIZE].astype(np.float32)
     cx_idx = (CELL_GRID_SIZE - 1) * 0.5
     cy_idx = (CELL_GRID_SIZE - 1) * 0.5

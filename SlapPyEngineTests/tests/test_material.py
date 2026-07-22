@@ -1,11 +1,11 @@
-﻿"""
+"""
 Tests for ColorRange, MaterialDef, and MaterialMap — no GPU required.
 """
 from pathlib import Path
 
 import pytest
 
-from slappyengine.material import ColorRange, MaterialDef, MaterialMap
+from pharos_engine.material import ColorRange, MaterialDef, MaterialMap
 
 
 # ---------------------------------------------------------------------------

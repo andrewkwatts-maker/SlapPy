@@ -1,6 +1,6 @@
 """HH1 ↔ HH4 ↔ HH5 integration tripwire suite.
 
-Covers :mod:`slappyengine.app_integration` — the bridge that wires the
+Covers :mod:`pharos_engine.app_integration` — the bridge that wires the
 HH1 :class:`App` API to the HH4 forward renderer and the HH5 asset
 importer. Also exercises the HH1 extensions:
 :meth:`App._load_via_asset_importer`, :meth:`App.render_frame`, and
@@ -18,11 +18,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import slappyengine
-from slappyengine.app import App, AppConfig, ModelHandle, _StubRenderer
+import pharos_engine
+from pharos_engine.app import App, AppConfig, ModelHandle, _StubRenderer
 
 # Sample asset shipped by HH5 for tests + docs.
-from slappyengine.asset_import.samples import TRIANGLE_OBJ
+from pharos_engine.asset_import.samples import TRIANGLE_OBJ
 
 
 # ---------------------------------------------------------------------------
@@ -40,7 +40,7 @@ def fresh_app() -> App:
 
 def _has_render_subpackage() -> bool:
     try:
-        import slappyengine.render  # noqa: F401
+        import pharos_engine.render  # noqa: F401
     except Exception:
         return False
     return True
@@ -48,7 +48,7 @@ def _has_render_subpackage() -> bool:
 
 def _wgpu_available() -> bool:
     try:
-        from slappyengine.render import is_wgpu_available
+        from pharos_engine.render import is_wgpu_available
 
         return bool(is_wgpu_available())
     except Exception:
@@ -62,9 +62,9 @@ def _wgpu_available() -> bool:
 
 def test_default_material_returns_material_instance():
     if not _has_render_subpackage():
-        pytest.skip("slappyengine.render not importable")
-    from slappyengine.app_integration import default_material
-    from slappyengine.render.material import Material
+        pytest.skip("pharos_engine.render not importable")
+    from pharos_engine.app_integration import default_material
+    from pharos_engine.render.material import Material
 
     mat = default_material()
     assert isinstance(mat, Material)
@@ -72,8 +72,8 @@ def test_default_material_returns_material_instance():
 
 def test_default_material_is_opaque_and_light_gray():
     if not _has_render_subpackage():
-        pytest.skip("slappyengine.render not importable")
-    from slappyengine.app_integration import default_material
+        pytest.skip("pharos_engine.render not importable")
+    from pharos_engine.app_integration import default_material
 
     mat = default_material()
     assert mat.alpha_mode == "opaque"
@@ -89,7 +89,7 @@ def test_default_material_is_opaque_and_light_gray():
 
 
 def test_handle_transform_matrix_identity(fresh_app):
-    from slappyengine.app_integration import handle_transform_matrix
+    from pharos_engine.app_integration import handle_transform_matrix
 
     h = ModelHandle(path="x.obj", id=0, _app=fresh_app)
     m = handle_transform_matrix(h)
@@ -98,7 +98,7 @@ def test_handle_transform_matrix_identity(fresh_app):
 
 
 def test_handle_transform_matrix_translation(fresh_app):
-    from slappyengine.app_integration import handle_transform_matrix
+    from pharos_engine.app_integration import handle_transform_matrix
 
     h = ModelHandle(path="x.obj", id=0, _app=fresh_app, position=(3.0, 4.0, 5.0))
     m = handle_transform_matrix(h)
@@ -108,7 +108,7 @@ def test_handle_transform_matrix_translation(fresh_app):
 
 
 def test_handle_transform_matrix_scale_applies_to_diagonal(fresh_app):
-    from slappyengine.app_integration import handle_transform_matrix
+    from pharos_engine.app_integration import handle_transform_matrix
 
     h = ModelHandle(path="x.obj", id=0, _app=fresh_app, scale=(2.0, 3.0, 4.0))
     m = handle_transform_matrix(h)
@@ -131,7 +131,7 @@ def test_model_handle_transform_matrix_method(fresh_app):
 
 
 def test_bridge_load_model_loads_triangle_obj(fresh_app):
-    from slappyengine.app_integration import bridge_load_model
+    from pharos_engine.app_integration import bridge_load_model
 
     handle = bridge_load_model(fresh_app, str(TRIANGLE_OBJ))
     assert isinstance(handle, ModelHandle)
@@ -142,7 +142,7 @@ def test_bridge_load_model_loads_triangle_obj(fresh_app):
 
 
 def test_bridge_load_model_appends_to_app_models(fresh_app):
-    from slappyengine.app_integration import bridge_load_model
+    from pharos_engine.app_integration import bridge_load_model
 
     n_before = len(fresh_app.models)
     handle = bridge_load_model(fresh_app, str(TRIANGLE_OBJ))
@@ -151,7 +151,7 @@ def test_bridge_load_model_appends_to_app_models(fresh_app):
 
 
 def test_bridge_load_model_populates_bounding_box(fresh_app):
-    from slappyengine.app_integration import bridge_load_model
+    from pharos_engine.app_integration import bridge_load_model
 
     handle = bridge_load_model(fresh_app, str(TRIANGLE_OBJ))
     assert handle.bounding_box is not None
@@ -162,15 +162,15 @@ def test_bridge_load_model_populates_bounding_box(fresh_app):
 
 
 def test_bridge_load_model_sets_default_material(fresh_app):
-    from slappyengine.app_integration import bridge_load_model
-    from slappyengine.render.material import Material
+    from pharos_engine.app_integration import bridge_load_model
+    from pharos_engine.render.material import Material
 
     handle = bridge_load_model(fresh_app, str(TRIANGLE_OBJ))
     assert isinstance(handle.material, Material)
 
 
 def test_bridge_load_model_records_trace_entry(fresh_app):
-    from slappyengine.app_integration import bridge_load_model
+    from pharos_engine.app_integration import bridge_load_model
 
     bridge_load_model(fresh_app, str(TRIANGLE_OBJ))
     kinds = {t[0] for t in fresh_app.trace}
@@ -179,7 +179,7 @@ def test_bridge_load_model_records_trace_entry(fresh_app):
 
 def test_bridge_load_model_falls_back_when_path_missing(fresh_app):
     """A missing path should not crash — falls back to the stub loader."""
-    from slappyengine.app_integration import bridge_load_model
+    from pharos_engine.app_integration import bridge_load_model
 
     handle = bridge_load_model(fresh_app, "no_such_file_1234.obj")
     # Falls back to the stub: no mesh attached, but the handle still exists.
@@ -194,9 +194,9 @@ def test_bridge_load_model_falls_back_when_path_missing(fresh_app):
 
 def test_bridge_submit_frame_records_mesh_call(fresh_app):
     if not _has_render_subpackage():
-        pytest.skip("slappyengine.render not importable")
-    from slappyengine.app_integration import bridge_load_model, bridge_submit_frame
-    from slappyengine.render import NullRenderer
+        pytest.skip("pharos_engine.render not importable")
+    from pharos_engine.app_integration import bridge_load_model, bridge_submit_frame
+    from pharos_engine.render import NullRenderer
 
     bridge_load_model(fresh_app, str(TRIANGLE_OBJ))
     renderer = NullRenderer()
@@ -211,9 +211,9 @@ def test_bridge_submit_frame_records_mesh_call(fresh_app):
 
 def test_bridge_submit_frame_records_camera_call(fresh_app):
     if not _has_render_subpackage():
-        pytest.skip("slappyengine.render not importable")
-    from slappyengine.app_integration import bridge_submit_frame
-    from slappyengine.render import NullRenderer
+        pytest.skip("pharos_engine.render not importable")
+    from pharos_engine.app_integration import bridge_submit_frame
+    from pharos_engine.render import NullRenderer
 
     fresh_app.spawn_camera(position=(0.0, 0.0, 5.0), look_at=(0.0, 0.0, 0.0))
     renderer = NullRenderer()
@@ -226,9 +226,9 @@ def test_bridge_submit_frame_records_camera_call(fresh_app):
 
 def test_bridge_submit_frame_records_lights_call(fresh_app):
     if not _has_render_subpackage():
-        pytest.skip("slappyengine.render not importable")
-    from slappyengine.app_integration import bridge_submit_frame
-    from slappyengine.render import NullRenderer
+        pytest.skip("pharos_engine.render not importable")
+    from pharos_engine.app_integration import bridge_submit_frame
+    from pharos_engine.render import NullRenderer
 
     fresh_app.spawn_light(position=(1.0, 2.0, 3.0), color=(1.0, 0.5, 0.25))
     renderer = NullRenderer()
@@ -242,9 +242,9 @@ def test_bridge_submit_frame_records_lights_call(fresh_app):
 
 def test_bridge_submit_frame_skips_invisible_models(fresh_app):
     if not _has_render_subpackage():
-        pytest.skip("slappyengine.render not importable")
-    from slappyengine.app_integration import bridge_load_model, bridge_submit_frame
-    from slappyengine.render import NullRenderer
+        pytest.skip("pharos_engine.render not importable")
+    from pharos_engine.app_integration import bridge_load_model, bridge_submit_frame
+    from pharos_engine.render import NullRenderer
 
     h = bridge_load_model(fresh_app, str(TRIANGLE_OBJ))
     h.set_visible(False)
@@ -262,9 +262,9 @@ def test_bridge_submit_frame_skips_invisible_models(fresh_app):
 
 def test_promote_stub_renderer_null_when_gpu_disabled():
     if not _has_render_subpackage():
-        pytest.skip("slappyengine.render not importable")
-    from slappyengine.app_integration import promote_stub_renderer
-    from slappyengine.render import NullRenderer
+        pytest.skip("pharos_engine.render not importable")
+    from pharos_engine.app_integration import promote_stub_renderer
+    from pharos_engine.render import NullRenderer
 
     app = App(AppConfig(enable_gpu=False))
     assert isinstance(app._renderer, _StubRenderer)
@@ -275,11 +275,11 @@ def test_promote_stub_renderer_null_when_gpu_disabled():
 
 def test_promote_stub_renderer_real_when_gpu_available():
     if not _has_render_subpackage():
-        pytest.skip("slappyengine.render not importable")
+        pytest.skip("pharos_engine.render not importable")
     if not _wgpu_available():
         pytest.skip("wgpu not available in this environment")
-    from slappyengine.app_integration import promote_stub_renderer
-    from slappyengine.render import Renderer
+    from pharos_engine.app_integration import promote_stub_renderer
+    from pharos_engine.render import Renderer
 
     app = App(AppConfig(enable_gpu=True))
     assert isinstance(app._renderer, _StubRenderer)
@@ -290,8 +290,8 @@ def test_promote_stub_renderer_real_when_gpu_available():
 
 def test_promote_stub_renderer_is_noop_on_second_call():
     if not _has_render_subpackage():
-        pytest.skip("slappyengine.render not importable")
-    from slappyengine.app_integration import promote_stub_renderer
+        pytest.skip("pharos_engine.render not importable")
+    from pharos_engine.app_integration import promote_stub_renderer
 
     app = App(AppConfig(enable_gpu=False))
     promote_stub_renderer(app)
@@ -304,9 +304,9 @@ def test_promote_stub_renderer_is_noop_on_second_call():
 def test_promote_stub_renderer_honours_stub_backend_config():
     """``renderer_backend="stub"`` should never promote to a real GPU."""
     if not _has_render_subpackage():
-        pytest.skip("slappyengine.render not importable")
-    from slappyengine.app_integration import promote_stub_renderer
-    from slappyengine.render import NullRenderer, Renderer
+        pytest.skip("pharos_engine.render not importable")
+    from pharos_engine.app_integration import promote_stub_renderer
+    from pharos_engine.render import NullRenderer, Renderer
 
     app = App(AppConfig(enable_gpu=True, renderer_backend="stub"))
     promote_stub_renderer(app)
@@ -323,7 +323,7 @@ def test_promote_stub_renderer_honours_stub_backend_config():
 
 def test_two_line_render_pattern_still_works_after_integration():
     """The whole point of HH1 — 2 lines to render — must survive HH4 wiring."""
-    app = slappyengine.launch(
+    app = pharos_engine.launch(
         on_begin=lambda a: a.load_model("bunny.obj"),
         max_frames=3,
     )
@@ -377,8 +377,8 @@ def test_render_frame_with_stub_renderer_increments_frame_count(fresh_app):
 
 def test_render_frame_with_null_renderer_records_bridge_calls():
     if not _has_render_subpackage():
-        pytest.skip("slappyengine.render not importable")
-    from slappyengine.app_integration import promote_stub_renderer
+        pytest.skip("pharos_engine.render not importable")
+    from pharos_engine.app_integration import promote_stub_renderer
 
     app = App(AppConfig(enable_gpu=False))
     app.load_model(str(TRIANGLE_OBJ))  # HH5 path via load_model
@@ -436,8 +436,8 @@ def test_bounding_box_respects_transform():
 def test_end_to_end_launch_with_real_obj_and_null_renderer():
     """Exercises the full HH1 → HH4 → HH5 stack in one flow."""
     if not _has_render_subpackage():
-        pytest.skip("slappyengine.render not importable")
-    from slappyengine.app_integration import promote_stub_renderer
+        pytest.skip("pharos_engine.render not importable")
+    from pharos_engine.app_integration import promote_stub_renderer
 
     triangle_path = str(TRIANGLE_OBJ)
     app = App(AppConfig(enable_gpu=False, max_frames=2))

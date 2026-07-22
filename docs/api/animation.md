@@ -1,15 +1,15 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.animation — API Reference
+# pharos_engine.animation — API Reference
 
 > Hand-written reference for the animation subpackage.
 > Covers state-machine graphs, procedural rigging with control points
 > and IK, and the video-frame import path. For per-pixel softbody and
-> fluid animation see `slappyengine.softbody` / `slappyengine.fluid`;
+> fluid animation see `pharos_engine.softbody` / `pharos_engine.fluid`;
 > for tween / easing primitives used by the editor and HUD see
-> `slappyengine.tools`.
+> `pharos_engine.tools`.
 
 ```python
-from slappyengine.animation import (
+from pharos_engine.animation import (
     AnimationGraph, AnimState, AnimTransition, AnimUpdate,
     ProceduralRig, ControlPoint,
 )
@@ -18,8 +18,8 @@ from slappyengine.animation import (
 ## Overview
 
 All names are lazy-loaded via `__getattr__` — importing
-`slappyengine.animation` is cheap. Video-frame extraction lives in
-`slappyengine.animation.video_import` and is **not** in `__all__` (it
+`pharos_engine.animation` is cheap. Video-frame extraction lives in
+`pharos_engine.animation.video_import` and is **not** in `__all__` (it
 pulls a `[video]` extra that most users will not install).
 
 ## AnimationGraph — state-machine playback
@@ -157,7 +157,7 @@ Methods:
 - `solve_ik(target_positions: dict[name, (u, v)]) -> dict[name, (u, v)]`
   — for each tip in `target_positions`, find the chain root via
   `_find_root` (cycle-safe), gather chain positions, and delegate to
-  `slappyengine._core.solve_ik` (Rust). When `_core` is unavailable
+  `pharos_engine._core.solve_ik` (Rust). When `_core` is unavailable
   the rig falls back to `_simple_stretch`, which just snaps the tip
   to the target — useful as a baseline for unit tests but visually
   poor.
@@ -173,7 +173,7 @@ Returns the new positions for every joint in the chain.
 ## Video frame import
 
 ```python
-from slappyengine.animation.video_import import extract_frames
+from pharos_engine.animation.video_import import extract_frames
 
 frames = extract_frames("animation.mp4", max_frames=256)
 # frames: list[np.ndarray]  — each (H, W, 4) uint8 RGBA
@@ -194,10 +194,10 @@ animation playback does not need it.
 
 ## Inner modules
 
-- `slappyengine.animation.graph` — `AnimationGraph`, `AnimState`,
+- `pharos_engine.animation.graph` — `AnimationGraph`, `AnimState`,
   `AnimTransition`, `AnimUpdate`.
-- `slappyengine.animation.procedural` — `ProceduralRig`, `ControlPoint`.
-- `slappyengine.animation.video_import` — `extract_frames` (opt-in
+- `pharos_engine.animation.procedural` — `ProceduralRig`, `ControlPoint`.
+- `pharos_engine.animation.video_import` — `extract_frames` (opt-in
   extra; not in `__all__`).
 
 ## Design notes
@@ -218,5 +218,5 @@ blend trees, motion matching), promote that material to a dedicated
   surface for demo capture.
 - [`../studio_design.md`](../studio_design.md) — Stage abstraction the
   humanoid demos run on.
-- [`ext.md`](ext.md) — `slappyengine.ext.animation` re-exports the
+- [`ext.md`](ext.md) — `pharos_engine.ext.animation` re-exports the
   same surface for back-compat imports.

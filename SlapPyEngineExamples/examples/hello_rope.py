@@ -1,6 +1,6 @@
 """SlapPyEngine — Hello Rope
 
-Minimal demo of :class:`slappyengine.dynamics.RopeSpec`.
+Minimal demo of :class:`pharos_engine.dynamics.RopeSpec`.
 
 A 24-node rope is hung between two pinned anchors 4.0 units apart at
 ``y = 2.0``. The rope is given ``total_length = 6.0`` (50% slack) so it
@@ -9,7 +9,7 @@ droops into a catenary curve under gravity. The world is stepped for
 
 Damping is tuned so ``solver_iterations * damping`` stays at or under
 ``0.3`` (the over-damp warning threshold documented in
-:mod:`slappyengine.dynamics.world`): ``iters=12`` and ``damping=0.025``
+:mod:`pharos_engine.dynamics.world`): ``iters=12`` and ``damping=0.025``
 give exactly ``0.30`` (effective per-step damping ≈ 0.262), so the demo
 never trips ``RuntimeWarning``. This matches the tuning used by
 ``hello_ragdoll``.
@@ -31,7 +31,7 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.dynamics import RopeSpec, World, build_rope
+from pharos_engine.dynamics import RopeSpec, World, build_rope
 
 
 # ── Demo parameters ────────────────────────────────────────────────────────
@@ -42,7 +42,7 @@ ANCHOR_Y: float = 2.0           # both anchors at this height
 MASS_PER_NODE: float = 0.05
 STIFFNESS: float = 2.0e6
 # Solver tuning: keep iters * damping <= 0.3 so the World over-damp warning
-# in :mod:`slappyengine.dynamics.world` (threshold 0.5 on effective per-step
+# in :mod:`pharos_engine.dynamics.world` (threshold 0.5 on effective per-step
 # damping) never fires. iters=12, damping=0.025 gives product 0.30 and
 # effective damping 1-(1-0.025)^12 ≈ 0.262 — well under the 0.5 threshold.
 SOLVER_ITERATIONS: int = 12
@@ -201,7 +201,7 @@ def print_summary(summary: dict) -> None:
 # ────────────────────────────────────────────────────────────────────────────
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    from slappyengine.examples_common import build_demo_arg_parser
+    from pharos_engine.examples_common import build_demo_arg_parser
 
     parser = build_demo_arg_parser(
         "Hello Rope — SlapPyEngine demo",

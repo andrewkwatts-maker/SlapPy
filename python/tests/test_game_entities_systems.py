@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _GAME_ROOT = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _GAME_STR = str(_GAME_ROOT)
@@ -129,7 +129,7 @@ class TestCheckpointEntityReset:
 class TestHazardSystemInit:
     def _hs(self):
         from systems.hazard_system import HazardSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         hs = HazardSystem(ts)
         return hs, ts
@@ -153,12 +153,12 @@ class TestHazardSystemInit:
 class TestHazardSystemBoostPad:
     def _hs(self):
         from systems.hazard_system import HazardSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         return HazardSystem(ts), ts
 
     def test_add_boost_pad_returns_volume(self):
-        from slappyengine.trigger import TriggerVolume
+        from pharos_engine.trigger import TriggerVolume
         hs, ts = self._hs()
         vol = hs.add_boost_pad((100, 100))
         assert isinstance(vol, TriggerVolume)
@@ -185,8 +185,8 @@ class TestHazardSystemBoostPad:
 
     def test_boost_pad_fires_event_on_enter(self):
         from systems.hazard_system import HazardSystem
-        from slappyengine.trigger import TriggerSystem
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.trigger import TriggerSystem
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ts = TriggerSystem()
         hs = HazardSystem(ts)
         hs.add_boost_pad((50, 50), size=(200, 200))
@@ -207,12 +207,12 @@ class TestHazardSystemBoostPad:
 class TestHazardSystemDamageZone:
     def _hs(self):
         from systems.hazard_system import HazardSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         return HazardSystem(ts), ts
 
     def test_add_damage_zone_returns_volume(self):
-        from slappyengine.trigger import TriggerVolume
+        from pharos_engine.trigger import TriggerVolume
         hs, ts = self._hs()
         vol = hs.add_damage_zone((200, 200))
         assert isinstance(vol, TriggerVolume)
@@ -232,8 +232,8 @@ class TestHazardSystemDamageZone:
 
     def test_damage_zone_fires_event(self):
         from systems.hazard_system import HazardSystem
-        from slappyengine.trigger import TriggerSystem
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.trigger import TriggerSystem
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ts = TriggerSystem()
         hs = HazardSystem(ts)
         hs.add_damage_zone((50, 50), size=(200, 200), damage=0.1)
@@ -276,7 +276,7 @@ class _FastVehicle:
 class TestPitsSystemInit:
     def _ps(self, positions=None):
         from systems.pits_system import PitsSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         ps = PitsSystem(ts, vehicles=[], pit_positions=positions)
         return ps, ts
@@ -308,7 +308,7 @@ class TestPitsSystemInit:
 class TestPitsSystemEnter:
     def _ps(self, pit_pos=(100, 100, 200, 200)):
         from systems.pits_system import PitsSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         ps = PitsSystem(ts, vehicles=[], pit_positions=[(*pit_pos, 1.0, 0.0)])
         return ps, ts
@@ -322,7 +322,7 @@ class TestPitsSystemEnter:
         assert result is True
 
     def test_fast_vehicle_rejected(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ps, ts = self._ps()
         v = _FastVehicle()
         rejected = []
@@ -333,7 +333,7 @@ class TestPitsSystemEnter:
         assert len(rejected) >= 1
 
     def test_pits_entered_event_fires(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ps, ts = self._ps()
         v = _SlowVehicle()
         received = []
@@ -356,7 +356,7 @@ class TestPitsSystemEnter:
 class TestPitsSystemUpdate:
     def _ps(self):
         from systems.pits_system import PitsSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         ps = PitsSystem(ts, vehicles=[], pit_positions=[(100, 100, 200, 200, 1.0, 0.0)])
         return ps, ts
@@ -367,7 +367,7 @@ class TestPitsSystemUpdate:
         ps.teardown()
 
     def test_update_publishes_repairing_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ps, ts = self._ps()
         v = _SlowVehicle()
         ts.update([v])
@@ -380,7 +380,7 @@ class TestPitsSystemUpdate:
 
     def test_session_removed_when_max_repair_reached(self):
         from systems.pits_system import PitsSystem, MAX_REPAIR_PER_VISIT
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         ps = PitsSystem(ts, vehicles=[], pit_positions=[(100, 100, 200, 200, 1.0, 0.0)])
         v = _SlowVehicle()
@@ -394,8 +394,8 @@ class TestPitsSystemUpdate:
 
     def test_pits_exited_event_fires_on_max_repair(self):
         from systems.pits_system import PitsSystem, MAX_REPAIR_PER_VISIT
-        from slappyengine.trigger import TriggerSystem
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.trigger import TriggerSystem
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ts = TriggerSystem()
         ps = PitsSystem(ts, vehicles=[], pit_positions=[(100, 100, 200, 200, 1.0, 0.0)])
         v = _SlowVehicle()
@@ -540,7 +540,7 @@ class TestVehicleGridBuilderValidate:
 
     def test_validation_status_event_fired_on_place(self):
         from entities.part import PartType
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         b = self._b()
         received = []
         h = subscribe("Garage.ValidationStatus", lambda e: received.append(e))

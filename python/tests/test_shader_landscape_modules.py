@@ -1,9 +1,9 @@
 """Headless tests for shader_gen, shader_binding, and landscape modules.
 
 Covers:
-- slappyengine.shader_gen     (ShaderGen.pixel_struct_wgsl, inject_into_shader)
-- slappyengine.shader_binding (ShaderBinding dataclass + evaluate + to_wgsl_expr)
-- slappyengine.landscape      (TileCoord, Tile)
+- pharos_engine.shader_gen     (ShaderGen.pixel_struct_wgsl, inject_into_shader)
+- pharos_engine.shader_binding (ShaderBinding dataclass + evaluate + to_wgsl_expr)
+- pharos_engine.landscape      (TileCoord, Tile)
 """
 from __future__ import annotations
 import math
@@ -17,8 +17,8 @@ from pathlib import Path
 
 class TestShaderGen:
     def _make_gen(self):
-        from slappyengine.struct_registry import StructRegistry
-        from slappyengine.shader_gen import ShaderGen
+        from pharos_engine.struct_registry import StructRegistry
+        from pharos_engine.shader_gen import ShaderGen
         r = StructRegistry()
         return ShaderGen(r), r
 
@@ -47,8 +47,8 @@ class TestShaderGen:
         assert "color" in result
 
     def test_added_channel_appears(self):
-        from slappyengine.struct_registry import StructRegistry, StructModule
-        from slappyengine.shader_gen import ShaderGen
+        from pharos_engine.struct_registry import StructRegistry, StructModule
+        from pharos_engine.shader_gen import ShaderGen
 
         class HpMod(StructModule):
             name = "hp"
@@ -93,7 +93,7 @@ class TestShaderGen:
 
 class TestShaderBindingDefaults:
     def test_instantiates(self):
-        from slappyengine.shader_binding import ShaderBinding
+        from pharos_engine.shader_binding import ShaderBinding
         sb = ShaderBinding(
             source_module="physics",
             source_field="temperature",
@@ -103,7 +103,7 @@ class TestShaderBindingDefaults:
         assert sb is not None
 
     def test_fields_stored(self):
-        from slappyengine.shader_binding import ShaderBinding
+        from pharos_engine.shader_binding import ShaderBinding
         sb = ShaderBinding(
             source_module="A",
             source_field="B",
@@ -116,29 +116,29 @@ class TestShaderBindingDefaults:
         assert sb.target_param == "D"
 
     def test_default_transform_linear(self):
-        from slappyengine.shader_binding import ShaderBinding
+        from pharos_engine.shader_binding import ShaderBinding
         sb = ShaderBinding("m", "f", "s", "p")
         assert sb.transform == "linear"
 
     def test_default_input_range(self):
-        from slappyengine.shader_binding import ShaderBinding
+        from pharos_engine.shader_binding import ShaderBinding
         sb = ShaderBinding("m", "f", "s", "p")
         assert sb.input_range == (0.0, 1.0)
 
     def test_default_output_range(self):
-        from slappyengine.shader_binding import ShaderBinding
+        from pharos_engine.shader_binding import ShaderBinding
         sb = ShaderBinding("m", "f", "s", "p")
         assert sb.output_range == (0.0, 1.0)
 
     def test_default_clamp_true(self):
-        from slappyengine.shader_binding import ShaderBinding
+        from pharos_engine.shader_binding import ShaderBinding
         sb = ShaderBinding("m", "f", "s", "p")
         assert sb.clamp is True
 
 
 class TestShaderBindingEvaluate:
     def _sb(self, transform="linear", in_range=(0.0, 1.0), out_range=(0.0, 1.0), clamp=True):
-        from slappyengine.shader_binding import ShaderBinding
+        from pharos_engine.shader_binding import ShaderBinding
         return ShaderBinding("m", "f", "s", "p",
                              transform=transform,
                              input_range=in_range,
@@ -208,31 +208,31 @@ class TestShaderBindingEvaluate:
 
 class TestShaderBindingToWgsl:
     def test_returns_string(self):
-        from slappyengine.shader_binding import ShaderBinding
+        from pharos_engine.shader_binding import ShaderBinding
         sb = ShaderBinding("m", "f", "s", "p")
         result = sb.to_wgsl_expr()
         assert isinstance(result, str)
 
     def test_contains_output_range_start(self):
-        from slappyengine.shader_binding import ShaderBinding
+        from pharos_engine.shader_binding import ShaderBinding
         sb = ShaderBinding("m", "f", "s", "p", output_range=(0.0, 5.0))
         result = sb.to_wgsl_expr()
         assert "0.0" in result
 
     def test_pow2_contains_pow(self):
-        from slappyengine.shader_binding import ShaderBinding
+        from pharos_engine.shader_binding import ShaderBinding
         sb = ShaderBinding("m", "f", "s", "p", transform="pow2")
         result = sb.to_wgsl_expr()
         assert "pow" in result
 
     def test_sqrt_contains_sqrt(self):
-        from slappyengine.shader_binding import ShaderBinding
+        from pharos_engine.shader_binding import ShaderBinding
         sb = ShaderBinding("m", "f", "s", "p", transform="sqrt")
         result = sb.to_wgsl_expr()
         assert "sqrt" in result
 
     def test_custom_wgsl_substituted(self):
-        from slappyengine.shader_binding import ShaderBinding
+        from pharos_engine.shader_binding import ShaderBinding
         sb = ShaderBinding("m", "f", "s", "p",
                            transform="custom_wgsl",
                            custom_wgsl="val * val * 2.0")
@@ -246,59 +246,59 @@ class TestShaderBindingToWgsl:
 
 class TestTileCoord:
     def test_instantiates(self):
-        from slappyengine.landscape import TileCoord
+        from pharos_engine.landscape import TileCoord
         tc = TileCoord(3, 7)
         assert tc is not None
 
     def test_x_stored(self):
-        from slappyengine.landscape import TileCoord
+        from pharos_engine.landscape import TileCoord
         tc = TileCoord(5, 2)
         assert tc.x == 5
 
     def test_y_stored(self):
-        from slappyengine.landscape import TileCoord
+        from pharos_engine.landscape import TileCoord
         tc = TileCoord(5, 2)
         assert tc.y == 2
 
     def test_equality(self):
-        from slappyengine.landscape import TileCoord
+        from pharos_engine.landscape import TileCoord
         a = TileCoord(1, 2)
         b = TileCoord(1, 2)
         assert a == b
 
     def test_inequality(self):
-        from slappyengine.landscape import TileCoord
+        from pharos_engine.landscape import TileCoord
         a = TileCoord(1, 2)
         b = TileCoord(3, 4)
         assert a != b
 
     def test_hash_equal_for_same_coords(self):
-        from slappyengine.landscape import TileCoord
+        from pharos_engine.landscape import TileCoord
         a = TileCoord(5, 7)
         b = TileCoord(5, 7)
         assert hash(a) == hash(b)
 
     def test_hash_different_for_different_coords(self):
-        from slappyengine.landscape import TileCoord
+        from pharos_engine.landscape import TileCoord
         a = TileCoord(1, 0)
         b = TileCoord(0, 1)
         assert hash(a) != hash(b)
 
     def test_usable_as_dict_key(self):
-        from slappyengine.landscape import TileCoord
+        from pharos_engine.landscape import TileCoord
         d = {}
         tc = TileCoord(3, 4)
         d[tc] = "test"
         assert d[TileCoord(3, 4)] == "test"
 
     def test_repr(self):
-        from slappyengine.landscape import TileCoord
+        from pharos_engine.landscape import TileCoord
         tc = TileCoord(3, 4)
         assert "3" in repr(tc)
         assert "4" in repr(tc)
 
     def test_equality_with_non_tile_coord(self):
-        from slappyengine.landscape import TileCoord
+        from pharos_engine.landscape import TileCoord
         tc = TileCoord(1, 2)
         result = tc.__eq__("not a tile coord")
         assert result is NotImplemented
@@ -306,45 +306,45 @@ class TestTileCoord:
 
 class TestTile:
     def test_instantiates(self):
-        from slappyengine.landscape import Tile, TileCoord
+        from pharos_engine.landscape import Tile, TileCoord
         tile = Tile(TileCoord(0, 0), tile_size=256)
         assert tile is not None
 
     def test_coord_stored(self):
-        from slappyengine.landscape import Tile, TileCoord
+        from pharos_engine.landscape import Tile, TileCoord
         tc = TileCoord(3, 7)
         tile = Tile(tc, tile_size=128)
         assert tile.coord is tc
 
     def test_tile_size_stored(self):
-        from slappyengine.landscape import Tile, TileCoord
+        from pharos_engine.landscape import Tile, TileCoord
         tile = Tile(TileCoord(0, 0), tile_size=512)
         assert tile.tile_size == 512
 
     def test_name_from_coord(self):
-        from slappyengine.landscape import Tile, TileCoord
+        from pharos_engine.landscape import Tile, TileCoord
         tile = Tile(TileCoord(2, 5), tile_size=256)
         assert "2" in tile.name
         assert "5" in tile.name
 
     def test_position_from_coord(self):
-        from slappyengine.landscape import Tile, TileCoord
+        from pharos_engine.landscape import Tile, TileCoord
         tile = Tile(TileCoord(1, 2), tile_size=256)
         assert tile.position == (256.0, 512.0)
 
     def test_dirty_false_initially(self):
-        from slappyengine.landscape import Tile, TileCoord
+        from pharos_engine.landscape import Tile, TileCoord
         tile = Tile(TileCoord(0, 0), tile_size=64)
         assert tile._dirty is False
 
     def test_mark_dirty(self):
-        from slappyengine.landscape import Tile, TileCoord
+        from pharos_engine.landscape import Tile, TileCoord
         tile = Tile(TileCoord(0, 0), tile_size=64)
         tile.mark_dirty()
         assert tile._dirty is True
 
     def test_mark_clean(self):
-        from slappyengine.landscape import Tile, TileCoord
+        from pharos_engine.landscape import Tile, TileCoord
         tile = Tile(TileCoord(0, 0), tile_size=64)
         tile.mark_dirty()
         tile.mark_clean()

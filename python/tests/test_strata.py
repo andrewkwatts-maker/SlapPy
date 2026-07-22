@@ -4,7 +4,7 @@ import pytest
 
 
 def _make_world(inactive_dim=0.35):
-    from slappyengine.strata import StrataWorld, StrataLayer
+    from pharos_engine.strata import StrataWorld, StrataLayer
     layers = [
         StrataLayer("Physical",  0, (1.0, 1.0, 1.0, 1.0), parallax=1.0),
         StrataLayer("Cyber",     1, (0.4, 0.6, 1.0, 0.9), parallax=1.1),
@@ -20,7 +20,7 @@ class _Entity:
 
 class TestStrataLayer:
     def test_init_stores_fields(self):
-        from slappyengine.strata import StrataLayer
+        from pharos_engine.strata import StrataLayer
         layer = StrataLayer("Test", 0, (1.0, 0.5, 0.0, 1.0), parallax=1.2)
         assert layer.name == "Test"
         assert layer.index == 0

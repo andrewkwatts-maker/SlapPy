@@ -3,7 +3,7 @@
 A vehicle is a single ``SoftBodyWorld`` body composed of a chassis
 lattice, two (or more) wheels each built from a hub + ring of rim nodes,
 and suspension beams that glue the wheels to the chassis. See
-``python/slappyengine/softbody/vehicle.py``.
+``python/pharos_engine/softbody/vehicle.py``.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.softbody import (
+from pharos_engine.softbody import (
     SoftBodyWorld,
     VehicleSpec,
     WheelSpec,

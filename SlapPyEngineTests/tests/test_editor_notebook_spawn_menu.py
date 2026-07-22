@@ -142,8 +142,8 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def clear_theme(stub_dpg):
     """Reset notebook theme + listener list between tests."""
-    from slappyengine.ui.widgets import notebook_theme
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine.ui.widgets import notebook_theme
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -159,20 +159,20 @@ def clear_theme(stub_dpg):
 
 class TestConstruction:
     def test_menu_constructs_with_callback(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         assert menu.TITLE == "+ Add"
         assert menu.card_count == 10
 
     def test_menu_rejects_non_callable_on_spawn(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         with pytest.raises(TypeError):
             NotebookSpawnMenu(on_spawn="not callable")  # type: ignore[arg-type]
 
     def test_menu_has_all_ten_expected_card_ids(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         ids = {card.card_id for card in menu.cards}
@@ -192,7 +192,7 @@ class TestConstruction:
 
 class TestPortraitSVGs:
     def test_each_card_has_portrait_under_500_bytes(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         for card in menu.cards:
@@ -203,7 +203,7 @@ class TestPortraitSVGs:
             )
 
     def test_spawn_cards_module_constant_carries_all_ten_entries(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import SPAWN_CARDS
+        from pharos_engine.ui.editor.notebook_spawn_menu import SPAWN_CARDS
 
         assert len(SPAWN_CARDS) == 10
         # Each entry is the canonical (id, title, svg, description) tuple.
@@ -223,14 +223,14 @@ class TestPortraitSVGs:
 
 class TestBuildPath:
     def test_build_records_in_call_log(self, stub_dpg):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         menu.build("sidebar")
         assert any(event[0] == "build" for event in menu.call_log)
 
     def test_build_renders_title_text(self, stub_dpg):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         menu.build("sidebar")
@@ -240,7 +240,7 @@ class TestBuildPath:
         assert "+ Add" in flat
 
     def test_build_renders_card_titles(self, stub_dpg):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         menu.build("sidebar")
@@ -259,7 +259,7 @@ class TestBuildPath:
 
 class TestSummonCallback:
     def test_summon_then_submit_fires_on_spawn(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         captured: list[tuple[str, dict]] = []
         menu = NotebookSpawnMenu(
@@ -277,14 +277,14 @@ class TestSummonCallback:
         assert "anchor_b" in spec
 
     def test_summon_unknown_card_raises(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         with pytest.raises(ValueError):
             menu.summon("not_a_real_card")
 
     def test_cancel_modal_does_not_fire_on_spawn(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         captured: list = []
         menu = NotebookSpawnMenu(
@@ -303,7 +303,7 @@ class TestSummonCallback:
 
 class TestHoverShimmer:
     def test_hover_caches_shimmer_overlay(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         assert menu.shimmer_overlay("rope") is None
@@ -313,7 +313,7 @@ class TestHoverShimmer:
         assert menu.hovered_card == "rope"
 
     def test_hover_clear_resets_state(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         menu.set_hover("rope")
@@ -321,7 +321,7 @@ class TestHoverShimmer:
         assert menu.hovered_card is None
 
     def test_hover_scale_factor_is_above_one(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         scale = menu.hover_scale()
@@ -329,7 +329,7 @@ class TestHoverShimmer:
         assert scale <= 1.5  # sane upper bound — cards shouldn't balloon
 
     def test_unknown_hover_id_silently_clears(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         menu.set_hover("not_a_real_card")
@@ -343,8 +343,8 @@ class TestHoverShimmer:
 
 class TestThemeIntegration:
     def test_theme_switch_updates_card_background(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
-        from slappyengine.ui.widgets.notebook_theme import (
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )
@@ -366,8 +366,8 @@ class TestThemeIntegration:
         assert menu.shimmer_overlay("rope") is None
 
     def test_theme_listener_detached_on_destroy(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
-        from slappyengine.ui.widgets.notebook_theme import (
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )
@@ -385,8 +385,8 @@ class TestThemeIntegration:
 
 class TestModalSpecTemplate:
     def test_summon_opens_modal_with_correct_spec_type(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
-        from slappyengine.ui.editor.spawn_menu import RopeSpawnSpec
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.spawn_menu import RopeSpawnSpec
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         menu.summon("rope")
@@ -396,8 +396,8 @@ class TestModalSpecTemplate:
         assert isinstance(modal["spec"], RopeSpawnSpec)
 
     def test_summon_humanoid_uses_humanoid_spawn_spec(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
-        from slappyengine.ui.editor.spawn_menu import HumanoidSpawnSpec
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.spawn_menu import HumanoidSpawnSpec
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         menu.summon("humanoid")
@@ -406,7 +406,7 @@ class TestModalSpecTemplate:
         assert isinstance(modal["spec"], HumanoidSpawnSpec)
 
     def test_summon_zone_rect_uses_rect_zone_spec(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import (
+        from pharos_engine.ui.editor.notebook_spawn_menu import (
             NotebookSpawnMenu,
             RectZoneSpec,
         )
@@ -418,7 +418,7 @@ class TestModalSpecTemplate:
         assert isinstance(modal["spec"], RectZoneSpec)
 
     def test_summon_light_directional_uses_directional_spec(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import (
+        from pharos_engine.ui.editor.notebook_spawn_menu import (
             DirectionalLightSpec,
             NotebookSpawnMenu,
         )
@@ -430,7 +430,7 @@ class TestModalSpecTemplate:
         assert isinstance(modal["spec"], DirectionalLightSpec)
 
     def test_modal_carries_inspector_handle(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         menu.summon("emitter")
@@ -448,7 +448,7 @@ class TestModalSpecTemplate:
 
 class TestOpenCloseLifecycle:
     def test_open_marks_menu_open(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         assert menu.is_open is False
@@ -456,7 +456,7 @@ class TestOpenCloseLifecycle:
         assert menu.is_open is True
 
     def test_close_resets_open_flag_and_modal(self):
-        from slappyengine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
+        from pharos_engine.ui.editor.notebook_spawn_menu import NotebookSpawnMenu
 
         menu = NotebookSpawnMenu(on_spawn=lambda cid, spec: None)
         menu.open()

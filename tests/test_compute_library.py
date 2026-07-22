@@ -8,50 +8,50 @@ import numpy as np
 # ---------------------------------------------------------------------------
 
 def test_reduce_max():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     arr = np.array([1.0, 5.0, 3.0, 2.0])
     assert ComputeLibrary.reduce(arr, "max") == pytest.approx(5.0)
 
 
 def test_reduce_min():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     arr = np.array([1.0, 5.0, 3.0, 2.0])
     assert ComputeLibrary.reduce(arr, "min") == pytest.approx(1.0)
 
 
 def test_reduce_sum():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     arr = np.array([1.0, 2.0, 3.0])
     assert ComputeLibrary.reduce(arr, "sum") == pytest.approx(6.0)
 
 
 def test_reduce_mean():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     arr = np.array([2.0, 4.0, 6.0])
     assert ComputeLibrary.reduce(arr, "mean") == pytest.approx(4.0)
 
 
 def test_reduce_std():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     arr = np.array([2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0])
     expected = float(np.std(arr))
     assert ComputeLibrary.reduce(arr, "std") == pytest.approx(expected, rel=1e-5)
 
 
 def test_reduce_unknown_op():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     with pytest.raises(ValueError, match="Unknown op"):
         ComputeLibrary.reduce(np.array([1.0]), "median")
 
 
 def test_reduce_2d_array():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     arr = np.array([[1.0, 2.0], [3.0, 4.0]])
     assert ComputeLibrary.reduce(arr, "max") == pytest.approx(4.0)
 
 
 def test_reduce_empty():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     assert ComputeLibrary.reduce(np.array([]), "max") == pytest.approx(0.0)
 
 
@@ -60,7 +60,7 @@ def test_reduce_empty():
 # ---------------------------------------------------------------------------
 
 def test_convex_hull_square():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     pts = np.array([
         [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0],
         [0.5, 0.5],  # interior point
@@ -70,7 +70,7 @@ def test_convex_hull_square():
 
 
 def test_convex_hull_collinear():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     # Only 2 points (degenerate)
     pts = np.array([[0.0, 0.0], [1.0, 1.0]], dtype=np.float32)
     hull = ComputeLibrary.convex_hull(pts)
@@ -78,7 +78,7 @@ def test_convex_hull_collinear():
 
 
 def test_convex_hull_wrong_shape():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     with pytest.raises(ValueError):
         ComputeLibrary.convex_hull(np.array([1.0, 2.0, 3.0]))
 
@@ -88,7 +88,7 @@ def test_convex_hull_wrong_shape():
 # ---------------------------------------------------------------------------
 
 def test_concave_hull_returns_array():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     rng = np.random.default_rng(42)
     pts = rng.uniform(0, 100, (50, 2)).astype(np.float32)
     hull = ComputeLibrary.concave_hull(pts, alpha=0.3)
@@ -97,7 +97,7 @@ def test_concave_hull_returns_array():
 
 
 def test_concave_hull_small():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     pts = np.array([[0.0, 0.0], [1.0, 0.0], [0.5, 1.0]], dtype=np.float32)
     hull = ComputeLibrary.concave_hull(pts, alpha=0.5)
     assert len(hull) >= 3
@@ -115,14 +115,14 @@ class FakeLayer:
 
 
 def test_reduce_field_alpha():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     layer = FakeLayer()
     val = ComputeLibrary.reduce_field(layer, field="alpha", op="mean")
     assert val == pytest.approx(128.0, abs=0.01)
 
 
 def test_reduce_field_r():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
     layer = FakeLayer()
     layer._image_data[:, :, 0] = 200  # red channel
     val = ComputeLibrary.reduce_field(layer, field="r", op="max")
@@ -130,7 +130,7 @@ def test_reduce_field_r():
 
 
 def test_reduce_field_no_data():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
 
     class Empty:
         _image_data = None
@@ -141,7 +141,7 @@ def test_reduce_field_no_data():
 
 
 def test_reduce_field_structured_array():
-    from slappyengine.compute.library import ComputeLibrary
+    from pharos_engine.compute.library import ComputeLibrary
 
     class StructLayer:
         _image_data = None

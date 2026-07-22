@@ -17,7 +17,7 @@ import time
 
 import pytest
 
-from slappyengine import telemetry
+from pharos_engine import telemetry
 
 
 # ---------------------------------------------------------------------------

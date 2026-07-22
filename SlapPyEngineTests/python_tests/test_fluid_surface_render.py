@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.fluid import (
+from pharos_engine.fluid import (
     FluidRenderConfig,
     FluidRenderer,
     FluidWorld,

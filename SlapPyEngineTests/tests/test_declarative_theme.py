@@ -10,7 +10,7 @@ Coverage:
 * Round-trip: ``parse → dump → parse → equal``.
 * Malformed input raises :class:`DeclarativeThemeError` with line
   numbers.
-* ``${...}`` interpolation via ``slappyengine.math.evaluate``.
+* ``${...}`` interpolation via ``pharos_engine.math.evaluate``.
 * Built-in themes export as declarative + re-parse identically.
 * Registry integration: ``load_declarative`` registers a theme.
 """
@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine.ui.theme import (
+from pharos_engine.ui.theme import (
     Color,
     DeclarativeTheme,
     DeclarativeThemeError,
@@ -29,7 +29,7 @@ from slappyengine.ui.theme import (
     list_registered_themes,
     load_declarative,
 )
-from slappyengine.ui.theme.themes import (
+from pharos_engine.ui.theme.themes import (
     BULLET_JOURNAL,
     COZY_DIARY,
     TEENGIRL_NOTEBOOK,

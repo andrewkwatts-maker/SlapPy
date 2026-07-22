@@ -1,6 +1,6 @@
 # Rust Bypass Guide — 2026-07-05 (II1, HH8 follow-up)
 
-**Status**: shipped. Companion to `python/slappyengine/_core_facade.py`
+**Status**: shipped. Companion to `python/pharos_engine/_core_facade.py`
 (HH8, which landed the facade module) and
 `SlapPyEngineTests/tests/test_rust_bypass.py` (which pins the surface).
 
@@ -16,10 +16,10 @@ The 2026-07-05 user directive is verbatim:
 > "ensure framework is PY PYPI Lib, wrapping a Rust Accellerated backend,
 >  users should be able to bypass the py lib if they want."
 
-The Python package `slappyengine` is a **user-facing ergonomics layer**.
+The Python package `pharos_engine` is a **user-facing ergonomics layer**.
 Every per-frame kernel — softbody projection, PBF neighbour lookup,
 raster line drawing, IK solve, LZ4 compress — lives inside the compiled
-PyO3 extension `slappyengine._core` (built from `src/*.rs` by `maturin`).
+PyO3 extension `pharos_engine._core` (built from `src/*.rs` by `maturin`).
 
 The Python wrappers exist for three reasons:
 
@@ -37,7 +37,7 @@ tight compute loop of their own. The bypass exists so power users can:
   arrays or bytes without allocating a `SoftbodyWorld` first.
 * **Build custom pipelines** — chain `_core.rasterize_lines` →
   `_core.box_blur_rgb` → `_core.post_process_rgb` without the
-  `slappyengine.softbody.render.render_softbody_scene` orchestrator.
+  `pharos_engine.softbody.render.render_softbody_scene` orchestrator.
 * **Host integration** — embed the fast paths inside a game engine that
   already has its own scene graph, camera, and asset pipeline. Only the
   Rust kernels need to be reachable; the Python surface is not.
@@ -64,7 +64,7 @@ equivalent Python one-liner, they can also write the equivalent
    |  ergonomics /      |                |  direct-bypass path  |
    |  wrapper stack     |                |  (this document)     |
    |                    |                |                      |
-   |  slappyengine.*    |                |  slappyengine._core  |
+   |  pharos_engine.*    |                |  pharos_engine._core  |
    |    App, Scene,     |                |    hull.convex_hull  |
    |    Renderer,       |                |    ik_solver.solve_ik|
    |    SoftbodyWorld,  |                |    raster.rasterize_ |
@@ -79,7 +79,7 @@ equivalent Python one-liner, they can also write the equivalent
                             |
                             v
    +----------------------------------------------------------------+
-   |             slappyengine._core  (PyO3 extension)               |
+   |             pharos_engine._core  (PyO3 extension)               |
    |                                                                |
    |   compiled from src/*.rs by maturin — one flat namespace       |
    |   grouped by _core_facade.RUST_MODULE_MAP into logical         |
@@ -96,8 +96,8 @@ equivalent Python one-liner, they can also write the equivalent
 2. Publishes `RUST_MODULE_MAP` — the authoritative "which flat symbol
    belongs to which Rust source file" table.
 3. Registers synthetic sub-module views under
-   `sys.modules['slappyengine._core.<name>']` so users can write
-   `from slappyengine._core import raster` and get exactly the symbols
+   `sys.modules['pharos_engine._core.<name>']` so users can write
+   `from pharos_engine._core import raster` and get exactly the symbols
    that came out of `src/raster.rs`.
 4. Installs `_NullCore` as a fallback attribute-access stub when the
    `.pyd` didn't build (headless CI, source install without maturin).
@@ -118,8 +118,8 @@ line numbers were verified against `src/*.rs` on 2026-07-05.
 * **Purpose**: 2-D convex hull (Andrew's monotone chain), axis-aligned
   bounding box, and pixel-mask edge-point extraction.
 * **Rust source**: `src/hull.rs`.
-* **Python wrapper**: `slappyengine/compute/spatial.py`,
-  `slappyengine/bvh_factory.py`.
+* **Python wrapper**: `pharos_engine/compute/spatial.py`,
+  `pharos_engine/bvh_factory.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -130,8 +130,8 @@ line numbers were verified against `src/*.rs` on 2026-07-05.
 **Bypass example**:
 
 ```python
-from slappyengine import _core_facade  # ensures sub-module views installed
-from slappyengine._core import hull
+from pharos_engine import _core_facade  # ensures sub-module views installed
+from pharos_engine._core import hull
 
 pts = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0), (0.5, 0.5)]
 hull_pts = hull.convex_hull(pts)                        # -> [(0,0),(1,0),(1,1),(0,1)]
@@ -142,7 +142,7 @@ xmin, ymin, xmax, ymax = hull.bounding_box(pts)        # -> (0.0, 0.0, 1.0, 1.0)
 
 * **Purpose**: FABRIK forward/backward reach IK for 2-D chains.
 * **Rust source**: `src/ik_solver.rs`.
-* **Python wrapper**: `slappyengine/animation/procedural.py`.
+* **Python wrapper**: `pharos_engine/animation/procedural.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -152,8 +152,8 @@ xmin, ymin, xmax, ymax = hull.bounding_box(pts)        # -> (0.0, 0.0, 1.0, 1.0)
 **Bypass example**:
 
 ```python
-from slappyengine import _core_facade
-from slappyengine._core import ik_solver
+from pharos_engine import _core_facade
+from pharos_engine._core import ik_solver
 
 bones = [(0.0, 0.0), (1.0, 0.0), (2.0, 0.0), (3.0, 0.0)]
 lengths = ik_solver.compute_bone_lengths(bones)         # -> [1.0, 1.0, 1.0]
@@ -164,7 +164,7 @@ solved = ik_solver.solve_ik(bones, (2.0, 1.5), lengths, iterations=10, tolerance
 
 * **Purpose**: `Vec2` and `AABB` pyclasses used across the 2-D pipeline.
 * **Rust source**: `src/math.rs`.
-* **Python wrapper**: `slappyengine/compute/pipeline.py`.
+* **Python wrapper**: `pharos_engine/compute/pipeline.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -174,7 +174,7 @@ solved = ik_solver.solve_ik(bones, (2.0, 1.5), lengths, iterations=10, tolerance
 **Bypass example**:
 
 ```python
-from slappyengine._core import math as core_math
+from pharos_engine._core import math as core_math
 v = core_math.Vec2(1.0, 2.0)
 box = core_math.AABB(0.0, 0.0, 10.0, 10.0)
 ```
@@ -184,7 +184,7 @@ box = core_math.AABB(0.0, 0.0, 10.0, 10.0)
 * **Purpose**: Compile a JSON material node graph (nodes + edges) to a
   WGSL fragment shader.
 * **Rust source**: `src/node_compiler.rs`.
-* **Python wrapper**: `slappyengine/material/node_material.py`.
+* **Python wrapper**: `pharos_engine/material/node_material.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -193,7 +193,7 @@ box = core_math.AABB(0.0, 0.0, 10.0, 10.0)
 **Bypass example**:
 
 ```python
-from slappyengine._core import node_compiler
+from pharos_engine._core import node_compiler
 wgsl = node_compiler.compile_node_graph(json_str)
 ```
 
@@ -202,7 +202,7 @@ wgsl = node_compiler.compile_node_graph(json_str)
 * **Purpose**: Raw LZ4 block compress/decompress for the `.slap` asset
   container format.
 * **Rust source**: `src/slap_format.rs`.
-* **Python wrapper**: `slappyengine/landscape.py`, `slappyengine/assets/`.
+* **Python wrapper**: `pharos_engine/landscape.py`, `pharos_engine/assets/`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -212,7 +212,7 @@ wgsl = node_compiler.compile_node_graph(json_str)
 **Bypass example**:
 
 ```python
-from slappyengine._core import slap_format
+from pharos_engine._core import slap_format
 blob = slap_format.lz4_compress(raw_bytes)
 back = slap_format.lz4_decompress(blob)
 assert back == raw_bytes
@@ -223,7 +223,7 @@ assert back == raw_bytes
 * **Purpose**: Compute WGSL struct offsets/alignments; emit WGSL struct
   declarations from `(name, type)` channel lists.
 * **Rust source**: `src/struct_layout.rs`.
-* **Python wrapper**: `slappyengine/struct_registry.py`.
+* **Python wrapper**: `pharos_engine/struct_registry.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -233,7 +233,7 @@ assert back == raw_bytes
 **Bypass example**:
 
 ```python
-from slappyengine._core import struct_layout
+from pharos_engine._core import struct_layout
 offsets = struct_layout.compute_layout([("pos", "vec3f"), ("uv", "vec2f")])
 decl = struct_layout.generate_wgsl_struct("Vertex", [("pos", "vec3f"), ("uv", "vec2f")])
 ```
@@ -243,7 +243,7 @@ decl = struct_layout.generate_wgsl_struct("Vertex", [("pos", "vec3f"), ("uv", "v
 * **Purpose**: LRU cache for streamed landscape tiles keyed by
   `(chunk_x, chunk_y, lod)`.
 * **Rust source**: `src/tile_cache.rs`.
-* **Python wrapper**: `slappyengine/landscape.py`.
+* **Python wrapper**: `pharos_engine/landscape.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -252,7 +252,7 @@ decl = struct_layout.generate_wgsl_struct("Vertex", [("pos", "vec3f"), ("uv", "v
 **Bypass example**:
 
 ```python
-from slappyengine._core import tile_cache
+from pharos_engine._core import tile_cache
 cache = tile_cache.TileCache(capacity=64)
 ```
 
@@ -261,7 +261,7 @@ cache = tile_cache.TileCache(capacity=64)
 * **Purpose**: Minimal 3-D rigid-body integrator; used behind
   `physics2/` for demos and rig scene tests.
 * **Rust source**: `src/physics.rs`.
-* **Python wrapper**: `slappyengine/physics2/` package.
+* **Python wrapper**: `pharos_engine/physics2/` package.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -272,7 +272,7 @@ cache = tile_cache.TileCache(capacity=64)
 **Bypass example**:
 
 ```python
-from slappyengine._core import physics
+from pharos_engine._core import physics
 world = physics.PhysicsWorld()
 world.set_gravity(0.0, -9.81, 0.0)
 body = physics.RigidBody(mass=1.0)
@@ -286,8 +286,8 @@ for _ in range(60):
 * **Purpose**: Load a serialised SDF scene and answer distance / normal
   / push-out queries.
 * **Rust source**: `src/sdf_collision.rs`.
-* **Python wrapper**: `slappyengine/bvh_factory.py`,
-  `slappyengine/sdf_shapes.py`.
+* **Python wrapper**: `pharos_engine/bvh_factory.py`,
+  `pharos_engine/sdf_shapes.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -296,7 +296,7 @@ for _ in range(60):
 **Bypass example**:
 
 ```python
-from slappyengine._core import sdf_collision
+from pharos_engine._core import sdf_collision
 collider = sdf_collision.SdfCollider()
 collider.load_bytes(scene_blob)
 d = collider.distance(0.0, 1.0, 0.0)
@@ -320,7 +320,7 @@ nx, ny, nz = collider.normal(0.0, 1.0, 0.0)
 **Bypass example**:
 
 ```python
-from slappyengine._core import math_3d
+from pharos_engine._core import math_3d
 q = math_3d.Quaternion.from_axis_angle(math_3d.Vec3(0.0, 1.0, 0.0), 3.14159 / 2.0)
 m = math_3d.Mat4x4.from_rotation(q)
 p = m.transform_point(math_3d.Vec3(1.0, 0.0, 0.0))
@@ -331,7 +331,7 @@ p = m.transform_point(math_3d.Vec3(1.0, 0.0, 0.0))
 * **Purpose**: 3-D BVH build and ray / sphere / AABB queries. Backs the
   3-D scene raycaster.
 * **Rust source**: `src/bvh.rs` (`#[cfg(feature = "3d")]`).
-* **Python wrapper**: `slappyengine/bvh_factory.py`.
+* **Python wrapper**: `pharos_engine/bvh_factory.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -346,7 +346,7 @@ attribute). The Rust struct is named `BVH`. Users import `Bvh`.
 * **Purpose**: Build an SDF scene (sphere, box, cylinder, capsule,
   cone, torus, plane, rounded_box) and serialise it for GPU upload.
 * **Rust source**: `src/sdf.rs` (`#[cfg(feature = "3d")]`).
-* **Python wrapper**: `slappyengine/bvh_factory.py`.
+* **Python wrapper**: `pharos_engine/bvh_factory.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -356,7 +356,7 @@ attribute). The Rust struct is named `BVH`. Users import `Bvh`.
 **Bypass example**:
 
 ```python
-from slappyengine._core import sdf as core_sdf
+from pharos_engine._core import sdf as core_sdf
 scene = core_sdf.SdfScene()
 scene.add(core_sdf.SdfPrimitive.sphere(0.0, 0.0, 0.0, 1.0))
 scene.add(core_sdf.SdfPrimitive.box_(2.0, 0.0, 0.0, 0.5, 0.5, 0.5))
@@ -369,7 +369,7 @@ blob = scene.to_gpu_bytes()
   radiance-cascade GI pipeline. All heavy work runs in WGSL; this is
   bookkeeping only.
 * **Rust source**: `src/gi.rs` (`#[cfg(feature = "gi")]`).
-* **Python wrapper**: `slappyengine/gi/cascade.py`.
+* **Python wrapper**: `pharos_engine/gi/cascade.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -380,7 +380,7 @@ blob = scene.to_gpu_bytes()
 * **Purpose**: Project an HDR equirectangular image to 9 × RGB SH L2
   coefficients ready for GPU upload.
 * **Rust source**: `src/ibl.rs` (`#[cfg(feature = "ibl")]`).
-* **Python wrapper**: `slappyengine/lighting.py`.
+* **Python wrapper**: `pharos_engine/lighting.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -392,8 +392,8 @@ blob = scene.to_gpu_bytes()
   post-process (LUT, chromatic aberration), textured triangles. Backs
   both softbody and fluid renderers.
 * **Rust source**: `src/raster.rs`.
-* **Python wrapper**: `slappyengine/softbody/render.py`,
-  `slappyengine/fluid/render.py`.
+* **Python wrapper**: `pharos_engine/softbody/render.py`,
+  `pharos_engine/fluid/render.py`.
 * **Orphan status**: not `mod`-declared in `src/lib.rs` — see
   `docs/rust_migration_audit_2026_07_05.md` §1.2. Present in wheels
   built from working trees where the mod-decl was in place; absent
@@ -414,9 +414,9 @@ blob = scene.to_gpu_bytes()
 mod-decls):
 
 ```python
-from slappyengine import _core_facade
+from pharos_engine import _core_facade
 if _core_facade.has_native() and "raster" in _core_facade.list_rust_functions():
-    from slappyengine._core import raster
+    from pharos_engine._core import raster
     out = bytearray(w * h * 3)
     raster.rasterize_lines(out, w, h, lines_bytes, colors_bytes, thicknesses_bytes)
     raster.box_blur_rgb(out, w, h, radius=2)
@@ -428,8 +428,8 @@ if _core_facade.has_native() and "raster" in _core_facade.list_rust_functions():
   break-marking, contact broadphase, node-beam / node-node contact
   projection, full step. Same orphan-status caveat as `raster`.
 * **Rust source**: `src/softbody_solver.rs`.
-* **Python wrapper**: `slappyengine/softbody/solver.py`,
-  `slappyengine/softbody/collision.py`.
+* **Python wrapper**: `pharos_engine/softbody/solver.py`,
+  `pharos_engine/softbody/collision.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -439,15 +439,15 @@ if _core_facade.has_native() and "raster" in _core_facade.list_rust_functions():
 | `build_contact_pairs` | pyfunction | `src/softbody_solver.rs:495` |
 | `project_node_beam_contacts` | pyfunction | `src/softbody_solver.rs:844` |
 | `project_node_node_pairs` | pyfunction | `src/softbody_solver.rs:1138` |
-| `slappyengine_step` | pyfunction | `src/softbody_solver.rs:1954` |
+| `pharos_engine_step` | pyfunction | `src/softbody_solver.rs:1954` |
 
 ### 3.17 `pbf_solver` — PBF inner kernels (orphan)
 
 * **Purpose**: PBF neighbour-table build, density solve iteration,
   friction pass, thermal step, full step. Same orphan-status caveat.
 * **Rust source**: `src/pbf_solver.rs`.
-* **Python wrapper**: `slappyengine/fluid/solver.py`,
-  `slappyengine/fluid/thermal_step.py`.
+* **Python wrapper**: `pharos_engine/fluid/solver.py`,
+  `pharos_engine/fluid/thermal_step.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -465,8 +465,8 @@ if _core_facade.has_native() and "raster" in _core_facade.list_rust_functions():
   density-grid sampling, marching-squares isoline extraction. Same
   orphan-status caveat.
 * **Rust source**: `src/fluid_shader.rs`.
-* **Python wrapper**: `slappyengine/fluid/render.py`,
-  `slappyengine/fluid/surface.py`.
+* **Python wrapper**: `pharos_engine/fluid/render.py`,
+  `pharos_engine/fluid/surface.py`.
 
 | Symbol | Kind | Rust source line |
 |---|---|---|
@@ -493,7 +493,7 @@ The bypass path is the right call when any of the following apply:
   validation / YAML overhead becomes measurable (>1% of frame budget).
 * **Custom render pipeline** — you're composing raster / blur /
   composite passes in an order the shipped `render.py` doesn't produce.
-* **Host integration** — you're embedding `slappyengine` inside another
+* **Host integration** — you're embedding `pharos_engine` inside another
   engine that owns scene, camera, and asset loading. You want the fast
   kernels, not the wrapper's scene graph.
 * **Batch offline processing** — running IK on 100 000 poses in a
@@ -546,7 +546,7 @@ follows the same five-step lifecycle:
    pattern: `PyReadonlyArray*` / `&[u8]` in, `Vec<f32>` / `PyByteArray`
    out. Preserve f64 accumulators where numpy uses `float64`.
 3. **Wrap with a `HAS_NATIVE_X` switch.** In the Python wrapper, gate
-   the fast path behind `try: from slappyengine import _core;
+   the fast path behind `try: from pharos_engine import _core;
    HAS_NATIVE_X = True except ImportError: HAS_NATIVE_X = False`.
    Keep the numpy fallback for CI without the `.pyd`.
 4. **Add a regression test that the two paths agree.** Same input,
@@ -610,7 +610,7 @@ orphan modules — see FF4 §1.2).
 | softbody_solver | build_contact_pairs | pyfunction (orphan) | `src/softbody_solver.rs:495` |
 | softbody_solver | project_node_beam_contacts | pyfunction (orphan) | `src/softbody_solver.rs:844` |
 | softbody_solver | project_node_node_pairs | pyfunction (orphan) | `src/softbody_solver.rs:1138` |
-| softbody_solver | slappyengine_step | pyfunction (orphan) | `src/softbody_solver.rs:1954` |
+| softbody_solver | pharos_engine_step | pyfunction (orphan) | `src/softbody_solver.rs:1954` |
 | pbf_solver | build_neighbour_table | pyfunction (orphan) | `src/pbf_solver.rs:73` |
 | pbf_solver | pbf_iter | pyfunction (orphan) | `src/pbf_solver.rs:246` |
 | pbf_solver | friction_pass_rs | pyfunction (orphan) | `src/pbf_solver.rs:531` |
@@ -638,7 +638,7 @@ logical `RUST_MODULE_MAP` entries, **55 documented public symbols**
 `SlapPyEngineTests/tests/test_rust_bypass.py` pins the bypass surface.
 The suite is deliberately soft on the compiled `.pyd`: every test that
 depends on the extension being built calls
-`pytest.importorskip("slappyengine._core")` (or checks
+`pytest.importorskip("pharos_engine._core")` (or checks
 `_core_facade.has_native()`) so headless CI without maturin still
 returns green.
 
@@ -649,7 +649,7 @@ Coverage:
   `RUST_MODULE_MAP` is non-empty and every entry has the required
   `src` / `symbols` / `summary` keys.
 * **Sub-module view registration** — for every module present at
-  runtime, `slappyengine._core.<name>` resolves via
+  runtime, `pharos_engine._core.<name>` resolves via
   `importlib.import_module` and exposes exactly the symbols
   `RUST_MODULE_MAP` promises.
 * **Null-core stub semantics** — `_NullCore.<anything>` raises
@@ -676,7 +676,7 @@ tests remain hard assertions on the doc / facade contract.
 
 ## 9. Cross-references
 
-* `python/slappyengine/_core_facade.py` — HH8, the facade module.
+* `python/pharos_engine/_core_facade.py` — HH8, the facade module.
 * `docs/rust_migration_audit_2026_07_05.md` — FF4, the shipping-wheel
   inventory this guide is derived from.
 * `docs/rust_migration_plan.md` — original 7-step Rust plan.

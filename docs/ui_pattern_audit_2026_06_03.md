@@ -1,7 +1,7 @@
 # UI Pattern Audit — Nova3D → Woodland/Notebook (2026-06-03)
 
 A formal contract audit of every panel under
-`python/slappyengine/ui/editor/` plus a translation map from the current
+`python/pharos_engine/ui/editor/` plus a translation map from the current
 Nova3D-derived dark-glassmorphism theme to the proposed playful
 woodland/notebook overhaul. Read-only audit; no source edits accompany
 this document.
@@ -282,9 +282,9 @@ resolves the factory lazily and calls `factory(world, **spec_fields)`.
 table. Per-modal: the spec instance and its inspector handle.
 
 **Engine reads.** Lazily imports
-`slappyengine.softbody.body_builders.*`,
-`slappyengine.fluid.world.*`,
-`slappyengine.dynamics.{rope,ragdoll,ik,humanoid}` adapters.
+`pharos_engine.softbody.body_builders.*`,
+`pharos_engine.fluid.world.*`,
+`pharos_engine.dynamics.{rope,ragdoll,ik,humanoid}` adapters.
 
 **Events published.** Calls the factory which appends to the
 target world; no bus emission.
@@ -346,7 +346,7 @@ becomes a tag-strip of fabric labels.
 
 Module raises `ImportError` on import. No surface. The
 replacement is the property inspector bound against
-`softbody.Body` and `slappyengine.zones`. No translation
+`softbody.Body` and `pharos_engine.zones`. No translation
 required.
 
 ---
@@ -492,7 +492,7 @@ readability):
   etc.). The overhaul should keep the `theme.get_accent_button_theme()`
   /  `get_default_button_theme()` API stable; only the colours change.
 - **Sprite + texture loading** needs a one-time path:
-  `slappyengine/ui/editor/assets/woodland/` with small PNGs
+  `pharos_engine/ui/editor/assets/woodland/` with small PNGs
   (≤ 4 KB each). Load via `dpg.add_image_registry` + cached
   `dpg.add_static_texture` handles at `apply_editor_theme` time.
 - **No engine surface change.** Every panel keeps its current

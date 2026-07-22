@@ -1,4 +1,4 @@
-﻿"""
+"""
 Tests for the node-based material graph system.
 
 The NodeMaterial class lives in SlapPyEngine.material.node_material, which is
@@ -16,7 +16,7 @@ import pytest
 
 def test_node_def_auto_id():
     try:
-        from slappyengine.material.node_material import NodeDef, UVNode
+        from pharos_engine.material.node_material import NodeDef, UVNode
     except ImportError:
         pytest.skip("SlapPyEngine.material.node_material not available")
 
@@ -32,7 +32,7 @@ def test_node_def_auto_id():
 
 def test_node_def_ids_are_unique():
     try:
-        from slappyengine.material.node_material import UVNode
+        from pharos_engine.material.node_material import UVNode
     except ImportError:
         pytest.skip("SlapPyEngine.material.node_material not available")
 
@@ -46,7 +46,7 @@ def test_node_def_ids_are_unique():
 
 def test_node_material_build_and_serialize():
     try:
-        from slappyengine.material.node_material import (
+        from pharos_engine.material.node_material import (
             NodeMaterial,
             UVNode,
             GravityWarpNode,
@@ -79,7 +79,7 @@ def test_node_material_build_and_serialize():
 
 def test_node_material_roundtrip():
     try:
-        from slappyengine.material.node_material import (
+        from pharos_engine.material.node_material import (
             NodeMaterial,
             UVNode,
             FinalColorNode,
@@ -105,7 +105,7 @@ def test_node_material_roundtrip():
 def test_node_material_roundtrip_name():
     """from_json must use the supplied name, not one from the JSON blob."""
     try:
-        from slappyengine.material.node_material import (
+        from pharos_engine.material.node_material import (
             NodeMaterial,
             UVNode,
         )
@@ -126,7 +126,7 @@ def test_node_material_roundtrip_name():
 def test_node_material_json_structure():
     """Serialised JSON must contain top-level 'nodes' and 'edges' keys."""
     try:
-        from slappyengine.material.node_material import NodeMaterial, UVNode
+        from pharos_engine.material.node_material import NodeMaterial, UVNode
     except ImportError:
         pytest.skip("SlapPyEngine.material.node_material not available")
 
@@ -147,7 +147,7 @@ def test_node_material_json_structure():
 def test_node_material_node_entries():
     """Each serialised node must carry at least 'id' and 'type'."""
     try:
-        from slappyengine.material.node_material import (
+        from pharos_engine.material.node_material import (
             NodeMaterial,
             UVNode,
             FinalColorNode,
@@ -172,7 +172,7 @@ def test_node_material_node_entries():
 
 def test_graph_schema_valid():
     try:
-        from slappyengine.material.graph_schema import validate_node_graph
+        from pharos_engine.material.graph_schema import validate_node_graph
     except ImportError:
         pytest.skip("SlapPyEngine.material.graph_schema not available")
 
@@ -200,7 +200,7 @@ def test_graph_schema_valid():
 
 def test_graph_schema_duplicate_ids():
     try:
-        from slappyengine.material.graph_schema import validate_node_graph
+        from pharos_engine.material.graph_schema import validate_node_graph
     except ImportError:
         pytest.skip("SlapPyEngine.material.graph_schema not available")
 
@@ -221,7 +221,7 @@ def test_graph_schema_duplicate_ids():
 
 def test_graph_schema_bad_edge_ref():
     try:
-        from slappyengine.material.graph_schema import validate_node_graph
+        from pharos_engine.material.graph_schema import validate_node_graph
     except ImportError:
         pytest.skip("SlapPyEngine.material.graph_schema not available")
 
@@ -246,7 +246,7 @@ def test_graph_schema_bad_edge_ref():
 
 def test_graph_schema_empty_graph():
     try:
-        from slappyengine.material.graph_schema import validate_node_graph
+        from pharos_engine.material.graph_schema import validate_node_graph
     except ImportError:
         pytest.skip("SlapPyEngine.material.graph_schema not available")
 
@@ -262,7 +262,7 @@ def test_graph_schema_empty_graph():
 
 def test_graph_schema_edge_to_missing_target():
     try:
-        from slappyengine.material.graph_schema import validate_node_graph
+        from pharos_engine.material.graph_schema import validate_node_graph
     except ImportError:
         pytest.skip("SlapPyEngine.material.graph_schema not available")
 
@@ -287,7 +287,7 @@ def test_graph_schema_edge_to_missing_target():
 
 def test_node_material_compile_requires_core():
     try:
-        from slappyengine.material.node_material import (
+        from pharos_engine.material.node_material import (
             NodeMaterial,
             UVNode,
             FinalColorNode,
@@ -317,7 +317,7 @@ def test_node_material_compile_requires_core():
 
 def test_gravity_warp_node_params():
     try:
-        from slappyengine.material.node_material import GravityWarpNode
+        from pharos_engine.material.node_material import GravityWarpNode
     except ImportError:
         pytest.skip("SlapPyEngine.material.node_material not available")
 

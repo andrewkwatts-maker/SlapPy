@@ -3,7 +3,7 @@
 The editor auto-detects which "kind" of material target it has and
 renders accordingly:
 
-- ``"material_map"`` — :class:`slappyengine.material.map.MaterialMap`
+- ``"material_map"`` — :class:`pharos_engine.material.map.MaterialMap`
 - ``"softbody"``     — a ``softbody.Material`` dataclass (stubbed here)
 - ``"fluid"``        — a ``fluid.FluidMaterial`` dataclass (stubbed here)
 
@@ -67,14 +67,14 @@ def stub_dearpygui(monkeypatch):
 # ---------------------------------------------------------------------------
 
 try:
-    from slappyengine.ui.editor.material_editor import (
+    from pharos_engine.ui.editor.material_editor import (
         MaterialEditor,
         KIND_MATERIAL_MAP,
         KIND_SOFTBODY,
         KIND_FLUID,
         _detect_kind,
     )
-    from slappyengine.material.map import MaterialMap, ColorRange
+    from pharos_engine.material.map import MaterialMap, ColorRange
 except Exception as _err:  # pragma: no cover
     pytest.skip(
         f"material editor deps not importable: {_err}",
@@ -89,13 +89,13 @@ except Exception as _err:  # pragma: no cover
 
 def _install_softbody_stub():
     # Always override the Material class in sys.modules — if the real
-    # slappyengine.softbody is already imported it carries a strict
+    # pharos_engine.softbody is already imported it carries a strict
     # 7-positional-arg dataclass that breaks our default ctor. We force
     # the stub onto the existing or new module entry.
-    mod = sys.modules.get("slappyengine.softbody")
+    mod = sys.modules.get("pharos_engine.softbody")
     if mod is None:
-        mod = types.ModuleType("slappyengine.softbody")
-        sys.modules["slappyengine.softbody"] = mod
+        mod = types.ModuleType("pharos_engine.softbody")
+        sys.modules["pharos_engine.softbody"] = mod
 
     @dataclass
     class Material:
@@ -108,16 +108,16 @@ def _install_softbody_stub():
 
     # _detect_kind reads type(target).__module__ — set it so the
     # synthetic dataclass behaves like a real softbody.* member.
-    Material.__module__ = "slappyengine.softbody"
+    Material.__module__ = "pharos_engine.softbody"
     mod.Material = Material
     return mod
 
 
 def _install_fluid_stub():
-    mod = sys.modules.get("slappyengine.fluid")
+    mod = sys.modules.get("pharos_engine.fluid")
     if mod is None:
-        mod = types.ModuleType("slappyengine.fluid")
-        sys.modules["slappyengine.fluid"] = mod
+        mod = types.ModuleType("pharos_engine.fluid")
+        sys.modules["pharos_engine.fluid"] = mod
 
     @dataclass
     class FluidMaterial:
@@ -127,7 +127,7 @@ def _install_fluid_stub():
         surface_tension: float = 0.07
         rest_density: float = 1000.0
 
-    FluidMaterial.__module__ = "slappyengine.fluid"
+    FluidMaterial.__module__ = "pharos_engine.fluid"
     mod.FluidMaterial = FluidMaterial
     return mod
 

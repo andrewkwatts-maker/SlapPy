@@ -154,8 +154,8 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def clear_theme_state():
     """Reset theme listeners between tests so picker construction is clean."""
-    from slappyengine.ui.widgets import notebook_theme
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine.ui.widgets import notebook_theme
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -171,14 +171,14 @@ def clear_theme_state():
 
 def _fresh_registry(tmp_path: Path):
     """Return a :class:`ProjectRegistry` pointing at a temp store_path."""
-    from slappyengine.projects import ProjectRegistry
+    from pharos_engine.projects import ProjectRegistry
 
     return ProjectRegistry(store_path=tmp_path / "registry.yaml")
 
 
 def _make_project(tmp_path: Path, name: str = "Test"):
     """Scaffold a fresh project under tmp_path / name and return it."""
-    from slappyengine.projects import Project
+    from pharos_engine.projects import Project
 
     return Project.new(tmp_path / name.replace(" ", "_"), name)
 
@@ -196,7 +196,7 @@ class _CallbackRecorder:
 
 
 def _make_picker(tmp_path: Path, registry=None, callbacks=None):
-    from slappyengine.ui.editor.notebook_project_picker import (
+    from pharos_engine.ui.editor.notebook_project_picker import (
         NotebookProjectPicker,
     )
 
@@ -227,10 +227,10 @@ class TestConstruction:
         assert picker.last_chosen is None
 
     def test_constructs_with_default_registry(self, tmp_path):
-        from slappyengine.projects.registry import (
+        from pharos_engine.projects.registry import (
             _reset_default_registry_for_tests,
         )
-        from slappyengine.ui.editor.notebook_project_picker import (
+        from pharos_engine.ui.editor.notebook_project_picker import (
             NotebookProjectPicker,
         )
 
@@ -240,14 +240,14 @@ class TestConstruction:
                 on_project_chosen=lambda _p: None,
                 on_cancel=lambda: None,
             )
-            from slappyengine.projects import ProjectRegistry
+            from pharos_engine.projects import ProjectRegistry
 
             assert isinstance(picker.registry, ProjectRegistry)
         finally:
             _reset_default_registry_for_tests()
 
     def test_rejects_non_callable_on_project_chosen(self, tmp_path):
-        from slappyengine.ui.editor.notebook_project_picker import (
+        from pharos_engine.ui.editor.notebook_project_picker import (
             NotebookProjectPicker,
         )
 
@@ -259,7 +259,7 @@ class TestConstruction:
             )
 
     def test_rejects_non_callable_on_cancel(self, tmp_path):
-        from slappyengine.ui.editor.notebook_project_picker import (
+        from pharos_engine.ui.editor.notebook_project_picker import (
             NotebookProjectPicker,
         )
 
@@ -271,7 +271,7 @@ class TestConstruction:
             )
 
     def test_rejects_non_registry(self, tmp_path):
-        from slappyengine.ui.editor.notebook_project_picker import (
+        from pharos_engine.ui.editor.notebook_project_picker import (
             NotebookProjectPicker,
         )
 
@@ -435,7 +435,7 @@ class TestCreateNew:
         assert recents[0].name == "Brand New"
 
     def test_create_new_persists_default_theme(self, tmp_path):
-        from slappyengine.projects import read_project
+        from pharos_engine.projects import read_project
 
         picker, _, _ = _make_picker(tmp_path)
         proj = picker.create_new(
@@ -528,56 +528,56 @@ class TestHeadless:
 
 class TestHumaniseAge:
     def test_just_now(self):
-        from slappyengine.ui.editor.notebook_project_picker import humanise_age
+        from pharos_engine.ui.editor.notebook_project_picker import humanise_age
 
         now = datetime(2026, 6, 3, 12, 0, 0, tzinfo=timezone.utc)
         stamp = (now - timedelta(seconds=10)).isoformat().replace("+00:00", "Z")
         assert humanise_age(stamp, now=now) == "just now"
 
     def test_minutes(self):
-        from slappyengine.ui.editor.notebook_project_picker import humanise_age
+        from pharos_engine.ui.editor.notebook_project_picker import humanise_age
 
         now = datetime(2026, 6, 3, 12, 0, 0, tzinfo=timezone.utc)
         stamp = (now - timedelta(minutes=15)).isoformat().replace("+00:00", "Z")
         assert humanise_age(stamp, now=now) == "15m ago"
 
     def test_today_same_day(self):
-        from slappyengine.ui.editor.notebook_project_picker import humanise_age
+        from pharos_engine.ui.editor.notebook_project_picker import humanise_age
 
         now = datetime(2026, 6, 3, 22, 0, 0, tzinfo=timezone.utc)
         stamp = (now - timedelta(hours=5)).isoformat().replace("+00:00", "Z")
         assert humanise_age(stamp, now=now) == "Today"
 
     def test_days(self):
-        from slappyengine.ui.editor.notebook_project_picker import humanise_age
+        from pharos_engine.ui.editor.notebook_project_picker import humanise_age
 
         now = datetime(2026, 6, 10, 12, 0, 0, tzinfo=timezone.utc)
         stamp = (now - timedelta(days=5)).isoformat().replace("+00:00", "Z")
         assert humanise_age(stamp, now=now) == "5d ago"
 
     def test_weeks(self):
-        from slappyengine.ui.editor.notebook_project_picker import humanise_age
+        from pharos_engine.ui.editor.notebook_project_picker import humanise_age
 
         now = datetime(2026, 6, 30, 12, 0, 0, tzinfo=timezone.utc)
         stamp = (now - timedelta(days=14)).isoformat().replace("+00:00", "Z")
         assert humanise_age(stamp, now=now) == "2w ago"
 
     def test_months(self):
-        from slappyengine.ui.editor.notebook_project_picker import humanise_age
+        from pharos_engine.ui.editor.notebook_project_picker import humanise_age
 
         now = datetime(2026, 12, 1, 12, 0, 0, tzinfo=timezone.utc)
         stamp = (now - timedelta(days=120)).isoformat().replace("+00:00", "Z")
         assert humanise_age(stamp, now=now) == "4mo ago"
 
     def test_years(self):
-        from slappyengine.ui.editor.notebook_project_picker import humanise_age
+        from pharos_engine.ui.editor.notebook_project_picker import humanise_age
 
         now = datetime(2030, 6, 3, 12, 0, 0, tzinfo=timezone.utc)
         stamp = (now - timedelta(days=800)).isoformat().replace("+00:00", "Z")
         assert humanise_age(stamp, now=now) == "2y ago"
 
     def test_unknown_on_invalid(self):
-        from slappyengine.ui.editor.notebook_project_picker import humanise_age
+        from pharos_engine.ui.editor.notebook_project_picker import humanise_age
 
         assert humanise_age("not-a-timestamp") == "unknown"
         assert humanise_age("") == "unknown"
@@ -599,7 +599,7 @@ class TestLifecycle:
         assert picker.is_open is False
 
     def test_destroy_unregisters_theme_listener(self, tmp_path):
-        from slappyengine.ui.widgets import notebook_theme
+        from pharos_engine.ui.widgets import notebook_theme
 
         picker, _, _ = _make_picker(tmp_path)
         listeners_before = len(notebook_theme._theme_listeners)
@@ -617,8 +617,8 @@ class TestWelcomeIntegration:
     def test_welcome_open_picker_button_fires_callback(self, tmp_path, stub_dpg):
         """The welcome screen should expose an "Open a notebook" button
         that wires through to the project picker."""
-        from slappyengine.ui.editor.notebook_welcome import NotebookWelcome
-        from slappyengine.ui.editor.settings import UISettings
+        from pharos_engine.ui.editor.notebook_welcome import NotebookWelcome
+        from pharos_engine.ui.editor.settings import UISettings
 
         opened: list[int] = []
         welcome = NotebookWelcome(

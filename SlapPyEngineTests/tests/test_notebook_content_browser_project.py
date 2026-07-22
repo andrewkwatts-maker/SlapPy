@@ -139,9 +139,9 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def clear_theme(stub_dpg):
     """Reset theme + sticker state between tests."""
-    from slappyengine.ui.widgets import notebook_theme
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
-    from slappyengine.ui.widgets.sticker_corner import _active_stickers
+    from pharos_engine.ui.widgets import notebook_theme
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine.ui.widgets.sticker_corner import _active_stickers
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -159,7 +159,7 @@ def clear_theme(stub_dpg):
 
 @dataclass
 class _FakeProject:
-    """Duck-typed stand-in for ``slappyengine.projects.Project``."""
+    """Duck-typed stand-in for ``pharos_engine.projects.Project``."""
 
     path: Path
 
@@ -204,49 +204,49 @@ def _make_full_project(root: Path) -> _FakeProject:
 
 class TestClassifyAsset:
     def test_py_is_script(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_SCRIPT, classify_asset,
         )
         assert classify_asset(Path("player.py")) == ASSET_KIND_SCRIPT
 
     def test_scene_yaml_is_scene(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_SCENE, classify_asset,
         )
         assert classify_asset(Path("main.scene.yaml")) == ASSET_KIND_SCENE
 
     def test_scene_json_is_scene(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_SCENE, classify_asset,
         )
         assert classify_asset(Path("menu.scene.json")) == ASSET_KIND_SCENE
 
     def test_png_is_texture(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_TEXTURE, classify_asset,
         )
         assert classify_asset(Path("hero.png")) == ASSET_KIND_TEXTURE
 
     def test_jpg_is_texture(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_TEXTURE, classify_asset,
         )
         assert classify_asset(Path("wall.jpg")) == ASSET_KIND_TEXTURE
 
     def test_webp_is_texture(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_TEXTURE, classify_asset,
         )
         assert classify_asset(Path("tile.webp")) == ASSET_KIND_TEXTURE
 
     def test_mat_yaml_is_material(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_MATERIAL, classify_asset,
         )
         assert classify_asset(Path("skin.mat.yaml")) == ASSET_KIND_MATERIAL
 
     def test_material_yaml_is_material(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_MATERIAL, classify_asset,
         )
         assert (
@@ -255,37 +255,37 @@ class TestClassifyAsset:
         )
 
     def test_wgsl_is_shader(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_SHADER, classify_asset,
         )
         assert classify_asset(Path("blit.wgsl")) == ASSET_KIND_SHADER
 
     def test_glsl_is_shader(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_SHADER, classify_asset,
         )
         assert classify_asset(Path("tone.glsl")) == ASSET_KIND_SHADER
 
     def test_unknown_ext_is_other(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_OTHER, classify_asset,
         )
         assert classify_asset(Path("readme.txt")) == ASSET_KIND_OTHER
 
     def test_hidden_returns_none(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             classify_asset,
         )
         assert classify_asset(Path(".gitignore")) is None
 
     def test_pyc_returns_none(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             classify_asset,
         )
         assert classify_asset(Path("cache.pyc")) is None
 
     def test_pycache_dir_returns_none(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             classify_asset,
         )
         assert classify_asset(Path("pkg/__pycache__/mod.py")) is None
@@ -298,7 +298,7 @@ class TestClassifyAsset:
 
 class TestSetProject:
     def test_none_clears_the_tree(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         proj = _make_full_project(tmp_path)
@@ -314,7 +314,7 @@ class TestSetProject:
         }
 
     def test_populates_groups_from_fixture(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_MATERIAL, ASSET_KIND_SCENE, ASSET_KIND_SCRIPT,
             ASSET_KIND_SHADER, ASSET_KIND_TEXTURE, NotebookContentBrowser,
         )
@@ -330,7 +330,7 @@ class TestSetProject:
 
     def test_empty_project_no_assets_dir(self, tmp_path):
         """A project with no ``assets/`` directory renders an empty tree."""
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         proj = _FakeProject(path=tmp_path)
@@ -343,7 +343,7 @@ class TestSetProject:
 
     def test_missing_project_path(self, tmp_path):
         """``set_project`` on an object without ``.path`` clears state."""
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         cb = NotebookContentBrowser(_noop, _noop, _noop)
@@ -356,7 +356,7 @@ class TestSetProject:
         assert cb.get_root() is None
 
     def test_set_project_resets_search_and_cwd(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         proj = _make_full_project(tmp_path)
@@ -373,7 +373,7 @@ class TestSetProject:
 
 class TestBuildAssetTree:
     def test_walks_root_recursively(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         _make_assets(tmp_path, [
@@ -387,7 +387,7 @@ class TestBuildAssetTree:
         assert "shallow.wgsl" in names
 
     def test_missing_root_returns_empty(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         cb = NotebookContentBrowser(_noop, _noop, _noop)
@@ -395,7 +395,7 @@ class TestBuildAssetTree:
         assert all(v == [] for v in tree.values())
 
     def test_skips_pycache_files(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         _make_assets(tmp_path, ["__pycache__/mod.py", "real.py"])
@@ -406,7 +406,7 @@ class TestBuildAssetTree:
         assert "mod.py" not in names
 
     def test_deterministic_ordering(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_SCRIPT, NotebookContentBrowser,
         )
         _make_assets(tmp_path, ["z.py", "a.py", "m.py"])
@@ -423,7 +423,7 @@ class TestBuildAssetTree:
 
 class TestSearchFilter:
     def test_search_hides_non_matching(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_SCRIPT, NotebookContentBrowser,
         )
         proj = _make_full_project(tmp_path)
@@ -436,7 +436,7 @@ class TestSearchFilter:
         assert after == 0
 
     def test_search_keeps_matching(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_SCRIPT, NotebookContentBrowser,
         )
         proj = _make_full_project(tmp_path)
@@ -447,7 +447,7 @@ class TestSearchFilter:
         assert any("player.py" == p.name for p in matches)
 
     def test_fuzzy_subsequence_match(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             fuzzy_match,
         )
         assert fuzzy_match("mm", "main_menu.py")
@@ -455,14 +455,14 @@ class TestSearchFilter:
         assert not fuzzy_match("xyz", "player.py")
 
     def test_fuzzy_case_insensitive(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             fuzzy_match,
         )
         assert fuzzy_match("PLAYER", "player.py")
         assert fuzzy_match("Player", "PLAYER.PY")
 
     def test_empty_search_matches_all(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             fuzzy_match,
         )
         assert fuzzy_match("", "anything.py")
@@ -475,7 +475,7 @@ class TestSearchFilter:
 
 class TestOnAssetSelected:
     def test_fires_with_correct_kind_script(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_SCRIPT, NotebookContentBrowser,
         )
         proj = _make_full_project(tmp_path)
@@ -488,7 +488,7 @@ class TestOnAssetSelected:
         assert captured == [(script, ASSET_KIND_SCRIPT)]
 
     def test_fires_with_correct_kind_shader(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_SHADER, NotebookContentBrowser,
         )
         proj = _make_full_project(tmp_path)
@@ -501,7 +501,7 @@ class TestOnAssetSelected:
         assert captured[0][1] == ASSET_KIND_SHADER
 
     def test_callback_none_is_noop(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_SCRIPT, NotebookContentBrowser,
         )
         cb = NotebookContentBrowser(_noop, _noop, _noop)
@@ -511,7 +511,7 @@ class TestOnAssetSelected:
         cb._dispatch_asset(Path("foo.py"), ASSET_KIND_SCRIPT)  # no raise
 
     def test_non_callable_rejected(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         cb = NotebookContentBrowser(_noop, _noop, _noop)
@@ -519,7 +519,7 @@ class TestOnAssetSelected:
             cb.set_on_asset_selected("not a callable")  # type: ignore[arg-type]
 
     def test_callback_exception_does_not_crash(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_TEXTURE, NotebookContentBrowser,
         )
         cb = NotebookContentBrowser(_noop, _noop, _noop)
@@ -532,7 +532,7 @@ class TestOnAssetSelected:
 
     def test_reentrant_swap_guarded(self, tmp_path):
         """A callback that re-subscribes cannot corrupt in-flight dispatch."""
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_SCRIPT, NotebookContentBrowser,
         )
         cb = NotebookContentBrowser(_noop, _noop, _noop)
@@ -565,7 +565,7 @@ class TestOnAssetSelected:
 class TestBrokenFiles:
     def test_missing_symlink_skipped(self, tmp_path):
         """A dangling symlink should not raise during the walk."""
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         real = tmp_path / "real.py"
@@ -590,7 +590,7 @@ class TestBrokenFiles:
 
 class TestRenderGroup:
     def test_render_group_emits_collapsing_header(self, tmp_path, stub_dpg):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         _make_assets(tmp_path, ["scripts/x.py"])
@@ -603,7 +603,7 @@ class TestRenderGroup:
         assert "Scripts" in labels
 
     def test_render_group_empty_is_noop(self, stub_dpg):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         cb = NotebookContentBrowser(_noop, _noop, _noop)
@@ -615,7 +615,7 @@ class TestRenderGroup:
         )
 
     def test_build_renders_asset_group_buttons(self, tmp_path, stub_dpg):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         proj = _make_full_project(tmp_path)
@@ -632,7 +632,7 @@ class TestRenderGroup:
     def test_build_empty_project_renders_empty_state(
         self, tmp_path, stub_dpg,
     ):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         # No assets/ dir at all.
@@ -654,7 +654,7 @@ class TestRenderGroup:
 
 class TestCopyPath:
     def test_copy_path_returns_string(self, tmp_path, stub_dpg):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         cb = NotebookContentBrowser(_noop, _noop, _noop)
@@ -673,7 +673,7 @@ class TestCopyPath:
 
 class TestContextMenu:
     def test_context_open_fires_asset_callback(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             ASSET_KIND_SCRIPT, NotebookContentBrowser,
         )
         cb = NotebookContentBrowser(_noop, _noop, _noop)
@@ -686,7 +686,7 @@ class TestContextMenu:
 
     def test_context_delete_removes_file_headless(self, tmp_path, stub_dpg):
         """With the DPG stub, delete confirms via the modal path."""
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
         cb = NotebookContentBrowser(_noop, _noop, _noop)

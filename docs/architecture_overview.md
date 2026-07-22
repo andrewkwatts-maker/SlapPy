@@ -10,7 +10,7 @@ physics (a separate experimental track), see [physics_module.md](physics_module.
 
 ```
                 +-------------------+
-                |   slappyengine    |  user-facing entry point
+                |   pharos_engine    |  user-facing entry point
                 +---------+---------+
                           |
        +------------------+------------------+
@@ -45,7 +45,7 @@ vehicles, IK chains, and humanoid skeletons. `fluid` is independent of
 `softbody` but uses the same XPBD spatial-hash form for particle ↔ beam
 contact.
 
-### `slappyengine.softbody` — XPBD lattice physics
+### `pharos_engine.softbody` — XPBD lattice physics
 
 BeamNG-style node-and-beam simulator in 2D, following the XPBD
 formulation from Macklin et al. 2016 (*"XPBD: position-based simulation
@@ -59,7 +59,7 @@ Materials and tuning live in `config/softbody.yml`. Topology builders
 (`make_lattice_body`, `make_layered_creature`, `build_vehicle`) pack
 typed primitives into the SoA arrays.
 
-### `slappyengine.fluid` — Position-Based Fluids
+### `pharos_engine.fluid` — Position-Based Fluids
 
 Particle fluid in 2D following Macklin & Müller 2013 (*"Position based
 fluids"*). `ParticleSoA` carries position, velocity, mass, material_id,
@@ -72,7 +72,7 @@ Archimedes coupling: per-node upthrust proportional to local fluid
 density above each submerged softbody node. Materials live in
 `config/fluid.yml`.
 
-### `slappyengine.dynamics` — unified primitive layer
+### `pharos_engine.dynamics` — unified primitive layer
 
 A type system on top of softbody. The same primitive set composes into
 lattices, vehicles, ropes, ragdolls, IK chains, and humanoid skeletons.
@@ -83,7 +83,7 @@ motorised joints; `solve_ik` runs FABRIK-style 2-bone IK; `make_humanoid`
 + `place_feet_on_terrain` + `wrap_in_flesh` build a bones-and-flesh
 humanoid.
 
-### `slappyengine.studio` — high-level scaffolding
+### `pharos_engine.studio` — high-level scaffolding
 
 Bundles world(s) + renderer + view_box + dt into a `Stage` dataclass
 and provides `record(stage, frames=..., output=...)` to run the render
@@ -93,7 +93,7 @@ loop. Four scene factories: `softbody_stage`, `fluid_stage`,
 
 ### Integration with the legacy engine
 
-The rebuild stack is intentionally decoupled from `slappyengine.engine`
+The rebuild stack is intentionally decoupled from `pharos_engine.engine`
 / `scene` / `scripts` / `lighting`. Two integration paths today:
 
 - Use `studio` for cinematic GIF captures from a game's debug menu.

@@ -22,7 +22,7 @@ engine-side test:
 | # | Break | Downstream cost |
 |---|---|---|
 | 1 | `RenderTarget.__init__` MRO shift — subclass `add_layer` before base init raised `AttributeError: 'layers'`. | ~665 Ochema + ~32 Bullet Strata test fails. |
-| 2 | `slappyengine.event_bus.global_bus` symbol removed. | Every downstream module that did `from slappyengine.event_bus import global_bus` failed at import. |
+| 2 | `pharos_engine.event_bus.global_bus` symbol removed. | Every downstream module that did `from pharos_engine.event_bus import global_bus` failed at import. |
 | 3 | `EventBus.unsubscribe(event_type, callback)` began requiring two args. | Legacy 1-arg `bus.unsubscribe("topic")` in game code raised `TypeError`. |
 
 Common root cause: engine tests never exercise **downstream subclass
@@ -50,13 +50,13 @@ Two paired test files plus a snapshot lock-file:
 Pinned modules (14):
 
 ```
-slappyengine                      slappyengine.event_bus
-slappyengine.entity               slappyengine.layer
-slappyengine.render_target        slappyengine.asset
-slappyengine.app                  slappyengine.dynamics
-slappyengine.physics3_bridge      slappyengine.diagnostics
-slappyengine.hud_bridge           slappyengine.audio_3d
-slappyengine.capture              slappyengine.exporter
+pharos_engine                      pharos_engine.event_bus
+pharos_engine.entity               pharos_engine.layer
+pharos_engine.render_target        pharos_engine.asset
+pharos_engine.app                  pharos_engine.dynamics
+pharos_engine.physics3_bridge      pharos_engine.diagnostics
+pharos_engine.hud_bridge           pharos_engine.audio_3d
+pharos_engine.capture              pharos_engine.exporter
 ```
 
 The 14-module cut is the set called out in the UU7 sprint spec.
@@ -66,12 +66,12 @@ and re-run the refresh.
 
 ### 2.1 What "public surface" means
 
-For every module *except* the top-level `slappyengine` package:
+For every module *except* the top-level `pharos_engine` package:
 
 > Every module-level name that does not start with `_`. Same set as
 > would be visible to `from mod import *` if `__all__` were absent.
 
-For the `slappyengine` package itself:
+For the `pharos_engine` package itself:
 
 > The contents of `__all__`. Necessary because the package uses PEP 562
 > lazy-load (`__getattr__`) and `dir()` doesn't enumerate un-touched
@@ -138,14 +138,14 @@ sample, per the sprint spec.
   game-compat re-run that motivated this harness.
 * [`docs/engine_surface_v030.md`](engine_surface_v030.md) — the
   hand-authored v0.3 top-level surface reference (91 names). The
-  harness's `slappyengine` entry pins the same set plus HH1 App +
+  harness's `pharos_engine` entry pins the same set plus HH1 App +
   OO6 diagnostics.
 * [`docs/v0_4_gate_reconciliation_2026_07_07.md`](v0_4_gate_reconciliation_2026_07_07.md)
   — v0.4 ship gates; gate #12 (game-compat) motivates this harness.
 * [`SlapPyEngineTests/tests/test_ochema_api_surface.py`](../SlapPyEngineTests/tests/test_ochema_api_surface.py)
   — narrower race-scene tripwire that predates this doc. Kept
   separately because it exercises *lazy-load* resolution (does
-  `slappyengine.CatmullRomSpline` still resolve?) which is orthogonal
+  `pharos_engine.CatmullRomSpline` still resolve?) which is orthogonal
   to the module-scan approach here.
 * [`SlapPyEngineTests/tests/test_event_bus_backcompat.py`](../SlapPyEngineTests/tests/test_event_bus_backcompat.py)
   — pre-existing event_bus-specific tripwire.

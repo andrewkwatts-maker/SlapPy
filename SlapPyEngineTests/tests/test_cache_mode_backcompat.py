@@ -2,7 +2,7 @@
 
 Downstream games (Ochema Circuit, Bullet Strata) depend on the
 ``OFFSCREEN_SERIALIZE`` / ``ALWAYS_CACHED`` / ``USER_DRIVEN`` enum
-members on ``slappyengine.residency.manager.CacheMode``.
+members on ``pharos_engine.residency.manager.CacheMode``.
 
 These predate the GPU / RAM / DISK residency-tier vocabulary and were
 briefly deleted in the a1732e1 Phase-C refactor. VV1 restored them
@@ -13,7 +13,7 @@ silently regress downstream games again.
 """
 from __future__ import annotations
 
-from slappyengine.residency.manager import CacheMode
+from pharos_engine.residency.manager import CacheMode
 
 
 def test_offscreen_serialize_exists():

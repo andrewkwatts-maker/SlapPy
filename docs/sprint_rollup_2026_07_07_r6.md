@@ -179,7 +179,7 @@ r14 kickoff:
 **Total across r14 – r20**: **35 new actions wired** across 7 rounds
 (cumulative router registry growth from 65 → 100 ids).
 
-`python/slappyengine/actions/` module count: **74 files** at r6 close
+`python/pharos_engine/actions/` module count: **74 files** at r6 close
 (was 64 at r5 close; QQ1 + RR1 + SS1 each added 5 modules = 15
 increment before dedupe with `spawn.stamp_repeat` reusing existing
 scaffold).

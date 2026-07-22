@@ -47,7 +47,7 @@ mark_breaks (which also iterate beams) it's ~30% of softbody step time.
 **Files**
 - New: `src/softbody_solver.rs`
 - Modify: `src/lib.rs` (`mod softbody_solver; softbody_solver::register(m)?;`)
-- Modify: `python/slappyengine/softbody/solver.py` —
+- Modify: `python/pharos_engine/softbody/solver.py` —
   `_project_distance_constraints`, `_apply_plasticity`, `_mark_breaks`
   get `HAS_NATIVE` guards.
 
@@ -94,7 +94,7 @@ work — no float precision concerns.
 
 **Files**
 - Add to: `src/softbody_solver.rs` — `build_contact_pairs` function
-- Modify: `python/slappyengine/softbody/collision.py`
+- Modify: `python/pharos_engine/softbody/collision.py`
 
 **Rust surface**
 ```rust
@@ -135,7 +135,7 @@ output. ~15% of step time, runs `iters` times per substep.
 
 **Files**
 - Add to: `src/softbody_solver.rs` — `project_contact_pairs` function
-- Modify: `python/slappyengine/softbody/collision.py`
+- Modify: `python/pharos_engine/softbody/collision.py`
 
 **Rust surface**
 ```rust
@@ -177,7 +177,7 @@ projection order (process node-beam pairs first, then node-node).
 **Files**
 - New: `src/pbf_solver.rs`
 - Modify: `src/lib.rs`
-- Modify: `python/slappyengine/fluid/solver.py`
+- Modify: `python/pharos_engine/fluid/solver.py`
 
 **Rust surface**
 ```rust
@@ -219,7 +219,7 @@ runs once per substep; `thermal_step` runs once per substep.
 
 **Files**
 - Add to: `src/pbf_solver.rs`
-- Modify: `python/slappyengine/fluid/solver.py` + `thermal_step.py`
+- Modify: `python/pharos_engine/fluid/solver.py` + `thermal_step.py`
 
 **Rust surface**
 ```rust

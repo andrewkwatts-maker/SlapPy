@@ -26,14 +26,14 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     ConstraintSolver,
     DistanceConstraint,
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.render import PhysicsRenderer, RenderConfig
+from pharos_engine.physics.render import PhysicsRenderer, RenderConfig
 
 
 TEST_NAME = "constraints"

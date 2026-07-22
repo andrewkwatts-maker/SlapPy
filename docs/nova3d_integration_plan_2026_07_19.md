@@ -17,10 +17,10 @@ Every "port" in this document lands as:
 
 | Layer | SlapPy stack | Nova3D source of truth used |
 |---|---|---|
-| **User API** | Python — `slappyengine.<subsystem>` on PyPI (`pip install slappy-engine`) | Reference — API shape lifted from Nova3D `*.hpp` headers, **retyped in Python** |
+| **User API** | Python — `pharos_engine.<subsystem>` on PyPI (`pip install pharos-engine`) | Reference — API shape lifted from Nova3D `*.hpp` headers, **retyped in Python** |
 | **Hot paths** | Rust `_core.<kernel>` via PyO3 + maturin | Reference — algorithm lifted from Nova3D `*.cpp` sources, **rewritten in Rust** |
 | **GPU** | wgpu (`wgpu-py` on the Python side, `wgpu` crate on the Rust side) → **Vulkan** on Windows/Linux, DX12 on Windows fallback, Metal on macOS | Reference — technique lifted from Nova3D OpenGL/GLSL, **shaders rewritten in WGSL** |
-| **Shaders** | WGSL sources under `python/slappyengine/render/shaders/` and `src/*.rs` inline strings | Reference — Nova3D `*.glsl` translated to WGSL by hand |
+| **Shaders** | WGSL sources under `python/pharos_engine/render/shaders/` and `src/*.rs` inline strings | Reference — Nova3D `*.glsl` translated to WGSL by hand |
 
 **Not being adopted from Nova3D:** C++ codebase, CMake build, OpenGL 4.6, GLFW, ImGui, Assimp, GLM. These are Nova3D-only.
 
@@ -42,11 +42,11 @@ Every complexity estimate + sprint budget in this document is for the **Python+R
 
 Nova3D contains **~44 top-level `engine/` subsystems** and ~200 files just under `engine/graphics/`. The bulk of the value we should adopt for SlapPy is concentrated in **five load-bearing pillars**. Each pillar's "Nova3D source" column below points at the C++ headers/GLSL we read as the **feature reference**; the "SlapPy target" column names the new Python/Rust/WGSL modules we write.
 
-1. **Docking editor UX** — feature ref: `engine/ui/DockingSystem.hpp:142-793` + `engine/editor/EditorLayoutManager.hpp` (~2.7 kloc C++ reference implementation). SlapPy target: pure-Python `slappyengine.ui.editor.dock.DockNode` / `DockSpace` / `DockLayout` classes reusing `movable_panel.py` + `dock_zones.py` primitives; JSON round-trip already handled by `layout_persistence.py`. **No Rust hot-path required** — dock math is drag-drop-driven and infrequent.
-2. **Deferred renderer + G-buffer** — feature ref: `engine/graphics/DeferredRenderer.hpp`, `GBuffer.hpp`, `Renderer.hpp` (OpenGL 4.6). SlapPy target: WGSL rewrite of the G-buffer + light accumulation shaders under `python/slappyengine/render/shaders/deferred/*.wgsl`; Python driver in `render/deferred.py`; **hot-path light-cluster culling ported to `_core.deferred_cluster`** in Rust for perf. Unlocks clustered lighting, CSM composition, TAA, SSAO — techniques already listed in `project_nova3d_additions.md`.
+1. **Docking editor UX** — feature ref: `engine/ui/DockingSystem.hpp:142-793` + `engine/editor/EditorLayoutManager.hpp` (~2.7 kloc C++ reference implementation). SlapPy target: pure-Python `pharos_engine.ui.editor.dock.DockNode` / `DockSpace` / `DockLayout` classes reusing `movable_panel.py` + `dock_zones.py` primitives; JSON round-trip already handled by `layout_persistence.py`. **No Rust hot-path required** — dock math is drag-drop-driven and infrequent.
+2. **Deferred renderer + G-buffer** — feature ref: `engine/graphics/DeferredRenderer.hpp`, `GBuffer.hpp`, `Renderer.hpp` (OpenGL 4.6). SlapPy target: WGSL rewrite of the G-buffer + light accumulation shaders under `python/pharos_engine/render/shaders/deferred/*.wgsl`; Python driver in `render/deferred.py`; **hot-path light-cluster culling ported to `_core.deferred_cluster`** in Rust for perf. Unlocks clustered lighting, CSM composition, TAA, SSAO — techniques already listed in `project_nova3d_additions.md`.
 3. **PBR material graph** — feature ref: `engine/graphics/Material.hpp:1-744`, `engine/materials/AdvancedMaterial.hpp`, `MaterialGraphEditor.hpp:1-359`, ~30 node types under `engine/materials/`. SlapPy target: extend `render/material.py::PbrMaterial` (Python) with `MaterialGraph` + `MaterialNode` classes; WGSL shader-fragment emission per node; **node-evaluation hot-path ported to `_core.material_eval`** in Rust for parameter-baking. Node taxonomy (30 node types) lifted 1:1 as Python subclasses.
-4. **Asset browser + import pipeline** — feature ref: `engine/editor/AssetBrowser.hpp:1220` lines, `AssetThumbnailCache.hpp`, `engine/import/ModelImporter.hpp`, `TextureImporter.hpp`, `AnimationImporter.hpp` (uses Assimp C library). SlapPy target: Python-side `slappyengine.asset_import.AssetBrowser` + `ThumbnailCache` on top of existing `gltf_importer.py`; FBX support via pure-Python `fbx-io` wheel or by writing a Rust FBX kernel (`_core.fbx_importer`). Thumbnail generation runs on **Python thread pool**, not a Rust kernel — it's I/O-bound.
-5. **Prefab + scene graph** — feature ref: `engine/editor/PrefabSystem.hpp:1155` lines, `engine/scene/SceneNode.hpp:298`, `engine/entity/Entity.hpp:213`. SlapPy target: extend `python/slappyengine/scene.py::Scene` with a `SceneNode` hierarchy (parent transform inheritance); YAML round-trip for prefab format; **transform propagation hot-path ported to `_core.scene_walk_transforms`** in Rust (walks the tree, accumulates 4x4 matrices) — perf-critical on scenes with thousands of nodes.
+4. **Asset browser + import pipeline** — feature ref: `engine/editor/AssetBrowser.hpp:1220` lines, `AssetThumbnailCache.hpp`, `engine/import/ModelImporter.hpp`, `TextureImporter.hpp`, `AnimationImporter.hpp` (uses Assimp C library). SlapPy target: Python-side `pharos_engine.asset_import.AssetBrowser` + `ThumbnailCache` on top of existing `gltf_importer.py`; FBX support via pure-Python `fbx-io` wheel or by writing a Rust FBX kernel (`_core.fbx_importer`). Thumbnail generation runs on **Python thread pool**, not a Rust kernel — it's I/O-bound.
+5. **Prefab + scene graph** — feature ref: `engine/editor/PrefabSystem.hpp:1155` lines, `engine/scene/SceneNode.hpp:298`, `engine/entity/Entity.hpp:213`. SlapPy target: extend `python/pharos_engine/scene.py::Scene` with a `SceneNode` hierarchy (parent transform inheritance); YAML round-trip for prefab format; **transform propagation hot-path ported to `_core.scene_walk_transforms`** in Rust (walks the tree, accumulates 4x4 matrices) — perf-critical on scenes with thousands of nodes.
 
 The rest of Nova3D ships useful individual techniques (radiance cascades, SVGF, RTX path tracer, spectral renderer, SDF sculpting, procedural terrain, NavMesh, RTS systems). Some are already ported (per `project_nova3d_additions.md`, all as **WGSL rewrites** of the original GLSL); others are out-of-scope for the current sprint plan.
 
@@ -56,23 +56,23 @@ The rest of Nova3D ships useful individual techniques (radiance cascades, SVGF, 
 
 | # | Nova3D subsystem | Source path | SlapPy equivalent | Complexity | Sprint budget |
 |---|---|---|---|---|---|
-| 1 | **DockSpace / panel docking** | `engine/ui/DockingSystem.hpp:142-793` (`DockNode`, `DockSpace`, `DockDragInfo`, `DockLayout`) + `.cpp:1-1872` | Partial: `python/slappyengine/ui/editor/movable_panel.py`, `dock_zones.py`, `layout_persistence.py`, `layout_presets.py`, `notebook_panel_decor.py` — no tree model | **LARGE** | 3-4 sprints |
-| 2 | **Deferred renderer + G-buffer** | `engine/graphics/DeferredRenderer.hpp:1-707`, `GBuffer.hpp:1-290`, `Renderer.hpp:1-921` | `python/slappyengine/render/pipeline.py`, `render/renderer.py`, `render/passes.py` — forward-only | **LARGE** | 4-5 sprints |
-| 3 | **PBR material graph** | `engine/graphics/Material.hpp:1-744`, `engine/materials/AdvancedMaterial.hpp:1-305`, `MaterialGraphEditor.hpp:1-359`, `PbrSurfaceNodes.cpp`, `NoiseNodes.cpp`, `TriplanarNodes.cpp` | `python/slappyengine/render/material.py::PbrMaterial` (struct only); notebook stub `notebook_material_editor.py`, `material_editor.py` | **LARGE** | 3-4 sprints |
-| 4 | **Asset browser + thumbnails** | `engine/editor/AssetBrowser.hpp:1-1220`, `AssetThumbnailCache.hpp`, `AssetRegistry.hpp`, `AssetTypeRegistry.hpp` | `python/slappyengine/ui/editor/notebook_content_browser.py`, `content_browser.py` — no thumbnail cache | **MEDIUM** | 2 sprints |
-| 5 | **Import pipeline** (`gltf`/`fbx`/`obj`) | `engine/import/ModelImporter.hpp:1-534`, `TextureImporter.hpp:1-533`, `AnimationImporter.hpp:1-461`, `AssetProcessor.hpp` | `python/slappyengine/asset_import/gltf_importer.py`, `obj_importer.py`, `texture_importer.py`, `skinned_mesh.py` — no FBX | **MEDIUM** | 2 sprints |
-| 6 | **Prefab system + variants** | `engine/editor/PrefabSystem.hpp:1-1155` (nested prefabs, overrides, hot-reload) | `python/slappyengine/ui/editor/notebook_prefab_menu.py` — spawn menu only, no overrides | **MEDIUM** | 2-3 sprints |
-| 7 | **Scene graph (SceneNode)** | `engine/scene/SceneNode.hpp:1-298`, `Scene.hpp:1-240` (hierarchical transforms) | `python/slappyengine/scene.py::Scene` (flat entity dict at line 17); `python/slappyengine/entity.py` | **MEDIUM** | 2 sprints |
-| 8 | **Transform gizmo (3D)** | `engine/editor/TransformGizmo.hpp:1-860`, `ViewportPanel.hpp:1-268` | `python/slappyengine/ui/editor/gizmo_overlay.py`, `notebook_gizmos.py` — 2D screen-space only | **MEDIUM** | 1-2 sprints |
+| 1 | **DockSpace / panel docking** | `engine/ui/DockingSystem.hpp:142-793` (`DockNode`, `DockSpace`, `DockDragInfo`, `DockLayout`) + `.cpp:1-1872` | Partial: `python/pharos_engine/ui/editor/movable_panel.py`, `dock_zones.py`, `layout_persistence.py`, `layout_presets.py`, `notebook_panel_decor.py` — no tree model | **LARGE** | 3-4 sprints |
+| 2 | **Deferred renderer + G-buffer** | `engine/graphics/DeferredRenderer.hpp:1-707`, `GBuffer.hpp:1-290`, `Renderer.hpp:1-921` | `python/pharos_engine/render/pipeline.py`, `render/renderer.py`, `render/passes.py` — forward-only | **LARGE** | 4-5 sprints |
+| 3 | **PBR material graph** | `engine/graphics/Material.hpp:1-744`, `engine/materials/AdvancedMaterial.hpp:1-305`, `MaterialGraphEditor.hpp:1-359`, `PbrSurfaceNodes.cpp`, `NoiseNodes.cpp`, `TriplanarNodes.cpp` | `python/pharos_engine/render/material.py::PbrMaterial` (struct only); notebook stub `notebook_material_editor.py`, `material_editor.py` | **LARGE** | 3-4 sprints |
+| 4 | **Asset browser + thumbnails** | `engine/editor/AssetBrowser.hpp:1-1220`, `AssetThumbnailCache.hpp`, `AssetRegistry.hpp`, `AssetTypeRegistry.hpp` | `python/pharos_engine/ui/editor/notebook_content_browser.py`, `content_browser.py` — no thumbnail cache | **MEDIUM** | 2 sprints |
+| 5 | **Import pipeline** (`gltf`/`fbx`/`obj`) | `engine/import/ModelImporter.hpp:1-534`, `TextureImporter.hpp:1-533`, `AnimationImporter.hpp:1-461`, `AssetProcessor.hpp` | `python/pharos_engine/asset_import/gltf_importer.py`, `obj_importer.py`, `texture_importer.py`, `skinned_mesh.py` — no FBX | **MEDIUM** | 2 sprints |
+| 6 | **Prefab system + variants** | `engine/editor/PrefabSystem.hpp:1-1155` (nested prefabs, overrides, hot-reload) | `python/pharos_engine/ui/editor/notebook_prefab_menu.py` — spawn menu only, no overrides | **MEDIUM** | 2-3 sprints |
+| 7 | **Scene graph (SceneNode)** | `engine/scene/SceneNode.hpp:1-298`, `Scene.hpp:1-240` (hierarchical transforms) | `python/pharos_engine/scene.py::Scene` (flat entity dict at line 17); `python/pharos_engine/entity.py` | **MEDIUM** | 2 sprints |
+| 8 | **Transform gizmo (3D)** | `engine/editor/TransformGizmo.hpp:1-860`, `ViewportPanel.hpp:1-268` | `python/pharos_engine/ui/editor/gizmo_overlay.py`, `notebook_gizmos.py` — 2D screen-space only | **MEDIUM** | 1-2 sprints |
 | 9 | **Shader hot-reload** | `engine/graphics/ShaderHotReload.hpp:1-99` (`ShaderWatchEntry`, mtime polling ~1 Hz) | None — SlapPy has `shader_gen.py`, `shader_binding.py`, `shader_stock.py`; hot-reload is manual | **SMALL** | 0.5 sprint |
-| 10 | **Texture manager + streaming** | `engine/graphics/TextureManager.hpp:1-99`, `TextureAtlas.hpp`, `engine/streaming/StreamingManager.hpp` | `python/slappyengine/asset_import/texture_importer.py` (no residency mgr) | **MEDIUM** | 1-2 sprints |
-| 11 | **Cascaded shadow maps + TAA** | `engine/graphics/CascadedShadowMaps.hpp:1-256`, `TAA.hpp:1-258` | Already partially ported per `project_nova3d_additions.md`; `python/slappyengine/render/shadows.py` | **DONE (SMALL polish)** | 0.5 sprint |
-| 12 | **Debug draw (wireframe/normals/frustum)** | `engine/graphics/debug/DebugDraw.hpp:1-270`, `DebugShapes.cpp`, `LightGizmoBillboards.cpp`, `engine/debug/BVHVisualizer.hpp` | `python/slappyengine/ui/debug_overlay.py`, `render/bvh_3d.py` visualiser | **SMALL** | 0.5 sprint |
-| 13 | **Reflection / property system** | `engine/reflection/NovaReflect.hpp`, `TypeRegistry.hpp`, `Property.cpp`, `Observable.hpp` (~14 headers) | `python/slappyengine/data_component.py`, `struct_registry.py`, notebook `property_inspector.py` | **MEDIUM** | 2 sprints |
-| 14 | **AssetDatabase + JSON asset serialiser** | `engine/assets/AssetDatabase.hpp:1-288`, `JsonAssetSerializer.hpp`, `AssetPaths.hpp` | `python/slappyengine/asset_manifest.py`, `project_registry.py`, residency `slap_format.py` | **MEDIUM** | 2 sprints |
-| 15 | **Editor menu system + command history** | `engine/editor/EditorMenuSystem.hpp`, `EditorCommand.hpp`, `CommandHistory.hpp` | `python/slappyengine/ui/editor/notebook_menu_bar.py`, `editor_undo.py`, `tool_router.py` | **SMALL** | 1 sprint |
-| 16 | **Skeletal animation + blend trees** | `engine/animation/Animation.hpp`, `AnimationBlendTree.hpp`, `AnimationStateMachine.hpp`, `SkeletalAnimator.hpp` | `python/slappyengine/animation/skeleton_runtime.py`, `animation/` subpackage | **MEDIUM (extend existing)** | 1-2 sprints |
-| 17 | **Window management (`Window.hpp`)** | `engine/core/Window.hpp:1-213`, `engine/platform/windows/WindowsPlatform.cpp` | `python/slappyengine/app.py`, `engine.py` — GLFW-less | **SMALL** | 0.5 sprint |
+| 10 | **Texture manager + streaming** | `engine/graphics/TextureManager.hpp:1-99`, `TextureAtlas.hpp`, `engine/streaming/StreamingManager.hpp` | `python/pharos_engine/asset_import/texture_importer.py` (no residency mgr) | **MEDIUM** | 1-2 sprints |
+| 11 | **Cascaded shadow maps + TAA** | `engine/graphics/CascadedShadowMaps.hpp:1-256`, `TAA.hpp:1-258` | Already partially ported per `project_nova3d_additions.md`; `python/pharos_engine/render/shadows.py` | **DONE (SMALL polish)** | 0.5 sprint |
+| 12 | **Debug draw (wireframe/normals/frustum)** | `engine/graphics/debug/DebugDraw.hpp:1-270`, `DebugShapes.cpp`, `LightGizmoBillboards.cpp`, `engine/debug/BVHVisualizer.hpp` | `python/pharos_engine/ui/debug_overlay.py`, `render/bvh_3d.py` visualiser | **SMALL** | 0.5 sprint |
+| 13 | **Reflection / property system** | `engine/reflection/NovaReflect.hpp`, `TypeRegistry.hpp`, `Property.cpp`, `Observable.hpp` (~14 headers) | `python/pharos_engine/data_component.py`, `struct_registry.py`, notebook `property_inspector.py` | **MEDIUM** | 2 sprints |
+| 14 | **AssetDatabase + JSON asset serialiser** | `engine/assets/AssetDatabase.hpp:1-288`, `JsonAssetSerializer.hpp`, `AssetPaths.hpp` | `python/pharos_engine/asset_manifest.py`, `project_registry.py`, residency `slap_format.py` | **MEDIUM** | 2 sprints |
+| 15 | **Editor menu system + command history** | `engine/editor/EditorMenuSystem.hpp`, `EditorCommand.hpp`, `CommandHistory.hpp` | `python/pharos_engine/ui/editor/notebook_menu_bar.py`, `editor_undo.py`, `tool_router.py` | **SMALL** | 1 sprint |
+| 16 | **Skeletal animation + blend trees** | `engine/animation/Animation.hpp`, `AnimationBlendTree.hpp`, `AnimationStateMachine.hpp`, `SkeletalAnimator.hpp` | `python/pharos_engine/animation/skeleton_runtime.py`, `animation/` subpackage | **MEDIUM (extend existing)** | 1-2 sprints |
+| 17 | **Window management (`Window.hpp`)** | `engine/core/Window.hpp:1-213`, `engine/platform/windows/WindowsPlatform.cpp` | `python/pharos_engine/app.py`, `engine.py` — GLFW-less | **SMALL** | 0.5 sprint |
 
 **Grand total sprint budget:** ~28-34 sprints to reach Nova3D parity for the 3D pipeline surface. Prioritised rollout below.
 
@@ -98,7 +98,7 @@ The rest of Nova3D ships useful individual techniques (radiance cascades, SVGF, 
 5. Layout persistence: `SaveLayout` writes the tree as flat `NodeLayout` records keyed by `id` + `parentId`; `LoadLayout` re-links via a `panelMap` (id → `EditorPanel*`) and silently drops unregistered panels.
 6. Callbacks: `OnLayoutChanged`, `OnPanelDocked`, `OnPanelUndocked`, `OnPanelClosed` fire from inside `DockSpace` so panel-side listeners can rewire.
 
-**SlapPy port target.** New module `python/slappyengine/ui/editor/dock_space.py` mirroring `DockNode`/`DockSpace` in pure Python. SlapPy already has `movable_panel.py`, `dock_zones.py`, `layout_persistence.py` — those become the drag/drop primitives; the tree model is new. The `flexBasis`/`flexGrow` layout bridge maps directly onto `python/slappyengine/ui/runtime/layout.py`.
+**SlapPy port target.** New module `python/pharos_engine/ui/editor/dock_space.py` mirroring `DockNode`/`DockSpace` in pure Python. SlapPy already has `movable_panel.py`, `dock_zones.py`, `layout_persistence.py` — those become the drag/drop primitives; the tree model is new. The `flexBasis`/`flexGrow` layout bridge maps directly onto `python/pharos_engine/ui/runtime/layout.py`.
 
 **Complexity: LARGE, 3-4 sprints.** Split as W1: `DockNode`+`DockSpace` tree + `AddPanel`/`RemovePanel`/`SplitNode`; W2: drag/drop + preview overlay; W3: JSON round-trip + preset layouts; W4: flex bridge + resize handles.
 
@@ -108,7 +108,7 @@ The rest of Nova3D ships useful individual techniques (radiance cascades, SVGF, 
 
 Nova3D's G-buffer layout is standard 4-target MRT: albedo+roughness (RGBA8), normal+metallic (RGB10A2 or RGBA16F), motion+material-id (RG16F+RG8), depth (D32F). The lighting pass reads all four, applies clustered lighting (`ClusteredLighting.hpp`, `ClusteredLightingExpanded.hpp`), reads CSM shadows (`CascadedShadowMaps.hpp:1-256`), then runs post-process (`engine/postprocess/PostProcess.hpp`). `Light` struct at `DeferredRenderer.hpp:39-118` is GPU-friendly SSBO layout with `LightType::{Directional, Point, Spot, Area}`, `castsShadows`, `shadowMapIndex`, and factory helpers `CreateDirectional`/`CreatePoint`/`CreateSpot`.
 
-**SlapPy port target.** New `python/slappyengine/render/deferred.py` + WGSL shaders. `PbrMaterial` already exists (`render/material.py`) and `render/light.py` has a light struct — extend for GPU-friendly packing. `render/shadows.py` already ports CSM per `project_nova3d_additions.md`, so the deferred pipeline just consumes it. Split as W1: G-buffer creation + geometry pass; W2: light accumulation; W3: motion vectors + TAA hookup; W4: clustered lighting SSBO port; W5: material-ID debug view + integration into `Layer3D`.
+**SlapPy port target.** New `python/pharos_engine/render/deferred.py` + WGSL shaders. `PbrMaterial` already exists (`render/material.py`) and `render/light.py` has a light struct — extend for GPU-friendly packing. `render/shadows.py` already ports CSM per `project_nova3d_additions.md`, so the deferred pipeline just consumes it. Split as W1: G-buffer creation + geometry pass; W2: light accumulation; W3: motion vectors + TAA hookup; W4: clustered lighting SSBO port; W5: material-ID debug view + integration into `Layer3D`.
 
 **Complexity: LARGE, 4-5 sprints.**
 
@@ -116,7 +116,7 @@ Nova3D's G-buffer layout is standard 4-target MRT: albedo+roughness (RGBA8), nor
 
 **Files.** `engine/materials/` (52 files). Key nodes: `PbrSurfaceNodes.cpp`, `NoiseNodes.cpp`, `TriplanarNodes.cpp`, `BloomNodes.cpp`, `ColorGradeNodes.cpp`, `TonemapNodes.cpp`, `DistanceDrivenNodes.cpp`, `RadianceProbeNodes.cpp`, `SDFShaderNodes.cpp`, `VolumetricFogNodes.cpp`. Editor UI: `MaterialGraphEditor.hpp:1-359` + `engine/editor/MaterialEditor.hpp`, `MaterialEditorAdvanced.hpp`, `MaterialAssetEditor.hpp`. Advanced-material struct (`AdvancedMaterial.hpp:1-305`) covers Sellmeier IOR dispersion, subsurface scattering, volumetric (Rayleigh/Mie).
 
-**SlapPy port target.** Extend `python/slappyengine/render/material.py::PbrMaterial` into a graph model in a new `python/slappyengine/render/material_graph.py`. SlapPy already has a `notebook_node_editor.py` and `node_graph_panel.py` — the node inventory maps directly. WGSL generation goes through the existing `shader_gen.py` pipeline. Ship the graph in three tiers: (1) surface (albedo/normal/roughness/metallic + emissive), (2) procedural (noise/triplanar/gradients), (3) advanced (SSS, dispersion, volumetric).
+**SlapPy port target.** Extend `python/pharos_engine/render/material.py::PbrMaterial` into a graph model in a new `python/pharos_engine/render/material_graph.py`. SlapPy already has a `notebook_node_editor.py` and `node_graph_panel.py` — the node inventory maps directly. WGSL generation goes through the existing `shader_gen.py` pipeline. Ship the graph in three tiers: (1) surface (albedo/normal/roughness/metallic + emissive), (2) procedural (noise/triplanar/gradients), (3) advanced (SSS, dispersion, volumetric).
 
 **Complexity: LARGE, 3-4 sprints.**
 
@@ -132,7 +132,7 @@ Nova3D's G-buffer layout is standard 4-target MRT: albedo+roughness (RGBA8), nor
 - Context menus for file operations
 - `AssetType` enum: `Unknown, Folder, SDFModel, Mesh, Texture, Material, Animation, Audio, ...`
 
-**SlapPy port target.** Expand `python/slappyengine/ui/editor/notebook_content_browser.py` into a real asset browser. Thumbnail cache = new `python/slappyengine/asset_import/thumbnail_cache.py` that uses `PIL` for image formats and `render/renderer.py` off-screen for meshes. Async pipeline = threaded via existing `python/slappyengine/telemetry/` infra.
+**SlapPy port target.** Expand `python/pharos_engine/ui/editor/notebook_content_browser.py` into a real asset browser. Thumbnail cache = new `python/pharos_engine/asset_import/thumbnail_cache.py` that uses `PIL` for image formats and `render/renderer.py` off-screen for meshes. Async pipeline = threaded via existing `python/pharos_engine/telemetry/` infra.
 
 **Complexity: MEDIUM, 2 sprints.**
 
@@ -140,7 +140,7 @@ Nova3D's G-buffer layout is standard 4-target MRT: albedo+roughness (RGBA8), nor
 
 **Files.** `engine/editor/PrefabSystem.hpp:1-1155`. Features: prefab creation, instantiation, per-instance overrides, prefab variants, nested prefabs, hot-reload, undo/redo integration via `CommandHistory`.
 
-**SlapPy port target.** New `python/slappyengine/prefab.py` + editor panel `python/slappyengine/ui/editor/prefab_panel.py`. Under the hood, a prefab is a serialised `Entity` subtree; instantiation copies + records an override table keyed by property path (`transform.position`, `mesh_material.albedo`, etc.). SlapPy's `serialize.py` + `slap_format.py` (residency) already provide the on-disk format.
+**SlapPy port target.** New `python/pharos_engine/prefab.py` + editor panel `python/pharos_engine/ui/editor/prefab_panel.py`. Under the hood, a prefab is a serialised `Entity` subtree; instantiation copies + records an override table keyed by property path (`transform.position`, `mesh_material.albedo`, etc.). SlapPy's `serialize.py` + `slap_format.py` (residency) already provide the on-disk format.
 
 **Complexity: MEDIUM, 2-3 sprints.**
 
@@ -152,7 +152,7 @@ Nova3D's G-buffer layout is standard 4-target MRT: albedo+roughness (RGBA8), nor
 
 Nova3D wraps GLFW behind a thin `Window` class that exposes a `Callbacks` struct (line 32-43): `onResize`, `onFocus`, `onClose`, and — critical for asset workflow — `onFileDrop(std::vector<std::string>)`. The OS-level drag-drop from Explorer/Finder flows into `AssetBrowser::HandleExternalFileDrop`. `CreateParams` (line 44+) defaults to 1920×1080 with a plain string title.
 
-**SlapPy lesson.** `python/slappyengine/app.py` has an App class but no OS drop callback surface. Adding an `on_file_drop` hook (SlapPy runs on wgpu + winit under the hood via wheels) lets the asset browser accept native drops. Small dependency: expose the winit `WindowEvent::DroppedFile` variant through the Rust `_core` extension.
+**SlapPy lesson.** `python/pharos_engine/app.py` has an App class but no OS drop callback surface. Adding an `on_file_drop` hook (SlapPy runs on wgpu + winit under the hood via wheels) lets the asset browser accept native drops. Small dependency: expose the winit `WindowEvent::DroppedFile` variant through the Rust `_core` extension.
 
 ### 3.2 EditorApplication as central coordinator
 
@@ -164,7 +164,7 @@ Nova3D wraps GLFW behind a thin `Window` class that exposes a `Callbacks` struct
 - Settings + preferences (`EditorSettings.hpp`, `PreferencesPanel.hpp`)
 - Notifications + status display
 
-**SlapPy analogue.** `python/slappyengine/ui/editor/shell.py` (~"shell" is the entry point) plus `notebook_menu_bar.py`, `toolbar.py`, `editor_undo.py`, `scene_outliner.py`, `property_inspector.py`. These are already reasonably good; the missing piece is a **single `EditorApplication` class** that owns them all and exposes lifecycle hooks (`Init`, `Update`, `Render`, `Shutdown`) — currently SlapPy's editor is a bag of loose panels bound by `tool_router.py`.
+**SlapPy analogue.** `python/pharos_engine/ui/editor/shell.py` (~"shell" is the entry point) plus `notebook_menu_bar.py`, `toolbar.py`, `editor_undo.py`, `scene_outliner.py`, `property_inspector.py`. These are already reasonably good; the missing piece is a **single `EditorApplication` class** that owns them all and exposes lifecycle hooks (`Init`, `Update`, `Render`, `Shutdown`) — currently SlapPy's editor is a bag of loose panels bound by `tool_router.py`.
 
 ### 3.3 Docking primitive re-cap
 
@@ -178,7 +178,7 @@ See Page 2 § Priority 1 for the tree model. The key take-aways for editor UX be
 
 `engine/editor/ViewportPanel.hpp:1-268` renders the scene into an offscreen framebuffer, presents it as an `ImGui::Image` inside a normal `EditorPanel`, and integrates `ViewportControls` (Maya-style orbit/pan/zoom), `TransformGizmo`, and `RayPicker`. `RenderMode` enum (line 51+) has debug views for **shadow maps (directional / point / spot)**, **normals**, **wireframe**, **unlit**, **SDF**, plus `kFirstDebugMode` for full-screen internal-buffer visualisation — a lightweight in-editor renderdoc.
 
-**SlapPy lesson.** `python/slappyengine/ui/editor/viewport_panel.py` exists but is 2D-oriented. A `Viewport3DPanel` that owns a `MeshRenderer` (from `python/slappyengine/gpu/mesh_renderer.py`) and mirrors Nova3D's `RenderMode` enum would be the fastest way to give SlapPy real 3D editing.
+**SlapPy lesson.** `python/pharos_engine/ui/editor/viewport_panel.py` exists but is 2D-oriented. A `Viewport3DPanel` that owns a `MeshRenderer` (from `python/pharos_engine/gpu/mesh_renderer.py`) and mirrors Nova3D's `RenderMode` enum would be the fastest way to give SlapPy real 3D editing.
 
 ### 3.5 Transform gizmo mechanics
 
@@ -188,11 +188,11 @@ See Page 2 § Priority 1 for the tree model. The key take-aways for editor UX be
 
 ### 3.6 Right-click contextual menus + spawn
 
-`engine/editor/EditorMenuSystem.hpp` centralises menu registration. `engine/editor/AssetCreationDialog.hpp` handles right-click "Create → …". `engine/editor/PrefabSystem` "Instantiate here" flows through the same menu system. SlapPy's `python/slappyengine/ui/editor/spawn_menu.py` + `notebook_spawn_menu.py` + `notebook_spawn_menu_svgs.py` already cover 90% of this — the remaining work is unifying the entry points so the same registration flows both to menu bar and to context menu.
+`engine/editor/EditorMenuSystem.hpp` centralises menu registration. `engine/editor/AssetCreationDialog.hpp` handles right-click "Create → …". `engine/editor/PrefabSystem` "Instantiate here" flows through the same menu system. SlapPy's `python/pharos_engine/ui/editor/spawn_menu.py` + `notebook_spawn_menu.py` + `notebook_spawn_menu_svgs.py` already cover 90% of this — the remaining work is unifying the entry points so the same registration flows both to menu bar and to context menu.
 
 ### 3.7 Keyboard nav + command palette
 
-`engine/editor/EditorCommand.hpp` + `CommandHistory.hpp` implement a typed command pattern (each user action is a `Command` object that captures its undo state). SlapPy has `python/slappyengine/ui/editor/notebook_command_palette.py` + `editor_undo.py` — the palette is command-driven but only bridges to `tool_router.py`; a proper `Command` base class with `Do`/`Undo` methods would tighten it.
+`engine/editor/EditorCommand.hpp` + `CommandHistory.hpp` implement a typed command pattern (each user action is a `Command` object that captures its undo state). SlapPy has `python/pharos_engine/ui/editor/notebook_command_palette.py` + `editor_undo.py` — the palette is command-driven but only bridges to `tool_router.py`; a proper `Command` base class with `Do`/`Undo` methods would tighten it.
 
 ### 3.8 Panel layout persistence
 
@@ -210,7 +210,7 @@ See Page 2 § Priority 1 for the tree model. The key take-aways for editor UX be
 
 ### 4.1 Current state of SlapPy `Layer`
 
-`python/slappyengine/layer.py:65-278`. Key observations:
+`python/pharos_engine/layer.py:65-278`. Key observations:
 
 - `Layer.__init__` (line 66) accepts `mode: str = "2D"` — 3D is already a first-class variant.
 - `Layer.mesh_geometry` (line 101) is a `GpuMesh | None` and `Layer.mesh_material` (line 102) is a `PbrMaterial | None`. **The 3D scaffolding is already in the `Layer` class.**
@@ -218,7 +218,7 @@ See Page 2 § Priority 1 for the tree model. The key take-aways for editor UX be
 - Cross-layer baking already exists: `bake_to_2d` (line 157) renders a 3D layer to a texture; `apply_heightmap` (line 188), `apply_normal_map` (line 233), `apply_albedo` (line 258) go the other direction (2D → 3D material inputs).
 - `Layer2D` subclass exists (line 280) but there is **no explicit `Layer3D`** — `mode="3D"` on the base class is the current pathway.
 
-`python/slappyengine/scene.py::Scene` (line 14-90) holds a flat `_entities: dict[str, Entity]`, a `Camera`, `_z_layers: list[ZLayer]` sorted by z ascending (line 71-73), and calls `entity.tick(dt)` in a loop. **Layers today are held on the entity side** (via `entity.layers`), not on `Scene` directly.
+`python/pharos_engine/scene.py::Scene` (line 14-90) holds a flat `_entities: dict[str, Entity]`, a `Camera`, `_z_layers: list[ZLayer]` sorted by z ascending (line 71-73), and calls `entity.tick(dt)` in a loop. **Layers today are held on the entity side** (via `entity.layers`), not on `Scene` directly.
 
 ### 4.2 Design decision: subclass `Layer` for `Layer3D`
 
@@ -231,7 +231,7 @@ See Page 2 § Priority 1 for the tree model. The key take-aways for editor UX be
 ### 4.3 API sketch
 
 ```python
-# python/slappyengine/layer.py (new subclass, alongside Layer2D)
+# python/pharos_engine/layer.py (new subclass, alongside Layer2D)
 class Layer3D(Layer):
     """3D layer holding a mesh + material + world-space transform.
 
@@ -257,7 +257,7 @@ class Layer3D(Layer):
 
     @classmethod
     def from_gltf(cls, path: str | Path, name: str | None = None) -> "Layer3D":
-        from slappyengine.asset_import.gltf_importer import import_gltf
+        from pharos_engine.asset_import.gltf_importer import import_gltf
         result = import_gltf(path)
         return cls(name=name or Path(path).stem,
                    mesh=result.mesh, material=result.material)
@@ -353,22 +353,22 @@ Once `Layer3D` is a first-class citizen:
 
 | Concern | Path |
 |---|---|
-| Layer base + subclasses | `H:/Github/SlapPyEngine/python/slappyengine/layer.py` |
-| Scene | `H:/Github/SlapPyEngine/python/slappyengine/scene.py` |
-| Entity | `H:/Github/SlapPyEngine/python/slappyengine/entity.py` |
-| Render pipeline | `H:/Github/SlapPyEngine/python/slappyengine/render/pipeline.py` |
-| PBR material | `H:/Github/SlapPyEngine/python/slappyengine/render/material.py` |
-| 3D scene walker | `H:/Github/SlapPyEngine/python/slappyengine/render/scene_walker.py` |
-| Shadows | `H:/Github/SlapPyEngine/python/slappyengine/render/shadows.py` |
-| glTF importer | `H:/Github/SlapPyEngine/python/slappyengine/asset_import/gltf_importer.py` |
-| Editor shell | `H:/Github/SlapPyEngine/python/slappyengine/ui/editor/shell.py` |
-| Dock zones + movable panel | `H:/Github/SlapPyEngine/python/slappyengine/ui/editor/dock_zones.py`, `movable_panel.py` |
-| Layout persistence | `H:/Github/SlapPyEngine/python/slappyengine/ui/editor/layout_persistence.py`, `layout_baker.py`, `layout_presets.py` |
-| Content browser | `H:/Github/SlapPyEngine/python/slappyengine/ui/editor/notebook_content_browser.py` |
-| Property inspector | `H:/Github/SlapPyEngine/python/slappyengine/ui/editor/property_inspector.py` |
-| Gizmos | `H:/Github/SlapPyEngine/python/slappyengine/ui/editor/notebook_gizmos.py`, `gizmo_overlay.py` |
-| Material editor stub | `H:/Github/SlapPyEngine/python/slappyengine/ui/editor/notebook_material_editor.py`, `material_editor.py` |
-| Node graph editor | `H:/Github/SlapPyEngine/python/slappyengine/ui/editor/notebook_node_editor.py`, `node_graph_panel.py` |
+| Layer base + subclasses | `H:/Github/SlapPyEngine/python/pharos_engine/layer.py` |
+| Scene | `H:/Github/SlapPyEngine/python/pharos_engine/scene.py` |
+| Entity | `H:/Github/SlapPyEngine/python/pharos_engine/entity.py` |
+| Render pipeline | `H:/Github/SlapPyEngine/python/pharos_engine/render/pipeline.py` |
+| PBR material | `H:/Github/SlapPyEngine/python/pharos_engine/render/material.py` |
+| 3D scene walker | `H:/Github/SlapPyEngine/python/pharos_engine/render/scene_walker.py` |
+| Shadows | `H:/Github/SlapPyEngine/python/pharos_engine/render/shadows.py` |
+| glTF importer | `H:/Github/SlapPyEngine/python/pharos_engine/asset_import/gltf_importer.py` |
+| Editor shell | `H:/Github/SlapPyEngine/python/pharos_engine/ui/editor/shell.py` |
+| Dock zones + movable panel | `H:/Github/SlapPyEngine/python/pharos_engine/ui/editor/dock_zones.py`, `movable_panel.py` |
+| Layout persistence | `H:/Github/SlapPyEngine/python/pharos_engine/ui/editor/layout_persistence.py`, `layout_baker.py`, `layout_presets.py` |
+| Content browser | `H:/Github/SlapPyEngine/python/pharos_engine/ui/editor/notebook_content_browser.py` |
+| Property inspector | `H:/Github/SlapPyEngine/python/pharos_engine/ui/editor/property_inspector.py` |
+| Gizmos | `H:/Github/SlapPyEngine/python/pharos_engine/ui/editor/notebook_gizmos.py`, `gizmo_overlay.py` |
+| Material editor stub | `H:/Github/SlapPyEngine/python/pharos_engine/ui/editor/notebook_material_editor.py`, `material_editor.py` |
+| Node graph editor | `H:/Github/SlapPyEngine/python/pharos_engine/ui/editor/notebook_node_editor.py`, `node_graph_panel.py` |
 
 ### Ranked integration roadmap (dependency-ordered)
 

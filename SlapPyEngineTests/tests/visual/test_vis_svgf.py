@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from slappyengine.gi.svgf import SVGFDenoiser
+from pharos_engine.gi.svgf import SVGFDenoiser
 from tests.visual.harness import make_test_output_dir
 
 TEST_NAME = "svgf"

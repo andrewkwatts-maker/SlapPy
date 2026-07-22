@@ -1,7 +1,7 @@
 """Q2 Sprint — Physics Component Validation Tests.
 
 Tests for RigidBodyComponent, DeformableLayerComponent, and InputDrivenComponent
-from slappyengine.components.  All tests run headless (CPU only, no wgpu).
+from pharos_engine.components.  All tests run headless (CPU only, no wgpu).
 """
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ def _attach_rb(rb, entity):
 # ---------------------------------------------------------------------------
 
 def test_rigidbody_apply_force_increases_velocity_x():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
     rb = RigidBodyComponent(mass=1.0, damping=1.0)  # damping=1 = no damping
     rb.apply_force(100.0, 0.0)
     rb.update(1.0)
@@ -48,7 +48,7 @@ def test_rigidbody_apply_force_increases_velocity_x():
 
 
 def test_rigidbody_apply_force_no_y_component():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
     rb = RigidBodyComponent(mass=1.0, damping=1.0)
     rb.apply_force(100.0, 0.0)
     rb.update(1.0)
@@ -57,7 +57,7 @@ def test_rigidbody_apply_force_no_y_component():
 
 def test_rigidbody_apply_force_magnitude_proportional_to_mass():
     """Heavier body accelerates less under same force."""
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
     rb_light = RigidBodyComponent(mass=1.0, damping=1.0)
     rb_heavy = RigidBodyComponent(mass=10.0, damping=1.0)
     rb_light.apply_force(100.0, 0.0)
@@ -72,7 +72,7 @@ def test_rigidbody_apply_force_magnitude_proportional_to_mass():
 # ---------------------------------------------------------------------------
 
 def test_rigidbody_damping_reduces_speed():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
     rb = RigidBodyComponent(mass=1.0, damping=0.5)
     rb.apply_force(100.0, 0.0)
     rb.update(1.0)
@@ -83,7 +83,7 @@ def test_rigidbody_damping_reduces_speed():
 
 
 def test_rigidbody_zero_damping_stops_immediately():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
     rb = RigidBodyComponent(mass=1.0, damping=0.0)
     rb.apply_force(500.0, 0.0)
     rb.update(1.0)
@@ -97,15 +97,15 @@ def test_rigidbody_zero_damping_stops_immediately():
 # ---------------------------------------------------------------------------
 
 def test_rigidbody_apply_impulse_immediate_velocity_change():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
     rb = RigidBodyComponent(mass=2.0, damping=1.0)
     rb.apply_impulse(100.0, 0.0)   # delta_vx = 100 / 2 = 50
     assert rb.velocity_x == pytest.approx(50.0)
 
 
 def test_rigidbody_apply_impulse_publishes_event():
-    from slappyengine.components import RigidBodyComponent
-    from slappyengine.event_bus import subscribe, unsubscribe
+    from pharos_engine.components import RigidBodyComponent
+    from pharos_engine.event_bus import subscribe, unsubscribe
 
     received = []
     handle = subscribe("RigidBody.Impulse", lambda evt: received.append(evt))
@@ -119,7 +119,7 @@ def test_rigidbody_apply_impulse_publishes_event():
 
 
 def test_rigidbody_apply_impulse_2d():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
     rb = RigidBodyComponent(mass=1.0, damping=1.0)
     rb.apply_impulse(3.0, 4.0)
     # apply_impulse syncs velocity_x/velocity_y immediately; speed is synced in update()
@@ -132,7 +132,7 @@ def test_rigidbody_apply_impulse_2d():
 # ---------------------------------------------------------------------------
 
 def test_rigidbody_zero_mass_no_division_error():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
     rb = RigidBodyComponent(mass=0.0, damping=0.98)
     rb.apply_force(1000.0, 0.0)
     rb.update(1.0)   # must not raise ZeroDivisionError
@@ -141,7 +141,7 @@ def test_rigidbody_zero_mass_no_division_error():
 
 
 def test_rigidbody_zero_mass_impulse_no_crash():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
     rb = RigidBodyComponent(mass=0.0)
     rb.apply_impulse(999.0, 0.0)   # guarded by `if self.mass > 0`
     assert rb.velocity_x == pytest.approx(0.0)
@@ -152,7 +152,7 @@ def test_rigidbody_zero_mass_impulse_no_crash():
 # ---------------------------------------------------------------------------
 
 def test_rigidbody_max_speed_cap():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
     rb = RigidBodyComponent(mass=1.0, damping=1.0, max_speed=10.0)
     rb.apply_force(10000.0, 0.0)
     rb.update(1.0)
@@ -164,8 +164,8 @@ def test_rigidbody_max_speed_cap():
 # ---------------------------------------------------------------------------
 
 def test_rigidbody_velocity_x_publishes_event():
-    from slappyengine.components import RigidBodyComponent
-    from slappyengine.event_bus import subscribe, unsubscribe
+    from pharos_engine.components import RigidBodyComponent
+    from pharos_engine.event_bus import subscribe, unsubscribe
 
     received = []
     # Subscribe to the specific attribute path; Observable only publishes when
@@ -181,7 +181,7 @@ def test_rigidbody_velocity_x_publishes_event():
 
 
 def test_rigidbody_speed_updated_after_update():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
     rb = RigidBodyComponent(mass=1.0, damping=1.0)
     rb.apply_force(3.0, 4.0)
     rb.update(1.0)
@@ -195,7 +195,7 @@ def test_rigidbody_speed_updated_after_update():
 # ---------------------------------------------------------------------------
 
 def test_rigidbody_updates_entity_position():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
     entity = _make_entity(pos=(0.0, 0.0))
     rb = RigidBodyComponent(mass=1.0, damping=1.0)
     _attach_rb(rb, entity)
@@ -206,7 +206,7 @@ def test_rigidbody_updates_entity_position():
 
 
 def test_rigidbody_dt_zero_no_change():
-    from slappyengine.components import RigidBodyComponent
+    from pharos_engine.components import RigidBodyComponent
     rb = RigidBodyComponent(mass=1.0, damping=1.0)
     rb.apply_force(100.0, 0.0)
     rb.update(0.0)   # dt=0 → no change
@@ -226,7 +226,7 @@ def _make_layer(w: int = 32, h: int = 32, alpha: int = 255):
 
 
 def test_deformable_init_no_crash():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     layer = _make_layer()
     dc = DeformableLayerComponent(layer)
     assert dc.integrity == pytest.approx(1.0)
@@ -234,7 +234,7 @@ def test_deformable_init_no_crash():
 
 
 def test_deformable_init_integrity_is_one():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     layer = _make_layer()
     dc = DeformableLayerComponent(layer)
     assert dc._integrity == pytest.approx(1.0)
@@ -246,7 +246,7 @@ def test_deformable_init_integrity_is_one():
 # ---------------------------------------------------------------------------
 
 def test_deformable_apply_plastic_impact_reduces_integrity():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     layer = _make_layer(32, 32, alpha=255)
     dc = DeformableLayerComponent(layer, elastic_threshold=10.0)
     dc.apply_impact((16.0, 16.0), force=500.0, radius=20.0, mode="plastic")
@@ -256,7 +256,7 @@ def test_deformable_apply_plastic_impact_reduces_integrity():
 
 
 def test_deformable_apply_impact_auto_mode_selects_plastic_above_threshold():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     layer = _make_layer(32, 32, alpha=255)
     dc = DeformableLayerComponent(layer, elastic_threshold=50.0)
     dc.apply_impact((16.0, 16.0), force=200.0, mode="auto")
@@ -266,7 +266,7 @@ def test_deformable_apply_impact_auto_mode_selects_plastic_above_threshold():
 
 
 def test_deformable_apply_impact_auto_mode_selects_elastic_below_threshold():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     layer = _make_layer(32, 32, alpha=255)
     dc = DeformableLayerComponent(layer, elastic_threshold=100.0)
     dc.apply_impact((16.0, 16.0), force=30.0, mode="auto")
@@ -280,7 +280,7 @@ def test_deformable_apply_impact_auto_mode_selects_elastic_below_threshold():
 # ---------------------------------------------------------------------------
 
 def test_deformable_repair_increases_integrity():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     layer = _make_layer(32, 32, alpha=255)
     dc = DeformableLayerComponent(layer, elastic_threshold=10.0)
     # Apply a heavy plastic impact
@@ -296,7 +296,7 @@ def test_deformable_repair_increases_integrity():
 
 
 def test_deformable_repair_does_not_exceed_original():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     layer = _make_layer(32, 32, alpha=255)
     dc = DeformableLayerComponent(layer, elastic_threshold=10.0)
     dc.apply_impact((16.0, 16.0), force=100.0, radius=20.0, mode="plastic")
@@ -312,7 +312,7 @@ def test_deformable_repair_does_not_exceed_original():
 # ---------------------------------------------------------------------------
 
 def test_deformable_max_impacts_per_frame_queued():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     layer = _make_layer(32, 32, alpha=255)
     dc = DeformableLayerComponent(layer, max_impacts_per_frame=3)
 
@@ -328,7 +328,7 @@ def test_deformable_max_impacts_per_frame_queued():
 
 
 def test_deformable_remaining_impacts_processed_next_frame():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     layer = _make_layer(32, 32, alpha=255)
     dc = DeformableLayerComponent(layer, max_impacts_per_frame=2)
 
@@ -347,7 +347,7 @@ def test_deformable_remaining_impacts_processed_next_frame():
 # ---------------------------------------------------------------------------
 
 def test_deformable_integrity_never_below_zero():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     layer = _make_layer(32, 32, alpha=255)
     dc = DeformableLayerComponent(layer, elastic_threshold=0.0)
     for _ in range(50):
@@ -358,7 +358,7 @@ def test_deformable_integrity_never_below_zero():
 
 
 def test_deformable_integrity_never_above_one():
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     layer = _make_layer(32, 32, alpha=255)
     dc = DeformableLayerComponent(layer)
     dc.repair(rate=9999.0)
@@ -378,7 +378,7 @@ def _make_input(axes: dict):
 
 
 def test_inputdriven_axis_maps_to_force():
-    from slappyengine.components import InputDrivenComponent, RigidBodyComponent
+    from pharos_engine.components import InputDrivenComponent, RigidBodyComponent
 
     entity = _make_entity()
     rb = RigidBodyComponent(mass=1.0, damping=1.0)
@@ -400,7 +400,7 @@ def test_inputdriven_axis_maps_to_force():
 
 
 def test_inputdriven_zero_axis_applies_no_force():
-    from slappyengine.components import InputDrivenComponent, RigidBodyComponent
+    from pharos_engine.components import InputDrivenComponent, RigidBodyComponent
 
     entity = _make_entity()
     rb = RigidBodyComponent(mass=1.0, damping=1.0)
@@ -419,7 +419,7 @@ def test_inputdriven_zero_axis_applies_no_force():
 
 
 def test_inputdriven_torque_axis():
-    from slappyengine.components import InputDrivenComponent, RigidBodyComponent
+    from pharos_engine.components import InputDrivenComponent, RigidBodyComponent
 
     entity = _make_entity()
     entity.rotation = 0.0
@@ -439,7 +439,7 @@ def test_inputdriven_torque_axis():
 
 
 def test_inputdriven_no_rigidbody_no_crash():
-    from slappyengine.components import InputDrivenComponent
+    from pharos_engine.components import InputDrivenComponent
 
     entity = _make_entity()
     # Entity has no RigidBodyComponent registered
@@ -457,7 +457,7 @@ def test_inputdriven_no_rigidbody_no_crash():
 # ---------------------------------------------------------------------------
 
 def test_component_composition_no_conflict():
-    from slappyengine.components import (
+    from pharos_engine.components import (
         RigidBodyComponent, DeformableLayerComponent, InputDrivenComponent
     )
 
@@ -494,13 +494,13 @@ def test_component_composition_no_conflict():
 # ---------------------------------------------------------------------------
 
 def test_rigidbody_satisfies_component_protocol():
-    from slappyengine.components import RigidBodyComponent, Component
+    from pharos_engine.components import RigidBodyComponent, Component
     rb = RigidBodyComponent()
     assert isinstance(rb, Component)
 
 
 def test_deformable_satisfies_component_protocol():
-    from slappyengine.components import DeformableLayerComponent, Component
+    from pharos_engine.components import DeformableLayerComponent, Component
     layer = _make_layer()
     dc = DeformableLayerComponent(layer)
     assert isinstance(dc, Component)
@@ -508,7 +508,7 @@ def test_deformable_satisfies_component_protocol():
 
 
 def test_inputdriven_satisfies_component_protocol():
-    from slappyengine.components import InputDrivenComponent, Component
+    from pharos_engine.components import InputDrivenComponent, Component
     provider = _make_input({})
     idc = InputDrivenComponent(input_provider=provider)
     assert isinstance(idc, Component)

@@ -1,14 +1,14 @@
 """E2 — WGSL chunk loader tests.
 
 Verifies that the shared WGSL snippets in ``shaders/chunks/`` are loadable
-via ``slappyengine.compute.wgsl_chunks`` and that ``compose`` produces
+via ``pharos_engine.compute.wgsl_chunks`` and that ``compose`` produces
 concatenated source ready for shader-module creation.
 
 These tests do not touch the GPU — they only validate text loading/joining.
 """
 from __future__ import annotations
 
-from slappyengine.compute.wgsl_chunks import chunk, compose
+from pharos_engine.compute.wgsl_chunks import chunk, compose
 
 
 def test_chunk_pack_rgba_contains_symbol():

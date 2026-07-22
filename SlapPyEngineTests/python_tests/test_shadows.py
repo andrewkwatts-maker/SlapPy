@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.physics.shadows`.
+"""Tests for :mod:`pharos_engine.physics.shadows`.
 
 These exercise the directional ShadowPass and the crack-aware AOPass in
 isolation.  Each test builds a tiny PhysicsWorld, calls a pass's
@@ -10,12 +10,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.shadows import AOPass, ShadowPass
+from pharos_engine.physics.shadows import AOPass, ShadowPass
 
 
 # Default screen / world geometry must match the ShadowPass defaults.

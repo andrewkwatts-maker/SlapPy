@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.gi — API Reference
+# pharos_engine.gi — API Reference
 
 > Hand-written reference for the GI (Global Illumination) subpackage.
 > Covers radiance cascades, ReSTIR reservoir reuse, and the SVGF denoiser
@@ -20,7 +20,7 @@ tested on headless CI.
 
 ### `RadianceCascadeSystem`
 
-_class — defined in `slappyengine.gi.cascade`_
+_class — defined in `pharos_engine.gi.cascade`_
 
 Manages a 4-pass radiance cascade GI dispatch (probe-based diffuse
 indirect). The cascade hierarchy stores SH L1 coefficients per probe
@@ -74,7 +74,7 @@ RadianceCascadeSystem(
 
 ### `ReSTIRSystem`
 
-_class — defined in `slappyengine.gi.restir`_
+_class — defined in `pharos_engine.gi.restir`_
 
 Reservoir-based importance sampling for ~1000-SPP-quality indirect
 illumination from a small per-pixel ray budget. Four GPU passes
@@ -125,7 +125,7 @@ ReSTIRSystem(
 
 ### `SVGFDenoiser`
 
-_class — defined in `slappyengine.gi.svgf`_
+_class — defined in `pharos_engine.gi.svgf`_
 
 Spatiotemporal variance-guided filtering for noisy GI buffers. Five
 GPU passes (temporal → variance → 5× wavelet → modulate) with a
@@ -201,16 +201,16 @@ _(none — all public surface is class-based.)_
 
 ### `_RESERVOIR_STRIDE` (internal)
 
-_int — defined in `slappyengine.gi.restir`_
+_int — defined in `pharos_engine.gi.restir`_
 
 Value: `32`. Bytes per reservoir record; not exported but documents
 the GPU buffer layout (see ReSTIRSystem constructor signature above).
 
 ## Inner modules
 
-- `slappyengine.gi.cascade` — `RadianceCascadeSystem`
-- `slappyengine.gi.restir` — `ReSTIRSystem`
-- `slappyengine.gi.svgf` — `SVGFDenoiser` + module constants
+- `pharos_engine.gi.cascade` — `RadianceCascadeSystem`
+- `pharos_engine.gi.restir` — `ReSTIRSystem`
+- `pharos_engine.gi.svgf` — `SVGFDenoiser` + module constants
 
 ## Notes
 

@@ -1,9 +1,9 @@
-"""Tests for :mod:`slappyengine.ui.theme.user_themes`.
+"""Tests for :mod:`pharos_engine.ui.theme.user_themes`.
 
 The store exposes six responsibilities: bootstrap defaults, list baked
 themes, list user themes, load (user-wins), save, revert, and
 edit-detection. Every test uses ``tmp_path`` to isolate the user
-directory so no test touches ``~/.slappyengine`` on the developer
+directory so no test touches ``~/.pharos_engine`` on the developer
 machine.
 """
 from __future__ import annotations
@@ -13,9 +13,9 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine.ui.theme.themes import TEENGIRL_NOTEBOOK
-from slappyengine.ui.theme.theme_spec import ThemeSpec
-from slappyengine.ui.theme.user_themes import (
+from pharos_engine.ui.theme.themes import TEENGIRL_NOTEBOOK
+from pharos_engine.ui.theme.theme_spec import ThemeSpec
+from pharos_engine.ui.theme.user_themes import (
     UserThemeError,
     UserThemeStore,
     bake_default_themes,
@@ -76,8 +76,8 @@ def test_bake_default_themes_is_idempotent(baked_dir: Path) -> None:
 
 
 def test_store_defaults_point_at_home_dir() -> None:
-    """The class-level defaults track the ``~/.slappyengine/themes`` convention."""
-    assert UserThemeStore.USER_DIR == Path.home() / ".slappyengine" / "themes"
+    """The class-level defaults track the ``~/.pharos_engine/themes`` convention."""
+    assert UserThemeStore.USER_DIR == Path.home() / ".pharos_engine" / "themes"
     # BAKED_DIR is co-located with the module.
     assert UserThemeStore.BAKED_DIR.name == "_baked"
     assert UserThemeStore.BAKED_DIR.parent.name == "themes"

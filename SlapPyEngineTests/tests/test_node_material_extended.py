@@ -1,6 +1,6 @@
 import pytest
 
-from slappyengine.material.node_material import (
+from pharos_engine.material.node_material import (
     NodeMaterial, ReadFieldNode, WriteFieldNode, SampleSimFieldNode,
     SinNode, CosNode, RemapNode, NoiseNode, TimeNode, WorldPosNode,
     ForceOutputNode, ReduceOutputNode, OffsetUVNode, FinalColorNode,

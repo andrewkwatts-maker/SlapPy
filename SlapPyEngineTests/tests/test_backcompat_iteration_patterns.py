@@ -29,8 +29,8 @@ def test_entity_layers_iteration_works() -> None:
     ``layers`` ever gets swapped from ``list`` to a lazy generator /
     proxy this test trips.
     """
-    from slappyengine.layer import Layer
-    from slappyengine.render_target import RenderTarget
+    from pharos_engine.layer import Layer
+    from pharos_engine.render_target import RenderTarget
 
     rt = RenderTarget(name="iter_test", size=(32, 32))
     rt.add_layer(Layer(name="a"))
@@ -51,8 +51,8 @@ def test_entity_layers_supports_index_access() -> None:
     """Downstream ``entity.layers[0]`` must keep working — index access
     is the second-most-common access pattern after iteration.
     """
-    from slappyengine.layer import Layer
-    from slappyengine.render_target import RenderTarget
+    from pharos_engine.layer import Layer
+    from pharos_engine.render_target import RenderTarget
 
     rt = RenderTarget(name="index_test", size=(32, 32))
     rt.add_layer(Layer(name="first"))
@@ -73,7 +73,7 @@ def test_event_bus_listeners_dict_items_iteration() -> None:
     swapped from ``dict`` to a bespoke registry with no ``.items()``
     the game-compat harness breaks silently.
     """
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
 
     bus = EventBus()
 
@@ -100,7 +100,7 @@ def test_event_bus_listeners_dict_keys_iteration() -> None:
     """``for topic in bus._listeners`` (implicit keys iteration) must
     work.  Guards the ``.keys()`` / plain-iter contract.
     """
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
 
     bus = EventBus()
     bus.subscribe("alpha", lambda _p: None)
@@ -117,7 +117,7 @@ def test_event_bus_listeners_dict_values_iteration() -> None:
     the ``.values()`` contract Ochema's telemetry dashboard uses to
     count total live subscribers.
     """
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
 
     bus = EventBus()
     bus.subscribe("x", lambda _p: None)
@@ -141,7 +141,7 @@ def test_entity_tags_list_assignment() -> None:
     lookups.  If the setter starts rejecting non-set values every
     subclass __init__ breaks.
     """
-    from slappyengine.entity import Entity
+    from pharos_engine.entity import Entity
 
     entity = Entity(name="tag_test")
 
@@ -163,7 +163,7 @@ def test_entity_tags_list_assignment() -> None:
 def test_entity_tags_reassignment_replaces_previous() -> None:
     """``entity.tags = [...]`` must overwrite, not append. This is the
     Ochema Circuit vehicle-loadout reset contract."""
-    from slappyengine.entity import Entity
+    from pharos_engine.entity import Entity
 
     entity = Entity(name="reassign_test")
     entity.tags = ["old_a", "old_b"]  # type: ignore[assignment]
@@ -180,7 +180,7 @@ def test_entity_tags_iteration_after_default_init() -> None:
     when empty — protects against a future refactor that lazy-inits
     ``tags`` to ``None`` and breaks ``for t in entity.tags`` sites.
     """
-    from slappyengine.entity import Entity
+    from pharos_engine.entity import Entity
 
     entity = Entity(name="fresh")
 
@@ -204,7 +204,7 @@ def test_scene_entities_iteration_if_available() -> None:
     """Guardrail: if ``Scene`` exposes an ``entities`` collection it
     must be iterable.  Skips cleanly on builds where Scene is absent.
     """
-    scene_mod = pytest.importorskip("slappyengine.scene")
+    scene_mod = pytest.importorskip("pharos_engine.scene")
     Scene = getattr(scene_mod, "Scene", None)
     if Scene is None:
         pytest.skip("Scene class not exported in this build")

@@ -1,4 +1,4 @@
-"""Tests for slappyengine.exporter + slap export CLI (LL6)."""
+"""Tests for pharos_engine.exporter + slap export CLI (LL6)."""
 from __future__ import annotations
 
 import subprocess
@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine import exporter, scaffold
-from slappyengine.exporter import (
+from pharos_engine import exporter, scaffold
+from pharos_engine.exporter import (
     BinaryExporter,
     BinaryExportResult,
     BundleResult,
@@ -26,7 +26,7 @@ from slappyengine.exporter import (
     load_manifest,
     pyinstaller_available,
 )
-from slappyengine.exporter.zip_bundler import _is_excluded
+from pharos_engine.exporter.zip_bundler import _is_excluded
 
 
 # ---------------------------------------------------------------------------
@@ -319,7 +319,7 @@ def test_export_result_from_binary_dry_run(project: Path, tmp_path: Path, monkey
 def test_cli_export_produces_zip(project: Path, tmp_path: Path):
     out = tmp_path / "cli.zip"
     completed = subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", "export", str(project),
+        [sys.executable, "-m", "pharos_engine.cli", "export", str(project),
          "--output", str(out)],
         capture_output=True,
         text=True,
@@ -334,7 +334,7 @@ def test_cli_export_produces_zip(project: Path, tmp_path: Path):
 def test_cli_export_binary_dry_run(project: Path, tmp_path: Path):
     out_dir = tmp_path / "bin_out"
     completed = subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", "export", str(project),
+        [sys.executable, "-m", "pharos_engine.cli", "export", str(project),
          "--output", str(out_dir), "--dry-run"],
         capture_output=True,
         text=True,
@@ -346,7 +346,7 @@ def test_cli_export_binary_dry_run(project: Path, tmp_path: Path):
 
 def test_cli_export_help_lists_all_flags():
     completed = subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", "export", "--help"],
+        [sys.executable, "-m", "pharos_engine.cli", "export", "--help"],
         capture_output=True,
         text=True,
     )

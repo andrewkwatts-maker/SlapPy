@@ -1,7 +1,7 @@
 """Tests for EventBus, Observable, Binding, and global_bus."""
 from __future__ import annotations
 import pytest
-from slappyengine.event_bus import EventBus, Observable, Binding, global_bus
+from pharos_engine.event_bus import EventBus, Observable, Binding, global_bus
 
 
 # ── EventBus ─────────────────────────────────────────────────────────────────
@@ -347,10 +347,10 @@ class TestGlobalBus:
         assert received == [123]
 
     def test_global_bus_import_shorthand(self):
-        from slappyengine import global_bus as gb
+        from pharos_engine import global_bus as gb
         assert isinstance(gb, EventBus)
 
     def test_global_bus_singleton(self):
-        from slappyengine.event_bus import global_bus as gb1
-        from slappyengine.event_bus import global_bus as gb2
+        from pharos_engine.event_bus import global_bus as gb1
+        from pharos_engine.event_bus import global_bus as gb2
         assert gb1 is gb2

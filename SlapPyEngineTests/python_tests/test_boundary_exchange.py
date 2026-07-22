@@ -10,8 +10,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.deform_modes import CellMaterial
-from slappyengine.physics import (
+from pharos_engine.deform_modes import CellMaterial
+from pharos_engine.physics import (
     BoundaryExchange,
     ContactPair,
     PhysicsWorld,

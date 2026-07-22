@@ -19,7 +19,7 @@ import types
 
 import pytest
 
-from slappyengine.prefabs import Prefab, PrefabLibrary
+from pharos_engine.prefabs import Prefab, PrefabLibrary
 
 
 # ---------------------------------------------------------------------------
@@ -143,7 +143,7 @@ def _make_library(*prefabs: Prefab) -> PrefabLibrary:
 
 
 def _make_menu(**kwargs):
-    from slappyengine.ui.editor.notebook_prefab_menu import NotebookPrefabMenu
+    from pharos_engine.ui.editor.notebook_prefab_menu import NotebookPrefabMenu
 
     return NotebookPrefabMenu(**kwargs)
 
@@ -178,13 +178,13 @@ class TestConstruction:
             _make_menu(library=lib, on_spawn="not-callable")
 
     def test_title_constant(self):
-        from slappyengine.ui.editor.notebook_prefab_menu import (
+        from pharos_engine.ui.editor.notebook_prefab_menu import (
             NotebookPrefabMenu,
         )
         assert NotebookPrefabMenu.TITLE == "Prefab Library"
 
     def test_min_size_constants(self):
-        from slappyengine.ui.editor.notebook_prefab_menu import (
+        from pharos_engine.ui.editor.notebook_prefab_menu import (
             NotebookPrefabMenu,
         )
         assert NotebookPrefabMenu.MIN_WIDTH >= 200
@@ -218,7 +218,7 @@ class TestCategoryFilter:
         assert menu.visible_count() == 2
 
     def test_category_options_include_all_five_plus_all(self):
-        from slappyengine.ui.editor.notebook_prefab_menu import (
+        from pharos_engine.ui.editor.notebook_prefab_menu import (
             CATEGORY_OPTIONS,
         )
         assert CATEGORY_OPTIONS[0] == "All"
@@ -580,12 +580,12 @@ class TestBuild:
 
 class TestBadge:
     def test_badge_circle_reports_one_node_zero_joints(self):
-        from slappyengine.ui.editor.notebook_prefab_menu import _prefab_badge
+        from pharos_engine.ui.editor.notebook_prefab_menu import _prefab_badge
         prefab = _make_prefab("ball", "props", "circle")
         assert _prefab_badge(prefab) == "1n / 0j"
 
     def test_badge_box_reports_four_nodes_six_joints(self):
-        from slappyengine.ui.editor.notebook_prefab_menu import _prefab_badge
+        from pharos_engine.ui.editor.notebook_prefab_menu import _prefab_badge
         prefab = Prefab(
             name="crate",
             category="props",
@@ -594,7 +594,7 @@ class TestBadge:
         assert _prefab_badge(prefab) == "4n / 6j"
 
     def test_badge_rope_reports_node_count_plus_edges(self):
-        from slappyengine.ui.editor.notebook_prefab_menu import _prefab_badge
+        from pharos_engine.ui.editor.notebook_prefab_menu import _prefab_badge
         prefab = Prefab(
             name="bridge",
             category="structural",
@@ -610,20 +610,20 @@ class TestBadge:
 
 class TestLazyRegistration:
     def test_lazy_import_works(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         assert "NotebookPrefabMenu" in editor_pkg.__all__
         cls = editor_pkg.NotebookPrefabMenu
         assert cls.__name__ == "NotebookPrefabMenu"
 
     def test_all_alphabetically_ordered_neighbors(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         idx = editor_pkg.__all__.index("NotebookPrefabMenu")
         prev_entry = editor_pkg.__all__[idx - 1]
         next_entry = editor_pkg.__all__[idx + 1]
         assert prev_entry <= "NotebookPrefabMenu" <= next_entry
 
     def test_lazy_map_wired(self):
-        from slappyengine.ui.editor import _LAZY_MAP
+        from pharos_engine.ui.editor import _LAZY_MAP
         assert _LAZY_MAP.get("NotebookPrefabMenu") == ".notebook_prefab_menu"
 
 
@@ -634,7 +634,7 @@ class TestLazyRegistration:
 
 class TestDpgContextSentinel:
     def test_mark_dpg_context_live_toggle(self):
-        from slappyengine.ui.editor import notebook_prefab_menu as mod
+        from pharos_engine.ui.editor import notebook_prefab_menu as mod
         # Snapshot + restore.
         prev = mod._DPG_CONTEXT_LIVE
         try:
@@ -646,7 +646,7 @@ class TestDpgContextSentinel:
             mod.mark_dpg_context_live(prev)
 
     def test_mark_dpg_context_live_exported(self):
-        from slappyengine.ui.editor.notebook_prefab_menu import (
+        from pharos_engine.ui.editor.notebook_prefab_menu import (
             __all__ as prefab_all,
         )
         assert "mark_dpg_context_live" in prefab_all

@@ -34,7 +34,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "python"))
 
-from slappyengine.input._manager import InputManager  # noqa: E402
+from pharos_engine.input._manager import InputManager  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

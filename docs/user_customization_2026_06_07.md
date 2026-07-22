@@ -4,7 +4,7 @@
 
 SlapPyEngine ships with a **folder-based user-override layer**. You can
 drop Python files, YAML config, and WGSL shaders under
-`~/.slappyengine/ui/` to extend or replace parts of the editor
+`~/.pharos_engine/ui/` to extend or replace parts of the editor
 **without touching the installed package**.
 
 This guide covers:
@@ -19,10 +19,10 @@ This guide covers:
 
 ## 1. Directory layout
 
-The layer lives at `~/.slappyengine/ui/`. Its structure is fixed:
+The layer lives at `~/.pharos_engine/ui/`. Its structure is fixed:
 
 ```
-~/.slappyengine/
+~/.pharos_engine/
 └── ui/
     ├── panels/                     ← user-defined editor panels (.py)
     │   └── my_timeline.py
@@ -57,10 +57,10 @@ disabled — their filenames start with `_` so the loader skips them.
 ## 2. Contract summary
 
 The user-override layer is implemented in
-`python/slappyengine/ui/user_overrides.py`. The public surface is:
+`python/pharos_engine/ui/user_overrides.py`. The public surface is:
 
 * **`UserOverrideLoader(root=None)`** — construct with a path or let it
-  default to `~/.slappyengine/ui`.
+  default to `~/.pharos_engine/ui`.
 * **`ensure_scaffolded()`** — populate the tree with folders + README
   files + a default `config.yaml` on first run.
 * **`load_all() -> UserOverrideBundle`** — discover + load every user
@@ -130,7 +130,7 @@ ctrl+alt+p:   editor.profiler_toggle    # rebind an existing command
 """Callables invoked by `user.*` command ids in hotkey YAMLs."""
 
 def mark_bookmark() -> None:
-    from slappyengine.ui.editor.editor_undo import global_stack
+    from pharos_engine.ui.editor.editor_undo import global_stack
     global_stack().push_bookmark("user_bookmark")
 ```
 
@@ -188,7 +188,7 @@ the other registries.
 ### 3.5 The master `config.yaml`
 
 ```yaml
-# ~/.slappyengine/ui/config.yaml
+# ~/.pharos_engine/ui/config.yaml
 enable_user_panels:        true
 enable_user_hotkeys:       true
 enable_user_spawn_actions: true
@@ -205,7 +205,7 @@ a single feature during debugging.
 
 ## 4. Troubleshooting
 
-* **My panel doesn't show up.** Check `~/.slappyengine/ui/panels/` —
+* **My panel doesn't show up.** Check `~/.pharos_engine/ui/panels/` —
   the factory must be named `get_panel` exactly and return a non-None
   object with a `build(parent_tag)` method.
 * **A hotkey doesn't fire.** Ensure the key string is lower-case
@@ -215,7 +215,7 @@ a single feature during debugging.
   three kind subdirectories. Shaders directly in `shaders/` are
   skipped by design.
 * **Nothing is loading.** Inspect the editor log — every failure
-  emits a `WARNING` from `slappyengine.ui.user_overrides`. Bundles
+  emits a `WARNING` from `pharos_engine.ui.user_overrides`. Bundles
   also carry the errors on `bundle.errors` for programmatic access.
 
 ---
@@ -225,7 +225,7 @@ a single feature during debugging.
 The loader is a plain Python class you can consume outside the editor:
 
 ```python
-from slappyengine.ui.user_overrides import UserOverrideLoader
+from pharos_engine.ui.user_overrides import UserOverrideLoader
 
 loader = UserOverrideLoader()
 loader.ensure_scaffolded()

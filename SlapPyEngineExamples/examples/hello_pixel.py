@@ -1,4 +1,4 @@
-﻿"""Hello Pixel — minimal SlapPyEngine example.
+"""Hello Pixel — minimal SlapPyEngine example.
 
 Creates a 256x256 canvas, draws a red cross using numpy array access,
 and opens a window. Close the window to exit.
@@ -6,10 +6,10 @@ and opens a window. Close the window to exit.
 Run:
     python examples/hello_pixel.py
 """
-import slappyengine as se
-from slappyengine.asset import Asset
-from slappyengine.layer import Layer
-from slappyengine.scene import Scene
+import pharos_engine as se
+from pharos_engine.asset import Asset
+from pharos_engine.layer import Layer
+from pharos_engine.scene import Scene
 
 engine = se.Engine(width=256, height=256, title="Hello Pixel")
 scene = Scene(name="HelloPixel")

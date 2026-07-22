@@ -1,4 +1,4 @@
-"""Perf-regression tripwire for :func:`slappyengine.numerics.vcycle_poisson`.
+"""Perf-regression tripwire for :func:`pharos_engine.numerics.vcycle_poisson`.
 
 Catches accidental Python-level regressions in the V-cycle hot path
 (``_sor_sweep``, ``_restrict_2x2``, ``_restrict_mask``, ``_v_cycle``).
@@ -29,7 +29,7 @@ _PY_SRC = _REPO_ROOT / "python"
 if str(_PY_SRC) not in sys.path:
     sys.path.insert(0, str(_PY_SRC))
 
-from slappyengine.numerics import vcycle_poisson  # noqa: E402
+from pharos_engine.numerics import vcycle_poisson  # noqa: E402
 
 
 # Loose enough for CI noise; tight enough to flag a 2x regression on the

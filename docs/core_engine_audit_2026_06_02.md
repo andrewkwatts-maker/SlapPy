@@ -1,6 +1,6 @@
 # Core Engine Module Audit — 2026-06-02
 
-Read-only survey of `python/slappyengine/` after two weeks of 7-agent sprint
+Read-only survey of `python/pharos_engine/` after two weeks of 7-agent sprint
 work, plus one small structural fix. Scope: top-level `__init__.py` shape,
 legacy compat-routed symbol usage, discoverability via `help()`, and drift
 between `docs/api/*.md` and the actual subpackage `__all__` lists.
@@ -16,7 +16,7 @@ modified.
 
 1. The wheel ships a Rust `_core` extension and many top-level symbols
    transitively import `wgpu` or other heavy native deps. Eager-loading
-   them would push `import slappyengine` past a useful budget for CLI
+   them would push `import pharos_engine` past a useful budget for CLI
    tooling (`slappy docs_gen`, etc.).
 2. The `_LAZY_MAP` is also the contract surface that
    `SlapPyEngineTests/tests/test_init_lazy_map.py` and `SlapPyEngineTests/tests/test_game_compat_tripwire.py`
@@ -27,25 +27,25 @@ exists to do.
 
 ### 1b. Legacy `_compat`-routed symbols — are they actually used?
 
-Tracked-master ripgrep for direct `from slappyengine import X` /
-`slappyengine.X` references (excluding `.claude/worktrees/**` and the
+Tracked-master ripgrep for direct `from pharos_engine import X` /
+`pharos_engine.X` references (excluding `.claude/worktrees/**` and the
 symbols' own definition / `_compat` / `__init__.py` sites):
 
 | Symbol               | Direct top-level callers on master                | Verdict                |
 |----------------------|---------------------------------------------------|------------------------|
-| `MaterialPreset`     | 0 direct `from slappyengine` imports              | **compat surface only** |
-| `CrackMode`          | 0 direct `from slappyengine` imports              | **compat surface only** |
-| `SimState`           | 0 direct `from slappyengine` imports              | **compat surface only** |
-| `SimFrequencyBudget` | 0 direct `from slappyengine` imports              | **compat surface only** |
-| `DeformController`   | 0 direct `from slappyengine` imports              | **compat surface only** |
-| `ZoneMap`            | 0 direct `from slappyengine` imports              | **compat surface only** |
-| `CellMaterial`       | 0 direct `from slappyengine` imports              | **compat surface only** |
-| `cell_material_for`  | 0 direct `from slappyengine` imports              | **compat surface only** |
+| `MaterialPreset`     | 0 direct `from pharos_engine` imports              | **compat surface only** |
+| `CrackMode`          | 0 direct `from pharos_engine` imports              | **compat surface only** |
+| `SimState`           | 0 direct `from pharos_engine` imports              | **compat surface only** |
+| `SimFrequencyBudget` | 0 direct `from pharos_engine` imports              | **compat surface only** |
+| `DeformController`   | 0 direct `from pharos_engine` imports              | **compat surface only** |
+| `ZoneMap`            | 0 direct `from pharos_engine` imports              | **compat surface only** |
+| `CellMaterial`       | 0 direct `from pharos_engine` imports              | **compat surface only** |
+| `cell_material_for`  | 0 direct `from pharos_engine` imports              | **compat surface only** |
 
 **But every one of these symbols is exercised by**:
 
 - `SlapPyEngineTests/tests/test_game_compat_tripwire.py` — the multi-game tripwire walks each
-  per-game contract and asserts the symbol resolves off `slappyengine`.
+  per-game contract and asserts the symbol resolves off `pharos_engine`.
   The Bullet Strata contract explicitly requires `MaterialPreset`,
   `ZoneMap`, `DeformController`, `SimFrequencyBudget`, `CrackMode`; the
   Ochema contract explicitly requires `SimFrequencyBudget`, `SimState`,
@@ -72,11 +72,11 @@ Recommended migration target labels (for the v1.0 changelog):
 - `SimState` / `SimFrequencyBudget` → retire (rebuild solver dispatches
   every step; no state machine, no budget allocator).
 - `DeformController` → `softbody.body_builders.make_layered_creature`.
-- `ZoneMap` → `slappyengine.zones.ZoneManager` (mechanical rename).
+- `ZoneMap` → `pharos_engine.zones.ZoneManager` (mechanical rename).
 - `CellMaterial` / `cell_material_for` → host on the physics subpackage
   itself once `deform_modes.py` is deleted.
 
-## 2. Subpackage discoverability — `help(slappyengine)`
+## 2. Subpackage discoverability — `help(pharos_engine)`
 
 **Before fix**: top-level docstring was a one-liner:
 
@@ -84,23 +84,23 @@ Recommended migration target labels (for the v1.0 changelog):
 """SlapPyEngine — compute-shader-driven 2D game engine."""
 ```
 
-`help(slappyengine)` listed the version + the lazy `__all__` symbols, but
+`help(pharos_engine)` listed the version + the lazy `__all__` symbols, but
 **none of the 19 subpackages** showed up in any tour. A user typing
-`help(slappyengine)` had no way to discover `slappyengine.studio`,
-`slappyengine.dynamics`, `slappyengine.thermal`, or any of the other
+`help(pharos_engine)` had no way to discover `pharos_engine.studio`,
+`pharos_engine.dynamics`, `pharos_engine.thermal`, or any of the other
 subpackages without already knowing they exist.
 
 **After fix** (this commit): the top-level module docstring now hosts a
 sectioned tour with 21 subpackages grouped into Simulation / Rendering /
 Authoring / Game-compat, plus a 5-line Quickstart and a Lifecycle Flags
-note. See the file change to `python/slappyengine/__init__.py`.
+note. See the file change to `python/pharos_engine/__init__.py`.
 
 This is the structural fix landed by this commit (see §4).
 
 ## 3. Public-surface drift — `docs/api/*.md` vs `__all__`
 
 Method: read each `docs/api/<subpackage>.md`, compare against the actual
-`__all__` of `python/slappyengine/<subpackage>/__init__.py` (or single-file
+`__all__` of `python/pharos_engine/<subpackage>/__init__.py` (or single-file
 module).
 
 | Subpackage     | Doc lists exports?       | Drift?                                                  |
@@ -144,7 +144,7 @@ Two ancillary notes:
 
 ## 4. Structural fix landed
 
-**Pick**: rewrite `slappyengine.__doc__` so `help(slappyengine)` is
+**Pick**: rewrite `pharos_engine.__doc__` so `help(pharos_engine)` is
 actually informative. This was the highest-value smallest fix from the
 audit:
 
@@ -152,7 +152,7 @@ audit:
 * zero test risk — no module-level code modified
 * directly addresses task #2 (subpackage discoverability)
 * makes the README and `docs/architecture_overview.md` redundant for the
-  "what is in this package" question — `pydoc slappyengine` now answers it
+  "what is in this package" question — `pydoc pharos_engine` now answers it
 
 The new docstring is ~95 lines and groups the 21 subpackages into:
 
@@ -166,7 +166,7 @@ The new docstring is ~95 lines and groups the 21 subpackages into:
 Plus a 5-line Quickstart snippet and a Lifecycle Flags note about
 `HAS_NATIVE` and `engine_config`.
 
-Verified by `python -c "import slappyengine; print(len(slappyengine.__doc__))"`
+Verified by `python -c "import pharos_engine; print(len(pharos_engine.__doc__))"`
 → 4475 chars, no import error, no regression in `__all__`.
 
 ## 5. Forward-looking notes

@@ -1,4 +1,4 @@
-"""Tests for slappyengine.render.pipeline + wgpu forward path (JJ1).
+"""Tests for pharos_engine.render.pipeline + wgpu forward path (JJ1).
 
 Every wgpu-dependent test soft-skips when the interpreter has no wgpu
 install or when no adapter can be requested (typical headless CI). The
@@ -10,7 +10,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.render import (
+from pharos_engine.render import (
     Camera3D,
     Light,
     Material,
@@ -19,7 +19,7 @@ from slappyengine.render import (
     cube,
     is_wgpu_available,
 )
-from slappyengine.render.pipeline import (
+from pharos_engine.render.pipeline import (
     BLEND_MODES,
     BufferUploader,
     PipelineCache,
@@ -36,7 +36,7 @@ from slappyengine.render.pipeline import (
     create_sprite_pipeline,
     parse_wgsl_vs_locations,
 )
-from slappyengine.render.shader_stock import (
+from pharos_engine.render.shader_stock import (
     LINE_3D_WGSL,
     PHONG_3D_WGSL,
     SPRITE_2D_WGSL,
@@ -567,7 +567,7 @@ def test_force_null_renderer_read_pixels_matches_clear():
 
 
 def test_pipeline_cache_key_len_seven():
-    from slappyengine.render.pipeline import _PipelineKey
+    from pharos_engine.render.pipeline import _PipelineKey
 
     key = _PipelineKey(
         shader_id="phong_3d",

@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.ui.theme.shader_batch_validator` (DD6).
+"""Tests for :mod:`pharos_engine.ui.theme.shader_batch_validator` (DD6).
 
 Covers:
 
@@ -25,8 +25,8 @@ from typing import Any
 
 import pytest
 
-from slappyengine.ui.theme import shader_batch_validator as sbv
-from slappyengine.ui.theme.shader_batch_validator import (
+from pharos_engine.ui.theme import shader_batch_validator as sbv
+from pharos_engine.ui.theme.shader_batch_validator import (
     ValidationSummary,
     _collect_wgsl_manifest_entries,
     _iter_theme_library_sources,
@@ -37,7 +37,7 @@ from slappyengine.ui.theme.shader_batch_validator import (
     validate_all_shaders,
     write_report,
 )
-from slappyengine.ui.theme.shader_lint import WGSLLintResult
+from pharos_engine.ui.theme.shader_lint import WGSLLintResult
 
 
 # ---------------------------------------------------------------------------
@@ -266,7 +266,7 @@ def test_save_shader_manifest_produces_parseable_document(tmp_path: Path) -> Non
     assert out.exists()
     payload = _parse_yaml_or_json(out.read_text(encoding="utf-8"))
     assert isinstance(payload, dict)
-    assert payload["schema"] == "slappyengine.shader_manifest"
+    assert payload["schema"] == "pharos_engine.shader_manifest"
     assert payload["version"] == 1
     assert isinstance(payload["shaders"], list)
     assert payload["count"] == len(payload["shaders"])

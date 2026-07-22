@@ -1,5 +1,5 @@
 """
-Bench :class:`slappyengine.zones.ZoneManager.update` under load.
+Bench :class:`pharos_engine.zones.ZoneManager.update` under load.
 
 Compares the legacy O(zones × entities) linear-scan against the
 spatial-hash accelerated path across four scenarios:
@@ -36,7 +36,7 @@ _PY_SRC = _REPO_ROOT / "python"
 if str(_PY_SRC) not in sys.path:
     sys.path.insert(0, str(_PY_SRC))
 
-from slappyengine.zones import RectZone, ZoneManager  # noqa: E402
+from pharos_engine.zones import RectZone, ZoneManager  # noqa: E402
 
 
 WORLD = 100.0

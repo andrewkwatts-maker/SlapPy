@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _OCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _OCHEMA_STR = str(_OCHEMA_DIR)
@@ -173,7 +173,7 @@ class TestRadialRepairSystemGetRepairer:
         sys_.teardown()
 
     def test_vehicle_with_valid_deform_returns_repairer(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         sys_ = self._system()
         vehicle = MagicMock()
         vehicle._deform = MagicMock()
@@ -207,13 +207,13 @@ class TestRadialRepairSystemOnFull:
         del evt.target  # make sure getattr returns None
         evt.configure_mock(**{"target": None})
         # Actually, just publish the event and check it doesn't crash
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         publish("Repair.Full", target=None, rate=1.0)
         sys_.teardown()
 
     def test_on_full_with_valid_target_queues_repair(self):
-        from slappyengine.event_bus import publish
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.event_bus import publish
+        from pharos_engine.deform_repair import DeformRepairer
         sys_ = self._system()
         vehicle = MagicMock()
         vehicle._deform = MagicMock()
@@ -231,14 +231,14 @@ class TestRadialRepairSystemOnRadial:
         return RadialRepairSystem(vehicles=[])
 
     def test_on_radial_no_target_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         sys_ = self._system()
         publish("Repair.Radial", target=None, center_x=10, center_y=10, radius=20, rate=2.0)
         sys_.teardown()
 
     def test_on_radial_queues_repair(self):
-        from slappyengine.event_bus import publish
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.event_bus import publish
+        from pharos_engine.deform_repair import DeformRepairer
         sys_ = self._system()
         vehicle = MagicMock()
         vehicle._deform = MagicMock()

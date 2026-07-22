@@ -27,8 +27,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.post_process.executor import _splice_runtime_params
-from slappyengine.post_process.taa import TAAPass
+from pharos_engine.post_process.executor import _splice_runtime_params
+from pharos_engine.post_process.taa import TAAPass
 
 
 # ---------------------------------------------------------------------------

@@ -115,7 +115,7 @@ can't silently regress it.
 
 ### 3.6 `CacheMode` variant values are `str`
 
-Every variant of `slappyengine.residency.manager.CacheMode` MUST have a
+Every variant of `pharos_engine.residency.manager.CacheMode` MUST have a
 `str`-typed `.value`.  Bullet Strata's residency-tier YAML compares
 `.value` against string literals; a variant flipping from `str` → `int`
 takes out ~26 game-compat sites (VV1 fix, 2026-07-07).

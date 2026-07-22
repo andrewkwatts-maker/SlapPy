@@ -1,4 +1,4 @@
-"""Tripwire suite for ``slappyengine.projects`` — the multi-project subsystem.
+"""Tripwire suite for ``pharos_engine.projects`` — the multi-project subsystem.
 
 Covers:
 
@@ -8,7 +8,7 @@ Covers:
 * :class:`ProjectRegistry` persistence — register, unregister,
   list_recent, opening touches ``last_opened_at``.
 * Scaffolding lays down the expected directory tree.
-* Top-level lazy re-export (``slappyengine.projects``).
+* Top-level lazy re-export (``pharos_engine.projects``).
 
 Every test uses ``tmp_path`` for the project root *and* an isolated
 registry ``store_path`` so the suite never touches the user's home
@@ -21,8 +21,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-import slappyengine
-from slappyengine.projects import (
+import pharos_engine
+from pharos_engine.projects import (
     PROJECT_FILE_NAME,
     Project,
     ProjectFormatError,
@@ -35,7 +35,7 @@ from slappyengine.projects import (
     scaffold_project,
     write_project,
 )
-from slappyengine.projects.registry import (
+from pharos_engine.projects.registry import (
     RegistryEntry,
     _reset_default_registry_for_tests,
 )
@@ -128,8 +128,8 @@ def test_project_new_writes_manifest_with_name(tmp_path):
     proj = Project.new(tmp_path / "Game2", "Game2")
     data = yaml.safe_load(proj.slap_proj_path.read_text(encoding="utf-8"))
     assert data["name"] == "Game2"
-    # Engine version defaults to the running slappyengine.__version__
-    assert data["version"] == slappyengine.__version__
+    # Engine version defaults to the running pharos_engine.__version__
+    assert data["version"] == pharos_engine.__version__
 
 
 def test_project_new_scaffold_false_skips_subdirs(tmp_path):
@@ -520,7 +520,7 @@ def test_get_default_registry_is_singleton(tmp_path, fresh_singleton, monkeypatc
 
 
 def test_top_level_lazy_reexport_works():
-    import slappyengine as eng
+    import pharos_engine as eng
     assert eng.projects is not None
     # Re-export should round-trip the public surface symbols.
     assert eng.projects.Project is Project

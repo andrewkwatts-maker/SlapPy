@@ -1,6 +1,6 @@
-# slappyengine.gi — Design Reference
+# pharos_engine.gi — Design Reference
 
-`slappyengine.gi` is the engine's **global-illumination** subpackage —
+`pharos_engine.gi` is the engine's **global-illumination** subpackage —
 three independent GPU systems that compose into a Nova3D-style indirect
 lighting path:
 
@@ -203,7 +203,7 @@ asserted by the test suite):
 | `MAX_HISTORY` | 32 | History-length cap for the temporal pass |
 
 These are exposed as module-level names so a tuning sprint can override
-them without forking the class — `slappyengine.gi.svgf.PHI_COLOR = 5.0`
+them without forking the class — `pharos_engine.gi.svgf.PHI_COLOR = 5.0`
 takes effect on the next `denoise_numpy` call.
 
 ## When to migrate to Rust

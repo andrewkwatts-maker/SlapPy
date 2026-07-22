@@ -57,7 +57,7 @@ silences the 20+ untracked subdir entries (`buoyancy/`, `character/`, `fluid/`, 
 
 ## 2. Working-tree-only WIP modules — classification
 
-Untracked files under `python/slappyengine/` and `python/tests/` fall into three buckets.
+Untracked files under `python/pharos_engine/` and `python/tests/` fall into three buckets.
 Counts are approximate; full list is in `git status --short`.
 
 ### (a) Should be committed — useful new code referenced by tests/docs/examples
@@ -65,24 +65,24 @@ Counts are approximate; full list is in `git status --short`.
 These are **finished, imported, and tested** modules from the recent sprints. They should
 be staged in a follow-up commit with their corresponding tests.
 
-- `python/slappyengine/asset_manifest.py`, `build_gen.py`, `content_encrypt.py`, `docs_gen.py`
+- `python/pharos_engine/asset_manifest.py`, `build_gen.py`, `content_encrypt.py`, `docs_gen.py`
   — usability sprint deliverables (see `project_usability_sprint.md`).
-- `python/slappyengine/cylinder_sprite.py`, `vehicle_parts.py`, `drivetrain.py`,
+- `python/pharos_engine/cylinder_sprite.py`, `vehicle_parts.py`, `drivetrain.py`,
   `suspension.py` — vehicle sim sprint (covered by `test_vehicle_parts.py`,
   `test_vehicle_physics_script.py`).
-- `python/slappyengine/deform_controller.py`, `deform_modes.py`, `deform_crack.py`,
+- `python/pharos_engine/deform_controller.py`, `deform_modes.py`, `deform_crack.py`,
   `deform_repair.py`, `deform_zones.py` — Bullet Strata integration; **decision pending**
   whether these stay (Phase D doomed-list candidates).
-- `python/slappyengine/collision_pixel.py`, `pixel_material.py`, `pixel_struct.py`,
+- `python/pharos_engine/collision_pixel.py`, `pixel_material.py`, `pixel_struct.py`,
   `bvh_factory.py`, `spline.py`, `track.py`, `trigger.py`, `visibility.py`,
   `input_provider.py`, `media.py` — covered by matching `test_*.py` files.
-- `python/slappyengine/compute/{hull,library,shader_cache,wgsl_chunks}.py` +
+- `python/pharos_engine/compute/{hull,library,shader_cache,wgsl_chunks}.py` +
   `compute/defaults/` — compute pipeline plumbing.
-- `python/slappyengine/post_process/{motion_blur,ssr}.py` — Q4 post-process passes.
-- `python/slappyengine/gpu/adaptive_quality.py` — covered by `test_adaptive_quality.py`.
-- `python/slappyengine/tools/{audio_tools,sprite_tools,texture_tools,track_tools,video}.py`
+- `python/pharos_engine/post_process/{motion_blur,ssr}.py` — Q4 post-process passes.
+- `python/pharos_engine/gpu/adaptive_quality.py` — covered by `test_adaptive_quality.py`.
+- `python/pharos_engine/tools/{audio_tools,sprite_tools,texture_tools,track_tools,video}.py`
   — tooling sprint deliverables (`test_sprite_tools.py`, `test_audio_tools.py`, etc.).
-- `python/slappyengine/ui/debug_overlay.py`,
+- `python/pharos_engine/ui/debug_overlay.py`,
   `ui/editor/script_binding_panel.py`, `ui/widgets/` — editor sprint deliverables.
 - `python/tests/` — **entire directory** (200+ files). The tests are why we know (a) works.
   These must land together with the modules they cover.
@@ -97,14 +97,14 @@ be staged in a follow-up commit with their corresponding tests.
 
 Survey only; no action this sprint.
 
-- `python/slappyengine/physics/cc_label.py` — superseded by `slappyengine.topology`
+- `python/pharos_engine/physics/cc_label.py` — superseded by `pharos_engine.topology`
   (MEMORY says topology subpackage took over connected-component labelling).
-- `python/slappyengine/physics2/material.py` — appears to be a half-started parallel
-  rewrite; mainline material lives in `slappyengine.material.*`. Confirm before delete.
-- `python/slappyengine/deform_{controller,crack,modes,repair,zones}.py` — listed in the
+- `python/pharos_engine/physics2/material.py` — appears to be a half-started parallel
+  rewrite; mainline material lives in `pharos_engine.material.*`. Confirm before delete.
+- `python/pharos_engine/deform_{controller,crack,modes,repair,zones}.py` — listed in the
   Phase D doomed file set per `phase_d_strip_plan_2026_05_31.md`. Cross-check whether the
   Bullet Strata integration still imports them; if not, delete.
-- `python/slappyengine/physics/{ccd,constraints,debug_hud,frontier,hull,memory_budget,`
+- `python/pharos_engine/physics/{ccd,constraints,debug_hud,frontier,hull,memory_budget,`
   `pressure_multigrid,scene_loader,shadows,world,broadphase,cell,profiles,post_process,`
   `render,particle_graph,particles,event_publisher,boundary_exchange,body,video,profile}.py`
   — large block of `physics/` files dropped in untracked. Many duplicate functionality now
@@ -120,13 +120,13 @@ Survey only; no action this sprint.
 
 Per user constraint, do not touch:
 
-- `python/slappyengine/softbody/` (whole subpackage)
-- `python/slappyengine/fluid/` (whole subpackage)
-- `python/slappyengine/physics/particle_field.py` + `particle_gpu*.py` — active sprint work
+- `python/pharos_engine/softbody/` (whole subpackage)
+- `python/pharos_engine/fluid/` (whole subpackage)
+- `python/pharos_engine/physics/particle_field.py` + `particle_gpu*.py` — active sprint work
 
 Other actively-iterated areas spotted during the survey, leave for the owning sprint:
 
-- `python/slappyengine/testing/baselines/*.png` — visual regression baselines
+- `python/pharos_engine/testing/baselines/*.png` — visual regression baselines
   (`outline_round5_legacy.png`, `outline_round5_smooth.png`). Stage them in a baseline-only
   commit once their owning test stabilises.
 - `SlapPyEngineTests/tests/visual/scenes/` and `SlapPyEngineTests/tests/visual/test_vis_*.py` — visual harness scenes are
@@ -153,7 +153,7 @@ Other actively-iterated areas spotted during the survey, leave for the owning sp
 1. **Stage the (a) bucket in one large commit.** Hundreds of untracked python files that are
    already imported and tested would drop the `git status` count from ~400 to under 50.
 2. **Cull the (b) bucket — physics/ duplicates.** ~25 untracked files in
-   `python/slappyengine/physics/` shadow the already-tracked subpackages. Single highest
+   `python/pharos_engine/physics/` shadow the already-tracked subpackages. Single highest
    cleanup win once individually triaged.
 3. **Move `ARCHITECTURE.md` and `ONBOARDING.md` under `docs/`.** They are already deleted at
    root; the staged-in-working-tree copies under `docs/` are the same content. Just needs a

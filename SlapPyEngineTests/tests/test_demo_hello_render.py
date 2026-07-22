@@ -14,7 +14,7 @@ Pins nine behaviours of the flagship "getting started" example:
    renderer's log.
 8. The bundled ``assets/triangle.obj`` is present and non-empty.
 9. The 2-line pattern the user asked for actually works: ``import
-   slappyengine`` + a single call to ``slappyengine.launch`` produces a
+   pharos_engine`` + a single call to ``pharos_engine.launch`` produces a
    rendered model with zero further plumbing.
 """
 from __future__ import annotations
@@ -204,17 +204,17 @@ def test_bundled_triangle_asset_exists():
 def test_two_line_pattern_end_to_end():
     """This is the user's ask -- if this fails we've broken the promise.
 
-    Two lines: ``import slappyengine`` + a single ``launch(...)`` call
+    Two lines: ``import pharos_engine`` + a single ``launch(...)`` call
     with a lambda loading the triangle must produce a rendered model
     without any other setup.
     """
-    import slappyengine
+    import pharos_engine
 
     triangle = str(_TRIANGLE_OBJ)
-    app = slappyengine.launch(
+    app = pharos_engine.launch(
         on_begin=lambda a: a.load_model(triangle),
         max_frames=3,
-        config=slappyengine.AppConfig(enable_gpu=False, renderer_backend="stub"),
+        config=pharos_engine.AppConfig(enable_gpu=False, renderer_backend="stub"),
     )
     assert app is not None
     assert len(app.models) == 1

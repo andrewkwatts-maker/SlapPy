@@ -6,7 +6,7 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import RopeSpec, World, build_rope
+from pharos_engine.dynamics import RopeSpec, World, build_rope
 
 
 def test_rope_builds_expected_node_count():

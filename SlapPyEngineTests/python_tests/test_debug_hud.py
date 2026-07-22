@@ -1,4 +1,4 @@
-"""Tests for slappyengine.physics.debug_hud.DebugHUD."""
+"""Tests for pharos_engine.physics.debug_hud.DebugHUD."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 import pytest
 
-from slappyengine.physics.debug_hud import DebugHUD
+from pharos_engine.physics.debug_hud import DebugHUD
 
 
 # ---------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-﻿"""
+"""
 layered_character.py — Demonstrates the layer reveal system.
 
 Layers: Skin (top) → Muscle (revealed when skin health < threshold) → Bone (final)
@@ -6,14 +6,14 @@ Health module channels: health, max_health
 Damage: each tick, skin health drops; when it falls below 0.3, the layer alpha fades.
 """
 import numpy as np
-from slappyengine import Engine
-from slappyengine.scene import Scene
-from slappyengine.asset import Asset
-from slappyengine.layer import Layer
-from slappyengine.camera import Camera
-from slappyengine.material import MaterialMap, ColorRange
-from slappyengine.modules.health import HealthModule
-from slappyengine.animation.procedural import ProceduralRig, ControlPoint
+from pharos_engine import Engine
+from pharos_engine.scene import Scene
+from pharos_engine.asset import Asset
+from pharos_engine.layer import Layer
+from pharos_engine.camera import Camera
+from pharos_engine.material import MaterialMap, ColorRange
+from pharos_engine.modules.health import HealthModule
+from pharos_engine.animation.procedural import ProceduralRig, ControlPoint
 
 
 def make_warrior(width: int = 64, height: int = 128) -> Asset:

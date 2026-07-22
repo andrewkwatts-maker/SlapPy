@@ -15,21 +15,21 @@ from dataclasses import dataclass, field
 import numpy as np
 import pytest
 
-from slappyengine.render.camera import Camera2D, Camera3D
-from slappyengine.ui.runtime.draw_command import DrawCommand
-from slappyengine.ui.runtime.hud_kit import HealthBar, StaminaBar, Toast
-from slappyengine.ui.runtime.hud_kit_extra import (
+from pharos_engine.render.camera import Camera2D, Camera3D
+from pharos_engine.ui.runtime.draw_command import DrawCommand
+from pharos_engine.ui.runtime.hud_kit import HealthBar, StaminaBar, Toast
+from pharos_engine.ui.runtime.hud_kit_extra import (
     Crosshair,
     ObjectiveMarker,
     ScoreCounter,
 )
-from slappyengine.ui.runtime.hud_overlay import (
+from pharos_engine.ui.runtime.hud_overlay import (
     HUDOverlay,
     SpriteSubmission,
     hud_command_to_sprite,
     hud_command_to_text,
 )
-from slappyengine.ui.runtime.hud_registry import HUDRegistry
+from pharos_engine.ui.runtime.hud_registry import HUDRegistry
 
 
 # ---------------------------------------------------------------------------

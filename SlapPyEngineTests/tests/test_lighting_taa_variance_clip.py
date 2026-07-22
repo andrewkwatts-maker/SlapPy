@@ -26,7 +26,7 @@ import struct
 import numpy as np
 import pytest
 
-from slappyengine.post_process.taa import TAAPass
+from pharos_engine.post_process.taa import TAAPass
 
 
 # ---------------------------------------------------------------------------

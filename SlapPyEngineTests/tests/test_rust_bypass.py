@@ -1,7 +1,7 @@
 """Tests for the Rust-backend bypass facade (II1, 2026-07-05).
 
 Pins the surface documented in ``docs/rust_bypass_2026_07_05.md``
-against the actual :mod:`slappyengine._core_facade` module.
+against the actual :mod:`pharos_engine._core_facade` module.
 
 Tests that require the compiled ``_core`` extension soft-skip when the
 extension is absent (headless CI without maturin).  Tests that check
@@ -17,8 +17,8 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine import _core_facade
-from slappyengine._core_facade import (
+from pharos_engine import _core_facade
+from pharos_engine._core_facade import (
     RUST_MODULE_MAP,
     _NullCore,
     has_native,
@@ -68,9 +68,9 @@ def test_has_native_when_extension_built():
     facade correctly reflects reality, not to require the extension.
     """
     try:
-        importlib.import_module("slappyengine._core")
+        importlib.import_module("pharos_engine._core")
     except ImportError:
-        pytest.skip("slappyengine._core not compiled — expected on headless CI")
+        pytest.skip("pharos_engine._core not compiled — expected on headless CI")
     assert has_native() is True
 
 
@@ -134,7 +134,7 @@ def test_null_core_repr_is_informative():
 @pytest.mark.parametrize("mod_name", sorted(RUST_MODULE_MAP.keys()))
 def test_each_module_importable(mod_name: str):
     """For every module in RUST_MODULE_MAP that's present at runtime,
-    ``import slappyengine._core.<mod_name>`` must work and expose the
+    ``import pharos_engine._core.<mod_name>`` must work and expose the
     documented symbols."""
     if not has_native():
         pytest.skip("_core not built")
@@ -145,7 +145,7 @@ def test_each_module_importable(mod_name: str):
             "(feature-gated or orphan not baked)"
         )
     # Importing the shim sub-module should not raise.
-    shim = importlib.import_module(f"slappyengine._core.{mod_name}")
+    shim = importlib.import_module(f"pharos_engine._core.{mod_name}")
     assert shim is not None
     # Every documented symbol must be on the shim.
     for sym in surface[mod_name]:
@@ -221,7 +221,7 @@ def test_submodule_views_have_docstrings():
         pytest.skip("_core not built")
     surface = list_rust_functions()
     for mod_name in surface:
-        shim = importlib.import_module(f"slappyengine._core.{mod_name}")
+        shim = importlib.import_module(f"pharos_engine._core.{mod_name}")
         assert shim.__doc__, f"sub-module {mod_name!r} missing docstring"
         assert "src/" in shim.__doc__, (
             f"sub-module {mod_name!r} docstring must reference src/"
@@ -234,7 +234,7 @@ def test_submodule_views_expose_dunder_all():
         pytest.skip("_core not built")
     surface = list_rust_functions()
     for mod_name, syms in surface.items():
-        shim = importlib.import_module(f"slappyengine._core.{mod_name}")
+        shim = importlib.import_module(f"pharos_engine._core.{mod_name}")
         assert hasattr(shim, "__all__"), (
             f"sub-module {mod_name!r} missing __all__"
         )
@@ -261,7 +261,7 @@ def test_bypass_matches_wrapper_convex_hull():
     surface = list_rust_functions()
     if "hull" not in surface or "convex_hull" not in surface["hull"]:
         pytest.skip("hull.convex_hull not present in this wheel")
-    hull_mod = importlib.import_module("slappyengine._core.hull")
+    hull_mod = importlib.import_module("pharos_engine._core.hull")
     # Direct bypass path.
     pts = [(0.0, 0.0), (2.0, 0.0), (2.0, 2.0), (0.0, 2.0), (1.0, 1.0)]
     direct = hull_mod.convex_hull(pts)
@@ -269,7 +269,7 @@ def test_bypass_matches_wrapper_convex_hull():
     # fallback that mirrors the Rust kernel's algorithm; use it as the
     # ground-truth comparison target.
     try:
-        from slappyengine.compute import spatial as spatial_wrap
+        from pharos_engine.compute import spatial as spatial_wrap
     except ImportError:  # pragma: no cover - defensive
         pytest.skip("compute.spatial wrapper not importable")
     py_fallback = getattr(spatial_wrap, "_python_convex_hull", None)
@@ -291,7 +291,7 @@ def test_bypass_lz4_roundtrip():
     surface = list_rust_functions()
     if "slap_format" not in surface:
         pytest.skip("slap_format not present in this wheel")
-    slap = importlib.import_module("slappyengine._core.slap_format")
+    slap = importlib.import_module("pharos_engine._core.slap_format")
     payload = (b"SlapPyEngine bypass smoke " * 64)
     blob = bytes(slap.lz4_compress(payload))
     assert blob != payload  # compression actually did something
@@ -306,7 +306,7 @@ def test_bypass_bounding_box_matches_min_max():
     surface = list_rust_functions()
     if "hull" not in surface or "bounding_box" not in surface["hull"]:
         pytest.skip("hull.bounding_box not present in this wheel")
-    hull_mod = importlib.import_module("slappyengine._core.hull")
+    hull_mod = importlib.import_module("pharos_engine._core.hull")
     pts = [(1.0, 2.0), (-3.0, 4.0), (5.0, -6.0), (0.5, 0.5)]
     xmin, ymin, xmax, ymax = hull_mod.bounding_box(pts)
     assert xmin == pytest.approx(min(p[0] for p in pts))

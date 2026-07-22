@@ -1,10 +1,10 @@
-"""Tests for slappyengine.physics.constraints (joint/constraint solver)."""
+"""Tests for pharos_engine.physics.constraints (joint/constraint solver)."""
 from __future__ import annotations
 
 import math
 
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     ConstraintSolver,
     DistanceConstraint,
     PhysicsWorld,

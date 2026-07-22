@@ -1,6 +1,6 @@
-# slappyengine.material — Design Reference
+# pharos_engine.material — Design Reference
 
-`slappyengine.material` is the engine's **node-graph material authoring
+`pharos_engine.material` is the engine's **node-graph material authoring
 system** — a small set of dataclasses (`NodeDef`, `NodeMaterial`) plus
 18 factory functions that produce well-formed `NodeDef` records. The
 authored graph round-trips through JSON, validates against a schema,
@@ -18,9 +18,9 @@ The engine ships two material authoring paths:
 
 1. **`MaterialMap`** — a flat list of `MaterialDef` records with R/G/B
    colour ranges, alpha-meaning tags, and behaviour tags. Used by the
-   per-pixel physics layer (`slappyengine.physics`) for classification:
+   per-pixel physics layer (`pharos_engine.physics`) for classification:
    "this pixel is in the wood band, it floats, it burns slowly". The
-   authoring surface lives in `slappyengine.material.map` and is
+   authoring surface lives in `pharos_engine.material.map` and is
    covered by [`material_catalog.md`](material_catalog.md). Visual
    editor: `MaterialEditor` (kind `material_map`).
 2. **`NodeMaterial`** — a node graph that compiles to a fragment shader
@@ -88,7 +88,7 @@ The Sprint 1B restoration brought the total factory count to 30:
   `SampleTextureNode`, `FinalColorNode`, `DiscardNode`,
   `WriteFieldNode` (terminal sim-field write).
 - **19 lowercase snake_case factories** restored in Sprint 1B but not
-  in `__all__` (importable from `slappyengine.material.node_material`):
+  in `__all__` (importable from `pharos_engine.material.node_material`):
   `ReadFieldNode`, `WriteFieldNode`, `SampleSimFieldNode`, `SinNode`,
   `CosNode`, `PowNode`, `RemapNode`, `LengthNode`, `NormalizeNode`,
   `DotNode`, `NoiseNode`, `WorldPosNode`, `TimeNode`, `OffsetUVNode`,
@@ -200,7 +200,7 @@ them.
 ## Rust-only compile
 
 `NodeMaterial.compile() -> str` invokes
-`slappyengine._core.compile_node_graph` on the JSON and caches the
+`pharos_engine._core.compile_node_graph` on the JSON and caches the
 result in `_compiled_wgsl`. The `wgsl` property exposes it read-only.
 
 **There is no Python fallback.** `compile()` raises `RuntimeError` if
@@ -216,8 +216,8 @@ validation use `validate_node_graph(graph.to_dict())` instead of
 ## Lazy import
 
 `material/__init__.py` uses `_LAZY_MAP` + `__getattr__` so a bare
-`import slappyengine` does **not** import the Rust `_core` extension or
-`slappyengine.material.node_material`. The extension only loads when a
+`import pharos_engine` does **not** import the Rust `_core` extension or
+`pharos_engine.material.node_material`. The extension only loads when a
 factory is referenced (`UVNode`, `NodeMaterial`, …). This matters for:
 
 - Headless CI without wgpu / `_core` built.

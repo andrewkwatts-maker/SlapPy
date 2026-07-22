@@ -1,11 +1,11 @@
-"""Tests for slappyengine.physics.memory_budget."""
+"""Tests for pharos_engine.physics.memory_budget."""
 from __future__ import annotations
 
 import warnings
 
 import pytest
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     MemoryBudget,
     MemoryBudgetConfig,
@@ -13,7 +13,7 @@ from slappyengine.physics import (
     load_physics_config,
     make_circle_silhouette,
 )
-from slappyengine.physics.hull import TIER_T0
+from pharos_engine.physics.hull import TIER_T0
 
 
 # -- Helpers -----------------------------------------------------------------
@@ -254,7 +254,7 @@ def test_max_cell_pool_slots_raises():
 
 def test_max_particle_count_warns():
     """Crossing 80% of the particle cap during ``emit`` must warn."""
-    from slappyengine.physics.particles import ParticleSystem
+    from pharos_engine.physics.particles import ParticleSystem
     budget = MemoryBudget(MemoryBudgetConfig(
         max_bodies=10_000,
         max_cell_pool_slots=10_000,

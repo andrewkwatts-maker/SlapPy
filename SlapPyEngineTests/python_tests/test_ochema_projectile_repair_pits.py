@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _OCHEMA_ROOT = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _OCHEMA_STR = str(_OCHEMA_ROOT)
@@ -29,7 +29,7 @@ def _make_proj(owner_id=0, vx=200.0, vy=0.0, damage=10.0, pos=(100.0, 100.0)):
 
 
 def _make_vehicle(driver_id=1, pos=(500.0, 300.0), size=(64, 64)):
-    from slappyengine.collision import AABBShape
+    from pharos_engine.collision import AABBShape
     v = MagicMock()
     v.driver_id = driver_id
     v.position = pos
@@ -39,7 +39,7 @@ def _make_vehicle(driver_id=1, pos=(500.0, 300.0), size=(64, 64)):
 
 
 def _make_turret(pos=(300.0, 300.0)):
-    from slappyengine.collision import AABBShape
+    from pharos_engine.collision import AABBShape
     t = MagicMock()
     t.position = pos
     t.collision_shape = AABBShape(width=24, height=24)
@@ -227,7 +227,7 @@ class TestProjectileSystemVehicleHit:
 
     def test_hit_destroyed_vehicle_publishes_destroyed_event(self):
         from systems.projectile_system import ProjectileSystem
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ps = ProjectileSystem()
         proj = _make_proj(owner_id=0, pos=(500.0, 300.0))
         vehicle = _make_vehicle(driver_id=1, pos=(500.0, 300.0))
@@ -338,7 +338,7 @@ class TestRadialRepairSystemInit:
 class TestRadialRepairSystemEvents:
     def test_radial_event_with_no_deform_skipped(self):
         from systems.repair_system import RadialRepairSystem
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         vehicle = MagicMock()
         vehicle._deform = None
         rrs = RadialRepairSystem(vehicles=[vehicle])
@@ -349,21 +349,21 @@ class TestRadialRepairSystemEvents:
 
     def test_radial_event_with_no_target_ignored(self):
         from systems.repair_system import RadialRepairSystem
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         rrs = RadialRepairSystem(vehicles=[])
         publish("Repair.Radial", center_x=50, center_y=50)  # no target
         rrs.teardown()
 
     def test_pixel_event_with_no_target_ignored(self):
         from systems.repair_system import RadialRepairSystem
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         rrs = RadialRepairSystem(vehicles=[])
         publish("Repair.Pixel", x=10, y=10, rate=5.0)
         rrs.teardown()
 
     def test_full_event_with_no_target_ignored(self):
         from systems.repair_system import RadialRepairSystem
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         rrs = RadialRepairSystem(vehicles=[])
         publish("Repair.Full", rate=1.0)
         rrs.teardown()
@@ -455,7 +455,7 @@ class TestPitsSystemVehicleEnter:
 
     def test_slow_vehicle_enters_pits(self):
         from systems.pits_system import PitsSystem
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ts = self._make_trigger_system()
         vehicle = MagicMock()
         vehicle.velocity = [10.0, 0.0]  # slow
@@ -474,7 +474,7 @@ class TestPitsSystemVehicleEnter:
 
     def test_fast_vehicle_rejected(self):
         from systems.pits_system import PitsSystem
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ts = self._make_trigger_system()
         vehicle = MagicMock()
         vehicle.velocity = [200.0, 0.0]  # too fast
@@ -504,7 +504,7 @@ class TestPitsSystemVehicleEnter:
 
     def test_vehicle_exit_publishes_event(self):
         from systems.pits_system import PitsSystem
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ts = self._make_trigger_system()
         vehicle = MagicMock()
         vehicle.velocity = [10.0, 0.0]
@@ -590,7 +590,7 @@ class TestPitsSystemUpdate:
 
     def test_update_publishes_repairing_event(self):
         from systems.pits_system import PitsSystem
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ts = self._make_trigger_system()
         vehicle = MagicMock()
         vehicle.velocity = [10.0, 0.0]

@@ -1,4 +1,4 @@
-"""Negative-path tests for :mod:`slappyengine.audio` public-boundary
+"""Negative-path tests for :mod:`pharos_engine.audio` public-boundary
 validation (hardening round 7).
 
 The positive paths (loading WAVs through :meth:`AudioManager.load`,
@@ -17,7 +17,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "python"))
 
-from slappyengine.audio import AudioManager, SoundHandle, play_sound  # noqa: E402
+from pharos_engine.audio import AudioManager, SoundHandle, play_sound  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

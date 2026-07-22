@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from slappyengine.softbody import make_lattice_body, make_layered_creature
-from slappyengine.studio import (
+from pharos_engine.softbody import make_lattice_body, make_layered_creature
+from pharos_engine.studio import (
     anchor, centroid, output_path, record, softbody_stage,
 )
 

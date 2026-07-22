@@ -15,12 +15,12 @@ import numpy as np
 
 class TestPostProcessPass:
     def test_instantiates(self):
-        from slappyengine.post_process.chain import PostProcessPass
+        from pharos_engine.post_process.chain import PostProcessPass
         p = PostProcessPass(shader_path="blur.wgsl")
         assert p is not None
 
     def test_defaults(self):
-        from slappyengine.post_process.chain import PostProcessPass
+        from pharos_engine.post_process.chain import PostProcessPass
         p = PostProcessPass(shader_path="blur.wgsl")
         assert p.params == {}
         assert p.label == ""
@@ -29,7 +29,7 @@ class TestPostProcessPass:
         assert p.raw_params_bytes is None
 
     def test_custom_values(self):
-        from slappyengine.post_process.chain import PostProcessPass
+        from pharos_engine.post_process.chain import PostProcessPass
         p = PostProcessPass(shader_path="blur.wgsl", params={"r": 3}, label="blur",
                             enabled=False, entry_point="my_main")
         assert p.params["r"] == 3
@@ -40,26 +40,26 @@ class TestPostProcessPass:
 
 class TestPostProcessChain:
     def test_instantiates_empty(self):
-        from slappyengine.post_process.chain import PostProcessChain
+        from pharos_engine.post_process.chain import PostProcessChain
         c = PostProcessChain()
         assert c is not None
         assert c.passes == []
 
     def test_instantiates_with_passes(self):
-        from slappyengine.post_process.chain import PostProcessChain, PostProcessPass
+        from pharos_engine.post_process.chain import PostProcessChain, PostProcessPass
         p = PostProcessPass(shader_path="blur.wgsl", label="blur", enabled=True)
         c = PostProcessChain([p])
         assert len(c.passes) == 1
 
     def test_add_pass(self):
-        from slappyengine.post_process.chain import PostProcessChain, PostProcessPass
+        from pharos_engine.post_process.chain import PostProcessChain, PostProcessPass
         c = PostProcessChain()
         p = PostProcessPass(shader_path="test.wgsl", label="test")
         c.add(p)
         assert len(c.passes) == 1
 
     def test_remove_by_label(self):
-        from slappyengine.post_process.chain import PostProcessChain, PostProcessPass
+        from pharos_engine.post_process.chain import PostProcessChain, PostProcessPass
         c = PostProcessChain()
         c.add(PostProcessPass(shader_path="a.wgsl", label="a"))
         c.add(PostProcessPass(shader_path="b.wgsl", label="b"))
@@ -69,14 +69,14 @@ class TestPostProcessChain:
         assert "b" in labels
 
     def test_passes_excludes_disabled(self):
-        from slappyengine.post_process.chain import PostProcessChain, PostProcessPass
+        from pharos_engine.post_process.chain import PostProcessChain, PostProcessPass
         c = PostProcessChain()
         c.add(PostProcessPass(shader_path="a.wgsl", label="a", enabled=True))
         c.add(PostProcessPass(shader_path="b.wgsl", label="b", enabled=False))
         assert len(c.passes) == 1
 
     def test_add_blur(self):
-        from slappyengine.post_process.chain import PostProcessChain
+        from pharos_engine.post_process.chain import PostProcessChain
         c = PostProcessChain()
         p = c.add_blur(radius=4)
         assert p.label == "blur"
@@ -84,14 +84,14 @@ class TestPostProcessChain:
         assert len(c.passes) == 1
 
     def test_add_pixelate(self):
-        from slappyengine.post_process.chain import PostProcessChain
+        from pharos_engine.post_process.chain import PostProcessChain
         c = PostProcessChain()
         p = c.add_pixelate(block_size=8)
         assert p.label == "pixelate"
         assert p.params["block_size"] == 8
 
     def test_add_outline(self):
-        from slappyengine.post_process.chain import PostProcessChain
+        from pharos_engine.post_process.chain import PostProcessChain
         c = PostProcessChain()
         p = c.add_outline(color=(0.0, 1.0, 0.0, 1.0), threshold=0.2)
         assert p.label == "outline"
@@ -99,7 +99,7 @@ class TestPostProcessChain:
         assert p.params["threshold"] == pytest.approx(0.2)
 
     def test_add_gravity_warp(self):
-        from slappyengine.post_process.chain import PostProcessChain
+        from pharos_engine.post_process.chain import PostProcessChain
         c = PostProcessChain()
         p = c.add_gravity_warp(center=(0.3, 0.7), strength=2.0, radius=0.4)
         assert p.label == "gravity_warp"
@@ -109,50 +109,50 @@ class TestPostProcessChain:
 
 class TestNamedPasses:
     def test_chromatic_aberration_defaults(self):
-        from slappyengine.post_process.chain import ChromaticAberrationPass
+        from pharos_engine.post_process.chain import ChromaticAberrationPass
         ca = ChromaticAberrationPass()
         assert ca.strength == pytest.approx(0.005)
         assert ca.label == "chromatic_aberration"
 
     def test_chromatic_aberration_custom_strength(self):
-        from slappyengine.post_process.chain import ChromaticAberrationPass
+        from pharos_engine.post_process.chain import ChromaticAberrationPass
         ca = ChromaticAberrationPass(strength=0.01)
         assert ca.strength == pytest.approx(0.01)
 
     def test_chromatic_aberration_strength_setter(self):
-        from slappyengine.post_process.chain import ChromaticAberrationPass
+        from pharos_engine.post_process.chain import ChromaticAberrationPass
         ca = ChromaticAberrationPass()
         ca.strength = 0.02
         assert ca.strength == pytest.approx(0.02)
         assert ca.params["strength"] == pytest.approx(0.02)
 
     def test_vignette_defaults(self):
-        from slappyengine.post_process.chain import VignettePass
+        from pharos_engine.post_process.chain import VignettePass
         v = VignettePass()
         assert v.strength == pytest.approx(0.4)
         assert v.label == "vignette"
 
     def test_vignette_strength_setter(self):
-        from slappyengine.post_process.chain import VignettePass
+        from pharos_engine.post_process.chain import VignettePass
         v = VignettePass()
         v.strength = 0.8
         assert v.strength == pytest.approx(0.8)
 
     def test_film_grain_defaults(self):
-        from slappyengine.post_process.chain import FilmGrainPass
+        from pharos_engine.post_process.chain import FilmGrainPass
         fg = FilmGrainPass()
         assert fg.strength == pytest.approx(0.025)
         assert fg.label == "film_grain"
 
     def test_bloom_defaults(self):
-        from slappyengine.post_process.chain import BloomPass
+        from pharos_engine.post_process.chain import BloomPass
         b = BloomPass()
         assert b.intensity == pytest.approx(1.0)
         assert b.label == "bloom"
         assert b.params["threshold"] == pytest.approx(0.7)
 
     def test_bloom_intensity_setter(self):
-        from slappyengine.post_process.chain import BloomPass
+        from pharos_engine.post_process.chain import BloomPass
         b = BloomPass()
         b.intensity = 2.5
         assert b.intensity == pytest.approx(2.5)
@@ -164,12 +164,12 @@ class TestNamedPasses:
 
 class TestVolumetricFog:
     def test_instantiates(self):
-        from slappyengine.post_process.volumetric_fog import VolumetricFog
+        from pharos_engine.post_process.volumetric_fog import VolumetricFog
         vf = VolumetricFog()
         assert vf is not None
 
     def test_defaults(self):
-        from slappyengine.post_process.volumetric_fog import VolumetricFog
+        from pharos_engine.post_process.volumetric_fog import VolumetricFog
         vf = VolumetricFog()
         assert vf.density == pytest.approx(0.02)
         assert vf.scatter == pytest.approx(0.5)
@@ -182,37 +182,37 @@ class TestVolumetricFog:
         assert vf.sun_intensity == pytest.approx(1.0)
 
     def test_label(self):
-        from slappyengine.post_process.volumetric_fog import VolumetricFog
+        from pharos_engine.post_process.volumetric_fog import VolumetricFog
         assert VolumetricFog.label == "volumetric_fog"
 
     def test_custom_values(self):
-        from slappyengine.post_process.volumetric_fog import VolumetricFog
+        from pharos_engine.post_process.volumetric_fog import VolumetricFog
         vf = VolumetricFog(density=0.1, num_steps=32)
         assert vf.density == pytest.approx(0.1)
         assert vf.num_steps == 32
 
     def test_make_pass_returns_post_process_pass(self):
-        from slappyengine.post_process.volumetric_fog import VolumetricFog
-        from slappyengine.post_process.chain import PostProcessPass
+        from pharos_engine.post_process.volumetric_fog import VolumetricFog
+        from pharos_engine.post_process.chain import PostProcessPass
         vf = VolumetricFog()
         p = vf.make_pass()
         assert isinstance(p, PostProcessPass)
 
     def test_make_pass_has_raw_params(self):
-        from slappyengine.post_process.volumetric_fog import VolumetricFog
+        from pharos_engine.post_process.volumetric_fog import VolumetricFog
         vf = VolumetricFog()
         p = vf.make_pass()
         assert isinstance(p.raw_params_bytes, bytes)
         assert len(p.raw_params_bytes) > 0
 
     def test_make_pass_label_matches(self):
-        from slappyengine.post_process.volumetric_fog import VolumetricFog
+        from pharos_engine.post_process.volumetric_fog import VolumetricFog
         vf = VolumetricFog()
         p = vf.make_pass()
         assert p.label == "volumetric_fog"
 
     def test_identity_mat4(self):
-        from slappyengine.post_process.volumetric_fog import _IDENTITY_MAT4
+        from pharos_engine.post_process.volumetric_fog import _IDENTITY_MAT4
         assert len(_IDENTITY_MAT4) == 16
         assert _IDENTITY_MAT4[0] == pytest.approx(1.0)
         assert _IDENTITY_MAT4[5] == pytest.approx(1.0)
@@ -227,12 +227,12 @@ class TestVolumetricFog:
 
 class TestTAAPass:
     def test_instantiates(self):
-        from slappyengine.post_process.taa import TAAPass
+        from pharos_engine.post_process.taa import TAAPass
         t = TAAPass()
         assert t is not None
 
     def test_defaults(self):
-        from slappyengine.post_process.taa import TAAPass
+        from pharos_engine.post_process.taa import TAAPass
         t = TAAPass()
         assert t.alpha == pytest.approx(0.1)
         assert t.motion_weight == pytest.approx(1.0)
@@ -240,42 +240,42 @@ class TestTAAPass:
         assert t.sharpening == pytest.approx(0.0)
 
     def test_label(self):
-        from slappyengine.post_process.taa import TAAPass
+        from pharos_engine.post_process.taa import TAAPass
         assert TAAPass.label == "taa"
 
     def test_variance_clip_gamma_above_one(self):
-        from slappyengine.post_process.taa import TAAPass
+        from pharos_engine.post_process.taa import TAAPass
         t = TAAPass(variance_clip_gamma=1.5)
         assert t.sharpening == pytest.approx(0.5)
 
     def test_variance_clip_gamma_below_one(self):
-        from slappyengine.post_process.taa import TAAPass
+        from pharos_engine.post_process.taa import TAAPass
         t = TAAPass(variance_clip_gamma=0.5)
         # sharpening = max(0, 0.5-1) = 0
         assert t.sharpening == pytest.approx(0.0)
 
     def test_make_pass_returns_post_process_pass(self):
-        from slappyengine.post_process.taa import TAAPass
-        from slappyengine.post_process.chain import PostProcessPass
+        from pharos_engine.post_process.taa import TAAPass
+        from pharos_engine.post_process.chain import PostProcessPass
         t = TAAPass()
         p = t.make_pass("frame", "history", "motion")
         assert isinstance(p, PostProcessPass)
 
     def test_make_pass_has_raw_bytes(self):
-        from slappyengine.post_process.taa import TAAPass
+        from pharos_engine.post_process.taa import TAAPass
         t = TAAPass()
         p = t.make_pass("frame", "history", "motion")
         assert isinstance(p.raw_params_bytes, bytes)
         assert len(p.raw_params_bytes) == 16  # 4 fields × 4 bytes
 
     def test_make_pass_label(self):
-        from slappyengine.post_process.taa import TAAPass
+        from pharos_engine.post_process.taa import TAAPass
         t = TAAPass()
         p = t.make_pass(None, None, None)
         assert p.label == "taa"
 
     def test_make_pass_textures_in_params(self):
-        from slappyengine.post_process.taa import TAAPass
+        from pharos_engine.post_process.taa import TAAPass
         t = TAAPass()
         p = t.make_pass("ft", "ht", "mt")
         assert p.params["frame_tex"] == "ft"
@@ -289,12 +289,12 @@ class TestTAAPass:
 
 class TestShadowCSM:
     def test_instantiates(self):
-        from slappyengine.post_process.shadow_csm import ShadowCSM
+        from pharos_engine.post_process.shadow_csm import ShadowCSM
         s = ShadowCSM()
         assert s is not None
 
     def test_defaults(self):
-        from slappyengine.post_process.shadow_csm import ShadowCSM
+        from pharos_engine.post_process.shadow_csm import ShadowCSM
         s = ShadowCSM()
         assert s.num_cascades == 4
         assert s.pcss_enabled is True
@@ -304,38 +304,38 @@ class TestShadowCSM:
         assert s.pcf_radius == pytest.approx(1.5)
 
     def test_label(self):
-        from slappyengine.post_process.shadow_csm import ShadowCSM
+        from pharos_engine.post_process.shadow_csm import ShadowCSM
         assert ShadowCSM.label == "shadow_csm"
 
     def test_custom_values(self):
-        from slappyengine.post_process.shadow_csm import ShadowCSM
+        from pharos_engine.post_process.shadow_csm import ShadowCSM
         s = ShadowCSM(num_cascades=3, pcss_enabled=False, depth_bias=0.01)
         assert s.num_cascades == 3
         assert s.pcss_enabled is False
         assert s.depth_bias == pytest.approx(0.01)
 
     def test_make_pass_returns_post_process_pass(self):
-        from slappyengine.post_process.shadow_csm import ShadowCSM
-        from slappyengine.post_process.chain import PostProcessPass
+        from pharos_engine.post_process.shadow_csm import ShadowCSM
+        from pharos_engine.post_process.chain import PostProcessPass
         s = ShadowCSM()
         p = s.make_pass()
         assert isinstance(p, PostProcessPass)
 
     def test_make_pass_has_raw_bytes(self):
-        from slappyengine.post_process.shadow_csm import ShadowCSM
+        from pharos_engine.post_process.shadow_csm import ShadowCSM
         s = ShadowCSM()
         p = s.make_pass()
         assert isinstance(p.raw_params_bytes, bytes)
         assert len(p.raw_params_bytes) > 0
 
     def test_make_pass_label(self):
-        from slappyengine.post_process.shadow_csm import ShadowCSM
+        from pharos_engine.post_process.shadow_csm import ShadowCSM
         s = ShadowCSM()
         p = s.make_pass()
         assert p.label == "shadow_csm"
 
     def test_default_split_dists(self):
-        from slappyengine.post_process.shadow_csm import ShadowCSM, _DEFAULT_SPLIT_DISTS
+        from pharos_engine.post_process.shadow_csm import ShadowCSM, _DEFAULT_SPLIT_DISTS
         assert len(_DEFAULT_SPLIT_DISTS) == 4
         assert _DEFAULT_SPLIT_DISTS[0] == pytest.approx(10.0)
 
@@ -349,45 +349,45 @@ _SQUARE = [(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)]
 
 class TestCatmullRomSplineDefaults:
     def test_instantiates(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         assert s is not None
 
     def test_closed_default(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         assert s.closed is True
 
     def test_tension_default(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         assert s.tension == pytest.approx(0.5)
 
     def test_points_stored(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         assert s.points == _SQUARE
 
     def test_total_length_positive(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         assert s.length() > 0
 
     def test_open_spline(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE, closed=False)
         assert s.closed is False
 
 
 class TestCatmullRomSplineSample:
     def test_sample_returns_tuple(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         pt = s.sample(0.0)
         assert len(pt) == 2
 
     def test_sample_at_zero_is_first_point(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         pt = s.sample(0.0)
         # At t=0, should be near the first control point
@@ -395,7 +395,7 @@ class TestCatmullRomSplineSample:
         assert abs(pt[1] - _SQUARE[0][1]) < 1.0
 
     def test_sample_multiple_t_values(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         for t in [0.0, 0.25, 0.5, 0.75]:
             pt = s.sample(t)
@@ -403,19 +403,19 @@ class TestCatmullRomSplineSample:
             assert isinstance(pt[1], float)
 
     def test_uniform_samples_count(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         pts = s.uniform_samples(8)
         assert len(pts) == 8
 
     def test_uniform_ts_count(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         ts = s.uniform_ts(10)
         assert len(ts) == 10
 
     def test_uniform_ts_monotone(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         ts = s.uniform_ts(8)
         for i in range(len(ts) - 1):
@@ -424,13 +424,13 @@ class TestCatmullRomSplineSample:
 
 class TestCatmullRomSplineTangentNormal:
     def test_tangent_returns_tuple(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         tx, ty = s.tangent(0.0)
         assert isinstance(tx, float) and isinstance(ty, float)
 
     def test_tangent_is_unit_length(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         for t in [0.1, 0.3, 0.6, 0.9]:
             tx, ty = s.tangent(t)
@@ -438,7 +438,7 @@ class TestCatmullRomSplineTangentNormal:
             assert mag == pytest.approx(1.0, abs=1e-4)
 
     def test_normal_perpendicular_to_tangent(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         for t in [0.1, 0.4, 0.7]:
             tx, ty = s.tangent(t)
@@ -447,7 +447,7 @@ class TestCatmullRomSplineTangentNormal:
             assert abs(dot) < 1e-4
 
     def test_normal_returns_tuple(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         s = CatmullRomSpline(_SQUARE)
         nx, ny = s.normal(0.5)
         assert isinstance(nx, float) and isinstance(ny, float)
@@ -472,19 +472,19 @@ def _make_layer(w=64, h=64):
 
 class TestSdfCanvasInstantiation:
     def test_instantiates(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         assert canvas is not None
 
     def test_empty_shapes(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         assert canvas._shapes == []
 
     def test_flush_empty_no_crash(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         canvas.flush()  # should not raise
@@ -492,21 +492,21 @@ class TestSdfCanvasInstantiation:
 
 class TestSdfCanvasCircle:
     def test_circle_adds_shape(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         canvas.circle(center=(32, 32), radius=10)
         assert len(canvas._shapes) == 1
 
     def test_circle_kind_zero(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         canvas.circle(center=(32, 32), radius=10)
         assert canvas._shapes[0].kind == 0
 
     def test_circle_flush_writes_pixels(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer(w=64, h=64)
         canvas = SdfCanvas(layer)
         canvas.circle(center=(32, 32), radius=10, color=(1.0, 0.0, 0.0, 1.0))
@@ -515,7 +515,7 @@ class TestSdfCanvasCircle:
         assert layer._image_data[32, 32, 0] > 0
 
     def test_circle_clears_after_flush(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         canvas.circle(center=(32, 32), radius=10)
@@ -523,7 +523,7 @@ class TestSdfCanvasCircle:
         assert len(canvas._shapes) == 0
 
     def test_chaining(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         result = canvas.circle(center=(32, 32), radius=5)
@@ -532,21 +532,21 @@ class TestSdfCanvasCircle:
 
 class TestSdfCanvasBox:
     def test_box_adds_shape(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         canvas.box(center=(32, 32), size=(20, 10))
         assert len(canvas._shapes) == 1
 
     def test_box_kind_one(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         canvas.box(center=(32, 32), size=(20, 10))
         assert canvas._shapes[0].kind == 1
 
     def test_box_flush_writes_pixels(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer(w=64, h=64)
         canvas = SdfCanvas(layer)
         canvas.box(center=(32, 32), size=(20, 10), color=(0.0, 1.0, 0.0, 1.0))
@@ -556,21 +556,21 @@ class TestSdfCanvasBox:
 
 class TestSdfCanvasSegment:
     def test_segment_adds_shape(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         canvas.segment(a=(10, 10), b=(50, 50), thickness=2.0)
         assert len(canvas._shapes) == 1
 
     def test_segment_kind_two(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         canvas.segment(a=(10, 10), b=(50, 50))
         assert canvas._shapes[0].kind == 2
 
     def test_segment_flush_no_crash(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         canvas.segment(a=(5, 5), b=(60, 60), thickness=3.0)
@@ -579,21 +579,21 @@ class TestSdfCanvasSegment:
 
 class TestSdfCanvasRing:
     def test_ring_adds_shape(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         canvas.ring(center=(32, 32), radius=15, thickness=3)
         assert len(canvas._shapes) == 1
 
     def test_ring_kind_three(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         canvas.ring(center=(32, 32), radius=15, thickness=3)
         assert canvas._shapes[0].kind == 3
 
     def test_ring_flush_writes_pixels(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer(w=64, h=64)
         canvas = SdfCanvas(layer)
         canvas.ring(center=(32, 32), radius=12, thickness=4, color=(0.0, 0.0, 1.0, 1.0))
@@ -604,7 +604,7 @@ class TestSdfCanvasRing:
 
 class TestSdfCanvasMultipleShapes:
     def test_multiple_shapes_queued(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         canvas.circle(center=(20, 20), radius=5)
@@ -613,7 +613,7 @@ class TestSdfCanvasMultipleShapes:
         assert len(canvas._shapes) == 3
 
     def test_clear_empties_shapes(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer()
         canvas = SdfCanvas(layer)
         canvas.circle(center=(32, 32), radius=5)
@@ -621,7 +621,7 @@ class TestSdfCanvasMultipleShapes:
         assert len(canvas._shapes) == 0
 
     def test_multiple_flush_accumulates(self):
-        from slappyengine.sdf_shapes import SdfCanvas
+        from pharos_engine.sdf_shapes import SdfCanvas
         layer = _make_layer(w=64, h=64)
         canvas = SdfCanvas(layer)
         canvas.circle(center=(16, 16), radius=5, color=(1.0, 0.0, 0.0, 1.0))

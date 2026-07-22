@@ -11,9 +11,9 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.softbody import MATERIALS, Material, SoftBodyWorld, load_catalog
-from slappyengine.softbody.beam import BeamSoA
-from slappyengine.softbody.node import NodeSoA
+from pharos_engine.softbody import MATERIALS, Material, SoftBodyWorld, load_catalog
+from pharos_engine.softbody.beam import BeamSoA
+from pharos_engine.softbody.node import NodeSoA
 
 
 @pytest.fixture(autouse=True)

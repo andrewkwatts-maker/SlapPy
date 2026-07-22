@@ -12,8 +12,8 @@ from typing import Any
 
 import pytest
 
-from slappyengine.event_bus import EventBus, subscribe, global_bus
-from slappyengine.physics.event_publisher import PhysicsEventPublisher
+from pharos_engine.event_bus import EventBus, subscribe, global_bus
+from pharos_engine.physics.event_publisher import PhysicsEventPublisher
 
 
 # ── Stubs ────────────────────────────────────────────────────────────────────

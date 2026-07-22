@@ -19,7 +19,7 @@ The demo tracks 25+ subsystems in a single scripted headless run:
 2.  **GIF video capture** (LL2) — 60 headless frames recorded to
     ``hello_showcase_v3.gif`` via :class:`GIFCapture`.
 3.  **Instanced rendering** (LL3) — 20 cube instances arranged on a
-    circle via :func:`slappyengine.render.instanced.circle`.
+    circle via :func:`pharos_engine.render.instanced.circle`.
 4.  **3D positional audio** (LL4) — a moving ``menu_swipe`` source
     played into :class:`Audio3DEngine`; DSP verifies gain/pitch
     trajectories (doppler shift).
@@ -236,8 +236,8 @@ class SubsystemStatus:
 def _step_boot_app(trace: DemoTrace) -> tuple[Any, Any, SubsystemStatus]:
     """Boot :class:`App` with :class:`NullRenderer`; return (app, renderer, status)."""
     try:
-        from slappyengine.app import App, AppConfig
-        from slappyengine.render.null_renderer import NullRenderer
+        from pharos_engine.app import App, AppConfig
+        from pharos_engine.render.null_renderer import NullRenderer
     except Exception as exc:
         trace.record("app_missing", error=str(exc))
         return None, None, SubsystemStatus("app_shell", False, reason=str(exc))
@@ -279,9 +279,9 @@ def _step_hud_overlay(
     """Mount HUD overlay with HealthBar + AmmoCounter; return statuses + submitted count."""
     statuses: list[SubsystemStatus] = []
     try:
-        from slappyengine.render.camera import Camera2D
-        from slappyengine.ui.runtime.hud_kit import AmmoCounter, HealthBar
-        from slappyengine.ui.runtime.hud_overlay import HUDOverlay
+        from pharos_engine.render.camera import Camera2D
+        from pharos_engine.ui.runtime.hud_kit import AmmoCounter, HealthBar
+        from pharos_engine.ui.runtime.hud_overlay import HUDOverlay
     except Exception as exc:
         trace.record("hud_missing", error=str(exc))
         statuses.append(SubsystemStatus("hud_overlay", False, reason=str(exc)))
@@ -363,7 +363,7 @@ def _step_gif_capture(
 ) -> tuple[SubsystemStatus, int]:
     """Record ``GIF_FRAME_COUNT`` synthesised frames to a GIF; return status + count."""
     try:
-        from slappyengine.capture.gif_capture import GIFCapture
+        from pharos_engine.capture.gif_capture import GIFCapture
     except Exception as exc:
         trace.record("gif_capture_missing", error=str(exc))
         return SubsystemStatus("video_capture", False, reason=str(exc)), 0
@@ -415,8 +415,8 @@ def _step_instanced(
     """Spawn ``INSTANCE_COUNT`` cube instances in a circle; feed BVH later."""
     statuses: list[SubsystemStatus] = []
     try:
-        from slappyengine.render.instanced import circle as instanced_circle
-        from slappyengine.render.mesh import cube
+        from pharos_engine.render.instanced import circle as instanced_circle
+        from pharos_engine.render.mesh import cube
     except Exception as exc:
         trace.record("instanced_missing", error=str(exc))
         statuses.append(SubsystemStatus("instanced_rendering", False, reason=str(exc)))
@@ -446,7 +446,7 @@ def _step_instanced(
     # Build per-instance AABB entries for BVH downstream.
     entries: list[tuple[str, Any]] = []
     try:
-        from slappyengine.render.bvh_3d import AABB3D
+        from pharos_engine.render.bvh_3d import AABB3D
 
         half = 0.3
         ts = inst.instance_data.instance_transforms
@@ -468,7 +468,7 @@ def _step_instanced(
 def _step_audio_3d(trace: DemoTrace) -> SubsystemStatus:
     """Play a moving ``menu_swipe`` source and verify doppler shift trajectory."""
     try:
-        from slappyengine.audio_3d import (
+        from pharos_engine.audio_3d import (
             Audio3DEngine,
             Audio3DSource,
             AudioListener,
@@ -546,7 +546,7 @@ def _step_load_character(
 
     # Soft-import the JJ3 importer.
     try:
-        from slappyengine.asset_import.gltf_importer import import_gltf
+        from pharos_engine.asset_import.gltf_importer import import_gltf
 
         if asset_path.is_file():
             result = import_gltf(asset_path)
@@ -576,7 +576,7 @@ def _step_load_character(
 
     # Skeleton runtime (JJ4).
     try:
-        from slappyengine.animation.skeleton_runtime import (
+        from pharos_engine.animation.skeleton_runtime import (
             Skeleton,
             SkeletonNode,
             SkinnedMeshData,
@@ -649,7 +649,7 @@ def _step_build_clip(
 ) -> tuple[Any, SubsystemStatus]:
     """Build a 3-key rotate clip for JJ4's Animator."""
     try:
-        from slappyengine.animation.clip import AnimationChannel, AnimationClip
+        from pharos_engine.animation.clip import AnimationChannel, AnimationClip
     except Exception as exc:
         trace.record("animation_clip_missing", error=str(exc))
         return None, SubsystemStatus("animation_clip", False, reason=str(exc))
@@ -674,7 +674,7 @@ def _step_build_animator(
 ) -> tuple[Any, SubsystemStatus]:
     """Wire the Animator + drive it for 30 sub-frames."""
     try:
-        from slappyengine.animation.skinner import Animator
+        from pharos_engine.animation.skinner import Animator
     except Exception as exc:
         trace.record("animator_missing", error=str(exc))
         return None, SubsystemStatus("animator", False, reason=str(exc))
@@ -713,9 +713,9 @@ def _step_csm(trace: DemoTrace) -> tuple[list[SubsystemStatus], int]:
     """Build a 4-cascade CSM against the demo camera + directional light."""
     statuses: list[SubsystemStatus] = []
     try:
-        from slappyengine.render.camera import Camera3D
-        from slappyengine.render.light import Light
-        from slappyengine.render.shadows import CSMBuilder, ShadowMapConfig
+        from pharos_engine.render.camera import Camera3D
+        from pharos_engine.render.light import Light
+        from pharos_engine.render.shadows import CSMBuilder, ShadowMapConfig
     except Exception as exc:
         trace.record("csm_missing", error=str(exc))
         statuses.append(SubsystemStatus("directional_light", False, reason=str(exc)))
@@ -780,7 +780,7 @@ def _step_skybox(trace: DemoTrace) -> list[SubsystemStatus]:
     """Build a 3-stop gradient cubemap; sample it to confirm the sampler works."""
     statuses: list[SubsystemStatus] = []
     try:
-        from slappyengine.render.skybox import (
+        from pharos_engine.render.skybox import (
             procedural_gradient_sky,
             sample_direction_from_cubemap,
         )
@@ -834,7 +834,7 @@ def _step_skybox(trace: DemoTrace) -> list[SubsystemStatus]:
 def _step_ssao(trace: DemoTrace) -> SubsystemStatus:
     """Build an :class:`SSAOPass` + verify its kernel + noise generators."""
     try:
-        from slappyengine.render.ssao import SSAOConfig, SSAOPass
+        from pharos_engine.render.ssao import SSAOConfig, SSAOPass
     except Exception as exc:
         trace.record("ssao_missing", error=str(exc))
         return SubsystemStatus("ssao", False, reason=str(exc))
@@ -868,8 +868,8 @@ def _step_ssao(trace: DemoTrace) -> SubsystemStatus:
 def _step_sdf_text(trace: DemoTrace) -> SubsystemStatus:
     """Render ``SDF_TITLE_TEXT`` via SDF glyph atlas + text renderer."""
     try:
-        from slappyengine.text.atlas import SDFGlyphAtlas
-        from slappyengine.text.text_render import SDFTextRenderer
+        from pharos_engine.text.atlas import SDFGlyphAtlas
+        from pharos_engine.text.text_render import SDFTextRenderer
     except Exception as exc:
         trace.record("sdf_text_missing", error=str(exc))
         return SubsystemStatus("sdf_text", False, reason=str(exc))
@@ -918,9 +918,9 @@ def _step_bvh(
         return statuses
 
     try:
-        from slappyengine.render.bvh_3d import BVH3D
-        from slappyengine.render.camera import Camera3D
-        from slappyengine.render.scene_walker import Frustum
+        from pharos_engine.render.bvh_3d import BVH3D
+        from pharos_engine.render.camera import Camera3D
+        from pharos_engine.render.scene_walker import Frustum
     except Exception as exc:
         trace.record("bvh_missing", error=str(exc))
         statuses.append(SubsystemStatus("bvh_3d", False, reason=str(exc)))
@@ -1006,7 +1006,7 @@ def _step_physics3(trace: DemoTrace) -> list[SubsystemStatus]:
     """Spawn 5 spheres in :class:`World3D`; integrate; record broadphase pairs."""
     statuses: list[SubsystemStatus] = []
     try:
-        from slappyengine.physics3_bridge import (
+        from pharos_engine.physics3_bridge import (
             Body3D,
             World3D,
             resolve_physics3_backend,
@@ -1071,7 +1071,7 @@ def _step_physics3(trace: DemoTrace) -> list[SubsystemStatus]:
 def _step_exporter(trace: DemoTrace, tmp_root: Path) -> SubsystemStatus:
     """Synthesise a minimal project skeleton + call :func:`export_project`."""
     try:
-        from slappyengine.exporter import (
+        from pharos_engine.exporter import (
             ProjectManifest,
             export_project,
         )

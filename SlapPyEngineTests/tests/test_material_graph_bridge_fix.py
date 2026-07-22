@@ -1,6 +1,6 @@
 """Regression tests for MaterialGraphBridge FF2 fix — binding heuristic.
 
-The V5 :mod:`slappyengine.visual_scripting.material_nodes` palette adds
+The V5 :mod:`pharos_engine.visual_scripting.material_nodes` palette adds
 helper-function markers (``perlin2d``, ``worley2d``, ``_hash2``) to the
 emit context's ``used_uniforms`` set so that
 :meth:`MaterialGraphBridge.emit_full_shader` can auto-insert the helper
@@ -39,7 +39,7 @@ import pytest
 
 @pytest.fixture
 def bridge():
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
     return MaterialGraphBridge()
@@ -48,7 +48,7 @@ def bridge():
 @pytest.fixture
 def perlin_graph():
     """A minimal graph exercising the perlin2d helper injection."""
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         MaterialOutputNode, NodeGraph, PerlinNoiseNode,
     )
     g = NodeGraph(name="perlin_only")
@@ -63,41 +63,41 @@ def perlin_graph():
 
 
 def test_classify_helper_marker_perlin2d() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import _classify_uniform
+    from pharos_engine.ui.editor.material_graph_bridge import _classify_uniform
     assert _classify_uniform("perlin2d") == "helper"
 
 
 def test_classify_helper_marker_worley2d() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import _classify_uniform
+    from pharos_engine.ui.editor.material_graph_bridge import _classify_uniform
     assert _classify_uniform("worley2d") == "helper"
 
 
 def test_classify_helper_marker_hash2() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import _classify_uniform
+    from pharos_engine.ui.editor.material_graph_bridge import _classify_uniform
     assert _classify_uniform("_hash2") == "helper"
 
 
 def test_classify_function_call_fragment() -> None:
     """A name that leaked a WGSL function-call fragment is a helper."""
-    from slappyengine.ui.editor.material_graph_bridge import _classify_uniform
+    from pharos_engine.ui.editor.material_graph_bridge import _classify_uniform
     assert _classify_uniform("perlin2d(uv)") == "helper"
 
 
 def test_classify_sampler_by_suffix() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import _classify_uniform
+    from pharos_engine.ui.editor.material_graph_bridge import _classify_uniform
     assert _classify_uniform("u_albedo_sampler") == "sampler"
     assert _classify_uniform("u_sampler") == "sampler"
 
 
 def test_classify_texture_by_suffix() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import _classify_uniform
+    from pharos_engine.ui.editor.material_graph_bridge import _classify_uniform
     assert _classify_uniform("u_albedo_texture") == "texture"
     assert _classify_uniform("u_normal_tex") == "texture"
     assert _classify_uniform("u_texture") == "texture"
 
 
 def test_classify_generic_uniform() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import _classify_uniform
+    from pharos_engine.ui.editor.material_graph_bridge import _classify_uniform
     assert _classify_uniform("u_time") == "uniform"
     assert _classify_uniform("u_scale") == "uniform"
     assert _classify_uniform("u_theme_color") == "uniform"
@@ -105,13 +105,13 @@ def test_classify_generic_uniform() -> None:
 
 def test_classify_unknown() -> None:
     """Bare lowercase names with no ``u_`` prefix are unknown."""
-    from slappyengine.ui.editor.material_graph_bridge import _classify_uniform
+    from pharos_engine.ui.editor.material_graph_bridge import _classify_uniform
     assert _classify_uniform("some_helper") == "unknown"
     assert _classify_uniform("bogus") == "unknown"
 
 
 def test_classify_empty_or_non_string() -> None:
-    from slappyengine.ui.editor.material_graph_bridge import _classify_uniform
+    from pharos_engine.ui.editor.material_graph_bridge import _classify_uniform
     assert _classify_uniform("") == "unknown"
     assert _classify_uniform(None) == "unknown"  # type: ignore[arg-type]
 
@@ -158,7 +158,7 @@ def test_perlin2d_appears_before_uniforms(bridge, perlin_graph):
 
 def _make_leaky_node():
     """Build a MaterialNode subclass that leaks an unclassified name."""
-    from slappyengine.visual_scripting.material_nodes import MaterialNode
+    from pharos_engine.visual_scripting.material_nodes import MaterialNode
 
     class _UnclassifiedLeakNode(MaterialNode):
         NODE_TYPE = "leak.raw"
@@ -179,7 +179,7 @@ def _make_leaky_node():
 
 
 def _make_leaky_graph():
-    from slappyengine.visual_scripting import MaterialOutputNode, NodeGraph
+    from pharos_engine.visual_scripting import MaterialOutputNode, NodeGraph
     g = NodeGraph(name="leaky")
     g.add_node(_make_leaky_node())
     g.add_node(MaterialOutputNode())
@@ -187,7 +187,7 @@ def _make_leaky_graph():
 
 
 def test_strict_mode_raises_on_unclassified(bridge):
-    from slappyengine.ui.editor.material_graph_bridge import MaterialGraphError
+    from pharos_engine.ui.editor.material_graph_bridge import MaterialGraphError
     graph = _make_leaky_graph()
     with pytest.raises(MaterialGraphError) as excinfo:
         bridge.emit_full_shader(graph, strict_mode=True)
@@ -196,7 +196,7 @@ def test_strict_mode_raises_on_unclassified(bridge):
 
 def test_strict_mode_default_is_true(bridge):
     """emit_full_shader must default to strict_mode=True."""
-    from slappyengine.ui.editor.material_graph_bridge import MaterialGraphError
+    from pharos_engine.ui.editor.material_graph_bridge import MaterialGraphError
     graph = _make_leaky_graph()
     with pytest.raises(MaterialGraphError):
         bridge.emit_full_shader(graph)  # no explicit strict_mode
@@ -239,7 +239,7 @@ _PERLIN_RAMP_WGSL = (
 
 
 def test_fixed_perlin_ramp_wgsl_passes_structural_lint():
-    from slappyengine.ui.theme.shader_lint import lint_wgsl
+    from pharos_engine.ui.theme.shader_lint import lint_wgsl
     assert _PERLIN_RAMP_WGSL.exists(), (
         f"expected regenerated fixture at {_PERLIN_RAMP_WGSL}"
     )
@@ -275,7 +275,7 @@ def test_fixed_perlin_ramp_declares_perlin2d_function():
 
 def test_fixed_perlin_ramp_wgpu_compiles_when_available():
     """When wgpu can spin up a device, the shader must actually compile."""
-    from slappyengine.ui.theme.shader_lint import (
+    from pharos_engine.ui.theme.shader_lint import (
         _get_wgpu_device, wgpu_available,
     )
     if not wgpu_available():
@@ -294,7 +294,7 @@ def test_fixed_perlin_ramp_wgpu_compiles_when_available():
 
 
 def test_function_registry_first_write_wins():
-    from slappyengine.ui.editor.material_graph_bridge import _FunctionRegistry
+    from pharos_engine.ui.editor.material_graph_bridge import _FunctionRegistry
     reg = _FunctionRegistry()
     reg.register("perlin2d", "fn perlin2d() { return 1.0; }")
     reg.register("perlin2d", "fn perlin2d() { return 2.0; }")
@@ -303,7 +303,7 @@ def test_function_registry_first_write_wins():
 
 
 def test_function_registry_insertion_order():
-    from slappyengine.ui.editor.material_graph_bridge import _FunctionRegistry
+    from pharos_engine.ui.editor.material_graph_bridge import _FunctionRegistry
     reg = _FunctionRegistry()
     reg.register("_hash2", "fn _hash2() { return 0.0; }")
     reg.register("perlin2d", "fn perlin2d() { return 0.0; }")
@@ -312,21 +312,21 @@ def test_function_registry_insertion_order():
 
 
 def test_function_registry_rejects_non_string_name():
-    from slappyengine.ui.editor.material_graph_bridge import _FunctionRegistry
+    from pharos_engine.ui.editor.material_graph_bridge import _FunctionRegistry
     reg = _FunctionRegistry()
     with pytest.raises(TypeError):
         reg.register(123, "fn x() {}")  # type: ignore[arg-type]
 
 
 def test_function_registry_rejects_empty_name():
-    from slappyengine.ui.editor.material_graph_bridge import _FunctionRegistry
+    from pharos_engine.ui.editor.material_graph_bridge import _FunctionRegistry
     reg = _FunctionRegistry()
     with pytest.raises(ValueError):
         reg.register("", "fn x() {}")
 
 
 def test_function_registry_as_wgsl_joins_bodies():
-    from slappyengine.ui.editor.material_graph_bridge import _FunctionRegistry
+    from pharos_engine.ui.editor.material_graph_bridge import _FunctionRegistry
     reg = _FunctionRegistry()
     reg.register("a", "fn a() {}")
     reg.register("b", "fn b() {}")
@@ -340,7 +340,7 @@ def test_function_registry_as_wgsl_joins_bodies():
 
 
 def test_register_helper_function_adds_marker_and_definition():
-    from slappyengine.ui.editor.material_graph_bridge import _BridgeEmitContext
+    from pharos_engine.ui.editor.material_graph_bridge import _BridgeEmitContext
     ctx = _BridgeEmitContext()
     ctx.register_helper_function("custom_noise", "fn custom_noise() { return 0.0; }")
     assert "custom_noise" in ctx.HELPER_FUNCTION_MARKERS
@@ -348,7 +348,7 @@ def test_register_helper_function_adds_marker_and_definition():
 
 
 def test_register_helper_function_is_idempotent():
-    from slappyengine.ui.editor.material_graph_bridge import _BridgeEmitContext
+    from pharos_engine.ui.editor.material_graph_bridge import _BridgeEmitContext
     ctx = _BridgeEmitContext()
     ctx.register_helper_function("h1", "fn h1() {}")
     ctx.register_helper_function("h1", "fn h1_v2() {}")
@@ -358,7 +358,7 @@ def test_register_helper_function_is_idempotent():
 
 def test_bridge_context_seed_from_module_markers():
     """A fresh context inherits the module-level marker set."""
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         HELPER_FUNCTION_MARKERS, _BridgeEmitContext,
     )
     ctx = _BridgeEmitContext()
@@ -367,7 +367,7 @@ def test_bridge_context_seed_from_module_markers():
 
 
 def test_bridge_is_helper_marker_predicate():
-    from slappyengine.ui.editor.material_graph_bridge import _BridgeEmitContext
+    from pharos_engine.ui.editor.material_graph_bridge import _BridgeEmitContext
     ctx = _BridgeEmitContext()
     assert ctx.is_helper_marker("perlin2d") is True
     assert ctx.is_helper_marker("perlin2d(uv)") is True
@@ -382,7 +382,7 @@ def test_bridge_is_helper_marker_predicate():
 
 def test_all_four_demo_wgsl_pass_structural_lint():
     """Every regenerated demo shader must pass the lint's structural checks."""
-    from slappyengine.ui.theme.shader_lint import lint_wgsl
+    from pharos_engine.ui.theme.shader_lint import lint_wgsl
     examples_dir = _REPO_ROOT / "SlapPyEngineExamples" / "examples"
     contract = {
         "max_bytes": 4096,
@@ -420,7 +420,7 @@ def test_helper_marker_never_becomes_binding_end_to_end(bridge, perlin_graph):
 
 def test_texture_binding_uses_texture_2d_type(bridge):
     """Names matching ``u_*_texture`` bind as texture_2d<f32>, not scalar."""
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         MaterialOutputNode, NodeGraph, TextureSampleNode,
     )
     g = NodeGraph(name="tex")
@@ -439,7 +439,7 @@ def test_texture_binding_uses_texture_2d_type(bridge):
 
 def test_helper_library_contains_perlin2d():
     """The module-level HELPER_FUNCTION_LIBRARY ships perlin2d out of the box."""
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         HELPER_FUNCTION_LIBRARY,
     )
     assert "perlin2d" in HELPER_FUNCTION_LIBRARY
@@ -447,7 +447,7 @@ def test_helper_library_contains_perlin2d():
 
 
 def test_module_exports_new_symbols():
-    from slappyengine.ui.editor import material_graph_bridge as mod
+    from pharos_engine.ui.editor import material_graph_bridge as mod
     assert "HELPER_FUNCTION_MARKERS" in mod.__all__
     assert "HELPER_FUNCTION_LIBRARY" in mod.__all__
 

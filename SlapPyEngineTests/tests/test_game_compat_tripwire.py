@@ -17,7 +17,7 @@ must keep importable:
 
 * **Stone Keep** — iso tower-defence. Per
   ``memory/project_sprint_2026_05_29.md`` (Phase C3), the game's combat loop
-  uses ``slappyengine.iso.combat.resolve_attack`` + ``WaveSpec`` +
+  uses ``pharos_engine.iso.combat.resolve_attack`` + ``WaveSpec`` +
   ``WaveSchedule.tick``, plus the iso grid / scene primitives
   (``IsoGrid``, ``IsoScene``, ``IsoEntity``) and the ``zones`` package for
   spawn pads / damage zones.
@@ -43,7 +43,7 @@ import pytest
 _GAME_CONTRACTS: dict[str, list[str]] = {
     # ------------------------------------------------------------------
     # Ochema Circuit — copied from tests/test_ochema_api_surface.py.
-    # The RACE scene chain-imports these top-level names off ``slappyengine``.
+    # The RACE scene chain-imports these top-level names off ``pharos_engine``.
     # ------------------------------------------------------------------
     "ochema_circuit": [
         # vehicle scene (softbody.vehicle re-exports)
@@ -76,7 +76,7 @@ _GAME_CONTRACTS: dict[str, list[str]] = {
     # ------------------------------------------------------------------
     # Bullet Strata — from project_bullet_strata.md (sessions 1-6).
     # The arena scene + entities/* import these names directly off
-    # ``slappyengine``. The HUD's "reactive dirty flag" is built on
+    # ``pharos_engine``. The HUD's "reactive dirty flag" is built on
     # ``DataComponent.watch`` + ``EventBus`` — both must stay exported.
     # ------------------------------------------------------------------
     "bullet_strata": [
@@ -153,7 +153,7 @@ def _resolve_dotted(mod, dotted: str):
     For dotted paths whose intermediate segments are subpackages
     (e.g. ``iso.combat.resolve_attack``), the test must explicitly
     ``import_module`` each subpackage segment — Python doesn't bind
-    ``slappyengine.iso.combat`` onto ``slappyengine.iso`` until
+    ``pharos_engine.iso.combat`` onto ``pharos_engine.iso`` until
     something has imported it. Treating subpackages as importable
     here lets us probe the *real* compat surface, not just whatever
     happened to be eagerly imported by side effect.
@@ -173,7 +173,7 @@ def _resolve_dotted(mod, dotted: str):
             continue
         # Attribute not present — if we're still walking module-shaped
         # segments, try a real ``import_module``. This handles the
-        # canonical ``slappyengine.iso.combat.resolve_attack`` case where
+        # canonical ``pharos_engine.iso.combat.resolve_attack`` case where
         # ``combat`` is a submodule that hasn't been imported yet.
         if i < len(parts) - 1:
             try:
@@ -242,7 +242,7 @@ _PARAMS: list[tuple[str, str]] = [
     ids=[f"{g}:{n}" for g, n in _PARAMS],
 )
 def test_game_surface(game: str, name: str) -> None:
-    """``slappyengine.<name>`` must resolve — lazy-load is fine.
+    """``pharos_engine.<name>`` must resolve — lazy-load is fine.
 
     Known-broken pairs are xfailed so the suite stays green while the gap is
     visible. Closing a gap should remove the entry from ``_KNOWN_BROKEN``.
@@ -252,11 +252,11 @@ def test_game_surface(game: str, name: str) -> None:
     """
     if (game, name) in _KNOWN_BROKEN:
         import pytest as _pt
-        _pt.xfail(f"known Phase C gap: slappyengine.{name} not resolvable")
-    mod = importlib.import_module("slappyengine")
+        _pt.xfail(f"known Phase C gap: pharos_engine.{name} not resolvable")
+    mod = importlib.import_module("pharos_engine")
     assert _has_dotted(mod, name), (
-        f"slappyengine.{name} is missing — would break {game} on next import. "
-        f"Either re-add the name to slappyengine.__init__._LAZY_MAP (or its "
+        f"pharos_engine.{name} is missing — would break {game} on next import. "
+        f"Either re-add the name to pharos_engine.__init__._LAZY_MAP (or its "
         f"subpackage __init__) or, if the removal is intentional, file a "
         f"compat break against {game}."
     )

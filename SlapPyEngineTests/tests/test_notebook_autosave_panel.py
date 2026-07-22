@@ -217,7 +217,7 @@ def _write_snap(dir_: Path, name: str, *, mtime: float | None = None) -> Path:
 
 
 def _make_panel(*, manager=None, integration=None, project_name=None):
-    from slappyengine.ui.editor.notebook_autosave_panel import (
+    from pharos_engine.ui.editor.notebook_autosave_panel import (
         NotebookAutosavePanel,
     )
     return NotebookAutosavePanel(
@@ -751,20 +751,20 @@ class TestCallbackSetters:
 
 class TestLazyRegistration:
     def test_lazy_import_works(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         assert "NotebookAutosavePanel" in editor_pkg.__all__
         cls = editor_pkg.NotebookAutosavePanel
         assert cls.__name__ == "NotebookAutosavePanel"
 
     def test_all_alphabetically_ordered_neighbors(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         idx = editor_pkg.__all__.index("NotebookAutosavePanel")
         prev_entry = editor_pkg.__all__[idx - 1]
         next_entry = editor_pkg.__all__[idx + 1]
         assert prev_entry <= "NotebookAutosavePanel" <= next_entry
 
     def test_lazy_map_registered(self):
-        import slappyengine.ui.editor as editor_pkg
+        import pharos_engine.ui.editor as editor_pkg
         assert "NotebookAutosavePanel" in editor_pkg._LAZY_MAP
         assert editor_pkg._LAZY_MAP["NotebookAutosavePanel"] == (
             ".notebook_autosave_panel"

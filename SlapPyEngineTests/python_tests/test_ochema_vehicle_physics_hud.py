@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _OCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _OCHEMA_STR = str(_OCHEMA_DIR)
@@ -21,7 +21,7 @@ if _OCHEMA_STR not in sys.path:
 
 def _make_entity(rotation=0.0, speed=0.0):
     """Return a MagicMock vehicle entity suitable for VehiclePhysicsScript.on_tick."""
-    from slappyengine.input_provider import ScriptInputProvider
+    from pharos_engine.input_provider import ScriptInputProvider
     e = MagicMock()
     e.position = [640.0, 360.0]
     e.velocity = [speed, 0.0]
@@ -145,7 +145,7 @@ class TestVehiclePhysicsScriptOnTick:
 
     def test_on_tick_moves_position(self):
         from systems.vehicle_physics import VehiclePhysicsScript
-        from slappyengine.input_provider import ScriptInputProvider
+        from pharos_engine.input_provider import ScriptInputProvider
         vp = VehiclePhysicsScript()
         e = _make_entity(speed=100.0)
         initial_x = e.position[0]
@@ -158,7 +158,7 @@ class TestVehiclePhysicsScriptOnTick:
 
     def test_on_tick_throttle_accelerates(self):
         from systems.vehicle_physics import VehiclePhysicsScript
-        from slappyengine.input_provider import ScriptInputProvider
+        from pharos_engine.input_provider import ScriptInputProvider
         vp = VehiclePhysicsScript()
         e = _make_entity()
         e.input_provider = ScriptInputProvider()
@@ -170,7 +170,7 @@ class TestVehiclePhysicsScriptOnTick:
 
     def test_on_tick_brake_decelerates(self):
         from systems.vehicle_physics import VehiclePhysicsScript
-        from slappyengine.input_provider import ScriptInputProvider
+        from pharos_engine.input_provider import ScriptInputProvider
         vp = VehiclePhysicsScript()
         e = _make_entity(speed=100.0)
         e.input_provider = ScriptInputProvider()
@@ -222,7 +222,7 @@ class TestVehiclePhysicsScriptOnTick:
 
     def test_on_tick_no_smoke_without_smoke_field(self):
         from systems.vehicle_physics import VehiclePhysicsScript
-        from slappyengine.input_provider import ScriptInputProvider
+        from pharos_engine.input_provider import ScriptInputProvider
         vp = VehiclePhysicsScript()
         e = _make_entity(speed=100.0)
         e._smoke_field = None  # explicit None
@@ -253,7 +253,7 @@ class TestVehiclePhysicsScriptUpdateGear:
 
 class TestVehiclePhysicsScriptVehicleDestroyed:
     def test_vehicle_destroyed_event_marks_destroyed(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.vehicle_physics import VehiclePhysicsScript
         vp = VehiclePhysicsScript()
         publish("Vehicle.Destroyed", publisher=None)
@@ -261,7 +261,7 @@ class TestVehiclePhysicsScriptVehicleDestroyed:
         vp.teardown()
 
     def test_on_tick_after_destroyed_skips(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.vehicle_physics import VehiclePhysicsScript
         vp = VehiclePhysicsScript()
         publish("Vehicle.Destroyed", publisher=None)
@@ -278,7 +278,7 @@ class TestVehiclePhysicsScriptTeardown:
         vp.teardown()
 
     def test_teardown_unsubscribes(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.vehicle_physics import VehiclePhysicsScript
         vp = VehiclePhysicsScript()
         vp.teardown()
@@ -414,7 +414,7 @@ class TestRaceHUDInit:
 
 class TestRaceHUDSpeedEvent:
     def test_speed_event_from_tracked_vehicle_updates(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -423,7 +423,7 @@ class TestRaceHUDSpeedEvent:
         hud.on_end()
 
     def test_speed_event_from_other_vehicle_ignored(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         other = MagicMock()
@@ -435,7 +435,7 @@ class TestRaceHUDSpeedEvent:
 
 class TestRaceHUDIntegrityEvent:
     def test_integrity_event_updates_value(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -444,7 +444,7 @@ class TestRaceHUDIntegrityEvent:
         hud.on_end()
 
     def test_integrity_from_other_ignored(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -456,7 +456,7 @@ class TestRaceHUDIntegrityEvent:
 
 class TestRaceHUDLapComplete:
     def test_lap_complete_increments_lap(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -465,7 +465,7 @@ class TestRaceHUDLapComplete:
         hud.on_end()
 
     def test_lap_complete_from_other_ignored(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         other = MagicMock()
@@ -475,7 +475,7 @@ class TestRaceHUDLapComplete:
         hud.on_end()
 
     def test_best_lap_set_on_first_lap(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -484,7 +484,7 @@ class TestRaceHUDLapComplete:
         hud.on_end()
 
     def test_best_lap_updated_when_faster(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -494,7 +494,7 @@ class TestRaceHUDLapComplete:
         hud.on_end()
 
     def test_best_lap_not_updated_when_slower(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -504,7 +504,7 @@ class TestRaceHUDLapComplete:
         hud.on_end()
 
     def test_best_lap_flash_set(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -515,7 +515,7 @@ class TestRaceHUDLapComplete:
 
 class TestRaceHUDGearEvent:
     def test_gear_event_updates(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -524,7 +524,7 @@ class TestRaceHUDGearEvent:
         hud.on_end()
 
     def test_gear_event_other_vehicle_ignored(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         other = MagicMock()
@@ -536,7 +536,7 @@ class TestRaceHUDGearEvent:
 
 class TestRaceHUDCountdownEvents:
     def test_countdown_tick_stored(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -545,7 +545,7 @@ class TestRaceHUDCountdownEvents:
         hud.on_end()
 
     def test_countdown_go_clears_tick(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -558,7 +558,7 @@ class TestRaceHUDCountdownEvents:
 
 class TestRaceHUDNitroBoost:
     def test_nitro_active_event_sets_flag(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -567,7 +567,7 @@ class TestRaceHUDNitroBoost:
         hud.on_end()
 
     def test_nitro_from_other_ignored(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         other = MagicMock()
@@ -577,7 +577,7 @@ class TestRaceHUDNitroBoost:
         hud.on_end()
 
     def test_boost_event_sets_flag(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -589,7 +589,7 @@ class TestRaceHUDNitroBoost:
 
 class TestRaceHUDStatusEvents:
     def test_race_started_sets_flag(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -598,7 +598,7 @@ class TestRaceHUDStatusEvents:
         hud.on_end()
 
     def test_race_finished_sets_flag(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -607,7 +607,7 @@ class TestRaceHUDStatusEvents:
         hud.on_end()
 
     def test_dnf_sets_flag_for_tracked_vehicle(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -616,7 +616,7 @@ class TestRaceHUDStatusEvents:
         hud.on_end()
 
     def test_wrong_way_sets_flag(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         v.driver_id = 0
@@ -627,7 +627,7 @@ class TestRaceHUDStatusEvents:
         hud.on_end()
 
     def test_weapon_hit_sets_flash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -636,7 +636,7 @@ class TestRaceHUDStatusEvents:
         hud.on_end()
 
     def test_weapon_hit_other_target_ignored(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         other = MagicMock()
@@ -648,7 +648,7 @@ class TestRaceHUDStatusEvents:
 
 class TestRaceHUDPitsEvents:
     def test_pits_entered_sets_active(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -657,7 +657,7 @@ class TestRaceHUDPitsEvents:
         hud.on_end()
 
     def test_pits_repairing_updates_progress(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -667,7 +667,7 @@ class TestRaceHUDPitsEvents:
         hud.on_end()
 
     def test_pits_exited_clears_active(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -679,7 +679,7 @@ class TestRaceHUDPitsEvents:
 
 class TestRaceHUDPositionsEvent:
     def test_positions_event_updates_position(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         other1 = MagicMock()
@@ -695,7 +695,7 @@ class TestRaceHUDPositionsEvent:
 
 class TestRaceHUDCoinEvents:
     def test_coins_earned_updates_total(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -704,7 +704,7 @@ class TestRaceHUDCoinEvents:
         hud.on_end()
 
     def test_coin_collected_adds_to_coins(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -716,7 +716,7 @@ class TestRaceHUDCoinEvents:
 
 class TestRaceHUDLayerDestroyed:
     def test_internals_exposed_message(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -726,7 +726,7 @@ class TestRaceHUDLayerDestroyed:
         hud.on_end()
 
     def test_chassis_critical_message(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         hud = RaceHUD(v, 0.0, 0.0)
@@ -735,7 +735,7 @@ class TestRaceHUDLayerDestroyed:
         hud.on_end()
 
     def test_layer_destroyed_from_other_vehicle_ignored(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from entities.hud import RaceHUD
         v = MagicMock()
         other = MagicMock()

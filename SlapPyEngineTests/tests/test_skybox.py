@@ -1,4 +1,4 @@
-"""Tests for slappyengine.render.skybox + asset_import.cubemap_importer (KK4).
+"""Tests for pharos_engine.render.skybox + asset_import.cubemap_importer (KK4).
 
 Sprint 11 of the Nova3D parity plan. Covers CubemapData validity, the
 procedural gradient sky generator, cubemap sampling, PNG-directory and
@@ -13,13 +13,13 @@ import pytest
 import yaml
 from PIL import Image
 
-from slappyengine.asset_import import (
+from pharos_engine.asset_import import (
     AssetImportDispatcher,
     import_cubemap,
     import_hdr_cubemap,
 )
-from slappyengine.asset_import.cubemap_importer import FACE_KEYS
-from slappyengine.render import (
+from pharos_engine.asset_import.cubemap_importer import FACE_KEYS
+from pharos_engine.render import (
     Camera3D,
     NullRenderer,
     SKYBOX_WGSL,

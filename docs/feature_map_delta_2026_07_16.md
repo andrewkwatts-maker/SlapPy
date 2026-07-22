@@ -9,7 +9,7 @@ WW4's round-24 ``view.toggle_axes`` / ``view.toggle_background`` /
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`slappyengine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `view.toggle_snap_indicator` | `view_toggle_snap_indicator_actions.toggle_snap_indicator` | view  |
 | `edit.select_parent`         | `edit_select_parent_actions.select_parent`                | edit  |
@@ -19,14 +19,14 @@ Five more action ids landed in this tick, moving 5 rows from STUB
 
 New action modules:
 
-* `python/slappyengine/actions/view_toggle_snap_indicator_actions.py`
-* `python/slappyengine/actions/edit_select_parent_actions.py`
-* `python/slappyengine/actions/spawn_at_selection_center_actions.py`
-* `python/slappyengine/actions/layer_lock_actions.py`
-* `python/slappyengine/actions/snap_reset_defaults_actions.py`
+* `python/pharos_engine/actions/view_toggle_snap_indicator_actions.py`
+* `python/pharos_engine/actions/edit_select_parent_actions.py`
+* `python/pharos_engine/actions/spawn_at_selection_center_actions.py`
+* `python/pharos_engine/actions/layer_lock_actions.py`
+* `python/pharos_engine/actions/snap_reset_defaults_actions.py`
 
 Router entries and `_fb_*` shims live in
-`python/slappyengine/tool_router.py` under the
+`python/pharos_engine/tool_router.py` under the
 `# ── YY4 STUB-triage: view.toggle_snap_indicator, edit.select_parent,
 spawn.at_selection_center, layer.lock, snap.reset_defaults (round 25) ──`
 block.

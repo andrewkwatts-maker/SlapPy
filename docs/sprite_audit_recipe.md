@@ -93,7 +93,7 @@ engine's own bundled PNGs. Full inventory + analysis lives in
 
 - **Scope.** No repo-root `assets/` directory exists. `SlapPyEngineTests/tests/visual/reference/`
   only contains `.npy` numeric goldens. The only PNGs the engine ships are
-  the 21 baselines under `python/slappyengine/testing/baselines/`, which are
+  the 21 baselines under `python/pharos_engine/testing/baselines/`, which are
   full-frame render captures, not isolated sprites — they were still audited
   because they form the engine's golden canon and the Sprint 2 anchor test
   iterates them.
@@ -108,7 +108,7 @@ engine's own bundled PNGs. Full inventory + analysis lives in
   invalidate the visual-regression suite they back.
 - **Threshold note.** The sprint task spec called for `width < 32` / `height < 32`
   to flag "tiny" sprites; the in-tree
-  `slappyengine.tools.sprite_audit.MIN_DIMENSION_CUTOFF` is the stricter
+  `pharos_engine.tools.sprite_audit.MIN_DIMENSION_CUTOFF` is the stricter
   `64`. Per the do-not-modify-the-tool directive, the audit reports against
   the tool default; no baseline is below 64 on either axis under either rule.
 

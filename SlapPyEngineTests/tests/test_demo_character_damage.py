@@ -4,7 +4,7 @@ The demo builds a 3-ring layered creature (bone / muscle / skin) and
 fires bullets along horizontal corridors, breaking beams and writing
 a GIF to ``examples/output/character/character_damage.gif``.
 
-The demo imports from :mod:`slappyengine.softbody`, which is a WIP
+The demo imports from :mod:`pharos_engine.softbody`, which is a WIP
 subpackage. This test wakes up as soon as that subpackage lands — until
 then it skips with a clear reason.
 
@@ -34,7 +34,7 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP softbody subpackage being unavailable.
     try:
-        from slappyengine.softbody import (  # noqa: F401
+        from pharos_engine.softbody import (  # noqa: F401
             SoftBodyRenderConfig,
             SoftBodyRenderer,
             SoftBodyWorld,
@@ -42,7 +42,7 @@ def demo():
             step,
         )
     except Exception as exc:
-        pytest.skip(f"slappyengine.softbody unavailable (WIP): {exc}")
+        pytest.skip(f"pharos_engine.softbody unavailable (WIP): {exc}")
 
     spec = importlib.util.spec_from_file_location(
         "character_damage_demo_ss2", _DEMO_PATH

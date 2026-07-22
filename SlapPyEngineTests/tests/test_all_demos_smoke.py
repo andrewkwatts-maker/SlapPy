@@ -5,8 +5,8 @@ For each demo in :data:`_DEMOS`:
 1. Spawn the demo as a subprocess with ``--render --frames 60 --out <tmp>``.
 2. Capture stdout / stderr; require exit code 0 (timeout 30s).
 3. Read the rendered PNG and diff it against the committed baseline at
-   ``python/slappyengine/testing/baselines/<name>.png`` using
-   :func:`slappyengine.testing.diff_pngs` at tolerance ``0.05``.
+   ``python/pharos_engine/testing/baselines/<name>.png`` using
+   :func:`pharos_engine.testing.diff_pngs` at tolerance ``0.05``.
 4. Assert the diff ``passes`` flag is ``True``; on failure include the
    max / mean diff metrics in the assertion message.
 
@@ -27,7 +27,7 @@ from typing import Any, Dict
 
 import pytest
 
-from slappyengine.testing import BASELINES_DIR, diff_pngs
+from pharos_engine.testing import BASELINES_DIR, diff_pngs
 
 # ── Allowlist of dynamics-era demos (each has a committed baseline) ─────────
 _DEMOS: list[str] = [

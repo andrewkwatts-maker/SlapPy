@@ -21,8 +21,8 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine import scaffold
-from slappyengine.exporter import (
+from pharos_engine import scaffold
+from pharos_engine.exporter import (
     MANIFEST_JSON_FILENAME,
     TARGETS,
     ZipBundler,
@@ -75,7 +75,7 @@ def test_dry_run_via_cli_reports_would_export_and_no_zip(
 ):
     out = tmp_path / "ship.zip"
     completed = subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", "export", str(project),
+        [sys.executable, "-m", "pharos_engine.cli", "export", str(project),
          "--output", str(out), "--dry-run"],
         capture_output=True, text=True,
     )
@@ -108,7 +108,7 @@ def test_verbose_prints_per_file_lines_via_api(project: Path, tmp_path: Path):
 def test_verbose_prints_per_file_lines_via_cli(project: Path, tmp_path: Path):
     out = tmp_path / "ship.zip"
     completed = subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", "export", str(project),
+        [sys.executable, "-m", "pharos_engine.cli", "export", str(project),
          "--output", str(out), "--verbose"],
         capture_output=True, text=True,
     )
@@ -139,7 +139,7 @@ def test_exclude_pattern_skips_arbitrary_glob_via_cli(project: Path, tmp_path: P
     (project / "skip_me.tmp").write_text("skip", encoding="utf-8")
     out = tmp_path / "ship.zip"
     completed = subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", "export", str(project),
+        [sys.executable, "-m", "pharos_engine.cli", "export", str(project),
          "--output", str(out), "--exclude", "*.tmp"],
         capture_output=True, text=True,
     )
@@ -155,7 +155,7 @@ def test_exclude_can_be_repeated(project: Path, tmp_path: Path):
     (project / "two.bb").write_text("b", encoding="utf-8")
     out = tmp_path / "ship.zip"
     completed = subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", "export", str(project),
+        [sys.executable, "-m", "pharos_engine.cli", "export", str(project),
          "--output", str(out), "--exclude", "*.aa", "--exclude", "*.bb"],
         capture_output=True, text=True,
     )
@@ -210,7 +210,7 @@ def test_manifest_json_hashes_match_file_contents(project: Path, tmp_path: Path)
 def test_manifest_targets_all_via_cli(project: Path, tmp_path: Path):
     out = tmp_path / "ship.zip"
     completed = subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", "export", str(project),
+        [sys.executable, "-m", "pharos_engine.cli", "export", str(project),
          "--output", str(out), "--target", "all"],
         capture_output=True, text=True,
     )
@@ -224,7 +224,7 @@ def test_manifest_targets_all_via_cli(project: Path, tmp_path: Path):
 def test_manifest_single_target_via_cli(project: Path, tmp_path: Path):
     out = tmp_path / "ship.zip"
     completed = subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", "export", str(project),
+        [sys.executable, "-m", "pharos_engine.cli", "export", str(project),
          "--output", str(out), "--target", "linux"],
         capture_output=True, text=True,
     )
@@ -237,7 +237,7 @@ def test_manifest_single_target_via_cli(project: Path, tmp_path: Path):
 def test_manifest_bad_target_rejected(project: Path, tmp_path: Path):
     out = tmp_path / "ship.zip"
     completed = subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", "export", str(project),
+        [sys.executable, "-m", "pharos_engine.cli", "export", str(project),
          "--output", str(out), "--target", "atari"],
         capture_output=True, text=True,
     )
@@ -268,7 +268,7 @@ def test_missing_project_dir_gives_clean_error_via_cli(tmp_path: Path):
     ghost = tmp_path / "no_such_project"
     out = tmp_path / "ship.zip"
     completed = subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", "export", str(ghost),
+        [sys.executable, "-m", "pharos_engine.cli", "export", str(ghost),
          "--output", str(out)],
         capture_output=True, text=True,
     )
@@ -286,7 +286,7 @@ def test_project_without_main_or_manifest_gives_clean_error_via_cli(tmp_path: Pa
     empty.mkdir()
     out = tmp_path / "ship.zip"
     completed = subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", "export", str(empty),
+        [sys.executable, "-m", "pharos_engine.cli", "export", str(empty),
          "--output", str(out)],
         capture_output=True, text=True,
     )
@@ -310,7 +310,7 @@ def test_missing_project_dir_via_api_returns_errors_not_raise(tmp_path: Path):
 
 def test_export_help_lists_polish_flags():
     completed = subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", "export", "--help"],
+        [sys.executable, "-m", "pharos_engine.cli", "export", "--help"],
         capture_output=True, text=True,
     )
     assert completed.returncode == 0

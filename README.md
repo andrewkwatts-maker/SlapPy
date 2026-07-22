@@ -12,13 +12,13 @@ New here? Read [`docs/quickstart.md`](docs/quickstart.md) (5 minutes) then jump 
 
 ```bash
 # 1. Install the engine + editor (Dear PyGui + pywebview + Arithma).
-pip install "slappy-engine[editor]"
+pip install "pharos-engine[editor]"
 
 # 2. Verify the install — the ragdoll demo exercises softbody + IK + Rust core.
 python SlapPyEngineExamples/examples/hello_ragdoll.py --no-gif
 
 # 3. Boot the notebook-diary editor.
-python -c "import slappyengine as se; se.Engine().run_editor()"
+python -c "import pharos_engine as se; se.Engine().run_editor()"
 ```
 
 Full walkthrough with themes, hotkeys, and prefab drops:
@@ -38,13 +38,13 @@ Sourced from the 2026-07-04 feature-map audit (`docs/engine_feature_map_2026_07_
 - **6 shipped diary themes** — `teengirl_notebook`, `cozy_diary`,
   `bullet_journal`, `scrapbook_summer`, `cottagecore_garden`,
   `kawaii_planner`; hot-swap losslessly, extendable via
-  `~/.slappyengine/themes/*.theme.yaml`.
+  `~/.pharos_engine/themes/*.theme.yaml`.
 - **Procedural stationery shader libraries** — 15 page-lining patterns,
   15 edge-stroke pens/pencils, and 23 washi-tape variants (15 static +
   8 animated, `u_time`-driven).
 - **Prefab library** — 6 baked entries (`ball`, `bridge`, `chain`,
   `crate`, `ragdoll`, `windmill`) with a per-user
-  `~/.slappyengine/prefabs/` overlay for edits.
+  `~/.pharos_engine/prefabs/` overlay for edits.
 - **Visual scripting** — Notebook Node Editor with 18+ material graph
   nodes, palette + right-click add, WGSL-emitting compile, and
   Python ↔ Graph codegen.
@@ -52,10 +52,10 @@ Sourced from the 2026-07-04 feature-map audit (`docs/engine_feature_map_2026_07_
   `post_process/executor.py::apply_manifest`; presets ship for
   cinematic / arcade / iso-strategy.
 - **Autosave + crash recovery** — background timer snapshots the
-  editor state to `~/.slappyengine/autosave/`; a boot-time
+  editor state to `~/.pharos_engine/autosave/`; a boot-time
   `RecoveryPrompt` offers to restore newer-than-last-save work.
 - **User override layer** — drop `.py` panels, `.yaml` hotkeys,
-  `.wgsl` shaders under `~/.slappyengine/ui/` to extend the editor
+  `.wgsl` shaders under `~/.pharos_engine/ui/` to extend the editor
   without touching the installed wheel.
 - **First-party integration tests** — three shipping games
   (Bullet Strata, Ochema Circuit, Stone Keep) run the engine as
@@ -65,13 +65,13 @@ Sourced from the 2026-07-04 feature-map audit (`docs/engine_feature_map_2026_07_
 
 ## Repository layout
 
-Top-level Python subpackages under `python/slappyengine/` — every entry
-is a lazy top-level import (`import slappyengine as sle; sle.dynamics`).
+Top-level Python subpackages under `python/pharos_engine/` — every entry
+is a lazy top-level import (`import pharos_engine as sle; sle.dynamics`).
 See [`docs/engine_surface_v030.md`](docs/engine_surface_v030.md) for the
 auto-generated public symbol map.
 
 ```
-python/slappyengine/
+python/pharos_engine/
 ├── actions/          # Headless-safe callbacks for editor menu actions (X3 / Y1 idiom).
 ├── ai/               # LLM client + script generation (httpx-backed, Ollama-compatible).
 ├── animation/        # Anim-graph nodes, blend trees, IK retargeting hooks.
@@ -110,8 +110,8 @@ python/slappyengine/
 
 Rust source under `src/` provides the `_core` extension (softbody, PBF,
 IK, hull, raster, node compiler). WGSL shaders live under `shaders/`
-(templates) and `python/slappyengine/compute/defaults/` (default pipelines).
-User overrides land at `~/.slappyengine/`; see
+(templates) and `python/pharos_engine/compute/defaults/` (default pipelines).
+User overrides land at `~/.pharos_engine/`; see
 [`docs/user_customization_2026_06_07.md`](docs/user_customization_2026_06_07.md).
 
 ---
@@ -125,7 +125,7 @@ The v0.3 line widens the public surface from physics + render kernels to a full 
 ## Install
 
 ```bash
-pip install slappy-engine==0.3.0b0
+pip install pharos-engine==0.3.0b0
 ```
 
 Requires Python 3.11+ and a GPU driver that supports Vulkan, Metal, or DirectX 12. The headless surface (dynamics, zones, telemetry, materials, serialisation, studio) runs without a GPU.
@@ -133,25 +133,25 @@ Requires Python 3.11+ and a GPU driver that supports Vulkan, Metal, or DirectX 1
 Optional extras:
 
 ```bash
-pip install "slappy-engine[3d]"        # 3D layer support
-pip install "slappy-engine[editor]"    # DearPyGui Nova3D editor
-pip install "slappy-engine[network]"   # P2P (Kademlia + ICE hole-punching)
-pip install "slappy-engine[audio]"     # Spatial audio backend
-pip install "slappy-engine[dev]"       # pytest + watchdog for contributors
+pip install "pharos-engine[3d]"        # 3D layer support
+pip install "pharos-engine[editor]"    # DearPyGui Nova3D editor
+pip install "pharos-engine[network]"   # P2P (Kademlia + ICE hole-punching)
+pip install "pharos-engine[audio]"     # Spatial audio backend
+pip install "pharos-engine[dev]"       # pytest + watchdog for contributors
 ```
 
 ---
 
 ## Minimal example
 
-`slappyengine.studio` wraps world setup, stepping, and GIF capture so a working demo lands in ~20 lines. `slappyengine.examples_common` ships the same `--frames` / `--out` / `--no-gif` CLI plumbing every `hello_*.py` script uses — drop it in and your demo gets a smoke-test mode for free.
+`pharos_engine.studio` wraps world setup, stepping, and GIF capture so a working demo lands in ~20 lines. `pharos_engine.examples_common` ships the same `--frames` / `--out` / `--no-gif` CLI plumbing every `hello_*.py` script uses — drop it in and your demo gets a smoke-test mode for free.
 
 ```python
 from pathlib import Path
 
-from slappyengine import studio
-from slappyengine.dynamics import RopeSpec, build_rope
-from slappyengine.examples_common import build_demo_arg_parser, record_or_smoke
+from pharos_engine import studio
+from pharos_engine.dynamics import RopeSpec, build_rope
+from pharos_engine.examples_common import build_demo_arg_parser, record_or_smoke
 
 
 def build_stage() -> studio.Stage:
@@ -179,7 +179,7 @@ if __name__ == "__main__":
 
 ## Public subpackages (v0.3)
 
-Every entry below is a top-level lazy export — `import slappyengine as sle` and reach into `sle.dynamics`, `sle.zones`, etc. The auto-generated surface map lives at [`docs/engine_surface_v030.md`](docs/engine_surface_v030.md) (75 symbols across 21 subpackages). Each row links to its hand-authored API reference under [`docs/api/`](docs/api/) — 19 hand-authored references plus auto-generated `dynamics.md` and `tools.md`.
+Every entry below is a top-level lazy export — `import pharos_engine as sle` and reach into `sle.dynamics`, `sle.zones`, etc. The auto-generated surface map lives at [`docs/engine_surface_v030.md`](docs/engine_surface_v030.md) (75 symbols across 21 subpackages). Each row links to its hand-authored API reference under [`docs/api/`](docs/api/) — 19 hand-authored references plus auto-generated `dynamics.md` and `tools.md`.
 
 | Subpackage | One-line description |
 |---|---|

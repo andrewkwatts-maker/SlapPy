@@ -75,7 +75,7 @@ Why PBF density iter:
    Use 64-thread workgroups. Pair-wise compute is over `array<u32>`
    indices; scatter is via atomic adds or a serial reduce step.
 
-3. **Wire `_HAS_NATIVE_GPU` switch** in `python/slappyengine/fluid/solver.py`:
+3. **Wire `_HAS_NATIVE_GPU` switch** in `python/pharos_engine/fluid/solver.py`:
    ```python
    if _HAS_NATIVE_GPU and p.count > GPU_THRESHOLD:
        _core.pbf_iter_gpu(...)
@@ -133,13 +133,13 @@ Why PBF density iter:
      (precision-sensitive scatter)
 
 2. **Keep buffers GPU-resident** across all kernels within a single
-   `slappyengine_step` / `pbf_step_full` call. Upload pos/mass/idx
+   `pharos_engine_step` / `pbf_step_full` call. Upload pos/mass/idx
    ONCE per frame. Readback ONCE per frame (or never — see 11.C).
 
 3. **Persistent storage buffers** for all SoA arrays. Resize lazily
    when n_nodes / n_particles changes.
 
-4. **Switch the existing `slappyengine_step` and `pbf_step_full`**
+4. **Switch the existing `pharos_engine_step` and `pbf_step_full`**
    to dispatch the GPU pipelines when `_HAS_NATIVE_GPU` is True and
    N exceeds threshold. Keep the CPU Rust path for small N.
 
@@ -204,8 +204,8 @@ New:
 
 Modified:
 - `src/lib.rs` — register new modules
-- `python/slappyengine/fluid/solver.py` — `_HAS_NATIVE_GPU` switch
-- `python/slappyengine/softbody/solver.py` — same
+- `python/pharos_engine/fluid/solver.py` — `_HAS_NATIVE_GPU` switch
+- `python/pharos_engine/softbody/solver.py` — same
 - `Cargo.toml` — wgpu features
 
 ## Pre-Tier-11 baseline (snapshot 2026-05-26)
@@ -239,6 +239,6 @@ fluid end-to-end watery: 2.62 ms (382 fps)
 ---
 
 **Decision recorded 2026-05-26:** chose Option 1 (ship now, defer
-Tier 11). Current CPU Rust state ships as `slappy-engine v1.0`-ish
+Tier 11). Current CPU Rust state ships as `pharos-engine v1.0`-ish
 on PyPI; Tier 11 reopens only when scene demands or feature explicitly
 requires GPU-resident buffers.

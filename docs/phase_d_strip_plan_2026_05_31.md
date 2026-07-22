@@ -9,17 +9,17 @@ been repackaged into clean engine-level APIs during Phase B:
 
 | Old core | New home |
 |---|---|
-| `physics/cc_label.connected_components` | `slappyengine.topology.connected_components` |
-| `physics/pressure_multigrid.vcycle_project_v` | `slappyengine.numerics.vcycle_poisson` |
-| `physics/boundary_exchange._exchange_pair` | `slappyengine.thermal.HeatField` / `exchange_two_regions` |
-| `deform_zones.ZoneMap` / `RectZone` / `ThresholdZone` | `slappyengine.zones.ZoneManager` / `RectZone` / `ThresholdZone` |
+| `physics/cc_label.connected_components` | `pharos_engine.topology.connected_components` |
+| `physics/pressure_multigrid.vcycle_project_v` | `pharos_engine.numerics.vcycle_poisson` |
+| `physics/boundary_exchange._exchange_pair` | `pharos_engine.thermal.HeatField` / `exchange_two_regions` |
+| `deform_zones.ZoneMap` / `RectZone` / `ThresholdZone` | `pharos_engine.zones.ZoneManager` / `RectZone` / `ThresholdZone` |
 | `softbody.material.MATERIALS` | already canonical (YAML-backed) |
 | `fluid.material.MATERIALS` | already canonical (YAML-backed) |
 
-The legacy modules are still imported by `slappyengine.physics.world`,
-`slappyengine.physics.body`, `slappyengine.physics.scene_loader`,
-`slappyengine.physics.__init__`, several editor and test modules, and the
-top-level `slappyengine/__init__.py` lazy map. Phase D removes them after
+The legacy modules are still imported by `pharos_engine.physics.world`,
+`pharos_engine.physics.body`, `pharos_engine.physics.scene_loader`,
+`pharos_engine.physics.__init__`, several editor and test modules, and the
+top-level `pharos_engine/__init__.py` lazy map. Phase D removes them after
 that consumer surface has been re-pointed.
 
 The figures below count only `H:/Github/SlapPyEngine/python/**` plus
@@ -40,8 +40,8 @@ green** (see §d for the exact pytest gate).
 
 | # | Module | LOC | Consumers (main repo, non-worktree) | Classification |
 |---|---|---:|---|---|
-| 1 | `python/slappyengine/physics/frontier.py` | 361 | `physics/__init__.py` (re-export), `physics/world.py` (lines 43, 194, 326-373, 490, 718-731, 825-844) + 4 tests (`test_frontier.py`, `test_phase_a_activation.py`, `test_nan_guards.py`, `test_phase_b_residency.py`) | `world.py` keeps a `frontier.enabled` flag for tests; once `world.py` itself dies (Phase D step 9) the flag dies with it. `test_frontier.py` is dead-with-module. The other three tests only touch `world.config.frontier.enabled = False` — purely defensive flag flips that come out with `world.py`. **BLOCKED 2026-05-31 — see "Step 1 blocker found" callout below.** |
-| 2 | `python/slappyengine/physics/granular_render.py` | 344 | `physics/__init__.py` (re-export) only | Superseded by `fluid.render.FluidRenderer`. Zero non-physics callers. **NO-OP 2026-06-01 — file was never tracked on master.** Audit confirmed: `git log --all --full-history -- "**/granular_render.py"` returns empty; `physics/__init__.py` already has no re-export (lines 4-42); `SlapPyEngineTests/tests/visual/test_vis_granular.py` and `SlapPyEngineTests/tests/visual/output/granular/` do not exist. The 344/134 LOC figures from the plan refer to a worktree-local artefact that never landed on master. Step 2 is closed as **NOTHING TO DELETE** rather than DONE — no commit hash. See "Step 2 no-op audit" subsection below for evidence. |
+| 1 | `python/pharos_engine/physics/frontier.py` | 361 | `physics/__init__.py` (re-export), `physics/world.py` (lines 43, 194, 326-373, 490, 718-731, 825-844) + 4 tests (`test_frontier.py`, `test_phase_a_activation.py`, `test_nan_guards.py`, `test_phase_b_residency.py`) | `world.py` keeps a `frontier.enabled` flag for tests; once `world.py` itself dies (Phase D step 9) the flag dies with it. `test_frontier.py` is dead-with-module. The other three tests only touch `world.config.frontier.enabled = False` — purely defensive flag flips that come out with `world.py`. **BLOCKED 2026-05-31 — see "Step 1 blocker found" callout below.** |
+| 2 | `python/pharos_engine/physics/granular_render.py` | 344 | `physics/__init__.py` (re-export) only | Superseded by `fluid.render.FluidRenderer`. Zero non-physics callers. **NO-OP 2026-06-01 — file was never tracked on master.** Audit confirmed: `git log --all --full-history -- "**/granular_render.py"` returns empty; `physics/__init__.py` already has no re-export (lines 4-42); `SlapPyEngineTests/tests/visual/test_vis_granular.py` and `SlapPyEngineTests/tests/visual/output/granular/` do not exist. The 344/134 LOC figures from the plan refer to a worktree-local artefact that never landed on master. Step 2 is closed as **NOTHING TO DELETE** rather than DONE — no commit hash. See "Step 2 no-op audit" subsection below for evidence. |
 
 #### Step 2 no-op audit — 2026-06-01
 
@@ -50,11 +50,11 @@ from the worktree, the main repo HEAD, and all of git history:
 
 | Target | Status | Evidence |
 |---|---|---|
-| `python/slappyengine/physics/granular_render.py` | absent | `ls` fails; `git log --all --full-history -- "**/granular_render.py"` empty |
+| `python/pharos_engine/physics/granular_render.py` | absent | `ls` fails; `git log --all --full-history -- "**/granular_render.py"` empty |
 | `SlapPyEngineTests/tests/visual/test_vis_granular.py` | absent | `ls` fails; `git log --all --full-history -- "**/test_vis_granular.py"` empty |
 | `SlapPyEngineTests/tests/visual/output/granular/` | absent | dir not in `SlapPyEngineTests/tests/visual/output/` listing |
 | `physics/__init__.py` re-export | absent | no `granular_render` import in lines 4-42 of `physics/__init__.py` |
-| Any production consumer | none | `grep -rn "granular_render" python/slappyengine/` → 0 hits |
+| Any production consumer | none | `grep -rn "granular_render" python/pharos_engine/` → 0 hits |
 
 The only surviving references to the string `granular_render` are:
 
@@ -83,13 +83,13 @@ No engine code touched. No tests touched.
 A re-audit during step 1 execution confirmed that `physics/world.py` has
 **33 live `frontier`/`Frontier` references** — not a flag-only consumer
 as the step 1 row suggested. The hard import at `world.py:43`
-(`from slappyengine.physics.frontier import FrontierConfig, FrontierSolver`)
+(`from pharos_engine.physics.frontier import FrontierConfig, FrontierSolver`)
 plus the `FrontierYamlConfig` dataclass (L193-210), the
 `PhysicsYaml.frontier` field (L227), the 35-line YAML loader block
 (L326-360), `self._frontier: FrontierSolver | None` (L490), the
 auto-tick block in `step()` (L700-731), and `_ensure_frontier_solver`
 (L825-844) together mean deleting `frontier.py` would either (a) hard-
-break `import slappyengine.physics` (because `physics/__init__.py:45`
+break `import pharos_engine.physics` (because `physics/__init__.py:45`
 also re-exports), or (b) require a real `world.py` refactor that the
 step 1 entry does not authorize.
 
@@ -130,9 +130,9 @@ touching anything games can see.
 
 | # | Module | LOC | Consumers | Classification |
 |---|---|---:|---|---|
-| 3 | `python/slappyengine/physics/crack_repair_adapter.py` | 258 | `physics/__init__.py` (re-export), `test_crack_repair_adapter.py` | Dead-with-module test. Adapter wraps the legacy `deform_crack` / `deform_repair` Layer2D path — both die in step 5. **NO-OP 2026-06-01 — file does not exist in repo.** |
-| 4 | `python/slappyengine/physics/deform_adapter.py` | 216 | `physics/__init__.py` (re-export), `test_deform_adapter.py` | Dead-with-module test. Wraps `DeformController` (dies in step 5) and `deform_zones.ZoneMap` (dies in step 6). **NO-OP 2026-06-01 — file does not exist in repo.** |
-| 5 | `python/slappyengine/physics/engine_bridge.py` | 335 | `physics/__init__.py` (re-export), `test_engine_bridge.py` | Dead-with-module test. Pure bridge to `PhysicsWorld` lifecycle hooks. **NO-OP 2026-06-01 — file does not exist in repo.** |
+| 3 | `python/pharos_engine/physics/crack_repair_adapter.py` | 258 | `physics/__init__.py` (re-export), `test_crack_repair_adapter.py` | Dead-with-module test. Adapter wraps the legacy `deform_crack` / `deform_repair` Layer2D path — both die in step 5. **NO-OP 2026-06-01 — file does not exist in repo.** |
+| 4 | `python/pharos_engine/physics/deform_adapter.py` | 216 | `physics/__init__.py` (re-export), `test_deform_adapter.py` | Dead-with-module test. Wraps `DeformController` (dies in step 5) and `deform_zones.ZoneMap` (dies in step 6). **NO-OP 2026-06-01 — file does not exist in repo.** |
+| 5 | `python/pharos_engine/physics/engine_bridge.py` | 335 | `physics/__init__.py` (re-export), `test_engine_bridge.py` | Dead-with-module test. Pure bridge to `PhysicsWorld` lifecycle hooks. **NO-OP 2026-06-01 — file does not exist in repo.** |
 
 #### Step 2 execution finding — 2026-06-01
 
@@ -141,7 +141,7 @@ A retry of Phase D step 2 (bridge-shim deletion) was attempted on
 modules (`crack_repair_adapter.py`, `deform_adapter.py`,
 `engine_bridge.py`) exist in the repository:
 
-* `git ls-tree HEAD python/slappyengine/physics/` does not include any
+* `git ls-tree HEAD python/pharos_engine/physics/` does not include any
   of the three filenames.
 * `Glob("**/crack_repair_adapter.py")`, `Glob("**/deform_adapter.py")`,
   and `Glob("**/engine_bridge.py")` return zero matches across the full
@@ -150,11 +150,11 @@ modules (`crack_repair_adapter.py`, `deform_adapter.py`,
   two strings return only docs (`phase_d_strip_plan_2026_05_31.md`,
   `strip_pass_v2_audit.md`) and the `SlapPyEngineTests/tests/test_strip_audit_doc.py`
   inventory list — never an actual source file commit.
-* `python/slappyengine/physics/__init__.py` does not import or
+* `python/pharos_engine/physics/__init__.py` does not import or
   re-export any of the three names (last import is `frontier`).
 * No test files `test_crack_repair_adapter.py`, `test_deform_adapter.py`,
   or `test_engine_bridge.py` exist anywhere.
-* `grep -rn` for `from slappyengine.physics.{crack_repair_adapter,deform_adapter,engine_bridge}`
+* `grep -rn` for `from pharos_engine.physics.{crack_repair_adapter,deform_adapter,engine_bridge}`
   finds zero matches in `python/`, `SlapPyEngineTests/tests/`, `SlapPyEngineExamples/examples/`, `docs/`
   (excluding the dry-run plan/audit docs themselves).
 
@@ -178,50 +178,50 @@ expected pass-count delta = 0 (vacuously satisfied).
 
 | # | Module | LOC | Consumers (non-trivial) | Classification |
 |---|---|---:|---|---|
-| 6 | `python/slappyengine/physics/cc_label.py` | 135 | `physics/hull.py:799` (function-local import), `physics/world.py:93,98,761` (comments + one severance check), `test_spawn_fragment.py`, `test_topology_components.py` (cross-check against legacy), 3 demo tests | `hull.py:799` migrates to `from slappyengine.topology import connected_components` — bond/adjacency array signature is identical. `test_topology_components.py` cross-check assert deletes with module (it exists *only* to prove parity). |
-| 7 | `python/slappyengine/physics/pressure_multigrid.py` | 468 | `physics/world.py:2315` (function-local import in pressure projection), `deform_modes.py:479` (docstring reference), `physics/shaders/pressure_project.wgsl` (comment), `test_multigrid_projection.py`, `test_numerics_vcycle.py` (cross-check) | `world.py:2315` migrates to `from slappyengine.numerics import vcycle_poisson`. WGSL comment is a no-op rewrite. `test_multigrid_projection.py` is dead-with-module; `test_numerics_vcycle.py` cross-check assert deletes (parity already proven). |
-| 8 | `python/slappyengine/physics/boundary_exchange.py` | 303 | `physics/__init__.py` (re-export), `physics/world.py:37,226,319-372,510,684-685`, `physics/profiles.py:44,57-90,145`, `test_boundary_exchange.py`, `test_boundary_exchange_integration.py`, `test_phase_b_residency.py:190`, `test_physics_profiles.py`, `test_thermal_heatfield.py` (cross-check) | `world.py` legacy usage dies with `world.py` itself in step 9. `profiles.py` keeps the `boundary_exchange_enabled` flag as a profile knob — that field migrates to `thermal_enabled` or is dropped (no non-physics consumer). Legacy tests die with module; `test_thermal_heatfield.py` parity check deletes. |
+| 6 | `python/pharos_engine/physics/cc_label.py` | 135 | `physics/hull.py:799` (function-local import), `physics/world.py:93,98,761` (comments + one severance check), `test_spawn_fragment.py`, `test_topology_components.py` (cross-check against legacy), 3 demo tests | `hull.py:799` migrates to `from pharos_engine.topology import connected_components` — bond/adjacency array signature is identical. `test_topology_components.py` cross-check assert deletes with module (it exists *only* to prove parity). |
+| 7 | `python/pharos_engine/physics/pressure_multigrid.py` | 468 | `physics/world.py:2315` (function-local import in pressure projection), `deform_modes.py:479` (docstring reference), `physics/shaders/pressure_project.wgsl` (comment), `test_multigrid_projection.py`, `test_numerics_vcycle.py` (cross-check) | `world.py:2315` migrates to `from pharos_engine.numerics import vcycle_poisson`. WGSL comment is a no-op rewrite. `test_multigrid_projection.py` is dead-with-module; `test_numerics_vcycle.py` cross-check assert deletes (parity already proven). |
+| 8 | `python/pharos_engine/physics/boundary_exchange.py` | 303 | `physics/__init__.py` (re-export), `physics/world.py:37,226,319-372,510,684-685`, `physics/profiles.py:44,57-90,145`, `test_boundary_exchange.py`, `test_boundary_exchange_integration.py`, `test_phase_b_residency.py:190`, `test_physics_profiles.py`, `test_thermal_heatfield.py` (cross-check) | `world.py` legacy usage dies with `world.py` itself in step 9. `profiles.py` keeps the `boundary_exchange_enabled` flag as a profile knob — that field migrates to `thermal_enabled` or is dropped (no non-physics consumer). Legacy tests die with module; `test_thermal_heatfield.py` parity check deletes. |
 
 ### Step 4 — Top-level `__init__.py` decoupling (PREREQUISITE for step 5)
 
 | # | Action | Caller | Detail |
 |---|---|---|---|
-| 9 | Remove `"MaterialPreset"` and `"CrackMode"` entries from `_LAZY_MAP` in `python/slappyengine/__init__.py` (lines 179-180) | top-level package | See §(b) below for the per-symbol replacement matrix. Must land **before** step 5 — `slappyengine/__init__.py` imports `deform_modes` lazily, but every `MaterialPreset` lookup re-imports it, and step 5 deletes the file. |
+| 9 | Remove `"MaterialPreset"` and `"CrackMode"` entries from `_LAZY_MAP` in `python/pharos_engine/__init__.py` (lines 179-180) | top-level package | See §(b) below for the per-symbol replacement matrix. Must land **before** step 5 — `pharos_engine/__init__.py` imports `deform_modes` lazily, but every `MaterialPreset` lookup re-imports it, and step 5 deletes the file. |
 
 #### Step 4 execution result — 2026-06-01
 
-**DONE.** Decoupling landed via new `python/slappyengine/_compat.py`
+**DONE.** Decoupling landed via new `python/pharos_engine/_compat.py`
 holding the five retired-feature symbols (`MaterialPreset`,
 `CrackMode`, `SimFrequencyBudget`, `SimState`, `DeformController`).
-`ZoneMap` repoints to `slappyengine.zones.ZoneManager` (one-line module-
+`ZoneMap` repoints to `pharos_engine.zones.ZoneManager` (one-line module-
 level `__getattr__` in `_compat.py`). The six `_LAZY_MAP` entries
 (lines 170-172, 178-180) now route through `._compat`; lookup of any
-of them no longer touches `slappyengine.deform_modes`,
-`slappyengine.deform_controller`, or `slappyengine.deform_zones`.
+of them no longer touches `pharos_engine.deform_modes`,
+`pharos_engine.deform_controller`, or `pharos_engine.deform_zones`.
 
 Regression test `SlapPyEngineTests/tests/test_init_lazy_map.py` (9 cases) pins the
 decoupling:
 
-* `test_import_slappyengine_does_not_load_deform_modules` — `import
-  slappyengine` + `dir()` leaves the three doomed modules absent from
+* `test_import_pharos_engine_does_not_load_deform_modules` — `import
+  pharos_engine` + `dir()` leaves the three doomed modules absent from
   `sys.modules`.
 * `test_doomed_symbols_still_resolve[*]` — 6 parametrised cases; each
   of the six symbols stays resolvable on the public surface.
 * `test_resolved_symbols_route_through_compat_not_legacy` — after
   every symbol is accessed, the three doomed modules are STILL
   absent from `sys.modules`.
-* `test_zone_map_aliases_zone_manager` — `slappyengine.ZoneMap is
-  slappyengine.zones.ZoneManager`.
+* `test_zone_map_aliases_zone_manager` — `pharos_engine.ZoneMap is
+  pharos_engine.zones.ZoneManager`.
 
-**Caller audit (per task §2).** Direct `from slappyengine.deform_modes
+**Caller audit (per task §2).** Direct `from pharos_engine.deform_modes
 import …` sites in `ui/editor/deform_panel.py` (16 lines) are
 unaffected — they import from the doomed module by path, not via the
 top-level lazy-map, so they keep working until `deform_panel.py` is
 decommissioned in step 5. No production caller imports the six
-symbols from `slappyengine` at the package root by name — the only
+symbols from `pharos_engine` at the package root by name — the only
 hard surface consumers are `SlapPyEngineTests/tests/test_game_compat_tripwire.py` and
 `SlapPyEngineTests/tests/test_game_smoke_instantiation.py`, both of which probe via
-`hasattr(slappyengine, name)` and now resolve through `_compat`.
+`hasattr(pharos_engine, name)` and now resolve through `_compat`.
 
 **Pytest delta (gate condition).** Pre-edit: 44 failed / 1618 passed
 (of which 5 are `test_init_lazy_map.py` cases for the symbols that
@@ -237,10 +237,10 @@ touch the lazy-map or the six decoupled symbols.
 
 **Files changed in this step:**
 
-* `python/slappyengine/__init__.py` — six `_LAZY_MAP` entries
+* `python/pharos_engine/__init__.py` — six `_LAZY_MAP` entries
   repointed from `.deform_controller` / `.deform_modes` /
   `.deform_zones` to `._compat`.
-* `python/slappyengine/_compat.py` — new file holding the five
+* `python/pharos_engine/_compat.py` — new file holding the five
   retired-feature stubs + the `ZoneMap` → `ZoneManager` alias.
 * `SlapPyEngineTests/tests/test_init_lazy_map.py` — new regression test pinning the
   decoupling (9 cases).
@@ -248,7 +248,7 @@ touch the lazy-map or the six decoupled symbols.
 The lazy-map gate from §(d) is now satisfied:
 
 ```
-python -c "import slappyengine; assert 'MaterialPreset' in slappyengine._LAZY_MAP and slappyengine._LAZY_MAP['MaterialPreset'] == '._compat'"
+python -c "import pharos_engine; assert 'MaterialPreset' in pharos_engine._LAZY_MAP and pharos_engine._LAZY_MAP['MaterialPreset'] == '._compat'"
 ```
 
 Step 5 (`deform_modes.py` + `deform_controller.py` deletion) is now
@@ -258,12 +258,12 @@ unblocked from the lazy-map angle; the remaining blocker is the
 
 #### Step 5 prerequisite audit — `deform_panel.py` consumer surface — 2026-06-01
 
-Read-only audit of every `from slappyengine.deform_modes import` site in
-`python/slappyengine/ui/editor/deform_panel.py`. Outcome: **the panel is
+Read-only audit of every `from pharos_engine.deform_modes import` site in
+`python/pharos_engine/ui/editor/deform_panel.py`. Outcome: **the panel is
 the *only* non-test, non-`physics/` consumer left** for the
 deform-modes / deform-controller / deform-crack / deform-repair family
 on master HEAD. The `SlapPyEngineExamples/examples/legacy/physics_materials_gallery_demo.py`
-import (`from slappyengine.deform_modes import list_materials`) is in
+import (`from pharos_engine.deform_modes import list_materials`) is in
 the `SlapPyEngineExamples/examples/legacy/` directory, which is already marked for retirement
 in the v0.3 cleanup pass and will be co-deleted with `deform_modes.py`.
 
@@ -273,21 +273,21 @@ in the v0.3 cleanup pass and will be co-deleted with `deform_modes.py`.
 |---|---|
 | `physics/body.py:14`, `physics/boundary_exchange.py:51`, `physics/pressure_multigrid.py:47`, `physics/scene_loader.py:53`, `physics/world.py:29` | Dies in Step 9 (`physics/` core sweep). NOT a Step 5 blocker. |
 | `SlapPyEngineExamples/examples/legacy/physics_materials_gallery_demo.py:38` | `SlapPyEngineExamples/examples/legacy/` is retired surface; co-delete with Step 5. |
-| `python/slappyengine/tests/test_deform_modes.py`, `SlapPyEngineTests/tests/test_deform_controller.py` | Dead-with-module tests. Co-delete with Step 5. |
-| `SlapPyEngineTests/tests/test_game_smoke_instantiation.py:42-47` | Probes legacy module paths by name — already resolved through `_compat` via the `slappyengine` top-level surface (Step 4 lazy-map gate). After Step 5 the assertions in `IMPORT_TABLE` need their module string flipped to `"slappyengine._compat"`. One-line per-symbol edit. |
+| `python/pharos_engine/tests/test_deform_modes.py`, `SlapPyEngineTests/tests/test_deform_controller.py` | Dead-with-module tests. Co-delete with Step 5. |
+| `SlapPyEngineTests/tests/test_game_smoke_instantiation.py:42-47` | Probes legacy module paths by name — already resolved through `_compat` via the `pharos_engine` top-level surface (Step 4 lazy-map gate). After Step 5 the assertions in `IMPORT_TABLE` need their module string flipped to `"pharos_engine._compat"`. One-line per-symbol edit. |
 | `SlapPyEngineTests/tests/test_init_lazy_map.py` | Already pins the decoupling; survives Step 5 unchanged. |
 | `SlapPyEngineTests/tests/test_strip_audit_doc.py:53-56` | Audit-tracking inventory list; co-edit with Step 5 to mark the four files removed. |
 | `docs/per_pixel_sim_audit_2026_05_31.md:27,53`, `docs/physics_module.md:108`, `docs/strip_pass_v2_audit.md` | Docs only; update on Step 5 commit. |
-| `python/slappyengine/ui/editor/deform_panel.py` | **The sole remaining production consumer.** 16 imports — see per-import table below. |
+| `python/pharos_engine/ui/editor/deform_panel.py` | **The sole remaining production consumer.** 16 imports — see per-import table below. |
 
 **Per-import migration table for `deform_panel.py`** (every
-`from slappyengine.deform_modes import …` line):
+`from pharos_engine.deform_modes import …` line):
 
 | Line | Imports | Used in | Migration target |
 |---|---|---|---|
-| 146 | `MaterialPreset`, `list_materials` | `_build_material_section` — combo of all material names | `MaterialPreset` → `slappyengine._compat.MaterialPreset` (name-only). `list_materials` is the only call site outside `deform_modes`; replace with `sorted(softbody.material.MATERIALS.keys())` (and optionally union `fluid.material.MATERIALS`). |
+| 146 | `MaterialPreset`, `list_materials` | `_build_material_section` — combo of all material names | `MaterialPreset` → `pharos_engine._compat.MaterialPreset` (name-only). `list_materials` is the only call site outside `deform_modes`; replace with `sorted(softbody.material.MATERIALS.keys())` (and optionally union `fluid.material.MATERIALS`). |
 | 172 | `DeformSimMode`, `DecayMode` | `_build_simulation_section` combos | Retired enums — no replacement (sim-mode/decay-mode state machine is gone in the rebuild solver). Whole section dies with the panel. |
-| 349 | `CrackMode` | `_build_cracks_section` combo | `slappyengine._compat.CrackMode` (name-only stub). Crack-mode feature itself is retired; the section UI dies with the panel. |
+| 349 | `CrackMode` | `_build_cracks_section` combo | `pharos_engine._compat.CrackMode` (name-only stub). Crack-mode feature itself is retired; the section UI dies with the panel. |
 | 367 | `MATERIAL_CONFIGS`, `MaterialPreset` | Fallback to read `crack_mode` from preset config | No replacement — `MATERIAL_CONFIGS` is `deform_modes`-internal; the fallback path dies with the panel. |
 | 419 | `DestroyMode` | `_build_destruction_section` combo | Retired enum. Section dies with the panel. |
 | 443 | `PhysicsCoupling` | `_build_physics_section` combo | Retired enum. Section dies with the panel. |
@@ -306,19 +306,19 @@ in the v0.3 cleanup pass and will be co-deleted with `deform_modes.py`.
 with the panel**; the only ones with a real replacement are
 `list_materials` (146, 815) and `MaterialPreset`/`get_material` (146,
 513, 978). All three legacy callers are already shimmed via
-`slappyengine._compat`, so a partial port of `deform_panel.py` would
+`pharos_engine._compat`, so a partial port of `deform_panel.py` would
 duplicate `_compat` surface inside the panel without unblocking
 deletion of any other file.
 
 **Proposal — next sprint:**
 
-1. **Decommission `python/slappyengine/ui/editor/deform_panel.py`**
+1. **Decommission `python/pharos_engine/ui/editor/deform_panel.py`**
    wholesale. Both classes (`DeformPanel`, `ZoneEditorPanel`) are
    retired-feature inspectors; their replacement is the property
-   inspector wired against `softbody.Body` and `slappyengine.zones`,
+   inspector wired against `softbody.Body` and `pharos_engine.zones`,
    tracked under the editor sprint (`project_editor_sprint.md`).
 2. Audit/migrate the editor wiring that *constructs* `DeformPanel` /
-   `ZoneEditorPanel` (search: `from slappyengine.ui.editor.deform_panel
+   `ZoneEditorPanel` (search: `from pharos_engine.ui.editor.deform_panel
    import` and `DeformPanel(` / `ZoneEditorPanel(` — held for the next
    sprint to keep this sprint read-only on engine code).
 3. Co-delete `python/tests/test_editor_deform_panel.py` if present
@@ -326,7 +326,7 @@ deletion of any other file.
 4. **Then** delete `deform_modes.py`, `deform_controller.py`,
    `deform_crack.py`, `deform_repair.py` plus their tests as the Step 5
    commit, flipping `SlapPyEngineTests/tests/test_game_smoke_instantiation.py:42-47`'s
-   `IMPORT_TABLE` to point at `slappyengine._compat` in the same
+   `IMPORT_TABLE` to point at `pharos_engine._compat` in the same
    commit.
 5. Update `SlapPyEngineTests/tests/test_strip_audit_doc.py` `EXPECTED_DELETED_PATHS` to
    mark the four files as removed.
@@ -346,16 +346,16 @@ read-only audit is the deliverable; the deletions land next sprint.
 
 | # | Module | LOC | Consumers (non-test) | Classification |
 |---|---|---:|---|---|
-| 10 | `python/slappyengine/deform_modes.py` | 1222 | `slappyengine/__init__.py` (post-step-9: zero), `physics/body.py:14` (CellMaterial), `physics/boundary_exchange.py:51` (dies in step 8), `physics/pressure_multigrid.py:47` (dies in step 7), `physics/scene_loader.py:53` (cell_material_for), `physics/world.py:29-32`, `ui/editor/deform_panel.py` (16 import sites, all `MaterialPreset` / `CrackMode` / `DeformSimMode` / `DecayMode` / `DestroyMode` / `PhysicsCoupling` / `RepairMode` / `MATERIAL_CONFIGS` / `get_material` / `list_materials`) | `physics/body.py`, `physics/scene_loader.py`, `physics/world.py` die together in step 9. `deform_panel.py` is the only Phase-D-survivor — it must be re-targeted (see Risk callout in §d). The bulk (`CellMaterial`, `MATERIAL_CONFIGS`, enums) is dead-with-module. |
-| 11 | `python/slappyengine/deform_controller.py` | 219 | `physics/deform_adapter.py:40` (dies in step 2), `slappyengine/__init__.py` (lazy-map entries `SimFrequencyBudget`, `SimState`, `DeformController` — lines 170-172), `test_deform_controller.py`, `slappyengine/tests/test_deform_controller.py` | Lazy-map entries must die in step 4b (same commit as step 9, or split into a 9b). No non-physics call sites. Tests die with module. |
-| 12 | `python/slappyengine/deform_crack.py` | 261 | `physics/crack_repair_adapter.py:156` (dies in step 2), `test_deform_modules.py`, `test_tags_zheight_deform_extras.py` | Dead-with-module tests. |
-| 13 | `python/slappyengine/deform_repair.py` | 300 | `physics/crack_repair_adapter.py:157` (dies in step 2), `test_config_and_repair.py`, `test_deform_modules.py`, `test_deform_repair_db.py`, `test_deform_repair_gpu.py`, `test_ochema_extra2.py` (3 imports) | Dead-with-module tests. `test_ochema_extra2.py` is legacy game-compat fixture — confirmed in Phase D plan to delete with module. |
+| 10 | `python/pharos_engine/deform_modes.py` | 1222 | `pharos_engine/__init__.py` (post-step-9: zero), `physics/body.py:14` (CellMaterial), `physics/boundary_exchange.py:51` (dies in step 8), `physics/pressure_multigrid.py:47` (dies in step 7), `physics/scene_loader.py:53` (cell_material_for), `physics/world.py:29-32`, `ui/editor/deform_panel.py` (16 import sites, all `MaterialPreset` / `CrackMode` / `DeformSimMode` / `DecayMode` / `DestroyMode` / `PhysicsCoupling` / `RepairMode` / `MATERIAL_CONFIGS` / `get_material` / `list_materials`) | `physics/body.py`, `physics/scene_loader.py`, `physics/world.py` die together in step 9. `deform_panel.py` is the only Phase-D-survivor — it must be re-targeted (see Risk callout in §d). The bulk (`CellMaterial`, `MATERIAL_CONFIGS`, enums) is dead-with-module. |
+| 11 | `python/pharos_engine/deform_controller.py` | 219 | `physics/deform_adapter.py:40` (dies in step 2), `pharos_engine/__init__.py` (lazy-map entries `SimFrequencyBudget`, `SimState`, `DeformController` — lines 170-172), `test_deform_controller.py`, `pharos_engine/tests/test_deform_controller.py` | Lazy-map entries must die in step 4b (same commit as step 9, or split into a 9b). No non-physics call sites. Tests die with module. |
+| 12 | `python/pharos_engine/deform_crack.py` | 261 | `physics/crack_repair_adapter.py:156` (dies in step 2), `test_deform_modules.py`, `test_tags_zheight_deform_extras.py` | Dead-with-module tests. |
+| 13 | `python/pharos_engine/deform_repair.py` | 300 | `physics/crack_repair_adapter.py:157` (dies in step 2), `test_config_and_repair.py`, `test_deform_modules.py`, `test_deform_repair_db.py`, `test_deform_repair_gpu.py`, `test_ochema_extra2.py` (3 imports) | Dead-with-module tests. `test_ochema_extra2.py` is legacy game-compat fixture — confirmed in Phase D plan to delete with module. |
 
 ### Step 6 — `deform_zones.py`
 
 | # | Module | LOC | Consumers | Classification |
 |---|---|---:|---|---|
-| 14 | `python/slappyengine/deform_zones.py` | 180 | `slappyengine/__init__.py` (`ZoneMap` lazy entry, line 178), `physics/deform_adapter.py:41` (dies in step 2), `event_bus.py:153` (comment only), `ui/editor/deform_panel.py:1005` (comment + Phase B uses `slappyengine.zones`), `test_deform_adapter.py`, `test_deform_modules.py`, `test_tags_zheight_deform_extras.py`, `slappyengine/tests/test_deform_zones.py` | `ZoneMap` lazy entry retargets to `slappyengine.zones.ZoneManager` OR dies (Bullet Strata's `ZoneMap` already migrated to `zones.ZoneManager` per `project_bullet_strata.md`). Dead-with-module tests. |
+| 14 | `python/pharos_engine/deform_zones.py` | 180 | `pharos_engine/__init__.py` (`ZoneMap` lazy entry, line 178), `physics/deform_adapter.py:41` (dies in step 2), `event_bus.py:153` (comment only), `ui/editor/deform_panel.py:1005` (comment + Phase B uses `pharos_engine.zones`), `test_deform_adapter.py`, `test_deform_modules.py`, `test_tags_zheight_deform_extras.py`, `pharos_engine/tests/test_deform_zones.py` | `ZoneMap` lazy entry retargets to `pharos_engine.zones.ZoneManager` OR dies (Bullet Strata's `ZoneMap` already migrated to `zones.ZoneManager` per `project_bullet_strata.md`). Dead-with-module tests. |
 
 #### Step 6 unblock progress — `CellMaterial` port — 2026-06-01
 
@@ -363,7 +363,7 @@ Sprint 7C halted Phase D step 6 because the five legacy
 `physics/*` consumers (`body.py`, `boundary_exchange.py`,
 `pressure_multigrid.py`, `scene_loader.py`, `world.py`) still
 imported `CellMaterial` and `cell_material_for` from
-`slappyengine.deform_modes`. `_compat.py` only shimmed 6 top-level
+`pharos_engine.deform_modes`. `_compat.py` only shimmed 6 top-level
 symbols, not these.
 
 **Status: unblocked from CellMaterial angle — `_compat.py` now
@@ -372,7 +372,7 @@ consumers.**
 
 Changes landed:
 
-* `python/slappyengine/_compat.py` — verbatim port of the
+* `python/pharos_engine/_compat.py` — verbatim port of the
   ``CellMaterial`` dataclass (44 fields, every default and type
   preserved exactly so the WGSL `_pack_params` uploader keeps
   reading the same shape) plus the ``cell_material_for(name)``
@@ -383,8 +383,8 @@ Changes landed:
   instance so the returned type matches the surviving class;
   falls back to ``None`` once ``deform_modes`` is removed, which
   every consumer already handles as "material unknown".
-* Five physics consumers repointed from `slappyengine.deform_modes`
-  to `slappyengine._compat`:
+* Five physics consumers repointed from `pharos_engine.deform_modes`
+  to `pharos_engine._compat`:
   * `physics/body.py:14`
   * `physics/boundary_exchange.py:51`
   * `physics/pressure_multigrid.py:47` (TYPE_CHECKING-gated)
@@ -424,28 +424,28 @@ on master:
 
 | Target | Tracking | Action |
 |---|---|---|
-| `python/slappyengine/ui/editor/deform_panel.py` | **TRACKED** | Decommissioned in this commit (ImportError stub, raised at import time). |
-| `python/slappyengine/deform_modes.py` | UNTRACKED (`git ls-files --error-unmatch` → no match) | NO-OP — never existed on master. |
-| `python/slappyengine/deform_controller.py` | UNTRACKED | NO-OP — never existed on master. |
-| `python/slappyengine/deform_crack.py` | UNTRACKED | NO-OP — never existed on master. |
-| `python/slappyengine/deform_repair.py` | UNTRACKED | NO-OP — never existed on master. |
+| `python/pharos_engine/ui/editor/deform_panel.py` | **TRACKED** | Decommissioned in this commit (ImportError stub, raised at import time). |
+| `python/pharos_engine/deform_modes.py` | UNTRACKED (`git ls-files --error-unmatch` → no match) | NO-OP — never existed on master. |
+| `python/pharos_engine/deform_controller.py` | UNTRACKED | NO-OP — never existed on master. |
+| `python/pharos_engine/deform_crack.py` | UNTRACKED | NO-OP — never existed on master. |
+| `python/pharos_engine/deform_repair.py` | UNTRACKED | NO-OP — never existed on master. |
 
 The four `deform_*.py` modules cannot be `git rm`-ed because they were
 never staged. Their continuing presence in the working tree under
-``H:\Github\SlapPyEngine\python\slappyengine\`` is local WIP — invisible
+``H:\Github\SlapPyEngine\python\pharos_engine\`` is local WIP — invisible
 to ``master`` and to the wheel build.
 
 **Caller audit for `deform_panel.py`.** Repo-wide grep for
 `deform_panel|DeformPanel|ZoneEditorPanel` found zero tracked production
 consumers:
 
-* `python/slappyengine/ui/editor/shell.py` — does NOT import or
+* `python/pharos_engine/ui/editor/shell.py` — does NOT import or
   register `DeformPanel` / `ZoneEditorPanel`. (Confirmed via grep:
   no matches in `shell.py` for any of the three names.)
-* `python/slappyengine/_compat.py:20` — docstring mention only,
+* `python/pharos_engine/_compat.py:20` — docstring mention only,
   references the panel by name in a comment about resolution order.
   Not an actual import.
-* No other editor module under `python/slappyengine/ui/editor/`
+* No other editor module under `python/pharos_engine/ui/editor/`
   imports `deform_panel`.
 * `SlapPyEngineExamples/examples/**` — zero matches.
 * `SlapPyEngineTests/tests/**` (the gate-relevant test root) — zero matches.
@@ -472,12 +472,12 @@ re-ordering, not from any test going green that was previously red
 
 **Action taken.**
 
-1. `python/slappyengine/ui/editor/deform_panel.py` rewritten to a
+1. `python/pharos_engine/ui/editor/deform_panel.py` rewritten to a
    29-line ImportError stub with a docstring explaining the
    decommissioning and pointing at the property inspector as the
    replacement. Importing the module now raises:
    ```
-   ImportError: slappyengine.ui.editor.deform_panel was decommissioned
+   ImportError: pharos_engine.ui.editor.deform_panel was decommissioned
    in Phase D step 6 (2026-06-01). ...
    ```
 2. No `git rm` was issued for the four `deform_*.py` modules — they
@@ -501,13 +501,13 @@ delete.
 
 | # | Module | LOC | Consumers | Classification |
 |---|---|---:|---|---|
-| 15 | `python/slappyengine/pixel_struct.py` | 164 | `physics/cell.py:12` (dies in step 9 with `physics/`), `test_pixel_struct.py`, `test_pixel_struct_camera_anim.py` | Dead-with-module tests. `shader_gen.py:pixel_struct_wgsl()` is a different (unrelated) function on the `ShaderGen` class; rename collision noise only — no actual dependency. |
+| 15 | `python/pharos_engine/pixel_struct.py` | 164 | `physics/cell.py:12` (dies in step 9 with `physics/`), `test_pixel_struct.py`, `test_pixel_struct_camera_anim.py` | Dead-with-module tests. `shader_gen.py:pixel_struct_wgsl()` is a different (unrelated) function on the `ShaderGen` class; rename collision noise only — no actual dependency. |
 
 ### Step 8 — WGSL audit (see §c for full checklist)
 
 | # | Action | File | Detail |
 |---|---|---|---|
-| 16 | Audit `python/slappyengine/physics/shaders/per_pixel_sim.wgsl` for dead conditional branches | shader | The brittle/ductile/fluid/melt switch (lines 234-389) is exercised by `test_gpu_headless.py` and `test_phase_c_gpu.py`. With `deform_modes.CellMaterial` gone (step 5), every input field still flows through `PixelMaterialParams` — the WGSL struct stays the same shape, only the *Python* uploader changes. Audit is for fields the new uploader will no longer populate. |
+| 16 | Audit `python/pharos_engine/physics/shaders/per_pixel_sim.wgsl` for dead conditional branches | shader | The brittle/ductile/fluid/melt switch (lines 234-389) is exercised by `test_gpu_headless.py` and `test_phase_c_gpu.py`. With `deform_modes.CellMaterial` gone (step 5), every input field still flows through `PixelMaterialParams` — the WGSL struct stays the same shape, only the *Python* uploader changes. Audit is for fields the new uploader will no longer populate. |
 
 ### Step 9 — Final sweep (`physics/` legacy core)
 
@@ -516,7 +516,7 @@ Once every step above is green, `physics/world.py`, `physics/body.py`,
 `physics/cell.py`, `physics/__init__.py`, and the remaining
 `physics/*.py` files become unreachable from the Phase-D-survivor
 surface (`softbody/`, `fluid/`, `topology/`, `numerics/`, `zones/`,
-`thermal/`, `dynamics/`, editor, top-level). The full `python/slappyengine/physics/`
+`thermal/`, `dynamics/`, editor, top-level). The full `python/pharos_engine/physics/`
 directory and its tests delete in one final commit — but this is
 out of the original Phase D candidate list and is tracked separately
 under "post-Phase-D legacy sweep" (see `docs/strip_pass_v2_audit.md`
@@ -554,7 +554,7 @@ per_pixel_sim.wgsl   ─┘    (step 8: shader audit)
 
 ## (b) `__init__.py` migration matrix — symbol → new home
 
-`python/slappyengine/__init__.py` `_LAZY_MAP` (lines 130-265) is the only
+`python/pharos_engine/__init__.py` `_LAZY_MAP` (lines 130-265) is the only
 *non-test, non-physics* importer of the legacy modules. The matrix below
 covers every symbol it currently routes through a Phase-D-doomed module.
 
@@ -565,7 +565,7 @@ covers every symbol it currently routes through a Phase-D-doomed module.
 | `SimFrequencyBudget` | `.deform_controller` (170) | **REMOVE entry** | No replacement. Sim frequency budgeting in the rebuild engine is per-`World.step()` substep count + per-scene throttle; no global budget primitive. | n/a — feature retired |
 | `SimState` | `.deform_controller` (171) | **REMOVE entry** | No replacement. The COLLISION_TRIGGERED → ACTIVE → SETTLING → STATIC state machine is gone — softbody bodies are always "active" and the solver's per-substep energy gates handle the rest-detection. | n/a — feature retired |
 | `DeformController` | `.deform_controller` (172) | **REMOVE entry** | No replacement. `DeformController` was the Layer2D-pixel orchestrator; layered creatures use `softbody.body_builders.make_layered_creature` instead. | `softbody/body_builders.py` (different shape — no 1:1 mapping) |
-| `ZoneMap` | `.deform_zones` (178) | **REPOINT** | `slappyengine.zones.ZoneManager` (the rect / threshold data model is preserved per `zones/__init__.py:13`; the pixel-alpha integrity path is *not*) | `zones/__init__.py` (already public) |
+| `ZoneMap` | `.deform_zones` (178) | **REPOINT** | `pharos_engine.zones.ZoneManager` (the rect / threshold data model is preserved per `zones/__init__.py:13`; the pixel-alpha integrity path is *not*) | `zones/__init__.py` (already public) |
 
 ### Decision matrix
 
@@ -589,7 +589,7 @@ not `topology`).
 
 ## (c) WGSL audit checklist — `per_pixel_sim.wgsl`
 
-File: `python/slappyengine/physics/shaders/per_pixel_sim.wgsl` (429 LOC).
+File: `python/pharos_engine/physics/shaders/per_pixel_sim.wgsl` (429 LOC).
 
 Cross-referenced against `deform_modes.CellMaterial` field set (the
 Python uploader for `PixelMaterialParams`). The shader's WGSL struct
@@ -662,10 +662,10 @@ confirmed by the executing agent:
    `C:\Users\Andrew\.claude\plans\ok-we-were-working-reactive-valley.md`
    §"Phase D — Strip pass v2": Ochema's 111 originally-failing tests
    must drop to ≤ test-data residuals on its own CI after migrating to
-   the new `slappyengine` import surface. **External signal** —
+   the new `pharos_engine` import surface. **External signal** —
    verifiable only by the user.
 2. **Bullet Strata clean.** Per `project_bullet_strata.md`, BS has
-   already migrated to `slappyengine.zones`. Verify 54/54 BS tests
+   already migrated to `pharos_engine.zones`. Verify 54/54 BS tests
    still pass with the latest engine before cutting `deform_zones.py`.
 3. **Stone Keep combat green.** `iso/combat.py` must be landed
    (per Phase C3); confirm `test_keep_scene_start_wave` passes.
@@ -692,7 +692,7 @@ halts the strip pass (per the original plan §"Phase D verification").
 ### Repackage parity gates (proves Phase B held)
 
 Before step 3 (cc_label) cut, confirm `test_topology_components.py`
-includes a cross-check assert vs `slappyengine.physics.cc_label`. The
+includes a cross-check assert vs `pharos_engine.physics.cc_label`. The
 test should **delete with the module** (its cross-check is moot once the
 legacy is gone). Same shape for:
 
@@ -705,32 +705,32 @@ legacy is gone). Same shape for:
 
 Before deleting `deform_modes.py` (step 5, module #10):
 
-- `python/slappyengine/__init__.py` `_LAZY_MAP` MUST NOT contain
+- `python/pharos_engine/__init__.py` `_LAZY_MAP` MUST NOT contain
   `"MaterialPreset"` or `"CrackMode"`. Verify via:
   ```
-  python -c "import slappyengine; assert 'MaterialPreset' not in slappyengine._LAZY_MAP"
+  python -c "import pharos_engine; assert 'MaterialPreset' not in pharos_engine._LAZY_MAP"
   ```
-- `python/slappyengine/__init__.py` `_LAZY_MAP` MUST NOT contain
+- `python/pharos_engine/__init__.py` `_LAZY_MAP` MUST NOT contain
   `"SimFrequencyBudget"`, `"SimState"`, `"DeformController"` before
   step 5 cuts `deform_controller.py`.
-- `python/slappyengine/__init__.py` `_LAZY_MAP` MUST NOT contain
+- `python/pharos_engine/__init__.py` `_LAZY_MAP` MUST NOT contain
   `"ZoneMap"` before step 6 cuts `deform_zones.py` (or it must already
   be repointed to `.zones.ZoneManager`).
 
 ### Editor surface gate (BEFORE step 5)
 
-`python/slappyengine/ui/editor/deform_panel.py` has 16 direct
-`from slappyengine.deform_modes import ...` sites (lines 146, 172, 349,
+`python/pharos_engine/ui/editor/deform_panel.py` has 16 direct
+`from pharos_engine.deform_modes import ...` sites (lines 146, 172, 349,
 367, 419, 443, 467, 513, 550, 559, 599, 627, 636, 645, 815, 978). The
 panel must be either:
 
 (a) re-targeted onto the new APIs (softbody.material strings,
-    `slappyengine.zones`, retired-feature stubs), OR
+    `pharos_engine.zones`, retired-feature stubs), OR
 (b) decommissioned (deleted alongside `deform_modes.py`).
 
 Per `project_editor_sprint.md` and Phase A of the reactive-valley plan,
 the panel's ZoneEditorPanel sub-component is already re-targeted onto
-`slappyengine.zones` — the residual `deform_modes` imports are for
+`pharos_engine.zones` — the residual `deform_modes` imports are for
 `MaterialPreset` enum dropdowns and crack-mode toggles. Both feature
 sets are retired in Phase D (see §b), so the executing agent should
 **decommission `deform_panel.py`** unless the user explicitly requests
@@ -761,7 +761,7 @@ totalling **4,766 LOC** of legacy Python (`frontier` 361, `granular_render`
 co-deleted test files (~3-4k LOC of legacy test code, exact count
 varies with how many `test_deform_modules.py`-style fixtures are
 parted vs deleted whole). The numerical cores of every flagged module
-are already preserved in `slappyengine.{topology, numerics, zones, thermal,
+are already preserved in `pharos_engine.{topology, numerics, zones, thermal,
 softbody.material, fluid.material}` by Phase B. The top-level
 `__init__.py` decoupling (six lazy-map entries: `MaterialPreset`,
 `CrackMode`, `SimFrequencyBudget`, `SimState`, `DeformController`,
@@ -777,7 +777,7 @@ rebuild-era code.
 ## Sprint tick 2026-06-02 — untracked `physics/` shadow-module triage
 
 Working-tree-only audit of the ~25 untracked modules under
-`python/slappyengine/physics/` (see `docs/repo_cleanup_2026_06_02.md`
+`python/pharos_engine/physics/` (see `docs/repo_cleanup_2026_06_02.md`
 §2(b)). Pre-strip pytest baseline: **2688 passed / 1 failed (pre-
 existing `test_docs_inventory::test_every_doc_is_indexed` — flags
 untracked `docs/roadmap.md` and `docs/cargo_audit_2026_06_02.md`,
@@ -787,31 +787,31 @@ unrelated to physics) / 28 skipped / 10 xfailed**, run via
 
 ### Finding — all 25 modules classify as (b) keep alive
 
-The untracked `python/slappyengine/physics/__init__.py` re-exports
+The untracked `python/pharos_engine/physics/__init__.py` re-exports
 **every** sibling module at import time (lines 4-42: `body`,
 `boundary_exchange`, `ccd`, `cell`, `post_process`, `shadows`,
 `particles`, `particle_graph`, `hull`, `world`, `debug_hud`, `video`,
 `scene_loader`, `event_publisher`, `profile`, `profiles`,
 `memory_budget`, `constraints`, `frontier`). The tracked test
 `SlapPyEngineTests/tests/visual/test_vis_constraints.py` imports
-``from slappyengine.physics import ConstraintSolver,
+``from pharos_engine.physics import ConstraintSolver,
 DistanceConstraint, PhysicsWorld, ...`` (line 29) and the tracked
 ``SlapPyEngineTests/tests/visual/scenes/lighting_scene.py`` imports
-``from slappyengine.physics.render import PointLight, RenderConfig``
+``from pharos_engine.physics.render import PointLight, RenderConfig``
 (line 15). Both currently pass.
 
 Empirical verification: temporarily removing `physics/frontier.py`
 and running
-``from slappyengine.physics import ConstraintSolver, ...`` reproduces:
+``from pharos_engine.physics import ConstraintSolver, ...`` reproduces:
 
 ```
 File "physics/__init__.py", line 18, in <module>
-    from slappyengine.physics.shadows import AOPass, ShadowPass
+    from pharos_engine.physics.shadows import AOPass, ShadowPass
 File "physics/shadows.py", line 37, in <module>
-    from slappyengine.physics.world import PhysicsWorld
+    from pharos_engine.physics.world import PhysicsWorld
 File "physics/world.py", line 43, in <module>
-    from slappyengine.physics.frontier import FrontierConfig, FrontierSolver
-ModuleNotFoundError: No module named 'slappyengine.physics.frontier'
+    from pharos_engine.physics.frontier import FrontierConfig, FrontierSolver
+ModuleNotFoundError: No module named 'pharos_engine.physics.frontier'
 ```
 
 The same cascade applies to **every** module reached from
@@ -859,8 +859,8 @@ The same cascade applies to **every** module reached from
   pre-commit the Phase D legacy surface that step 9 of the cut
   list is explicitly meant to delete in one final commit. Staging
   must wait until either (i) the legacy demos are migrated to
-  the canonical APIs (`slappyengine.topology` /
-  `slappyengine.numerics` / `slappyengine.thermal` /
+  the canonical APIs (`pharos_engine.topology` /
+  `pharos_engine.numerics` / `pharos_engine.thermal` /
   `softbody.material` / `fluid.material`) or (ii) the legacy
   demos and visual scenes are co-deleted with `physics/`.
 * **Holds (b):** all 25 modules left in place. Pass count delta
@@ -882,7 +882,7 @@ The minimum viable next action is to repackage
 `physics/__init__.py` to gate its re-exports behind
 `try/except ImportError` and remove the `SlapPyEngineTests/tests/visual/test_vis_constraints.py`
 + `SlapPyEngineTests/tests/visual/scenes/lighting_scene.py` dependencies on
-`slappyengine.physics.render`. That is the same gate condition
+`pharos_engine.physics.render`. That is the same gate condition
 flagged in §(d) "Editor surface gate" for Step 5, applied to the
 visual harness; tracked separately.
 

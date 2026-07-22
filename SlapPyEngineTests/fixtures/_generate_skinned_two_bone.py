@@ -235,7 +235,7 @@ def build_skinned_two_bone(out_gltf: Path, out_bin: Path) -> None:
     gltf.scenes.append(pygltflib.Scene(nodes=[0, 2]))
     gltf.scene = 0
 
-    gltf.asset = pygltflib.Asset(version="2.0", generator="slappyengine JJ3 test fixture")
+    gltf.asset = pygltflib.Asset(version="2.0", generator="pharos_engine JJ3 test fixture")
 
     gltf.save(str(out_gltf))
 
@@ -297,7 +297,7 @@ def build_static_quad(out_gltf: Path, out_bin: Path) -> None:
     gltf.nodes = [pygltflib.Node(name="quad_node", mesh=0)]
     gltf.scenes = [pygltflib.Scene(nodes=[0])]
     gltf.scene = 0
-    gltf.asset = pygltflib.Asset(version="2.0", generator="slappyengine JJ3 test fixture")
+    gltf.asset = pygltflib.Asset(version="2.0", generator="pharos_engine JJ3 test fixture")
     gltf.save(str(out_gltf))
 
 

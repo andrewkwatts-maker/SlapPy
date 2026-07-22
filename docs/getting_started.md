@@ -1,6 +1,6 @@
 # SlapPyEngine — Getting Started
 
-A friendly tour that takes you from `pip install slappy-engine` (v0.3.0b0
+A friendly tour that takes you from `pip install pharos-engine` (v0.3.0b0
 at time of writing) to a running mini-game in 15 minutes. For deeper docs
 see [studio_quickstart.md](studio_quickstart.md) (5-min `studio` tour),
 [dynamics_quickstart.md](dynamics_quickstart.md) (10-min physics tour),
@@ -17,7 +17,7 @@ when you have the `[render]` extra installed.
 ## 1. Install
 
 ```bash
-pip install slappy-engine
+pip install pharos-engine
 ```
 
 That gives you the headless engine: dynamics, zones, telemetry, materials,
@@ -25,17 +25,17 @@ serialisation, the CLI scaffolder, and the audio stub. To turn on the GPU
 renderer, audio output, and editor UI, install the extras you want:
 
 ```bash
-pip install "slappy-engine[render]"   # wgpu canvas + post-process chain
-pip install "slappy-engine[audio]"    # sounddevice + soundfile playback
-pip install "slappy-engine[editor]"   # Dear PyGui in-tree editor
+pip install "pharos-engine[render]"   # wgpu canvas + post-process chain
+pip install "pharos-engine[audio]"    # sounddevice + soundfile playback
+pip install "pharos-engine[editor]"   # Dear PyGui in-tree editor
 ```
 
 Smoke-test the install:
 
 ```python
-import slappyengine as se
+import pharos_engine as se
 
-print("slappyengine", se.__version__)
+print("pharos_engine", se.__version__)
 print("native Rust core available:", se.HAS_NATIVE)
 ```
 
@@ -53,7 +53,7 @@ into before the first frame draws.
 
 ```python
 import numpy as np
-import slappyengine as se
+import pharos_engine as se
 
 # 1. Build a scene with one camera-centred sprite.
 scene = se.Scene(name="hello")
@@ -83,14 +83,14 @@ plugs into the same `Scene`.
 
 ## 3. Add physics
 
-`slappyengine.dynamics` is the unified physics layer: a single `World` holds
+`pharos_engine.dynamics` is the unified physics layer: a single `World` holds
 nodes, joints, and bodies, and every primitive (rope, ragdoll, spring, motor,
 ik chain) writes into the same arrays. It runs without a GPU. The snippet
 below drops a 24-bead rope between two anchors and lets gravity pull it into
 a catenary.
 
 ```python
-from slappyengine.dynamics import RopeSpec, World, build_rope
+from pharos_engine.dynamics import RopeSpec, World, build_rope
 
 world = World(gravity=(0.0, -9.81))
 world.solver_iterations = 16
@@ -123,19 +123,19 @@ ref at [api/dynamics.md](api/dynamics.md).
 
 The engine ships two pub/sub pipelines:
 
-- `slappyengine.zones` — spatial triggers. Register `RectZone` or
+- `pharos_engine.zones` — spatial triggers. Register `RectZone` or
   `ThresholdZone` with a `ZoneManager`; call `update()` each frame with the
   latest entity positions, and `on_enter` / `on_exit` / `on_threshold`
   callbacks fire. The manager uses a uniform-grid spatial hash by default —
   see [api/zones.md](api/zones.md).
-- `slappyengine.telemetry` — name-based events. `emit("physics.step", ...)`
+- `pharos_engine.telemetry` — name-based events. `emit("physics.step", ...)`
   publishes, `subscribe("physics.*", cb)` listens via fnmatch glob patterns,
   and a ring buffer remembers the last N events for post-mortem queries.
   See [api/telemetry.md](api/telemetry.md).
 
 ```python
-from slappyengine import telemetry
-from slappyengine.zones import RectZone, ZoneManager
+from pharos_engine import telemetry
+from pharos_engine.zones import RectZone, ZoneManager
 
 # --- Spatial: fire when the player walks into a 4x4 pad at (0, 0). ---
 entered = []
@@ -176,8 +176,8 @@ its own `BloomPass` class (Lottes 2017 smooth-knee) that emits a `PostProcessPas
 via `make_pass()`.
 
 ```python
-from slappyengine import PostProcessChain
-from slappyengine.post_process.bloom import BloomPass
+from pharos_engine import PostProcessChain
+from pharos_engine.post_process.bloom import BloomPass
 
 chain = PostProcessChain()
 chain.add(BloomPass(threshold=1.0, knee=0.2, intensity=1.0).make_pass())
@@ -189,14 +189,14 @@ print(f"{len(chain.passes)} enabled passes: "
 
 # Hand the chain to the engine by stashing it on the scene; the engine
 # picks it up automatically in run() when scene.post_process is non-empty.
-import slappyengine as se
+import pharos_engine as se
 scene = se.Scene(name="lit")
 scene.post_process = list(chain.passes)
 print(f"scene wired with {len(scene.post_process)} post-process passes")
 ```
 
 For the deep-dive (auto-exposure, GTAO, motion blur, depth-of-field, TAA,
-SSR, volumetric fog, CSM shadows) see the rest of `slappyengine.post_process`
+SSR, volumetric fog, CSM shadows) see the rest of `pharos_engine.post_process`
 in [engine_surface_v030.md](engine_surface_v030.md). The dynamic chain helpers
 (`add_outline`, `add_chromatic_aberration`, `add_night_vision`, etc.) all
 live on `PostProcessChain` itself.
@@ -208,11 +208,11 @@ live on `PostProcessChain` itself.
 Audio is exposed as `engine.audio` (an `AudioManager`) after `engine.run()`
 sets up the device. Without the `[audio]` extra installed it falls back to a
 silent stub backend — your game still launches, it just ships muted. The
-backend abstraction lives in `slappyengine.audio_runtime`.
+backend abstraction lives in `pharos_engine.audio_runtime`.
 
 ```python
-from slappyengine.audio import AudioManager
-from slappyengine import audio_runtime
+from pharos_engine.audio import AudioManager
+from pharos_engine import audio_runtime
 
 audio = AudioManager()
 print(f"audio backend available: {audio.available}")
@@ -232,8 +232,8 @@ suffix; `load_world` reproduces the world to machine precision per the
 ```python
 import tempfile
 from pathlib import Path
-from slappyengine.dynamics import World
-from slappyengine.dynamics.serialize import save_world, load_world
+from pharos_engine.dynamics import World
+from pharos_engine.dynamics.serialize import save_world, load_world
 
 world = World(gravity=(0.0, -9.81))
 a = world.add_node((0.0, 0.0), mass=1.0)
@@ -254,8 +254,8 @@ with tempfile.TemporaryDirectory() as tmp:
 Two free wins for any non-trivial scene:
 
 ```python
-from slappyengine import telemetry
-from slappyengine.zones import RectZone, ZoneManager
+from pharos_engine import telemetry
+from pharos_engine.zones import RectZone, ZoneManager
 
 # 1. ZoneManager spatial hash — on by default since v0.3, but you can
 #    confirm and toggle it for parity tests.
@@ -281,7 +281,7 @@ that shrinks them further is in [rust_port_plan_dynamics.md](rust_port_plan_dyna
   of every dynamics primitive (rope, ragdoll, spring, motor, IK chain) with
   copy-paste snippets that produce GIFs.
 - [studio_quickstart.md](studio_quickstart.md) — 5-minute tour of
-  `slappyengine.studio` (`softbody_stage` / `fluid_stage` / `humanoid_stage`
+  `pharos_engine.studio` (`softbody_stage` / `fluid_stage` / `humanoid_stage`
   / `dynamics_stage` / `record(...)`). The shortest path from `import` to
   rendered GIF.
 - [demo_gallery.md](demo_gallery.md) — curated tour of flagship demos with
@@ -289,7 +289,7 @@ that shrinks them further is in [rust_port_plan_dynamics.md](rust_port_plan_dyna
   artefact is checked in so the gallery renders on GitHub without a local
   install.
 - [examples/](../SlapPyEngineExamples/examples/) — every `hello_*.py` demo wired through
-  `slappyengine.examples_common` (`--frames`, `--no-gif`, `--out`, `--seed`):
+  `pharos_engine.examples_common` (`--frames`, `--no-gif`, `--out`, `--seed`):
   rope, ragdoll, IK, joint, spring, motor, thermal, zone, telemetry,
   lighting, physics, pixel-physics, iso, topology, audio, composite, studio,
   GI, and the humanoid walking / IK-terrain demos.

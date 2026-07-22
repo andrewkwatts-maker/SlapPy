@@ -12,12 +12,12 @@ import pathlib
 
 import numpy as np
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.shadows import (
+from pharos_engine.physics.shadows import (
     MultiLightShadowPass,
     ShadowLight,
     ShadowPass,

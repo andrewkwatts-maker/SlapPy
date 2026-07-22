@@ -18,7 +18,7 @@ import time
 import numpy as np
 import pytest
 
-from slappyengine.animation.skeleton_runtime import (
+from pharos_engine.animation.skeleton_runtime import (
     PosedSkeleton,
     PoseState,
     Skeleton,
@@ -26,13 +26,13 @@ from slappyengine.animation.skeleton_runtime import (
     SkinnedMeshData,
     compose_trs,
 )
-from slappyengine.animation.clip import (
+from pharos_engine.animation.clip import (
     AnimationChannel,
     AnimationClip,
     quat_normalise,
     quat_slerp,
 )
-from slappyengine.animation.skinner import Animator, Skinner
+from pharos_engine.animation.skinner import Animator, Skinner
 
 
 # ---------------------------------------------------------------------------

@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _GAME_ROOT = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _GAME_STR = str(_GAME_ROOT)
@@ -277,7 +277,7 @@ class TestPlayerProfileInit:
             assert pp.part_tier(pt) == 0
 
     def test_is_observable(self):
-        from slappyengine.event_bus import Observable
+        from pharos_engine.event_bus import Observable
         from systems.player_profile import PlayerProfile
         assert issubclass(PlayerProfile, Observable)
 
@@ -293,7 +293,7 @@ class TestPlayerProfileCoins:
         assert pp.coins == 50
 
     def test_earn_publishes_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         pp = self._pp()
         received = []
         h = subscribe("PlayerProfile.CoinsEarned", lambda e: received.append(e))
@@ -390,7 +390,7 @@ class TestPlayerProfileUpgrades:
 class TestCoinSystemInit:
     def _cs(self, positions=None):
         from systems.coin_system import CoinSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         profile = MagicMock()
         profile.earn = MagicMock()
@@ -421,7 +421,7 @@ class TestCoinSystemInit:
 class TestCoinSystemCollection:
     def _cs(self):
         from systems.coin_system import CoinSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         profile = MagicMock()
         profile.earn = MagicMock()
@@ -468,7 +468,7 @@ class TestCoinSystemCollection:
         cs.teardown()
 
     def test_coin_enter_publishes_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         cs, ts, profile = self._cs()
         vol = cs._volumes[0]
         received = []
@@ -495,7 +495,7 @@ class TestCoinSystemCollection:
 class TestHazardSystemInit:
     def _hs(self):
         from systems.hazard_system import HazardSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         return HazardSystem(trigger_system=ts), ts
 
@@ -522,12 +522,12 @@ class TestHazardSystemInit:
 class TestHazardSystemBoostPad:
     def _hs(self):
         from systems.hazard_system import HazardSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         return HazardSystem(trigger_system=ts), ts
 
     def test_add_boost_pad_returns_volume(self):
-        from slappyengine.trigger import TriggerVolume
+        from pharos_engine.trigger import TriggerVolume
         hs, _ = self._hs()
         vol = hs.add_boost_pad(position=(200.0, 300.0))
         assert isinstance(vol, TriggerVolume)
@@ -547,7 +547,7 @@ class TestHazardSystemBoostPad:
         hs.teardown()
 
     def test_boost_pad_fires_event_on_entry(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         hs, _ = self._hs()
         vol = hs.add_boost_pad(position=(200.0, 200.0), boost_amount=2.0, duration=1.0)
         received = []
@@ -559,7 +559,7 @@ class TestHazardSystemBoostPad:
         hs.teardown()
 
     def test_boost_applies_velocity_fallback(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         hs, _ = self._hs()
         hs.add_boost_pad(position=(200.0, 200.0), boost_amount=2.0, duration=1.0)
         entity = MagicMock()
@@ -573,12 +573,12 @@ class TestHazardSystemBoostPad:
 class TestHazardSystemDamageZone:
     def _hs(self):
         from systems.hazard_system import HazardSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         return HazardSystem(trigger_system=ts), ts
 
     def test_add_damage_zone_returns_volume(self):
-        from slappyengine.trigger import TriggerVolume
+        from pharos_engine.trigger import TriggerVolume
         hs, _ = self._hs()
         vol = hs.add_damage_zone(position=(300.0, 400.0))
         assert isinstance(vol, TriggerVolume)
@@ -591,7 +591,7 @@ class TestHazardSystemDamageZone:
         hs.teardown()
 
     def test_damage_zone_fires_event_on_entry(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         hs, _ = self._hs()
         vol = hs.add_damage_zone(position=(200.0, 200.0), damage=0.2)
         received = []
@@ -603,7 +603,7 @@ class TestHazardSystemDamageZone:
         hs.teardown()
 
     def test_damage_reduces_hull_integrity(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         hs, _ = self._hs()
         hs.add_damage_zone(position=(200.0, 200.0), damage=0.2)
         entity = MagicMock()
@@ -614,7 +614,7 @@ class TestHazardSystemDamageZone:
         hs.teardown()
 
     def test_damage_does_not_go_below_zero(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         hs, _ = self._hs()
         hs.add_damage_zone(position=(200.0, 200.0), damage=5.0)
         entity = MagicMock()
@@ -632,7 +632,7 @@ class TestHazardSystemDamageZone:
 class TestPitsSystemInit:
     def _ps(self, positions=None):
         from systems.pits_system import PitsSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         vehicles = []
         ps = PitsSystem(trigger_system=ts, vehicles=vehicles,
@@ -663,7 +663,7 @@ class TestPitsSystemInit:
 class TestPitsSystemVehicleEntry:
     def _ps(self):
         from systems.pits_system import PitsSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         ps = PitsSystem(trigger_system=ts, vehicles=[],
                         pit_positions=[(200.0, 200.0, 80.0, 40.0, 1.0, 0.0)])
@@ -689,7 +689,7 @@ class TestPitsSystemVehicleEntry:
         ps.teardown()
 
     def test_fast_vehicle_rejected(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ps = self._ps()
         v = self._fast_vehicle()
         received = []
@@ -701,7 +701,7 @@ class TestPitsSystemVehicleEntry:
         ps.teardown()
 
     def test_enter_publishes_pits_entered(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ps = self._ps()
         v = self._slow_vehicle()
         received = []
@@ -712,7 +712,7 @@ class TestPitsSystemVehicleEntry:
         ps.teardown()
 
     def test_exit_publishes_pits_exited(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         ps = self._ps()
         v = self._slow_vehicle()
         ps._on_vehicle_enter(v)
@@ -818,7 +818,7 @@ class TestQualitySystemUpdate:
         qs.update(5000.0)
 
     def test_quality_tier_changed_event_published(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         received = []
         h = subscribe("Quality.TierChanged", lambda e: received.append(e))
         from systems.quality_system import QualitySystem

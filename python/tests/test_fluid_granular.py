@@ -12,15 +12,15 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.fluid import (
+from pharos_engine.fluid import (
     FluidRenderConfig,
     FluidRenderer,
     FluidWorld,
     pbf_step,
     project_fluid_softbody_contacts,
 )
-from slappyengine.media import save_frames
-from slappyengine.softbody import SoftBodyWorld, make_lattice_body, step as softbody_step
+from pharos_engine.media import save_frames
+from pharos_engine.softbody import SoftBodyWorld, make_lattice_body, step as softbody_step
 
 _OUT_DIR = Path(__file__).resolve().parent.parent.parent / "tests" / "output" / "fluid"
 _OUT_DIR.mkdir(parents=True, exist_ok=True)

@@ -1,10 +1,10 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.physics3_bridge — API Reference
+# pharos_engine.physics3_bridge — API Reference
 
 > Hand-written reference for the LL7 3D physics bridge — plus the NN4
 > raycast / AABB-sweep surface and the OO2 BVH-accelerated raycast
 > path. Backend-agnostic dynamics wrapper: prefers the WIP
-> :mod:`slappyengine.physics` tree when importable, else falls back on
+> :mod:`pharos_engine.physics` tree when importable, else falls back on
 > a built-in semi-implicit Euler + SAP shim. Sibling references:
 > [`render_bvh_3d.md`](render_bvh_3d.md) is the KK1 BVH surface the
 > OO2 fast path shares; [`dynamics.md`](dynamics.md) is the 2D dynamics
@@ -13,17 +13,17 @@
 
 ## Overview
 
-`slappyengine.physics3_bridge` is the Nova3D parity Sprint 18 landing
+`pharos_engine.physics3_bridge` is the Nova3D parity Sprint 18 landing
 (task LL7) plus two follow-ups: NN4 added first-hit
 :meth:`~World3D.raycast` + AABB :meth:`~World3D.sweep_aabb`, and OO2
-plugged the KK1 :class:`~slappyengine.render.bvh_3d.BVH3D` into raycast
+plugged the KK1 :class:`~pharos_engine.render.bvh_3d.BVH3D` into raycast
 so scenes above eight bodies use O(log N) tree traversal.
 
 Games and demos that want *some* 3D dynamics should not hard-depend on
-the untracked WIP `slappyengine.physics` tree. This module gives them a
+the untracked WIP `pharos_engine.physics` tree. This module gives them a
 stable Python-level surface with two implementations:
 
-* `backend="physics"` — delegates to :mod:`slappyengine.physics` when
+* `backend="physics"` — delegates to :mod:`pharos_engine.physics` when
   importable. Bodies keep their kinematic attributes on the shim side;
   the real physics tree handles contacts and constraints.
 * `backend="fallback"` — a minimal built-in world doing semi-implicit
@@ -33,14 +33,14 @@ stable Python-level surface with two implementations:
   even when the WIP tree is stripped from a build.
 
 The soft-import contract mirrors what
-:mod:`slappyengine.render.bvh_3d` does for JJ5's frustum: try the
+:mod:`pharos_engine.render.bvh_3d` does for JJ5's frustum: try the
 richer thing, fall back on a duck-typed local implementation, never
 raise at import time.
 
 ## Public surface
 
 ```python
-from slappyengine.physics3_bridge import (
+from pharos_engine.physics3_bridge import (
     Body3D, World3D, PhysicsBackendError,
     RaycastHit, SweepHit,
     resolve_physics3_backend,
@@ -52,7 +52,7 @@ from slappyengine.physics3_bridge import (
 
 ### `Body3D`
 
-_dataclass — defined in `slappyengine.physics3_bridge`_
+_dataclass — defined in `pharos_engine.physics3_bridge`_
 
 | Field | Type | Default | Notes |
 |-------|------|---------|-------|
@@ -79,7 +79,7 @@ Raises `ValueError` for negative mass or an unknown `shape_kind`;
 
 ### `World3D`
 
-_class — defined in `slappyengine.physics3_bridge`_
+_class — defined in `pharos_engine.physics3_bridge`_
 
 ```python
 World3D(
@@ -119,21 +119,21 @@ Attributes: `gravity`, `backend` (the tag returned by
 
 ### `RaycastHit`
 
-_frozen dataclass — defined in `slappyengine.physics3_bridge`_
+_frozen dataclass — defined in `pharos_engine.physics3_bridge`_
 
 Returned by :meth:`World3D.raycast`. Fields: `body_id: int`,
 `distance: float`, `point: (x, y, z)`, `normal: (x, y, z)`.
 
 ### `SweepHit`
 
-_frozen dataclass — defined in `slappyengine.physics3_bridge`_
+_frozen dataclass — defined in `pharos_engine.physics3_bridge`_
 
 Returned by :meth:`World3D.sweep_aabb`. Fields: `body_id: int`,
 `time_of_impact: float ∈ [0, 1]`, `contact_normal: (x, y, z)`.
 
 ### `PhysicsBackendError`
 
-_RuntimeError subclass — defined in `slappyengine.physics3_bridge`_
+_RuntimeError subclass — defined in `pharos_engine.physics3_bridge`_
 
 Raised when neither the WIP physics tree nor the numpy-backed
 fallback is usable (in practice: numpy is missing from the install).
@@ -142,7 +142,7 @@ fallback is usable (in practice: numpy is missing from the install).
 
 ### `resolve_physics3_backend() -> str`
 
-_defined in `slappyengine.physics3_bridge`_
+_defined in `pharos_engine.physics3_bridge`_
 
 Return the preferred backend tag: `"physics"` when the WIP tree
 imports cleanly, else `"fallback"` when numpy is importable, else
@@ -153,16 +153,16 @@ lifetime — cache at import time.
 
 ### `AABB3D`
 
-_type | None — defined in `slappyengine.physics3_bridge`_
+_type | None — defined in `pharos_engine.physics3_bridge`_
 
-Re-export of :class:`slappyengine.render.bvh_3d.AABB3D` when the
+Re-export of :class:`pharos_engine.render.bvh_3d.AABB3D` when the
 render tree is importable, else `None`. `isinstance(x, AABB3D)`
 guards must include a `None` check.
 
 ## Usage
 
 ```python
-from slappyengine.physics3_bridge import (
+from pharos_engine.physics3_bridge import (
     Body3D, World3D, resolve_physics3_backend,
 )
 
@@ -188,21 +188,21 @@ assert hit.distance > 0.0
 
 ## Skip the wrapper
 
-`slappyengine.physics3_bridge` is a Python-side shim. Rust support
+`pharos_engine.physics3_bridge` is a Python-side shim. Rust support
 lives in the `_core` submodules it *soft-imports through*:
 
-* `slappyengine._core.bvh` — from `src/bvh.rs`, exposes
+* `pharos_engine._core.bvh` — from `src/bvh.rs`, exposes
   `BvhPrimitive` + `Bvh`. Powers the OO2 raycast fast path via
-  :mod:`slappyengine.render.bvh_3d`.
-* `slappyengine._core.physics` — from `src/physics.rs`, exposes
+  :mod:`pharos_engine.render.bvh_3d`.
+* `pharos_engine._core.physics` — from `src/physics.rs`, exposes
   `BodyType`, `RigidBody`, `PhysicsWorld`. Consumed by the WIP
-  :mod:`slappyengine.physics2` tree, not directly by this shim.
+  :mod:`pharos_engine.physics2` tree, not directly by this shim.
 
-Both entries appear in `slappyengine._core_facade.RUST_MODULE_MAP`.
+Both entries appear in `pharos_engine._core_facade.RUST_MODULE_MAP`.
 Games that want raw Rust dynamics without the wrapper should target
-`_core.physics` directly (or use `slappyengine.physics2` when it
+`_core.physics` directly (or use `pharos_engine.physics2` when it
 stabilises); games that want the raycast tree without the world go
-through :class:`slappyengine.render.bvh_3d.BVH3D`.
+through :class:`pharos_engine.render.bvh_3d.BVH3D`.
 
 ## See also
 

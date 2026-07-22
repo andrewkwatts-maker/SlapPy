@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.math — API Reference
+# pharos_engine.math — API Reference
 
 > Hand-written reference for the `math` subpackage — symbolic + numeric
 > formula evaluation backed by [Arithma](https://github.com/andrewkwatts-maker/Arithma)
@@ -11,12 +11,12 @@
 
 ## Overview
 
-`slappyengine.math` exposes three layers of math primitives the rest of
+`pharos_engine.math` exposes three layers of math primitives the rest of
 the engine reaches for over and over:
 
 1. **Formulas.** `Formula`, `evaluate`, and `compile_formula` turn a
    user-supplied math string ("`a*b + sin(t)`") into a callable. When
-   the `[math]` extra is installed (`pip install slappyengine[math]`)
+   the `[math]` extra is installed (`pip install pharos_engine[math]`)
    we route through `arithma.Expression` — Arithma's Rust-backed
    symbolic AST gives consistent precision and shared simplification
    with material graph compilation. When the extra is missing, the
@@ -44,7 +44,7 @@ missing or before Wave-3 wrappers land in Arithma itself).
 ## Public surface
 
 ```python
-from slappyengine.math import (
+from pharos_engine.math import (
     Formula,
     evaluate,
     compile_formula,
@@ -72,7 +72,7 @@ from slappyengine.math import (
 
 ### `Formula`
 
-_class | dataclass — defined in `slappyengine.math.formula`_
+_class | dataclass — defined in `pharos_engine.math.formula`_
 
 A parsed math expression plus a declared list of free variables.
 Construction validates the source string and pre-compiles the
@@ -96,7 +96,7 @@ Formula(source: str, variables: list[str] = []) -> None
 
 ### `AnimationCurve`
 
-_class | dataclass — defined in `slappyengine.math.curves`_
+_class | dataclass — defined in `pharos_engine.math.curves`_
 
 Piecewise cubic Hermite curve through a sequence of `Keyframe` records
 (or raw `(t, v)` / `(t, v, in_tan, out_tan)` tuples). Keyframes are
@@ -118,21 +118,21 @@ AnimationCurve(keyframes: list[Keyframe | tuple]) -> None
 
 ### `Keyframe`
 
-_frozen dataclass — defined in `slappyengine.math.curves`_
+_frozen dataclass — defined in `pharos_engine.math.curves`_
 
 Hermite control point: `t`, `value`, optional `in_tan` / `out_tan`
 (default 0). All fields are finite-validated at construction time.
 
 ### `Bezier`
 
-_frozen dataclass — defined in `slappyengine.math.curves`_
+_frozen dataclass — defined in `pharos_engine.math.curves`_
 
 Cubic Bezier curve through `(p0, p1, p2, p3)`. `sample(t)` evaluates
 the standard Bernstein form on `[0, 1]`; out-of-range `t` is clamped.
 
 ### `Catmull`
 
-_class | dataclass — defined in `slappyengine.math.curves`_
+_class | dataclass — defined in `pharos_engine.math.curves`_
 
 Catmull-Rom spline through arbitrary 1-D points (uniform
 parameterisation). End-tangents are mirrored from the first / last
@@ -142,7 +142,7 @@ phantom controls from the caller. `sample(t)` accepts `t` in
 
 ### `Vec2`, `Vec3`, `Vec4`
 
-_frozen dataclass — defined in `slappyengine.math.vector`_
+_frozen dataclass — defined in `pharos_engine.math.vector`_
 
 Immutable, finite-validated vectors with operator overloads and the
 shared method roster:
@@ -166,7 +166,7 @@ arity.
 
 ### `evaluate(source: str, **bindings) -> float`
 
-_defined in `slappyengine.math.formula`_
+_defined in `pharos_engine.math.formula`_
 
 Parse and evaluate `source` against `bindings` in one call. Slow path
 because every call re-parses; for hot loops compile once with
@@ -176,7 +176,7 @@ in the sandbox's `_FORBIDDEN_NAMES` set, or any dunder identifier).
 
 ### `compile_formula(source: str) -> Callable[..., float]`
 
-_defined in `slappyengine.math.formula`_
+_defined in `pharos_engine.math.formula`_
 
 Compile `source` once and return a callable `(**bindings) -> float`.
 Tries Arithma first; falls back to the sandbox on any parse error or
@@ -185,7 +185,7 @@ safe to capture in a hot loop.
 
 ### `ease(t: float, kind: str = "ease_in_out_cubic") -> float`
 
-_defined in `slappyengine.math.curves`_
+_defined in `pharos_engine.math.curves`_
 
 Common easing functions on `[0, 1] → [0, 1]`. Inputs outside `[0, 1]`
 are clamped. Unknown `kind` raises `ValueError` with the legal kinds
@@ -201,14 +201,14 @@ ease_in_sine, ease_out_sine, ease_in_out_sine
 
 ### `_HAS_ARITHMA`
 
-_bool — defined in `slappyengine.math`_
+_bool — defined in `pharos_engine.math`_
 
 `True` iff `import arithma` succeeded at package load time. Reflects
 whether the optional `[math]` extra is installed.
 
 ### `Expression`, `Integer`, `Variable`
 
-_re-exports from `arithma` — defined in `slappyengine.math`_
+_re-exports from `arithma` — defined in `pharos_engine.math`_
 
 Live Arithma PyO3 wrappers when present. Today (Arithma 2.0.2) these
 are `None` until the Wave-3 wrappers land — degraded-mode is the only
@@ -218,14 +218,14 @@ backend separately from the wrapper readiness.
 
 ## Inner modules
 
-- `slappyengine.math.formula` — `Formula` / `evaluate` /
+- `pharos_engine.math.formula` — `Formula` / `evaluate` /
   `compile_formula` + Arithma probe + Python sandbox.
-- `slappyengine.math.curves`  — `AnimationCurve`, `Keyframe`,
+- `pharos_engine.math.curves`  — `AnimationCurve`, `Keyframe`,
   `Bezier`, `Catmull`, `ease`.
-- `slappyengine.math.vector`  — `Vec2`, `Vec3`, `Vec4` + Arithma
+- `pharos_engine.math.vector`  — `Vec2`, `Vec3`, `Vec4` + Arithma
   round-trip helper.
-- `slappyengine.math._validation` — shared input validators that
-  delegate to `slappyengine._validation` for the generic checks and
+- `pharos_engine.math._validation` — shared input validators that
+  delegate to `pharos_engine._validation` for the generic checks and
   add `validate_finite_sequence` / `validate_keyframe_list` for the
   domain shapes.
 
@@ -233,7 +233,7 @@ backend separately from the wrapper readiness.
 
 - **Lazy Arithma probe.** The Arithma `Expression` class is resolved
   lazily via `_arithma_expression_cls()` so tests can monkeypatch
-  `slappyengine.math._HAS_ARITHMA` / `Expression` to exercise both
+  `pharos_engine.math._HAS_ARITHMA` / `Expression` to exercise both
   branches without reloading the module.
 - **Sandbox forbidden list.** The sandbox refuses identifiers in
   `_FORBIDDEN_NAMES` (`__import__`, `open`, `exec`, `eval`, `compile`,

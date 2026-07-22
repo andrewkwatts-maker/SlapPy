@@ -14,40 +14,40 @@ import numpy as np
 
 class TestPixelStructBasics:
     def test_instantiates(self):
-        from slappyengine.pixel_struct import PixelStruct
+        from pharos_engine.pixel_struct import PixelStruct
         ps = PixelStruct({"albedo": "vec4", "roughness": "f32"})
         assert ps is not None
 
     def test_total_channels(self):
-        from slappyengine.pixel_struct import PixelStruct
+        from pharos_engine.pixel_struct import PixelStruct
         ps = PixelStruct({"albedo": "vec4", "roughness": "f32", "puddle": "f32"})
         assert ps.total_channels == 6  # 4 + 1 + 1
 
     def test_field_names(self):
-        from slappyengine.pixel_struct import PixelStruct
+        from pharos_engine.pixel_struct import PixelStruct
         ps = PixelStruct({"a": "f32", "b": "vec2"})
         assert ps.field_names == ["a", "b"]
 
     def test_unknown_dtype_raises(self):
-        from slappyengine.pixel_struct import PixelStruct
+        from pharos_engine.pixel_struct import PixelStruct
         with pytest.raises(ValueError):
             PixelStruct({"x": "badtype"})
 
     def test_empty_array_shape(self):
-        from slappyengine.pixel_struct import PixelStruct
+        from pharos_engine.pixel_struct import PixelStruct
         ps = PixelStruct({"a": "f32", "b": "vec2"})  # 3 channels
         arr = ps.empty_array(10, 20)
         assert arr.shape == (10, 20, 3)
         assert arr.dtype == np.float32
 
     def test_empty_array_zeros(self):
-        from slappyengine.pixel_struct import PixelStruct
+        from pharos_engine.pixel_struct import PixelStruct
         ps = PixelStruct({"x": "f32"})
         arr = ps.empty_array(4, 4)
         assert np.all(arr == 0)
 
     def test_dtype_constants(self):
-        from slappyengine.pixel_struct import DTYPE_TO_CHANNELS
+        from pharos_engine.pixel_struct import DTYPE_TO_CHANNELS
         assert DTYPE_TO_CHANNELS["f32"] == 1
         assert DTYPE_TO_CHANNELS["vec2"] == 2
         assert DTYPE_TO_CHANNELS["vec3"] == 3
@@ -55,7 +55,7 @@ class TestPixelStructBasics:
         assert DTYPE_TO_CHANNELS["u32"] == 1
 
     def test_repr(self):
-        from slappyengine.pixel_struct import PixelStruct
+        from pharos_engine.pixel_struct import PixelStruct
         ps = PixelStruct({"a": "f32"})
         r = repr(ps)
         assert "a" in r
@@ -64,7 +64,7 @@ class TestPixelStructBasics:
 
 class TestPixelStructReadWrite:
     def _make_struct_and_array(self):
-        from slappyengine.pixel_struct import PixelStruct
+        from pharos_engine.pixel_struct import PixelStruct
         ps = PixelStruct({"albedo": "vec4", "roughness": "f32", "puddle": "f32"})
         arr = ps.empty_array(8, 8)
         return ps, arr
@@ -102,7 +102,7 @@ class TestPixelStructReadWrite:
 
 class TestPixelStructWgslAndSlice:
     def test_wgsl_struct_contains_field_names(self):
-        from slappyengine.pixel_struct import PixelStruct
+        from pharos_engine.pixel_struct import PixelStruct
         ps = PixelStruct({"albedo": "vec4", "roughness": "f32"})
         wgsl = ps.to_wgsl_struct("TrackPixel")
         assert "TrackPixel" in wgsl
@@ -110,13 +110,13 @@ class TestPixelStructWgslAndSlice:
         assert "roughness" in wgsl
 
     def test_wgsl_struct_custom_name(self):
-        from slappyengine.pixel_struct import PixelStruct
+        from pharos_engine.pixel_struct import PixelStruct
         ps = PixelStruct({"x": "f32"})
         wgsl = ps.to_wgsl_struct("MyStruct")
         assert "struct MyStruct" in wgsl
 
     def test_slice_field_scalar(self):
-        from slappyengine.pixel_struct import PixelStruct
+        from pharos_engine.pixel_struct import PixelStruct
         ps = PixelStruct({"a": "f32", "b": "f32"})
         arr = ps.empty_array(4, 4)
         arr[:, :, 0] = 9.0  # field "a"
@@ -125,7 +125,7 @@ class TestPixelStructWgslAndSlice:
         assert sl[0, 0] == pytest.approx(9.0)
 
     def test_slice_field_vec(self):
-        from slappyengine.pixel_struct import PixelStruct
+        from pharos_engine.pixel_struct import PixelStruct
         ps = PixelStruct({"color": "vec4"})
         arr = ps.empty_array(2, 2)
         arr[0, 0, :] = [1, 2, 3, 4]
@@ -139,18 +139,18 @@ class TestPixelStructWgslAndSlice:
 
 class TestStructRegistry:
     def test_instantiates(self):
-        from slappyengine.struct_registry import StructRegistry
+        from pharos_engine.struct_registry import StructRegistry
         r = StructRegistry()
         assert r is not None
 
     def test_default_color_channel(self):
-        from slappyengine.struct_registry import StructRegistry
+        from pharos_engine.struct_registry import StructRegistry
         r = StructRegistry()
         names = [n for n, _ in r.channels]
         assert "color" in names
 
     def test_register_module(self):
-        from slappyengine.struct_registry import StructRegistry, StructModule
+        from pharos_engine.struct_registry import StructRegistry, StructModule
         r = StructRegistry()
 
         class HealthMod(StructModule):
@@ -164,7 +164,7 @@ class TestStructRegistry:
         assert "hp" in names
 
     def test_register_duplicate_channel_raises(self):
-        from slappyengine.struct_registry import StructRegistry, StructModule
+        from pharos_engine.struct_registry import StructRegistry, StructModule
         r = StructRegistry()
 
         class ModA(StructModule):
@@ -180,7 +180,7 @@ class TestStructRegistry:
             r.register(ModB)
 
     def test_lock_prevents_register(self):
-        from slappyengine.struct_registry import StructRegistry, StructModule
+        from pharos_engine.struct_registry import StructRegistry, StructModule
         r = StructRegistry()
         r.lock()
 
@@ -192,27 +192,27 @@ class TestStructRegistry:
             r.register(MyMod)
 
     def test_channel_offset_computed(self):
-        from slappyengine.struct_registry import StructRegistry
+        from pharos_engine.struct_registry import StructRegistry
         r = StructRegistry()
         offset = r.channel_offset("color")
         assert isinstance(offset, int)
         assert offset >= 0
 
     def test_stride_bytes_positive(self):
-        from slappyengine.struct_registry import StructRegistry
+        from pharos_engine.struct_registry import StructRegistry
         r = StructRegistry()
         stride = r.stride_bytes()
         assert isinstance(stride, int)
         assert stride > 0
 
     def test_stride_divisible_by_16(self):
-        from slappyengine.struct_registry import StructRegistry
+        from pharos_engine.struct_registry import StructRegistry
         r = StructRegistry()
         stride = r.stride_bytes()
         assert stride % 16 == 0
 
     def test_default_for_channel(self):
-        from slappyengine.struct_registry import StructRegistry, StructModule
+        from pharos_engine.struct_registry import StructRegistry, StructModule
         r = StructRegistry()
 
         class MyMod(StructModule):
@@ -225,12 +225,12 @@ class TestStructRegistry:
         assert r.default_for_channel("fuel") == pytest.approx(0.75)
 
     def test_default_for_unknown_channel_zero(self):
-        from slappyengine.struct_registry import StructRegistry
+        from pharos_engine.struct_registry import StructRegistry
         r = StructRegistry()
         assert r.default_for_channel("nonexistent") == pytest.approx(0.0)
 
     def test_required_compute_passes(self):
-        from slappyengine.struct_registry import StructRegistry, StructModule
+        from pharos_engine.struct_registry import StructRegistry, StructModule
         r = StructRegistry()
 
         class MyMod(StructModule):
@@ -244,7 +244,7 @@ class TestStructRegistry:
         assert "my_shader.wgsl" in passes
 
     def test_no_duplicate_compute_passes(self):
-        from slappyengine.struct_registry import StructRegistry, StructModule
+        from pharos_engine.struct_registry import StructRegistry, StructModule
         r = StructRegistry()
 
         class ModA(StructModule):
@@ -271,27 +271,27 @@ class TestStructRegistry:
 
 class TestCameraDefaults:
     def test_instantiates(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera()
         assert c is not None
 
     def test_default_position(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera()
         assert c.position == (0.0, 0.0)
 
     def test_default_zoom(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera()
         assert c.zoom == pytest.approx(1.0)
 
     def test_default_rotation(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera()
         assert c.rotation == pytest.approx(0.0)
 
     def test_custom_values(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera(position=(100.0, 200.0), zoom=2.0, rotation=0.5)
         assert c.position == (100.0, 200.0)
         assert c.zoom == pytest.approx(2.0)
@@ -300,7 +300,7 @@ class TestCameraDefaults:
 
 class TestCameraWorldToScreen:
     def test_origin_at_center(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera()
         c._viewport_size = (800, 600)
         sx, sy = c.world_to_screen((0.0, 0.0))
@@ -308,14 +308,14 @@ class TestCameraWorldToScreen:
         assert sy == pytest.approx(300.0)
 
     def test_camera_offset(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera(position=(100.0, 0.0))
         c._viewport_size = (800, 600)
         sx, sy = c.world_to_screen((100.0, 0.0))
         assert sx == pytest.approx(400.0)  # centred
 
     def test_zoom_scales(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera(zoom=2.0)
         c._viewport_size = (800, 600)
         sx, sy = c.world_to_screen((10.0, 0.0))
@@ -323,7 +323,7 @@ class TestCameraWorldToScreen:
         assert (sx - sx0) == pytest.approx(20.0)  # 10 * zoom=2
 
     def test_returns_float_pair(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera()
         result = c.world_to_screen((5.0, 5.0))
         assert len(result) == 2
@@ -332,7 +332,7 @@ class TestCameraWorldToScreen:
 
 class TestCameraScreenToWorld:
     def test_center_maps_to_camera_position(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera(position=(50.0, 30.0))
         c._viewport_size = (800, 600)
         wx, wy = c.screen_to_world((400.0, 300.0))
@@ -340,7 +340,7 @@ class TestCameraScreenToWorld:
         assert wy == pytest.approx(30.0)
 
     def test_roundtrip(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera(position=(200.0, 100.0), zoom=1.5)
         c._viewport_size = (800, 600)
         world_in = (350.0, 220.0)
@@ -352,14 +352,14 @@ class TestCameraScreenToWorld:
 
 class TestCameraVisibleRect:
     def test_returns_four_values(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera()
         c._viewport_size = (800, 600)
         rect = c.visible_rect()
         assert len(rect) == 4
 
     def test_centered_on_camera_position(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera(position=(0.0, 0.0))
         c._viewport_size = (800, 600)
         left, top, right, bottom = c.visible_rect()
@@ -367,7 +367,7 @@ class TestCameraVisibleRect:
         assert (top + bottom) / 2 == pytest.approx(0.0)
 
     def test_zoom_shrinks_rect(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c1 = Camera(zoom=1.0)
         c2 = Camera(zoom=2.0)
         c1._viewport_size = c2._viewport_size = (800, 600)
@@ -378,7 +378,7 @@ class TestCameraVisibleRect:
 
 class TestCameraFollow:
     def test_follow_snaps_at_lerp_one(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
 
         class FakeEntity:
             position = (200.0, 150.0)
@@ -389,7 +389,7 @@ class TestCameraFollow:
         assert c.position == (200.0 - 400.0, 150.0 - 300.0)
 
     def test_follow_lerps_at_partial(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
 
         class FakeEntity:
             position = (400.0, 300.0)
@@ -403,13 +403,13 @@ class TestCameraFollow:
 
 class TestCameraViewMatrix:
     def test_returns_list_of_16(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera()
         m = c.view_matrix()
         assert len(m) == 16
 
     def test_identity_at_origin_zero_rotation(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         c = Camera()
         c._viewport_size = (800, 600)
         m = c.view_matrix()
@@ -424,19 +424,19 @@ class TestCameraViewMatrix:
 
 class TestAnimState:
     def test_instantiates(self):
-        from slappyengine.animation.graph import AnimState
+        from pharos_engine.animation.graph import AnimState
         s = AnimState(name="idle")
         assert s is not None
 
     def test_defaults(self):
-        from slappyengine.animation.graph import AnimState
+        from pharos_engine.animation.graph import AnimState
         s = AnimState(name="run")
         assert s.clip_indices == []
         assert s.loop is True
         assert s.fps == pytest.approx(24.0)
 
     def test_custom_values(self):
-        from slappyengine.animation.graph import AnimState
+        from pharos_engine.animation.graph import AnimState
         s = AnimState(name="jump", clip_indices=[0, 1, 2], loop=False, fps=12.0)
         assert s.name == "jump"
         assert s.clip_indices == [0, 1, 2]
@@ -445,17 +445,17 @@ class TestAnimState:
 
 class TestAnimTransition:
     def test_instantiates(self):
-        from slappyengine.animation.graph import AnimTransition
+        from pharos_engine.animation.graph import AnimTransition
         t = AnimTransition(from_state="idle", to_state="run")
         assert t is not None
 
     def test_condition_false_by_default(self):
-        from slappyengine.animation.graph import AnimTransition
+        from pharos_engine.animation.graph import AnimTransition
         t = AnimTransition(from_state="idle", to_state="run")
         assert t.condition() is False
 
     def test_custom_condition(self):
-        from slappyengine.animation.graph import AnimTransition
+        from pharos_engine.animation.graph import AnimTransition
         t = AnimTransition(from_state="idle", to_state="run",
                            condition=lambda: True)
         assert t.condition() is True
@@ -463,7 +463,7 @@ class TestAnimTransition:
 
 class TestAnimUpdate:
     def test_instantiates(self):
-        from slappyengine.animation.graph import AnimUpdate
+        from pharos_engine.animation.graph import AnimUpdate
         u = AnimUpdate(state_name="run", frame_index=2, blend_fraction=0.5)
         assert u.state_name == "run"
         assert u.frame_index == 2
@@ -472,18 +472,18 @@ class TestAnimUpdate:
 
 class TestAnimationGraph:
     def test_instantiates(self):
-        from slappyengine.animation.graph import AnimationGraph
+        from pharos_engine.animation.graph import AnimationGraph
         g = AnimationGraph()
         assert g is not None
 
     def test_no_state_update_returns_none(self):
-        from slappyengine.animation.graph import AnimationGraph
+        from pharos_engine.animation.graph import AnimationGraph
         g = AnimationGraph()
         result = g.update(0.016)
         assert result is None
 
     def test_add_state_and_set_initial(self):
-        from slappyengine.animation.graph import AnimationGraph, AnimState
+        from pharos_engine.animation.graph import AnimationGraph, AnimState
         g = AnimationGraph()
         s = AnimState(name="idle", clip_indices=[0, 1, 2])
         g.add_state(s)
@@ -491,7 +491,7 @@ class TestAnimationGraph:
         assert g.current_state is s
 
     def test_update_returns_anim_update(self):
-        from slappyengine.animation.graph import AnimationGraph, AnimState, AnimUpdate
+        from pharos_engine.animation.graph import AnimationGraph, AnimState, AnimUpdate
         g = AnimationGraph()
         g.add_state(AnimState(name="idle", clip_indices=[0, 1, 2]))
         g.set_initial("idle")
@@ -500,7 +500,7 @@ class TestAnimationGraph:
         assert result.state_name == "idle"
 
     def test_frame_advances_over_time(self):
-        from slappyengine.animation.graph import AnimationGraph, AnimState
+        from pharos_engine.animation.graph import AnimationGraph, AnimState
         g = AnimationGraph()
         g.add_state(AnimState(name="run", clip_indices=[0, 1, 2, 3], fps=10.0))
         g.set_initial("run")
@@ -510,7 +510,7 @@ class TestAnimationGraph:
         assert result is not None
 
     def test_transition_fires(self):
-        from slappyengine.animation.graph import AnimationGraph, AnimState, AnimTransition
+        from pharos_engine.animation.graph import AnimationGraph, AnimState, AnimTransition
         g = AnimationGraph()
         g.add_state(AnimState(name="idle", clip_indices=[0]))
         g.add_state(AnimState(name="run", clip_indices=[1, 2]))
@@ -521,7 +521,7 @@ class TestAnimationGraph:
         assert g._current == "run"
 
     def test_loop_wraps_frames(self):
-        from slappyengine.animation.graph import AnimationGraph, AnimState
+        from pharos_engine.animation.graph import AnimationGraph, AnimState
         g = AnimationGraph()
         g.add_state(AnimState(name="walk", clip_indices=[0, 1], fps=10.0, loop=True))
         g.set_initial("walk")
@@ -531,7 +531,7 @@ class TestAnimationGraph:
         assert result is not None
 
     def test_non_loop_stops_at_last_frame(self):
-        from slappyengine.animation.graph import AnimationGraph, AnimState
+        from pharos_engine.animation.graph import AnimationGraph, AnimState
         g = AnimationGraph()
         g.add_state(AnimState(name="die", clip_indices=[0, 1, 2], fps=10.0, loop=False))
         g.set_initial("die")
@@ -548,12 +548,12 @@ class TestAnimationGraph:
 
 class TestControlPoint:
     def test_instantiates(self):
-        from slappyengine.animation.procedural import ControlPoint
+        from pharos_engine.animation.procedural import ControlPoint
         cp = ControlPoint(name="elbow", uv=(0.5, 0.3))
         assert cp is not None
 
     def test_defaults(self):
-        from slappyengine.animation.procedural import ControlPoint
+        from pharos_engine.animation.procedural import ControlPoint
         cp = ControlPoint(name="knee", uv=(0.4, 0.8))
         assert cp.parent is None
         assert cp.constraint == "free"
@@ -563,19 +563,19 @@ class TestControlPoint:
 
 class TestProceduralRig:
     def test_instantiates(self):
-        from slappyengine.animation.procedural import ProceduralRig
+        from pharos_engine.animation.procedural import ProceduralRig
         r = ProceduralRig()
         assert r is not None
 
     def test_add_point(self):
-        from slappyengine.animation.procedural import ProceduralRig, ControlPoint
+        from pharos_engine.animation.procedural import ProceduralRig, ControlPoint
         r = ProceduralRig()
         cp = ControlPoint(name="hip", uv=(0.5, 0.5))
         r.add_point(cp)
         assert "hip" in r._points
 
     def test_remove_point(self):
-        from slappyengine.animation.procedural import ProceduralRig, ControlPoint
+        from pharos_engine.animation.procedural import ProceduralRig, ControlPoint
         r = ProceduralRig()
         cp = ControlPoint(name="hip", uv=(0.5, 0.5))
         r.add_point(cp)
@@ -583,12 +583,12 @@ class TestProceduralRig:
         assert "hip" not in r._points
 
     def test_remove_nonexistent_no_crash(self):
-        from slappyengine.animation.procedural import ProceduralRig
+        from pharos_engine.animation.procedural import ProceduralRig
         r = ProceduralRig()
         r.remove_point("ghost")
 
     def test_get_chain_simple(self):
-        from slappyengine.animation.procedural import ProceduralRig, ControlPoint
+        from pharos_engine.animation.procedural import ProceduralRig, ControlPoint
         r = ProceduralRig()
         r.add_point(ControlPoint(name="hip", uv=(0.5, 0.9)))
         r.add_point(ControlPoint(name="knee", uv=(0.5, 0.7), parent="hip"))
@@ -598,7 +598,7 @@ class TestProceduralRig:
         assert names == ["hip", "knee", "ankle"]
 
     def test_solve_ik_no_crash(self):
-        from slappyengine.animation.procedural import ProceduralRig, ControlPoint
+        from pharos_engine.animation.procedural import ProceduralRig, ControlPoint
         r = ProceduralRig()
         r.add_point(ControlPoint(name="hip", uv=(0.5, 0.9)))
         r.add_point(ControlPoint(name="foot", uv=(0.5, 0.5), parent="hip"))

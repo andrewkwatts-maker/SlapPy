@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _OCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _OCHEMA_STR = str(_OCHEMA_DIR)
@@ -195,7 +195,7 @@ class TestVehicleGridBuilder:
 
 class TestHazardSystemInit:
     def _hs(self):
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         from systems.hazard_system import HazardSystem
         ts = TriggerSystem()
         hs = HazardSystem(ts)
@@ -206,14 +206,14 @@ class TestHazardSystemInit:
         hs.teardown()
 
     def test_add_boost_pad_returns_volume(self):
-        from slappyengine.trigger import TriggerVolume
+        from pharos_engine.trigger import TriggerVolume
         hs, ts = self._hs()
         vol = hs.add_boost_pad((100.0, 200.0))
         assert vol is not None
         hs.teardown()
 
     def test_add_damage_zone_returns_volume(self):
-        from slappyengine.trigger import TriggerVolume
+        from pharos_engine.trigger import TriggerVolume
         hs, ts = self._hs()
         vol = hs.add_damage_zone((50.0, 50.0))
         assert vol is not None
@@ -236,13 +236,13 @@ class TestHazardSystemInit:
 
 class TestHazardSystemOnBoost:
     def _hs(self):
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         from systems.hazard_system import HazardSystem
         ts = TriggerSystem()
         return HazardSystem(ts), ts
 
     def test_on_boost_calls_boost_method(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         hs, ts = self._hs()
         entity = MagicMock()
         entity._vphys_script = MagicMock()
@@ -252,7 +252,7 @@ class TestHazardSystemOnBoost:
         hs.teardown()
 
     def test_on_boost_fallback_scales_velocity(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         hs, ts = self._hs()
         entity = MagicMock(spec=[])  # no _vphys_script
         entity.velocity = [100.0, 50.0]
@@ -261,13 +261,13 @@ class TestHazardSystemOnBoost:
         hs.teardown()
 
     def test_on_boost_none_entity_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         hs, ts = self._hs()
         publish("Vehicle.Boost", publisher=None, amount=1.5, duration=0.8)
         hs.teardown()
 
     def test_on_boost_no_velocity_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         hs, ts = self._hs()
         entity = MagicMock(spec=[])  # no velocity
         publish("Vehicle.Boost", publisher=entity, amount=2.0, duration=0.5)
@@ -276,13 +276,13 @@ class TestHazardSystemOnBoost:
 
 class TestHazardSystemOnDamage:
     def _hs(self):
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         from systems.hazard_system import HazardSystem
         ts = TriggerSystem()
         return HazardSystem(ts), ts
 
     def test_on_damage_reduces_hull_integrity(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         hs, ts = self._hs()
         entity = MagicMock(spec=[])
         entity.hull_integrity = 1.0
@@ -292,13 +292,13 @@ class TestHazardSystemOnDamage:
         hs.teardown()
 
     def test_on_damage_none_entity_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         hs, ts = self._hs()
         publish("Vehicle.DamageZone", publisher=None, damage=0.1)
         hs.teardown()
 
     def test_on_damage_calls_deform_apply_impact(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         hs, ts = self._hs()
         entity = MagicMock()
         entity._deform = MagicMock()
@@ -308,7 +308,7 @@ class TestHazardSystemOnDamage:
         hs.teardown()
 
     def test_on_damage_clamps_to_zero(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         hs, ts = self._hs()
         entity = MagicMock(spec=[])
         entity.hull_integrity = 0.1
@@ -333,7 +333,7 @@ def _make_vehicle_for_pits(speed=0.0, integrity=0.5):
 
 class TestPitsSystemInit:
     def _ps(self):
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         from systems.pits_system import PitsSystem
         ts = TriggerSystem()
         ps = PitsSystem(ts, vehicles=[])
@@ -356,7 +356,7 @@ class TestPitsSystemInit:
 
 class TestPitsSystemEnterExit:
     def _ps(self):
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         from systems.pits_system import PitsSystem
         ts = TriggerSystem()
         ps = PitsSystem(ts, vehicles=[])
@@ -419,7 +419,7 @@ class TestPitsSystemEnterExit:
 
 class TestCoinSystem:
     def _cs(self, positions=None):
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         from systems.coin_system import CoinSystem
         ts = TriggerSystem()
         profile = MagicMock()
@@ -433,7 +433,7 @@ class TestCoinSystem:
         cs.teardown()
 
     def test_coin_enter_awards_profile(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         cs, ts, profile = self._cs()
         vol = cs._volumes[0]
         publish("Trigger.Enter.coin", volume=vol)
@@ -441,7 +441,7 @@ class TestCoinSystem:
         cs.teardown()
 
     def test_coin_enter_only_once_before_reset(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         cs, ts, profile = self._cs()
         vol = cs._volumes[0]
         publish("Trigger.Enter.coin", volume=vol)
@@ -450,7 +450,7 @@ class TestCoinSystem:
         cs.teardown()
 
     def test_reset_re_enables_coins(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         cs, ts, profile = self._cs()
         vol = cs._volumes[0]
         publish("Trigger.Enter.coin", volume=vol)

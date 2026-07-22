@@ -2,7 +2,7 @@
 
 Read-only comparison of the Nova3D C++ engine (at
 `H:\Github\Nova3D\engine\`) against the current SlapPyEngine tree
-(`H:\Github\SlapPyEngine\python\slappyengine\`). Written by HH3
+(`H:\Github\SlapPyEngine\python\pharos_engine\`). Written by HH3
 background scrum agent. The goal is to enumerate what Nova3D ships
 that SlapPyEngine does not, and to translate that delta into a
 prioritised roadmap for building a fully functioning 2D/3D engine.
@@ -62,7 +62,7 @@ pipeline** (glTF, OBJ, FBX). SlapPyEngine has zero mesh importers
 today — Nova3D uses Assimp under `engine/import/ModelImporter.cpp`
 (1381 lines) and `engine/graphics/ModelLoader.cpp` (227 lines). Adding
 `pygltflib` + `trimesh` + optional `PyFBX` behind an
-`slappyengine[assets]` extra is the P0 unlock for any 3D content
+`pharos_engine[assets]` extra is the P0 unlock for any 3D content
 pipeline.
 
 **The second biggest gap** is a **3D triangle rasterizer with
@@ -153,48 +153,48 @@ Row-per-Nova3D-subsystem, mapping to the closest SlapPyEngine surface.
 | Nova3D subsystem | SlapPyEngine equivalent | Status |
 |------------------|-------------------------|--------|
 | `accessibility/` | none | **GAP** |
-| `ai/` (NavMesh) | `python/slappyengine/ai/` (`ollama_manager.py`, `llm_client.py`, `script_gen.py`, `code_sync.py`, `_protocol.py`) — **LLM only, no NavMesh** | **PARTIAL** (different scope) |
-| `animation/` | `python/slappyengine/animation/` (`graph.py`, `procedural.py`, `video_import.py`) — **no skeletal, no blend tree** | **PARTIAL** |
-| `assets/` (asset DB) | `python/slappyengine/asset.py` (98 LoC — `Asset` class) + `python/slappyengine/assets/` + `asset_manifest.py` | **PARTIAL** — no thumbnail cache, no type registry |
-| `audio/` | `python/slappyengine/audio.py` (195 LoC) + `audio_runtime.py` | **PARTIAL** — no 3D positional, no sound bank YAML |
-| `config/` | `python/slappyengine/config.py` + YAML manifests | **WIRED** |
-| `core/` | `python/slappyengine/engine.py`, `entity.py`, `components.py`, `data_component.py`, `struct_registry.py`, `event_bus.py`, `serialize.py`, `tags.py`, `perf/` | **WIRED** — different feel (no JobSystem, no SIMD helpers) |
-| `debug/` | `python/slappyengine/ui/debug_overlay.py` + `notebook_telemetry_panel.py` | **PARTIAL** (no BVHVisualizer — because no BVH3D) |
-| `editor/` (118 files) | `python/slappyengine/ui/editor/` (~30 notebook panels + gizmo + menu bar + palette + timeline + minimap) | **WIRED** — different style (diary DPG vs docked ImGui); no PCGPanel, no AI panels, no game exporter |
-| `events/` | `python/slappyengine/event_bus.py`, `event_publisher.py` (untracked WIP), events flow through `tool_router.REGISTRY` | **PARTIAL** — no visual event graph editor |
-| `graphics/` (190 files!) | `python/slappyengine/gpu/` (18 files — `context`, `mesh`, `mesh_pipeline`, `mesh_renderer`, `render_pipeline`, `pbr_material`, `material_buffer`, `texture_manager`, `cluster_3d`, `cluster_pipeline`, `entity_renderer`, `sdf_renderer`, `sdf_extruder`, `buffer_manager`, `ibl`, `adaptive_quality`), `python/slappyengine/post_process/` (chain manifest + baker + TAA + bloom + executor), `python/slappyengine/gi/` (`cascade`, `restir`, `svgf`) | **PARTIAL** — no path tracer, no ModelLoader, no LOD manager, no Culler, no InstancedMesh, no shadow mapper (has lighting.py 1026 LoC but no CSM impl surfaced) |
+| `ai/` (NavMesh) | `python/pharos_engine/ai/` (`ollama_manager.py`, `llm_client.py`, `script_gen.py`, `code_sync.py`, `_protocol.py`) — **LLM only, no NavMesh** | **PARTIAL** (different scope) |
+| `animation/` | `python/pharos_engine/animation/` (`graph.py`, `procedural.py`, `video_import.py`) — **no skeletal, no blend tree** | **PARTIAL** |
+| `assets/` (asset DB) | `python/pharos_engine/asset.py` (98 LoC — `Asset` class) + `python/pharos_engine/assets/` + `asset_manifest.py` | **PARTIAL** — no thumbnail cache, no type registry |
+| `audio/` | `python/pharos_engine/audio.py` (195 LoC) + `audio_runtime.py` | **PARTIAL** — no 3D positional, no sound bank YAML |
+| `config/` | `python/pharos_engine/config.py` + YAML manifests | **WIRED** |
+| `core/` | `python/pharos_engine/engine.py`, `entity.py`, `components.py`, `data_component.py`, `struct_registry.py`, `event_bus.py`, `serialize.py`, `tags.py`, `perf/` | **WIRED** — different feel (no JobSystem, no SIMD helpers) |
+| `debug/` | `python/pharos_engine/ui/debug_overlay.py` + `notebook_telemetry_panel.py` | **PARTIAL** (no BVHVisualizer — because no BVH3D) |
+| `editor/` (118 files) | `python/pharos_engine/ui/editor/` (~30 notebook panels + gizmo + menu bar + palette + timeline + minimap) | **WIRED** — different style (diary DPG vs docked ImGui); no PCGPanel, no AI panels, no game exporter |
+| `events/` | `python/pharos_engine/event_bus.py`, `event_publisher.py` (untracked WIP), events flow through `tool_router.REGISTRY` | **PARTIAL** — no visual event graph editor |
+| `graphics/` (190 files!) | `python/pharos_engine/gpu/` (18 files — `context`, `mesh`, `mesh_pipeline`, `mesh_renderer`, `render_pipeline`, `pbr_material`, `material_buffer`, `texture_manager`, `cluster_3d`, `cluster_pipeline`, `entity_renderer`, `sdf_renderer`, `sdf_extruder`, `buffer_manager`, `ibl`, `adaptive_quality`), `python/pharos_engine/post_process/` (chain manifest + baker + TAA + bloom + executor), `python/pharos_engine/gi/` (`cascade`, `restir`, `svgf`) | **PARTIAL** — no path tracer, no ModelLoader, no LOD manager, no Culler, no InstancedMesh, no shadow mapper (has lighting.py 1026 LoC but no CSM impl surfaced) |
 | `import/` (Assimp) | none | **GAP** |
-| `input/` | `python/slappyengine/input/` (`_manager.py`, `action_map.py`), `python/slappyengine/input.py`, `input_provider.py` | **PARTIAL** — no gamepad, no rebinding UI |
-| `lighting/` | `python/slappyengine/lighting.py` (1026 LoC — physical lights + shadow presets), `python/slappyengine/gi/` (Radiance Cascade + ReSTIR + SVGF exist) | **WIRED** — actually the strongest single system |
-| `llm/` | `python/slappyengine/ai/ollama_manager.py`, `llm_client.py` | **WIRED** |
+| `input/` | `python/pharos_engine/input/` (`_manager.py`, `action_map.py`), `python/pharos_engine/input.py`, `input_provider.py` | **PARTIAL** — no gamepad, no rebinding UI |
+| `lighting/` | `python/pharos_engine/lighting.py` (1026 LoC — physical lights + shadow presets), `python/pharos_engine/gi/` (Radiance Cascade + ReSTIR + SVGF exist) | **WIRED** — actually the strongest single system |
+| `llm/` | `python/pharos_engine/ai/ollama_manager.py`, `llm_client.py` | **WIRED** |
 | `localization/` | none | **GAP** |
-| `materials/` (52 files) | `python/slappyengine/material/` (5 files — `graph_schema`, `map`, `node_material`), `python/slappyengine/visual_scripting/` (V5 18+ WGSL material nodes + V6 codegen), `python/slappyengine/pixel_material.py`, `pixel_struct.py` | **PARTIAL** — has WGSL emitting node graph, but no LTC tables, no radiance probe nodes, no per-pixel PBR compiler cache |
-| `math/` | `python/slappyengine/math/` (arithma-backed Formula) | **WIRED** |
+| `materials/` (52 files) | `python/pharos_engine/material/` (5 files — `graph_schema`, `map`, `node_material`), `python/pharos_engine/visual_scripting/` (V5 18+ WGSL material nodes + V6 codegen), `python/pharos_engine/pixel_material.py`, `pixel_struct.py` | **PARTIAL** — has WGSL emitting node graph, but no LTC tables, no radiance probe nodes, no per-pixel PBR compiler cache |
+| `math/` | `python/pharos_engine/math/` (arithma-backed Formula) | **WIRED** |
 | `modding/` | none (`ext/` exists but only for compat shims, not mods) | **GAP** |
-| `networking/` (Firebase) | `python/slappyengine/net/` (`discovery`, `peer`, `room`, `session`, `sync`) | **PARTIAL** — has P2P + zeroconf, no cloud provider registry, no Firebase |
-| `packaging/` | `python/slappyengine/build_gen.py`, `content_encrypt.py`, `docs_gen.py` | **PARTIAL** — no cross-platform game exporter |
-| `particles/` | `python/slappyengine/particles.py` | **PARTIAL** — no GPU particle system (has GPU compute pipeline though) |
+| `networking/` (Firebase) | `python/pharos_engine/net/` (`discovery`, `peer`, `room`, `session`, `sync`) | **PARTIAL** — has P2P + zeroconf, no cloud provider registry, no Firebase |
+| `packaging/` | `python/pharos_engine/build_gen.py`, `content_encrypt.py`, `docs_gen.py` | **PARTIAL** — no cross-platform game exporter |
+| `particles/` | `python/pharos_engine/particles.py` | **PARTIAL** — no GPU particle system (has GPU compute pipeline though) |
 | `pathfinding/` | none | **GAP** |
-| `persistence/` (SQLite / cloud) | `python/slappyengine/serialize.py`, `python/slappyengine/scenes/scene_file.py`, `autosave.py` | **PARTIAL** — YAML only, no SQLite, no cloud, no PlayerDatabase |
-| `physics/` | `python/slappyengine/dynamics/` (Rust-backed 2D), `python/slappyengine/physics/` (untracked WIP), `python/slappyengine/physics2/` (untracked WIP), `collision.py`, `collision_pixel.py` | **PARTIAL** — 2D only, no 3D rigid body, no gravity field, no trigger volume |
+| `persistence/` (SQLite / cloud) | `python/pharos_engine/serialize.py`, `python/pharos_engine/scenes/scene_file.py`, `autosave.py` | **PARTIAL** — YAML only, no SQLite, no cloud, no PlayerDatabase |
+| `physics/` | `python/pharos_engine/dynamics/` (Rust-backed 2D), `python/pharos_engine/physics/` (untracked WIP), `python/pharos_engine/physics2/` (untracked WIP), `collision.py`, `collision_pixel.py` | **PARTIAL** — 2D only, no 3D rigid body, no gravity field, no trigger volume |
 | `platform/` | Python is inherently cross-platform via wgpu | **N/A** |
-| `postprocess/` | `python/slappyengine/post_process/` — chain manifest + baker + executor + TAA + bloom | **WIRED** — strong |
-| `procedural/` | `python/slappyengine/landscape.py`, `python/slappyengine/topology/`, `python/slappyengine/zones/` | **PARTIAL** — no procedural graph editor |
-| `profiling/` | `python/slappyengine/perf/`, `python/slappyengine/telemetry/sink.py` | **PARTIAL** |
-| `reflection/` | `python/slappyengine/struct_registry.py`, `python/slappyengine/data_component.py` | **PARTIAL** — no NovaProperty, no auto-serializer, no observable |
+| `postprocess/` | `python/pharos_engine/post_process/` — chain manifest + baker + executor + TAA + bloom | **WIRED** — strong |
+| `procedural/` | `python/pharos_engine/landscape.py`, `python/pharos_engine/topology/`, `python/pharos_engine/zones/` | **PARTIAL** — no procedural graph editor |
+| `profiling/` | `python/pharos_engine/perf/`, `python/pharos_engine/telemetry/sink.py` | **PARTIAL** |
+| `reflection/` | `python/pharos_engine/struct_registry.py`, `python/pharos_engine/data_component.py` | **PARTIAL** — no NovaProperty, no auto-serializer, no observable |
 | `replay/` | none | **GAP** |
-| `save/` | `python/slappyengine/autosave.py` + `scenes/scene_file.py` | **PARTIAL** — no compression, no encryption, no cloud sync, no 100-slot manager |
-| `scene/` | `python/slappyengine/scene.py`, `scenes/`, `camera.py`, `entity.py` | **WIRED** — Scene / SceneRegistry / SceneFile YAML |
-| `scripting/` | `python/slappyengine/script.py`, `visual_scripting/` (material nodes + codegen), `python/slappyengine/actions/` | **WIRED** — Python IS the scripting language, plus visual graph |
-| `sdf/` (15 files) | `python/slappyengine/sdf_shapes.py`, `python/slappyengine/gpu/sdf_renderer.py`, `python/slappyengine/gpu/sdf_extruder.py` | **PARTIAL** — no marching cubes, no brick cache, no SDF animation |
+| `save/` | `python/pharos_engine/autosave.py` + `scenes/scene_file.py` | **PARTIAL** — no compression, no encryption, no cloud sync, no 100-slot manager |
+| `scene/` | `python/pharos_engine/scene.py`, `scenes/`, `camera.py`, `entity.py` | **WIRED** — Scene / SceneRegistry / SceneFile YAML |
+| `scripting/` | `python/pharos_engine/script.py`, `visual_scripting/` (material nodes + codegen), `python/pharos_engine/actions/` | **WIRED** — Python IS the scripting language, plus visual graph |
+| `sdf/` (15 files) | `python/pharos_engine/sdf_shapes.py`, `python/pharos_engine/gpu/sdf_renderer.py`, `python/pharos_engine/gpu/sdf_extruder.py` | **PARTIAL** — no marching cubes, no brick cache, no SDF animation |
 | `server/` | none | **GAP** |
-| `shaders/` | `python/slappyengine/ui/theme/*/library.py` (53 WGSL shaders) + `post_process/*.wgsl` + `visual_scripting/*.wgsl` | **WIRED** |
-| `spatial/` (BVH/Octree 3D) | `python/slappyengine/bvh_factory.py` (2D BVH) | **PARTIAL** — 2D only |
-| `streaming/` | `python/slappyengine/residency/` | **PARTIAL** |
-| `terrain/` | `python/slappyengine/landscape.py`, `python/slappyengine/topology/`, `python/slappyengine/thermal/` | **PARTIAL** — no SDF terrain, no voxel |
+| `shaders/` | `python/pharos_engine/ui/theme/*/library.py` (53 WGSL shaders) + `post_process/*.wgsl` + `visual_scripting/*.wgsl` | **WIRED** |
+| `spatial/` (BVH/Octree 3D) | `python/pharos_engine/bvh_factory.py` (2D BVH) | **PARTIAL** — 2D only |
+| `streaming/` | `python/pharos_engine/residency/` | **PARTIAL** |
+| `terrain/` | `python/pharos_engine/landscape.py`, `python/pharos_engine/topology/`, `python/pharos_engine/thermal/` | **PARTIAL** — no SDF terrain, no voxel |
 | `text/` | none | **GAP** |
-| `ui/` (26 files) | `python/slappyengine/ui/` (widgets, editor, theme, HUD, HTML overlay, hotkeys, project manager) | **WIRED** — but no runtime immediate-mode HUD for games |
-| `utils/` | scattered across `python/slappyengine/` root | **WIRED** |
+| `ui/` (26 files) | `python/pharos_engine/ui/` (widgets, editor, theme, HUD, HTML overlay, hotkeys, project manager) | **WIRED** — but no runtime immediate-mode HUD for games |
+| `utils/` | scattered across `python/pharos_engine/` root | **WIRED** |
 
 **Summary counts** — 12 WIRED, 20 PARTIAL, 10 GAP, 1 N/A.
 
@@ -208,26 +208,26 @@ sprint-slot estimate (1 slot = 4-8 hours of one background agent).
 
 | # | Gap | User impact | Difficulty | Effort | Landing path | Priority |
 |---|-----|-------------|------------|--------|--------------|----------|
-| 1 | **glTF / OBJ mesh importer** | Critical — no 3D content pipeline without this | Low | 2-3 slots | `python/slappyengine/importers/gltf.py` + `obj.py` + `slappyengine[assets]` extra | **MUST_HAVE** |
-| 2 | **3D triangle rasterizer draw-call loop** | Critical — wgpu plumbing exists but no scene→draw call walk | Medium | 3-5 slots | `python/slappyengine/gpu/scene_renderer.py` (walks Scene → issues drawcalls) | **MUST_HAVE** |
-| 3 | **Skeletal animation runtime** | High — no rigged character playback | Medium | 4-6 slots | `python/slappyengine/animation/skeleton.py` + `skinning.wgsl` + AnimationClip loader | **MUST_HAVE** |
-| 4 | **3D BVH / Octree** | High — 3D collision + culling needs it | Low-Medium | 2-3 slots | `python/slappyengine/spatial/` new subpackage (BVH3D + Octree + Frustum) | **MUST_HAVE** |
+| 1 | **glTF / OBJ mesh importer** | Critical — no 3D content pipeline without this | Low | 2-3 slots | `python/pharos_engine/importers/gltf.py` + `obj.py` + `pharos_engine[assets]` extra | **MUST_HAVE** |
+| 2 | **3D triangle rasterizer draw-call loop** | Critical — wgpu plumbing exists but no scene→draw call walk | Medium | 3-5 slots | `python/pharos_engine/gpu/scene_renderer.py` (walks Scene → issues drawcalls) | **MUST_HAVE** |
+| 3 | **Skeletal animation runtime** | High — no rigged character playback | Medium | 4-6 slots | `python/pharos_engine/animation/skeleton.py` + `skinning.wgsl` + AnimationClip loader | **MUST_HAVE** |
+| 4 | **3D BVH / Octree** | High — 3D collision + culling needs it | Low-Medium | 2-3 slots | `python/pharos_engine/spatial/` new subpackage (BVH3D + Octree + Frustum) | **MUST_HAVE** |
 | 5 | **Cascaded shadow maps** | High — 3D scenes look flat without | Medium | 3 slots | Extend `lighting.py` — WGSL CSM pass with 4 cascades | **MUST_HAVE** |
-| 6 | **Cross-platform game exporter** | High — user needs `slap build --target windows` | Medium | 3-4 slots | `python/slappyengine/packaging/` new subpackage + PyInstaller wrapper | **MUST_HAVE** |
-| 7 | **3D rigid body physics** | High — WIP dirs pinned, but nothing merged for 3D | Medium-High | 6-8 slots | Un-pin + finish `python/slappyengine/physics/` (untracked in tree) | **MUST_HAVE** |
-| 8 | **Gamepad input** | Medium-High — required for controller games | Low | 1-2 slots | Extend `python/slappyengine/input/_manager.py` with glfw joystick API | **MUST_HAVE** |
+| 6 | **Cross-platform game exporter** | High — user needs `slap build --target windows` | Medium | 3-4 slots | `python/pharos_engine/packaging/` new subpackage + PyInstaller wrapper | **MUST_HAVE** |
+| 7 | **3D rigid body physics** | High — WIP dirs pinned, but nothing merged for 3D | Medium-High | 6-8 slots | Un-pin + finish `python/pharos_engine/physics/` (untracked in tree) | **MUST_HAVE** |
+| 8 | **Gamepad input** | Medium-High — required for controller games | Low | 1-2 slots | Extend `python/pharos_engine/input/_manager.py` with glfw joystick API | **MUST_HAVE** |
 | 9 | **PBR material graph editor UI** | Medium — V5 nodes exist but no visual editor | Medium | 3 slots | Extend `notebook_material_graph_editor.py` — connections + preview swatch | **MUST_HAVE** |
 | 10 | **Sound bank + 3D positional audio** | Medium | Medium | 2-3 slots | Extend `audio.py` with `SoundBank` YAML + `soundfile`+`sounddevice` HRTF | **MUST_HAVE** |
-| 11 | **Runtime game HUD system (immediate-mode)** | Medium-High — editor UI ≠ runtime HUD | Medium | 3-4 slots | New `python/slappyengine/hud/` — imgui-bound or custom retained + widgets | **MUST_HAVE** |
-| 12 | **NavMesh + A\* pathfinding** | Medium — RTS + top-down games | Medium | 4 slots | `python/slappyengine/pathfinding/` new subpackage | **NICE_TO_HAVE** |
+| 11 | **Runtime game HUD system (immediate-mode)** | Medium-High — editor UI ≠ runtime HUD | Medium | 3-4 slots | New `python/pharos_engine/hud/` — imgui-bound or custom retained + widgets | **MUST_HAVE** |
+| 12 | **NavMesh + A\* pathfinding** | Medium — RTS + top-down games | Medium | 4 slots | `python/pharos_engine/pathfinding/` new subpackage | **NICE_TO_HAVE** |
 | 13 | **GPU particle system** | Medium | Medium | 3 slots | Extend `particles.py` + WGSL compute pass | **NICE_TO_HAVE** |
-| 14 | **Replay determinism harness** | Medium — deterministic recording | Medium-High | 4-5 slots | New `python/slappyengine/replay/` — pin RNG + record inputs | **NICE_TO_HAVE** |
-| 15 | **Localization / i18n** | Low-Medium | Low | 1-2 slots | New `python/slappyengine/localization/` + gettext / PO loader | **NICE_TO_HAVE** |
+| 14 | **Replay determinism harness** | Medium — deterministic recording | Medium-High | 4-5 slots | New `python/pharos_engine/replay/` — pin RNG + record inputs | **NICE_TO_HAVE** |
+| 15 | **Localization / i18n** | Low-Medium | Low | 1-2 slots | New `python/pharos_engine/localization/` + gettext / PO loader | **NICE_TO_HAVE** |
 | 16 | **Accessibility (colorblind / high contrast)** | Low-Medium | Low | 1 slot | Extend theme system with 3-4 palettes | **NICE_TO_HAVE** |
-| 17 | **Terrain (heightmap + voxel)** | Low-Medium — landscape.py exists but no heightmap loader | Medium | 3-4 slots | `python/slappyengine/terrain/` — heightmap PNG + tri strips | **NICE_TO_HAVE** |
-| 18 | **Text rendering (SDF glyphs)** | Low-Medium — needed for runtime HUD | Medium | 3 slots | `python/slappyengine/text/` — msdfgen or `freetype-py` | **NICE_TO_HAVE** |
+| 17 | **Terrain (heightmap + voxel)** | Low-Medium — landscape.py exists but no heightmap loader | Medium | 3-4 slots | `python/pharos_engine/terrain/` — heightmap PNG + tri strips | **NICE_TO_HAVE** |
+| 18 | **Text rendering (SDF glyphs)** | Low-Medium — needed for runtime HUD | Medium | 3 slots | `python/pharos_engine/text/` — msdfgen or `freetype-py` | **NICE_TO_HAVE** |
 | 19 | **Modding system** | Low — Python is already extensible via ext/ | Low | 2 slots | Extend `ext/` with mod manifest loader | **NICE_TO_HAVE** |
-| 20 | **FBX importer** | Low — glTF is the modern standard | High (`PyFBX` limited) | 3 slots | Optional — behind `slappyengine[assets-fbx]` | **SKIP** for now |
+| 20 | **FBX importer** | Low — glTF is the modern standard | High (`PyFBX` limited) | 3 slots | Optional — behind `pharos_engine[assets-fbx]` | **SKIP** for now |
 | — | Path tracer / RTX / spectral render / Radiance Cascade beyond current stub | Low — user explicitly said "no fancy pipeline" | Very High | 20+ slots | — | **SKIP** |
 | — | SDF marching cubes + brick cache + SDF animation | Low — user explicitly said "no fancy pipeline" | Very High | 15+ slots | — | **SKIP** |
 | — | Firebase cloud persistence | Low — SlapPyEngine is offline-first | Medium | 4 slots | Optional | **SKIP** |
@@ -319,7 +319,7 @@ which supports 40+ formats. Python has three viable options.
 * **Animations**: keyframe channels (translation / rotation / scale /
   weights) with linear / step / cubic interpolation — feeds the
   skeletal runtime.
-* **Effort**: 2 sprint slots. `python/slappyengine/importers/gltf.py`
+* **Effort**: 2 sprint slots. `python/pharos_engine/importers/gltf.py`
   ≈ 300-500 LoC.
 
 ### 6.2 OBJ (RECOMMENDED as second port)
@@ -328,7 +328,7 @@ which supports 40+ formats. Python has three viable options.
   PLY support) OR `PyWavefront` (lighter, MIT).
 * **Coverage**: static meshes only (no animation, no skinning). Popular
   for CAD imports + free asset packs.
-* **Effort**: 1 sprint slot. `python/slappyengine/importers/obj.py`
+* **Effort**: 1 sprint slot. `python/pharos_engine/importers/obj.py`
   ≈ 150-250 LoC. Recommend `trimesh` — bigger surface, handles STL /
   PLY / DAE for free.
 
@@ -360,12 +360,12 @@ formats that need special handling:
   **NICE_TO_HAVE.**
 
 For MVP, PNG + JPEG via Pillow is enough. Add `imageio` under
-`slappyengine[assets]` extra.
+`pharos_engine[assets]` extra.
 
 ### 6.5 Vendor vs optional dep decision
 
 Recommendation: **all importers land as optional deps under a single
-`slappyengine[assets]` extra**. Rationale:
+`pharos_engine[assets]` extra**. Rationale:
 
 * Keeps the core wheel small (< 800 KiB currently — assets deps would
   triple it).
@@ -397,24 +397,24 @@ User's ask:
 
 **Current state** — SlapPyEngine has a mature editor UI stack:
 
-* `python/slappyengine/ui/theme/` — 3 declarative theme libraries (53
+* `python/pharos_engine/ui/theme/` — 3 declarative theme libraries (53
   WGSL shaders across washi_tape / page_linings / edge_strokes) +
   theme baker + shader lint + batch validator.
-* `python/slappyengine/ui/widgets/` — custom widget primitives
+* `python/pharos_engine/ui/widgets/` — custom widget primitives
   (GlitterProgressBar / RibbonTab / PaperClipAttachment / WashiTapeDivider
   / SketchButton / InkStampBadge — 6 primitives from X7).
-* `python/slappyengine/ui/editor/` — ~30 notebook panels
+* `python/pharos_engine/ui/editor/` — ~30 notebook panels
   (DiaryShell / StartupPrompt / ProjectRegistry / SnapOverlay /
   GizmoOverlay / MessageLog / PrefabMenu / AssetInspector /
   ToastManager / CommandPalette / AutosavePanel / HotkeyHelp /
   TelemetryDashboard / TimelineEditor / MenuBar / PPPreviewPanel /
   Minimap / MaterialGraphBridge / NodeEditor + 10 Nova3D-legacy).
-* `python/slappyengine/ui/hud_widgets.py` — HUD helpers (partial).
-* `python/slappyengine/ui/html_overlay.py` — pywebview-based HTML
+* `python/pharos_engine/ui/hud_widgets.py` — HUD helpers (partial).
+* `python/pharos_engine/ui/html_overlay.py` — pywebview-based HTML
   overlay (mostly for the project manager).
 
 **All DPG-bound**. The `dearpygui>=1.11` dep sits under
-`slappyengine[editor]` extra. This is fine for **editor** but wrong
+`pharos_engine[editor]` extra. This is fine for **editor** but wrong
 for **game runtime**:
 
 1. DPG is a heavy dep (~15 MB) — bloats shipped games.
@@ -428,12 +428,12 @@ for **game runtime**:
 
 ### 7.1 Editor UI (unchanged)
 
-Stay on DPG under `slappyengine[editor]`. Everything under `ui/editor/`
+Stay on DPG under `pharos_engine[editor]`. Everything under `ui/editor/`
 already works and doesn't need to change.
 
 ### 7.2 Runtime HUD (new)
 
-New `python/slappyengine/hud/` subpackage:
+New `python/pharos_engine/hud/` subpackage:
 
 * **Immediate-mode** — pygame-style `draw_rect` / `draw_text` / `draw_image`
   per-frame API backed by wgpu triangles.
@@ -497,7 +497,7 @@ physics3d = [
 
 # Meta: everything
 all = [
-    "slappy-engine[editor,video,audio,ai,math,network,assets,hud]",
+    "pharos-engine[editor,video,audio,ai,math,network,assets,hud]",
 ]
 ```
 
@@ -505,10 +505,10 @@ all = [
 
 | Use case | Command | Wheel weight |
 |----------|---------|--------------|
-| Headless server / CI | `pip install slappy-engine` | ~13 MB (wgpu core) |
-| Game runtime with HUD | `pip install slappy-engine[hud]` | ~15 MB |
-| Editor + assets pipeline | `pip install slappy-engine[editor,assets]` | ~50 MB |
-| Full development | `pip install slappy-engine[all]` | ~70 MB |
+| Headless server / CI | `pip install pharos-engine` | ~13 MB (wgpu core) |
+| Game runtime with HUD | `pip install pharos-engine[hud]` | ~15 MB |
+| Editor + assets pipeline | `pip install pharos-engine[editor,assets]` | ~50 MB |
+| Full development | `pip install pharos-engine[all]` | ~70 MB |
 
 The core stays lean; heavy deps opt-in per use case.
 
@@ -519,20 +519,20 @@ The core stays lean; heavy deps opt-in per use case.
 Ordered by (unlock chain × user-stated priority). Each item cites the
 gap-ranking row from §4.
 
-1. **[Gap #1] glTF importer** — `python/slappyengine/importers/gltf.py`
+1. **[Gap #1] glTF importer** — `python/pharos_engine/importers/gltf.py`
    using `pygltflib`. Emit `GpuMesh` + `PBRMaterial` + optional
    `Skeleton` + `AnimationClip` structs. 2-3 slots. **P0.**
 2. **[Gap #1] OBJ importer** — same subpackage, `trimesh`-backed.
    Static meshes only. 1 slot. **P0.**
 3. **[Gap #2] Scene→drawcall walker** —
-   `python/slappyengine/gpu/scene_renderer.py`. Walk `Scene`, filter
+   `python/pharos_engine/gpu/scene_renderer.py`. Walk `Scene`, filter
    visible entities, sort by material, submit indexed drawcalls
    through the existing `mesh_pipeline.py`. 3 slots. **P0.**
 4. **[Gap #4] 3D BVH + frustum culling** — new
-   `python/slappyengine/spatial/` subpackage. Extend `bvh_factory.py`
+   `python/pharos_engine/spatial/` subpackage. Extend `bvh_factory.py`
    from 2D → 3D. 2-3 slots. **P0.**
 5. **[Gap #6] Cross-platform game exporter** — extend `build_gen.py`
-   into `python/slappyengine/packaging/` with PyInstaller wrapper +
+   into `python/pharos_engine/packaging/` with PyInstaller wrapper +
    `slap build --target windows|linux|macos` CLI. 3 slots. **P0.**
 6. **[Gap #3] Skeletal animation runtime** — `animation/skeleton.py` +
    `skinning.wgsl` bone-palette buffer + `AnimationClip.sample()` +
@@ -541,13 +541,13 @@ gap-ranking row from §4.
    split shadow map framebuffer + `csm.wgsl` fragment sampler. 3 slots.
    **P1.**
 8. **[Gap #7] 3D rigid body physics** — un-pin the untracked
-   `python/slappyengine/physics/` tree, stage / review / commit, then
+   `python/pharos_engine/physics/` tree, stage / review / commit, then
    add 3D `RigidBody3D` component + Rust kernel port. 6-8 slots. **P1.**
 9. **[Gap #8] Gamepad input** — extend `input/_manager.py` with glfw
    joystick polling + `action_map.py` gamepad bindings. 1-2 slots. **P1.**
-10. **[Gap #11] Runtime HUD subsystem** — new `python/slappyengine/hud/`
+10. **[Gap #11] Runtime HUD subsystem** — new `python/pharos_engine/hud/`
     with imgui-backed immediate-mode API + theme bridge. Ships behind
-    `slappyengine[hud]`. 3-4 slots. **P2.**
+    `pharos_engine[hud]`. 3-4 slots. **P2.**
 
 **Runway estimate** — items 1-5 (P0) = 11-14 slots ≈ 1.5-2 weeks of
 7-agent parallel batches. Items 6-8 (P1) = 12-16 slots ≈ another 1.5
@@ -573,13 +573,13 @@ already deprioritised (path tracing, RTX, spectral, SDF brick cache).
 * `H:\Github\SlapPyEngine\docs\engine_feature_map_2026_07_04.md` —
   296-row action-level feature map.
 * `H:\Github\SlapPyEngine\pyproject.toml` — 7 current extras.
-* `H:\Github\SlapPyEngine\python\slappyengine\gpu\` — 18-file 3D
+* `H:\Github\SlapPyEngine\python\pharos_engine\gpu\` — 18-file 3D
   rendering pipeline (wgpu-backed, PBR-ready).
-* `H:\Github\SlapPyEngine\python\slappyengine\lighting.py` — 1026 LoC
+* `H:\Github\SlapPyEngine\python\pharos_engine\lighting.py` — 1026 LoC
   physical lights + shadow presets.
-* `H:\Github\SlapPyEngine\python\slappyengine\gi\` — Radiance Cascade +
+* `H:\Github\SlapPyEngine\python\pharos_engine\gi\` — Radiance Cascade +
   ReSTIR + SVGF (stubs surfaced).
-* `H:\Github\SlapPyEngine\python\slappyengine\material\` +
+* `H:\Github\SlapPyEngine\python\pharos_engine\material\` +
   `visual_scripting\material_nodes.py` — WGSL-emitting node graph.
 
 ---

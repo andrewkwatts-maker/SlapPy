@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.physics.video`.
+"""Tests for :mod:`pharos_engine.physics.video`.
 
 Detection-path only - we never actually attempt to pip install during tests.
 """
@@ -17,8 +17,8 @@ _PYTHON_DIR = Path(__file__).resolve().parents[1]
 if str(_PYTHON_DIR) not in sys.path:
     sys.path.insert(0, str(_PYTHON_DIR))
 
-from slappyengine.physics import video as video_mod  # noqa: E402
-from slappyengine.physics.video import (  # noqa: E402
+from pharos_engine.physics import video as video_mod  # noqa: E402
+from pharos_engine.physics.video import (  # noqa: E402
     FALLBACK_WARNING,
     INSTALL_HINT,
     VideoWriter,

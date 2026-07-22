@@ -20,7 +20,7 @@ import struct
 
 import pytest
 
-from slappyengine.post_process._ubo import (
+from pharos_engine.post_process._ubo import (
     UboField,
     compute_offsets,
     pack_layout_str,
@@ -195,7 +195,7 @@ def test_compute_offsets_unknown_dtype_raises() -> None:
 
 def test_bloom_pass_parity_with_legacy_layout() -> None:
     """BloomPass.params_to_bytes must match the pre-refactor ``"<ffff"`` blob."""
-    from slappyengine.post_process.bloom import BloomPass
+    from pharos_engine.post_process.bloom import BloomPass
 
     bp = BloomPass(threshold=0.7, knee=0.3, intensity=1.5)
     new_bytes = bp.params_to_bytes()
@@ -206,7 +206,7 @@ def test_bloom_pass_parity_with_legacy_layout() -> None:
 
 def test_bloom_pass_make_pass_raw_bytes_unchanged() -> None:
     """End-to-end: the PostProcessPass record holds the legacy bytes."""
-    from slappyengine.post_process.bloom import BloomPass
+    from pharos_engine.post_process.bloom import BloomPass
 
     pp = BloomPass(threshold=1.0, knee=0.2, intensity=1.0).make_pass()
     assert pp.raw_params_bytes == struct.pack("<ffff", 1.0, 0.2, 1.0, 0.0)
@@ -214,7 +214,7 @@ def test_bloom_pass_make_pass_raw_bytes_unchanged() -> None:
 
 def test_motion_blur_pass_parity_with_legacy_layout() -> None:
     """MotionBlurPass UBO bytes must match the pre-refactor ``"<IIIfIIII"``."""
-    from slappyengine.post_process.motion_blur import MotionBlurPass
+    from pharos_engine.post_process.motion_blur import MotionBlurPass
 
     mb = MotionBlurPass(sample_count=12, strength=1.5)
     pp = mb.make_pass(scene_tex=None, velocity_tex=None)
@@ -228,7 +228,7 @@ def test_motion_blur_pass_parity_with_legacy_layout() -> None:
 
 def test_motion_blur_width_height_at_offsets_0_4() -> None:
     """The runtime-splice contract: width@0, height@4 are pre-zeroed."""
-    from slappyengine.post_process.motion_blur import MotionBlurPass
+    from pharos_engine.post_process.motion_blur import MotionBlurPass
 
     pp = MotionBlurPass().make_pass(scene_tex=None, velocity_tex=None)
     assert pp.raw_params_bytes[0:8] == struct.pack("<II", 0, 0)
@@ -236,7 +236,7 @@ def test_motion_blur_width_height_at_offsets_0_4() -> None:
 
 def test_dof_pass_parity_with_legacy_layout() -> None:
     """DofPass UBO bytes must match the pre-refactor ``"<IIfffIII"``."""
-    from slappyengine.post_process.dof import DofPass
+    from pharos_engine.post_process.dof import DofPass
 
     dp = DofPass(
         focal_distance=0.4,
@@ -255,7 +255,7 @@ def test_dof_pass_parity_with_legacy_layout() -> None:
 
 def test_dof_width_height_at_offsets_0_4() -> None:
     """The runtime-splice contract: DoF also has width@0, height@4."""
-    from slappyengine.post_process.dof import DofPass
+    from pharos_engine.post_process.dof import DofPass
 
     pp = DofPass().make_pass(scene_tex=None, depth_tex=None)
     assert pp.raw_params_bytes[0:8] == struct.pack("<II", 0, 0)

@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.hud_bridge` (MM2 sprint).
+"""Tests for :mod:`pharos_engine.hud_bridge` (MM2 sprint).
 
 Pins the following behaviours end-to-end:
 
@@ -17,22 +17,22 @@ from __future__ import annotations
 
 import pytest
 
-import slappyengine
-from slappyengine.hud_bridge import (
+import pharos_engine
+from pharos_engine.hud_bridge import (
     _HUDStubCamera2D,
     _HUDStubRenderer,
     default_game_hud_widgets,
     mount_hud,
     unmount_hud,
 )
-from slappyengine.ui.runtime.hud_kit import (
+from pharos_engine.ui.runtime.hud_kit import (
     AmmoCounter,
     Compass,
     HealthBar,
     StaminaBar,
 )
-from slappyengine.ui.runtime.hud_kit_extra import Crosshair
-from slappyengine.ui.runtime.hud_overlay import HUDOverlay
+from pharos_engine.ui.runtime.hud_kit_extra import Crosshair
+from pharos_engine.ui.runtime.hud_overlay import HUDOverlay
 
 
 # ---------------------------------------------------------------------------
@@ -40,15 +40,15 @@ from slappyengine.ui.runtime.hud_overlay import HUDOverlay
 # ---------------------------------------------------------------------------
 
 
-def _headless_app() -> slappyengine.App:
-    cfg = slappyengine.AppConfig(
+def _headless_app() -> pharos_engine.App:
+    cfg = pharos_engine.AppConfig(
         enable_gpu=False,
         renderer_backend="stub",
         enable_editor=False,
         enable_telemetry=False,
         enable_audio=False,
     )
-    return slappyengine.App(config=cfg)
+    return pharos_engine.App(config=cfg)
 
 
 @pytest.fixture

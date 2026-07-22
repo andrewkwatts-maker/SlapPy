@@ -1,4 +1,4 @@
-"""Tests for slappyengine.asset_import (HH5).
+"""Tests for pharos_engine.asset_import (HH5).
 
 Covers the dispatcher, obj / texture importers, soft-import behaviour
 for gltf, and stub behaviour for fbx/ply/stl.
@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from slappyengine.asset_import import (
+from pharos_engine.asset_import import (
     AssetImportDispatcher,
     ImportDependencyError,
     ImportResult,
@@ -29,7 +29,7 @@ from slappyengine.asset_import import (
     load_model,
     load_texture,
 )
-from slappyengine.asset_import.samples import TRIANGLE_OBJ
+from pharos_engine.asset_import.samples import TRIANGLE_OBJ
 
 
 # ---------------------------------------------------------------------------
@@ -474,38 +474,38 @@ def test_import_gltf_dispatch_dispatcher(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_top_level_load_model_export():
-    """slappyengine.load_model should exist and delegate correctly."""
-    import slappyengine
-    handle = slappyengine.load_model(TRIANGLE_OBJ)
+    """pharos_engine.load_model should exist and delegate correctly."""
+    import pharos_engine
+    handle = pharos_engine.load_model(TRIANGLE_OBJ)
     assert handle is not None
 
 
 def test_top_level_load_texture_export(tmp_path):
-    """slappyengine.load_texture should exist and delegate correctly.
+    """pharos_engine.load_texture should exist and delegate correctly.
 
     HH1's App-level load_texture returns a TextureHandle wrapper; HH5's
     dispatcher-level import_texture returns TextureData. Both surfaces
-    co-exist; users pick which they want. The top-level slappyengine
+    co-exist; users pick which they want. The top-level pharos_engine
     shim currently exposes HH1's TextureHandle (registered first).
     """
-    import slappyengine
+    import pharos_engine
     p = tmp_path / "tlt.png"
     _write_png(p, 4, 4)
-    tex = slappyengine.load_texture(p)
+    tex = pharos_engine.load_texture(p)
     # Accept either surface (HH1 TextureHandle or HH5 TextureData).
     assert tex is not None
     assert hasattr(tex, "path") or hasattr(tex, "pixels")
 
 
 def test_top_level_import_asset_export():
-    import slappyengine
-    r = slappyengine.import_asset(TRIANGLE_OBJ)
+    import pharos_engine
+    r = pharos_engine.import_asset(TRIANGLE_OBJ)
     assert isinstance(r, ImportResult)
 
 
 def test_top_level_dispatcher_class_export():
-    import slappyengine
-    d = slappyengine.AssetImportDispatcher()
+    import pharos_engine
+    d = pharos_engine.AssetImportDispatcher()
     assert d.classify("x.obj") == "mesh"
 
 

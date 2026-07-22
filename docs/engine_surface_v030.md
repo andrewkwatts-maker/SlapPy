@@ -1,13 +1,13 @@
 # SlapPyEngine v0.3 — Engine Surface Reference
 
-> Auto-generated from runtime introspection of `slappyengine.__all__` and the
-> `_subpackages` set declared in `python/slappyengine/__init__.py`.
+> Auto-generated from runtime introspection of `pharos_engine.__all__` and the
+> `_subpackages` set declared in `python/pharos_engine/__init__.py`.
 > **Do not hand-edit.** Re-run `python scripts/gen_engine_surface_doc.py` to
 > refresh after surface changes.
 
 v0.3 is the first "Rust engine, Python wrapper" release. Hot paths are
 native; Python is glue, ergonomics, and config. Ships on PyPI as
-`slappy-engine`.
+`pharos-engine`.
 
 * Engine version (runtime): `0.3.0b0`
 * Native `_core` available: `True`
@@ -38,9 +38,9 @@ after the NN6 pass (2026-07-06). Delta since NN6:
 * `World3D` gained raycast + sweep + BVH + debug helpers
   (NN4 / OO2 / QQ7): `raycast`, `sweep_aabb`, `RaycastHit`,
   `SweepHit`, `build_bvh`, `draw_debug`, `debug_stats`. These live on
-  `slappyengine.gpu` / render-side objects and are surfaced through
+  `pharos_engine.gpu` / render-side objects and are surfaced through
   `App.spawn_camera(...).world` in application code — not directly in
-  `slappyengine.__all__`.
+  `pharos_engine.__all__`.
 
 Gate #2 verdict: **GREEN** — the generator ran clean, produced
 9 passing tripwire tests
@@ -71,9 +71,9 @@ Introspected via `dir(App)` at TT5-time:
 | `diagnostics_report` | SS6 | Save Markdown diagnostics report. |
 
 
-## Top-level surface (`import slappyengine`)
+## Top-level surface (`import pharos_engine`)
 
-Every name below is reachable as `slappyengine.<Name>`. Module column is relative to `slappyengine.`. Signatures shown where introspectable.
+Every name below is reachable as `pharos_engine.<Name>`. Module column is relative to `pharos_engine.`. Signatures shown where introspectable.
 
 ### Core (entity / scene / engine)
 
@@ -259,7 +259,7 @@ Every name below is reachable as `slappyengine.<Name>`. Module column is relativ
 | `BlurPass` | function | `(top-level)` | `(radius: 'int' = 2)` | Return a :class:`PostProcessPass` configured for blur. |
 | `CameraHandle` | dataclass | `app` | `(position: 'tuple[float, float, float]' = (0.0, 0.0, 5.0), look_at: 'tuple[float, float...` | Active-camera handle. |
 | `DiagnosticEvent` | dataclass | `diagnostics` | `(level: 'str', subsystem: 'str', message: 'str', timestamp: 'float', exc_info: 'Optiona...` | One captured logging record, distilled for HUD / tooling display. |
-| `DiagnosticsCollector` | class | `diagnostics` | `(max_events: 'int' = 500, min_level: 'str' = 'WARNING') -> 'None'` | Rolling-buffer aggregator for ``slappyengine.*`` log records. |
+| `DiagnosticsCollector` | class | `diagnostics` | `(max_events: 'int' = 500, min_level: 'str' = 'WARNING') -> 'None'` | Rolling-buffer aggregator for ``pharos_engine.*`` log records. |
 | `HAS_NATIVE` | constant |  |  | Returns True when the argument is true, False otherwise. |
 | `LightHandle` | dataclass | `app` | `(position: 'tuple[float, float, float]' = (0.0, 0.0, 0.0), color: 'tuple[float, float, ...` | Spawned light entity handle. |
 | `ModelHandle` | dataclass | `app` | `(path: 'str' = '', position: 'tuple[float, float, float]' = (0.0, 0.0, 0.0), rotation: ...` | Mutable transform + trace log for a loaded model. |
@@ -273,9 +273,9 @@ Every name below is reachable as `slappyengine.<Name>`. Module column is relativ
 
 ## Subpackages
 
-These are the modules exposed via `slappyengine.__getattr__` — accessing `slappyengine.<name>` lazy-imports them. Each row lists the public attributes currently exposed by the subpackage and its inner modules.
+These are the modules exposed via `pharos_engine.__getattr__` — accessing `pharos_engine.<name>` lazy-imports them. Each row lists the public attributes currently exposed by the subpackage and its inner modules.
 
-### `slappyengine.ai`
+### `pharos_engine.ai`
 
 AI subpackage — lazy-loaded (requires [ai] extra: httpx).
 
@@ -283,7 +283,7 @@ AI subpackage — lazy-loaded (requires [ai] extra: httpx).
 
 **Inner modules:** `_protocol`, `code_sync`, `llm_client`, `ollama_manager`, `script_gen`
 
-### `slappyengine.animation`
+### `pharos_engine.animation`
 
 Animation subpackage — lazy-loaded.
 
@@ -291,27 +291,27 @@ Animation subpackage — lazy-loaded.
 
 **Inner modules:** `clip`, `graph`, `procedural`, `skeleton_runtime`, `skinner`, `video_import`
 
-### `slappyengine.asset_import`
+### `pharos_engine.asset_import`
 
-slappyengine.asset_import — 3D-asset / texture importer subpackage.
+pharos_engine.asset_import — 3D-asset / texture importer subpackage.
 
 **Public attributes:** `AssetImportDispatcher`, `ImportDependencyError`, `ImportResult`, `MtlMaterialDef`, `Skeleton`, `SkeletonNode`, `SkinnedMeshData`, `TextureData`, `cubemap_importer`, `dispatcher`, `gltf_importer`, `import_asset`, `import_cubemap`, `import_fbx`, `import_gltf`, `import_hdr_cubemap`, `import_obj`, `import_obj_with_materials`, `import_ply`, `import_result`, `import_stl`, `import_texture`, `load_model`, `load_texture`, `mtl_resolver`, `mtl_to_material`, `obj_importer`, `parse_mtl`, `resolve_mtl_references`, `skinned_mesh`, `stub_importer`, `texture_importer`
 
 **Inner modules:** `cubemap_importer`, `dispatcher`, `gltf_importer`, `import_result`, `mtl_resolver`, `obj_importer`, `samples`, `skinned_mesh`, `stub_importer`, `texture_importer`
 
-### `slappyengine.assets`
+### `pharos_engine.assets`
 
 **Public attributes:** `database`
 
 **Inner modules:** `_validation`, `database`
 
-### `slappyengine.audio_runtime`
+### `pharos_engine.audio_runtime`
 
 audio_runtime — internal plumbing around the `sounddevice` backend.
 
 **Public attributes:** `Any`, `AudioBackend`, `Protocol`, `get_backend`, `logging`, `np`
 
-### `slappyengine.compute`
+### `pharos_engine.compute`
 
 Compute subpackage — lazy-loaded to avoid eager wgpu/numpy imports.
 
@@ -319,7 +319,7 @@ Compute subpackage — lazy-loaded to avoid eager wgpu/numpy imports.
 
 **Inner modules:** `_protocol`, `_validation`, `asset_compute`, `ast_compiler`, `effect`, `hull`, `library`, `mutator`, `pipeline`, `readback`, `shader_cache`, `spatial`, `stats`, `wgsl_chunks`
 
-### `slappyengine.dynamics`
+### `pharos_engine.dynamics`
 
 Unified dynamics primitives layered on top of the XPBD substrate.
 
@@ -327,7 +327,7 @@ Unified dynamics primitives layered on top of the XPBD substrate.
 
 **Inner modules:** `_validation`, `body`, `humanoid`, `ik`, `joint`, `material`, `motor`, `ragdoll`, `rope`, `serialize`, `spring`, `world`
 
-### `slappyengine.ext`
+### `pharos_engine.ext`
 
 SlapPyEngine.ext — optional extension modules.
 
@@ -335,7 +335,7 @@ SlapPyEngine.ext — optional extension modules.
 
 **Inner modules:** `ai`, `angle_sprite`, `animation`, `fluid_sim`, `input`, `iso`, `lighting`, `net`, `split_screen`, `ui`
 
-### `slappyengine.gpu`
+### `pharos_engine.gpu`
 
 GPU subpackage — lazy-loaded to avoid eager wgpu imports.
 
@@ -343,7 +343,7 @@ GPU subpackage — lazy-loaded to avoid eager wgpu imports.
 
 **Inner modules:** `_validation`, `adaptive_quality`, `buffer_manager`, `cluster_3d`, `cluster_pipeline`, `context`, `entity_renderer`, `ibl`, `ibl_prefilter`, `material_buffer`, `mesh`, `mesh_pipeline`, `mesh_renderer`, `pbr_material`, `render_pipeline`, `sdf_extruder`, `sdf_renderer`, `texture_manager`
 
-### `slappyengine.input`
+### `pharos_engine.input`
 
 SlapPyEngine.input
 
@@ -351,7 +351,7 @@ SlapPyEngine.input
 
 **Inner modules:** `_manager`, `_manager_validation`, `_validation`, `action_map`
 
-### `slappyengine.iso`
+### `pharos_engine.iso`
 
 SlapPyEngine.iso — Isometric 2D-grid-with-Z rendering subsystem.
 
@@ -359,7 +359,7 @@ SlapPyEngine.iso — Isometric 2D-grid-with-Z rendering subsystem.
 
 **Inner modules:** `_validation`, `combat`, `iso_camera`, `iso_entity`, `iso_grid`, `iso_scene`, `projection`
 
-### `slappyengine.material`
+### `pharos_engine.material`
 
 Material subpackage — lazy-loaded.
 
@@ -367,15 +367,15 @@ Material subpackage — lazy-loaded.
 
 **Inner modules:** `_node_validation`, `_protocol`, `graph_schema`, `map`, `node_material`
 
-### `slappyengine.math`
+### `pharos_engine.math`
 
-slappyengine.math — Symbolic + numeric formula evaluation.
+pharos_engine.math — Symbolic + numeric formula evaluation.
 
 **Public attributes:** `AnimationCurve`, `Bezier`, `Catmull`, `Expression`, `Formula`, `Integer`, `Keyframe`, `Variable`, `Vec2`, `Vec3`, `Vec4`, `compile_formula`, `curves`, `ease`, `evaluate`, `formula`, `vector`
 
 **Inner modules:** `_validation`, `curves`, `formula`, `vector`
 
-### `slappyengine.modules`
+### `pharos_engine.modules`
 
 Modules subpackage — lazy-loaded.
 
@@ -383,7 +383,7 @@ Modules subpackage — lazy-loaded.
 
 **Inner modules:** `fluid_params`, `health`, `physics`, `pixel_physics`
 
-### `slappyengine.numerics`
+### `pharos_engine.numerics`
 
 Generic numerical primitives.
 
@@ -391,7 +391,7 @@ Generic numerical primitives.
 
 **Inner modules:** `_validation`
 
-### `slappyengine.post_process`
+### `pharos_engine.post_process`
 
 Post-process subpackage — lazy-loaded to avoid eager wgpu imports.
 
@@ -399,15 +399,15 @@ Post-process subpackage — lazy-loaded to avoid eager wgpu imports.
 
 **Inner modules:** `_pass_base`, `_protocol`, `_ubo`, `_validation`, `auto_exposure`, `bloom`, `chain`, `chain_baker`, `chain_manifest`, `contact_shadows`, `dof`, `executor`, `gtao`, `motion_blur`, `outline`, `preset_chains`, `shadow_csm`, `ssr`, `taa`, `tonemap`, `vignette`, `volumetric_fog`
 
-### `slappyengine.projects`
+### `pharos_engine.projects`
 
-slappyengine.projects — Nova3D-style multi-project management.
+pharos_engine.projects — Nova3D-style multi-project management.
 
 **Public attributes:** `PROJECT_FILE_NAME`, `Project`, `ProjectFormatError`, `ProjectMetadata`, `ProjectRegistry`, `find_project_root`, `format`, `get_default_registry`, `is_project_dir`, `project`, `read_project`, `registry`, `scaffold_project`, `scaffolding`, `write_project`
 
 **Inner modules:** `format`, `project`, `registry`, `scaffolding`
 
-### `slappyengine.residency`
+### `pharos_engine.residency`
 
 Residency subpackage — lazy-loaded to avoid eager imports.
 
@@ -415,23 +415,23 @@ Residency subpackage — lazy-loaded to avoid eager imports.
 
 **Inner modules:** `_validation`, `compression`, `manager`, `slap_format`
 
-### `slappyengine.telemetry`
+### `pharos_engine.telemetry`
 
-slappyengine.telemetry
+pharos_engine.telemetry
 
 **Public attributes:** `Any`, `Callable`, `Deque`, `Dict`, `EventEmitterProtocol`, `EventSubscriberProtocol`, `List`, `Optional`, `TelemetryEvent`, `Tuple`, `clear_history`, `dataclass`, `deque`, `emit`, `enable_pattern_index`, `field`, `fnmatch`, `get_event_history`, `is_pattern_index_enabled`, `set_history_capacity`, `subscribe`, `threading`, `time`, `unsubscribe`, `validate_bool`, `validate_callable`, `validate_non_negative_int`, `validate_positive_int`, `validate_str`
 
 **Inner modules:** `_protocol`, `_validation`, `sink`
 
-### `slappyengine.testing`
+### `pharos_engine.testing`
 
-slappyengine.testing — visual regression harness.
+pharos_engine.testing — visual regression harness.
 
 **Public attributes:** `Any`, `BASELINES_DIR`, `DIFF_DIR`, `Path`, `assert_scene_matches`, `diff_pngs`, `logging`, `np`, `render_scene_to_png`, `validate_baseline_name`, `validate_non_negative_float`, `validate_non_negative_int`, `validate_pathlike`, `validate_positive_int`, `validate_tolerance`
 
 **Inner modules:** `_validation`
 
-### `slappyengine.thermal`
+### `pharos_engine.thermal`
 
 Heat diffusion + pairwise heat exchange — Phase B public surface.
 
@@ -439,13 +439,13 @@ Heat diffusion + pairwise heat exchange — Phase B public surface.
 
 **Inner modules:** `_protocol`, `_validation`
 
-### `slappyengine.tools`
+### `pharos_engine.tools`
 
 **Public attributes:** _(none exposed at package level)_
 
 **Inner modules:** `_sprite_audit_validation`, `audio_tools`, `gen_placeholders`, `sprite_audit`, `sprite_tools`, `texture_tools`, `track_tools`, `video`
 
-### `slappyengine.ui`
+### `pharos_engine.ui`
 
 UI subpackage — lazy-loaded to avoid eager numpy/wgpu imports.
 
@@ -453,7 +453,7 @@ UI subpackage — lazy-loaded to avoid eager numpy/wgpu imports.
 
 **Inner modules:** `debug_overlay`, `editor`, `hotkey_conflicts`, `hotkey_remap`, `html_overlay`, `hud_widgets`, `plugin_registry`, `plugin_samples`, `project_manager`, `runtime`, `scene_ui`, `theme`, `user_overrides`, `widgets`
 
-### `slappyengine.visual_scripting`
+### `pharos_engine.visual_scripting`
 
 Visual scripting — graph data model + Python code generation.
 
@@ -461,9 +461,9 @@ Visual scripting — graph data model + Python code generation.
 
 **Inner modules:** `codegen`, `codegen_python`, `golden_utils`, `graph`, `material_nodes`, `node`, `palette`
 
-### `slappyengine.zones`
+### `pharos_engine.zones`
 
-slappyengine.zones — Generic zone primitives.
+pharos_engine.zones — Generic zone primitives.
 
 **Public attributes:** `Any`, `Callable`, `EnterExitCallback`, `EntityId`, `Hashable`, `Iterable`, `Position`, `RectZone`, `ThresholdCallback`, `ThresholdZone`, `ZoneManager`, `ZoneProtocol`, `dataclasses`, `validate_finite_float`, `validate_non_negative_float`, `validate_positive_float`
 
@@ -478,8 +478,8 @@ slappyengine.zones — Generic zone primitives.
 
 ### Beta (may evolve)
 
-- Anything inside a subpackage that is **not** re-exported at the top level. Subpackage internals may move between point releases; pin a specific `slappy-engine` version if you rely on them directly.
-- `slappyengine.ext.*` — back-compat shim namespace; superseded by the top-level lazy exports.
+- Anything inside a subpackage that is **not** re-exported at the top level. Subpackage internals may move between point releases; pin a specific `pharos-engine` version if you rely on them directly.
+- `pharos_engine.ext.*` — back-compat shim namespace; superseded by the top-level lazy exports.
 
 ### Deprecated (kept for back-compat, will be removed)
 
@@ -488,7 +488,7 @@ slappyengine.zones — Generic zone primitives.
 ## Getting started
 
 ```python
-import slappyengine as sle
+import pharos_engine as sle
 
 engine = sle.Engine(title="My Game", width=640, height=360)
 layer = engine.add_layer("world", sle.Layer2D(tile_size=16))
@@ -501,7 +501,7 @@ See the `examples/` directory for runnable scenes that exercise the surface abov
 
 Downstream games (e.g. Ochema Circuit, Bullet Strata) pin the names they import from this engine. When a game ships against a new engine name, add a tripwire test that asserts the name remains importable — removing any locked name breaks that game.
 
-Today the locked names are simply everything in `slappyengine.__all__` plus the declared subpackages, both of which are exercised by `SlapPyEngineTests/tests/test_docs_engine_surface_complete.py`.
+Today the locked names are simply everything in `pharos_engine.__all__` plus the declared subpackages, both of which are exercised by `SlapPyEngineTests/tests/test_docs_engine_surface_complete.py`.
 
 <!-- BEGIN: AUTO-GENERATED SUBPACKAGE API LINKS -->
 
@@ -509,15 +509,15 @@ Today the locked names are simply everything in `slappyengine.__all__` plus the 
 
 The following per-subpackage reference docs are auto-generated by `scripts/gen_subpackage_api_docs.py`. Each one lists every public class / function / constant with full signatures and parsed `Raises:` sections — paste one into an LLM prompt to get accurate context for that subpackage.
 
-- [`slappyengine.dynamics`](api/dynamics.md)
-- [`slappyengine.zones`](api/zones.md)
-- [`slappyengine.topology`](api/topology.md)
-- [`slappyengine.numerics`](api/numerics.md)
-- [`slappyengine.thermal`](api/thermal.md)
-- [`slappyengine.iso`](api/iso.md)
-- [`slappyengine.telemetry`](api/telemetry.md)
-- [`slappyengine.testing`](api/testing.md)
-- [`slappyengine.tools`](api/tools.md)
+- [`pharos_engine.dynamics`](api/dynamics.md)
+- [`pharos_engine.zones`](api/zones.md)
+- [`pharos_engine.topology`](api/topology.md)
+- [`pharos_engine.numerics`](api/numerics.md)
+- [`pharos_engine.thermal`](api/thermal.md)
+- [`pharos_engine.iso`](api/iso.md)
+- [`pharos_engine.telemetry`](api/telemetry.md)
+- [`pharos_engine.testing`](api/testing.md)
+- [`pharos_engine.tools`](api/tools.md)
 
 <!-- END: AUTO-GENERATED SUBPACKAGE API LINKS -->
 
@@ -532,26 +532,26 @@ in the API reference's "Design notes" section (linked from the
 
 | Subpackage | API ref | Design ref |
 |---|---|---|
-| `slappyengine.dynamics` | [`api/dynamics.md`](api/dynamics.md) | [`dynamics_design.md`](dynamics_design.md) |
-| `slappyengine.softbody` | inline (`__init__.py` docstring) | [`softbody_design.md`](softbody_design.md) |
-| `slappyengine.fluid` | inline (`__init__.py` docstring) | [`fluid_design.md`](fluid_design.md) |
-| `slappyengine.gi` | [`api/gi.md`](api/gi.md) | [`gi_design.md`](gi_design.md) |
-| `slappyengine.post_process` | [`api/post_process.md`](api/post_process.md) | [`post_process_design.md`](post_process_design.md) |
-| `slappyengine.studio` | [`api/studio.md`](api/studio.md) | [`studio_design.md`](studio_design.md) |
-| `slappyengine.material` | [`api/material.md`](api/material.md) | [`material_design.md`](material_design.md) |
-| `slappyengine.numerics` | [`api/numerics.md`](api/numerics.md) | [`numerics_design.md`](numerics_design.md) |
-| `slappyengine.projects` | [`api/projects.md`](api/projects.md) | no separate doc — see API ref §Overview |
-| `slappyengine.telemetry` | [`api/telemetry.md`](api/telemetry.md) | [`telemetry_design.md`](telemetry_design.md) |
-| `slappyengine.zones` | [`api/zones.md`](api/zones.md) | [`zones_design.md`](zones_design.md) |
-| `slappyengine.animation` | [`api/animation.md`](api/animation.md) | no separate doc — see API ref §Design notes |
-| `slappyengine.audio_runtime` | [`api/audio_runtime.md`](api/audio_runtime.md) | no separate doc — see API ref §Design notes |
-| `slappyengine.compute` | [`api/compute.md`](api/compute.md) | no separate doc — see API ref §Design notes |
-| `slappyengine.ext` | [`api/ext.md`](api/ext.md) | no separate doc — see API ref §Design notes |
-| `slappyengine.gpu` | [`api/gpu.md`](api/gpu.md) | no separate doc — see API ref §Design notes |
-| `slappyengine.iso` | [`api/iso.md`](api/iso.md) | no separate doc — see API ref §Design notes |
-| `slappyengine.residency` | [`api/residency.md`](api/residency.md) | no separate doc — see API ref §Design notes |
-| `slappyengine.testing` | [`api/testing.md`](api/testing.md) | no separate doc — see API ref §Design notes |
-| `slappyengine.thermal` | [`api/thermal.md`](api/thermal.md) | no separate doc — see API ref §Design notes |
-| `slappyengine.topology` | [`api/topology.md`](api/topology.md) | no separate doc — see API ref §Design notes |
-| `slappyengine.ui.editor` | [`api/ui_editor.md`](api/ui_editor.md) | no separate doc — see API ref §Design notes |
-| `slappyengine.tools` | [`api/tools.md`](api/tools.md) | no separate doc — surface is the `sprite_audit` CPU utility (see [`sprite_audit_recipe.md`](sprite_audit_recipe.md)) |
+| `pharos_engine.dynamics` | [`api/dynamics.md`](api/dynamics.md) | [`dynamics_design.md`](dynamics_design.md) |
+| `pharos_engine.softbody` | inline (`__init__.py` docstring) | [`softbody_design.md`](softbody_design.md) |
+| `pharos_engine.fluid` | inline (`__init__.py` docstring) | [`fluid_design.md`](fluid_design.md) |
+| `pharos_engine.gi` | [`api/gi.md`](api/gi.md) | [`gi_design.md`](gi_design.md) |
+| `pharos_engine.post_process` | [`api/post_process.md`](api/post_process.md) | [`post_process_design.md`](post_process_design.md) |
+| `pharos_engine.studio` | [`api/studio.md`](api/studio.md) | [`studio_design.md`](studio_design.md) |
+| `pharos_engine.material` | [`api/material.md`](api/material.md) | [`material_design.md`](material_design.md) |
+| `pharos_engine.numerics` | [`api/numerics.md`](api/numerics.md) | [`numerics_design.md`](numerics_design.md) |
+| `pharos_engine.projects` | [`api/projects.md`](api/projects.md) | no separate doc — see API ref §Overview |
+| `pharos_engine.telemetry` | [`api/telemetry.md`](api/telemetry.md) | [`telemetry_design.md`](telemetry_design.md) |
+| `pharos_engine.zones` | [`api/zones.md`](api/zones.md) | [`zones_design.md`](zones_design.md) |
+| `pharos_engine.animation` | [`api/animation.md`](api/animation.md) | no separate doc — see API ref §Design notes |
+| `pharos_engine.audio_runtime` | [`api/audio_runtime.md`](api/audio_runtime.md) | no separate doc — see API ref §Design notes |
+| `pharos_engine.compute` | [`api/compute.md`](api/compute.md) | no separate doc — see API ref §Design notes |
+| `pharos_engine.ext` | [`api/ext.md`](api/ext.md) | no separate doc — see API ref §Design notes |
+| `pharos_engine.gpu` | [`api/gpu.md`](api/gpu.md) | no separate doc — see API ref §Design notes |
+| `pharos_engine.iso` | [`api/iso.md`](api/iso.md) | no separate doc — see API ref §Design notes |
+| `pharos_engine.residency` | [`api/residency.md`](api/residency.md) | no separate doc — see API ref §Design notes |
+| `pharos_engine.testing` | [`api/testing.md`](api/testing.md) | no separate doc — see API ref §Design notes |
+| `pharos_engine.thermal` | [`api/thermal.md`](api/thermal.md) | no separate doc — see API ref §Design notes |
+| `pharos_engine.topology` | [`api/topology.md`](api/topology.md) | no separate doc — see API ref §Design notes |
+| `pharos_engine.ui.editor` | [`api/ui_editor.md`](api/ui_editor.md) | no separate doc — see API ref §Design notes |
+| `pharos_engine.tools` | [`api/tools.md`](api/tools.md) | no separate doc — surface is the `sprite_audit` CPU utility (see [`sprite_audit_recipe.md`](sprite_audit_recipe.md)) |

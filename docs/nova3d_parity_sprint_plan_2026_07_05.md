@@ -14,17 +14,17 @@ during the II-batch push.
   kernels + top-3 next ports (`_slide`, `_sor_sweep`,
   `connected_components`).
 * `git log --oneline --since=2026-07-04` — 60+ commits including HH1
-  (App / launch), HH2 (project scaffolder), HH4 (`slappyengine.render`
+  (App / launch), HH2 (project scaffolder), HH4 (`pharos_engine.render`
   wgpu-forward + null fallback), HH5–HH8 salvage, GG7 rollup.
 * Live-verified against the source tree at
-  `H:\Github\SlapPyEngine\python\slappyengine\`.
+  `H:\Github\SlapPyEngine\python\pharos_engine\`.
 
 ---
 
 ## 1. Summary — where we stand
 
 Per HH3: **12 WIRED / 20 PARTIAL / 10 GAP / 1 N/A** across Nova3D's 44
-subsystems. Since HH3 landed, HH4 shipped `slappyengine.render`
+subsystems. Since HH3 landed, HH4 shipped `pharos_engine.render`
 (a wgpu-forward + `NullRenderer`-fallback façade — 1221 LoC across 9
 files) and HH1 shipped the top-level `App` / `launch()` / `load_model()`
 API. The `asset_import/` subpackage also landed with a real
@@ -65,7 +65,7 @@ are file-specific; success criteria are test-runnable.
 ## Sprint 1: Real wgpu forward pipeline in HH4 Renderer
 
 **Priority**: P0
-**Scope**: `python/slappyengine/render/renderer.py` (extend — currently
+**Scope**: `python/pharos_engine/render/renderer.py` (extend — currently
 `submit_mesh` / `submit_sprite` / `submit_lines` forward to
 `NullRenderer` even when wgpu is up)
 **Dependencies**: none (HH4 landed the shell)
@@ -87,7 +87,7 @@ wgpu adapter; `NullRenderer` still runs unchanged for headless CI.
 ## Sprint 2: MTL parser + material resolve for OBJ importer
 
 **Priority**: P0
-**Scope**: `python/slappyengine/asset_import/obj_importer.py` (extend —
+**Scope**: `python/pharos_engine/asset_import/obj_importer.py` (extend —
 line 9 documents "mtllib recorded but not resolved") + new
 `asset_import/mtl_parser.py`
 **Dependencies**: none
@@ -109,7 +109,7 @@ line 9 documents "mtllib recorded but not resolved") + new
 ## Sprint 3: Skinned-mesh loader in glTF importer
 
 **Priority**: P0
-**Scope**: `python/slappyengine/asset_import/gltf_importer.py` (extend
+**Scope**: `python/pharos_engine/asset_import/gltf_importer.py` (extend
 — currently no `JOINTS_0` / `WEIGHTS_0` handling)
 **Dependencies**: none (Sprint 4 consumes this)
 **Deliverable**:
@@ -130,7 +130,7 @@ expected bone count + weights summing to ~1.0 per vertex.
 ## Sprint 4: Skeletal animation runtime (Skeleton + AnimationClip + Skinner)
 
 **Priority**: P0
-**Scope**: new `python/slappyengine/animation/skeleton.py` +
+**Scope**: new `python/pharos_engine/animation/skeleton.py` +
 `animation/clip.py` + `animation/skinner.py`
 **Dependencies**: Sprint 3 (skinned-mesh loader)
 **Deliverable**:
@@ -151,13 +151,13 @@ matrix palette; CPU skinning matches reference within 1e-3.
 ## Sprint 5: Scene → drawcall walker (HH3 gap #2)
 
 **Priority**: P0
-**Scope**: new `python/slappyengine/gpu/scene_renderer.py`
+**Scope**: new `python/pharos_engine/gpu/scene_renderer.py`
 **Dependencies**: Sprint 1 (real wgpu pipeline)
 **Deliverable**:
 * `gpu/scene_renderer.py::SceneRenderer.walk_and_draw(scene, camera)`
   — filters visible entities, sorts by material handle, batches per
   pipeline, emits `Renderer.submit_mesh(...)` calls.
-* Integration with existing `FF3 scenes` (`slappyengine.scenes.Scene`)
+* Integration with existing `FF3 scenes` (`pharos_engine.scenes.Scene`)
   and `entity_renderer.py`.
 * `SlapPyEngineTests/tests/test_scene_renderer.py` — 10-entity mock
   scene, assert drawcall order (material-sorted) and cull count.
@@ -169,7 +169,7 @@ duplicate binds) and integrates with `hello_scene_reg` demo.
 ## Sprint 6: 3D BVH + frustum culling (HH3 gap #4)
 
 **Priority**: P0
-**Scope**: new `python/slappyengine/spatial/` subpackage + wire to
+**Scope**: new `python/pharos_engine/spatial/` subpackage + wire to
 Sprint 5
 **Dependencies**: Sprint 5 (SceneRenderer consumes the culler)
 **Deliverable**:
@@ -188,15 +188,15 @@ the drawcalls of the naïve path on a 100-entity scene.
 ## Sprint 7: Cascaded shadow maps (HH3 gap #5)
 
 **Priority**: P0
-**Scope**: `python/slappyengine/lighting.py` (extend — 1026 LoC, no
-CSM tokens today) + new `python/slappyengine/shaders/csm.wgsl`
+**Scope**: `python/pharos_engine/lighting.py` (extend — 1026 LoC, no
+CSM tokens today) + new `python/pharos_engine/shaders/csm.wgsl`
 **Dependencies**: Sprint 1 (needs a real wgpu pipeline first)
 **Deliverable**:
 * `lighting.py::DirectionalLight.compute_cascade_splits(camera, near,
   far, count=4)` — practical PSSM split scheme.
 * `lighting.py::render_shadow_cascade(scene, cascade_idx)` — 4×
   depth-only pass at 2048×2048 into a `TextureArrayView`.
-* `python/slappyengine/shaders/csm.wgsl` — sample cascade based on
+* `python/pharos_engine/shaders/csm.wgsl` — sample cascade based on
   view-space z, 3×3 PCF filter.
 * `SlapPyEngineTests/tests/test_csm.py` — render a plane + cube under
   a directional light, read back, assert shadow region hash matches
@@ -209,7 +209,7 @@ crisp shadow across a plane with no near-cascade acne.
 ## Sprint 8: MSAA resolve pipeline in HH4 Renderer
 
 **Priority**: P1
-**Scope**: `python/slappyengine/render/renderer.py` (extend — takes
+**Scope**: `python/pharos_engine/render/renderer.py` (extend — takes
 `msaa: int = 4` today but never wires a resolve target)
 **Dependencies**: Sprint 1 (real wgpu pipeline)
 **Deliverable**:
@@ -228,7 +228,7 @@ crisp shadow across a plane with no near-cascade acne.
 ## Sprint 9: Depth prepass for HH4 Renderer
 
 **Priority**: P1
-**Scope**: `python/slappyengine/render/renderer.py` (extend)
+**Scope**: `python/pharos_engine/render/renderer.py` (extend)
 **Dependencies**: Sprint 1, Sprint 8
 **Deliverable**:
 * `renderer.py::_run_depth_prepass(scene, camera)` — depth-only pass
@@ -247,7 +247,7 @@ scene.
 ## Sprint 10: Screen-space ambient occlusion (SSAO)
 
 **Priority**: P1
-**Scope**: new `python/slappyengine/post_process/ssao.py` +
+**Scope**: new `python/pharos_engine/post_process/ssao.py` +
 `post_process/ssao.wgsl`
 **Dependencies**: Sprint 9 (needs depth buffer + normal buffer from
 prepass)
@@ -268,15 +268,15 @@ via chain manifest.
 ## Sprint 11: Skybox + cubemap import + rendering
 
 **Priority**: P1
-**Scope**: new `python/slappyengine/asset_import/cubemap_importer.py`
-+ `python/slappyengine/render/skybox.py`
+**Scope**: new `python/pharos_engine/asset_import/cubemap_importer.py`
++ `python/pharos_engine/render/skybox.py`
 **Dependencies**: Sprint 1
 **Deliverable**:
 * `cubemap_importer.py` — load 6 face PNGs OR an equirectangular HDR
   (via `imageio`, soft dep) → 6-face `TextureCube`.
 * `render/skybox.py::Skybox` — vertex-shader-less full-screen tri
   that samples the cube through inverse view-proj.
-* Register `skybox` as a distinct scene node type in `slappyengine.
+* Register `skybox` as a distinct scene node type in `pharos_engine.
   scenes`.
 * `SlapPyEngineTests/tests/test_skybox.py` — 6-colour cubemap, camera
   facing +X, assert readback pixel matches +X face colour.
@@ -288,12 +288,12 @@ scene.
 ## Sprint 12: IBL prefiltered cubemap chain (extend gpu/ibl.py)
 
 **Priority**: P1
-**Scope**: `python/slappyengine/gpu/ibl.py` (extend — current file
+**Scope**: `python/pharos_engine/gpu/ibl.py` (extend — current file
 notes "Full cubemap prefilter requires the ibl_prefilter.wgsl shader"
 at `:159` and does not ship it)
 **Dependencies**: Sprint 11 (skybox provides the source HDR)
 **Deliverable**:
-* `python/slappyengine/shaders/ibl_prefilter.wgsl` — GGX importance
+* `python/pharos_engine/shaders/ibl_prefilter.wgsl` — GGX importance
   sampling, 5-mip roughness chain.
 * `gpu/ibl.py::IBLSystem.prefilter_from_hdr(path)` — runs the compute
   pass, populates `.prefilter_tex`.
@@ -309,7 +309,7 @@ matching the loaded HDRI.
 ## Sprint 13: Text rendering with SDF glyph atlas
 
 **Priority**: P1
-**Scope**: new `python/slappyengine/text/` subpackage
+**Scope**: new `python/pharos_engine/text/` subpackage
 **Dependencies**: Sprint 1
 **Deliverable**:
 * `text/__init__.py` — public `TextRenderer.draw(surface, text, xy,
@@ -319,7 +319,7 @@ matching the loaded HDRI.
 * `text/shader_stock.py::sdf_text` WGSL stock — samples SDF, applies
   smoothstep with per-pixel derivatives.
 * Bake a default Roboto Mono fixture at
-  `python/slappyengine/text/baked/roboto_mono.atlas.png`.
+  `python/pharos_engine/text/baked/roboto_mono.atlas.png`.
 * `SlapPyEngineTests/tests/test_text_render.py` — draw "SLAPPY", read
   back, assert five distinct glyph blobs.
 **Success**: `hello_hud.py` (Sprint 14 or existing) can draw text at
@@ -330,13 +330,13 @@ matching the loaded HDRI.
 ## Sprint 14: Runtime HUD subsystem (HH3 gap #11)
 
 **Priority**: P1
-**Scope**: new `python/slappyengine/hud/` subpackage
+**Scope**: new `python/pharos_engine/hud/` subpackage
 **Dependencies**: Sprint 13 (text rendering)
 **Deliverable**:
 * `hud/__init__.py` — public `HUD.begin_frame() / draw_rect / draw_text
   / draw_image / draw_widget / end_frame`.
 * `hud/imgui_backend.py` — optional `imgui[glfw]` backend (soft dep,
-  gated behind `slappyengine[hud]` extra).
+  gated behind `pharos_engine[hud]` extra).
 * `hud/null_backend.py` — headless fallback that records draw ops for
   testing.
 * Bridge to editor theme via
@@ -351,8 +351,8 @@ in the top-left of any wgpu window.
 ## Sprint 15: Video capture (FFmpeg wrapper)
 
 **Priority**: P1
-**Scope**: extend `python/slappyengine/media.py` OR new
-`python/slappyengine/capture/` subpackage
+**Scope**: extend `python/pharos_engine/media.py` OR new
+`python/pharos_engine/capture/` subpackage
 **Dependencies**: Sprint 1 (needs `read_pixels()` to work on wgpu path)
 **Deliverable**:
 * `capture/__init__.py` — public `VideoCapture(path, fps, size).write
@@ -373,7 +373,7 @@ playable mp4.
 ## Sprint 16: Instanced rendering + `InstancedMesh` component
 
 **Priority**: P1
-**Scope**: `python/slappyengine/gpu/mesh_renderer.py` (extend) + new
+**Scope**: `python/pharos_engine/gpu/mesh_renderer.py` (extend) + new
 `gpu/instanced_mesh.py`
 **Dependencies**: Sprint 5 (walker knows about instanced batches)
 **Deliverable**:
@@ -382,7 +382,7 @@ playable mp4.
 * `mesh_renderer.py::draw_instanced(mesh, instance_count)` — real
   `draw_indexed(index_count, instance_count)` call.
 * Component wiring: `InstancedMeshComponent` in
-  `python/slappyengine/components.py`.
+  `python/pharos_engine/components.py`.
 * `SlapPyEngineTests/tests/test_instanced_mesh.py` — 1000 grass blades,
   assert drawcall count == 1 (not 1000).
 **Success**: a grass-field demo goes from 1000 drawcalls → 1 drawcall
@@ -393,8 +393,8 @@ with the same visible geometry.
 ## Sprint 17: 3D positional audio + sound bank
 
 **Priority**: P1
-**Scope**: `python/slappyengine/audio.py` (extend) + new
-`python/slappyengine/audio/sound_bank.py`
+**Scope**: `python/pharos_engine/audio.py` (extend) + new
+`python/pharos_engine/audio/sound_bank.py`
 **Dependencies**: none (existing spatial support attenuates but has
 no orientation)
 **Deliverable**:
@@ -415,11 +415,11 @@ pans left/right correctly.
 ## Sprint 18: 3D physics broadphase soft-import (unpin `physics/`)
 
 **Priority**: P0
-**Scope**: `python/slappyengine/physics/` (currently untracked in
+**Scope**: `python/pharos_engine/physics/` (currently untracked in
 `git status`) — commit the ~40 module tree + wire BVH broadphase
 **Dependencies**: Sprint 6 (Bvh3D)
 **Deliverable**:
-* Stage + review + commit the untracked `python/slappyengine/physics/`
+* Stage + review + commit the untracked `python/pharos_engine/physics/`
   tree (per GG7 §5 "P0 for surface hygiene").
 * Wire `physics/broadphase.py::BVHBroadphase` to `_core.Bvh` from
   Sprint 6.
@@ -434,8 +434,8 @@ files; broadphase test suite green; ragdoll demo still passes.
 ## Sprint 19: Cross-platform game exporter (HH3 gap #6)
 
 **Priority**: P1
-**Scope**: extend `python/slappyengine/build_gen.py` → new
-`python/slappyengine/packaging/` subpackage
+**Scope**: extend `python/pharos_engine/build_gen.py` → new
+`python/pharos_engine/packaging/` subpackage
 **Dependencies**: HH2 (project scaffolder) already landed
 **Deliverable**:
 * `packaging/__init__.py` — public `export_game(project_path,
@@ -600,17 +600,17 @@ later plan):
   (291-row feature map @ 93.8% WIRED).
 * `H:\Github\SlapPyEngine\docs\rust_migration_audit_2026_07_05.md` —
   FF4 audit (17 shipped kernels).
-* `H:\Github\SlapPyEngine\python\slappyengine\render\renderer.py` — HH4
+* `H:\Github\SlapPyEngine\python\pharos_engine\render\renderer.py` — HH4
   wgpu façade currently forwarding to `NullRenderer`.
-* `H:\Github\SlapPyEngine\python\slappyengine\asset_import\gltf_importer.py`
+* `H:\Github\SlapPyEngine\python\pharos_engine\asset_import\gltf_importer.py`
   — real pygltflib-backed glTF loader.
-* `H:\Github\SlapPyEngine\python\slappyengine\asset_import\obj_importer.py`
+* `H:\Github\SlapPyEngine\python\pharos_engine\asset_import\obj_importer.py`
   — real OBJ parser, MTL not resolved.
-* `H:\Github\SlapPyEngine\python\slappyengine\lighting.py` — 1026 LoC,
+* `H:\Github\SlapPyEngine\python\pharos_engine\lighting.py` — 1026 LoC,
   no CSM tokens yet.
-* `H:\Github\SlapPyEngine\python\slappyengine\gpu\ibl.py` — IBL system
+* `H:\Github\SlapPyEngine\python\pharos_engine\gpu\ibl.py` — IBL system
   with prefilter shader marked "requires ibl_prefilter.wgsl" at `:159`.
-* `H:\Github\SlapPyEngine\python\slappyengine\input\_manager.py` —
+* `H:\Github\SlapPyEngine\python\pharos_engine\input\_manager.py` —
   gamepad support already wired via glfw (Sprint deliberately excluded
   from this plan — already landed).
 
@@ -640,5 +640,5 @@ later plan):
 
 *Nova3D parity sprint plan generated 2026-07-05 by II7 background
 scrum agent. All 20 sprints verified against the live source tree at
-`H:\Github\SlapPyEngine\python\slappyengine\` — no sprint targets work
+`H:\Github\SlapPyEngine\python\pharos_engine\` — no sprint targets work
 that already landed in the V→HH sprint window.*

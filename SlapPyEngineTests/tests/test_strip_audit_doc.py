@@ -42,20 +42,20 @@ def _read_doc() -> str:
 # ---------------------------------------------------------------------------
 
 CANDIDATE_SOURCE_MODULES = [
-    "python/slappyengine/physics/frontier.py",
-    "python/slappyengine/physics/boundary_exchange.py",
-    "python/slappyengine/physics/cc_label.py",
-    "python/slappyengine/physics/pressure_multigrid.py",
-    "python/slappyengine/physics/crack_repair_adapter.py",
-    "python/slappyengine/physics/deform_adapter.py",
-    "python/slappyengine/physics/engine_bridge.py",
-    "python/slappyengine/physics/granular_render.py",
-    "python/slappyengine/deform_modes.py",
-    "python/slappyengine/deform_controller.py",
-    "python/slappyengine/deform_crack.py",
-    "python/slappyengine/deform_repair.py",
-    "python/slappyengine/deform_zones.py",
-    "python/slappyengine/pixel_struct.py",
+    "python/pharos_engine/physics/frontier.py",
+    "python/pharos_engine/physics/boundary_exchange.py",
+    "python/pharos_engine/physics/cc_label.py",
+    "python/pharos_engine/physics/pressure_multigrid.py",
+    "python/pharos_engine/physics/crack_repair_adapter.py",
+    "python/pharos_engine/physics/deform_adapter.py",
+    "python/pharos_engine/physics/engine_bridge.py",
+    "python/pharos_engine/physics/granular_render.py",
+    "python/pharos_engine/deform_modes.py",
+    "python/pharos_engine/deform_controller.py",
+    "python/pharos_engine/deform_crack.py",
+    "python/pharos_engine/deform_repair.py",
+    "python/pharos_engine/deform_zones.py",
+    "python/pharos_engine/pixel_struct.py",
 ]
 
 CANDIDATE_TEST_GLOBS = [
@@ -226,10 +226,10 @@ def test_audit_doc_mentions_repackaged_targets():
     candidate."""
     body = _read_doc()
     for target in (
-        "slappyengine.topology",
-        "slappyengine.numerics",
-        "slappyengine.zones",
-        "slappyengine.thermal",
+        "pharos_engine.topology",
+        "pharos_engine.numerics",
+        "pharos_engine.zones",
+        "pharos_engine.thermal",
     ):
         assert target in body, (
             f"audit doc must reference repackaged module {target!r} as a "

@@ -31,7 +31,7 @@ def _install_engine_stubs(monkeypatch):
     except ImportError:
         pytest.skip("dearpygui not installed — editor demo cannot import")
 
-    from slappyengine import engine as engine_mod
+    from pharos_engine import engine as engine_mod
 
     class _StubCanvas:
         def __init__(self, *_, **__):

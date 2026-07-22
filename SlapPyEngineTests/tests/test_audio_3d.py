@@ -1,5 +1,5 @@
 """
-Tests for `slappyengine.audio_3d` — 3D positional audio, doppler,
+Tests for `pharos_engine.audio_3d` — 3D positional audio, doppler,
 and equal-power stereo panning.
 
 These tests exercise the pure-DSP helpers (`attenuation`,
@@ -14,7 +14,7 @@ import math
 
 import pytest
 
-from slappyengine.audio_3d import (
+from pharos_engine.audio_3d import (
     ATTENUATION_CURVES,
     SPEED_OF_SOUND,
     Audio3DEngine,

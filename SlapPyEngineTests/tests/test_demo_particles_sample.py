@@ -29,9 +29,9 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP-driven import failure.
     try:
-        from slappyengine.physics.particles import ParticleSystem  # noqa: F401
+        from pharos_engine.physics.particles import ParticleSystem  # noqa: F401
     except Exception as exc:
-        pytest.skip(f"slappyengine.physics.particles unavailable: {exc}")
+        pytest.skip(f"pharos_engine.physics.particles unavailable: {exc}")
 
     spec = importlib.util.spec_from_file_location("particles_sample_rr2", _DEMO_PATH)
     assert spec is not None and spec.loader is not None

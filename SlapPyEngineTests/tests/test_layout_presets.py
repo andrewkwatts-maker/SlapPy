@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from slappyengine.ui.editor.layout_presets import (
+from pharos_engine.ui.editor.layout_presets import (
     LayoutPreset,
     PANEL_IDS,
     PRESETS,
@@ -28,7 +28,7 @@ from slappyengine.ui.editor.layout_presets import (
     list_preset_names,
     list_presets,
 )
-from slappyengine.ui.editor.notebook_hotkeys import NotebookHotkeys
+from pharos_engine.ui.editor.notebook_hotkeys import NotebookHotkeys
 
 
 # ---------------------------------------------------------------------------
@@ -60,7 +60,7 @@ class _StubUISettings:
 
 def _make_shell():
     """Build a minimal EditorShell instance for the dispatch tests."""
-    from slappyengine.ui.editor.shell import EditorShell
+    from pharos_engine.ui.editor.shell import EditorShell
 
     class _StubEngine:
         scene = None

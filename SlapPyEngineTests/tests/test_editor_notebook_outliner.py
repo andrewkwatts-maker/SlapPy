@@ -131,9 +131,9 @@ def clear_theme(stub_dpg):
     otherwise their ``_on_theme_changed`` hook fires when the next test
     sets a theme and surfaces stale row state.
     """
-    from slappyengine.ui.widgets import notebook_theme
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
-    from slappyengine.ui.widgets.sticker_corner import _active_stickers
+    from pharos_engine.ui.widgets import notebook_theme
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine.ui.widgets.sticker_corner import _active_stickers
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -177,20 +177,20 @@ class _FakeWorld:
 
 class TestConstruction:
     def test_constructs_with_callables(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         out = NotebookOutliner(_FakeWorld, lambda e: None)
         assert out.TITLE == "Scene"
         assert out.get_selected() is None
 
     def test_rejects_non_callable_world_getter(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         with pytest.raises(TypeError):
             NotebookOutliner("not callable", lambda e: None)  # type: ignore[arg-type]
 
     def test_rejects_non_callable_on_select(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         with pytest.raises(TypeError):
             NotebookOutliner(lambda: None, "not callable")  # type: ignore[arg-type]
@@ -202,32 +202,32 @@ class TestConstruction:
 
 class TestClassifyEntity:
     def test_rope_classifies_as_rope(self):
-        from slappyengine.ui.editor.notebook_outliner import classify_entity
+        from pharos_engine.ui.editor.notebook_outliner import classify_entity
 
         ent = _FakeEntity("R1", kind="rope")
         assert classify_entity(ent) == "rope"
 
     def test_ragdoll_classifies_as_ragdoll(self):
-        from slappyengine.ui.editor.notebook_outliner import classify_entity
+        from pharos_engine.ui.editor.notebook_outliner import classify_entity
 
         ent = _FakeEntity("R1", kind="ragdoll")
         assert classify_entity(ent) == "ragdoll"
 
     def test_humanoid_via_parameters_tag(self):
-        from slappyengine.ui.editor.notebook_outliner import classify_entity
+        from pharos_engine.ui.editor.notebook_outliner import classify_entity
 
         ent = _FakeEntity("H1", kind="ragdoll")
         ent.parameters = {"humanoid": True}
         assert classify_entity(ent) == "humanoid"
 
     def test_unknown_kind_falls_back_to_entity(self):
-        from slappyengine.ui.editor.notebook_outliner import classify_entity
+        from pharos_engine.ui.editor.notebook_outliner import classify_entity
 
         ent = _FakeEntity("X1", kind="totally_unknown")
         assert classify_entity(ent) == "entity"
 
     def test_class_name_sniff_for_no_kind(self):
-        from slappyengine.ui.editor.notebook_outliner import classify_entity
+        from pharos_engine.ui.editor.notebook_outliner import classify_entity
 
         class CameraThing:
             pass
@@ -241,7 +241,7 @@ class TestClassifyEntity:
 
 class TestBadges:
     def test_every_kind_has_svg_under_500b(self):
-        from slappyengine.ui.editor.notebook_outliner import _BADGE_SVGS
+        from pharos_engine.ui.editor.notebook_outliner import _BADGE_SVGS
 
         expected = {
             "entity", "body", "joint", "light", "camera", "mesh",
@@ -254,13 +254,13 @@ class TestBadges:
             )
 
     def test_badge_svg_falls_back_to_entity_for_unknown(self):
-        from slappyengine.ui.editor.notebook_outliner import badge_svg, _BADGE_SVGS
+        from pharos_engine.ui.editor.notebook_outliner import badge_svg, _BADGE_SVGS
 
         assert badge_svg("not_a_real_kind") == _BADGE_SVGS["entity"]
 
     def test_make_badge_icon_returns_svgicon(self):
-        from slappyengine.ui.editor.notebook_outliner import make_badge_icon
-        from slappyengine.ui.theme.svg_icon import SVGIcon
+        from pharos_engine.ui.editor.notebook_outliner import make_badge_icon
+        from pharos_engine.ui.theme.svg_icon import SVGIcon
 
         icon = make_badge_icon("rope", size=16)
         assert isinstance(icon, SVGIcon)
@@ -273,14 +273,14 @@ class TestBadges:
 
 class TestEmptyState:
     def test_empty_world_iter_rows_is_empty(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         world = _FakeWorld()
         out = NotebookOutliner(lambda: world, lambda e: None)
         assert out.iter_rows() == []
 
     def test_empty_world_build_renders_empty_state(self, stub_dpg):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         world = _FakeWorld()
         out = NotebookOutliner(lambda: world, lambda e: None)
@@ -293,7 +293,7 @@ class TestEmptyState:
         assert "spawn menu" in flat
 
     def test_no_world_getter_returns_empty_rows(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         out = NotebookOutliner(lambda: None, lambda e: None)
         assert out.iter_rows() == []
@@ -312,7 +312,7 @@ class TestRowEnumeration:
         ])
 
     def test_three_entities_yield_three_rows(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         world = self._world_with_three()
         out = NotebookOutliner(lambda: world, lambda e: None)
@@ -320,7 +320,7 @@ class TestRowEnumeration:
         assert len(rows) == 3
 
     def test_each_row_carries_correct_badge_kind(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         world = self._world_with_three()
         out = NotebookOutliner(lambda: world, lambda e: None)
@@ -333,7 +333,7 @@ class TestRowEnumeration:
         }
 
     def test_world_with_three_renders_button_rows(self, stub_dpg):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         world = self._world_with_three()
         out = NotebookOutliner(lambda: world, lambda e: None)
@@ -353,7 +353,7 @@ class TestRowEnumeration:
 
 class TestSelectionCallback:
     def test_click_routes_through_on_select(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         world = _FakeWorld(entities=[_FakeEntity("R1", kind="rope")])
         captured: list[Any] = []
@@ -366,7 +366,7 @@ class TestSelectionCallback:
         assert out.get_selected() == "R1"
 
     def test_set_selected_updates_selection_state(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         out = NotebookOutliner(lambda: _FakeWorld(), lambda e: None)
         out.set_selected("my_id")
@@ -379,7 +379,7 @@ class TestSelectionCallback:
 
 class TestToggles:
     def test_visibility_toggle_updates_entity_visible(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         ent = _FakeEntity("V1", kind="body", visible=True)
         out = NotebookOutliner(lambda: _FakeWorld([ent]), lambda e: None)
@@ -389,7 +389,7 @@ class TestToggles:
         assert ent.visible is True
 
     def test_lock_toggle_updates_entity_locked(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         ent = _FakeEntity("L1", kind="body", locked=False)
         out = NotebookOutliner(lambda: _FakeWorld([ent]), lambda e: None)
@@ -405,7 +405,7 @@ class TestToggles:
 
 class TestSearch:
     def test_search_filter_shrinks_rows(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         world = _FakeWorld([
             _FakeEntity("rope_player", kind="rope"),
@@ -421,7 +421,7 @@ class TestSearch:
         assert rows[0]["name"] == "rope_player"
 
     def test_search_matches_kind_as_well_as_name(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         world = _FakeWorld([
             _FakeEntity("alpha", kind="rope"),
@@ -434,7 +434,7 @@ class TestSearch:
         assert rows[0]["name"] == "beta"
 
     def test_empty_search_shows_everything(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         world = _FakeWorld([
             _FakeEntity("a", kind="rope"),
@@ -453,8 +453,8 @@ class TestSearch:
 
 class TestThemeIntegration:
     def test_theme_switch_updates_cached_palette(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
-        from slappyengine.ui.widgets.notebook_theme import (
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )
@@ -470,8 +470,8 @@ class TestThemeIntegration:
         assert out._theme.color("accent") == (1, 2, 3, 255)
 
     def test_destroy_unregisters_listener(self):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
-        from slappyengine.ui.widgets.notebook_theme import (
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )
@@ -488,7 +488,7 @@ class TestThemeIntegration:
 
 class TestSelectedHighlight:
     def test_selected_row_emits_highlighter_overlay(self, stub_dpg):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         ent = _FakeEntity("only", kind="rope", eid="only")
         out = NotebookOutliner(lambda: _FakeWorld([ent]), lambda e: None)
@@ -505,7 +505,7 @@ class TestSelectedHighlight:
         )
 
     def test_unselected_rows_have_no_highlighter(self, stub_dpg):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
 
         ent = _FakeEntity("only", kind="rope", eid="only")
         out = NotebookOutliner(lambda: _FakeWorld([ent]), lambda e: None)
@@ -523,8 +523,8 @@ class TestSelectedHighlight:
 
 class TestStickerDecoration:
     def test_first_top_level_row_gets_sparkle_sticker(self, stub_dpg):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
-        from slappyengine.ui.widgets.sticker_corner import list_sticker_corners
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.widgets.sticker_corner import list_sticker_corners
 
         world = _FakeWorld([
             _FakeEntity("first", kind="rope", eid="first"),
@@ -541,8 +541,8 @@ class TestStickerDecoration:
         )
 
     def test_empty_state_drops_fox_sticker(self, stub_dpg):
-        from slappyengine.ui.editor.notebook_outliner import NotebookOutliner
-        from slappyengine.ui.widgets.sticker_corner import list_sticker_corners
+        from pharos_engine.ui.editor.notebook_outliner import NotebookOutliner
+        from pharos_engine.ui.widgets.sticker_corner import list_sticker_corners
 
         out = NotebookOutliner(lambda: _FakeWorld(), lambda e: None)
         out.build("sidebar")

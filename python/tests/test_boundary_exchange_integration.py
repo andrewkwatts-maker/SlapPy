@@ -34,12 +34,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.world import WorldConfig
+from pharos_engine.physics.world import WorldConfig
 
 
 # --- channel indices (mirror cell.CELL_PIXEL_STRUCT) ------------------------

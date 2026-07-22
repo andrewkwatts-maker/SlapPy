@@ -10,7 +10,7 @@ Produces two artefacts under ``examples/output/``:
     suitable for documentation / README inclusion.
 
 The demo is the visual reference for the per-material palette in
-``slappyengine.physics.render``: if you can read all 18+ material names
+``pharos_engine.physics.render``: if you can read all 18+ material names
 off the strip *and* visually tell their balls apart, the palette is doing
 its job.  See the bottom of this file for the palette overrides we apply
 to keep otherwise-grey metals (steel vs iron vs concrete) and the icy
@@ -29,13 +29,13 @@ import numpy as np
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_REPO_ROOT / "python"))
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.render import PhysicsRenderer, RenderConfig
-from slappyengine.deform_modes import list_materials
+from pharos_engine.physics.render import PhysicsRenderer, RenderConfig
+from pharos_engine.deform_modes import list_materials
 
 
 # ---------------------------------------------------------------------------

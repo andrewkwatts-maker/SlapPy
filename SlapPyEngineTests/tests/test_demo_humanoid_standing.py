@@ -29,8 +29,8 @@ def _load_demo():
     if not _DEMO_PATH.is_file():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Skip cleanly if the dynamics stack isn't wired.
-    pytest.importorskip("slappyengine.dynamics")
-    pytest.importorskip("slappyengine.studio")
+    pytest.importorskip("pharos_engine.dynamics")
+    pytest.importorskip("pharos_engine.studio")
 
     spec = importlib.util.spec_from_file_location(
         "humanoid_standing_demo_pp4", _DEMO_PATH
@@ -64,8 +64,8 @@ def test_humanoid_standing_main_runs(demo):
 
 def test_humanoid_standing_pose_is_upright(demo):
     """After ``main`` the head must sit above the pelvis, above the ankles."""
-    from slappyengine.dynamics import make_humanoid, place_feet_on_terrain
-    from slappyengine.studio import humanoid_stage
+    from pharos_engine.dynamics import make_humanoid, place_feet_on_terrain
+    from pharos_engine.studio import humanoid_stage
 
     stage = humanoid_stage(view_box=(-1.2, 0.0, 1.2, 4.0),
                             width=320, height=400)

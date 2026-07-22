@@ -4,7 +4,7 @@ The renderer falls back to medium-grey ``(128, 128, 128)`` for any material
 name it can't find in the palette, which used to mean materials like
 ``snow``, ``concrete``, ``magma`` etc. rendered as featureless grey blobs
 in the visual-drop tests.  These tests ensure that every variant of
-:class:`slappyengine.deform_modes.MaterialPreset` has an explicit palette
+:class:`pharos_engine.deform_modes.MaterialPreset` has an explicit palette
 entry, that the entries are well-formed RGB tuples, and that no two
 materials look indistinguishable on screen.
 """
@@ -14,8 +14,8 @@ from itertools import combinations
 
 import pytest
 
-from slappyengine.deform_modes import MaterialPreset
-from slappyengine.physics.render import DEFAULT_PALETTE
+from pharos_engine.deform_modes import MaterialPreset
+from pharos_engine.physics.render import DEFAULT_PALETTE
 
 
 # ``CUSTOM`` is the user-overrides preset and intentionally has no fixed

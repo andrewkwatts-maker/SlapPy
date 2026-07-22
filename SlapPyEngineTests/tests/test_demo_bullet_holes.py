@@ -4,7 +4,7 @@ The demo fires a burst of high-velocity ``bullet`` particles through a
 stone wall using :class:`ParticleField` per-pixel drilling, then writes
 a GIF to ``examples/output/particles/bullet_holes.gif``.
 
-The demo imports from :mod:`slappyengine.physics.particle_field`, which
+The demo imports from :mod:`pharos_engine.physics.particle_field`, which
 lives under the WIP ``physics/`` subpackage. This test wakes up as soon
 as that subpackage lands — until then it skips with a clear reason so
 the gap remains visible in the test report.
@@ -34,13 +34,13 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP physics subpackage being unavailable.
     try:
-        from slappyengine.physics.particle_field import (  # noqa: F401
+        from pharos_engine.physics.particle_field import (  # noqa: F401
             Material,
             ParticleField,
         )
     except Exception as exc:
         pytest.skip(
-            "slappyengine.physics.particle_field unavailable (WIP): "
+            "pharos_engine.physics.particle_field unavailable (WIP): "
             f"{exc}"
         )
 

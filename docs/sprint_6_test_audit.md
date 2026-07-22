@@ -22,7 +22,7 @@ by this sprint.**
 
 | File | Tests failing | Cause | Recommendation |
 |---|---:|---|---|
-| `SlapPyEngineTests/tests/test_hardening_layer.py` | 23 | The hardening battery was authored against a hardened `Layer` / `Layer2D` / `LayerDataBuffer` API (name validation, mode validation, blank-size validation, heightmap NaN/Inf guards, struct-fields type checks). `python/slappyengine/layer.py` was never updated to add those boundary checks. Tests assert `pytest.raises(TypeError, ...)` against constructions that the current impl accepts silently. | **resolve** in a dedicated `hardening-layer` sprint — Sprint 6 is observation-only per scope, source untouched. Tracked here; do not silently `xfail` them, since they document real missing input validation. |
+| `SlapPyEngineTests/tests/test_hardening_layer.py` | 23 | The hardening battery was authored against a hardened `Layer` / `Layer2D` / `LayerDataBuffer` API (name validation, mode validation, blank-size validation, heightmap NaN/Inf guards, struct-fields type checks). `python/pharos_engine/layer.py` was never updated to add those boundary checks. Tests assert `pytest.raises(TypeError, ...)` against constructions that the current impl accepts silently. | **resolve** in a dedicated `hardening-layer` sprint — Sprint 6 is observation-only per scope, source untouched. Tracked here; do not silently `xfail` them, since they document real missing input validation. |
 
 Other hardening suites are fully green:
 * `test_hardening_actionmap.py`, `test_hardening_animation.py`,
@@ -43,7 +43,7 @@ Roll-up: **355 passed, 23 failed** out of 378 hardening assertions.
 | File:line | Reason on the file | Recommendation | Justification |
 |---|---|---|---|
 | `test_all_demos_smoke.py:186` `test_demo_renders_against_baseline` | "Subprocess-rendered frames diverge from in-process baselines due to seed/timing non-determinism across the dynamics demos. Per-demo tests at `SlapPyEngineTests/tests/test_demo_<name>.py` pin tighter, in-process baselines." | **keep xfail** | The per-demo tests at `SlapPyEngineTests/tests/test_demo_*.py` (80 passing) are the correct tight baselines. The subprocess smoke is a coverage tripwire that demos *boot and render something non-black*; pixel-identical match across subprocess seeds is not the contract this test should enforce. |
-| `test_game_compat_tripwire.py:233` (15 entries) `pt.xfail("known Phase C gap: ...")` | Names not yet resolvable from `slappyengine.<name>` after Phase C. | **keep xfail** — these are deliberate landing pads for the Phase C gap-closure sprint. Sprint 6 has no mandate to close them. |
+| `test_game_compat_tripwire.py:233` (15 entries) `pt.xfail("known Phase C gap: ...")` | Names not yet resolvable from `pharos_engine.<name>` after Phase C. | **keep xfail** — these are deliberate landing pads for the Phase C gap-closure sprint. Sprint 6 has no mandate to close them. |
 
 ---
 
@@ -53,16 +53,16 @@ These guard against missing optional dependencies / hardware. Keep as-is.
 
 | File:line | Guard | Recommendation |
 |---|---|---|
-| `test_animation.py:56` | `not _has_animupdate` -- AnimUpdate dataclass not yet defined | **resolve** (small): define `AnimUpdate` in `slappyengine.animation` and drop the guard. Out of scope for Sprint 6 (no source edits) — flag for the next animation sprint. |
+| `test_animation.py:56` | `not _has_animupdate` -- AnimUpdate dataclass not yet defined | **resolve** (small): define `AnimUpdate` in `pharos_engine.animation` and drop the guard. Out of scope for Sprint 6 (no source edits) — flag for the next animation sprint. |
 | `test_audio_runtime.py:44` | sounddevice unavailable | **keep skip** — optional backend; stub fallback exists |
 | `test_compute.py:23`, `test_gpu_headless.py:26` | "No GPU adapter available" | **keep skip** — required when CI has no GPU |
 | `test_editor.py:30,123,211,259,337,375` | Editor sub-panels not importable on minimal install | **keep skip** — editor sub-deps are optional |
 | `test_editor_material_editor_kinds.py:79`, `test_editor_property_inspector_dataclass.py:86`, `test_editor_spawn_menu.py:73` | Editor not importable | **keep skip** |
 | `test_landscape.py:11` | landscape module not importable | **keep skip** |
 | `test_postprocess.py:10,86,100,111,125,142` | RenderTarget / SceneUIEntity not importable | **keep skip** |
-| `test_node_material.py` (14 entries) | `slappyengine.material.node_material` / `graph_schema` not available on this checkout | **keep skip** — modules are optional and module-import-guarded |
+| `test_node_material.py` (14 entries) | `pharos_engine.material.node_material` / `graph_schema` not available on this checkout | **keep skip** — modules are optional and module-import-guarded |
 | `test_material.py:110,128,149` | materials.yml absent in repo | **keep skip** |
-| `test_scene_ui.py:18,342,352,368,378,391,400,412,426,428,442,444,459,461,475,477` | `slappyengine.ui` not importable on minimal install, or `handle_keyboard` / `set_key_callback` not yet implemented | **mixed** — the 1 import-level skip should stay; the 15 "not yet implemented" skips inside test bodies should be **resolved** by implementing the keyboard plumbing or **deleted** if the methods are abandoned. Flag for UI sprint. |
+| `test_scene_ui.py:18,342,352,368,378,391,400,412,426,428,442,444,459,461,475,477` | `pharos_engine.ui` not importable on minimal install, or `handle_keyboard` / `set_key_callback` not yet implemented | **mixed** — the 1 import-level skip should stay; the 15 "not yet implemented" skips inside test bodies should be **resolved** by implementing the keyboard plumbing or **deleted** if the methods are abandoned. Flag for UI sprint. |
 | `test_tools_run_examples.py:140` | hello_rope.py / hello_motor.py not present | **keep skip** — present in current checkout, so this skip never fires here; guard exists for partial checkouts |
 
 ---

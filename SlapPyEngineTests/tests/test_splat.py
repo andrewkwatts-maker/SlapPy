@@ -5,7 +5,7 @@ import math
 
 import pytest
 
-from slappyengine.physics.splat import (
+from pharos_engine.physics.splat import (
     SPLAT_MUD,
     SPLAT_NONE,
     SPLAT_WATER,
@@ -179,7 +179,7 @@ def test_can_compose_with_fragmentshape_bake_mask_xy() -> None:
     """Smoke test: the returned tuple plugs into bake_mask_xy without
     blowing up, and a real squash produces a wider-than-tall raster
     for a vertical impact."""
-    from slappyengine.physics.fragment import SHAPE_BLOB
+    from pharos_engine.physics.fragment import SHAPE_BLOB
 
     sx, sy, rot = compute_splat(
         impact_vel=(0.0, FAST),

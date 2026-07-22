@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-from slappyengine.post_process import (
+from pharos_engine.post_process import (
     PostProcessChain,
     arcade_chain,
     cinematic_chain,
@@ -85,8 +85,8 @@ def test_iso_strategy_has_topo_dependencies_set():
     survived sprint-3 composition.
 
     Round-8 polish introduced the ``depends_on`` field on
-    :class:`~slappyengine.render_channel.RenderPass`; sprint-3 mirrors that
-    contract onto :class:`~slappyengine.post_process.chain.PostProcessPass`
+    :class:`~pharos_engine.render_channel.RenderPass`; sprint-3 mirrors that
+    contract onto :class:`~pharos_engine.post_process.chain.PostProcessPass`
     so post-process executors with topological scheduling can honour
     explicit dependency declarations.
     """

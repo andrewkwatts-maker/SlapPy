@@ -1,4 +1,4 @@
-"""Input-validation tests for the public ``slappyengine.testing`` API.
+"""Input-validation tests for the public ``pharos_engine.testing`` API.
 
 Each test in this file exercises one rejection path with a precise
 substring match. Positive paths live in :file:`tests/test_visual_smoke.py`.
@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from slappyengine.testing import (
+from pharos_engine.testing import (
     assert_scene_matches,
     diff_pngs,
     render_scene_to_png,

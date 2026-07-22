@@ -7,7 +7,7 @@ These tests pin the demo's contract:
 3.  ``SceneFile`` round-trip preserves the entity list.
 4.  The registry discovers all 3 extra scenes + scene1 (4 total).
 5.  ``scene.apply(world, library)`` spawns bodies into a fresh
-    :class:`~slappyengine.dynamics.World`.
+    :class:`~pharos_engine.dynamics.World`.
 6.  ``Scene.snapshot(world)`` produces one entity per world body.
 7.  Loading a corrupt scene raises :class:`SceneValidationError`.
 8.  Trace log emits >= 20 events and is written to disk.
@@ -122,8 +122,8 @@ def test_registry_discovers_four_scenes(ran):
 
 
 def test_scene_apply_spawns_into_world(demo, tmp_path):
-    from slappyengine.dynamics import World
-    from slappyengine.prefabs import PrefabLibrary
+    from pharos_engine.dynamics import World
+    from pharos_engine.prefabs import PrefabLibrary
 
     lib_dir = tmp_path / "prefabs"
     library = PrefabLibrary()
@@ -146,8 +146,8 @@ def test_scene_apply_spawns_into_world(demo, tmp_path):
 
 
 def test_snapshot_matches_world_body_count(demo, tmp_path):
-    from slappyengine.dynamics import World
-    from slappyengine.prefabs import PrefabLibrary
+    from pharos_engine.dynamics import World
+    from pharos_engine.prefabs import PrefabLibrary
 
     lib_dir = tmp_path / "prefabs"
     library = PrefabLibrary()

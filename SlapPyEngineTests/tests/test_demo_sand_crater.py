@@ -1,12 +1,12 @@
 """Smoke test for ``examples/sand_crater_demo.py`` (UU5 gap-close, batch 6).
 
 The demo drives a preset-based crater explosion on a
-:class:`slappyengine.physics.particle_field.ParticleField`, calling
-:func:`slappyengine.physics.blast.detonate` on the blast frame and
+:class:`pharos_engine.physics.particle_field.ParticleField`, calling
+:func:`pharos_engine.physics.blast.detonate` on the blast frame and
 emitting a gif per preset to
 ``examples/output/particles/sand_crater[_<preset>][_<mode>].gif``.
 
-The demo imports from :mod:`slappyengine.physics`, which is a WIP
+The demo imports from :mod:`pharos_engine.physics`, which is a WIP
 subpackage. This test wakes up as soon as it lands — until then it
 skips with a clear reason so the gap remains visible in the test report.
 
@@ -36,16 +36,16 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP physics subpackage being unavailable.
     try:
-        from slappyengine.physics.blast import detonate  # noqa: F401
-        from slappyengine.physics.particle_field import ParticleField  # noqa: F401
-        from slappyengine.physics.splatter_presets import (  # noqa: F401
+        from pharos_engine.physics.blast import detonate  # noqa: F401
+        from pharos_engine.physics.particle_field import ParticleField  # noqa: F401
+        from pharos_engine.physics.splatter_presets import (  # noqa: F401
             PRESETS,
             SplatterPreset,
             get as get_preset,
         )
     except Exception as exc:
         pytest.skip(
-            "slappyengine.physics (blast / particle_field / splatter_presets) "
+            "pharos_engine.physics (blast / particle_field / splatter_presets) "
             f"unavailable (WIP): {exc}"
         )
 

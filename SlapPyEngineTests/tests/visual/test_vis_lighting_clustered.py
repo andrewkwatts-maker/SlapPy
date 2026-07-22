@@ -1,4 +1,4 @@
-﻿"""Visual test: clustered 2D lighting — 100 point lights."""
+"""Visual test: clustered 2D lighting — 100 point lights."""
 from __future__ import annotations
 import random
 import pytest
@@ -10,8 +10,8 @@ TEST_NAME = "lighting_clustered"
 
 def _build_scene():
     try:
-        from slappyengine.scene import Scene
-        from slappyengine.lighting import PointLight, LightingSystem
+        from pharos_engine.scene import Scene
+        from pharos_engine.lighting import PointLight, LightingSystem
         rng = random.Random(42)
         scene = Scene()
         # LightingSystem requires a live GPUContext; collect light objects instead

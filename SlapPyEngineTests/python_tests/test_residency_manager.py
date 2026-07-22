@@ -10,20 +10,20 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 def _make_layer(w=16, h=16):
-    from slappyengine.layer import Layer2D
+    from pharos_engine.layer import Layer2D
     return Layer2D.blank(w, h, name="test_layer")
 
 
 def _make_asset(name="TestAsset"):
     """Minimal in-memory asset with one layer, no GPU context needed."""
-    from slappyengine.asset import Asset
+    from pharos_engine.asset import Asset
     a = Asset(name=name, position=(100.0, 200.0), size=(32, 32))
     a.add_layer(_make_layer())
     return a
 
 
 def _manager(tmp_path):
-    from slappyengine.residency.manager import ResidencyManager
+    from pharos_engine.residency.manager import ResidencyManager
     return ResidencyManager(ctx=None, buf_mgr=None, tex_mgr=None, save_dir=tmp_path)
 
 
@@ -33,23 +33,23 @@ def _manager(tmp_path):
 
 class TestCacheMode:
     def test_import(self):
-        from slappyengine.residency.manager import CacheMode
+        from pharos_engine.residency.manager import CacheMode
         assert CacheMode is not None
 
     def test_always_cached_value(self):
-        from slappyengine.residency.manager import CacheMode
+        from pharos_engine.residency.manager import CacheMode
         assert CacheMode.ALWAYS_CACHED.value == "always_cached"
 
     def test_offscreen_serialize_value(self):
-        from slappyengine.residency.manager import CacheMode
+        from pharos_engine.residency.manager import CacheMode
         assert CacheMode.OFFSCREEN_SERIALIZE.value == "offscreen_serialize"
 
     def test_user_driven_value(self):
-        from slappyengine.residency.manager import CacheMode
+        from pharos_engine.residency.manager import CacheMode
         assert CacheMode.USER_DRIVEN.value == "user_driven"
 
     def test_three_modes_defined(self):
-        from slappyengine.residency.manager import CacheMode
+        from pharos_engine.residency.manager import CacheMode
         modes = list(CacheMode)
         assert len(modes) == 3
 
@@ -65,7 +65,7 @@ class TestResidencyManagerInit:
 
     def test_save_dir_created(self, tmp_path):
         save = tmp_path / "residency"
-        from slappyengine.residency.manager import ResidencyManager
+        from pharos_engine.residency.manager import ResidencyManager
         ResidencyManager(save_dir=save)
         assert save.is_dir()
 
@@ -94,7 +94,7 @@ class TestResidencyManagerInit:
 
 class TestResidencyManagerTier:
     def test_always_cached_stays_gpu(self, tmp_path):
-        from slappyengine.residency.manager import CacheMode
+        from pharos_engine.residency.manager import CacheMode
         mgr = _manager(tmp_path)
         asset = _make_asset()
         asset.cache_mode = CacheMode.ALWAYS_CACHED
@@ -104,7 +104,7 @@ class TestResidencyManagerTier:
         assert mgr.tier(asset) == "gpu"
 
     def test_user_driven_not_auto_evicted(self, tmp_path):
-        from slappyengine.residency.manager import CacheMode
+        from pharos_engine.residency.manager import CacheMode
         mgr = _manager(tmp_path)
         asset = _make_asset()
         asset.cache_mode = CacheMode.USER_DRIVEN
@@ -188,7 +188,7 @@ class TestResidencyManagerEvict:
         assert mgr.tier(asset) == "gpu"
 
     def test_tier_constants(self, tmp_path):
-        from slappyengine.residency.manager import ResidencyManager
+        from pharos_engine.residency.manager import ResidencyManager
         assert ResidencyManager.TIER_GPU == "gpu"
         assert ResidencyManager.TIER_RAM == "ram"
         assert ResidencyManager.TIER_DISK == "disk"

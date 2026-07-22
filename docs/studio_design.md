@@ -1,6 +1,6 @@
-# slappyengine.studio — Design Reference
+# pharos_engine.studio — Design Reference
 
-`slappyengine.studio` is the engine's **demo-authoring sugar layer**.
+`pharos_engine.studio` is the engine's **demo-authoring sugar layer**.
 It exists so a working physics-and-render scene fits in ~15 lines of
 Python instead of ~50, without locking callers out of the underlying
 worlds and renderers. Every helper is additive — `softbody_stage(...)`
@@ -231,7 +231,7 @@ The studio API ships four module-level helpers that operate on a
 `(node_start, node_end)` slice of a world's node array:
 
 ```python
-from slappyengine.studio import kick, anchor, centroid, translate
+from pharos_engine.studio import kick, anchor, centroid, translate
 
 cube = make_lattice_body(world, ...)
 kick(world, cube.slice, vy=8.0, twist=-0.6)

@@ -1,10 +1,10 @@
 """Lock the friendly top-level rebuild surface that users discover with
-``import slappyengine``.
+``import pharos_engine``.
 
 These names are lazily re-exported from the new ``softbody`` / ``fluid``
 / ``dynamics`` / ``studio`` subpackages. Each entry exists so the user
-can write ``slappyengine.softbody_stage(...)``, ``slappyengine.kick(...)``,
-``slappyengine.make_humanoid(...)`` etc. without knowing which submodule
+can write ``pharos_engine.softbody_stage(...)``, ``pharos_engine.kick(...)``,
+``pharos_engine.make_humanoid(...)`` etc. without knowing which submodule
 to import from.
 """
 from __future__ import annotations
@@ -31,16 +31,16 @@ import pytest
 ])
 def test_toplevel_surface_resolves(name: str):
     """Each name must resolve when accessed on the top-level package."""
-    import slappyengine
-    val = getattr(slappyengine, name)
+    import pharos_engine
+    val = getattr(pharos_engine, name)
     assert val is not None
     # Lazy attrs are cached on access; the second lookup should hit the cache
-    assert getattr(slappyengine, name) is val
+    assert getattr(pharos_engine, name) is val
 
 
 def test_friendly_demo_one_call_works():
     """The shortest demo a user could write: import, stage, body, record."""
-    import slappyengine as eng
+    import pharos_engine as eng
 
     stage = eng.softbody_stage(view_box=(-1, -1, 1, 4), width=64, height=48,
                                  floor_y=3.0)

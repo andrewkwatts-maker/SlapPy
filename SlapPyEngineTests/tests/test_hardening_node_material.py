@@ -1,4 +1,4 @@
-"""Input-validation tests for :mod:`slappyengine.material.node_material`
+"""Input-validation tests for :mod:`pharos_engine.material.node_material`
 (hardening round 10).
 
 Mirrors the structure of ``test_hardening_audio.py`` /
@@ -22,7 +22,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "python"))
 
-from slappyengine.material.node_material import (  # noqa: E402
+from pharos_engine.material.node_material import (  # noqa: E402
     AccumulateNode,
     ClampNode,
     CosNode,

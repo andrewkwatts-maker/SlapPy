@@ -24,7 +24,7 @@ from typing import Any, Callable
 
 import pytest
 
-from slappyengine.ui.user_overrides import (
+from pharos_engine.ui.user_overrides import (
     NullWatcherHandle,
     ReloadedBundle,
     UserOverrideBundle,
@@ -40,7 +40,7 @@ from slappyengine.ui.user_overrides import (
 
 @pytest.fixture()
 def loader(tmp_path: Path) -> UserOverrideLoader:
-    """A loader rooted at a tmp path (never touches ``~/.slappyengine``)."""
+    """A loader rooted at a tmp path (never touches ``~/.pharos_engine``)."""
     root = tmp_path / "ui"
     loader = UserOverrideLoader(root=root)
     loader.ensure_scaffolded()
@@ -149,7 +149,7 @@ def test_watch_dir_missing_watchdog_returns_null(
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
     # Reset warned flag so we don't skip the branch under test.
-    import slappyengine.ui.user_overrides as mod
+    import pharos_engine.ui.user_overrides as mod
     monkeypatch.setattr(mod, "_WATCHDOG_WARNED", False)
 
     handle = loader.watch_dir(lambda _k, _p: None)
@@ -173,10 +173,10 @@ def test_watch_dir_missing_watchdog_only_warns_once(
         return real_import(name, *args, **kw)
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
-    import slappyengine.ui.user_overrides as mod
+    import pharos_engine.ui.user_overrides as mod
     monkeypatch.setattr(mod, "_WATCHDOG_WARNED", False)
 
-    with caplog.at_level("WARNING", logger="slappyengine.ui.user_overrides"):
+    with caplog.at_level("WARNING", logger="pharos_engine.ui.user_overrides"):
         loader.watch_dir(lambda _k, _p: None).stop()
         first_count = sum(
             1 for r in caplog.records if "watchdog not installed" in r.getMessage()

@@ -1,4 +1,4 @@
-"""Tests for slappyengine.numerics — V-cycle multigrid Poisson solver."""
+"""Tests for pharos_engine.numerics — V-cycle multigrid Poisson solver."""
 from __future__ import annotations
 
 import warnings
@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.numerics import (
+from pharos_engine.numerics import (
     compute_residual,
     sor_smooth,
     vcycle_poisson,

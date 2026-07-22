@@ -1,10 +1,10 @@
-"""Input-validation tests for the public ``slappyengine.numerics`` API."""
+"""Input-validation tests for the public ``pharos_engine.numerics`` API."""
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from slappyengine.numerics import (
+from pharos_engine.numerics import (
     compute_residual,
     sor_smooth,
     vcycle_poisson,

@@ -4,7 +4,7 @@ The demo drops a tall column of PBF water into a walled basin and
 renders a side-by-side particle / watery-surface GIF to
 ``examples/output/fluid/dam_break.gif``.
 
-The demo imports from :mod:`slappyengine.fluid`, which is a WIP
+The demo imports from :mod:`pharos_engine.fluid`, which is a WIP
 subpackage. This test wakes up as soon as it lands — until then it
 skips with a clear reason so the gap remains visible in the test report.
 
@@ -34,18 +34,18 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP fluid subpackage being unavailable.
     try:
-        from slappyengine.fluid import (  # noqa: F401
+        from pharos_engine.fluid import (  # noqa: F401
             FluidRenderConfig,
             FluidRenderer,
             pbf_step,
         )
-        from slappyengine.studio import (  # noqa: F401
+        from pharos_engine.studio import (  # noqa: F401
             fluid_stage,
             output_path,
         )
     except Exception as exc:
         pytest.skip(
-            "slappyengine.fluid / studio unavailable (WIP): "
+            "pharos_engine.fluid / studio unavailable (WIP): "
             f"{exc}"
         )
 

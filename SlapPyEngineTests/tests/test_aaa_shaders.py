@@ -19,12 +19,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.ui.theme.page_linings import (
+from pharos_engine.ui.theme.page_linings import (
     AAAShaderQualityPreset,
     DEFAULT_AAA_PRESET,
     render_lining,
 )
-from slappyengine.ui.theme.shader_effects import ruled_paper
+from pharos_engine.ui.theme.shader_effects import ruled_paper
 
 
 AAA_UPGRADED_PRESETS = ("ruled_paper", "dot_grid", "graph_grid", "blank_cream")

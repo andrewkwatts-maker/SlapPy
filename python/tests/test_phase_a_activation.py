@@ -21,7 +21,7 @@ import time
 import numpy as np
 import pytest
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     FrontierConfig,
     FrontierSolver,
     PhysicsWorld,

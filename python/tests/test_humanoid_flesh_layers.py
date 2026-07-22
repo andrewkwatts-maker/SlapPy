@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from slappyengine.dynamics import make_humanoid, wrap_in_flesh
-from slappyengine.softbody import SoftBodyWorld
+from pharos_engine.dynamics import make_humanoid, wrap_in_flesh
+from pharos_engine.softbody import SoftBodyWorld
 
 
 def test_flesh_beams_node_a_has_higher_or_equal_layer():

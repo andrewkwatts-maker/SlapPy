@@ -24,7 +24,7 @@ import struct
 import numpy as np
 import pytest
 
-from slappyengine.post_process.shadow_csm import ShadowCSM
+from pharos_engine.post_process.shadow_csm import ShadowCSM
 
 
 # ---------------------------------------------------------------------------

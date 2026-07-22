@@ -80,8 +80,8 @@ def stub_dearpygui(monkeypatch):
 # ---------------------------------------------------------------------------
 
 try:
-    from slappyengine.ui.editor import spawn_menu  # noqa: F401
-    from slappyengine.dynamics.world import World as _DynWorld  # noqa: F401
+    from pharos_engine.ui.editor import spawn_menu  # noqa: F401
+    from pharos_engine.dynamics.world import World as _DynWorld  # noqa: F401
 except Exception as _import_err:  # pragma: no cover
     pytest.skip(
         f"editor.spawn_menu or dynamics.world not importable: {_import_err}",
@@ -90,7 +90,7 @@ except Exception as _import_err:  # pragma: no cover
 
 
 def _find_action(label: str) -> dict:
-    from slappyengine.ui.editor.spawn_menu import SPAWN_ACTIONS
+    from pharos_engine.ui.editor.spawn_menu import SPAWN_ACTIONS
     for action in SPAWN_ACTIONS:
         if action["label"] == label:
             return action
@@ -103,7 +103,7 @@ def _drive_spawn(label: str, world):
     Mirrors what :func:`open_spawn_modal`'s ``_on_spawn`` callback does
     when the user clicks the Spawn button.
     """
-    from slappyengine.ui.editor.spawn_menu import (
+    from pharos_engine.ui.editor.spawn_menu import (
         _resolve_factory,
         _spec_to_kwargs,
     )
@@ -121,7 +121,7 @@ def _drive_spawn(label: str, world):
 
 class TestSpawnRopeIntegration:
     def test_node_and_joint_counts_match_spec(self):
-        from slappyengine.dynamics.world import World
+        from pharos_engine.dynamics.world import World
 
         world = World()
         spec, body = _drive_spawn("Add Rope", world)
@@ -148,7 +148,7 @@ class TestSpawnRopeIntegration:
 
 class TestSpawnRagdollIntegration:
     def test_bone_count_drives_topology(self):
-        from slappyengine.dynamics.world import World
+        from pharos_engine.dynamics.world import World
 
         world = World()
         spec, body = _drive_spawn("Add Ragdoll", world)
@@ -177,7 +177,7 @@ class TestSpawnRagdollIntegration:
 
 class TestSpawnIKChainIntegration:
     def test_solver_runs_with_target_and_returns_bool(self):
-        from slappyengine.dynamics.world import World
+        from pharos_engine.dynamics.world import World
 
         world = World()
         # Seed nodes for the default csv "0,1,2,3".
@@ -206,7 +206,7 @@ class TestSpawnIKChainIntegration:
 
 class TestSpawnHumanoidIntegration:
     def test_skeleton_has_15_nodes(self):
-        from slappyengine.softbody.world import SoftBodyWorld
+        from pharos_engine.softbody.world import SoftBodyWorld
 
         world = SoftBodyWorld()
         spec, humanoid = _drive_spawn("Add Humanoid", world)

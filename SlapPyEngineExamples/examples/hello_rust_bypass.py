@@ -6,12 +6,12 @@ Codifies the 2026-07-05 architectural directive:
      backend, users should be able to bypass the py lib if they want."
 
 This demo shows a power user how to **skip the Python wrapper stack**
-and call the compiled Rust kernels in :mod:`slappyengine._core`
+and call the compiled Rust kernels in :mod:`pharos_engine._core`
 directly.  It covers three concrete comparisons on kernels that ship in
 every wheel build (no `--features 3d,gi,ibl` required):
 
 * :func:`_core.convex_hull` vs the pure-Python fallback in
-  :mod:`slappyengine.compute.spatial`.
+  :mod:`pharos_engine.compute.spatial`.
 * :func:`_core.compute_bone_lengths` vs a hand-rolled numpy euclidean
   distance loop.
 * :func:`_core.lz4_compress` vs :func:`zlib.compress` at the default
@@ -127,7 +127,7 @@ def _make_lz4_payload(n_bytes: int) -> bytes:
     """A repeat-friendly payload so LZ4 finds long matches (realistic)."""
     # 32-byte pattern repeated to ``n_bytes``.  Matches the kind of
     # tile-map / voxel data the .slap container actually compresses.
-    pattern = b"slappyengine-bypass-demo-payload"
+    pattern = b"pharos_engine-bypass-demo-payload"
     return (pattern * ((n_bytes // len(pattern)) + 1))[:n_bytes]
 
 
@@ -141,7 +141,7 @@ def _python_convex_hull(
 ) -> List[Tuple[float, float]]:
     """Andrew's monotone chain in pure Python.
 
-    Mirrors :func:`slappyengine.compute.spatial._python_convex_hull` so
+    Mirrors :func:`pharos_engine.compute.spatial._python_convex_hull` so
     the comparison is against the same algorithm the wrapper would use
     on a machine without ``_core``.
     """
@@ -200,12 +200,12 @@ def _write_trace_yaml(payload: Dict[str, Any], path: Path) -> Path:
 def _enumerate_core_submodules() -> Dict[str, List[str]]:
     """Return a ``{submodule: [symbol, ...]}`` map from the live ``_core``.
 
-    Uses :func:`slappyengine._core_facade.list_rust_functions` — which
+    Uses :func:`pharos_engine._core_facade.list_rust_functions` — which
     filters :data:`RUST_MODULE_MAP` against actual ``hasattr(_core, ...)``
     presence — so the returned dict reflects the shipping wheel, not
     the theoretical maximum surface.
     """
-    from slappyengine import _core_facade
+    from pharos_engine import _core_facade
 
     if not _core_facade.has_native():
         return {}
@@ -240,7 +240,7 @@ def main(
     trace_yaml_path:
         Where to write the YAML trace.  ``None`` -> next to the demo.
     """
-    from slappyengine import _core_facade
+    from pharos_engine import _core_facade
 
     submodules = _enumerate_core_submodules()
     has_native = _core_facade.has_native()
@@ -255,10 +255,10 @@ def main(
 
     if has_native:
         # We import the flat _core module directly.  Users who prefer
-        # the sub-module views can do ``from slappyengine._core import
+        # the sub-module views can do ``from pharos_engine._core import
         # hull, ik_solver, slap_format`` — both work; the sub-module
         # views are attribute-level aliases installed by _core_facade.
-        from slappyengine import _core
+        from pharos_engine import _core
 
         # --- 1. Convex hull ------------------------------------------------
         hull_pts = _make_hull_points(hull_points)
@@ -326,10 +326,10 @@ def main(
         "submodules": submodules,
         "timings": timings,
         "notes": [
-            "Bypass path: `from slappyengine import _core` then call the "
+            "Bypass path: `from pharos_engine import _core` then call the "
             "kernel directly on the same argument tuple/list.",
             "Wrapper path: pure-Python reference implementation matching "
-            "what slappyengine falls back to when _core is missing.",
+            "what pharos_engine falls back to when _core is missing.",
             "Speedup > 1.0 means the Rust kernel is faster than the "
             "equivalent Python fallback.",
         ],

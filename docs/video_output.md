@@ -33,14 +33,14 @@ Verify it's on PATH with `ffmpeg -version`.
 ## Verify
 
 ```
-python -c "from slappyengine.physics.video import VideoWriter; print(VideoWriter.ffmpeg_available())"
+python -c "from pharos_engine.physics.video import VideoWriter; print(VideoWriter.ffmpeg_available())"
 ```
 
 Prints `True` if MP4 emission is available, `False` if `VideoWriter` will
 fall back to GIF. For more detail:
 
 ```
-python -c "from slappyengine.physics.video import VideoWriter; print(VideoWriter.ffmpeg_source())"
+python -c "from pharos_engine.physics.video import VideoWriter; print(VideoWriter.ffmpeg_source())"
 ```
 
 Prints `imageio_ffmpeg`, `system`, or `None`.
@@ -48,7 +48,7 @@ Prints `imageio_ffmpeg`, `system`, or `None`.
 ## Usage
 
 ```python
-from slappyengine.physics.video import VideoWriter
+from pharos_engine.physics.video import VideoWriter
 
 with VideoWriter("out/showcase.mp4", fps=60) as vw:
     for frame in render_frames():
@@ -58,13 +58,13 @@ with VideoWriter("out/showcase.mp4", fps=60) as vw:
 If ffmpeg is unavailable the writer rewrites the extension to `.gif` and
 emits a `RuntimeWarning` that includes the install hint.
 
-## Buffered API: `slappyengine.media.save_frames`
+## Buffered API: `pharos_engine.media.save_frames`
 
 For visual demos that build a Python list of `PIL.Image` frames and then
 flush them in one shot, prefer the buffered helper:
 
 ```python
-from slappyengine.media import save_frames
+from pharos_engine.media import save_frames
 
 # Pick MP4 vs GIF purely from the extension.  Falls back to .gif (with
 # a RuntimeWarning) when ffmpeg is missing.
@@ -72,7 +72,7 @@ save_frames(pil_frames, "out/demo.mp4", fps=30)   # MP4 if available
 save_frames(pil_frames, "out/demo.gif", fps=30)   # always GIF, never warns
 ```
 
-`save_frames` is a thin dispatcher over `slappyengine.tools.video.write_gif`
+`save_frames` is a thin dispatcher over `pharos_engine.tools.video.write_gif`
 and `write_mp4`.  Numeric defaults (`fps`, `quality`, GIF `loop`,
 `palette_colors`) come from the `media:` section of `config/physics.yml`:
 
@@ -104,7 +104,7 @@ Alternatives if you prefer a system install:
 Verify availability:
 
 ```python
-from slappyengine.media import have_ffmpeg
+from pharos_engine.media import have_ffmpeg
 print(have_ffmpeg())   # True iff MP4 emission will work
 ```
 

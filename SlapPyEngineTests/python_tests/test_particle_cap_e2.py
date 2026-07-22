@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from slappyengine.particles import (
+from pharos_engine.particles import (
     MOBILE_MAX_PARTICLES,
     GpuParticleSystem,
 )

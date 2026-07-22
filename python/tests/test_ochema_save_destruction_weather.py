@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _OCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _OCHEMA_STR = str(_OCHEMA_DIR)
@@ -108,21 +108,21 @@ class TestSaveSystemEventHandlers:
         return SaveSystem(save_dir=str(tmp_path))
 
     def test_on_race_finished_increments_total_races(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ss = self._ss(tmp_path)
         publish("Race.Finished", publisher=None, track_name="t1", results=[])
         assert ss._data.get("total_races", 0) == 1
         ss.teardown()
 
     def test_on_best_lap_stores_time(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ss = self._ss(tmp_path)
         publish("Race.BestLap", publisher=None, track_name="circuit01", lap_time=55.2)
         assert ss._data.get("best_laps", {}).get("circuit01") == pytest.approx(55.2)
         ss.teardown()
 
     def test_on_paint_changed_stores_color(self, tmp_path):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ss = self._ss(tmp_path)
         publish("Garage.PaintChanged", publisher=None, color="#FF4400")
         assert ss._data.get("paint_color") == "#FF4400"
@@ -308,7 +308,7 @@ class TestWeatherSystem:
         ws.teardown()
 
     def test_quality_tier_changes_intensity(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ws, fog = self._ws(rain_intensity=1.0)
         publish("Quality.TierChanged", publisher=None,
                 params={"rain_cap": 250})  # 250/500 = 50%

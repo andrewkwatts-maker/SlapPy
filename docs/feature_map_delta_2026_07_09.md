@@ -10,7 +10,7 @@ batch).
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`slappyengine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `spawn.at_origin`          | `spawn_origin_actions.spawn_at_origin`              | spawn |
 | `selection.by_type`        | `selection_by_type_actions.select_by_type`          | selection |
@@ -20,14 +20,14 @@ Five more action ids landed in this tick, moving 5 rows from STUB
 
 New action modules:
 
-* `python/slappyengine/actions/spawn_origin_actions.py`
-* `python/slappyengine/actions/selection_by_type_actions.py`
-* `python/slappyengine/actions/selection_by_layer_actions.py`
-* `python/slappyengine/actions/selection_same_material_actions.py`
-* `python/slappyengine/actions/view_toggle_stats_actions.py`
+* `python/pharos_engine/actions/spawn_origin_actions.py`
+* `python/pharos_engine/actions/selection_by_type_actions.py`
+* `python/pharos_engine/actions/selection_by_layer_actions.py`
+* `python/pharos_engine/actions/selection_same_material_actions.py`
+* `python/pharos_engine/actions/view_toggle_stats_actions.py`
 
 Router entries and `_fb_*` shims live in
-`python/slappyengine/tool_router.py` under the
+`python/pharos_engine/tool_router.py` under the
 `# ── QQ1 STUB-triage: spawn-at-origin, selection by type / layer /
 material, view toggle-stats overlay (round 18) ──` block.
 

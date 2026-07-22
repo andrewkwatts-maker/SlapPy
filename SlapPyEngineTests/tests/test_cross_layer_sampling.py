@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine.layer import Layer2D, Layer3D
-from slappyengine.render.layer_sampling import (
+from pharos_engine.layer import Layer2D, Layer3D
+from pharos_engine.render.layer_sampling import (
     BLEND_MODES,
     LayerSampleBinding,
     LayerTextureBinding,
@@ -271,6 +271,6 @@ def test_composite_shader_parses_basic():
 
 
 def test_composite_shader_file_lives_next_to_module():
-    from slappyengine.render import layer_sampling
+    from pharos_engine.render import layer_sampling
     shader_dir = Path(layer_sampling.__file__).parent / "shaders"
     assert (shader_dir / "cross_layer_composite.wgsl").is_file()

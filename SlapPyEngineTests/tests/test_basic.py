@@ -1,18 +1,18 @@
-﻿"""
+"""
 Basic tests for core Python types — no GPU or Rust extension required.
 """
 import math
 import pytest
 
-from slappyengine.entity import Entity
-from slappyengine.render_target import RenderTarget
-from slappyengine.cube_array import CubeArray
-from slappyengine.layer import Layer
-from slappyengine.asset import Asset
-from slappyengine.scene import Scene
-from slappyengine.camera import Camera
-from slappyengine.tags import TagRegistry
-from slappyengine.material import ColorRange
+from pharos_engine.entity import Entity
+from pharos_engine.render_target import RenderTarget
+from pharos_engine.cube_array import CubeArray
+from pharos_engine.layer import Layer
+from pharos_engine.asset import Asset
+from pharos_engine.scene import Scene
+from pharos_engine.camera import Camera
+from pharos_engine.tags import TagRegistry
+from pharos_engine.material import ColorRange
 
 
 # ---------------------------------------------------------------------------

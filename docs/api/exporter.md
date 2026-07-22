@@ -1,18 +1,18 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.exporter — API Reference
+# pharos_engine.exporter — API Reference
 
 > Hand-written reference for the LL6 cross-platform game exporter.
 > Bundles a scaffolded SlapPyEngine project into a distributable ZIP or a
 > standalone PyInstaller binary. Sibling references: the CLI subcommand
 > `slap export` (documented in [`../ONBOARDING.md`](../ONBOARDING.md) and
-> registered in `python/slappyengine/cli.py`) is the primary caller;
+> registered in `python/pharos_engine/cli.py`) is the primary caller;
 > [`../pyproject_extras_2026_07_05.md`](../pyproject_extras_2026_07_05.md)
 > covers the pip-install shape the exported ZIP will boot into on a
 > customer machine.
 
 ## Overview
 
-`slappyengine.exporter` is the Nova3D parity Sprint 18 landing (task
+`pharos_engine.exporter` is the Nova3D parity Sprint 18 landing (task
 LL6), extended by NN7 with dry-run + verbose + exclude patterns +
 `manifest.json`. It packages a scaffolded project (the tree produced by
 `slap new`) into one of two shippable shapes:
@@ -35,7 +35,7 @@ Dispatch is by output extension: `output.suffix.lower() == ".zip"` →
 ## Public surface
 
 ```python
-from slappyengine.exporter import (
+from pharos_engine.exporter import (
     BinaryExporter, BinaryExportResult,
     BundleResult,
     DEFAULT_EXCLUDES, REQUIRED_FILES,
@@ -53,7 +53,7 @@ from slappyengine.exporter import (
 
 ### `ZipBundler`
 
-_class — defined in `slappyengine.exporter.zip_bundler`_
+_class — defined in `pharos_engine.exporter.zip_bundler`_
 
 Walks a scaffolded project tree and writes a filtered ZIP.
 
@@ -77,7 +77,7 @@ Raises `TypeError` / `ValueError` on empty or wrong-typed arguments,
 
 ### `BundleResult`
 
-_dataclass — defined in `slappyengine.exporter.zip_bundler`_
+_dataclass — defined in `pharos_engine.exporter.zip_bundler`_
 
 | Field | Type | Notes |
 |-------|------|-------|
@@ -92,7 +92,7 @@ _dataclass — defined in `slappyengine.exporter.zip_bundler`_
 
 ### `BinaryExporter`
 
-_class — defined in `slappyengine.exporter.binary_exporter`_
+_class — defined in `pharos_engine.exporter.binary_exporter`_
 
 PyInstaller-backed executable builder.
 
@@ -100,7 +100,7 @@ PyInstaller-backed executable builder.
 BinaryExporter(*, hidden_imports: Sequence[str] | None = None)
 ```
 
-Default hidden imports are `["slappyengine", "slappyengine._core",
+Default hidden imports are `["pharos_engine", "pharos_engine._core",
 "yaml"]` so PyInstaller's static analysis picks up the C-extension +
 YAML dependencies.
 
@@ -113,14 +113,14 @@ via :func:`detect_current_platform`; cross-compiling is not supported
 
 ### `BinaryExportResult`
 
-_dataclass — defined in `slappyengine.exporter.binary_exporter`_
+_dataclass — defined in `pharos_engine.exporter.binary_exporter`_
 
 Fields: `binary_path`, `spec_path`, `size_bytes`, `log`, `warnings`,
 `errors`, `succeeded`, `skipped_reason`.
 
 ### `ProjectManifest`
 
-_dataclass — defined in `slappyengine.exporter.manifest`_
+_dataclass — defined in `pharos_engine.exporter.manifest`_
 
 Ship-time project metadata (`slappyproject.yaml`).
 
@@ -144,7 +144,7 @@ Class methods:
 
 ### `ExportResult`
 
-_dataclass — defined in `slappyengine.exporter`_
+_dataclass — defined in `pharos_engine.exporter`_
 
 Unified return type for :func:`export_project`.
 
@@ -166,7 +166,7 @@ Unified return type for :func:`export_project`.
 
 ### `export_project(project_dir, output, *, platform="auto", include_python=False, icon=None, console=False, dry_run=False, verbose=False, exclude_patterns=None, write_manifest_json=True, manifest_targets=None, verbose_stream=None) -> ExportResult`
 
-_defined in `slappyengine.exporter`_
+_defined in `pharos_engine.exporter`_
 
 Convenience wrapper. Validates that *project_dir* exists and contains
 either `main.py` or `slappyproject.yaml`, loads the manifest, then
@@ -175,7 +175,7 @@ otherwise :class:`BinaryExporter`.
 
 ### `build_bundle_manifest(project_dir, included_files, *, targets=None) -> dict`
 
-_defined in `slappyengine.exporter.zip_bundler`_
+_defined in `pharos_engine.exporter.zip_bundler`_
 
 Compute a `manifest.json` payload: SHA-256 hashes over each included
 file, project name / version from `slappyproject.yaml`, ISO-8601 build
@@ -184,26 +184,26 @@ zip when `write_manifest_json=True`.
 
 ### `load_manifest(project_dir) -> ProjectManifest`
 
-_defined in `slappyengine.exporter.manifest`_
+_defined in `pharos_engine.exporter.manifest`_
 
 Thin wrapper over :meth:`ProjectManifest.load`.
 
 ### `detect_current_platform() -> str`
 
-_defined in `slappyengine.exporter.platform_targets`_
+_defined in `pharos_engine.exporter.platform_targets`_
 
 Returns `"windows"`, `"macos"`, or `"linux"` per `sys.platform`.
 
 ### `get_target(name) -> dict`
 
-_defined in `slappyengine.exporter.platform_targets`_
+_defined in `pharos_engine.exporter.platform_targets`_
 
 Return the :data:`TARGETS` descriptor for *name*. `"auto"` resolves to
 the host. Raises `ValueError` on unknown names.
 
 ### `pyinstaller_available() -> bool`
 
-_defined in `slappyengine.exporter.binary_exporter`_
+_defined in `pharos_engine.exporter.binary_exporter`_
 
 `True` when `import PyInstaller` succeeds. Callers should branch on
 this before scheduling a binary export.
@@ -222,7 +222,7 @@ Written into the zip root when `write_manifest_json=True`.
 
 ### `DEFAULT_EXCLUDES`
 
-_tuple[str, ...] — defined in `slappyengine.exporter.zip_bundler`_
+_tuple[str, ...] — defined in `pharos_engine.exporter.zip_bundler`_
 
 Always-on fnmatch exclusion patterns. Includes `.git`,
 `__pycache__`, `*.pyc`, `.venv`, `venv`, `build`, `dist`,
@@ -237,7 +237,7 @@ hard failure — the customer may have a non-standard entry point).
 
 ### `TARGETS`
 
-_dict[str, dict] — defined in `slappyengine.exporter.platform_targets`_
+_dict[str, dict] — defined in `pharos_engine.exporter.platform_targets`_
 
 Per-platform descriptors under keys `"windows"`, `"linux"`, `"macos"`.
 Each entry carries `executable_ext`, `launcher_ext`,
@@ -247,7 +247,7 @@ Each entry carries `executable_ext`, `launcher_ext`,
 
 ```python
 from pathlib import Path
-from slappyengine.exporter import export_project
+from pharos_engine.exporter import export_project
 
 result = export_project(
     project_dir=Path("scaffold_out/my_game"),
@@ -268,13 +268,13 @@ assert not result.errors
 
 For a real ship-time build drop `dry_run=True` and inspect
 `result.size_bytes` + `result.warnings`. The
-`slappyengine.cli.cmd_export` command drives exactly this call site
+`pharos_engine.cli.cmd_export` command drives exactly this call site
 under the hood.
 
 ## Skip the wrapper
 
-`slappyengine.exporter` is Python-only. Grep of
-`slappyengine._core_facade.RUST_MODULE_MAP` shows **no** `exporter`
+`pharos_engine.exporter` is Python-only. Grep of
+`pharos_engine._core_facade.RUST_MODULE_MAP` shows **no** `exporter`
 entry — the export path is bounded by disk I/O (zip write, PyInstaller
 subprocess), so pushing it into Rust would not move any measurable
 needle.

@@ -3,7 +3,7 @@
 Index / gap tracker for every `docs/api/*.md` reference. See
 [`_template.md`](_template.md) for the canonical hand-authored
 structure — every hand-authored ref file must carry the do-not-
-regenerate marker on line 1, use the `# slappyengine.<X> — API
+regenerate marker on line 1, use the `# pharos_engine.<X> — API
 Reference` H1, and provide one of the canonical landing H2s
 (`## Overview` / `## Public surface` / `## Usage`). Enforced by
 `SlapPyEngineTests/tests/test_docs_api_template_conformance.py`.
@@ -15,52 +15,52 @@ tracks which shipped subpackages have references and which do not.
 
 | Subpackage | Doc |
 |---|---|
-| `slappyengine.actions` | [`actions.md`](actions.md) |
-| `slappyengine.ai` | [`ai.md`](ai.md) |
-| `slappyengine.animation` | [`animation.md`](animation.md) |
-| `slappyengine.animation.skeleton_runtime` | [`animation_skeleton.md`](animation_skeleton.md) |
-| `slappyengine.asset_import` | [`asset_import.md`](asset_import.md) |
-| `slappyengine.assets` | [`assets.md`](assets.md) |
-| `slappyengine.audio_3d` | [`audio_3d.md`](audio_3d.md) |
-| `slappyengine.audio_runtime` | [`audio_runtime.md`](audio_runtime.md) |
-| `slappyengine.capture` | [`capture.md`](capture.md) |
-| `slappyengine.compute` | [`compute.md`](compute.md) |
-| `slappyengine.diagnostics` | [`diagnostics.md`](diagnostics.md) |
-| `slappyengine.dynamics` | [`dynamics.md`](dynamics.md) |
-| `slappyengine.exporter` | [`exporter.md`](exporter.md) |
-| `slappyengine.ext` | [`ext.md`](ext.md) |
-| `slappyengine.gi` | [`gi.md`](gi.md) |
-| `slappyengine.gpu` | [`gpu.md`](gpu.md) |
-| `slappyengine.input` | [`input.md`](input.md) |
-| `slappyengine.iso` | [`iso.md`](iso.md) |
-| `slappyengine.material` | [`material.md`](material.md) |
-| `slappyengine.math` | [`math.md`](math.md) |
-| `slappyengine.modules` | [`modules.md`](modules.md) |
-| `slappyengine.net` | [`net.md`](net.md) |
-| `slappyengine.numerics` | [`numerics.md`](numerics.md) |
-| `slappyengine.perf` | [`perf.md`](perf.md) |
-| `slappyengine.physics3_bridge` | [`physics3_bridge.md`](physics3_bridge.md) |
-| `slappyengine.post_process` | [`post_process.md`](post_process.md) |
-| `slappyengine.prefabs` | [`prefabs.md`](prefabs.md) |
-| `slappyengine.projects` | [`projects.md`](projects.md) |
-| `slappyengine.render.bvh_3d` | [`render_bvh_3d.md`](render_bvh_3d.md) |
-| `slappyengine.render.instanced` | [`render_instanced.md`](render_instanced.md) |
-| `slappyengine.render.scene_walker` | [`render_scene_walker.md`](render_scene_walker.md) |
-| `slappyengine.render.shadows` | [`render_shadows.md`](render_shadows.md) |
-| `slappyengine.render.skybox` | [`render_skybox.md`](render_skybox.md) |
-| `slappyengine.residency` | [`residency.md`](residency.md) |
-| `slappyengine.studio` | [`studio.md`](studio.md) |
-| `slappyengine.telemetry` | [`telemetry.md`](telemetry.md) |
-| `slappyengine.testing` | [`testing.md`](testing.md) |
-| `slappyengine.thermal` | [`thermal.md`](thermal.md) |
-| `slappyengine.tools` | [`tools.md`](tools.md) |
-| `slappyengine.topology` | [`topology.md`](topology.md) |
-| `slappyengine.ui.editor` | [`ui_editor.md`](ui_editor.md) |
-| `slappyengine.ui.runtime.hud_overlay` | [`hud_overlay.md`](hud_overlay.md) |
-| `slappyengine.ui.theme` | [`ui_theme.md`](ui_theme.md) |
-| `slappyengine.ui.widgets` | [`ui_widgets.md`](ui_widgets.md) |
-| `slappyengine.visual_scripting` | [`visual_scripting.md`](visual_scripting.md) |
-| `slappyengine.zones` | [`zones.md`](zones.md) |
+| `pharos_engine.actions` | [`actions.md`](actions.md) |
+| `pharos_engine.ai` | [`ai.md`](ai.md) |
+| `pharos_engine.animation` | [`animation.md`](animation.md) |
+| `pharos_engine.animation.skeleton_runtime` | [`animation_skeleton.md`](animation_skeleton.md) |
+| `pharos_engine.asset_import` | [`asset_import.md`](asset_import.md) |
+| `pharos_engine.assets` | [`assets.md`](assets.md) |
+| `pharos_engine.audio_3d` | [`audio_3d.md`](audio_3d.md) |
+| `pharos_engine.audio_runtime` | [`audio_runtime.md`](audio_runtime.md) |
+| `pharos_engine.capture` | [`capture.md`](capture.md) |
+| `pharos_engine.compute` | [`compute.md`](compute.md) |
+| `pharos_engine.diagnostics` | [`diagnostics.md`](diagnostics.md) |
+| `pharos_engine.dynamics` | [`dynamics.md`](dynamics.md) |
+| `pharos_engine.exporter` | [`exporter.md`](exporter.md) |
+| `pharos_engine.ext` | [`ext.md`](ext.md) |
+| `pharos_engine.gi` | [`gi.md`](gi.md) |
+| `pharos_engine.gpu` | [`gpu.md`](gpu.md) |
+| `pharos_engine.input` | [`input.md`](input.md) |
+| `pharos_engine.iso` | [`iso.md`](iso.md) |
+| `pharos_engine.material` | [`material.md`](material.md) |
+| `pharos_engine.math` | [`math.md`](math.md) |
+| `pharos_engine.modules` | [`modules.md`](modules.md) |
+| `pharos_engine.net` | [`net.md`](net.md) |
+| `pharos_engine.numerics` | [`numerics.md`](numerics.md) |
+| `pharos_engine.perf` | [`perf.md`](perf.md) |
+| `pharos_engine.physics3_bridge` | [`physics3_bridge.md`](physics3_bridge.md) |
+| `pharos_engine.post_process` | [`post_process.md`](post_process.md) |
+| `pharos_engine.prefabs` | [`prefabs.md`](prefabs.md) |
+| `pharos_engine.projects` | [`projects.md`](projects.md) |
+| `pharos_engine.render.bvh_3d` | [`render_bvh_3d.md`](render_bvh_3d.md) |
+| `pharos_engine.render.instanced` | [`render_instanced.md`](render_instanced.md) |
+| `pharos_engine.render.scene_walker` | [`render_scene_walker.md`](render_scene_walker.md) |
+| `pharos_engine.render.shadows` | [`render_shadows.md`](render_shadows.md) |
+| `pharos_engine.render.skybox` | [`render_skybox.md`](render_skybox.md) |
+| `pharos_engine.residency` | [`residency.md`](residency.md) |
+| `pharos_engine.studio` | [`studio.md`](studio.md) |
+| `pharos_engine.telemetry` | [`telemetry.md`](telemetry.md) |
+| `pharos_engine.testing` | [`testing.md`](testing.md) |
+| `pharos_engine.thermal` | [`thermal.md`](thermal.md) |
+| `pharos_engine.tools` | [`tools.md`](tools.md) |
+| `pharos_engine.topology` | [`topology.md`](topology.md) |
+| `pharos_engine.ui.editor` | [`ui_editor.md`](ui_editor.md) |
+| `pharos_engine.ui.runtime.hud_overlay` | [`hud_overlay.md`](hud_overlay.md) |
+| `pharos_engine.ui.theme` | [`ui_theme.md`](ui_theme.md) |
+| `pharos_engine.ui.widgets` | [`ui_widgets.md`](ui_widgets.md) |
+| `pharos_engine.visual_scripting` | [`visual_scripting.md`](visual_scripting.md) |
+| `pharos_engine.zones` | [`zones.md`](zones.md) |
 
 ## Shader / theme references
 
@@ -79,17 +79,17 @@ each row is deferred. Filed for follow-on agents.
 
 | Subpackage | Notes |
 |---|---|
-| `slappyengine.build` | Build-manifest helpers — small internal utility surface. Deferred: low external caller count. |
-| `slappyengine.render` | Composite root package; individual first-class refs already exist for the load-bearing modules (`render.scene_walker`, `render.shadows`, `render.bvh_3d`, `render.skybox`, `render.instanced`). A top-level `render.md` would only summarise the split refs above. Deferred: covered by the sub-refs. |
-| `slappyengine.scenes` | Scene registration + persistence helpers. Deferred: rewrite pending after WW-batch WIP unfreeze. |
-| `slappyengine.text` | SDF text renderer. Deferred: covered inline by [`../feature_map_2026_06_03.md`](../feature_map_2026_06_03.md) until dedicated ref lands. |
-| `slappyengine.ui` (top level) | Composite root package; first-class refs exist for `ui.editor`, `ui.theme`, `ui.widgets`, `ui.runtime.hud_overlay`. Deferred: covered by the sub-refs. |
+| `pharos_engine.build` | Build-manifest helpers — small internal utility surface. Deferred: low external caller count. |
+| `pharos_engine.render` | Composite root package; individual first-class refs already exist for the load-bearing modules (`render.scene_walker`, `render.shadows`, `render.bvh_3d`, `render.skybox`, `render.instanced`). A top-level `render.md` would only summarise the split refs above. Deferred: covered by the sub-refs. |
+| `pharos_engine.scenes` | Scene registration + persistence helpers. Deferred: rewrite pending after WW-batch WIP unfreeze. |
+| `pharos_engine.text` | SDF text renderer. Deferred: covered inline by [`../feature_map_2026_06_03.md`](../feature_map_2026_06_03.md) until dedicated ref lands. |
+| `pharos_engine.ui` (top level) | Composite root package; first-class refs exist for `ui.editor`, `ui.theme`, `ui.widgets`, `ui.runtime.hud_overlay`. Deferred: covered by the sub-refs. |
 
 ## WIP subpackages — refs deliberately withheld
 
 | Subpackage | Reason |
 |---|---|
-| `slappyengine.softbody` | WIP — active sprint. Do not document until subpackage lands. |
-| `slappyengine.fluid` | WIP — active sprint. Do not document until subpackage lands. |
-| `slappyengine.physics` | WIP — active sprint. Do not document until subpackage lands. |
-| `slappyengine.physics2` | WIP — active sprint. Do not document until subpackage lands. |
+| `pharos_engine.softbody` | WIP — active sprint. Do not document until subpackage lands. |
+| `pharos_engine.fluid` | WIP — active sprint. Do not document until subpackage lands. |
+| `pharos_engine.physics` | WIP — active sprint. Do not document until subpackage lands. |
+| `pharos_engine.physics2` | WIP — active sprint. Do not document until subpackage lands. |

@@ -1,10 +1,10 @@
-"""Tests for slappyengine.gpu.ibl_prefilter — KK5 Nova3D parity Sprint 12."""
+"""Tests for pharos_engine.gpu.ibl_prefilter — KK5 Nova3D parity Sprint 12."""
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from slappyengine.gpu.ibl_prefilter import (
+from pharos_engine.gpu.ibl_prefilter import (
     PREFILTER_WGSL,
     PrefilterConfig,
     PrefilteredCubemap,

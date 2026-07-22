@@ -1,4 +1,4 @@
-"""Tests for slappyengine.dynamics — unified JointSpec + Body + Motor."""
+"""Tests for pharos_engine.dynamics — unified JointSpec + Body + Motor."""
 from __future__ import annotations
 
 import math
@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import (
+from pharos_engine.dynamics import (
     JOINT_KINDS,
     Body,
     JointSpec,
@@ -20,9 +20,9 @@ from slappyengine.dynamics import (
     make_weld,
     resolve_joint_specs,
 )
-from slappyengine.dynamics.motor import apply_motor
-from slappyengine.softbody import SoftBodyWorld, make_lattice_body
-from slappyengine.softbody.solver import step as softbody_step
+from pharos_engine.dynamics.motor import apply_motor
+from pharos_engine.softbody import SoftBodyWorld, make_lattice_body
+from pharos_engine.softbody.solver import step as softbody_step
 
 
 @pytest.fixture(autouse=True)
@@ -261,7 +261,7 @@ def test_distance_spec_holds_two_nodes_at_rest_length():
     """A distance joint between two free nodes keeps them at rest_length after
     several solver steps. Emits a GIF of the resulting near-zero motion."""
     from python.tests._visual_snapshot import output_dir, save_softbody_sequence
-    from slappyengine.softbody import SoftBodyRenderConfig, SoftBodyRenderer
+    from pharos_engine.softbody import SoftBodyRenderConfig, SoftBodyRenderer
 
     w, a, b = _two_node_world()
     resolve_joint_specs(w, [make_distance(a, b, rest_length=1.0, stiffness=1.0e9)])
@@ -290,7 +290,7 @@ def test_spring_spec_oscillates_when_stretched():
     return some kinetic energy to the system within a few frames.
     Emits a GIF of the oscillation."""
     from python.tests._visual_snapshot import output_dir, save_softbody_sequence
-    from slappyengine.softbody import SoftBodyRenderConfig, SoftBodyRenderer
+    from pharos_engine.softbody import SoftBodyRenderConfig, SoftBodyRenderer
 
     w = SoftBodyWorld()
     pos = np.asarray([[0.0, 0.0], [1.5, 0.0]], dtype=np.float32)

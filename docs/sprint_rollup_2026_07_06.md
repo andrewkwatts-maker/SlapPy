@@ -149,7 +149,7 @@ real-bunny demo plus a mega-showcase demo plus r3 doc consolidation.
 
 Commit: `1e584e4` (salvaged in NN-batch). Modified files:
 
-| File (relative to `python/slappyengine/`) | Hardening added |
+| File (relative to `python/pharos_engine/`) | Hardening added |
 |---|---|
 | `render/ssao.py` | `SSAOPass.execute` renderer / depth / normal `None`-checks. |
 | `render/instanced.py` | `render_instanced` renderer + mesh type-checks. |
@@ -175,9 +175,9 @@ regressions (r2 lesson) don't come back.
 
 Commit: `774f1b0` (salvage). Files:
 
-* `python/slappyengine/hud_bridge.py` — glue between `App` and the
+* `python/pharos_engine/hud_bridge.py` — glue between `App` and the
   runtime UI HUD overlay (LL1).
-* `python/slappyengine/app.py` — `App.enable_hud(...)` appended.
+* `python/pharos_engine/app.py` — `App.enable_hud(...)` appended.
 * `SlapPyEngineExamples/examples/hello_hud.py` — scripted demo that
   boots App, enables HUD, cycles overlays.
 * `SlapPyEngineExamples/examples/hello_hud_trace.yaml` — golden
@@ -226,12 +226,12 @@ test shipped (MM5 died before dropping it — noted for follow-up).
 
 Commit: `1e584e4` (salvaged in NN-batch). Files:
 
-* `python/slappyengine/actions/capture_actions.py` (365 LoC) —
+* `python/pharos_engine/actions/capture_actions.py` (365 LoC) —
   `start_recording` / `stop_recording` / `screenshot` action ids
   wired to `App.start_recording` / `App.stop_recording` /
   `App.take_screenshot`. Headless-safe: `capture_state` stashed on
   the DPG shell when no `App` context is available.
-* `python/slappyengine/actions/render_toggle_actions.py` (255 LoC) —
+* `python/pharos_engine/actions/render_toggle_actions.py` (255 LoC) —
   `enable_ssao` / `enable_shadows` action ids with 3-tier
   resolution (renderer method → attr → shell fallback).
 
@@ -413,10 +413,10 @@ Plus r3-window `animation/skinner.py::cpu_skin` (LL5 CPU-skinning
 
 Unchanged from r3 §10.3. Still uncommitted:
 
-* `python/slappyengine/softbody/`
-* `python/slappyengine/fluid/`
-* `python/slappyengine/physics/` (~40 module files)
-* `python/slappyengine/physics2/`
+* `python/pharos_engine/softbody/`
+* `python/pharos_engine/fluid/`
+* `python/pharos_engine/physics/` (~40 module files)
+* `python/pharos_engine/physics2/`
 * `src/{fluid_shader, pbf_solver, raster, softbody_solver}.rs`
 
 r4 shipped LL7's `physics3_bridge` specifically so Nova3D parity
@@ -627,5 +627,5 @@ NN6's docs consolidation commit. Cross-referenced against
 `docs/sprint_rollup_2026_07_05_r3.md` (r3), `docs/feature_map_delta
 _2026_07_04_v2.md` (v2), `docs/engine_feature_map_2026_07_04.md`
 (post-MM3 baseline), and the live source tree at
-`H:\Github\SlapPyEngine\python\slappyengine\` and
+`H:\Github\SlapPyEngine\python\pharos_engine\` and
 `SlapPyEngineExamples\examples\`.*

@@ -1,7 +1,7 @@
 """Correctness parity: BVH raycast agrees with linear raycast — OO2.
 
 For 100 random ``(origin, direction)`` pairs against a 200-body
-:class:`~slappyengine.physics3_bridge.World3D`, both raycast paths must
+:class:`~pharos_engine.physics3_bridge.World3D`, both raycast paths must
 return the same body_id (or both ``None``) and the same ``distance``
 within 1e-6. If the two disagree we'd have a functional regression
 against NN4's linear implementation.
@@ -18,7 +18,7 @@ import random
 
 import pytest
 
-from slappyengine.physics3_bridge import Body3D, RaycastHit, World3D
+from pharos_engine.physics3_bridge import Body3D, RaycastHit, World3D
 
 _SEED = 20260707
 _BODY_COUNT = 200

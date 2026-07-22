@@ -15,18 +15,18 @@ from __future__ import annotations
 import pytest
 
 try:
-    from slappyengine.ui.editor.notebook_status_bar import (
+    from pharos_engine.ui.editor.notebook_status_bar import (
         NotebookStatusBar,
         _TransientMessage,
         _FALLBACK_INK,
     )
-    from slappyengine.ui.editor.notebook_window_title import (
+    from pharos_engine.ui.editor.notebook_window_title import (
         format_window_title,
         parse_window_title,
         saved_glyph,
         unsaved_glyph,
     )
-    from slappyengine.ui.theme import (
+    from pharos_engine.ui.theme import (
         Color,
         Gradient,
         SemanticTokens,

@@ -1,6 +1,6 @@
 """SlapPyEngine — Hello Telemetry
 
-Minimal demo of :mod:`slappyengine.telemetry`.
+Minimal demo of :mod:`pharos_engine.telemetry`.
 
 The demo wires three subscribers to the engine bus:
 
@@ -39,7 +39,7 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
-import slappyengine.telemetry as telemetry
+import pharos_engine.telemetry as telemetry
 
 
 # ── Demo parameters ────────────────────────────────────────────────────────

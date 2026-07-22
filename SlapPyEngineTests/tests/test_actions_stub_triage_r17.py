@@ -9,7 +9,7 @@ after OO1's round-16 layer / selection / snap batch):
 * ``edit.rename`` — Unity / Blender ``F2`` rename-entity.
 * ``edit.duplicate_at_cursor`` — Blender ``Shift+D`` duplicate-to-cursor.
 
-Every test dispatches through :class:`~slappyengine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
 so the wire-up is exercised end-to-end. No DPG context — fixtures use
 :class:`SimpleNamespace` stand-ins for shell / scene / entity handles.
 """
@@ -20,7 +20,7 @@ from typing import Any
 
 import pytest
 
-from slappyengine.tool_router import (
+from pharos_engine.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -365,7 +365,7 @@ class TestEditDuplicateAtCursor:
         self, router: ToolRouter,
     ) -> None:
         # Reset the process-wide clipboard so prior tests don't leak.
-        from slappyengine.ui.editor.entity_clipboard import (
+        from pharos_engine.ui.editor.entity_clipboard import (
             get_active_clipboard,
         )
         clip = get_active_clipboard()
@@ -386,7 +386,7 @@ class TestEditDuplicateAtCursor:
     def test_duplicate_preserves_relative_offset(
         self, router: ToolRouter,
     ) -> None:
-        from slappyengine.ui.editor.entity_clipboard import (
+        from pharos_engine.ui.editor.entity_clipboard import (
             get_active_clipboard,
         )
         get_active_clipboard().clear()
@@ -421,7 +421,7 @@ class TestEditDuplicateAtCursor:
     def test_duplicate_cursor_2d_padded_to_3d(
         self, router: ToolRouter,
     ) -> None:
-        from slappyengine.ui.editor.entity_clipboard import (
+        from pharos_engine.ui.editor.entity_clipboard import (
             get_active_clipboard,
         )
         get_active_clipboard().clear()

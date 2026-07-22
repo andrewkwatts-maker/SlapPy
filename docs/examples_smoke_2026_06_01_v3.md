@@ -7,7 +7,7 @@ recorded 44/47 GREEN end-to-end, with three failing demos:
 `hello_3d_layer.py` and `hello_bake.py` (GPU pipeline-layout mismatch at
 `gpu/mesh_pipeline.py:124`) and `ik_skeleton_demo.py` (ImportError on
 `make_distance` / `resolve_joint_specs`). Sprint 7A (`e3e89d7`) restored
-both names on `slappyengine.dynamics`, realigned `ik_skeleton_demo.py` to
+both names on `pharos_engine.dynamics`, realigned `ik_skeleton_demo.py` to
 the current `IKChainSpec(node_indices=...)` / `solve_ik(spec, world,
 ...)` signature, and added an `argparse --frames N` flag. Sprint 7B
 (`d3871b9`) authored a slimmed `mesh_frag_pbr_simple.wgsl` whose declared
@@ -114,7 +114,7 @@ invocation but is not a meaningful smoke test — same caveat as v2.
 |---|---|---|---|
 | hello_3d_layer.py | RUNTIME_ERROR | GREEN | Sprint 7B (`d3871b9`) replaced `mesh_frag_pbr.wgsl` with a slimmed `mesh_frag_pbr_simple.wgsl` whose `@group/@binding` declarations exactly match the documented pipeline layout (camera @0/0 + material @1/0). Sprint R2S1-E (`5956440`) wired `--frames N` to `Engine.run(max_frames=N)` so the harness exits cleanly. |
 | hello_bake.py | RUNTIME_ERROR | GREEN | Same Sprint 7B mesh shader-binding fix + R2S1-E `--frames` wiring. |
-| ik_skeleton_demo.py | IMPORT_MISSING_OTHER | GREEN | Sprint 7A (`e3e89d7`) restored `make_distance` and `resolve_joint_specs` on `slappyengine.dynamics`'s public surface. The demo body was realigned to the current `IKChainSpec(node_indices=...)` / `solve_ik(spec, world, ...)` signature and gained an `argparse --frames N` flag. `solve_ik` and its `_validation` gate were widened to accept the softbody duck via a `_positions_view` accessor that reads `world.positions` or falls back to `world.nodes.pos`. |
+| ik_skeleton_demo.py | IMPORT_MISSING_OTHER | GREEN | Sprint 7A (`e3e89d7`) restored `make_distance` and `resolve_joint_specs` on `pharos_engine.dynamics`'s public surface. The demo body was realigned to the current `IKChainSpec(node_indices=...)` / `solve_ik(spec, world, ...)` signature and gained an `argparse --frames N` flag. `solve_ik` and its `_validation` gate were widened to accept the softbody duck via a `_positions_view` accessor that reads `world.positions` or falls back to `world.nodes.pos`. |
 
 ### Newly broken (0)
 
@@ -164,7 +164,7 @@ real frames (not no-op-ing through `run()`).
 
 The repeated `--frames N --no-gif --out path` argparse boilerplate that
 21 `SlapPyEngineExamples/examples/*.py` demos had been duplicating is now factored into
-`python/slappyengine/examples_common.py`:
+`python/pharos_engine/examples_common.py`:
 
 - `build_demo_arg_parser(description, *, default_frames, default_seed,
   default_out)` returns an `argparse.ArgumentParser` pre-loaded with the

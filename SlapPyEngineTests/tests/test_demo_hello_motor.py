@@ -10,7 +10,7 @@ These tests pin five things:
    full trajectory — guards the rim distance joints from drifting.
 4. No NaNs leak out of the XPBD solver.
 5. The visual rasterisation reproduces a stable golden master via the
-   :mod:`slappyengine.testing` harness (golden on first run, diff on
+   :mod:`pharos_engine.testing` harness (golden on first run, diff on
    subsequent runs).
 """
 from __future__ import annotations
@@ -23,7 +23,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from slappyengine.testing import assert_scene_matches
+from pharos_engine.testing import assert_scene_matches
 
 # ── Load the demo as a module so we don't depend on examples/ being on path ──
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -122,7 +122,7 @@ def test_hello_motor_no_nan(demo):
 def test_hello_motor_visual_baseline(demo):
     """Render the wheel and diff against the committed baseline PNG.
 
-    First run writes ``python/slappyengine/testing/baselines/hello_motor.png``
+    First run writes ``python/pharos_engine/testing/baselines/hello_motor.png``
     and passes; subsequent runs require a max per-channel diff <= 0.05.
     """
     world, info = demo.build_world()

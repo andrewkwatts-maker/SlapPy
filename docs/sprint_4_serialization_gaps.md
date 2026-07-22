@@ -15,7 +15,7 @@ hand-roll on top of what the engine already gives it.
 
 | Subsystem                   | API                                          | Notes |
 | --------------------------- | -------------------------------------------- | ----- |
-| `slappyengine.dynamics`     | `dynamics.serialize.save_world` / `load_world` | JSON round-trip for `World`: positions, prev_positions, velocities, inv_masses, every joint (`JointSpec`), every body (`Body`), gravity, solver_iterations, warn_overdamping flag, current frame counter. Schema is versioned (`SCHEMA_VERSION`). Determinism contract: one `step(dt)` on a reloaded world matches the original next-frame positions within 1e-9. |
+| `pharos_engine.dynamics`     | `dynamics.serialize.save_world` / `load_world` | JSON round-trip for `World`: positions, prev_positions, velocities, inv_masses, every joint (`JointSpec`), every body (`Body`), gravity, solver_iterations, warn_overdamping flag, current frame counter. Schema is versioned (`SCHEMA_VERSION`). Determinism contract: one `step(dt)` on a reloaded world matches the original next-frame positions within 1e-9. |
 
 Empirical numbers from the round-trip test against the composite demo
 (`DEFAULT_FRAMES=180`, 16-node rope, 15-joint chain, 1 rope body):
@@ -36,7 +36,7 @@ for the *absence* of `to_dict` / `from_dict` / `save_*` / `load_*`
 methods. Any new serializer that fills a gap will trip the
 corresponding probe and force this doc to be updated.
 
-### 1. `slappyengine.thermal.HeatField`
+### 1. `pharos_engine.thermal.HeatField`
 
 * No `to_dict`, no `from_dict`, no `save` / `load`.
 * The temperature grid is just a numpy array on the field instance; a
@@ -47,7 +47,7 @@ corresponding probe and force this doc to be updated.
   `DEFENDER_TEMP=300`) and the diffusion bulk would both reset to
   ambient `T=20` on reload.
 
-### 2. `slappyengine.zones.ZoneManager` + `RectZone`
+### 2. `pharos_engine.zones.ZoneManager` + `RectZone`
 
 * Zone *definitions* (rect bounds, name, material) live as plain
   dataclass fields and are technically reachable for hand-rolled JSON,
@@ -59,7 +59,7 @@ corresponding probe and force this doc to be updated.
 * Composite-demo impact: foundry crossings are recounted from scratch
   on reload; an attacker mid-crossing would not re-fire `on_enter`.
 
-### 3. `slappyengine.iso.combat`
+### 3. `pharos_engine.iso.combat`
 
 * `Attacker`, `Defender`, `WaveSpec`, `WaveSchedule` are all bare
   dataclasses with no serialisation API.
@@ -69,7 +69,7 @@ corresponding probe and force this doc to be updated.
   `elapsed=0`, re-emits already-emitted spawns, and corrupts the
   `total_spawns` / `attackers_killed` accounting.
 
-### 4. `slappyengine.telemetry`
+### 4. `pharos_engine.telemetry`
 
 * History is an in-process `deque` (`telemetry._history`); the module
   exposes `get_event_history` / `clear_history` /

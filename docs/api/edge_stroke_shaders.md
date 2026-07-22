@@ -2,7 +2,7 @@
 
 Hand-drawn WGSL border styles for UI panels.
 
-`slappyengine.ui.theme.edge_strokes` ships a library of 15 short WGSL
+`pharos_engine.ui.theme.edge_strokes` ships a library of 15 short WGSL
 fragment shaders — each one replaces the flat `border_color` line
 around a DPG panel with a textured, hand-drawn stroke (pencil, pen,
 marker, brush, chalk, charcoal, …).
@@ -16,7 +16,7 @@ Every style has:
 ## Quick start
 
 ```python
-from slappyengine.ui.theme import (
+from pharos_engine.ui.theme import (
     FrameStyle,
     get_edge_stroke,
     render_stroke_border,
@@ -204,7 +204,7 @@ existing `PanelFrameSet.for_panel(kind)` lookup — one theme can give
 toolbars a `sharpie` frame and dialogs a `pencil_2b` frame.
 
 ```python
-from slappyengine.ui.theme import (
+from pharos_engine.ui.theme import (
     FrameStyle, PanelFrameSet, get_edge_stroke,
 )
 

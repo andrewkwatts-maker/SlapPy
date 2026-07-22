@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.media`.
+"""Tests for :mod:`pharos_engine.media`.
 
 Verifies the dispatcher chooses MP4 vs GIF based on extension and that
 the MP4 path falls back to GIF cleanly when ffmpeg is unavailable.
@@ -19,8 +19,8 @@ _PYTHON_DIR = Path(__file__).resolve().parents[1]
 if str(_PYTHON_DIR) not in sys.path:
     sys.path.insert(0, str(_PYTHON_DIR))
 
-from slappyengine import media as media_mod  # noqa: E402
-from slappyengine.media import (  # noqa: E402
+from pharos_engine import media as media_mod  # noqa: E402
+from pharos_engine.media import (  # noqa: E402
     FALLBACK_WARNING,
     have_ffmpeg,
     save_frames,
@@ -43,7 +43,7 @@ def _patch_writers(monkeypatch: pytest.MonkeyPatch) -> dict:
         calls["mp4"].append({"path": Path(out_path), "kwargs": dict(kwargs)})
         return Path(out_path).resolve()
 
-    import slappyengine.tools.video as tv
+    import pharos_engine.tools.video as tv
     monkeypatch.setattr(tv, "write_gif", fake_write_gif)
     monkeypatch.setattr(tv, "write_mp4", fake_write_mp4)
     return calls
@@ -187,7 +187,7 @@ def test_yaml_defaults_loaded_when_no_overrides(
         captured["path"] = Path(out_path)
         return Path(out_path)
 
-    import slappyengine.tools.video as tv
+    import pharos_engine.tools.video as tv
     monkeypatch.setattr(tv, "write_gif", fake_write_gif)
     monkeypatch.setattr(media_mod, "have_ffmpeg", lambda: False)
 

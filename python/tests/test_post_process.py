@@ -1,10 +1,10 @@
-"""Tests for slappyengine.physics.post_process."""
+"""Tests for pharos_engine.physics.post_process."""
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from slappyengine.physics.post_process import (
+from pharos_engine.physics.post_process import (
     BloomPass,
     PostProcessChain,
     TonemapPass,

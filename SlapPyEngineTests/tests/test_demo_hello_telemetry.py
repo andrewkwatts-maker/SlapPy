@@ -10,7 +10,7 @@ Pins five behaviours of the telemetry demo:
 4. The no-subscriber emit path costs less than 200 ns/emit measured over
    100,000 emits — guards the allocation-free fast path.
 5. The rendered events-per-frame histogram reproduces a stable golden
-   master via :func:`slappyengine.testing.assert_scene_matches`.
+   master via :func:`pharos_engine.testing.assert_scene_matches`.
 """
 from __future__ import annotations
 
@@ -23,8 +23,8 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-import slappyengine.telemetry as telemetry
-from slappyengine.testing import assert_scene_matches
+import pharos_engine.telemetry as telemetry
+from pharos_engine.testing import assert_scene_matches
 
 # ── Load the demo as a module so we don't depend on examples/ being on path ──
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -183,7 +183,7 @@ def test_no_subscriber_emit_under_budget_ns(demo):
 def test_hello_telemetry_visual_baseline(demo):
     """Render the histogram and diff against the committed baseline PNG.
 
-    First run writes ``python/slappyengine/testing/baselines/hello_telemetry.png``
+    First run writes ``python/pharos_engine/testing/baselines/hello_telemetry.png``
     and passes; subsequent runs require a max per-channel diff <= 0.05.
     """
     subs = demo.build_subscribers()

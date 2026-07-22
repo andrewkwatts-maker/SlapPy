@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _GAME_ROOT = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _GAME_STR = str(_GAME_ROOT)
@@ -203,7 +203,7 @@ class TestGhostSystemPersistence:
 
 class TestGhostSystemEvents:
     def test_race_started_begins_recording(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.ghost_system import GhostSystem
         g = GhostSystem()
         publish("Race.Started", publisher=None)
@@ -211,7 +211,7 @@ class TestGhostSystemEvents:
         g.teardown()
 
     def test_race_finished_stops_recording(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.ghost_system import GhostSystem
         g = GhostSystem()
         g._start_recording()
@@ -220,7 +220,7 @@ class TestGhostSystemEvents:
         g.teardown()
 
     def test_best_lap_saves_frames(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.ghost_system import GhostSystem, GhostFrame
         g = GhostSystem()
         g._start_recording()
@@ -231,7 +231,7 @@ class TestGhostSystemEvents:
         g.teardown()
 
     def test_faster_lap_replaces_ghost(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.ghost_system import GhostSystem, GhostFrame
         g = GhostSystem()
         g._start_recording()
@@ -316,7 +316,7 @@ class TestQualitySystemUpdate:
 
     def test_update_publishes_tier_changed_on_downgrade(self):
         from systems.quality_system import QualitySystem, _DOWNGRADE_FRAMES
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         received = []
         h = subscribe("Quality.TierChanged", lambda e: received.append(e))
         qs = QualitySystem()
@@ -372,7 +372,7 @@ class _FakeProfile:
 class TestCoinSystemInit:
     def _cs(self, positions=None, value=10):
         from systems.coin_system import CoinSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         prof = _FakeProfile()
         cs = CoinSystem(ts, prof, positions or [(100.0, 100.0)], value=value)
@@ -407,7 +407,7 @@ class TestCoinSystemInit:
 class TestCoinSystemCollection:
     def test_vehicle_enters_coin_zone_earns_coins(self):
         from systems.coin_system import CoinSystem
-        from slappyengine.trigger import TriggerSystem, TriggerVolume
+        from pharos_engine.trigger import TriggerSystem, TriggerVolume
 
         ts = TriggerSystem()
         prof = _FakeProfile()
@@ -423,7 +423,7 @@ class TestCoinSystemCollection:
 
     def test_double_entry_only_awards_once(self):
         from systems.coin_system import CoinSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
 
         ts = TriggerSystem()
         prof = _FakeProfile()
@@ -440,7 +440,7 @@ class TestCoinSystemCollection:
 
     def test_multiple_coins_all_collectible(self):
         from systems.coin_system import CoinSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
 
         ts = TriggerSystem()
         prof = _FakeProfile()
@@ -462,8 +462,8 @@ class TestCoinSystemCollection:
 
     def test_coin_collected_event_fired(self):
         from systems.coin_system import CoinSystem
-        from slappyengine.trigger import TriggerSystem
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.trigger import TriggerSystem
+        from pharos_engine.event_bus import subscribe, unsubscribe
 
         ts = TriggerSystem()
         prof = _FakeProfile()
@@ -482,7 +482,7 @@ class TestCoinSystemCollection:
 
     def test_reset_allows_recollection(self):
         from systems.coin_system import CoinSystem
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
 
         ts = TriggerSystem()
         prof = _FakeProfile()
@@ -520,7 +520,7 @@ class TestPlayerProfileInit:
             assert p.part_tier(pt) == 0
 
     def test_no_publish_on_internal(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         received = []
         h = subscribe("PlayerProfile._part_tiers", lambda e: received.append(e))
         p = self._p()
@@ -559,7 +559,7 @@ class TestPlayerProfileCoins:
         assert p.coins == 0
 
     def test_earn_publishes_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         received = []
         h = subscribe("PlayerProfile.CoinsEarned", lambda e: received.append(e))
         p = self._p()
@@ -568,7 +568,7 @@ class TestPlayerProfileCoins:
         assert len(received) == 1
 
     def test_spend_publishes_event_on_success(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         received = []
         h = subscribe("PlayerProfile.CoinsSpent", lambda e: received.append(e))
         p = self._p()
@@ -578,7 +578,7 @@ class TestPlayerProfileCoins:
         assert len(received) == 1
 
     def test_spend_no_event_on_failure(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         received = []
         h = subscribe("PlayerProfile.CoinsSpent", lambda e: received.append(e))
         p = self._p()
@@ -611,7 +611,7 @@ class TestPlayerProfileUpgrades:
         assert p.part_tier("cockpit") == 1
 
     def test_upgrade_publishes_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         received = []
         h = subscribe("PlayerProfile.PartUpgraded", lambda e: received.append(e))
         p = self._p()

@@ -1,4 +1,4 @@
-"""Round-trip tests for every spec kind in :mod:`slappyengine.dynamics.serialize`.
+"""Round-trip tests for every spec kind in :mod:`pharos_engine.dynamics.serialize`.
 
 Sprint 7E surface regen pinned ``dynamics.serialize`` as a public submodule.
 Round 1 (Body / JointSpec / SpringSpec / MotorSpec / RopeSpec) and Round 2
@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import (
+from pharos_engine.dynamics import (
     BoneSpec,
     Body,
     Humanoid,
@@ -68,7 +68,7 @@ from slappyengine.dynamics import (
     world_to_dict,
     build_flesh_wrap,
 )
-from slappyengine.softbody import SoftBodyWorld
+from pharos_engine.softbody import SoftBodyWorld
 
 
 # ---------------------------------------------------------------------------

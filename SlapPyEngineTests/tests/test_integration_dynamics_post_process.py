@@ -2,10 +2,10 @@
 
 Bridges three subpackages that, until now, only had per-subpackage tests:
 
-* :mod:`slappyengine.dynamics` — a real 10-node rope under gravity.
-* :mod:`slappyengine.studio` — :func:`dynamics_stage` + ``Stage.record`` GIF
+* :mod:`pharos_engine.dynamics` — a real 10-node rope under gravity.
+* :mod:`pharos_engine.studio` — :func:`dynamics_stage` + ``Stage.record`` GIF
   loop with a custom render override.
-* :mod:`slappyengine.post_process` — the three preset chains
+* :mod:`pharos_engine.post_process` — the three preset chains
   (``cinematic_chain`` / ``arcade_chain`` / ``iso_strategy_chain``).
 
 The post-process executor is GPU-only, so this test composes the chain on
@@ -34,9 +34,9 @@ import numpy as np
 import pytest
 from PIL import Image, ImageChops
 
-from slappyengine import studio
-from slappyengine.dynamics import RopeSpec, World, build_rope
-from slappyengine.post_process import (
+from pharos_engine import studio
+from pharos_engine.dynamics import RopeSpec, World, build_rope
+from pharos_engine.post_process import (
     PostProcessChain,
     arcade_chain,
     cinematic_chain,

@@ -12,7 +12,7 @@ Pins six behaviours of the multigrid Poisson demo:
    peak, even at the default smoother strength).
 5. No NaN / ±inf leak into the solution.
 6. The rasterised 3-panel render reproduces the committed visual
-   baseline via :func:`slappyengine.testing.assert_scene_matches`.
+   baseline via :func:`pharos_engine.testing.assert_scene_matches`.
 
 The Poisson equation as written by the demo is ``Δp = +rhs`` on a
 Dirichlet-zero boundary, so the solution is *everywhere non-positive*
@@ -29,7 +29,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from slappyengine.testing import assert_scene_matches
+from pharos_engine.testing import assert_scene_matches
 
 # ── Load the demo as a module so we don't depend on examples/ being on path ──
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -183,7 +183,7 @@ def test_no_nan_in_solution(demo):
 def test_hello_numerics_visual_baseline(demo):
     """Render the 3-panel composite and diff against the committed baseline.
 
-    First run writes ``python/slappyengine/testing/baselines/hello_numerics.png``
+    First run writes ``python/pharos_engine/testing/baselines/hello_numerics.png``
     and passes; subsequent runs require a max per-channel diff <= 0.05.
     """
     rhs = demo.build_source()

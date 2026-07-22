@@ -16,7 +16,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
@@ -619,7 +619,7 @@ def test_inject_keeps_cell_field_angular_zero_mean():
     rho = ball.material.density_rho
     cs_x = float(w.hulls.cell_size_x[ball.root_hull_id])
     cs_y = float(w.hulls.cell_size_y[ball.root_hull_id])
-    from slappyengine.physics.cell import CELL_GRID_SIZE
+    from pharos_engine.physics.cell import CELL_GRID_SIZE
     cx_idx = (CELL_GRID_SIZE - 1) * 0.5
     cy_idx = (CELL_GRID_SIZE - 1) * 0.5
     yy, xx = np.mgrid[0:CELL_GRID_SIZE, 0:CELL_GRID_SIZE].astype(np.float32)

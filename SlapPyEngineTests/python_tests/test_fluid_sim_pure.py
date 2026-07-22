@@ -16,9 +16,9 @@ from __future__ import annotations
 import sys
 from unittest.mock import MagicMock
 
-# ── Stub out GPU / compute dependencies before any slappyengine import ────────
+# ── Stub out GPU / compute dependencies before any pharos_engine import ────────
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 import numpy as np
 import pytest
@@ -30,7 +30,7 @@ import pytest
 
 def _make_sim(screen_w: int = 640, screen_h: int = 480, cfg=None):
     """Return a GlobalFluidSim with a MagicMock GPU context."""
-    from slappyengine.fluid_sim import GlobalFluidSim
+    from pharos_engine.fluid_sim import GlobalFluidSim
     gpu_ctx = MagicMock()
     gpu_ctx.device = MagicMock()
     return GlobalFluidSim(gpu=gpu_ctx, screen_w=screen_w, screen_h=screen_h, cfg=cfg)
@@ -44,89 +44,89 @@ class TestFluidSimConfigDefaults:
     """Full coverage of every documented default field value."""
 
     def test_viscosity_default(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig().viscosity == pytest.approx(0.1)
 
     def test_diffusion_default(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig().diffusion == pytest.approx(0.02)
 
     def test_buoyancy_default(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig().buoyancy == pytest.approx(0.0)
 
     def test_gravity_default(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig().gravity == pytest.approx(0.0)
 
     def test_density_decay_default(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig().density_decay == pytest.approx(0.995)
 
     def test_velocity_decay_default(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig().velocity_decay == pytest.approx(0.99)
 
     def test_pad_pixels_default(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig().pad_pixels == 64
 
     def test_lod_zones_default(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig().lod_zones == 4
 
     def test_lod_mode_default(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig().lod_mode == "exp"
 
     def test_noise_type_default(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig().noise_type == "fbm"
 
     def test_god_rays_default(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig().god_rays is True
 
     def test_caustics_default(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig().caustics is False
 
     def test_render_tint_default_is_3_tuple(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         tint = FluidSimConfig().render_tint
         assert len(tint) == 3
         assert all(isinstance(v, float) for v in tint)
 
     def test_render_tint_default_values(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         r, g, b = FluidSimConfig().render_tint
         assert r == pytest.approx(0.8)
         assert g == pytest.approx(0.9)
         assert b == pytest.approx(1.0)
 
     def test_render_alpha_scale_default(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig().render_alpha_scale == pytest.approx(1.0)
 
     def test_is_dataclass(self):
         import dataclasses
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert dataclasses.is_dataclass(FluidSimConfig)
 
     def test_dataclass_replace(self):
         import dataclasses
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         orig = FluidSimConfig()
         updated = dataclasses.replace(orig, viscosity=0.5)
         assert updated.viscosity == pytest.approx(0.5)
         assert orig.viscosity == pytest.approx(0.1)
 
     def test_equality_same_params(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig() == FluidSimConfig()
 
     def test_inequality_different_params(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig(viscosity=0.2) != FluidSimConfig(viscosity=0.3)
 
 
@@ -136,59 +136,59 @@ class TestFluidSimConfigDefaults:
 
 class TestFogConfig:
     def test_returns_fluid_sim_config(self):
-        from slappyengine.fluid_sim import fog_config, FluidSimConfig
+        from pharos_engine.fluid_sim import fog_config, FluidSimConfig
         assert isinstance(fog_config(), FluidSimConfig)
 
     def test_viscosity(self):
-        from slappyengine.fluid_sim import fog_config
+        from pharos_engine.fluid_sim import fog_config
         assert fog_config().viscosity == pytest.approx(0.2)
 
     def test_diffusion(self):
-        from slappyengine.fluid_sim import fog_config
+        from pharos_engine.fluid_sim import fog_config
         assert fog_config().diffusion == pytest.approx(0.04)
 
     def test_density_decay(self):
-        from slappyengine.fluid_sim import fog_config
+        from pharos_engine.fluid_sim import fog_config
         assert fog_config().density_decay == pytest.approx(0.998)
 
     def test_returns_new_object_each_call(self):
-        from slappyengine.fluid_sim import fog_config
+        from pharos_engine.fluid_sim import fog_config
         assert fog_config() is not fog_config()
 
 
 class TestWaterConfig:
     def test_returns_fluid_sim_config(self):
-        from slappyengine.fluid_sim import water_config, FluidSimConfig
+        from pharos_engine.fluid_sim import water_config, FluidSimConfig
         assert isinstance(water_config(), FluidSimConfig)
 
     def test_gravity(self):
-        from slappyengine.fluid_sim import water_config
+        from pharos_engine.fluid_sim import water_config
         assert water_config().gravity == pytest.approx(9.8)
 
     def test_density_decay_is_one(self):
-        from slappyengine.fluid_sim import water_config
+        from pharos_engine.fluid_sim import water_config
         assert water_config().density_decay == pytest.approx(1.0)
 
     def test_buoyancy_is_zero(self):
-        from slappyengine.fluid_sim import water_config
+        from pharos_engine.fluid_sim import water_config
         assert water_config().buoyancy == pytest.approx(0.0)
 
 
 class TestSmokeConfig:
     def test_returns_fluid_sim_config(self):
-        from slappyengine.fluid_sim import smoke_config, FluidSimConfig
+        from pharos_engine.fluid_sim import smoke_config, FluidSimConfig
         assert isinstance(smoke_config(), FluidSimConfig)
 
     def test_buoyancy(self):
-        from slappyengine.fluid_sim import smoke_config
+        from pharos_engine.fluid_sim import smoke_config
         assert smoke_config().buoyancy == pytest.approx(0.15)
 
     def test_density_decay_less_than_one(self):
-        from slappyengine.fluid_sim import smoke_config
+        from pharos_engine.fluid_sim import smoke_config
         assert smoke_config().density_decay < 1.0
 
     def test_smoke_render_tint_grey(self):
-        from slappyengine.fluid_sim import smoke_config
+        from pharos_engine.fluid_sim import smoke_config
         r, g, b = smoke_config().render_tint
         assert abs(r - g) < 0.05
         assert abs(g - b) < 0.05
@@ -216,13 +216,13 @@ class TestGlobalFluidSimInit:
         assert sim._initialized is False
 
     def test_cfg_set_to_default_when_none_passed(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         sim = _make_sim()
         assert isinstance(sim.cfg, FluidSimConfig)
         assert sim.cfg.viscosity == pytest.approx(0.1)
 
     def test_cfg_uses_passed_config(self):
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         custom = FluidSimConfig(viscosity=0.7)
         sim = _make_sim(cfg=custom)
         assert sim.cfg.viscosity == pytest.approx(0.7)
@@ -242,7 +242,7 @@ class TestGlobalFluidSimInit:
         assert sim._sim_h == 480 + 2 * pad
 
     def test_gpu_stored(self):
-        from slappyengine.fluid_sim import GlobalFluidSim
+        from pharos_engine.fluid_sim import GlobalFluidSim
         gpu_ctx = MagicMock()
         gpu_ctx.device = MagicMock()
         sim = GlobalFluidSim(gpu=gpu_ctx, screen_w=320, screen_h=240)
@@ -285,7 +285,7 @@ class TestSampleVelocityNoneCache:
 class TestSampleVelocityWithCache:
     def _sim_with_cache(self, vx: float, vy: float):
         """Create a 1×1 sim with a single-pixel vel_cache."""
-        from slappyengine.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         cfg = FluidSimConfig(pad_pixels=0)   # pad=0 so pixel 0,0 maps to sim 0,0
         sim = _make_sim(screen_w=1, screen_h=1, cfg=cfg)
         sim._vel_cache = np.array([[[vx, vy]]], dtype=np.float32)
@@ -325,7 +325,7 @@ class TestSampleVelocityWithCache:
 
     def test_injected_numpy_cache_canonical(self):
         """Canonical form from the task specification."""
-        from slappyengine.fluid_sim import GlobalFluidSim
+        from pharos_engine.fluid_sim import GlobalFluidSim
         gpu_ctx = MagicMock()
         gpu_ctx.device = MagicMock()
         sim = GlobalFluidSim(gpu=gpu_ctx, screen_w=640, screen_h=480)

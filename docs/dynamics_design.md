@@ -1,6 +1,6 @@
-# slappyengine.dynamics — Design Reference
+# pharos_engine.dynamics — Design Reference
 
-`slappyengine.dynamics` is the unified primitive set that sits on top of the
+`pharos_engine.dynamics` is the unified primitive set that sits on top of the
 engine's XPBD substrate. It generalises the older softbody-specific
 `BodyMeta` / `VehicleSpec` / `WheelSpec` triumvirate into a small composable
 type system — a single `JointSpec` with seven *kinds*, plus authoring helpers
@@ -9,7 +9,7 @@ constraint primitives the solver already knows how to project.
 
 This document is the canonical "what do I reach for, and why does it work?"
 reference. It does not duplicate per-field API docs (those live next to the
-dataclasses in `python/slappyengine/dynamics/`); it explains the *shape* of the
+dataclasses in `python/pharos_engine/dynamics/`); it explains the *shape* of the
 abstraction, the underlying solver, the choices between primitives, and the
 failure modes you should plan for.
 
@@ -21,7 +21,7 @@ replaces classical stiffness/damping forces with a Lagrange-multiplier
 position projection that converges to an exact constraint at the end of each
 substep. Practically every `JointSpec.kind` in this package is a thin
 wrapper around the canonical XPBD distance projection used by `_project_distance`
-in `python/slappyengine/dynamics/joint.py`:
+in `python/pharos_engine/dynamics/joint.py`:
 
 ```text
 C       = |x_a - x_b| - L
@@ -260,11 +260,11 @@ unified types. The intended bridge:
 | `softbody.vehicle.VehicleSpec`, `WheelSpec`, `build_vehicle`| Kept as authoring wrappers; internals resolve wheels to `make_motor` + `make_spring`. The public signatures of `build_vehicle` and `apply_drivetrain_torque` are stable. |
 | `softbody.body_builders.make_layered_creature`              | Continues to work; the cross-layer beams it emits become `JointSpec(kind="distance")` records with finite `break_force`. |
 | `softbody.world.SoftBodyWorld`                              | Alias of `dynamics.World` (`world.py:123`). Both names refer to the same class so legacy callers keep working. |
-| Top-level `slappyengine.build_vehicle`, `VehicleSpec`, `WheelSpec` | Re-exports from `slappyengine/__init__.py`; resolve to the same wrappers above. The Ochema-side import path does not change. |
+| Top-level `pharos_engine.build_vehicle`, `VehicleSpec`, `WheelSpec` | Re-exports from `pharos_engine/__init__.py`; resolve to the same wrappers above. The Ochema-side import path does not change. |
 
 Migration posture: the **legacy names stay**, but their guts increasingly
 delegate to the unified backend. New code should reach for
-`slappyengine.dynamics` directly; legacy code does not need touching to keep
+`pharos_engine.dynamics` directly; legacy code does not need touching to keep
 working. The `SoftBodyWorld = World` alias at the bottom of
 `dynamics/world.py` is the most explicit form of this contract — if you read
 old code that talks to a `SoftBodyWorld`, it is now talking to a
@@ -318,7 +318,7 @@ rigid distance constraints the bound does not matter — those joints
 *should* converge to equilibrium in one step.
 
 `estimate_effective_damping(damping, iters)` in
-`python/slappyengine/dynamics/world.py` computes the formula above for
+`python/pharos_engine/dynamics/world.py` computes the formula above for
 you. `World.step` calls it on first invocation against every spring /
 distance joint; if any exceed `OVERDAMPING_THRESHOLD = 0.5` it emits a
 `RuntimeWarning` naming the offending joint, the iteration count, the

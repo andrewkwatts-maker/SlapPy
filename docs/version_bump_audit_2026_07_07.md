@@ -17,7 +17,7 @@ Bump-required files (paths relative to repo root):
 |---|---|---|---|
 | `pyproject.toml` | `version = "0.3.0b0"` | `version = "0.4.0"` | Line 7; canonical PyPI version. |
 | `Cargo.toml` | `version = "0.3.0-beta.0"` | `version = "0.4.0"` | Line 3; Rust workspace root version (SemVer form). |
-| `python/slappyengine/__init__.py` | `__version__ = "0.3.0b0"` | `__version__ = "0.4.0"` | Line 103; canonical Python `__version__`. |
+| `python/pharos_engine/__init__.py` | `__version__ = "0.3.0b0"` | `__version__ = "0.4.0"` | Line 103; canonical Python `__version__`. |
 
 Docs referencing the old string (either as prose about "v0.3" or as
 hard-coded `0.3.0` / `0.3.0b0` strings). Some are historical / correct
@@ -29,7 +29,7 @@ audit each individually:
 |---|---|
 | `README.md` | Update "What's new in v0.3.0" section + install snippet. |
 | `docs/quickstart.md` | Update the version string in the intro. |
-| `docs/getting_started.md` | Update banner + any `pip install slappy-engine==0.3.0b0` snippets. |
+| `docs/getting_started.md` | Update banner + any `pip install pharos-engine==0.3.0b0` snippets. |
 | `docs/CONTRIBUTING.md` | Verify the "current version" mention. |
 | `docs/roadmap.md` | Roll "Near-term — v0.3.x" into "Mid-term — v0.4"; add new v0.4.x + v0.5 near-term. |
 | `docs/demo_gallery.md` | Version banner. |
@@ -37,8 +37,8 @@ audit each individually:
 | `docs/master_review_2026_06_07.md` | Leave historical; adds a dated banner "written pre-v0.4 tag" if needed. |
 | `docs/v0_4_release_readiness_2026_07_06.md` | Leave historical; the audit conclusion should be re-run pre-tag and rated GREEN. |
 | `docs/wheel_size_audit_2026_06_02.md` | Leave historical. |
-| `python/slappyengine/projects/format.py` | `version: "0.3.0b0"` at L9 — used by the `Project` YAML schema default; bump alongside the code. |
-| `python/slappyengine/projects/project.py` | Verify the reference is a `slappyengine.__version__` runtime lookup, not a hard-coded string. |
+| `python/pharos_engine/projects/format.py` | `version: "0.3.0b0"` at L9 — used by the `Project` YAML schema default; bump alongside the code. |
+| `python/pharos_engine/projects/project.py` | Verify the reference is a `pharos_engine.__version__` runtime lookup, not a hard-coded string. |
 | `SlapPyEngineTests/tests/test_projects.py` | Fixtures reference `0.3.0`; update alongside the bump. |
 | `SlapPyEngineTests/tests/test_docs_v030.py` | Rename to `test_docs_v040.py` (or generalise) — currently pins v0.3 tripwires. |
 | `SlapPyEngineExamples/examples/hello_export_cli_trace.yaml` | Regenerate against bumped `__version__`. |
@@ -59,7 +59,7 @@ The following are produced by `scripts/`:
 ## Version-consistency tripwire
 
 `SlapPyEngineTests/tests/test_version_consistency.py` cross-checks
-`pyproject.toml` ⇄ `Cargo.toml` ⇄ `python/slappyengine/__init__.py`.
+`pyproject.toml` ⇄ `Cargo.toml` ⇄ `python/pharos_engine/__init__.py`.
 The bump is one atomic commit; the tripwire will surface any missed
 file.
 

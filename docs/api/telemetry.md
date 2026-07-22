@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.telemetry — API Reference
+# pharos_engine.telemetry — API Reference
 
 > Hand-curated reference for the telemetry subpackage. The auto-generator
 > (`scripts/gen_subpackage_api_docs.py`) skips files carrying the
@@ -8,7 +8,7 @@
 > [`telemetry_design.md`](../telemetry_design.md).
 
 ```python
-from slappyengine.telemetry import (
+from pharos_engine.telemetry import (
     TelemetryEvent,
     emit,
     subscribe,
@@ -23,7 +23,7 @@ from slappyengine.telemetry import (
 
 ## Overview
 
-`slappyengine.telemetry` is the engine's instrumentation bus: a single
+`pharos_engine.telemetry` is the engine's instrumentation bus: a single
 process-wide event sink that games, editor panels, profilers, and
 save-state diffs all subscribe to. The pattern was promoted out of
 Bullet Strata's reactive-HUD dirty flag after every game we shipped
@@ -35,7 +35,7 @@ the remaining seventeen are re-exported stdlib aliases (`fnmatch`,
 `threading`, `time`, `dataclass`, `field`, `deque`, eight `typing`
 shims, four `_validation` helpers) — byproducts of the flat `from …
 import *` layout, documented here only so callers know what
-`dir(slappyengine.telemetry)` will show.
+`dir(pharos_engine.telemetry)` will show.
 
 ## Event record — `TelemetryEvent`
 
@@ -102,7 +102,7 @@ Drops a subscription. Unknown handles are silently ignored — calling
 
 ## History ring buffer
 
-`slappyengine.telemetry` keeps a process-wide `collections.deque` of
+`pharos_engine.telemetry` keeps a process-wide `collections.deque` of
 recent events so a debugger / save-state diff / post-mortem panel can
 look at what happened without having to subscribe ahead of time.
 
@@ -167,13 +167,13 @@ on ordering.
 
 ## Output adapters
 
-`slappyengine.telemetry` ships **no** wire-format adapters — that is
+`pharos_engine.telemetry` ships **no** wire-format adapters — that is
 deliberate. Subscribers are plain Python callables, so games typically
 write their own ~10-line forwarder for whatever backend they need:
 
 ```python
 import json
-from slappyengine.telemetry import subscribe
+from pharos_engine.telemetry import subscribe
 
 def log_to_jsonl(event):
     with open("run.jsonl", "a") as f:
@@ -215,7 +215,7 @@ context manager built on top of `emit`:
 ```python
 from contextlib import contextmanager
 import time
-from slappyengine.telemetry import emit
+from pharos_engine.telemetry import emit
 
 @contextmanager
 def measure(name):
@@ -242,14 +242,14 @@ subscriber list is explicitly copied into a local before iteration.
 
 ## Inner module surface
 
-- `slappyengine.telemetry.TelemetryEvent` — public dataclass.
-- `slappyengine.telemetry.emit` / `subscribe` / `unsubscribe` —
+- `pharos_engine.telemetry.TelemetryEvent` — public dataclass.
+- `pharos_engine.telemetry.emit` / `subscribe` / `unsubscribe` —
   producer / consumer entry points.
-- `slappyengine.telemetry.get_event_history` / `clear_history` /
+- `pharos_engine.telemetry.get_event_history` / `clear_history` /
   `set_history_capacity` — ring buffer.
-- `slappyengine.telemetry.enable_pattern_index` /
+- `pharos_engine.telemetry.enable_pattern_index` /
   `is_pattern_index_enabled` — opt-in O(matching) dispatch.
-- `slappyengine.telemetry._validation` — private input-validation
+- `pharos_engine.telemetry._validation` — private input-validation
   helpers. Not part of the contract; reach into them at your own risk.
 
 ## Protocols

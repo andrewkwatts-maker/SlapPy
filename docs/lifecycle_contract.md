@@ -76,7 +76,7 @@ drives them through their existing per-subpackage step methods:
 | `dynamics`     | `World.step(dt)`                           |
 | `thermal`      | `HeatField.step(dt)`                       |
 | `fluid`        | `GlobalFluidSim.step(dt)` (Rust-backed)    |
-| `softbody`     | `slappyengine.softbody.step(world)`        |
+| `softbody`     | `pharos_engine.softbody.step(world)`        |
 | `zones`        | `ZoneManager.update(positions)`            |
 | `post_process` | `PostProcessExecutor.run(...)`             |
 | `compute`      | `ComputePipeline.dispatch(pass_)`          |
@@ -128,8 +128,8 @@ that hold per-frame state in module globals must re-initialise inside
 
 * `docs/engine_surface_v030.md` — full public-surface reference.
 * `docs/getting_started.md` — first-run scaffold + script tutorial.
-* `python/slappyengine/script.py` — `Script` base class.
-* `python/slappyengine/asset_manifest.py` — `ScriptBinding`.
+* `python/pharos_engine/script.py` — `Script` base class.
+* `python/pharos_engine/asset_manifest.py` — `ScriptBinding`.
 * `SlapPyEngineTests/tests/test_protocols.py` — Round 3 Protocols.
 * `SlapPyEngineTests/tests/test_subpackage_protocols.py` — F6
   per-subpackage Protocols.

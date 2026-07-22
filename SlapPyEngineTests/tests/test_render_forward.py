@@ -1,4 +1,4 @@
-"""Tests for slappyengine.render — HH4 forward renderer.
+"""Tests for pharos_engine.render — HH4 forward renderer.
 
 All tests use the NullRenderer path so no GPU is required.
 """
@@ -9,7 +9,7 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.render import (
+from pharos_engine.render import (
     Camera2D,
     Camera3D,
     DrawCall,
@@ -32,7 +32,7 @@ from slappyengine.render import (
     pack_lights_ubo,
     quad,
 )
-from slappyengine.render.shader_stock import (
+from pharos_engine.render.shader_stock import (
     LINE_3D_WGSL,
     PHONG_3D_WGSL,
     SPRITE_2D_WGSL,

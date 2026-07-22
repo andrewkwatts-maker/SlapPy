@@ -91,7 +91,7 @@ def bench_inline_thermal() -> dict[str, float | str]:
 
     Returns ``{"name", "scenario", "median_ns", "median_ms", "bound"}``.
     """
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     rng = np.random.default_rng(0)
     grid = rng.standard_normal((64, 64)).astype(np.float64)
@@ -109,7 +109,7 @@ def bench_inline_thermal() -> dict[str, float | str]:
 
 def bench_inline_topology() -> dict[str, float | str]:
     """``connected_components`` on a 1000-node random graph."""
-    from slappyengine.topology import connected_components
+    from pharos_engine.topology import connected_components
 
     rng = np.random.default_rng(0xC0FFEE)
     # Sparse-ish: ~2 edges per node so we get a handful of components.
@@ -129,7 +129,7 @@ def bench_inline_topology() -> dict[str, float | str]:
 
 def bench_inline_numerics() -> dict[str, float | str]:
     """``vcycle_poisson`` on a 64x64 grid, 1 V-cycle."""
-    from slappyengine.numerics import vcycle_poisson
+    from pharos_engine.numerics import vcycle_poisson
 
     rng = np.random.default_rng(0xBEEF)
     rhs = rng.standard_normal((64, 64)).astype(np.float32)
@@ -149,7 +149,7 @@ def bench_inline_numerics() -> dict[str, float | str]:
 
 def bench_inline_dynamics() -> dict[str, float | str]:
     """``World.step`` on a 100-node lattice. Cites the existing port plan."""
-    from slappyengine.dynamics import JointSpec, World
+    from pharos_engine.dynamics import JointSpec, World
 
     world = World(gravity=(0.0, -9.81))
     # 10x10 lattice.

@@ -27,22 +27,22 @@ from typing import Iterable
 
 import numpy as np
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.post_process import (
+from pharos_engine.physics.post_process import (
     BloomPass,
     PostProcessChain,
     TonemapPass,
 )
-from slappyengine.physics.render import (
+from pharos_engine.physics.render import (
     PhysicsRenderer,
     PointLight,
     RenderConfig,
 )
-from slappyengine.physics.world import WorldConfig
+from pharos_engine.physics.world import WorldConfig
 
 
 # --- cell channel indices (mirror CELL_PIXEL_STRUCT) ------------------------

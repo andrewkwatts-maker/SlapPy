@@ -14,7 +14,7 @@ Covers the five new action ids added by the 2026-07-05 AA1 sprint tick
 * ``tool.pan`` — activate the pan navigation tool by writing
   ``shell._active_tool = "pan"``.
 
-Every test dispatches through :class:`~slappyengine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
 so the wire-up (``action_id`` → Python fallback) is exercised end-to-end.
 No DPG context is required — everything routes through ``SimpleNamespace``
 mocks so the suite is headless.
@@ -26,7 +26,7 @@ from typing import Any
 
 import pytest
 
-from slappyengine.tool_router import (
+from pharos_engine.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -49,7 +49,7 @@ def router() -> ToolRouter:
 @pytest.fixture(autouse=True)
 def _reset_clipboard() -> None:
     """Drop the process-wide EntityClipboard between tests."""
-    from slappyengine.ui.editor.entity_clipboard import (
+    from pharos_engine.ui.editor.entity_clipboard import (
         reset_active_clipboard,
     )
     reset_active_clipboard()
@@ -70,7 +70,7 @@ class _FakeEntity:
 
 
 class _FakeScene:
-    """Minimal scene stand-in matching :class:`slappyengine.scene.Scene`.
+    """Minimal scene stand-in matching :class:`pharos_engine.scene.Scene`.
 
     Only implements the surfaces the AA1 actions poke: ``entities()``
     (as either a list attr or a method), ``remove_entity``, and the
@@ -204,7 +204,7 @@ def test_cut_selection_stashes_and_removes(router: ToolRouter) -> None:
 
 def test_cut_selection_marks_clipboard_action_cut(router: ToolRouter) -> None:
     """The clipboard's ``last_action`` reads ``"cut"`` after the router call."""
-    from slappyengine.ui.editor.entity_clipboard import get_active_clipboard
+    from pharos_engine.ui.editor.entity_clipboard import get_active_clipboard
     e = _FakeEntity(name="cut_me")
     router.dispatch(
         "edit.cut_selection", {"selection": [e]},
@@ -260,7 +260,7 @@ def test_delete_selection_no_scene_returns_status(router: ToolRouter) -> None:
 
 def test_delete_selection_does_not_touch_clipboard(router: ToolRouter) -> None:
     """Delete must not stash anything on the clipboard."""
-    from slappyengine.ui.editor.entity_clipboard import get_active_clipboard
+    from pharos_engine.ui.editor.entity_clipboard import get_active_clipboard
     e = _FakeEntity(name="gone")
     scene = _FakeScene([e])
     router.dispatch(
@@ -471,8 +471,8 @@ def test_pan_tool_notifies_engine(router: ToolRouter) -> None:
 
 
 def test_direct_import_cut_and_delete() -> None:
-    """Every new helper is importable from ``slappyengine.actions``."""
-    from slappyengine.actions import cut_selection, delete_selection
+    """Every new helper is importable from ``pharos_engine.actions``."""
+    from pharos_engine.actions import cut_selection, delete_selection
     assert callable(cut_selection)
     assert callable(delete_selection)
     # No-op smoke — empty ctx returns the expected status dict.
@@ -481,13 +481,13 @@ def test_direct_import_cut_and_delete() -> None:
 
 
 def test_direct_import_framing_actions() -> None:
-    from slappyengine.actions import center_on_selection, frame_all
+    from pharos_engine.actions import center_on_selection, frame_all
     assert center_on_selection({}) == {"status": "no_camera"}
     assert frame_all({}) == {"status": "no_camera"}
 
 
 def test_direct_import_pan_tool() -> None:
-    from slappyengine.actions import PAN_TOOL_ID, activate_pan_tool
+    from pharos_engine.actions import PAN_TOOL_ID, activate_pan_tool
     assert PAN_TOOL_ID == "pan"
     result = activate_pan_tool({})
     assert result["tool"] == "pan"

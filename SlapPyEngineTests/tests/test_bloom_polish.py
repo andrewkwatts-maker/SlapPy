@@ -15,7 +15,7 @@ Jimenez's SIGGRAPH 2014 slide deck:
 5. Configurable mip count in [4, 8] with default 6.
 
 These are pure-Python / numpy tests — no GPU required.  The CPU reference
-lives in :mod:`slappyengine.post_process.bloom`; the WGSL companion in
+lives in :mod:`pharos_engine.post_process.bloom`; the WGSL companion in
 ``shaders/bloom_pyramid.wgsl`` is regression-tested for constant match by
 ``test_lighting_bloom_pyramid.py``.
 """
@@ -24,7 +24,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.post_process.bloom import (
+from pharos_engine.post_process.bloom import (
     _FIREFLY_ANCHOR,
     _MIP_DEFAULT,
     _MIP_MAX,

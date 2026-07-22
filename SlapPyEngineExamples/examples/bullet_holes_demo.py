@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 
-from slappyengine.physics.particle_field import Material, ParticleField
+from pharos_engine.physics.particle_field import Material, ParticleField
 
 
 W, H = 640, 240

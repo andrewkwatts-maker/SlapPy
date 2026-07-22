@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.tool_router` — the editor tool-routing contract.
+"""Tests for :mod:`pharos_engine.tool_router` — the editor tool-routing contract.
 
 Coverage
 --------
@@ -25,8 +25,8 @@ from typing import Any
 
 import pytest
 
-from slappyengine import tool_router
-from slappyengine.tool_router import (
+from pharos_engine import tool_router
+from pharos_engine.tool_router import (
     REGISTRY,
     ToolAction,
     ToolRouter,
@@ -137,7 +137,7 @@ def test_has_rust_backing_true_when_symbol_exists(
 ) -> None:
     """editor.save is wired to slap_format.lz4_compress — which ships."""
     try:
-        import slappyengine._core  # noqa: F401
+        import pharos_engine._core  # noqa: F401
     except ImportError:
         pytest.skip("_core extension not available")
     assert seeded_router.has_rust_backing("editor.save") is True
@@ -160,7 +160,7 @@ def test_rust_backing_symbol_returns_callable(
     seeded_router: ToolRouter,
 ) -> None:
     try:
-        import slappyengine._core  # noqa: F401
+        import pharos_engine._core  # noqa: F401
     except ImportError:
         pytest.skip("_core extension not available")
     sym = seeded_router.rust_backing_symbol("editor.save")
@@ -203,7 +203,7 @@ def test_rust_backing_accepts_dotted_core_prefix(
 ) -> None:
     """Both `_core.slap_format.lz4_compress` and `slap_format.lz4_compress` work."""
     try:
-        import slappyengine._core  # noqa: F401
+        import pharos_engine._core  # noqa: F401
     except ImportError:
         pytest.skip("_core extension not available")
     fresh_router.register(
@@ -288,7 +288,7 @@ def test_dispatch_rust_backing_falls_through_on_type_error(
 
     # Point at a real Rust symbol that will TypeError on kwargs.
     try:
-        import slappyengine._core  # noqa: F401
+        import pharos_engine._core  # noqa: F401
     except ImportError:
         pytest.skip("_core extension not available")
     fresh_router.register(
@@ -361,7 +361,7 @@ def test_default_registry_has_at_least_50_actions() -> None:
 
 def test_every_hotkey_command_is_registered() -> None:
     """Every command in the NotebookHotkeys table has a router registration."""
-    from slappyengine.ui.editor.notebook_hotkeys import _BINDINGS_FROZEN
+    from pharos_engine.ui.editor.notebook_hotkeys import _BINDINGS_FROZEN
 
     missing: list[str] = []
     for _key, command in _BINDINGS_FROZEN.items():
@@ -373,7 +373,7 @@ def test_every_hotkey_command_is_registered() -> None:
 
 def test_every_spawn_card_is_registered() -> None:
     """Every SpawnCard.card_id has a matching `spawn.<id>` action."""
-    from slappyengine.ui.editor.notebook_spawn_menu import SPAWN_CARDS
+    from pharos_engine.ui.editor.notebook_spawn_menu import SPAWN_CARDS
 
     # SPAWN_CARDS entries are tuples whose first item is the card_id.
     for card_tuple in SPAWN_CARDS:

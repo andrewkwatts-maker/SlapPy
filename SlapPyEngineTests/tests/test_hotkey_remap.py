@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.ui.hotkey_remap` (AA7).
+"""Tests for :mod:`pharos_engine.ui.hotkey_remap` (AA7).
 
 Covers:
 
@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine.ui.hotkey_remap import (
+from pharos_engine.ui.hotkey_remap import (
     BAKED_HOTKEY_DIR,
     HotkeyBinding,
     HotkeyMap,
@@ -28,7 +28,7 @@ from slappyengine.ui.hotkey_remap import (
     default_hotkey_map,
     load_user_hotkeys,
 )
-from slappyengine.ui.hotkey_remap import _canon_combo
+from pharos_engine.ui.hotkey_remap import _canon_combo
 
 
 # ---------------------------------------------------------------------------
@@ -341,7 +341,7 @@ def test_validate_type_error_when_registry_has_no_has_action() -> None:
 
 
 def test_validate_against_real_registry() -> None:
-    from slappyengine.tool_router import REGISTRY
+    from pharos_engine.tool_router import REGISTRY
     m = HotkeyMap([
         HotkeyBinding(combo="ctrl+s", action_id="editor.save"),
     ])
@@ -466,7 +466,7 @@ def test_baked_default_matches_notebook_bindings() -> None:
     # Baked default should include every action id from the notebook table
     # (the combos themselves may differ if we later remap defaults, but
     # the action ids stay in lockstep).
-    from slappyengine.ui.editor.notebook_hotkeys import NotebookHotkeys
+    from pharos_engine.ui.editor.notebook_hotkeys import NotebookHotkeys
 
     m = HotkeyMap.from_yaml(
         (BAKED_HOTKEY_DIR / "default.yaml").read_text(encoding="utf-8"),
@@ -524,7 +524,7 @@ def test_apply_remap_end_to_end(tmp_path: Path) -> None:
 
 
 def test_full_bake_load_merge_validate_flow(tmp_path: Path) -> None:
-    from slappyengine.tool_router import REGISTRY
+    from pharos_engine.tool_router import REGISTRY
 
     # 1. Bake defaults into a fresh user dir.
     bake_defaults(tmp_path)

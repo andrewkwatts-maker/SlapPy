@@ -1,4 +1,4 @@
-"""Tests for ``slappyengine.scenes.scene_diff`` (sprint GG6).
+"""Tests for ``pharos_engine.scenes.scene_diff`` (sprint GG6).
 
 Covers:
 
@@ -18,8 +18,8 @@ import re
 
 import pytest
 
-from slappyengine.scenes import Scene
-from slappyengine.scenes.scene_diff import (
+from pharos_engine.scenes import Scene
+from pharos_engine.scenes.scene_diff import (
     EntityDiff,
     SceneDiff,
     apply_diff,

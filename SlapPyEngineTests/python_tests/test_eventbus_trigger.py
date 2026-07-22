@@ -11,7 +11,7 @@ import pytest
 
 class TestEventBusSubscribePublish:
     def setup_method(self):
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         self.bus = EventBus()
 
     def test_subscribe_returns_int_handle(self):
@@ -115,7 +115,7 @@ class TestEventBusSubscribePublish:
         assert received == []
 
     def test_thread_safe_mode(self):
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         bus = EventBus(thread_safe=True)
         results = []
         bus.subscribe("e", lambda p: results.append(1))
@@ -129,15 +129,15 @@ class TestEventBusSubscribePublish:
 
 class TestGlobalBusHelpers:
     def setup_method(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         global_bus.clear()
 
     def teardown_method(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         global_bus.clear()
 
     def test_subscribe_and_publish(self):
-        from slappyengine.event_bus import subscribe, publish, unsubscribe
+        from pharos_engine.event_bus import subscribe, publish, unsubscribe
         received = []
         h = subscribe("Test.Event", lambda evt: received.append(evt.name))
         publish("Test.Event")
@@ -145,7 +145,7 @@ class TestGlobalBusHelpers:
         assert "Test.Event" in received
 
     def test_hierarchical_fanout(self):
-        from slappyengine.event_bus import subscribe, publish, unsubscribe
+        from pharos_engine.event_bus import subscribe, publish, unsubscribe
         received = []
         h1 = subscribe("Race.LapComplete", lambda evt: received.append("lap"))
         h2 = subscribe("Race", lambda evt: received.append("race"))
@@ -156,7 +156,7 @@ class TestGlobalBusHelpers:
         assert "race" in received
 
     def test_value_pipe_fanout(self):
-        from slappyengine.event_bus import subscribe, publish, unsubscribe
+        from pharos_engine.event_bus import subscribe, publish, unsubscribe
         received_exact = []
         received_path = []
         h1 = subscribe("Vehicle.speed|120.0", lambda evt: received_exact.append(1))
@@ -168,7 +168,7 @@ class TestGlobalBusHelpers:
         assert received_path   # path match also fires
 
     def test_event_details_name(self):
-        from slappyengine.event_bus import subscribe, publish, unsubscribe
+        from pharos_engine.event_bus import subscribe, publish, unsubscribe
         names = []
         h = subscribe("My.Event", lambda evt: names.append(evt.name))
         publish("My.Event")
@@ -176,7 +176,7 @@ class TestGlobalBusHelpers:
         assert "My.Event" in names
 
     def test_event_details_payload_attr(self):
-        from slappyengine.event_bus import subscribe, publish, unsubscribe
+        from pharos_engine.event_bus import subscribe, publish, unsubscribe
         vals = []
         h = subscribe("My.Event", lambda evt: vals.append(evt.fuel))
         publish("My.Event", fuel=0.5)
@@ -184,19 +184,19 @@ class TestGlobalBusHelpers:
         assert vals == [pytest.approx(0.5)]
 
     def test_event_details_bad_attr_raises(self):
-        from slappyengine.event_bus import EventDetails
+        from pharos_engine.event_bus import EventDetails
         ed = EventDetails(name="x", payload={"a": 1})
         with pytest.raises(AttributeError):
             _ = ed.nonexistent
 
     def test_listener_count_helper(self):
-        from slappyengine.event_bus import subscribe, unsubscribe, listener_count
+        from pharos_engine.event_bus import subscribe, unsubscribe, listener_count
         h = subscribe("X.Y", lambda e: None)
         assert listener_count("X.Y") >= 1
         unsubscribe(h)
 
     def test_publish_batch(self):
-        from slappyengine.event_bus import subscribe, unsubscribe, publish_batch
+        from pharos_engine.event_bus import subscribe, unsubscribe, publish_batch
         received = []
         h = subscribe("Batch", lambda evt: received.append(1))
         publish_batch([("Batch", {}), ("Batch", {})])
@@ -204,7 +204,7 @@ class TestGlobalBusHelpers:
         assert len(received) == 2
 
     def test_debug_listeners(self):
-        from slappyengine.event_bus import subscribe, unsubscribe, debug_listeners
+        from pharos_engine.event_bus import subscribe, unsubscribe, debug_listeners
         h = subscribe("Debug.Test", lambda e: None)
         d = debug_listeners()
         assert isinstance(d, dict)
@@ -217,28 +217,28 @@ class TestGlobalBusHelpers:
 
 class TestEventDetails:
     def test_instantiates(self):
-        from slappyengine.event_bus import EventDetails
+        from pharos_engine.event_bus import EventDetails
         ed = EventDetails(name="x")
         assert ed.name == "x"
 
     def test_payload_access_as_attr(self):
-        from slappyengine.event_bus import EventDetails
+        from pharos_engine.event_bus import EventDetails
         ed = EventDetails(name="x", payload={"speed": 100})
         assert ed.speed == 100
 
     def test_publisher_stored(self):
-        from slappyengine.event_bus import EventDetails
+        from pharos_engine.event_bus import EventDetails
         obj = object()
         ed = EventDetails(name="x", publisher=obj)
         assert ed.publisher is obj
 
     def test_timestamp_is_float(self):
-        from slappyengine.event_bus import EventDetails
+        from pharos_engine.event_bus import EventDetails
         ed = EventDetails(name="x")
         assert isinstance(ed.timestamp, float)
 
     def test_repr(self):
-        from slappyengine.event_bus import EventDetails
+        from pharos_engine.event_bus import EventDetails
         ed = EventDetails(name="x", payload={"a": 1})
         r = repr(ed)
         assert "x" in r
@@ -250,15 +250,15 @@ class TestEventDetails:
 
 class TestObservable:
     def setup_method(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         global_bus.clear()
 
     def teardown_method(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         global_bus.clear()
 
     def test_instantiates(self):
-        from slappyengine.event_bus import Observable
+        from pharos_engine.event_bus import Observable
 
         class MyObj(Observable):
             pass
@@ -267,7 +267,7 @@ class TestObservable:
         assert o is not None
 
     def test_set_attr_no_crash(self):
-        from slappyengine.event_bus import Observable
+        from pharos_engine.event_bus import Observable
 
         class MyObj(Observable):
             pass
@@ -277,7 +277,7 @@ class TestObservable:
         assert o.speed == pytest.approx(100.0)
 
     def test_private_attr_not_published(self):
-        from slappyengine.event_bus import Observable, subscribe, unsubscribe
+        from pharos_engine.event_bus import Observable, subscribe, unsubscribe
         received = []
 
         class MyObj(Observable):
@@ -290,7 +290,7 @@ class TestObservable:
         assert received == []
 
     def test_no_publish_attr_not_published(self):
-        from slappyengine.event_bus import Observable, subscribe, unsubscribe
+        from pharos_engine.event_bus import Observable, subscribe, unsubscribe
         received = []
 
         class MyObj(Observable):
@@ -303,7 +303,7 @@ class TestObservable:
         assert received == []
 
     def test_public_attr_published_when_listener(self):
-        from slappyengine.event_bus import Observable, subscribe, unsubscribe
+        from pharos_engine.event_bus import Observable, subscribe, unsubscribe
         received = []
 
         class MyObj(Observable):
@@ -316,7 +316,7 @@ class TestObservable:
         assert 120.0 in received
 
     def test_watch_fires_on_change(self):
-        from slappyengine.event_bus import Observable
+        from pharos_engine.event_bus import Observable
         received = []
 
         class MyObj(Observable):
@@ -328,7 +328,7 @@ class TestObservable:
         assert received == [pytest.approx(0.5)]
 
     def test_unwatch_stops_firing(self):
-        from slappyengine.event_bus import Observable
+        from pharos_engine.event_bus import Observable
         received = []
 
         class MyObj(Observable):
@@ -342,7 +342,7 @@ class TestObservable:
         assert len(received) == 1  # only first change
 
     def test_emit_fires_local_bus(self):
-        from slappyengine.event_bus import Observable
+        from pharos_engine.event_bus import Observable
         received = []
 
         class MyObj(Observable):
@@ -360,15 +360,15 @@ class TestObservable:
 
 class TestBinding:
     def setup_method(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         global_bus.clear()
 
     def teardown_method(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         global_bus.clear()
 
     def test_binding_instantiates(self):
-        from slappyengine.event_bus import Observable, Binding
+        from pharos_engine.event_bus import Observable, Binding
 
         class Source(Observable):
             pass
@@ -380,7 +380,7 @@ class TestBinding:
         assert b is not None
 
     def test_binding_initial_value_applied(self):
-        from slappyengine.event_bus import Observable, Binding
+        from pharos_engine.event_bus import Observable, Binding
 
         class Source(Observable):
             pass
@@ -392,7 +392,7 @@ class TestBinding:
         assert received == [pytest.approx(50.0)]
 
     def test_binding_updates_on_change(self):
-        from slappyengine.event_bus import Observable, Binding
+        from pharos_engine.event_bus import Observable, Binding
 
         class Source(Observable):
             pass
@@ -406,7 +406,7 @@ class TestBinding:
         assert 120.0 in received
 
     def test_binding_formatter_applied(self):
-        from slappyengine.event_bus import Observable, Binding
+        from pharos_engine.event_bus import Observable, Binding
 
         class Source(Observable):
             pass
@@ -421,7 +421,7 @@ class TestBinding:
         assert 20.0 in received
 
     def test_binding_target_object(self):
-        from slappyengine.event_bus import Observable, Binding
+        from pharos_engine.event_bus import Observable, Binding
 
         class Source(Observable):
             pass
@@ -438,7 +438,7 @@ class TestBinding:
         assert t.value == pytest.approx(99.0)
 
     def test_binding_filter(self):
-        from slappyengine.event_bus import Observable, Binding
+        from pharos_engine.event_bus import Observable, Binding
 
         class Source(Observable):
             pass
@@ -456,7 +456,7 @@ class TestBinding:
         assert 0.8 not in received
 
     def test_binding_detach_stops_updates(self):
-        from slappyengine.event_bus import Observable, Binding
+        from pharos_engine.event_bus import Observable, Binding
 
         class Source(Observable):
             pass
@@ -484,12 +484,12 @@ class _Entity:
 
 class TestTriggerVolume:
     def test_instantiates(self):
-        from slappyengine.trigger import TriggerVolume
+        from pharos_engine.trigger import TriggerVolume
         v = TriggerVolume(position=(100, 100), size=(50, 50))
         assert v is not None
 
     def test_defaults(self):
-        from slappyengine.trigger import TriggerVolume
+        from pharos_engine.trigger import TriggerVolume
         v = TriggerVolume(position=(0, 0), size=(10, 10))
         assert v.normal == (0.0, 1.0)
         assert v.on_enter is None
@@ -499,7 +499,7 @@ class TestTriggerVolume:
         assert v.pixel_precise is False
 
     def test_custom_values(self):
-        from slappyengine.trigger import TriggerVolume
+        from pharos_engine.trigger import TriggerVolume
         v = TriggerVolume(position=(50, 50), size=(20, 20), tag="boost",
                           pixel_precise=True)
         assert v.tag == "boost"
@@ -508,20 +508,20 @@ class TestTriggerVolume:
 
 class TestTriggerSystem:
     def setup_method(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         global_bus.clear()
 
     def teardown_method(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         global_bus.clear()
 
     def test_instantiates(self):
-        from slappyengine.trigger import TriggerSystem
+        from pharos_engine.trigger import TriggerSystem
         ts = TriggerSystem()
         assert ts is not None
 
     def test_add_volume(self):
-        from slappyengine.trigger import TriggerSystem, TriggerVolume
+        from pharos_engine.trigger import TriggerSystem, TriggerVolume
         ts = TriggerSystem()
         v = TriggerVolume(position=(0, 0), size=(10, 10))
         result = ts.add(v)
@@ -529,7 +529,7 @@ class TestTriggerSystem:
         assert v in ts._volumes
 
     def test_remove_volume(self):
-        from slappyengine.trigger import TriggerSystem, TriggerVolume
+        from pharos_engine.trigger import TriggerSystem, TriggerVolume
         ts = TriggerSystem()
         v = TriggerVolume(position=(0, 0), size=(10, 10))
         ts.add(v)
@@ -537,13 +537,13 @@ class TestTriggerSystem:
         assert v not in ts._volumes
 
     def test_remove_not_present_no_crash(self):
-        from slappyengine.trigger import TriggerSystem, TriggerVolume
+        from pharos_engine.trigger import TriggerSystem, TriggerVolume
         ts = TriggerSystem()
         v = TriggerVolume(position=(0, 0), size=(10, 10))
         ts.remove(v)  # should not raise
 
     def test_clear(self):
-        from slappyengine.trigger import TriggerSystem, TriggerVolume
+        from pharos_engine.trigger import TriggerSystem, TriggerVolume
         ts = TriggerSystem()
         ts.add(TriggerVolume(position=(0, 0), size=(10, 10)))
         ts.add(TriggerVolume(position=(50, 50), size=(10, 10)))
@@ -551,7 +551,7 @@ class TestTriggerSystem:
         assert ts._volumes == []
 
     def test_on_enter_fires(self):
-        from slappyengine.trigger import TriggerSystem, TriggerVolume
+        from pharos_engine.trigger import TriggerSystem, TriggerVolume
         entered = []
         ts = TriggerSystem()
         v = TriggerVolume(position=(0, 0), size=(20, 20),
@@ -562,7 +562,7 @@ class TestTriggerSystem:
         assert len(entered) == 1
 
     def test_on_enter_not_fires_outside(self):
-        from slappyengine.trigger import TriggerSystem, TriggerVolume
+        from pharos_engine.trigger import TriggerSystem, TriggerVolume
         entered = []
         ts = TriggerSystem()
         v = TriggerVolume(position=(0, 0), size=(10, 10),
@@ -573,7 +573,7 @@ class TestTriggerSystem:
         assert entered == []
 
     def test_on_enter_fires_only_once(self):
-        from slappyengine.trigger import TriggerSystem, TriggerVolume
+        from pharos_engine.trigger import TriggerSystem, TriggerVolume
         entered = []
         ts = TriggerSystem()
         v = TriggerVolume(position=(0, 0), size=(20, 20),
@@ -585,7 +585,7 @@ class TestTriggerSystem:
         assert len(entered) == 1
 
     def test_on_stay_fires_while_inside(self):
-        from slappyengine.trigger import TriggerSystem, TriggerVolume
+        from pharos_engine.trigger import TriggerSystem, TriggerVolume
         stays = []
         ts = TriggerSystem()
         v = TriggerVolume(position=(0, 0), size=(20, 20),
@@ -598,7 +598,7 @@ class TestTriggerSystem:
         assert len(stays) == 2  # frames 2 and 3
 
     def test_on_exit_fires(self):
-        from slappyengine.trigger import TriggerSystem, TriggerVolume
+        from pharos_engine.trigger import TriggerSystem, TriggerVolume
         exited = []
         ts = TriggerSystem()
         v = TriggerVolume(position=(0, 0), size=(20, 20),
@@ -611,8 +611,8 @@ class TestTriggerSystem:
         assert len(exited) == 1
 
     def test_tagged_volume_publishes_event(self):
-        from slappyengine.trigger import TriggerSystem, TriggerVolume
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.trigger import TriggerSystem, TriggerVolume
+        from pharos_engine.event_bus import subscribe, unsubscribe
         received = []
         h = subscribe("Trigger.Enter.boost", lambda evt: received.append(1))
         ts = TriggerSystem()
@@ -624,13 +624,13 @@ class TestTriggerSystem:
         assert received
 
     def test_empty_entities_no_crash(self):
-        from slappyengine.trigger import TriggerSystem, TriggerVolume
+        from pharos_engine.trigger import TriggerSystem, TriggerVolume
         ts = TriggerSystem()
         ts.add(TriggerVolume(position=(0, 0), size=(10, 10)))
         ts.update([])
 
     def test_entity_without_size_uses_default(self):
-        from slappyengine.trigger import TriggerSystem, TriggerVolume
+        from pharos_engine.trigger import TriggerSystem, TriggerVolume
         entered = []
         ts = TriggerSystem()
         v = TriggerVolume(position=(0, 0), size=(20, 20),
@@ -650,26 +650,26 @@ class TestTriggerSystem:
 
 class TestReverbZone:
     def setup_method(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         global_bus.clear()
 
     def teardown_method(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         global_bus.clear()
 
     def test_instantiates(self):
-        from slappyengine.trigger import ReverbZone
+        from pharos_engine.trigger import ReverbZone
         rz = ReverbZone(position=(100, 100), size=(80, 40),
                         tag="tunnel", reverb_amount=0.7, reverb_decay=1.2)
         assert rz is not None
 
     def test_is_trigger_volume(self):
-        from slappyengine.trigger import ReverbZone, TriggerVolume
+        from pharos_engine.trigger import ReverbZone, TriggerVolume
         rz = ReverbZone(position=(0, 0), size=(10, 10), tag="r")
         assert isinstance(rz, TriggerVolume)
 
     def test_reverb_fields_stored(self):
-        from slappyengine.trigger import ReverbZone
+        from pharos_engine.trigger import ReverbZone
         rz = ReverbZone(position=(0, 0), size=(10, 10), tag="r",
                         reverb_amount=0.5, reverb_decay=2.0)
         assert rz.reverb_amount == pytest.approx(0.5)

@@ -23,14 +23,14 @@ import dataclasses
 import numpy as np
 import pytest
 
-from slappyengine.deform_modes import cell_material_for
-from slappyengine.physics import (
+from pharos_engine.deform_modes import cell_material_for
+from pharos_engine.physics import (
     PhysicsWorld,
     PhysicsYaml,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.world import (
+from pharos_engine.physics.world import (
     CellConfig,
     CollisionConfig,
     GpuConfig,

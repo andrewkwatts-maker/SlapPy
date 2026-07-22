@@ -1,4 +1,4 @@
-"""Input-validation tests for the public ``slappyengine.topology`` API.
+"""Input-validation tests for the public ``pharos_engine.topology`` API.
 
 Mirrors the ``test_hardening_dynamics.py`` policy: validate at system
 boundaries, refuse bad input loudly rather than silently coercing it.
@@ -10,7 +10,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.topology import (
+from pharos_engine.topology import (
     BACKGROUND_LABEL,
     connected_components,
 )

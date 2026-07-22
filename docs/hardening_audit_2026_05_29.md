@@ -5,7 +5,7 @@ Branch: `hardening-input-validation`
 ## Scope
 
 This audit covers the new Phase B / B+ / C subpackages exposed via the public
-`slappyengine.*` namespace. For each public function and class constructor we
+`pharos_engine.*` namespace. For each public function and class constructor we
 record the expected input contract and any silent-bad-input bugs found during
 the audit.
 
@@ -18,14 +18,14 @@ Out of scope (per task brief): `softbody/`, `fluid/`, `lighting/`, `audio/`,
 
 ## Inventory
 
-### `slappyengine.topology`
+### `pharos_engine.topology`
 
 | Entry point | Inputs | Contract |
 |---|---|---|
 | `connected_components(n_nodes, edges, active=None, node_mask=None)` | `n_nodes: int`, `edges: np.ndarray (E,2) int`, `active: np.ndarray (E,) bool`, `node_mask: np.ndarray (n_nodes,) bool` | `n_nodes >= 0`; `edges` is a numpy array of shape `(E, 2)`; edge indices in `[0, n_nodes)`; `active.shape == (E,)`; `node_mask.shape == (n_nodes,)` |
 | `connected_components_grid(density, bond_e, bond_s, density_threshold, bond_threshold)` | three 2-D ndarrays, two scalars | all three arrays same shape and 2-D; thresholds finite |
 
-### `slappyengine.numerics`
+### `pharos_engine.numerics`
 
 | Entry point | Inputs | Contract |
 |---|---|---|
@@ -33,7 +33,7 @@ Out of scope (per task brief): `softbody/`, `fluid/`, `lighting/`, `audio/`,
 | `sor_smooth(p, rhs, iters=20, omega=1.0)` | two ndarrays, two scalars | p / rhs are ndarrays of matching shape, 2-D; iters ≥ 0 |
 | `compute_residual(p, rhs)` | two ndarrays | p / rhs are ndarrays of matching shape, 2-D |
 
-### `slappyengine.zones`
+### `pharos_engine.zones`
 
 | Entry point | Inputs | Contract |
 |---|---|---|
@@ -43,7 +43,7 @@ Out of scope (per task brief): `softbody/`, `fluid/`, `lighting/`, `audio/`,
 | `ZoneManager.update(positions)` | dict or iterable of `(eid, (x, y))` | each position is a 2-tuple of finite floats |
 | `ZoneManager.update_threshold(name, value)` | name str, value float | name str, value finite float |
 
-### `slappyengine.thermal`
+### `pharos_engine.thermal`
 
 | Entry point | Inputs | Contract |
 |---|---|---|
@@ -52,7 +52,7 @@ Out of scope (per task brief): `softbody/`, `fluid/`, `lighting/`, `audio/`,
 | `HeatField.exchange_with(other, contact_pairs, dt=1.0, conductivity=None)` | HeatField + iterable + scalars | other is HeatField; dt > 0; conductivity > 0 if given |
 | `exchange_two_regions(t_a, m_a, k_a, t_b, m_b, k_b, dt)` | 7 scalars | all finite floats; dt ≥ 0 |
 
-### `slappyengine.iso.combat`
+### `pharos_engine.iso.combat`
 
 | Entry point | Inputs | Contract |
 |---|---|---|
@@ -63,7 +63,7 @@ Out of scope (per task brief): `softbody/`, `fluid/`, `lighting/`, `audio/`,
 | `WaveSchedule(waves)` | list of `WaveSpec` | waves is iterable of WaveSpec; every spec passes WaveSpec contract |
 | `WaveSchedule.tick(dt)` | scalar | dt finite float |
 
-### `slappyengine.dynamics`
+### `pharos_engine.dynamics`
 
 | Entry point | Inputs | Contract |
 |---|---|---|
@@ -140,18 +140,18 @@ hardening wins — they would have been silent corruptors at runtime:
 
 ## Modules touched
 
-- `python/slappyengine/topology/__init__.py`
-- `python/slappyengine/numerics/__init__.py`
-- `python/slappyengine/zones/__init__.py`
-- `python/slappyengine/thermal/__init__.py`
-- `python/slappyengine/iso/combat.py`
-- `python/slappyengine/dynamics/rope.py`
-- `python/slappyengine/dynamics/ragdoll.py`
-- `python/slappyengine/dynamics/ik.py`
-- `python/slappyengine/dynamics/spring.py`
-- `python/slappyengine/dynamics/motor.py`
-- `python/slappyengine/dynamics/material.py`
-- `python/slappyengine/dynamics/world.py`
+- `python/pharos_engine/topology/__init__.py`
+- `python/pharos_engine/numerics/__init__.py`
+- `python/pharos_engine/zones/__init__.py`
+- `python/pharos_engine/thermal/__init__.py`
+- `python/pharos_engine/iso/combat.py`
+- `python/pharos_engine/dynamics/rope.py`
+- `python/pharos_engine/dynamics/ragdoll.py`
+- `python/pharos_engine/dynamics/ik.py`
+- `python/pharos_engine/dynamics/spring.py`
+- `python/pharos_engine/dynamics/motor.py`
+- `python/pharos_engine/dynamics/material.py`
+- `python/pharos_engine/dynamics/world.py`
 
 ## New tests
 

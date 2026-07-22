@@ -1,5 +1,5 @@
 """
-Bench :mod:`slappyengine.telemetry` under high subscriber count.
+Bench :mod:`pharos_engine.telemetry` under high subscriber count.
 
 Scenarios
 ---------
@@ -32,7 +32,7 @@ _PY_SRC = _REPO_ROOT / "python"
 if str(_PY_SRC) not in sys.path:
     sys.path.insert(0, str(_PY_SRC))
 
-from slappyengine import telemetry  # noqa: E402
+from pharos_engine import telemetry  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -244,7 +244,7 @@ def _format_results(results: list) -> str:
 
 
 def main() -> int:
-    print("# `slappyengine.telemetry` bench\n")
+    print("# `pharos_engine.telemetry` bench\n")
     print(
         f"Python {sys.version.split()[0]} on {sys.platform}. "
         f"perf_counter resolution {time.get_clock_info('perf_counter').resolution:.0e}s.\n"

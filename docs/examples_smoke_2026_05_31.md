@@ -25,11 +25,11 @@ For each example, two probes were performed with `PYTHONPATH=python` and a
 - **GREEN** — example completes a short headless run, or in the case of pure
   `engine.run()` event-loop demos, imports and constructs scene successfully.
 - **RUNTIME_ERROR** — imports fine but crashes during execution.
-- **IMPORT_MISSING_OTHER** — an import from `slappyengine.*` no longer
+- **IMPORT_MISSING_OTHER** — an import from `pharos_engine.*` no longer
   resolves on this branch.
-- **IMPORT_MISSING_SOFTBODY** — refers to a missing `slappyengine.softbody`
+- **IMPORT_MISSING_SOFTBODY** — refers to a missing `pharos_engine.softbody`
   symbol. *(None observed — the package is present.)*
-- **IMPORT_MISSING_FLUID** — refers to a missing `slappyengine.fluid`
+- **IMPORT_MISSING_FLUID** — refers to a missing `pharos_engine.fluid`
   symbol. *(None observed — the package is present.)*
 
 ## Results (47 examples)
@@ -68,9 +68,9 @@ For each example, two probes were performed with `PYTHONPATH=python` and a
 | hello_world.py | GREEN | Minimal `engine.run()` window; constructor + load_scene OK. |
 | hello_zone.py | GREEN | `--frames 5` passes. |
 | hud_demo.py | GREEN | Interactive `engine.run()`; HUD wiring + script attach OK (deprecation warning about subclassing `Script`). |
-| humanoid_destruction_demo.py | IMPORT_MISSING_OTHER | `ImportError: cannot import name 'make_humanoid' from 'slappyengine.dynamics'`. Also needs `wrap_in_flesh`. |
-| humanoid_ik_terrain_demo.py | IMPORT_MISSING_OTHER | `ImportError: cannot import name 'make_humanoid' from 'slappyengine.dynamics'` (and `place_feet_on_terrain`). |
-| humanoid_standing_demo.py | IMPORT_MISSING_OTHER | Same `make_humanoid` / `place_feet_on_terrain` missing in `slappyengine.dynamics`. |
+| humanoid_destruction_demo.py | IMPORT_MISSING_OTHER | `ImportError: cannot import name 'make_humanoid' from 'pharos_engine.dynamics'`. Also needs `wrap_in_flesh`. |
+| humanoid_ik_terrain_demo.py | IMPORT_MISSING_OTHER | `ImportError: cannot import name 'make_humanoid' from 'pharos_engine.dynamics'` (and `place_feet_on_terrain`). |
+| humanoid_standing_demo.py | IMPORT_MISSING_OTHER | Same `make_humanoid` / `place_feet_on_terrain` missing in `pharos_engine.dynamics`. |
 | humanoid_walking_demo.py | IMPORT_MISSING_OTHER | Same `make_humanoid` / `place_feet_on_terrain` / `wrap_in_flesh` missing. |
 | ik_skeleton_demo.py | RUNTIME_ERROR | `AttributeError: 'SoftBodyWorld' object has no attribute 'positions'` raised from `dynamics/joint.py:177` during distance-joint projection. Solver field drift. |
 | landscape_demo.py | GREEN | Interactive `engine.run()`; landscape streaming dir created, 0 tiles initially visible. |
@@ -89,10 +89,10 @@ For each example, two probes were performed with `PYTHONPATH=python` and a
 - **GREEN**: 41 of 47 (87%).
 - **RUNTIME_ERROR**: 2 (`hello_gi.py`, `ik_skeleton_demo.py`).
 - **IMPORT_MISSING_OTHER**: 4 (all four `humanoid_*_demo.py`).
-- **IMPORT_MISSING_SOFTBODY**: 0 — `slappyengine.softbody` is present and exposes
+- **IMPORT_MISSING_SOFTBODY**: 0 — `pharos_engine.softbody` is present and exposes
   `SoftBodyWorld`, `SoftBodyRenderer`, `BodyMeta`, `NodeSoA`, `BeamSoA`,
   `Material`, `MATERIALS`, `VehicleHandle`, etc.
-- **IMPORT_MISSING_FLUID**: 0 — `slappyengine.fluid` exposes `FluidWorld`,
+- **IMPORT_MISSING_FLUID**: 0 — `pharos_engine.fluid` exposes `FluidWorld`,
   `FluidRenderer`, `FluidMaterial`, and the `WATER/LAVA/GRAVEL/DUST/ICE` material
   presets.
 
@@ -100,7 +100,7 @@ For each example, two probes were performed with `PYTHONPATH=python` and a
 
 ### Missing `make_humanoid` family (4 demos)
 
-`slappyengine.dynamics.__init__` currently exports:
+`pharos_engine.dynamics.__init__` currently exports:
 
 ```
 Body, BoneSpec, IKChainSpec, JointSpec, Material, MotorSpec, RagdollSpec,
@@ -118,7 +118,7 @@ moved during the Phase D strip). All four demos die at import time.
 `SlapPyEngineExamples/examples/hello_gi.py` constructs `SVGFDenoiser(W, H)` and calls
 `reset_history()` immediately. The attribute is absent on the current
 implementation — either it was renamed (e.g. `reset()`) or removed when SVGF
-moved into `slappyengine.gi.svgf`. Demo crashes at line 86 before any frame
+moved into `pharos_engine.gi.svgf`. Demo crashes at line 86 before any frame
 is produced.
 
 ### `SoftBodyWorld.positions` missing
@@ -127,7 +127,7 @@ is produced.
 `dynamics/joint.py:177 _project_distance` which dereferences
 `world.positions[a]`. The current `SoftBodyWorld` SoA likely exposes node
 positions through `nodes.x` / `node_pos` / similar, but not `positions`.
-This is a regression in `slappyengine.dynamics.joint`'s distance solver
+This is a regression in `pharos_engine.dynamics.joint`'s distance solver
 relative to the worker `SoftBodyWorld` schema, not the example itself.
 
 ## Caveat on "interactive" demos

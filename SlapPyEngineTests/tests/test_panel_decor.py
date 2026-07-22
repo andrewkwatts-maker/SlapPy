@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.ui.editor.panel_decor`.
+"""Tests for :mod:`pharos_engine.ui.editor.panel_decor`.
 
 Exercises every :class:`DividerStyle` (each style should register at
 least one drawlist op via the recording stub), the washi-tape corner
@@ -18,7 +18,7 @@ from typing import Any
 
 import pytest
 
-from slappyengine.ui.editor.panel_decor import (
+from pharos_engine.ui.editor.panel_decor import (
     DividerSpec,
     DividerStyle,
     PanelDecor,
@@ -35,7 +35,7 @@ from slappyengine.ui.editor.panel_decor import (
     washi_pigment,
     washi_rect_corners,
 )
-from slappyengine.ui.theme.theme_spec import (
+from pharos_engine.ui.theme.theme_spec import (
     Color,
     Gradient,
     PanelDecorConfig,
@@ -530,17 +530,17 @@ class TestShippingThemes:
     """Sanity check — each diary theme carries a valid PanelDecorConfig."""
 
     @pytest.mark.parametrize("module_name,attr_name,expected_divider,expected_corner", [
-        ("slappyengine.ui.theme.themes.kawaii_planner",
+        ("pharos_engine.ui.theme.themes.kawaii_planner",
          "KAWAII_PLANNER", "heart_chain", "tape_pink"),
-        ("slappyengine.ui.theme.themes.bullet_journal",
+        ("pharos_engine.ui.theme.themes.bullet_journal",
          "BULLET_JOURNAL", "dashed", "tape_yellow"),
-        ("slappyengine.ui.theme.themes.cottagecore_garden",
+        ("pharos_engine.ui.theme.themes.cottagecore_garden",
          "COTTAGECORE_GARDEN", "flower_chain", "tape_mint"),
-        ("slappyengine.ui.theme.themes.cozy_diary",
+        ("pharos_engine.ui.theme.themes.cozy_diary",
          "COZY_DIARY", "pencil_line", "tape_lavender"),
-        ("slappyengine.ui.theme.themes.scrapbook_summer",
+        ("pharos_engine.ui.theme.themes.scrapbook_summer",
          "SCRAPBOOK_SUMMER", "star_chain", "tape_blue"),
-        ("slappyengine.ui.theme.themes.teengirl_notebook",
+        ("pharos_engine.ui.theme.themes.teengirl_notebook",
          "TEENGIRL_NOTEBOOK", "wavy", "tape_pink"),
     ])
     def test_theme_has_expected_decor(

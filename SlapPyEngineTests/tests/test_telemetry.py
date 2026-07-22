@@ -1,5 +1,5 @@
 """
-Tests for :mod:`slappyengine.telemetry`.
+Tests for :mod:`pharos_engine.telemetry`.
 
 Covers the no-subscriber fast path, glob pattern matching, unsubscribe,
 the ring-buffer history API, and thread-safety under concurrent emits.
@@ -11,7 +11,7 @@ import time
 
 import pytest
 
-from slappyengine import telemetry
+from pharos_engine import telemetry
 
 
 @pytest.fixture(autouse=True)

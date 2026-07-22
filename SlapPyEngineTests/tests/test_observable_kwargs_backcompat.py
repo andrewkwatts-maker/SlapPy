@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import pytest
 
-from slappyengine.event_bus import EventBus, Observable
+from pharos_engine.event_bus import EventBus, Observable
 
 
 class TestObservableBackcompat:
@@ -109,7 +109,7 @@ class TestObservableMROCooperation:
 
     def test_mro_with_asset_peer_still_runs_render_target_init(self) -> None:
         """(Observable, Asset) MRO — Asset.__init__ must still run."""
-        from slappyengine.asset import Asset
+        from pharos_engine.asset import Asset
 
         class VehicleLike(Observable, Asset):
             def __init__(self) -> None:

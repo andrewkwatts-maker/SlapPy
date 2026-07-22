@@ -22,9 +22,9 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.dynamics import make_humanoid, place_feet_on_terrain, wrap_in_flesh
-from slappyengine.softbody import SoftBodyRenderConfig, SoftBodyRenderer
-from slappyengine.studio import Stage, humanoid_stage, output_path, record
+from pharos_engine.dynamics import make_humanoid, place_feet_on_terrain, wrap_in_flesh
+from pharos_engine.softbody import SoftBodyRenderConfig, SoftBodyRenderer
+from pharos_engine.studio import Stage, humanoid_stage, output_path, record
 
 
 FRAMES, FPS, CYCLE_S = 240, 30, 1.0

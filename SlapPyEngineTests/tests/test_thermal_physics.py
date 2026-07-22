@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.physics.thermal import (
+from pharos_engine.physics.thermal import (
     LAVA_THERMAL,
     SAND_THERMAL,
     SNOW_THERMAL,

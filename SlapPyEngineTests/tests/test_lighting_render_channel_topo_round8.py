@@ -33,7 +33,7 @@ import numpy as np
 import pytest
 
 try:
-    from slappyengine.render_channel import (
+    from pharos_engine.render_channel import (
         NightVisionPass,
         RenderChannelCompositor,
         RenderChannelCycleError,
@@ -42,13 +42,13 @@ try:
     )
 except ImportError as exc:  # pragma: no cover — defensive
     pytest.skip(
-        f"slappyengine.render_channel not importable: {exc}",
+        f"pharos_engine.render_channel not importable: {exc}",
         allow_module_level=True,
     )
 
 # Visual-baseline helper required by the round-8 spec (kwarg name is
 # ``tolerance``, never ``tol``).
-from slappyengine.testing import assert_scene_matches
+from pharos_engine.testing import assert_scene_matches
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +109,7 @@ def _scene_delta(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.mean(np.abs(a - b)))
 
 
-# NOTE: visual baseline comparisons use ``slappyengine.testing.assert_scene_matches``
+# NOTE: visual baseline comparisons use ``pharos_engine.testing.assert_scene_matches``
 # directly (imported above).  The kwarg name is ``tolerance`` not ``tol`` —
 # the spec is strict on this so that future polish rounds share one signature.
 

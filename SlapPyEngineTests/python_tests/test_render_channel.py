@@ -5,44 +5,44 @@ import pytest
 
 class TestRenderPassDefaults:
     def test_default_blend_mode_lerp(self):
-        from slappyengine.render_channel import RenderPass
+        from pharos_engine.render_channel import RenderPass
         rp = RenderPass("my_pass")
         assert rp.blend_mode == "lerp"
 
     def test_default_blend_alpha_zero(self):
-        from slappyengine.render_channel import RenderPass
+        from pharos_engine.render_channel import RenderPass
         rp = RenderPass("my_pass")
         assert rp.blend_alpha == pytest.approx(0.0)
 
     def test_default_gain_one(self):
-        from slappyengine.render_channel import RenderPass
+        from pharos_engine.render_channel import RenderPass
         rp = RenderPass("my_pass")
         assert rp.gain == pytest.approx(1.0)
 
     def test_default_tint_white(self):
-        from slappyengine.render_channel import RenderPass
+        from pharos_engine.render_channel import RenderPass
         rp = RenderPass("my_pass")
         assert rp.tint == (1.0, 1.0, 1.0)
 
 
 class TestPrebuiltPasses:
     def test_night_vision_pass_exists(self):
-        from slappyengine.render_channel import NightVisionPass
+        from pharos_engine.render_channel import NightVisionPass
         assert NightVisionPass.name == "night_vision"
 
     def test_night_vision_green_tint(self):
-        from slappyengine.render_channel import NightVisionPass
+        from pharos_engine.render_channel import NightVisionPass
         r, g, b = NightVisionPass.tint
         assert g > r and g > b
 
     def test_thermal_pass_exists(self):
-        from slappyengine.render_channel import ThermalPass
+        from pharos_engine.render_channel import ThermalPass
         assert ThermalPass.name == "thermal"
 
 
 class TestRenderChannelCompositorNonGpu:
     def _make_compositor(self):
-        from slappyengine.render_channel import RenderChannelCompositor
+        from pharos_engine.render_channel import RenderChannelCompositor
         return RenderChannelCompositor(gpu=None, width=1280, height=720)
 
     def test_init_empty_passes(self):
@@ -50,14 +50,14 @@ class TestRenderChannelCompositorNonGpu:
         assert len(rc._passes) == 0
 
     def test_add_channel_by_string(self):
-        from slappyengine.render_channel import RenderPass
+        from pharos_engine.render_channel import RenderPass
         rc = self._make_compositor()
         rp = rc.add_channel("custom")
         assert isinstance(rp, RenderPass)
         assert "custom" in rc._passes
 
     def test_add_channel_by_pass(self):
-        from slappyengine.render_channel import RenderChannelCompositor, NightVisionPass
+        from pharos_engine.render_channel import RenderChannelCompositor, NightVisionPass
         rc = self._make_compositor()
         rp = rc.add_channel(NightVisionPass)
         assert rp.name == "night_vision"

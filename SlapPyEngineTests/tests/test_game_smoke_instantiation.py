@@ -2,7 +2,7 @@
 
 The sibling :mod:`tests.test_game_compat_tripwire` locks down *importability* —
 each ``(game, name)`` pair in the engine-surface contract must resolve off the
-``slappyengine`` package. That catches the "deleted a public name" class of
+``pharos_engine`` package. That catches the "deleted a public name" class of
 regression, but it doesn't catch the "name imports but blows up on first
 construction" class — which is exactly the failure mode that ships to a game
 team in the next ``pip install`` and turns into a same-day rollback.
@@ -36,24 +36,24 @@ import pytest
 # ---------------------------------------------------------------------------
 
 _MISSING_MODULES: dict[str, str] = {
-    "TriggerSystem":           "slappyengine.trigger",
-    "TriggerVolume":           "slappyengine.trigger",
-    "ZoneMap":                 "slappyengine.deform_zones",
-    "CrackMode":               "slappyengine.deform_modes",
-    "MaterialPreset":          "slappyengine.deform_modes",
-    "PixelMaterialMap":        "slappyengine.pixel_material",
-    "SimFrequencyBudget":      "slappyengine.deform_controller",
-    "SimState":                "slappyengine.deform_controller",
-    "DeformController":        "slappyengine.deform_controller",
-    "build_vehicle":           "slappyengine.softbody.vehicle",
-    "VehicleSpec":             "slappyengine.softbody.vehicle",
-    "WheelSpec":               "slappyengine.softbody.vehicle",
-    "apply_drivetrain_torque": "slappyengine.softbody.vehicle",
-    "CatmullRomSpline":        "slappyengine.spline",
-    "SplineTrack":             "slappyengine.track",
-    "PlayerInputProvider":     "slappyengine.input_provider",
-    "PixelCollisionPass":      "slappyengine.collision_pixel",
-    "MotionBlurPass":          "slappyengine.post_process.motion_blur",
+    "TriggerSystem":           "pharos_engine.trigger",
+    "TriggerVolume":           "pharos_engine.trigger",
+    "ZoneMap":                 "pharos_engine.deform_zones",
+    "CrackMode":               "pharos_engine.deform_modes",
+    "MaterialPreset":          "pharos_engine.deform_modes",
+    "PixelMaterialMap":        "pharos_engine.pixel_material",
+    "SimFrequencyBudget":      "pharos_engine.deform_controller",
+    "SimState":                "pharos_engine.deform_controller",
+    "DeformController":        "pharos_engine.deform_controller",
+    "build_vehicle":           "pharos_engine.softbody.vehicle",
+    "VehicleSpec":             "pharos_engine.softbody.vehicle",
+    "WheelSpec":               "pharos_engine.softbody.vehicle",
+    "apply_drivetrain_torque": "pharos_engine.softbody.vehicle",
+    "CatmullRomSpline":        "pharos_engine.spline",
+    "SplineTrack":             "pharos_engine.track",
+    "PlayerInputProvider":     "pharos_engine.input_provider",
+    "PixelCollisionPass":      "pharos_engine.collision_pixel",
+    "MotionBlurPass":          "pharos_engine.post_process.motion_blur",
 }
 
 
@@ -73,7 +73,7 @@ def test_event_bus_publish_subscribe_class() -> None:
     so subscribers receive a dict on dispatch. This pins that contract — the
     HUD pattern relies on it.
     """
-    from slappyengine import EventBus
+    from pharos_engine import EventBus
 
     bus = EventBus()
     received: list[Any] = []
@@ -84,7 +84,7 @@ def test_event_bus_publish_subscribe_class() -> None:
 
 def test_event_bus_module_level_publish_subscribe() -> None:
     """``event_bus.publish``/``subscribe`` module-level helpers — Phase C item."""
-    from slappyengine import event_bus
+    from pharos_engine import event_bus
 
     received: list[Any] = []
     event_bus.subscribe("Test.Topic", lambda payload: received.append(payload))
@@ -104,7 +104,7 @@ def test_data_component_set_get_watch() -> None:
     + per-key get. Pin both the kwarg-set contract and the .watch attribute
     that the HUD's reactive dirty-flag pattern relies on.
     """
-    from slappyengine import DataComponent
+    from pharos_engine import DataComponent
 
     dc = DataComponent()
     dc.set(ammo=30)
@@ -121,7 +121,7 @@ def test_data_component_set_get_watch() -> None:
 
 def test_observable_construct_and_publish() -> None:
     """``Observable`` default ctor + auto-publish via .set on subscribed bus."""
-    from slappyengine import EventBus, Observable
+    from pharos_engine import EventBus, Observable
 
     bus = EventBus()
     obs = Observable(bus=bus, topic="player.state")
@@ -151,7 +151,7 @@ def test_observable_construct_and_publish() -> None:
 
 def test_cache_mode_enum_values() -> None:
     """``CacheMode`` is an Enum with GPU / RAM / DISK members."""
-    from slappyengine import CacheMode
+    from pharos_engine import CacheMode
 
     names = {m.name for m in CacheMode}
     assert {"GPU", "RAM", "DISK"}.issubset(names), (
@@ -163,7 +163,7 @@ def test_cache_mode_enum_values() -> None:
 
 def test_strata_world_construct_with_layers() -> None:
     """``StrataWorld(layers=[StrataLayer(...)])`` — Bullet Strata world ctor."""
-    from slappyengine import StrataLayer, StrataWorld
+    from pharos_engine import StrataLayer, StrataWorld
 
     layers = [
         StrataLayer(name="bg",    index=0, tint=(0.5, 0.5, 0.6, 1.0), parallax=0.5),
@@ -181,7 +181,7 @@ def test_strata_world_construct_with_layers() -> None:
 
 def test_particle_emitter_default_construct_and_tick() -> None:
     """``ParticleEmitter()`` default ctor + emit + tick — no GPU needed."""
-    from slappyengine import ParticleEmitter
+    from pharos_engine import ParticleEmitter
 
     em = ParticleEmitter()
     em.emit(count=8, position=(32.0, 32.0), color=(255, 64, 64), lifetime=0.5)
@@ -194,7 +194,7 @@ def test_particle_emitter_default_construct_and_tick() -> None:
 
 def test_gpu_particle_system_construct_with_mock_ctx() -> None:
     """``GpuParticleSystem(ctx, max_particles=...)`` — Bullet Strata muzzle FX."""
-    from slappyengine import GpuParticleSystem
+    from pharos_engine import GpuParticleSystem
 
     ctx = MagicMock()
     ctx.device.create_buffer.return_value = MagicMock()
@@ -212,7 +212,7 @@ def test_gpu_particle_system_construct_with_mock_ctx() -> None:
 
 def test_audio_runtime_module_get_backend() -> None:
     """``audio_runtime.get_backend()`` returns an :class:`AudioBackend`."""
-    from slappyengine import audio_runtime
+    from pharos_engine import audio_runtime
 
     backend = audio_runtime.get_backend()
     assert backend is not None
@@ -224,7 +224,7 @@ def test_audio_runtime_module_get_backend() -> None:
 
 def test_script_default_construct() -> None:
     """``Script()`` default ctor — must allow zero-arg subclass init."""
-    from slappyengine import Script
+    from pharos_engine import Script
 
     s = Script()
     assert s is not None
@@ -234,7 +234,7 @@ def test_script_default_construct() -> None:
 
 def test_zones_rect_zone_construct() -> None:
     """``zones.RectZone`` + ``ZoneManager`` enter/exit round-trip."""
-    from slappyengine.zones import RectZone, ZoneManager
+    from pharos_engine.zones import RectZone, ZoneManager
 
     mgr = ZoneManager()
     entered: list[Any] = []
@@ -249,7 +249,7 @@ def test_zones_rect_zone_construct() -> None:
 
 def test_zones_threshold_zone_construct() -> None:
     """``zones.ThresholdZone`` fires at threshold + re-arms on recovery."""
-    from slappyengine.zones import ThresholdZone, ZoneManager
+    from pharos_engine.zones import ThresholdZone, ZoneManager
 
     mgr = ZoneManager()
     fired: list[float] = []
@@ -278,8 +278,8 @@ def test_stone_keep_wave_schedule_100_frames_no_nan() -> None:
     """
     import math
 
-    from slappyengine.iso import IsoEntity, IsoGrid, IsoScene, IsoTileDef
-    from slappyengine.iso.combat import (
+    from pharos_engine.iso import IsoEntity, IsoGrid, IsoScene, IsoTileDef
+    from pharos_engine.iso.combat import (
         Attacker,
         Defender,
         WaveSchedule,
@@ -350,7 +350,7 @@ def test_stone_keep_wave_schedule_100_frames_no_nan() -> None:
 
 # ---------------------------------------------------------------------------
 # Phase C closed-gap surface — every symbol previously tracked in
-# :data:`_MISSING_MODULES` now resolves off the master ``slappyengine``
+# :data:`_MISSING_MODULES` now resolves off the master ``pharos_engine``
 # package. The parametrised test below enforces that as a forward-looking
 # regression tripwire: if a symbol disappears from the export surface, this
 # test fails outright (no longer xfail-cushioned) and the sibling tripwire
@@ -364,8 +364,8 @@ def test_stone_keep_wave_schedule_100_frames_no_nan() -> None:
 )
 def test_missing_module_residual_gap(symbol: str, module: str) -> None:
     """One assertion per previously-missing Phase C symbol — must resolve now."""
-    import slappyengine
-    assert hasattr(slappyengine, symbol), (
+    import pharos_engine
+    assert hasattr(pharos_engine, symbol), (
         f"{symbol} regressed off the public surface — module {module} "
         f"was previously a Phase C residual gap that has been closed; "
         f"removing it again would re-break game-team installs."

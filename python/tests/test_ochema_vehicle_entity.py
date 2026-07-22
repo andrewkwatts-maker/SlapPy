@@ -11,10 +11,10 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 # --------------------------------------------------------------------------- #
-# GPU / wgpu stubs (must appear before any slappyengine import)
+# GPU / wgpu stubs (must appear before any pharos_engine import)
 # --------------------------------------------------------------------------- #
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 # --------------------------------------------------------------------------- #
 # Ochema Circuit on sys.path
@@ -170,7 +170,7 @@ class TestRecompute:
         v = _make_vehicle()
         v.parts.clear()
         # grid_size is 8 from config; centre = 4
-        from slappyengine.vehicle_parts import PartSlot
+        from pharos_engine.vehicle_parts import PartSlot
         p1 = _make_part("ARMOR", grid_x=4, grid_y=0)
         p2 = _make_part("ARMOR", grid_x=4, grid_y=7)
         v.add_part(p1)
@@ -271,7 +271,7 @@ class TestUpdateDamageLayers:
 
 class TestSetNitro:
     def test_nitro_creates_point_light(self):
-        from slappyengine.lighting import PointLight
+        from pharos_engine.lighting import PointLight
         v = _make_vehicle()
         v.set_nitro(True, None)
         assert v._nitro_light is not None
@@ -296,7 +296,7 @@ class TestSetNitro:
         assert v._nitro_active is False
 
     def test_nitro_publishes_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         v = _make_vehicle()
         received = []
         h = subscribe("Vehicle.NitroActive", lambda e: received.append(e))
@@ -305,7 +305,7 @@ class TestSetNitro:
         assert len(received) >= 1
 
     def test_nitro_event_has_active_payload(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         v = _make_vehicle()
         received = []
         h = subscribe("Vehicle.NitroActive", lambda e: received.append(e))
@@ -314,7 +314,7 @@ class TestSetNitro:
         assert received[0].payload.get("active") is True
 
     def test_nitro_observable_attr_fires(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         v = _make_vehicle()
         received = []
         h = subscribe("VehicleEntity.nitro_active", lambda e: received.append(e))
@@ -347,7 +347,7 @@ class TestUpdateNitroLight:
         v.update_nitro_light(0.0)  # should return early
 
     def test_inactive_nitro_no_update(self):
-        from slappyengine.lighting import PointLight
+        from pharos_engine.lighting import PointLight
         v = _make_vehicle()
         v._nitro_light = PointLight((0.0, 0.0), z=0.0)
         v._nitro_active = False
@@ -356,7 +356,7 @@ class TestUpdateNitroLight:
         assert v._nitro_light.position == (0.0, 0.0)
 
     def test_active_nitro_updates_intensity(self):
-        from slappyengine.lighting import PointLight
+        from pharos_engine.lighting import PointLight
         v = _make_vehicle()
         v.set_nitro(True, None)
         v.position = (100.0, 100.0)
@@ -366,7 +366,7 @@ class TestUpdateNitroLight:
         assert 2.0 <= v._nitro_light.intensity <= 4.0
 
     def test_active_nitro_places_light_behind_car(self):
-        from slappyengine.lighting import PointLight
+        from pharos_engine.lighting import PointLight
         v = _make_vehicle()
         v.set_nitro(True, None)
         v.position = (200.0, 300.0)
@@ -384,7 +384,7 @@ class TestUpdateNitroLight:
 
 class TestGetStrengthMapLayer:
     def test_returns_layer_or_none(self):
-        from slappyengine.layer import Layer
+        from pharos_engine.layer import Layer
         v = _make_vehicle()
         result = v.get_strength_map_layer()
         assert result is None or isinstance(result, Layer)
@@ -396,7 +396,7 @@ class TestGetStrengthMapLayer:
         assert result is None
 
     def test_layer_has_correct_shape(self):
-        from slappyengine.layer import Layer
+        from pharos_engine.layer import Layer
         import numpy as np
         v = _make_vehicle()
         if v._strength_map is None:
@@ -561,7 +561,7 @@ class TestUpdateTireRenderers:
 
 class TestVehicleObservableExtra:
     def test_gear_is_tracked(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         v = _make_vehicle()
         received = []
         h = subscribe("VehicleEntity.gear", lambda e: received.append(e))
@@ -570,7 +570,7 @@ class TestVehicleObservableExtra:
         assert len(received) >= 1
 
     def test_drift_factor_is_tracked(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         v = _make_vehicle()
         received = []
         h = subscribe("VehicleEntity.drift_factor", lambda e: received.append(e))
@@ -579,7 +579,7 @@ class TestVehicleObservableExtra:
         assert len(received) >= 1
 
     def test_steer_is_tracked(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         v = _make_vehicle()
         received = []
         h = subscribe("VehicleEntity.steer", lambda e: received.append(e))
@@ -588,7 +588,7 @@ class TestVehicleObservableExtra:
         assert len(received) >= 1
 
     def test_brake_is_tracked(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         v = _make_vehicle()
         received = []
         h = subscribe("VehicleEntity.brake", lambda e: received.append(e))
@@ -597,7 +597,7 @@ class TestVehicleObservableExtra:
         assert len(received) >= 1
 
     def test_nitro_active_observable_deactivate_fires(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         v = _make_vehicle()
         v.set_nitro(True, None)  # activate first
         received = []

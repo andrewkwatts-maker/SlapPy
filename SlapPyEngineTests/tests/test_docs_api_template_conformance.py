@@ -11,7 +11,7 @@ Specifically, every file under ``docs/api/`` that carries the
 ``<!-- handauthored: do not regenerate -->`` marker must:
 
 1. Start with the marker on line 1 (exact bytes).
-2. Have an H1 line of the form ``# slappyengine.<X> — API Reference``
+2. Have an H1 line of the form ``# pharos_engine.<X> — API Reference``
    where ``<X>`` is a dotted subpackage path (``post_process``,
    ``ui.editor``, …).
 3. Have at least one of the canonical landing-section H2s:
@@ -33,7 +33,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC_DIR = REPO_ROOT / "docs" / "api"
 
 HANDAUTHORED_MARKER = "<!-- handauthored: do not regenerate -->"
-H1_RE = re.compile(r"^#\s+slappyengine\.[A-Za-z0-9_.]+\s+—\s+API Reference\s*$")
+H1_RE = re.compile(r"^#\s+pharos_engine\.[A-Za-z0-9_.]+\s+—\s+API Reference\s*$")
 LANDING_H2S = ("## Overview", "## Public surface", "## Usage")
 
 # The meta-template is not a per-subpackage reference; skip it.
@@ -93,7 +93,7 @@ def test_handauthored_doc_starts_with_marker(doc_path: Path) -> None:
     ids=lambda p: p.name,
 )
 def test_handauthored_doc_has_canonical_h1(doc_path: Path) -> None:
-    """The H1 must match ``# slappyengine.<X> — API Reference``."""
+    """The H1 must match ``# pharos_engine.<X> — API Reference``."""
     lines = doc_path.read_text(encoding="utf-8").splitlines()
     h1_lines = [ln for ln in lines if ln.startswith("# ")]
     assert h1_lines, (
@@ -102,7 +102,7 @@ def test_handauthored_doc_has_canonical_h1(doc_path: Path) -> None:
     first_h1 = h1_lines[0]
     assert H1_RE.match(first_h1), (
         f"{doc_path.relative_to(REPO_ROOT)} H1 must match "
-        f"'# slappyengine.<X> — API Reference'; saw {first_h1!r}."
+        f"'# pharos_engine.<X> — API Reference'; saw {first_h1!r}."
     )
 
 

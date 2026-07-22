@@ -17,9 +17,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.prefab import Prefab
-from slappyengine.scene import Scene
-from slappyengine.scene_node import SceneNode, Transform3D
+from pharos_engine.prefab import Prefab
+from pharos_engine.scene import Scene
+from pharos_engine.scene_node import SceneNode, Transform3D
 
 
 # ---------------------------------------------------------------------------
@@ -130,7 +130,7 @@ def test_scene_has_root_node_and_add_node():
 
 def test_scene_flat_entity_api_still_works():
     """Backwards-compat: existing Entity dict API must be untouched."""
-    from slappyengine.entity import Entity
+    from pharos_engine.entity import Entity
     scene = Scene("test")
     e = Entity(name="ghost")
     scene.add(e)
@@ -207,7 +207,7 @@ def test_prefab_instantiate_under_parent():
 def test_rust_walk_transforms_matches_python():
     """Skip cleanly if _core.scene_walk isn't compiled in."""
     try:
-        from slappyengine import _core
+        from pharos_engine import _core
         scene_walk = getattr(_core, "scene_walk", None)
     except Exception:
         pytest.skip("_core not importable in this build")

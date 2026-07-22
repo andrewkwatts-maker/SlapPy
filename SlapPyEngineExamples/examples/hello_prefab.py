@@ -1,10 +1,10 @@
 """SlapPyEngine - Hello Prefab
 
-Minimal demo of :class:`slappyengine.prefabs.PrefabLibrary` (sprint Y3).
+Minimal demo of :class:`pharos_engine.prefabs.PrefabLibrary` (sprint Y3).
 
 Spawns four baked prefabs — a wooden crate, a rubber ball, a windmill
 cross, and a five-link iron chain — into a shared
-:class:`slappyengine.dynamics.World`, then integrates for 120 fixed
+:class:`pharos_engine.dynamics.World`, then integrates for 120 fixed
 timesteps at ``dt = 1/60``. Each frame is optionally rasterised to a
 PIL image; the final frame is written to ``hello_prefab_final.png``.
 
@@ -27,8 +27,8 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.dynamics import World
-from slappyengine.prefabs import PrefabLibrary
+from pharos_engine.dynamics import World
+from pharos_engine.prefabs import PrefabLibrary
 
 
 # ── Demo parameters ─────────────────────────────────────────────────────────
@@ -79,7 +79,7 @@ def build_library(user_dir: Path | None = None) -> PrefabLibrary:
     """Return a :class:`PrefabLibrary` populated from the baked palette.
 
     A temporary user directory is used by default so the demo never
-    touches ``~/.slappyengine/prefabs/`` on the developer's machine.
+    touches ``~/.pharos_engine/prefabs/`` on the developer's machine.
     """
     lib = PrefabLibrary()
     if user_dir is None:

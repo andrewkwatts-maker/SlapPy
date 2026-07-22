@@ -14,7 +14,7 @@ kinds shown in the side-by-side demo:
    ``[-pi/4, +pi/4]`` (allowing a small tolerance for XPBD overshoot).
 6. No NaNs leak out of the XPBD solver in any scene.
 7. The visual rasterisation reproduces a stable golden master via the
-   :mod:`slappyengine.testing` harness.
+   :mod:`pharos_engine.testing` harness.
 8. (Y2) The demo runs 60 steps without emitting ``RuntimeWarning`` — the
    over-damp guard that W1 fixed for ``hello_ragdoll`` and X2 fixed for
    ``hello_rope``.
@@ -39,7 +39,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from slappyengine.testing import assert_scene_matches
+from pharos_engine.testing import assert_scene_matches
 
 # ── Load the demo as a module so we don't depend on examples/ being on path ──
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -180,7 +180,7 @@ def test_hello_joint_no_nan(long_run):
 def test_hello_joint_visual_baseline(long_run, demo):
     """Render the four-scene panel and diff against the committed baseline.
 
-    First run writes ``python/slappyengine/testing/baselines/hello_joint.png``
+    First run writes ``python/pharos_engine/testing/baselines/hello_joint.png``
     and passes; subsequent runs require a max per-channel diff <= 0.05.
     """
     world, info, _trace = long_run
@@ -243,13 +243,13 @@ def _free_scene_nodes(info, world):
 def test_hello_joint_60_steps_no_runtime_warning(demo):
     """Stepping the world 60 frames must not raise any ``RuntimeWarning``.
 
-    The over-damp diagnostic in :mod:`slappyengine.dynamics.world` is the
+    The over-damp diagnostic in :mod:`pharos_engine.dynamics.world` is the
     usual culprit: keeps a lid on ``iters * damping``. Any future edit that
     silently drives the product above 0.3 will fail this test.
     """
     # The over-damp warning is throttled process-wide; clear the cache so
     # any regression is observable in this test regardless of test order.
-    from slappyengine.dynamics import world as _dyn_world
+    from pharos_engine.dynamics import world as _dyn_world
     _dyn_world._reset_warning_cache()
 
     world, info = demo.build_world()
@@ -409,7 +409,7 @@ def test_hello_joint_main_no_warnings(demo, tmp_path):
     tripping any warning category — belt-and-braces coverage over the
     per-step check in :func:`test_hello_joint_60_steps_no_runtime_warning`.
     """
-    from slappyengine.dynamics import world as _dyn_world
+    from pharos_engine.dynamics import world as _dyn_world
     _dyn_world._reset_warning_cache()
 
     with warnings.catch_warnings():

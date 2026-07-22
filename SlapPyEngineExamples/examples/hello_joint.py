@@ -1,8 +1,8 @@
 """SlapPyEngine -- Hello Joint
 
-Side-by-side demo of four :class:`slappyengine.dynamics.JointSpec` kinds.
+Side-by-side demo of four :class:`pharos_engine.dynamics.JointSpec` kinds.
 
-Four mini-scenes are built in a single :class:`~slappyengine.dynamics.World`
+Four mini-scenes are built in a single :class:`~pharos_engine.dynamics.World`
 and arranged along the x-axis so that one render shows them all at once:
 
 * **Scene A** (x = 0..2): ``kind="distance"`` -- two nodes, one pinned at the
@@ -44,7 +44,7 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.dynamics import JointSpec, World
+from pharos_engine.dynamics import JointSpec, World
 
 
 # -- Demo parameters --------------------------------------------------------
@@ -60,7 +60,7 @@ SCENE_DROP: float = 2.0           # initial distance from anchor to the bottom
 
 # Joint tuning that applies to every scene unless overridden below.
 # Solver tuning: keep ``iters * damping <= 0.3`` so the over-damp warning in
-# :mod:`slappyengine.dynamics.world` (threshold 0.5 on effective per-step
+# :mod:`pharos_engine.dynamics.world` (threshold 0.5 on effective per-step
 # damping) never fires. With ``iters=16`` we pick ``damping=0.018`` giving a
 # product of 0.288 and effective per-step damping
 # ``1 - (1 - 0.018)^16 ≈ 0.253`` — well under the 0.5 threshold. Mirrors the

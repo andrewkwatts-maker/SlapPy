@@ -16,7 +16,7 @@ import math
 
 import pytest
 
-from slappyengine.physics3_bridge import (
+from pharos_engine.physics3_bridge import (
     Body3D,
     RaycastHit,
     SweepHit,

@@ -10,7 +10,7 @@ SS1's round-20 ``content.reveal_in_explorer`` /
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`slappyengine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `view.set_zoom`            | `view_set_zoom_actions.set_zoom`                          | view |
 | `spawn.at_view_center`     | `spawn_view_center_actions.spawn_at_view_center`          | spawn |
@@ -20,14 +20,14 @@ Five more action ids landed in this tick, moving 5 rows from STUB
 
 New action modules:
 
-* `python/slappyengine/actions/view_set_zoom_actions.py`
-* `python/slappyengine/actions/spawn_view_center_actions.py`
-* `python/slappyengine/actions/spawn_stamp_random_actions.py`
-* `python/slappyengine/actions/theme_reload_from_disk_actions.py`
-* `python/slappyengine/actions/layer_rename_actions.py`
+* `python/pharos_engine/actions/view_set_zoom_actions.py`
+* `python/pharos_engine/actions/spawn_view_center_actions.py`
+* `python/pharos_engine/actions/spawn_stamp_random_actions.py`
+* `python/pharos_engine/actions/theme_reload_from_disk_actions.py`
+* `python/pharos_engine/actions/layer_rename_actions.py`
 
 Router entries and `_fb_*` shims live in
-`python/slappyengine/tool_router.py` under the
+`python/pharos_engine/tool_router.py` under the
 `# ── TT2 STUB-triage: view.set_zoom, spawn.at_view_center,
 spawn.stamp_random, theme.reload_from_disk, layer.rename (round 21) ──`
 block.

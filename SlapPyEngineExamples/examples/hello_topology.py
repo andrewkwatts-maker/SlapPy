@@ -1,6 +1,6 @@
 """SlapPyEngine — Hello Topology
 
-Minimal demo of :func:`slappyengine.topology.connected_components`.
+Minimal demo of :func:`pharos_engine.topology.connected_components`.
 
 A 64-node graph is laid out as an 8x8 grid in unit-square world
 coordinates. We start with **no edges** at all (64 disjoint singletons)
@@ -35,7 +35,7 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.topology import connected_components
+from pharos_engine.topology import connected_components
 
 
 # ── Demo parameters ────────────────────────────────────────────────────────

@@ -159,7 +159,7 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def reset_notebook_theme():
     """Reset the notebook theme registry between tests."""
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
 
     set_active_theme(None)
     yield
@@ -173,7 +173,7 @@ def reset_notebook_theme():
 
 @dataclass(frozen=True)
 class _SoftbodyMaterialLike:
-    """Stands in for ``slappyengine.softbody.material.Material``.
+    """Stands in for ``pharos_engine.softbody.material.Material``.
 
     The kind discriminator keys on the module path so we hand-set it
     via the test fixture below.
@@ -193,7 +193,7 @@ class _SoftbodyMaterialLike:
 
 @dataclass(frozen=True)
 class _FluidMaterialLike:
-    """Stands in for ``slappyengine.fluid.material.FluidMaterial``."""
+    """Stands in for ``pharos_engine.fluid.material.FluidMaterial``."""
     name: str = "water"
     rest_density: float = 1000.0
     kernel_radius: float = 1.5
@@ -220,21 +220,21 @@ def _make_softbody(name: str = "rubber", **kwargs: Any) -> Any:
     # The kind detector keys on type.__module__ — but we can't change
     # a frozen dataclass's module without subclassing.  Wrap in a
     # fresh subclass whose ``__module__`` lies in the softbody domain.
-    sb_mod = types.ModuleType("slappyengine.softbody._test_material")
+    sb_mod = types.ModuleType("pharos_engine.softbody._test_material")
     SBSub = type("Material", (_SoftbodyMaterialLike,), {})
-    SBSub.__module__ = "slappyengine.softbody._test_material"
+    SBSub.__module__ = "pharos_engine.softbody._test_material"
     sb_mod.Material = SBSub  # type: ignore[attr-defined]
-    sys.modules["slappyengine.softbody._test_material"] = sb_mod
+    sys.modules["pharos_engine.softbody._test_material"] = sb_mod
     return SBSub(name=name, **kwargs)
 
 
 def _make_fluid(name: str = "water", **kwargs: Any) -> Any:
     """Return a fluid-FluidMaterial-like object with the proper module path."""
-    fl_mod = types.ModuleType("slappyengine.fluid._test_material")
+    fl_mod = types.ModuleType("pharos_engine.fluid._test_material")
     FlSub = type("FluidMaterial", (_FluidMaterialLike,), {})
-    FlSub.__module__ = "slappyengine.fluid._test_material"
+    FlSub.__module__ = "pharos_engine.fluid._test_material"
     fl_mod.FluidMaterial = FlSub  # type: ignore[attr-defined]
-    sys.modules["slappyengine.fluid._test_material"] = fl_mod
+    sys.modules["pharos_engine.fluid._test_material"] = fl_mod
     return FlSub(name=name, **kwargs)
 
 
@@ -244,10 +244,10 @@ def _make_fluid(name: str = "water", **kwargs: Any) -> Any:
 
 
 try:
-    from slappyengine.ui.editor.notebook_material_editor import (
+    from pharos_engine.ui.editor.notebook_material_editor import (
         NotebookMaterialEditor,
     )
-    from slappyengine.material.map import ColorRange, MaterialDef, MaterialMap
+    from pharos_engine.material.map import ColorRange, MaterialDef, MaterialMap
 except Exception as _err:  # pragma: no cover
     pytest.skip(
         f"NotebookMaterialEditor not importable: {_err}",
@@ -443,7 +443,7 @@ class TestInspectorDelegation:
         editor = NotebookMaterialEditor(target=mat)
         editor.build("parent_x")
         # The editor stashes the inspector reference.
-        from slappyengine.ui.editor.notebook_inspector import NotebookInspector
+        from pharos_engine.ui.editor.notebook_inspector import NotebookInspector
 
         assert isinstance(editor._inspector, NotebookInspector)
         # The inspector's target is the softbody material itself.
@@ -551,7 +551,7 @@ class TestRefreshAndPreview:
 
 class TestThemeSwitch:
     def test_theme_change_triggers_repaint(self, stub_dpg):
-        from slappyengine.ui.widgets.notebook_theme import (
+        from pharos_engine.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )

@@ -19,7 +19,7 @@ import pytest
 
 def test_washi_tape_presets_registry_has_four_entries() -> None:
     """The registry must expose exactly the 4 sprint-brief presets."""
-    from slappyengine.ui.theme.washi_tape import WASHI_TAPE_PRESETS
+    from pharos_engine.ui.theme.washi_tape import WASHI_TAPE_PRESETS
 
     assert len(WASHI_TAPE_PRESETS) == 4
     assert set(WASHI_TAPE_PRESETS) == {
@@ -28,8 +28,8 @@ def test_washi_tape_presets_registry_has_four_entries() -> None:
 
 
 def test_washi_tape_presets_reexported_at_theme_top_level() -> None:
-    """The top-level ``slappyengine.ui.theme`` namespace exports the dict."""
-    from slappyengine.ui import theme as theme_pkg
+    """The top-level ``pharos_engine.ui.theme`` namespace exports the dict."""
+    from pharos_engine.ui import theme as theme_pkg
 
     assert hasattr(theme_pkg, "WASHI_TAPE_PRESETS")
     assert hasattr(theme_pkg, "render_washi_tape")
@@ -40,7 +40,7 @@ def test_washi_tape_presets_reexported_at_theme_top_level() -> None:
 
 def test_washi_tape_preset_metadata_fields() -> None:
     """Each preset carries a display name, base colour, and description."""
-    from slappyengine.ui.theme.washi_tape import WASHI_TAPE_PRESETS
+    from pharos_engine.ui.theme.washi_tape import WASHI_TAPE_PRESETS
 
     for preset in WASHI_TAPE_PRESETS.values():
         assert isinstance(preset.id, str) and preset.id
@@ -60,7 +60,7 @@ def test_washi_tape_preset_metadata_fields() -> None:
 
 def test_render_pink_polka_returns_expected_shape() -> None:
     """``render_washi_tape("pink_polka", (128, 32))`` returns RGBA ndarray."""
-    from slappyengine.ui.theme.washi_tape import render_washi_tape
+    from pharos_engine.ui.theme.washi_tape import render_washi_tape
 
     img = render_washi_tape("pink_polka", (128, 32))
     assert isinstance(img, np.ndarray)
@@ -71,7 +71,7 @@ def test_render_pink_polka_returns_expected_shape() -> None:
 
 def test_render_all_four_presets_without_exception() -> None:
     """All 4 presets render at the sprint's default size without raising."""
-    from slappyengine.ui.theme.washi_tape import (
+    from pharos_engine.ui.theme.washi_tape import (
         WASHI_TAPE_PRESETS,
         render_washi_tape,
     )
@@ -84,7 +84,7 @@ def test_render_all_four_presets_without_exception() -> None:
 
 def test_render_washi_tape_unknown_preset_raises() -> None:
     """Unknown preset ids raise ``KeyError`` with a listing of known ids."""
-    from slappyengine.ui.theme.washi_tape import render_washi_tape
+    from pharos_engine.ui.theme.washi_tape import render_washi_tape
 
     with pytest.raises(KeyError) as excinfo:
         render_washi_tape("not_a_preset", (32, 32))
@@ -94,7 +94,7 @@ def test_render_washi_tape_unknown_preset_raises() -> None:
 @pytest.mark.parametrize("bad_size", [(0, 32), (32, -1), "abc", (32,)])
 def test_render_washi_tape_bad_size_raises(bad_size) -> None:
     """Malformed sizes raise ``ValueError``."""
-    from slappyengine.ui.theme.washi_tape import render_washi_tape
+    from pharos_engine.ui.theme.washi_tape import render_washi_tape
 
     with pytest.raises((ValueError, TypeError)):
         render_washi_tape("pink_polka", bad_size)
@@ -107,7 +107,7 @@ def test_render_washi_tape_bad_size_raises(bad_size) -> None:
 
 def test_torn_edges_have_low_alpha_on_outermost_row() -> None:
     """Outermost row/col has alpha < 128 so tape blends into the panel."""
-    from slappyengine.ui.theme.washi_tape import (
+    from pharos_engine.ui.theme.washi_tape import (
         WASHI_TAPE_PRESETS,
         render_washi_tape,
     )
@@ -128,7 +128,7 @@ def test_torn_edges_have_low_alpha_on_outermost_row() -> None:
 
 def test_tape_body_is_fully_opaque_in_the_middle() -> None:
     """Middle rows are fully opaque so the pattern reads clearly."""
-    from slappyengine.ui.theme.washi_tape import render_washi_tape
+    from pharos_engine.ui.theme.washi_tape import render_washi_tape
 
     img = render_washi_tape("plain", (128, 32))
     # Middle row (16) should be alpha=255 across all columns.
@@ -147,7 +147,7 @@ def test_notebook_panel_decor_title_tape_shape() -> None:
     Rotation enlarges the canvas so the tape's rotated corners fit; the
     output is therefore >= the pre-rotation size on both axes.
     """
-    from slappyengine.ui.editor.notebook_panel_decor import NotebookPanelDecor
+    from pharos_engine.ui.editor.notebook_panel_decor import NotebookPanelDecor
 
     decor = NotebookPanelDecor()
     tape = decor.title_tape("outliner")
@@ -159,7 +159,7 @@ def test_notebook_panel_decor_title_tape_shape() -> None:
 
 def test_notebook_panel_decor_preset_and_rotation_are_deterministic() -> None:
     """Same panel name → same preset + rotation across runs."""
-    from slappyengine.ui.editor.notebook_panel_decor import (
+    from pharos_engine.ui.editor.notebook_panel_decor import (
         preset_for_panel,
         rotation_for_panel,
     )
@@ -173,7 +173,7 @@ def test_notebook_panel_decor_preset_and_rotation_are_deterministic() -> None:
 
 def test_notebook_panel_decor_specs_covers_all_panels() -> None:
     """``.specs()`` returns one :class:`TitleTapeSpec` per requested name."""
-    from slappyengine.ui.editor.notebook_panel_decor import NotebookPanelDecor
+    from pharos_engine.ui.editor.notebook_panel_decor import NotebookPanelDecor
 
     decor = NotebookPanelDecor()
     names = ["outliner", "inspector", "toolbar"]
@@ -190,7 +190,7 @@ def test_notebook_panel_decor_specs_covers_all_panels() -> None:
 
 def test_notebook_panel_decor_cache_reuses_render() -> None:
     """Repeated calls for the same panel hit the internal cache."""
-    from slappyengine.ui.editor.notebook_panel_decor import NotebookPanelDecor
+    from pharos_engine.ui.editor.notebook_panel_decor import NotebookPanelDecor
 
     decor = NotebookPanelDecor()
     _ = decor.title_tape("inspector")

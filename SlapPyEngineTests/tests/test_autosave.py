@@ -1,4 +1,4 @@
-"""Tripwire suite for ``slappyengine.autosave`` — sprint Y6.
+"""Tripwire suite for ``pharos_engine.autosave`` — sprint Y6.
 
 Covers:
 
@@ -16,7 +16,7 @@ Covers:
   stress test).
 
 All tests use ``tmp_path`` for the snapshot dir so the suite never
-touches the user's ``~/.slappyengine/`` directory. Short timer intervals
+touches the user's ``~/.pharos_engine/`` directory. Short timer intervals
 (``0.02 s``) plus tight sleeps keep the full run under ~2 s.
 """
 from __future__ import annotations
@@ -28,7 +28,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from slappyengine.autosave import (
+from pharos_engine.autosave import (
     AutosaveManager,
     AutosaveState,
     RecoveryChoice,

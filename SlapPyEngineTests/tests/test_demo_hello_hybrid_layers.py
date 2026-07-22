@@ -49,7 +49,7 @@ def test_hello_hybrid_layers_imports(demo):
 
 def test_layer_compositor_importable():
     """Compositor must be importable from the render subpackage."""
-    from slappyengine.render.layer_compositor import (
+    from pharos_engine.render.layer_compositor import (
         CompositeStats,
         LayerCompositor,
         LayerTraceEvent,
@@ -104,7 +104,7 @@ def test_hello_hybrid_layers_cross_layer_binding_count(demo, tmp_path):
 
 def test_hello_hybrid_layers_center_pixel_not_clear(demo, tmp_path):
     """The final composite centre pixel must not equal the compositor clear colour."""
-    from slappyengine.render.layer_compositor import LayerCompositor
+    from pharos_engine.render.layer_compositor import LayerCompositor
 
     compositor_defaults = LayerCompositor(width=16, height=16)
     clear = tuple(int(compositor_defaults.output_buffer[8, 8, i]) for i in range(4))

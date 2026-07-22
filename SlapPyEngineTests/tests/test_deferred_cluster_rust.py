@@ -4,7 +4,7 @@
   in at least one cluster.
 * Timing sanity: 100 lights + 3,456 clusters < 10 ms on any dev box.
 
-Skips cleanly when ``slappyengine._core`` (or the ``deferred_cluster``
+Skips cleanly when ``pharos_engine._core`` (or the ``deferred_cluster``
 submodule) isn't built.
 """
 
@@ -17,7 +17,7 @@ import types
 import pytest
 
 
-_core = pytest.importorskip("slappyengine._core")
+_core = pytest.importorskip("pharos_engine._core")
 if not hasattr(_core, "deferred_cluster"):
     pytest.skip(
         "_core.deferred_cluster not built (rebuild _core with the 3d feature)",

@@ -1,8 +1,8 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.render.instanced — API Reference
+# pharos_engine.render.instanced — API Reference
 
 > Hand-written reference for the LL3 instanced-mesh submission surface.
-> Draws N copies of one :class:`~slappyengine.render.mesh.Mesh` in a
+> Draws N copies of one :class:`~pharos_engine.render.mesh.Mesh` in a
 > single draw call — grass fields, brick walls, particle billboards,
 > foliage scatter. Sibling references:
 > [`render_scene_walker.md`](render_scene_walker.md) is the frustum-cull
@@ -13,7 +13,7 @@
 
 ## Overview
 
-`slappyengine.render.instanced` is the Nova3D parity Sprint 16 landing
+`pharos_engine.render.instanced` is the Nova3D parity Sprint 16 landing
 (task LL3). It packages three things into one module:
 
 * A pair of dataclasses (:class:`InstanceData`, :class:`InstancedMesh`)
@@ -29,13 +29,13 @@
 Actual submission goes through :func:`render_instanced` which appends
 **exactly one** `DrawCall(kind="mesh", ...)` carrying an
 `instance_count` payload to the renderer's `draw_log`. Both the real
-wgpu :class:`~slappyengine.render.renderer.Renderer` and the headless
+wgpu :class:`~pharos_engine.render.renderer.Renderer` and the headless
 `NullRenderer` used in CI are supported.
 
 ## Public surface
 
 ```python
-from slappyengine.render.instanced import (
+from pharos_engine.render.instanced import (
     InstanceData, InstancedMesh,
     grid, random_scatter, circle, from_transforms,
     pack_instance_ubo, pack_instance_ssbo,
@@ -48,7 +48,7 @@ from slappyengine.render.instanced import (
 
 ### `InstanceData`
 
-_dataclass — defined in `slappyengine.render.instanced`_
+_dataclass — defined in `pharos_engine.render.instanced`_
 
 Per-instance attribute pack. Validates shapes in `__post_init__`.
 
@@ -64,13 +64,13 @@ optional colour / UV arrays disagree with `N`.
 
 ### `InstancedMesh`
 
-_dataclass — defined in `slappyengine.render.instanced`_
+_dataclass — defined in `pharos_engine.render.instanced`_
 
 ```python
 InstancedMesh(base_mesh: Mesh, instance_data: InstanceData)
 ```
 
-Pairs a base :class:`~slappyengine.render.mesh.Mesh` with its
+Pairs a base :class:`~pharos_engine.render.mesh.Mesh` with its
 per-instance attribute pack. `__post_init__` computes
 `bounding_box_all` — the union AABB after applying every instance's
 transform to the base mesh's corners. `instance_count` is proxied
@@ -114,7 +114,7 @@ Both raise `TypeError` when the argument is not an :class:`InstanceData`.
 
 ### `render_instanced(renderer, instanced_mesh, material, camera=None) -> None`
 
-_defined in `slappyengine.render.instanced`_
+_defined in `pharos_engine.render.instanced`_
 
 Submit `instanced_mesh` as a single draw call carrying `instance_count`
 in the payload. On the NullRenderer path this appends the entry to
@@ -133,7 +133,7 @@ Alias for :func:`render_instanced` with a Renderer-method-like name.
 
 ### `INSTANCED_MESH_WGSL`
 
-_str — defined in `slappyengine.render.instanced`_
+_str — defined in `pharos_engine.render.instanced`_
 
 Full vertex + fragment WGSL that reads a base-mesh vertex stream once
 and looks up `@builtin(instance_index)`-indexed per-instance data from
@@ -145,9 +145,9 @@ passes.
 
 ```python
 import numpy as np
-from slappyengine.render.instanced import grid, render_instanced
-from slappyengine.render.mesh import Mesh
-from slappyengine.render.null_renderer import NullRenderer
+from pharos_engine.render.instanced import grid, render_instanced
+from pharos_engine.render.mesh import Mesh
+from pharos_engine.render.null_renderer import NullRenderer
 
 # 8x8 grid of unit cubes, 2.0 units apart.
 mesh = Mesh.cube()                # any (V, N, I)-shaped Mesh
@@ -165,8 +165,8 @@ assert call.payload["instanced"] is True
 
 ## Skip the wrapper
 
-`slappyengine.render.instanced` is Python-only. Grep of
-`slappyengine._core_facade.RUST_MODULE_MAP` shows **no** `instanced`
+`pharos_engine.render.instanced` is Python-only. Grep of
+`pharos_engine._core_facade.RUST_MODULE_MAP` shows **no** `instanced`
 entry — the packing helpers already output contiguous float32 blocks
 `numpy` builds at C-speed, and the dispatch cost is one Python append.
 If a future GPU submission path lands, the `pack_instance_ssbo` byte

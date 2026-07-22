@@ -11,13 +11,13 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.serialize import SaveGame, from_dict, load, save, to_dict
+from pharos_engine.serialize import SaveGame, from_dict, load, save, to_dict
 
 
 # ── HeatField ──────────────────────────────────────────────────────────────
 
 def test_heatfield_dict_round_trip() -> None:
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
     grid = np.linspace(0.0, 100.0, 64, dtype=np.float64).reshape(8, 8)
     hf = HeatField(grid.copy(), conductivity=0.5, diffusivity=0.2)
     d = to_dict(hf)
@@ -28,7 +28,7 @@ def test_heatfield_dict_round_trip() -> None:
 
 
 def test_heatfield_yaml_save_load(tmp_path: Path) -> None:
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
     grid = np.eye(4, dtype=np.float64) * 50.0
     hf = HeatField(grid.copy())
     p = tmp_path / "hf.yml"
@@ -40,7 +40,7 @@ def test_heatfield_yaml_save_load(tmp_path: Path) -> None:
 # ── Zones ──────────────────────────────────────────────────────────────────
 
 def test_rectzone_round_trip() -> None:
-    from slappyengine.zones import RectZone
+    from pharos_engine.zones import RectZone
     z = RectZone(name="safe", x=1.0, y=2.0, w=3.0, h=4.0, material="steel")
     d = to_dict(z)
     z2 = from_dict(d)
@@ -50,7 +50,7 @@ def test_rectzone_round_trip() -> None:
 
 
 def test_thresholdzone_round_trip() -> None:
-    from slappyengine.zones import ThresholdZone
+    from pharos_engine.zones import ThresholdZone
     z = ThresholdZone(
         name="trigger", x=0, y=0, w=2, h=2,
         threshold=0.5, hysteresis=0.1, strength_scale=2.0,
@@ -63,7 +63,7 @@ def test_thresholdzone_round_trip() -> None:
 
 
 def test_zonemanager_round_trip(tmp_path: Path) -> None:
-    from slappyengine.zones import RectZone, ZoneManager
+    from pharos_engine.zones import RectZone, ZoneManager
     zm = ZoneManager()
     zm.add(RectZone(name="a", x=0, y=0, w=1, h=1))
     zm.add(RectZone(name="b", x=5, y=5, w=2, h=2))
@@ -76,7 +76,7 @@ def test_zonemanager_round_trip(tmp_path: Path) -> None:
 # ── iso.combat ─────────────────────────────────────────────────────────────
 
 def test_wavespec_round_trip() -> None:
-    from slappyengine.iso.combat import WaveSpec
+    from pharos_engine.iso.combat import WaveSpec
     ws = WaveSpec(
         count=4, spawn_points=[(0, 5), (10, 5)],
         hp_each=40, interval=1.0, delay=0.5,
@@ -89,7 +89,7 @@ def test_wavespec_round_trip() -> None:
 
 
 def test_attacker_defender_round_trip() -> None:
-    from slappyengine.iso.combat import Attacker, Defender
+    from pharos_engine.iso.combat import Attacker, Defender
     a = Attacker(pos=(3.0, 4.0), damage=5.0, reach=2.0, team="red")
     d_a = to_dict(a)
     a2 = from_dict(d_a)
@@ -105,7 +105,7 @@ def test_attacker_defender_round_trip() -> None:
 
 
 def test_waveschedule_round_trip(tmp_path: Path) -> None:
-    from slappyengine.iso.combat import WaveSchedule, WaveSpec
+    from pharos_engine.iso.combat import WaveSchedule, WaveSpec
     ws = WaveSpec(count=2, spawn_points=[(0, 0)], hp_each=10, interval=1.0)
     sched = WaveSchedule([ws])
     p = tmp_path / "sched.yml"
@@ -119,7 +119,7 @@ def test_waveschedule_round_trip(tmp_path: Path) -> None:
 # ── Telemetry ──────────────────────────────────────────────────────────────
 
 def test_telemetry_history_round_trip(tmp_path: Path) -> None:
-    from slappyengine import telemetry
+    from pharos_engine import telemetry
     telemetry.clear_history()
     telemetry.emit("physics.step", frame=1, dt=0.016)
     telemetry.emit("combat.hit", damage=5.0)
@@ -136,9 +136,9 @@ def test_telemetry_history_round_trip(tmp_path: Path) -> None:
 # ── SaveGame envelope ──────────────────────────────────────────────────────
 
 def test_savegame_round_trip_yml(tmp_path: Path) -> None:
-    from slappyengine.dynamics import World, RopeSpec, build_rope
-    from slappyengine.thermal import HeatField
-    from slappyengine.zones import RectZone, ZoneManager
+    from pharos_engine.dynamics import World, RopeSpec, build_rope
+    from pharos_engine.thermal import HeatField
+    from pharos_engine.zones import RectZone, ZoneManager
 
     world = World(gravity=(0.0, -9.81))
     build_rope(

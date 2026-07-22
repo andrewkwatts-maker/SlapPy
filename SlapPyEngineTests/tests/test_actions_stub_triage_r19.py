@@ -17,7 +17,7 @@ batch):
 * ``snap.toggle_incremental`` — toggle incremental vs freeform snap
   mode.
 
-Every test dispatches through :class:`~slappyengine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
 so the wire-up is exercised end-to-end. No DPG context — fixtures use
 :class:`SimpleNamespace` stand-ins for shell / scene / entity handles.
 """
@@ -27,7 +27,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from slappyengine.tool_router import (
+from pharos_engine.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,

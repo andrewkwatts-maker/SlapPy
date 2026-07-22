@@ -15,7 +15,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "python"))
 
-from slappyengine.input.action_map import ActionMap  # noqa: E402
+from pharos_engine.input.action_map import ActionMap  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

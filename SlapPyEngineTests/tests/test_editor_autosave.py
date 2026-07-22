@@ -1,4 +1,4 @@
-"""Tripwire suite for ``slappyengine.ui.editor.editor_autosave`` — sprint Z6.
+"""Tripwire suite for ``pharos_engine.ui.editor.editor_autosave`` — sprint Z6.
 
 Covers :class:`EditorAutosaveIntegration` end-to-end:
 
@@ -15,7 +15,7 @@ Covers :class:`EditorAutosaveIntegration` end-to-end:
 * :func:`default_restore_handler` writes attributes back onto the shell.
 
 All tests use ``tmp_path`` for snapshot dirs so nothing touches
-``~/.slappyengine/``. Fast (~0.02 s) autosave intervals plus tight
+``~/.pharos_engine/``. Fast (~0.02 s) autosave intervals plus tight
 sleeps keep the whole suite under ~2 s.
 """
 from __future__ import annotations
@@ -26,13 +26,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from slappyengine.autosave import (
+from pharos_engine.autosave import (
     AutosaveManager,
     AutosaveState,
     RecoveryChoice,
     RecoveryOffer,
 )
-from slappyengine.ui.editor.editor_autosave import (
+from pharos_engine.ui.editor.editor_autosave import (
     EditorAutosaveIntegration,
     default_dirty_state_provider,
     default_restore_handler,
@@ -537,7 +537,7 @@ def test_project_defaults_to_anonymous_when_none(tmp_path):
 
 
 def test_integration_exports_expected_symbols():
-    from slappyengine.ui.editor import editor_autosave as mod
+    from pharos_engine.ui.editor import editor_autosave as mod
     for sym in ("EditorAutosaveIntegration",
                 "default_dirty_state_provider",
                 "default_restore_handler"):

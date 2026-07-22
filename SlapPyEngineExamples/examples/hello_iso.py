@@ -1,15 +1,15 @@
 """SlapPyEngine — Hello Iso
 
-Minimal demo of :mod:`slappyengine.iso` + :mod:`slappyengine.iso.combat`.
+Minimal demo of :mod:`pharos_engine.iso` + :mod:`pharos_engine.iso.combat`.
 
 Builds a small 10x10 isometric arena occupied by two stationary defender
 towers placed at iso grid coordinates ``(5, 3)`` and ``(5, 7)``. A single
-:class:`~slappyengine.iso.combat.WaveSchedule` carrying one
-:class:`~slappyengine.iso.combat.WaveSpec` of four attackers is then
+:class:`~pharos_engine.iso.combat.WaveSchedule` carrying one
+:class:`~pharos_engine.iso.combat.WaveSpec` of four attackers is then
 ticked over 360 frames at ``dt = 1/30`` (12 sim seconds). Attackers spawn
 from the arena edges at ``(0, 5)`` and ``(9, 5)`` (round-robin), home in
 on the nearest defender at 2.5 grid-units/second, and once inside their
-reach call :func:`~slappyengine.iso.combat.resolve_attack` to chip away
+reach call :func:`~pharos_engine.iso.combat.resolve_attack` to chip away
 at the defender's hp. The defenders themselves return fire each frame an
 attacker is within their reach.
 
@@ -42,8 +42,8 @@ from typing import List, Tuple
 
 import numpy as np
 
-from slappyengine.iso import IsoGrid, IsoTileDef
-from slappyengine.iso.combat import (
+from pharos_engine.iso import IsoGrid, IsoTileDef
+from pharos_engine.iso.combat import (
     Attacker,
     Defender,
     WaveSchedule,

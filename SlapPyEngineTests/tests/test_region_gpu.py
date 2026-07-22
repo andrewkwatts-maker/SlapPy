@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.physics.region_gpu import (
+from pharos_engine.physics.region_gpu import (
     ACTIVE,
     DORMANT,
     STATIC,

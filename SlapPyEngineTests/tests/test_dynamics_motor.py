@@ -6,7 +6,7 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import World, make_motor
+from pharos_engine.dynamics import World, make_motor
 
 
 def test_motor_spins_rim_at_target_omega():

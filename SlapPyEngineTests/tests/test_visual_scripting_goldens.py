@@ -1,4 +1,4 @@
-"""Golden-file round-trip suite for :mod:`slappyengine.visual_scripting`.
+"""Golden-file round-trip suite for :mod:`pharos_engine.visual_scripting`.
 
 Ten hand-authored source/YAML/output triples live under
 ``SlapPyEngineTests/goldens/visual_scripting/<name>/``. Each case
@@ -24,7 +24,7 @@ codegen change, run::
     PYTHONPATH=python python tools/bake_visual_scripting_goldens.py
 
 ...which walks its own CASES table and writes each triple via
-:func:`slappyengine.visual_scripting.golden_utils.canonical_graph_yaml`.
+:func:`pharos_engine.visual_scripting.golden_utils.canonical_graph_yaml`.
 Inspect the diff (``git diff SlapPyEngineTests/goldens/visual_scripting``)
 and commit it together with the codegen change.
 
@@ -42,11 +42,11 @@ from __future__ import annotations
 
 import pytest
 
-from slappyengine.visual_scripting.codegen import (
+from pharos_engine.visual_scripting.codegen import (
     graph_to_python,
     python_to_graph,
 )
-from slappyengine.visual_scripting.golden_utils import (
+from pharos_engine.visual_scripting.golden_utils import (
     canonical_graph_yaml,
     canonicalize_python,
     load_golden,

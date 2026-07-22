@@ -1,8 +1,8 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.ui.editor — API Reference
+# pharos_engine.ui.editor — API Reference
 
 > Hand-written reference for the optional Dear PyGui editor shell
-> (``pip install slappy-engine[editor]``).
+> (``pip install pharos-engine[editor]``).
 > Covers the dataclass-reflection inspector, the spawn-menu factory
 > registry, the multi-kind material editor, the scene outliner, and
 > the top-level shell that wires them together. For the underlying
@@ -28,7 +28,7 @@ the rationale behind the swap.
 
 The subpackage is **lazy-loaded** and **fully optional**. Every
 `dearpygui` import is deferred to runtime so the rest of
-`slappyengine` (the engine, the studio API, the rebuild physics
+`pharos_engine` (the engine, the studio API, the rebuild physics
 stack) imports cleanly without the `[editor]` extra installed; a
 missing dearpygui surfaces as an `ImportError` only when
 `EditorShell.setup()` is actually called.
@@ -81,7 +81,7 @@ Phase A surfaces:
 
 ### `PropertyInspector`
 
-_class — defined in `slappyengine.ui.editor.property_inspector`_
+_class — defined in `pharos_engine.ui.editor.property_inspector`_
 
 Auto-generates DPG widgets for every primitive field of an arbitrary
 Python object. The **single source of truth** for object reflection
@@ -119,7 +119,7 @@ headers, in this order:
    length 2/3/4, list[str], list[int]).
 3. **References** _(default-collapsed)_ — fields that
    `_is_engine_object()` flags as complex (instances from
-   `slappyengine.*` modules that are not dataclasses, or lists
+   `pharos_engine.*` modules that are not dataclasses, or lists
    containing non-primitive items). Rendered as
    `<name>: TypeName [?]` with a popup button that opens a modal
    with the full `repr()`.
@@ -162,7 +162,7 @@ crashing the editor.
 
 ### `SpawnMenu` (module)
 
-_module — defined in `slappyengine.ui.editor.spawn_menu`_
+_module — defined in `pharos_engine.ui.editor.spawn_menu`_
 
 The `+ Add` action table. Not a class — the module exposes a list of
 action dicts plus an `open_spawn_modal` callable that the
@@ -175,8 +175,8 @@ _list[dict]_ — nine entries, one per spawnable body kind:
 - **Sprint 1 originals** (softbody + fluid):
   `Add SoftBody Lattice`, `Add Layered Creature`, `Add Vehicle`,
   `Add Fluid Pool`, `Add Sand Pile`. Each entry resolves a factory
-  in `slappyengine.softbody.body_builders` /
-  `slappyengine.softbody.vehicle` / `slappyengine.fluid.world` at
+  in `pharos_engine.softbody.body_builders` /
+  `pharos_engine.softbody.vehicle` / `pharos_engine.fluid.world` at
   **click time** so missing softbody / fluid backends do not break
   editor import.
 
@@ -190,7 +190,7 @@ _list[dict]_ — nine entries, one per spawnable body kind:
 
 - **Sprint 6 humanoid action**: `Add Humanoid` invokes
   `_spawn_humanoid`, which builds a 15-node humanoid skeleton via
-  `slappyengine.dynamics.humanoid.make_humanoid` (pelvis + neck +
+  `pharos_engine.dynamics.humanoid.make_humanoid` (pelvis + neck +
   head + 2×[shoulder, elbow, wrist] + 2×[hip, knee, ankle]). The
   adapter mirrors `make_humanoid`'s keyword arguments as primitive
   fields on `HumanoidSpawnSpec` so PropertyInspector reflection
@@ -224,18 +224,18 @@ constructing the real `IKChainSpec`.
 
 - `_resolve_factory(dotted: str) -> Callable` — `importlib`-based
   factory resolution. Tries the dotted path verbatim first, then
-  falls back to `slappyengine.<dotted>` for legacy entries.
+  falls back to `pharos_engine.<dotted>` for legacy entries.
 
 ### `MaterialEditor`
 
-_class — defined in `slappyengine.ui.editor.material_editor`_
+_class — defined in `pharos_engine.ui.editor.material_editor`_
 
 Visual material editor with a Sprint 2F `kind=` discriminator that
 lets one panel handle three target shapes:
 
 | `kind` constant | Target | Renderer |
 |---|---|---|
-| `KIND_MATERIAL_MAP` | `slappyengine.material.map.MaterialMap` | Legacy per-`MaterialDef` collapsing header with R/G/B drag-int sliders, alpha-meaning combo, behaviors text field, delete button, + `Add Material` button. |
+| `KIND_MATERIAL_MAP` | `pharos_engine.material.map.MaterialMap` | Legacy per-`MaterialDef` collapsing header with R/G/B drag-int sliders, alpha-meaning combo, behaviors text field, delete button, + `Add Material` button. |
 | `KIND_SOFTBODY` | `softbody.Material` dataclass | `PropertyInspector` reflection. |
 | `KIND_FLUID` | `fluid.FluidMaterial` dataclass | `PropertyInspector` reflection. |
 
@@ -244,8 +244,8 @@ lets one panel handle three target shapes:
 `_detect_kind(target)` decides automatically (most-specific first):
 
 1. Object exposes `_materials: list` → `material_map`.
-2. Type module starts with `slappyengine.fluid` → `fluid`.
-3. Type module starts with `slappyengine.softbody` → `softbody`.
+2. Type module starts with `pharos_engine.fluid` → `fluid`.
+3. Type module starts with `pharos_engine.softbody` → `softbody`.
 4. Any other dataclass → falls back to `softbody` so it still gets
    rendered through the dataclass-reflection path.
 5. Anything else → `material_map` (the legacy default).
@@ -275,7 +275,7 @@ panel; nothing to add).
 
 ### `SceneOutliner`
 
-_class — defined in `slappyengine.ui.editor.scene_outliner`_
+_class — defined in `pharos_engine.ui.editor.scene_outliner`_
 
 Scene entity hierarchy panel with per-row visibility / lock /
 selection controls, plus the **host for the `+ Add` spawn-menu
@@ -303,7 +303,7 @@ follow the outliner.
 #### Spawn-menu wiring
 
 The `+ Add` button has a popup attached (`mousebutton=0`) populated
-from `slappyengine.ui.editor.spawn_menu.SPAWN_ACTIONS`. Each menu
+from `pharos_engine.ui.editor.spawn_menu.SPAWN_ACTIONS`. Each menu
 item binds the action at default-arg time so the closure does not
 capture the loop variable, then calls
 `open_spawn_modal(action, self._scene)`. Missing spawn module is
@@ -312,7 +312,7 @@ just hides the popup rather than breaking the outliner.
 
 ### `EditorShell`
 
-_class — defined in `slappyengine.ui.editor.shell`_
+_class — defined in `pharos_engine.ui.editor.shell`_
 
 Top-level Dear PyGui shell that orchestrates every panel under a
 single primary window.
@@ -375,10 +375,10 @@ before the 3D panels have been built.
 
 The shell applies the active diary-family theme through
 ``setup_theme_subsystem`` (which calls
-``slappyengine.ui.theme.apply_theme``) — the notebook theme registry
+``pharos_engine.ui.theme.apply_theme``) — the notebook theme registry
 owns the entire editor look. The Nova3D ``apply_editor_theme`` /
 ``apply_dwm_glass`` / ``get_viewport_opaque_theme`` helpers in
-``slappyengine.ui.editor.theme`` are **reference only** and are not
+``pharos_engine.ui.editor.theme`` are **reference only** and are not
 invoked by ``setup()``.
 
 ## Inner modules
@@ -402,8 +402,8 @@ invoked by ``setup()``.
 ## Conventions
 
 - **Lazy import.** `__init__.py` resolves names through a `_LAZY_MAP`
-  + `__getattr__` so `import slappyengine.ui` (or
-  `import slappyengine.ui.editor`) never imports `dearpygui` until a
+  + `__getattr__` so `import pharos_engine.ui` (or
+  `import pharos_engine.ui.editor`) never imports `dearpygui` until a
   concrete class is referenced.
 - **Optional extra.** Every dearpygui import is **deferred to method
   bodies**. A missing dearpygui surfaces as `ImportError` only at

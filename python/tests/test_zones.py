@@ -1,4 +1,4 @@
-"""Tests for slappyengine.zones — generic rectangular zones with integrity probes."""
+"""Tests for pharos_engine.zones — generic rectangular zones with integrity probes."""
 from __future__ import annotations
 
 import warnings
@@ -6,8 +6,8 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.event_bus import global_bus, subscribe, unsubscribe
-from slappyengine.zones import (
+from pharos_engine.event_bus import global_bus, subscribe, unsubscribe
+from pharos_engine.zones import (
     Zone,
     ZoneManager,
     alpha_image_probe,
@@ -130,7 +130,7 @@ def test_alpha_probe_with_mask():
 
 
 def test_softbody_beam_probe_intact_body_is_full_integrity():
-    from slappyengine.softbody import SoftBodyWorld, make_lattice_body
+    from pharos_engine.softbody import SoftBodyWorld, make_lattice_body
     w = SoftBodyWorld()
     meta = make_lattice_body(w, "steel", width_cells=4, height_cells=4,
                              cell_size=0.1, position=(0.0, 0.0))
@@ -142,7 +142,7 @@ def test_softbody_beam_probe_intact_body_is_full_integrity():
 
 
 def test_softbody_beam_probe_breaks_drop_integrity():
-    from slappyengine.softbody import SoftBodyWorld, make_lattice_body
+    from pharos_engine.softbody import SoftBodyWorld, make_lattice_body
     w = SoftBodyWorld()
     meta = make_lattice_body(w, "steel", width_cells=4, height_cells=4,
                              cell_size=0.1, position=(0.0, 0.0))
@@ -162,7 +162,7 @@ def test_softbody_beam_probe_breaks_drop_integrity():
 
 
 def test_fluid_density_probe_empty_zone_is_dry():
-    from slappyengine.fluid import FluidWorld
+    from pharos_engine.fluid import FluidWorld
     fw = FluidWorld()
     mgr = ZoneManager()
     mgr.add_rect("dry", x=0, y=0, w=2, h=2, threshold=0.5)
@@ -171,7 +171,7 @@ def test_fluid_density_probe_empty_zone_is_dry():
 
 
 def test_fluid_density_probe_wet_zone_drops_integrity():
-    from slappyengine.fluid import FluidWorld
+    from pharos_engine.fluid import FluidWorld
     fw = FluidWorld()
     fw.add_block_of_particles(
         "water", nx=8, ny=8, spacing=0.05,

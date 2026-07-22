@@ -4,7 +4,7 @@
 
 ```
 SlapPyEngine/
-├── python/slappyengine/          # Python package source
+├── python/pharos_engine/          # Python package source
 │   └── compute/defaults/         # Default WGSL compute shaders
 ├── src/                          # Rust extension source (_core crate)
 ├── shaders/                      # WGSL shader templates
@@ -17,9 +17,9 @@ SlapPyEngine/
 
 ## Key Conventions
 
-- **No magic numbers in Python.** All default numeric values live in `config/*.yml` and are loaded at runtime via `slappyengine.config`. Never hardcode them in Python source.
-- **Shaders** live in two places: `shaders/*.wgsl` (reusable templates) and `python/slappyengine/compute/defaults/*.wgsl` (default pipeline shaders).
-- **Rust extension** (`src/`) is compiled into `slappyengine._core` via PyO3/maturin. Python code imports from there for performance-critical paths.
+- **No magic numbers in Python.** All default numeric values live in `config/*.yml` and are loaded at runtime via `pharos_engine.config`. Never hardcode them in Python source.
+- **Shaders** live in two places: `shaders/*.wgsl` (reusable templates) and `python/pharos_engine/compute/defaults/*.wgsl` (default pipeline shaders).
+- **Rust extension** (`src/`) is compiled into `pharos_engine._core` via PyO3/maturin. Python code imports from there for performance-critical paths.
 
 ## Build
 
@@ -55,7 +55,7 @@ pytest tests/
 ## Config Loading Pattern
 
 ```python
-from slappyengine.config import load_engine_config, load_materials_config
+from pharos_engine.config import load_engine_config, load_materials_config
 
 cfg = load_engine_config()          # reads config/engine.yml
 materials = load_materials_config() # reads config/materials.yml

@@ -45,7 +45,7 @@ future contributor doesn't accidentally extend them.
 The 24 `_*_validation.py` modules total 2002 LOC. The three smallest
 (`zones/_validation.py` 19 LOC, `telemetry/_validation.py` 23 LOC,
 `iso/_validation.py` 24 LOC) are already pure re-exports of
-`slappyengine._validation` with a module docstring + `__all__`. Collapsing
+`pharos_engine._validation` with a module docstring + `__all__`. Collapsing
 them to 1-line redirects would break the public re-export surface (each is
 imported by `<subsystem>/__init__.py` for the names it lists in `__all__`).
 The remaining 21 carry domain-specific validators (e.g. `validate_omega` in
@@ -92,8 +92,8 @@ tested green.
 Added `Legacy Nova3D reference. The shipping editor uses notebook_*
 siblings — see docs/ui_pattern_audit_2026_06_03.md.` headers to:
 
-* `python/slappyengine/ui/editor/material_editor.py`
-* `python/slappyengine/ui/editor/spawn_menu.py`
+* `python/pharos_engine/ui/editor/material_editor.py`
+* `python/pharos_engine/ui/editor/spawn_menu.py`
 
 The other six candidates already carried the banner from previous sweeps.
 
@@ -103,7 +103,7 @@ Extracted the 10 inline SVG portrait constants + the 500-byte budget
 guard into a sibling module so the menu module focuses on
 dispatch + lifecycle:
 
-* New: `python/slappyengine/ui/editor/notebook_spawn_menu_svgs.py` (146 LOC)
+* New: `python/pharos_engine/ui/editor/notebook_spawn_menu_svgs.py` (146 LOC)
 * `notebook_spawn_menu.py`: 951 → 844 LOC (−107)
 
 The 10 portraits are re-imported with their original names so every
@@ -126,7 +126,7 @@ Extracted:
 into a sibling module exposing an `InspectorDispatchMixin` that
 `NotebookInspector` now inherits:
 
-* New: `python/slappyengine/ui/editor/notebook_inspector_dispatch.py` (421 LOC)
+* New: `python/pharos_engine/ui/editor/notebook_inspector_dispatch.py` (421 LOC)
 * `notebook_inspector.py`: 959 → 624 LOC (−335)
 
 The mixin attribute contract is documented at the top of the dispatch
@@ -175,12 +175,12 @@ ticket since the directive forbids a test pass-count drop.
 ## Files touched
 
 ```
-M python/slappyengine/ui/editor/notebook_inspector.py            (-335)
-M python/slappyengine/ui/editor/notebook_spawn_menu.py           (-107)
-M python/slappyengine/ui/editor/material_editor.py               (+8 banner)
-M python/slappyengine/ui/editor/spawn_menu.py                    (+7 banner)
-A python/slappyengine/ui/editor/notebook_inspector_dispatch.py   (+421)
-A python/slappyengine/ui/editor/notebook_spawn_menu_svgs.py      (+146)
+M python/pharos_engine/ui/editor/notebook_inspector.py            (-335)
+M python/pharos_engine/ui/editor/notebook_spawn_menu.py           (-107)
+M python/pharos_engine/ui/editor/material_editor.py               (+8 banner)
+M python/pharos_engine/ui/editor/spawn_menu.py                    (+7 banner)
+A python/pharos_engine/ui/editor/notebook_inspector_dispatch.py   (+421)
+A python/pharos_engine/ui/editor/notebook_spawn_menu_svgs.py      (+146)
 A docs/consolidation_2026_06_07.md                               (this)
 ```
 

@@ -1,7 +1,7 @@
 """Subpackage ``__all__`` conformance tripwire.
 
 After two weeks of agents adding exports incrementally, every
-``python/slappyengine/<subpkg>/__init__.py`` should:
+``python/pharos_engine/<subpkg>/__init__.py`` should:
 
 * declare a non-empty ``__all__`` (unless the file is an empty marker —
   ``assets``, ``build``, ``tools``, ``tests`` are intentionally empty);
@@ -30,45 +30,45 @@ import pytest
 
 
 # Subpackages with a non-empty ``__all__``. Each is a top-level package
-# under ``slappyengine.*`` (or, for ``ui.editor`` / ``ui.widgets``, a
+# under ``pharos_engine.*`` (or, for ``ui.editor`` / ``ui.widgets``, a
 # documented nested subpackage). Empty marker packages (``assets``,
 # ``build``, ``tests``, ``tools``) are listed separately below.
 _SUBPACKAGES_WITH_ALL: tuple[str, ...] = (
-    "slappyengine.ai",
-    "slappyengine.animation",
-    "slappyengine.compute",
-    "slappyengine.dynamics",
-    "slappyengine.ext",
-    "slappyengine.gi",
-    "slappyengine.gpu",
-    "slappyengine.input",
-    "slappyengine.iso",
-    "slappyengine.material",
-    "slappyengine.modules",
-    "slappyengine.net",
-    "slappyengine.numerics",
-    "slappyengine.physics",
-    "slappyengine.post_process",
-    "slappyengine.residency",
-    "slappyengine.telemetry",
-    "slappyengine.testing",
-    "slappyengine.thermal",
-    "slappyengine.topology",
-    "slappyengine.ui",
-    "slappyengine.ui.editor",
-    "slappyengine.ui.widgets",
-    "slappyengine.zones",
+    "pharos_engine.ai",
+    "pharos_engine.animation",
+    "pharos_engine.compute",
+    "pharos_engine.dynamics",
+    "pharos_engine.ext",
+    "pharos_engine.gi",
+    "pharos_engine.gpu",
+    "pharos_engine.input",
+    "pharos_engine.iso",
+    "pharos_engine.material",
+    "pharos_engine.modules",
+    "pharos_engine.net",
+    "pharos_engine.numerics",
+    "pharos_engine.physics",
+    "pharos_engine.post_process",
+    "pharos_engine.residency",
+    "pharos_engine.telemetry",
+    "pharos_engine.testing",
+    "pharos_engine.thermal",
+    "pharos_engine.topology",
+    "pharos_engine.ui",
+    "pharos_engine.ui.editor",
+    "pharos_engine.ui.widgets",
+    "pharos_engine.zones",
 )
 
 
 # Empty marker packages — intentionally empty ``__init__.py`` files.
 # They exist to make the directory importable as a Python package
-# (``slappyengine.assets`` holds ``database.py``, ``slappyengine.tools``
+# (``pharos_engine.assets`` holds ``database.py``, ``pharos_engine.tools``
 # holds individual CLI helpers, etc.) without re-exporting anything.
 _EMPTY_MARKER_SUBPACKAGES: tuple[str, ...] = (
-    "slappyengine.assets",
-    "slappyengine.build",
-    "slappyengine.tools",
+    "pharos_engine.assets",
+    "pharos_engine.build",
+    "pharos_engine.tools",
 )
 
 
@@ -119,7 +119,7 @@ def test_all_names_resolve(pkg_name: str) -> None:
     This catches the common drift where a symbol is added to ``__all__``
     but the matching ``_LAZY_MAP`` entry is forgotten — or vice versa.
 
-    ``slappyengine.ext`` is a special case: its ``__all__`` enumerates
+    ``pharos_engine.ext`` is a special case: its ``__all__`` enumerates
     *submodules* (``ai``, ``lighting``, ...), not symbols. Submodules
     become attributes on the parent package only after they're imported.
     We give that single subpackage a one-shot import + retry rather than
@@ -191,12 +191,12 @@ def test_ext_shim_inherits_canonical_all() -> None:
     import paths expose an identical surface. This pins that identity.
     """
     pairs = (
-        ("slappyengine.ext.ai", "slappyengine.ai"),
-        ("slappyengine.ext.animation", "slappyengine.animation"),
-        ("slappyengine.ext.input", "slappyengine.input"),
-        ("slappyengine.ext.iso", "slappyengine.iso"),
-        ("slappyengine.ext.net", "slappyengine.net"),
-        ("slappyengine.ext.ui", "slappyengine.ui"),
+        ("pharos_engine.ext.ai", "pharos_engine.ai"),
+        ("pharos_engine.ext.animation", "pharos_engine.animation"),
+        ("pharos_engine.ext.input", "pharos_engine.input"),
+        ("pharos_engine.ext.iso", "pharos_engine.iso"),
+        ("pharos_engine.ext.net", "pharos_engine.net"),
+        ("pharos_engine.ext.ui", "pharos_engine.ui"),
     )
     for shim_name, canonical_name in pairs:
         shim = _import(shim_name)
@@ -209,13 +209,13 @@ def test_ext_shim_inherits_canonical_all() -> None:
 
 
 def test_top_level_all_resolves() -> None:
-    """Every name in ``slappyengine.__all__`` must be resolvable.
+    """Every name in ``pharos_engine.__all__`` must be resolvable.
 
     The top-level package uses PEP 562 ``__getattr__`` over a
     ``_LAZY_MAP`` so this is the strongest single-line check that no
     entry has been left dangling after the recent flurry of additions.
     """
-    pkg = _import("slappyengine")
+    pkg = _import("pharos_engine")
     missing: list[str] = []
     for name in pkg.__all__:
         try:
@@ -223,6 +223,6 @@ def test_top_level_all_resolves() -> None:
         except (AttributeError, ImportError) as exc:  # noqa: PERF203
             missing.append(f"{name} ({type(exc).__name__}: {exc})")
     assert not missing, (
-        "slappyengine.__all__ entries failed to resolve:\n  "
+        "pharos_engine.__all__ entries failed to resolve:\n  "
         + "\n  ".join(missing)
     )

@@ -4,7 +4,7 @@ The demo walks a humanoid skeleton wrapped in muscle + skin
 (``wrap_in_flesh``) across a flat floor using ``place_feet_on_terrain``
 IK, then writes a GIF to ``examples/output/humanoid/humanoid_walking.gif``.
 
-The demo imports from :mod:`slappyengine.softbody`, which is a WIP
+The demo imports from :mod:`pharos_engine.softbody`, which is a WIP
 subpackage. This test wakes up as soon as it lands — until then it
 skips with a clear reason so the gap remains visible in the test report.
 
@@ -34,16 +34,16 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP softbody / dynamics subpackages being unavailable.
     try:
-        from slappyengine.dynamics import (  # noqa: F401
+        from pharos_engine.dynamics import (  # noqa: F401
             make_humanoid,
             place_feet_on_terrain,
             wrap_in_flesh,
         )
-        from slappyengine.softbody import (  # noqa: F401
+        from pharos_engine.softbody import (  # noqa: F401
             SoftBodyRenderConfig,
             SoftBodyRenderer,
         )
-        from slappyengine.studio import (  # noqa: F401
+        from pharos_engine.studio import (  # noqa: F401
             Stage,
             humanoid_stage,
             output_path,
@@ -51,7 +51,7 @@ def demo():
         )
     except Exception as exc:
         pytest.skip(
-            "slappyengine.softbody / dynamics / studio unavailable (WIP): "
+            "pharos_engine.softbody / dynamics / studio unavailable (WIP): "
             f"{exc}"
         )
 

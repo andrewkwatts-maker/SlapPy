@@ -1,4 +1,4 @@
-"""Tests for slappyengine.scaffold + slap {new,launch,dev,config} CLI.
+"""Tests for pharos_engine.scaffold + slap {new,launch,dev,config} CLI.
 
 These tests deliberately avoid importing the heavy engine subsystems — the
 scaffolder is a pure-Python module whose only runtime dep is ``pyyaml``.
@@ -14,8 +14,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from slappyengine import scaffold
-from slappyengine.scaffold import (
+from pharos_engine import scaffold
+from pharos_engine.scaffold import (
     DEFAULT_APP_CONFIG,
     PROJECT_MARKER,
     PROJECT_TEMPLATE,
@@ -198,7 +198,7 @@ def test_editor_launchers_have_install_hint(tmp_path):
     project = create_project("demo", tmp_path)
     for name in ("launch_editor.bat", "launch_editor.ps1", "launch_editor.sh"):
         text = (project / name).read_text()
-        assert "slappy-engine[editor]" in text
+        assert "pharos-engine[editor]" in text
 
 
 def test_launch_scripts_are_executable_on_posix(tmp_path):
@@ -321,7 +321,7 @@ def test_launch_project_dry_run_with_editor_flag(tmp_path):
             launch_project(project, editor=True, dry_run=True)
     else:
         cmd = launch_project(project, editor=True, dry_run=True)
-        assert "slappyengine.ui.editor" in cmd
+        assert "pharos_engine.ui.editor" in cmd
 
 
 def test_launch_project_rejects_non_project(tmp_path):
@@ -382,9 +382,9 @@ def test_regenerate_config_reset_discards_user_values(tmp_path):
 
 
 def _run_cli(*args, cwd=None) -> subprocess.CompletedProcess:
-    """Invoke ``python -m slappyengine.cli`` — avoids relying on entry points."""
+    """Invoke ``python -m pharos_engine.cli`` — avoids relying on entry points."""
     return subprocess.run(
-        [sys.executable, "-m", "slappyengine.cli", *args],
+        [sys.executable, "-m", "pharos_engine.cli", *args],
         cwd=str(cwd) if cwd else None,
         capture_output=True,
         text=True,

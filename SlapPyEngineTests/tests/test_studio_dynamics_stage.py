@@ -1,4 +1,4 @@
-"""Regression coverage for :func:`slappyengine.studio.dynamics_stage`."""
+"""Regression coverage for :func:`pharos_engine.studio.dynamics_stage`."""
 from __future__ import annotations
 
 import importlib.util
@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine import studio
-from slappyengine.dynamics import RopeSpec, World, build_rope
+from pharos_engine import studio
+from pharos_engine.dynamics import RopeSpec, World, build_rope
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]

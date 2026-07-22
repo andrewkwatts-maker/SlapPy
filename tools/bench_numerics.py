@@ -1,4 +1,4 @@
-"""Bench :func:`slappyengine.numerics.vcycle_poisson` under realistic load.
+"""Bench :func:`pharos_engine.numerics.vcycle_poisson` under realistic load.
 
 Scenarios (grid, n_cycles, iters_per_level):
 
@@ -34,7 +34,7 @@ _PY_SRC = _REPO_ROOT / "python"
 if str(_PY_SRC) not in sys.path:
     sys.path.insert(0, str(_PY_SRC))
 
-from slappyengine.numerics import vcycle_poisson  # noqa: E402
+from pharos_engine.numerics import vcycle_poisson  # noqa: E402
 
 
 REPEATS = 30

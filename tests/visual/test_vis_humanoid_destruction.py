@@ -16,8 +16,8 @@ from __future__ import annotations
 import numpy as np
 from PIL import Image
 
-from slappyengine.dynamics import make_humanoid, wrap_in_flesh
-from slappyengine.softbody import (
+from pharos_engine.dynamics import make_humanoid, wrap_in_flesh
+from pharos_engine.softbody import (
     SoftBodyRenderConfig, SoftBodyRenderer, SoftBodyWorld, step,
 )
 

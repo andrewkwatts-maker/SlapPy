@@ -1,4 +1,4 @@
-"""Tests for the ``slappyengine.ui.theme`` PRIMITIVE infrastructure.
+"""Tests for the ``pharos_engine.ui.theme`` PRIMITIVE infrastructure.
 
 Coverage:
 
@@ -20,7 +20,7 @@ import numpy as np
 import pytest
 
 try:
-    from slappyengine.ui.theme import (
+    from pharos_engine.ui.theme import (
         Color,
         Font,
         Gradient,
@@ -48,11 +48,11 @@ try:
         ruled_paper,
         watercolor_wash,
     )
-    from slappyengine.ui.theme import _reset_registry_for_tests
-    from slappyengine.ui.theme.svg_icon import clear_cache as clear_svg_cache
+    from pharos_engine.ui.theme import _reset_registry_for_tests
+    from pharos_engine.ui.theme.svg_icon import clear_cache as clear_svg_cache
 except Exception as e:  # pragma: no cover - skip when extension absent
     pytest.skip(
-        f"slappyengine.ui.theme not importable: {e}", allow_module_level=True
+        f"pharos_engine.ui.theme not importable: {e}", allow_module_level=True
     )
 
 

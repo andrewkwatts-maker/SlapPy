@@ -5,7 +5,7 @@ full watery shader stack, emitting a side-by-side gif and per-frame perf
 log to ``examples/output/fluid/surface_overlay.gif`` /
 ``surface_overlay_perf.txt``.
 
-The demo imports from :mod:`slappyengine.fluid`, which is a WIP
+The demo imports from :mod:`pharos_engine.fluid`, which is a WIP
 subpackage. This test wakes up as soon as it lands — until then it
 skips with a clear reason so the gap remains visible in the test report.
 
@@ -35,16 +35,16 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP fluid subpackage being unavailable.
     try:
-        from slappyengine.fluid import (  # noqa: F401
+        from pharos_engine.fluid import (  # noqa: F401
             FluidRenderConfig,
             FluidRenderer,
             FluidWorld,
             pbf_step,
         )
-        from slappyengine.media import save_frames  # noqa: F401
+        from pharos_engine.media import save_frames  # noqa: F401
     except Exception as exc:
         pytest.skip(
-            "slappyengine.fluid / media unavailable (WIP): "
+            "pharos_engine.fluid / media unavailable (WIP): "
             f"{exc}"
         )
 

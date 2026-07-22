@@ -18,9 +18,9 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.post_process.auto_exposure import AutoExposurePass
-from slappyengine.post_process.chain import PostProcessChain
-from slappyengine.post_process.tonemap import TonemapPass
+from pharos_engine.post_process.auto_exposure import AutoExposurePass
+from pharos_engine.post_process.chain import PostProcessChain
+from pharos_engine.post_process.tonemap import TonemapPass
 
 
 # ---------------------------------------------------------------------------
@@ -234,7 +234,7 @@ def test_tonemap_pass_picks_up_derived_ev():
 def test_auto_ev_visual_baseline_smoke():
     """Drive auto_ev across a representative range; assert numerical stability.
 
-    The project does not currently expose ``slappyengine.testing.assert_scene_matches``
+    The project does not currently expose ``pharos_engine.testing.assert_scene_matches``
     (the visual-baseline harness lives in ``tests/visual/harness.py`` instead),
     so this acts as the CPU-only smoke / "scene matches expected EV envelope"
     proxy for the round-7 visual baseline.

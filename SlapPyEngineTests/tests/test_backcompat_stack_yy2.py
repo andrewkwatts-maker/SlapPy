@@ -51,14 +51,14 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def test_pixel_contact_result_depth_matches_contact_pixels():
-    from slappyengine.collision_pixel import PixelContactResult
+    from pharos_engine.collision_pixel import PixelContactResult
     r = PixelContactResult(hit=True, contact_pixels=42, normal=(1.0, 0.0))
     assert r.depth == 42
     assert r.depth == r.contact_pixels
 
 
 def test_pixel_contact_result_depth_zero_on_no_contact():
-    from slappyengine.collision_pixel import PixelContactResult
+    from pharos_engine.collision_pixel import PixelContactResult
     r = PixelContactResult(hit=False, contact_pixels=0, normal=(0.0, 0.0))
     assert r.depth == 0
 
@@ -68,15 +68,15 @@ def test_pixel_contact_result_depth_zero_on_no_contact():
 # ---------------------------------------------------------------------------
 
 def test_asset_cache_mode_defaults_to_offscreen_serialize():
-    from slappyengine.asset import Asset
-    from slappyengine.residency.manager import CacheMode
+    from pharos_engine.asset import Asset
+    from pharos_engine.residency.manager import CacheMode
     a = Asset(name="cache_default_test")
     assert a.cache_mode == CacheMode.OFFSCREEN_SERIALIZE
 
 
 def test_asset_cache_mode_assignable():
-    from slappyengine.asset import Asset
-    from slappyengine.residency.manager import CacheMode
+    from pharos_engine.asset import Asset
+    from pharos_engine.residency.manager import CacheMode
     a = Asset(name="cache_assign_test")
     a.cache_mode = CacheMode.ALWAYS_CACHED
     assert a.cache_mode == CacheMode.ALWAYS_CACHED
@@ -94,7 +94,7 @@ class _FakeLayer:
 
 
 def _make_deform(spring_decay: float = 0.94):
-    from slappyengine.components import DeformableLayerComponent
+    from pharos_engine.components import DeformableLayerComponent
     return DeformableLayerComponent(_FakeLayer(), spring_decay=spring_decay)
 
 
@@ -272,8 +272,8 @@ class _FakeCacheAsset:
 
 
 def _cache_test(monkeypatch, cache_mode, camera_pos):
-    from slappyengine.residency.manager import ResidencyManager
-    import slappyengine.asset as _asset_mod
+    from pharos_engine.residency.manager import ResidencyManager
+    import pharos_engine.asset as _asset_mod
     with tempfile.TemporaryDirectory() as td:
         mgr = ResidencyManager(save_dir=td)
         asset = _FakeCacheAsset(cache_mode, x=0.0, y=0.0)
@@ -284,14 +284,14 @@ def _cache_test(monkeypatch, cache_mode, camera_pos):
 
 
 def test_residency_always_cached_pins_to_gpu(monkeypatch):
-    from slappyengine.residency.manager import CacheMode, ResidencyManager
+    from pharos_engine.residency.manager import CacheMode, ResidencyManager
     mgr, asset = _cache_test(monkeypatch, CacheMode.ALWAYS_CACHED, (99999.0, 99999.0))
     assert mgr.tier(asset) == ResidencyManager.TIER_GPU
     assert asset.bake_paths == []
 
 
 def test_residency_user_driven_skips_auto_tier(monkeypatch):
-    from slappyengine.residency.manager import CacheMode, ResidencyManager
+    from pharos_engine.residency.manager import CacheMode, ResidencyManager
     mgr, asset = _cache_test(monkeypatch, CacheMode.USER_DRIVEN, (99999.0, 99999.0))
     # USER_DRIVEN never demotes automatically — starts at GPU, stays at GPU.
     assert mgr.tier(asset) == ResidencyManager.TIER_GPU
@@ -299,7 +299,7 @@ def test_residency_user_driven_skips_auto_tier(monkeypatch):
 
 
 def test_residency_offscreen_serialize_bakes_on_eviction(monkeypatch):
-    from slappyengine.residency.manager import CacheMode, ResidencyManager
+    from pharos_engine.residency.manager import CacheMode, ResidencyManager
     mgr, asset = _cache_test(monkeypatch, CacheMode.OFFSCREEN_SERIALIZE, (99999.0, 99999.0))
     assert mgr.tier(asset) == ResidencyManager.TIER_DISK
     assert any("_damage.slap" in p for p in asset.bake_paths)

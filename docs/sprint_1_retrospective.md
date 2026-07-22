@@ -19,11 +19,11 @@ The six commits, in landing order:
    `_kinetic_relax_legacy` for parity testing. Parity vs legacy: 7.63e-6
    max diff across 6 seeds × 3 densities.
 2. **`d337404` — Sprint 1: SpatialHash CPU reference for GPU-friendly neighbour queries.**
-   New `python/slappyengine/physics/spatial_hash.py` mirroring the layout of
+   New `python/pharos_engine/physics/spatial_hash.py` mirroring the layout of
    `shaders/particle_spatial_hash.wgsl` (cell_start / cell_count / sorted_ids).
    Rebuild benchmark: 0.42 ms at 10k particles, 5.43 ms at 100k. Linear scaling.
 3. **`12f9350` — Sprint 1: RegionGridGPU — int8/int32/bool grid + dirty bitmask for indirect dispatch.**
-   New `python/slappyengine/physics/region_gpu.py`. State (DORMANT/ACTIVE/STATIC),
+   New `python/pharos_engine/physics/region_gpu.py`. State (DORMANT/ACTIVE/STATIC),
    live_count, dirty bitmask packable to `uint32`. ~24 KB total at 4K×4K map,
    `cell_size=64`. 7 tests green. Coexists with existing `baked_terrain.RegionGrid`.
 4. **`d55ebab` — Sprint 1: CPU↔GPU parity test framework + first kernel test passing.**
@@ -33,7 +33,7 @@ The six commits, in landing order:
    tests skipped as placeholders for sprints 2-3.
 5. **`de17253` — Sprint 1: first GPU kernel — particle_integrate.wgsl + Python wrapper.**
    `shaders/particle_integrate.wgsl` (workgroup_size 64, six bindings) plus
-   `python/slappyengine/physics/particle_gpu.py` with `gpu_integrate(field, dt)`,
+   `python/pharos_engine/physics/particle_gpu.py` with `gpu_integrate(field, dt)`,
    `is_gpu_available()`, and a numpy fallback for headless / CI. New
    `ParticleField.use_gpu_integrate: bool = False` flag — opt-in, existing
    100 tests unchanged. Smoke results on real GPU: max |Δpos| = 5.34e-5,
@@ -126,7 +126,7 @@ heading.
 
 - **ChatGPT-style sync wgpu API was less ergonomic than expected.** The
   initial `gpu_integrate` draft used the raw wgpu submit/await idiom rather
-  than the engine's existing `slappyengine.compute.pipeline.ComputePipeline`
+  than the engine's existing `pharos_engine.compute.pipeline.ComputePipeline`
   wrapper. We rewrote to use the wrapper, but only after a chunk of
   boilerplate had been written and discarded. Future sprints should start
   from `ComputePipeline.dispatch()` and stay there.
@@ -239,7 +239,7 @@ Secondary risks (unchanged from the 7-sprint plan):
 - Read `docs/particle_field_gpu_buffers.md` §2 (per-pixel texture layout)
   and §4 (readback strategy) before scoping. These are load-bearing for
   collide_simple.
-- The `RegionGridGPU` (`python/slappyengine/physics/region_gpu.py`) has
+- The `RegionGridGPU` (`python/pharos_engine/physics/region_gpu.py`) has
   `record_live` ready for the `count_per_cell` integration. Don't
   reinvent it; extend it.
 - Make `use_gpu_collide` opt-in and default-off, same pattern as

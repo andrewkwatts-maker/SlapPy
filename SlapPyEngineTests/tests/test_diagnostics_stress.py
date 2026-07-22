@@ -1,4 +1,4 @@
-"""Stress tests for :mod:`slappyengine.diagnostics` (PP7 sprint).
+"""Stress tests for :mod:`pharos_engine.diagnostics` (PP7 sprint).
 
 Complements the OO6 landing test suite (``test_diagnostics.py``) which
 covers the *functional* contract of :class:`DiagnosticsCollector`. This
@@ -28,7 +28,7 @@ import threading
 
 import pytest
 
-from slappyengine.diagnostics import DiagnosticsCollector
+from pharos_engine.diagnostics import DiagnosticsCollector
 
 
 # ---------------------------------------------------------------------------
@@ -52,14 +52,14 @@ _SUBSYSTEMS: tuple[str, ...] = (
 
 
 def _logger_for(sub: str) -> logging.Logger:
-    """Return the ``slappyengine.<sub>`` logger."""
-    return logging.getLogger(f"slappyengine.{sub}")
+    """Return the ``pharos_engine.<sub>`` logger."""
+    return logging.getLogger(f"pharos_engine.{sub}")
 
 
 def _expected_subsystem_tag(sub: str) -> str:
     """Mirror the aggregator's ``_subsystem_from_logger_name`` grouping.
 
-    ``render.ssao`` -> ``render`` (first component past ``slappyengine.``).
+    ``render.ssao`` -> ``render`` (first component past ``pharos_engine.``).
     ``audio_3d``    -> ``audio_3d``.
     """
     return sub.split(".", 1)[0]
@@ -132,7 +132,7 @@ def test_diagnostics_ring_buffer_overflow():
     collector = DiagnosticsCollector(max_events=500, min_level="WARNING")
     collector.install()
     try:
-        log = logging.getLogger("slappyengine.render")
+        log = logging.getLogger("pharos_engine.render")
         for i in range(2000):
             log.warning("overflow-event %d", i)
 
@@ -175,7 +175,7 @@ def test_diagnostics_thread_safety():
 
     def _worker(worker_id: int) -> None:
         try:
-            log = logging.getLogger(f"slappyengine.worker_{worker_id}")
+            log = logging.getLogger(f"pharos_engine.worker_{worker_id}")
             for i in range(100):
                 log.warning("thread %d event %d", worker_id, i)
         except BaseException as exc:  # pragma: no cover - defensive
@@ -221,7 +221,7 @@ def test_diagnostics_install_uninstall_cycle():
     Final buffer count is 20; the 10 middle events are gone.
     """
     collector = DiagnosticsCollector(max_events=100, min_level="WARNING")
-    log = logging.getLogger("slappyengine.cycle_test")
+    log = logging.getLogger("pharos_engine.cycle_test")
 
     try:
         # Phase 1 — installed, 10 events captured.

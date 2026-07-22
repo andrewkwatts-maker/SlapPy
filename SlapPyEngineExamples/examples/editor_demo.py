@@ -1,4 +1,4 @@
-﻿"""
+"""
 Editor demo — opens the DPG editor shell with a sample scene.
 
 Requirements: pip install SlapPyEngine[editor]
@@ -26,12 +26,12 @@ except ImportError:
     print("Install with:  pip install SlapPyEngine[editor]")
     raise SystemExit(1)
 
-import slappyengine as se
-from slappyengine.asset import Asset
-from slappyengine.layer import Layer
-from slappyengine.material import MaterialMap, ColorRange
-from slappyengine.scene import Scene
-from slappyengine.animation.graph import AnimationGraph, AnimState, AnimTransition
+import pharos_engine as se
+from pharos_engine.asset import Asset
+from pharos_engine.layer import Layer
+from pharos_engine.material import MaterialMap, ColorRange
+from pharos_engine.scene import Scene
+from pharos_engine.animation.graph import AnimationGraph, AnimState, AnimTransition
 
 
 # ---------------------------------------------------------------------------

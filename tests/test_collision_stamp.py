@@ -10,9 +10,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.collision import AABBShape, CollisionWorld
-from slappyengine.entity import Entity
-from slappyengine.layer import Layer
+from pharos_engine.collision import AABBShape, CollisionWorld
+from pharos_engine.entity import Entity
+from pharos_engine.layer import Layer
 
 
 # ---------------------------------------------------------------------------

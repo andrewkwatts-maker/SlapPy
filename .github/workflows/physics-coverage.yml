@@ -3,13 +3,13 @@ name: Physics Coverage
 on:
   push:
     paths:
-      - 'python/slappyengine/physics/**'
+      - 'python/pharos_engine/physics/**'
       - 'python/tests/test_*.py'
       - 'config/physics.yml'
       - '.github/workflows/physics-coverage.yml'
   pull_request:
     paths:
-      - 'python/slappyengine/physics/**'
+      - 'python/pharos_engine/physics/**'
 
 jobs:
   coverage:
@@ -27,7 +27,7 @@ jobs:
         run: |
           export PYTHONPATH=python
           pytest \
-            --cov=python/slappyengine/physics \
+            --cov=python/pharos_engine/physics \
             --cov-report=xml:coverage.xml \
             --cov-report=term \
             --cov-report=html:htmlcov \

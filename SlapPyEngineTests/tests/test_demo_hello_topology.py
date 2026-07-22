@@ -11,7 +11,7 @@ Pinned behaviours:
    added — there is no operation in the demo that ever splits a
    component, so any regression here is a real bug.
 5. The rendered snapshot strip reproduces a stable golden master via
-   :mod:`slappyengine.testing`.
+   :mod:`pharos_engine.testing`.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from slappyengine.testing import assert_scene_matches
+from pharos_engine.testing import assert_scene_matches
 
 # Load the demo as a module so we don't depend on examples/ being on path.
 _REPO_ROOT = Path(__file__).resolve().parents[2]

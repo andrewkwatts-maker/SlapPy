@@ -1,4 +1,4 @@
-# Rust Port Plan — `slappyengine.dynamics`
+# Rust Port Plan — `pharos_engine.dynamics`
 
 Status: **PLAN ONLY** — no code ported yet.
 Date: 2026-05-29
@@ -6,8 +6,8 @@ Branch: `docs-rust-port-plan-dynamics`
 Author: dynamics-perf working group
 
 This document is a decision-quality writeup that answers a single question:
-*should we port the pure-numpy XPBD solver in `slappyengine.dynamics` to
-Rust (via the existing `slappyengine._core` extension module), and if so
+*should we port the pure-numpy XPBD solver in `pharos_engine.dynamics` to
+Rust (via the existing `pharos_engine._core` extension module), and if so
 how?* It bundles the bench evidence, the profile, the per-function
 classification, an estimated speedup range grounded in the engine's prior
 Rust ports, an actual `pyo3` API sketch, the risks, and a phased delivery
@@ -135,7 +135,7 @@ For each function in the top 10, we tag it as one of three actions:
 | `_resolve_motor` | **Refactor first** | Mixes a distance projection with a tangential velocity push and reaches into both `world.velocities` and `world.positions`. The distance half folds into the bulk distance kernel; the velocity half is its own 3-line scalar routine and is ported in Phase 2. |
 | `_resolve_hinge` | **Refactor first** | Two kernel calls (`_project_distance` + `_project_angle`); ports cleanly once both kernels exist. |
 | `_resolve_prismatic` | **Refactor first** | Slightly more involved (decompose displacement along/perp to axis, then optional min/max clamp). Same shape as distance once decomposed; ported in Phase 2. |
-| `solve_ik` (CCD) | **Already covered** | `slappyengine._core.ik_solver` already exists with FABRIK in Rust. The Python CCD path remains for cases where CCD is preferred (different convergence profile); no new port needed. |
+| `solve_ik` (CCD) | **Already covered** | `pharos_engine._core.ik_solver` already exists with FABRIK in Rust. The Python CCD path remains for cases where CCD is preferred (different convergence profile); no new port needed. |
 
 ---
 
@@ -199,7 +199,7 @@ storage and need a Gauss-Seidel sweep, not a parallel scatter.
 ## 5. Rust API surface — actual `pyo3` sketch
 
 Style references: `src/ik_solver.rs` (real `pyo3` signatures already
-used by `slappyengine._core.solve_ik`) and `src/physics.rs` (for the
+used by `pharos_engine._core.solve_ik`) and `src/physics.rs` (for the
 larger `#[pyclass]`-style shape).
 
 The smallest useful API is a single function call per `World.step` that
@@ -394,7 +394,7 @@ The Python side gets a one-method change in `dynamics/world.py:step()`:
 ```python
 # Inside World.step, replacing the inner "for _ in range(iters): for joint ..." loop
 try:
-    from slappyengine._core import solve_joints_pass as _solve_native
+    from pharos_engine._core import solve_joints_pass as _solve_native
 except ImportError:
     _solve_native = None
 
@@ -577,7 +577,7 @@ plan for at least one iteration after the first parity-test failure.
 ### Phase 3 — switch dispatch to native by default
 
 **Scope.** Flip `World.use_native_solver` default from `False` to
-`True` when `slappyengine._core` is importable. Add an opt-out via
+`True` when `pharos_engine._core` is importable. Add an opt-out via
 `SLAPPYENGINE_DISABLE_NATIVE_DYNAMICS=1` for debugging.
 
 **Acceptance criteria.**
@@ -599,8 +599,8 @@ plan for at least one iteration after the first parity-test failure.
 `_resolve_motor` etc. as `@deprecated` (DeprecationWarning) when called
 directly. The functions stay for now (one major release of grace) but
 emit a warning that says "this kernel has moved to
-`slappyengine._core.solve_joints_pass`; import the Python version from
-`slappyengine.dynamics._legacy` if you need the reference
+`pharos_engine._core.solve_joints_pass`; import the Python version from
+`pharos_engine.dynamics._legacy` if you need the reference
 implementation for testing."
 
 Move the Python implementations to a `_legacy.py` sub-module so they
@@ -635,7 +635,7 @@ collapsed) puts Scenario C — currently the only over-budget scenario
 ~3-4 ms at the likely-central estimate.
 
 **Phase 1 MVP function pick: `_project_distance`** (in
-`python/slappyengine/dynamics/joint.py`, lines 156-198). It is 85%
+`python/pharos_engine/dynamics/joint.py`, lines 156-198). It is 85%
 of frame time on the Scenario C profile, has no Python-state side
 effects, has a clean f64 SoA mapping, and is the dependency of four
 of the seven joint kinds. Land that single function in Rust with

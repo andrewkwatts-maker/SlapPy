@@ -1,6 +1,6 @@
 """SlapPyEngine — Hello Thermal
 
-Minimal demo of :class:`slappyengine.thermal.HeatField` showing two grids
+Minimal demo of :class:`pharos_engine.thermal.HeatField` showing two grids
 that diffuse internally *and* exchange heat across an edge contact strip.
 
 Two 32x32 grids are built at an ambient temperature of 20.0:
@@ -45,7 +45,7 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.thermal import HeatField
+from pharos_engine.thermal import HeatField
 
 
 # ── Demo parameters ────────────────────────────────────────────────────────

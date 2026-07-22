@@ -1,11 +1,11 @@
-﻿"""Tests for mixed 2D/3D layer scenes — no GPU required."""
+"""Tests for mixed 2D/3D layer scenes — no GPU required."""
 import numpy as np
 import pytest
 
 
 def test_layer_modes():
     """Layer can be created in 2D or 3D mode."""
-    from slappyengine.layer import Layer
+    from pharos_engine.layer import Layer
 
     layer_2d = Layer.blank(64, 64, name="BG")
     layer_3d = Layer.blank(64, 64, name="FG", mode="3D")
@@ -16,7 +16,7 @@ def test_layer_modes():
 
 def test_3d_layer_has_mesh_slots():
     """3D layers start with None mesh geometry and material."""
-    from slappyengine.layer import Layer
+    from pharos_engine.layer import Layer
 
     layer = Layer.blank(64, 64, mode="3D")
 
@@ -26,8 +26,8 @@ def test_3d_layer_has_mesh_slots():
 
 def test_3d_layer_accepts_mesh():
     """Assigning a GpuMesh to layer.mesh_geometry works."""
-    from slappyengine.layer import Layer
-    from slappyengine.gpu.mesh import GpuMesh
+    from pharos_engine.layer import Layer
+    from pharos_engine.gpu.mesh import GpuMesh
 
     layer = Layer.blank(64, 64, mode="3D")
     layer.mesh_geometry = GpuMesh.unit_cube()
@@ -38,8 +38,8 @@ def test_3d_layer_accepts_mesh():
 
 def test_3d_layer_accepts_material():
     """Assigning a PbrMaterial to layer.mesh_material works."""
-    from slappyengine.layer import Layer
-    from slappyengine.gpu.pbr_material import PbrMaterial
+    from pharos_engine.layer import Layer
+    from pharos_engine.gpu.pbr_material import PbrMaterial
 
     layer = Layer.blank(64, 64, mode="3D")
     layer.mesh_material = PbrMaterial(metallic=0.7, roughness=0.2)
@@ -50,7 +50,7 @@ def test_3d_layer_accepts_material():
 
 def test_mixed_layer_stack():
     """An asset can have both 2D and 3D layers stacked together."""
-    from slappyengine.layer import Layer
+    from pharos_engine.layer import Layer
 
     # Simulate an asset's layer list
     layers = [
@@ -69,7 +69,7 @@ def test_mixed_layer_stack():
 
 def test_2d_layer_has_no_mode_3d_attributes():
     """2D layers have mesh_geometry=None and mesh_material=None by design."""
-    from slappyengine.layer import Layer
+    from pharos_engine.layer import Layer
 
     layer = Layer.blank(64, 64)
 
@@ -80,8 +80,8 @@ def test_2d_layer_has_no_mode_3d_attributes():
 
 def test_3d_layer_lighting_context():
     """3D layer can have its own LightingContext."""
-    from slappyengine.layer import Layer
-    from slappyengine.lighting import LightingContext, PointLight
+    from pharos_engine.layer import Layer
+    from pharos_engine.lighting import LightingContext, PointLight
 
     layer = Layer.blank(64, 64, mode="3D")
     layer.lighting = LightingContext()
@@ -95,7 +95,7 @@ def test_3d_layer_lighting_context():
 
 def test_3d_layer_default_lighting_is_none():
     """A freshly created 3D layer inherits scene-level lighting (lighting=None)."""
-    from slappyengine.layer import Layer
+    from pharos_engine.layer import Layer
 
     layer = Layer.blank(64, 64, mode="3D")
     # No LightingContext assigned yet — should defer to scene global.
@@ -104,8 +104,8 @@ def test_3d_layer_default_lighting_is_none():
 
 def test_mode_preserved_after_mesh_assignment():
     """Assigning a mesh does not mutate the layer mode."""
-    from slappyengine.layer import Layer
-    from slappyengine.gpu.mesh import GpuMesh
+    from pharos_engine.layer import Layer
+    from pharos_engine.gpu.mesh import GpuMesh
 
     layer = Layer.blank(64, 64, mode="3D")
     layer.mesh_geometry = GpuMesh.unit_quad()
@@ -115,7 +115,7 @@ def test_mode_preserved_after_mesh_assignment():
 
 def test_unit_cube_index_count():
     """unit_cube() produces exactly 36 indices (6 faces × 2 triangles × 3 verts)."""
-    from slappyengine.gpu.mesh import GpuMesh
+    from pharos_engine.gpu.mesh import GpuMesh
 
     mesh = GpuMesh.unit_cube()
     assert mesh.index_count == 36
@@ -123,7 +123,7 @@ def test_unit_cube_index_count():
 
 def test_unit_quad_vertex_count():
     """unit_quad() produces exactly 4 vertices."""
-    from slappyengine.gpu.mesh import GpuMesh
+    from pharos_engine.gpu.mesh import GpuMesh
 
     mesh = GpuMesh.unit_quad()
     assert mesh.vertex_count == 4

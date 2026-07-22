@@ -8,7 +8,7 @@ Locks in the extras contract landed 2026-07-05:
 * The ``all`` meta-extra references every sub-extra except heavy
   ones (``ai`` — 800 MB torch + transformers bundle).
 * The ``dev`` extra includes pytest + maturin.
-* The package name is spelled ``slappy-engine`` (hyphen, not
+* The package name is spelled ``pharos-engine`` (hyphen, not
   underscore, matches PyPI + install command).
 
 See ``docs/pyproject_extras_2026_07_05.md`` for the rationale and
@@ -64,9 +64,9 @@ def test_pyproject_parses(pyproject: dict[str, Any]) -> None:
     assert "build-system" in pyproject
 
 
-def test_package_name_is_slappy_engine(pyproject: dict[str, Any]) -> None:
-    """Package name must be ``slappy-engine`` (hyphenated, matches PyPI)."""
-    assert pyproject["project"]["name"] == "slappy-engine"
+def test_package_name_is_pharos_engine(pyproject: dict[str, Any]) -> None:
+    """Package name must be ``pharos-engine`` (hyphenated, matches PyPI)."""
+    assert pyproject["project"]["name"] == "pharos-engine"
 
 
 def test_build_system_uses_maturin(pyproject: dict[str, Any]) -> None:
@@ -81,7 +81,7 @@ def test_maturin_config_preserved(pyproject: dict[str, Any]) -> None:
     tool = pyproject.get("tool", {})
     maturin_cfg = tool.get("maturin", {})
     assert maturin_cfg.get("python-source") == "python"
-    assert maturin_cfg.get("module-name") == "slappyengine._core"
+    assert maturin_cfg.get("module-name") == "pharos_engine._core"
 
 
 # ---------------------------------------------------------------------------
@@ -196,15 +196,15 @@ def test_all_extra_references_sub_extras(extras: dict[str, list[str]]) -> None:
     all_entries = extras["all"]
     assert len(all_entries) >= 1
     joined = " ".join(all_entries).lower()
-    # Must be a slappy-engine[...] self-reference, not a flat pkg list.
-    assert "slappy-engine[" in joined
+    # Must be a pharos-engine[...] self-reference, not a flat pkg list.
+    assert "pharos-engine[" in joined
 
 
 def test_all_extra_omits_ai(extras: dict[str, list[str]]) -> None:
     """`all` must NOT pull in the ~800 MB torch/transformers bundle.
 
     HH3 §8.2: ``ai`` stays opt-in. Users who want it must ask
-    explicitly via ``pip install slappy-engine[all,ai]``.
+    explicitly via ``pip install pharos-engine[all,ai]``.
     """
     joined = " ".join(extras["all"]).lower()
     # The token ",ai," or "[ai," or ",ai]" would indicate ai leaked in.
@@ -278,8 +278,8 @@ def test_no_exact_pins_in_extras(extras: dict[str, list[str]]) -> None:
     """
     for name, deps in extras.items():
         for dep in deps:
-            # Self-references (``slappy-engine[...]``) are exempt.
-            if dep.lower().startswith("slappy-engine"):
+            # Self-references (``pharos-engine[...]``) are exempt.
+            if dep.lower().startswith("pharos-engine"):
                 continue
             assert "==" not in dep, (
                 f"Exact pin in extra `{name}`: `{dep}` — use `>=` instead."

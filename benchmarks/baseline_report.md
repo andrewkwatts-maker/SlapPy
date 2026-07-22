@@ -422,7 +422,7 @@ overhead window.
   steps, **median** reported. Cross-subsystem benches ran three times to
   measure run-to-run stability (see "Stability" table below).
 - Constraint reminder: this refresh did not touch
-  `python/slappyengine/softbody/` or `python/slappyengine/fluid/` (the
+  `python/pharos_engine/softbody/` or `python/pharos_engine/fluid/` (the
   Rust core they sit on top of is reached via `dynamics.World`).
 
 ### Particle field — fresh A/B/C numbers
@@ -530,7 +530,7 @@ are too noisy on Windows shared cores to pin; they stay in
 - Methodology: `time.perf_counter()`, ≥5 iters/bench (7-10 for the
   cheaper ones) after 2-3 warmup steps, median per run.
 - Constraint reminder: this refresh did not touch
-  `python/slappyengine/softbody/` or `python/slappyengine/fluid/` (the
+  `python/pharos_engine/softbody/` or `python/pharos_engine/fluid/` (the
   Rust core they sit on top of is reached via `dynamics.World`).
 
 ### Cross-subsystem refresh — 3-run medians

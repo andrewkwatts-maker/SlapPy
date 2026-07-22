@@ -8,7 +8,7 @@ Coverage:
 * Subscriber lifecycle
     - ``subscribe`` registers a single handle (idempotent).
     - ``unsubscribe`` drops the handle (idempotent).
-    - Events arrive through the live ``slappyengine.telemetry`` bus.
+    - Events arrive through the live ``pharos_engine.telemetry`` bus.
 * Filtering
     - Empty filter passes everything.
     - Substring filter is case-insensitive.
@@ -139,9 +139,9 @@ def stub_dpg(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def clear_state():
-    from slappyengine import telemetry as t
-    from slappyengine.ui.widgets import notebook_theme
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine import telemetry as t
+    from pharos_engine.ui.widgets import notebook_theme
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -158,7 +158,7 @@ def clear_state():
 
 
 def _make_panel(**kwargs):
-    from slappyengine.ui.editor.notebook_telemetry_panel import (
+    from pharos_engine.ui.editor.notebook_telemetry_panel import (
         NotebookTelemetryPanel,
     )
     return NotebookTelemetryPanel(**kwargs)
@@ -210,7 +210,7 @@ class TestSubscription:
         assert panel._subscription_handle is None
 
     def test_receives_live_event(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         panel = _make_panel()
         panel.subscribe()
@@ -223,7 +223,7 @@ class TestSubscription:
             panel.unsubscribe()
 
     def test_build_auto_subscribes(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         panel = _make_panel()
         panel.build(parent_tag="root")
@@ -241,21 +241,21 @@ class TestSubscription:
 
 class TestFiltering:
     def test_empty_filter_matches_all(self):
-        from slappyengine.ui.editor.notebook_telemetry_panel import (
+        from pharos_engine.ui.editor.notebook_telemetry_panel import (
             matches_filter,
         )
         assert matches_filter("physics.step", "")
         assert matches_filter("render.frame", "  ")
 
     def test_substring_case_insensitive(self):
-        from slappyengine.ui.editor.notebook_telemetry_panel import (
+        from pharos_engine.ui.editor.notebook_telemetry_panel import (
             matches_filter,
         )
         assert matches_filter("Physics.Step", "physics")
         assert not matches_filter("render.frame", "physics")
 
     def test_fnmatch_glob(self):
-        from slappyengine.ui.editor.notebook_telemetry_panel import (
+        from pharos_engine.ui.editor.notebook_telemetry_panel import (
             matches_filter,
         )
         assert matches_filter("physics.step", "physics.*")
@@ -263,7 +263,7 @@ class TestFiltering:
         assert not matches_filter("render.frame", "physics.*")
 
     def test_set_filter_updates_events_view(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         panel = _make_panel()
         panel.subscribe()
@@ -284,7 +284,7 @@ class TestFiltering:
 
 class TestTransport:
     def test_pause_drops_new_events(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         panel = _make_panel()
         panel.subscribe()
@@ -296,7 +296,7 @@ class TestTransport:
             panel.unsubscribe()
 
     def test_resume_re_enables_capture(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         panel = _make_panel()
         panel.subscribe()
@@ -311,7 +311,7 @@ class TestTransport:
             panel.unsubscribe()
 
     def test_clear_drops_events(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         panel = _make_panel()
         panel.subscribe()
@@ -332,7 +332,7 @@ class TestTransport:
 
 class TestPinning:
     def test_pin_appends_once(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         panel = _make_panel()
         panel.subscribe()
@@ -346,7 +346,7 @@ class TestPinning:
             panel.unsubscribe()
 
     def test_unpin_removes(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         panel = _make_panel()
         panel.subscribe()
@@ -360,7 +360,7 @@ class TestPinning:
             panel.unsubscribe()
 
     def test_unpin_missing_is_silent(self):
-        from slappyengine.telemetry import TelemetryEvent
+        from pharos_engine.telemetry import TelemetryEvent
 
         panel = _make_panel()
         fake = TelemetryEvent(name="ghost", timestamp=0.0)
@@ -375,7 +375,7 @@ class TestPinning:
 
 class TestCapacity:
     def test_ring_trims_oldest(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         panel = _make_panel(capacity=2)
         panel.subscribe()
@@ -390,7 +390,7 @@ class TestCapacity:
             panel.unsubscribe()
 
     def test_set_capacity_trims_immediately(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         panel = _make_panel(capacity=10)
         panel.subscribe()
@@ -410,7 +410,7 @@ class TestCapacity:
 
 class TestThemeIntegration:
     def test_theme_switch_logs(self):
-        from slappyengine.ui.widgets.notebook_theme import (
+        from pharos_engine.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )

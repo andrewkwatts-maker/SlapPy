@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.ui.theme.page_linings`.
+"""Tests for :mod:`pharos_engine.ui.theme.page_linings`.
 
 Covers:
 
@@ -17,7 +17,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.ui.theme.page_linings import (
+from pharos_engine.ui.theme.page_linings import (
     LiningStyle,
     PAGE_LININGS,
     bake_lining_texture,
@@ -27,7 +27,7 @@ from slappyengine.ui.theme.page_linings import (
     list_linings,
     render_lining,
 )
-from slappyengine.ui.theme.page_linings.library import (
+from pharos_engine.ui.theme.page_linings.library import (
     PAGE_LININGS as _RAW_LININGS,
 )
 
@@ -292,7 +292,7 @@ def test_bake_lining_texture_ignores_unknown_uniforms():
 
 
 def _make_semantic():
-    from slappyengine.ui.theme.theme_spec import (
+    from pharos_engine.ui.theme.theme_spec import (
         Color, Gradient, SemanticTokens,
     )
     primary = Color(120, 180, 240, 1.0)
@@ -319,7 +319,7 @@ def _make_semantic():
 
 
 def test_theme_spec_accepts_lining_id_as_background_shader():
-    from slappyengine.ui.theme.theme_spec import ThemeSpec
+    from pharos_engine.ui.theme.theme_spec import ThemeSpec
     theme = ThemeSpec(
         name="lining-demo",
         semantic=_make_semantic(),
@@ -329,7 +329,7 @@ def test_theme_spec_accepts_lining_id_as_background_shader():
 
 
 def test_theme_spec_rejects_unknown_lining_id():
-    from slappyengine.ui.theme.theme_spec import ThemeSpec
+    from pharos_engine.ui.theme.theme_spec import ThemeSpec
     with pytest.raises(ValueError) as exc:
         ThemeSpec(
             name="bad-lining",
@@ -343,7 +343,7 @@ def test_theme_spec_lining_id_serialises_through_helper():
     """The background-shader serialisation helper tags lining ids so
     :meth:`ThemeSpec.from_dict` can recover the id on reload.
     """
-    from slappyengine.ui.theme.theme_spec import (
+    from pharos_engine.ui.theme.theme_spec import (
         _deserialise_background_shader,
         _serialise_background_shader,
     )
@@ -357,7 +357,7 @@ def test_theme_spec_lining_id_serialises_through_helper():
 
 
 def test_resolve_background_dispatches_lining_id():
-    from slappyengine.ui.theme.wgsl_backgrounds import resolve_background
+    from pharos_engine.ui.theme.wgsl_backgrounds import resolve_background
     arr = resolve_background("music_staff")
     assert isinstance(arr, np.ndarray)
     # music_staff tile_size (64, 48) → 2× → 128×96

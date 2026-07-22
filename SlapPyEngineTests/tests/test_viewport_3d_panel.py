@@ -1,4 +1,4 @@
-"""Tests for :class:`slappyengine.ui.editor.viewport_3d_panel.Viewport3DPanel`.
+"""Tests for :class:`pharos_engine.ui.editor.viewport_3d_panel.Viewport3DPanel`.
 
 The panel is the first end-to-end wgpu render surface hosted inside the
 Notebook editor (CCC1). These tests exercise three seams:
@@ -118,14 +118,14 @@ def dpg_mock(monkeypatch: pytest.MonkeyPatch) -> _DPGMock:
 
 def test_module_imports_cleanly() -> None:
     """The panel module must import with no side effects."""
-    from slappyengine.ui.editor import viewport_3d_panel as mod
+    from pharos_engine.ui.editor import viewport_3d_panel as mod
     assert hasattr(mod, "Viewport3DPanel")
     assert callable(mod.Viewport3DPanel)
 
 
 def test_default_construction_populates_frame() -> None:
     """Constructing the panel initialises a zero-filled ``last_frame``."""
-    from slappyengine.ui.editor.viewport_3d_panel import Viewport3DPanel
+    from pharos_engine.ui.editor.viewport_3d_panel import Viewport3DPanel
 
     p = Viewport3DPanel(width=128, height=96)
     assert p.width == 128
@@ -141,7 +141,7 @@ def test_default_construction_populates_frame() -> None:
 
 def test_build_under_dpg_mock_does_not_raise(dpg_mock: _DPGMock) -> None:
     """``build(parent_tag)`` must not raise when Dear PyGui is mocked out."""
-    from slappyengine.ui.editor.viewport_3d_panel import Viewport3DPanel
+    from pharos_engine.ui.editor.viewport_3d_panel import Viewport3DPanel
 
     p = Viewport3DPanel(width=192, height=128)
     p.build("mock_parent_window")
@@ -159,7 +159,7 @@ def test_build_under_dpg_mock_does_not_raise(dpg_mock: _DPGMock) -> None:
 
 def test_build_populates_last_frame(dpg_mock: _DPGMock) -> None:
     """After ``build`` returns, ``last_frame`` must hold a real image."""
-    from slappyengine.ui.editor.viewport_3d_panel import Viewport3DPanel
+    from pharos_engine.ui.editor.viewport_3d_panel import Viewport3DPanel
 
     p = Viewport3DPanel(width=160, height=120)
     p.build("mock_parent_window")
@@ -178,7 +178,7 @@ def test_build_populates_last_frame(dpg_mock: _DPGMock) -> None:
 
 def test_render_returns_non_empty_image() -> None:
     """A single ``render()`` call must return a non-empty ndarray."""
-    from slappyengine.ui.editor.viewport_3d_panel import Viewport3DPanel
+    from pharos_engine.ui.editor.viewport_3d_panel import Viewport3DPanel
 
     p = Viewport3DPanel(width=192, height=128)
     p._init_gpu()
@@ -197,7 +197,7 @@ def test_render_produces_cube_pixels() -> None:
     contain the orange cube base colour, i.e. the R channel materially
     exceeds the clear-colour red (~23).
     """
-    from slappyengine.ui.editor.viewport_3d_panel import Viewport3DPanel
+    from pharos_engine.ui.editor.viewport_3d_panel import Viewport3DPanel
 
     p = Viewport3DPanel(width=256, height=192)
     p._init_gpu()
@@ -215,7 +215,7 @@ def test_render_produces_cube_pixels() -> None:
 
 def test_tick_advances_rotation_and_updates_frame(dpg_mock: _DPGMock) -> None:
     """``tick`` must advance the cube rotation and push a new frame to DPG."""
-    from slappyengine.ui.editor.viewport_3d_panel import Viewport3DPanel
+    from pharos_engine.ui.editor.viewport_3d_panel import Viewport3DPanel
 
     p = Viewport3DPanel(width=192, height=128)
     p.build("mock_parent_window")
@@ -246,7 +246,7 @@ def test_placeholder_fallback_when_wgpu_missing(
     We patch ``_wgpu`` to ``None`` on the module so the ``_init_gpu`` fast
     path takes the placeholder branch even on a machine with a real GPU.
     """
-    from slappyengine.ui.editor import viewport_3d_panel as mod
+    from pharos_engine.ui.editor import viewport_3d_panel as mod
 
     monkeypatch.setattr(mod, "_wgpu", None)
     monkeypatch.setattr(mod, "_wgpu_utils", None)

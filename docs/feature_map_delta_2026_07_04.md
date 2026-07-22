@@ -16,7 +16,7 @@ therefore was not counted in the 233-row baseline.
 
 | Batch | Feature | Provenance | Impl status | Notes |
 |-------|---------|------------|-------------|-------|
-| V2 | `project_registry` subsystem | `python/slappyengine/project_registry.py`; commit `a714b3a` | WIRED | Multi-project recents store used by V2 panels + `open_recent` action. |
+| V2 | `project_registry` subsystem | `python/pharos_engine/project_registry.py`; commit `a714b3a` | WIRED | Multi-project recents store used by V2 panels + `open_recent` action. |
 | V2 | Notebook: Startup Prompt modal | `notebook_startup_prompt.py`; 3 buttons (row-open / new / skip) | WIRED | First-run gate wired via `_on_row_clicked` / `_on_new_clicked` / `_on_skip_clicked`. |
 | V2 | Notebook: Project Registry panel | `notebook_project_registry.py`; 4 button handlers | WIRED | `_on_open_clicked` / `_on_remove_clicked` / `_on_add_clicked` / `_on_folder_chosen` all commit to `ProjectRegistry`. |
 | V2 | Inspector: dataclass row dispatch | `notebook_inspector_dispatch.py` extended | WIRED | New reflection path — was STUB in V1 (rows 94/95 style). Field help still STUB. |
@@ -24,7 +24,7 @@ therefore was not counted in the 233-row baseline.
 | V5 | Visual Scripting: 18+ material nodes | `visual_scripting/material_nodes.py`; commit `a714b3a` | WIRED | WGSL-emitting graph nodes — palette-visible from Node Editor. |
 | V6 | Visual Scripting: Python AST -> Graph codegen | `visual_scripting/codegen.py` (bidirectional) | WIRED | Enables Diary "Generate Python from nodes" row 79 to be resurrected (still STUB from Diary side). |
 | V7 | 8 animated washi tape shaders | `ui/theme/washi_tape/library.py` extension | WIRED | heart_pulse / sparkle_shimmer / rainbow_flow / marching_dots / wave_shift / dashed_scroll / stars_twinkle / music_notes_flow. Budget widened to 1000B. |
-| X3 | Actions package (`slappyengine.actions.*`) | `actions/project_actions.py`, `edit_actions.py`, `view_actions.py` | WIRED | Backing for the 5 STUB-flip actions (see next section). |
+| X3 | Actions package (`pharos_engine.actions.*`) | `actions/project_actions.py`, `edit_actions.py`, `view_actions.py` | WIRED | Backing for the 5 STUB-flip actions (see next section). |
 | X4 | Content Browser project asset tree | `notebook_content_browser.py::set_project` | WIRED | Groups files into 6 kinds (Scripts / Scenes / Textures / Materials / Shaders / Other) + fuzzy search + right-click ctx menu. |
 | X5 | Post-Process chain manifest | `post_process/chain_manifest.py` + `executor.from_manifest` | WIRED | Declarative YAML pass ordering; `apply_manifest` CPU dispatcher landed. |
 | X6 | User-overrides live-reload watcher | `ui/user_overrides.py::watch_dir` / `autoreload` | WIRED | Watchdog soft-import + debounce + atomic swap + WatcherHandle context manager. |
@@ -101,7 +101,7 @@ check on the next visual regression pass.
 * **Row 78 (Diary "Open...")** — no behaviour change, but note the V6
   codegen now makes the round-trip technically possible; the picker
   still no-ops silently. Still STUB.
-* **Row 80 (Diary tick softbody import)** — still BROKEN. `python/slappyengine/softbody/`
+* **Row 80 (Diary tick softbody import)** — still BROKEN. `python/pharos_engine/softbody/`
   is in the current WIP tree (see `git status`) but has not been
   committed. Fresh checkouts continue to fail on this import.
 

@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.\<subpackage\> — API Reference
+# pharos_engine.\<subpackage\> — API Reference
 
 > Hand-written reference for the `<subpackage>` subpackage.
 > One-line scope sentence: what this subpackage owns, what it does not,
@@ -25,7 +25,7 @@ asserts the load-bearing pieces. Specifically it checks that every
 hand-authored doc:
 
   1. starts with `<!-- handauthored: do not regenerate -->` on line 1,
-  2. has an H1 of the form `# slappyengine.<X> — API Reference`,
+  2. has an H1 of the form `# pharos_engine.<X> — API Reference`,
   3. has at least one of `## Overview`, `## Public surface`, `## Usage`.
 
 Everything below is convention — follow it for new docs, leave existing
@@ -37,12 +37,12 @@ SECTION ORDER
 
   1. Hand-authored marker          REQUIRED — line 1, exact bytes.
   2. H1 + blockquote tagline       REQUIRED — H1 must match the form
-                                    `# slappyengine.<X> — API Reference`.
+                                    `# pharos_engine.<X> — API Reference`.
   3. ## Overview                   REQUIRED for new docs (or one of the
                                     two alternates below).
   4. ## Public surface             ALTERNATE to Overview — use this when
                                     the doc opens with a `from
-                                    slappyengine.<x> import (...)` block
+                                    pharos_engine.<x> import (...)` block
                                     and an `__all__` listing.
   5. ## Usage                      ALTERNATE — use this when the doc
                                     leads with a worked example.
@@ -120,7 +120,7 @@ canonical landing section that the conformance test looks for.
 ## Public surface
 
 ```python
-from slappyengine.<subpackage> import (
+from pharos_engine.<subpackage> import (
     PublicSymbolA,
     PublicSymbolB,
     public_function,
@@ -135,7 +135,7 @@ does not communicate roles — group by purpose
 
 ### `PublicSymbolA`
 
-_class | dataclass — defined in `slappyengine.<subpackage>.<module>`_
+_class | dataclass — defined in `pharos_engine.<subpackage>.<module>`_
 
 One-paragraph role description.
 
@@ -158,7 +158,7 @@ PublicSymbolA(arg1: int, arg2: str = "default") -> None
 
 ### `public_function(arg: int) -> bool`
 
-_defined in `slappyengine.<subpackage>`_
+_defined in `pharos_engine.<subpackage>`_
 
 One-paragraph role description, followed by a `Raises:` bullet list if
 the function validates its inputs.
@@ -167,14 +167,14 @@ the function validates its inputs.
 
 ### `CONSTANT_NAME`
 
-_int | str | … — defined in `slappyengine.<subpackage>`_
+_int | str | … — defined in `pharos_engine.<subpackage>`_
 
 Value: `42`. One-line description of what callers use it for.
 
 ## Inner modules
 
-- `slappyengine.<subpackage>.<module_a>` — one-line role.
-- `slappyengine.<subpackage>.<module_b>` — one-line role.
+- `pharos_engine.<subpackage>.<module_a>` — one-line role.
+- `pharos_engine.<subpackage>.<module_b>` — one-line role.
 
 ## Conventions
 

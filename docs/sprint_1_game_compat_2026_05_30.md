@@ -14,9 +14,9 @@ Strata, and Stone Keep is honoured on master HEAD after the Phase C closure
   end-to-end, 100-frame WaveSchedule sim completes with zero NaNs.
 - Bullet Strata surface: **half-closed.** The Phase C closure landed the
   `_LAZY_MAP` entries on master, but the underlying modules for ~13 of those
-  entries were never committed (`slappyengine.trigger`,
-  `slappyengine.deform_zones`, `slappyengine.deform_modes`,
-  `slappyengine.deform_controller`, `slappyengine.pixel_material`).
+  entries were never committed (`pharos_engine.trigger`,
+  `pharos_engine.deform_zones`, `pharos_engine.deform_modes`,
+  `pharos_engine.deform_controller`, `pharos_engine.pixel_material`).
 - Ochema Circuit surface: **half-closed.** Same root cause — Phase C added
   the lazy map entries for `softbody.vehicle`, `spline`, `track`,
   `input_provider`, `collision_pixel`, `post_process.motion_blur`,
@@ -52,33 +52,33 @@ Failing surfaces (20) — all from missing underlying modules:
 
 | Game | Symbol | Lazy-map target | Status |
 |------|--------|-----------------|--------|
-| ochema_circuit | `build_vehicle` | `slappyengine.softbody.vehicle` | module not on master |
-| ochema_circuit | `VehicleSpec` | `slappyengine.softbody.vehicle` | module not on master |
-| ochema_circuit | `WheelSpec` | `slappyengine.softbody.vehicle` | module not on master |
-| ochema_circuit | `apply_drivetrain_torque` | `slappyengine.softbody.vehicle` | module not on master |
-| ochema_circuit | `CatmullRomSpline` | `slappyengine.spline` | module not on master |
-| ochema_circuit | `SplineTrack` | `slappyengine.track` | module not on master |
-| ochema_circuit | `PlayerInputProvider` | `slappyengine.input_provider` | module not on master |
-| ochema_circuit | `PixelCollisionPass` | `slappyengine.collision_pixel` | module not on master |
-| ochema_circuit | `MotionBlurPass` | `slappyengine.post_process.motion_blur` | module not on master |
-| ochema_circuit | `SimFrequencyBudget` | `slappyengine.deform_controller` | module not on master |
-| ochema_circuit | `SimState` | `slappyengine.deform_controller` | module not on master |
-| ochema_circuit | `DeformController` | `slappyengine.deform_controller` | module not on master |
-| bullet_strata | `TriggerSystem` | `slappyengine.trigger` | module not on master |
-| bullet_strata | `TriggerVolume` | `slappyengine.trigger` | module not on master |
-| bullet_strata | `DeformController` | `slappyengine.deform_controller` | module not on master |
-| bullet_strata | `MaterialPreset` | `slappyengine.deform_modes` | module not on master |
-| bullet_strata | `ZoneMap` | `slappyengine.deform_zones` | module not on master |
-| bullet_strata | `SimFrequencyBudget` | `slappyengine.deform_controller` | module not on master |
-| bullet_strata | `CrackMode` | `slappyengine.deform_modes` | module not on master |
-| bullet_strata | `PixelMaterialMap` | `slappyengine.pixel_material` | module not on master |
+| ochema_circuit | `build_vehicle` | `pharos_engine.softbody.vehicle` | module not on master |
+| ochema_circuit | `VehicleSpec` | `pharos_engine.softbody.vehicle` | module not on master |
+| ochema_circuit | `WheelSpec` | `pharos_engine.softbody.vehicle` | module not on master |
+| ochema_circuit | `apply_drivetrain_torque` | `pharos_engine.softbody.vehicle` | module not on master |
+| ochema_circuit | `CatmullRomSpline` | `pharos_engine.spline` | module not on master |
+| ochema_circuit | `SplineTrack` | `pharos_engine.track` | module not on master |
+| ochema_circuit | `PlayerInputProvider` | `pharos_engine.input_provider` | module not on master |
+| ochema_circuit | `PixelCollisionPass` | `pharos_engine.collision_pixel` | module not on master |
+| ochema_circuit | `MotionBlurPass` | `pharos_engine.post_process.motion_blur` | module not on master |
+| ochema_circuit | `SimFrequencyBudget` | `pharos_engine.deform_controller` | module not on master |
+| ochema_circuit | `SimState` | `pharos_engine.deform_controller` | module not on master |
+| ochema_circuit | `DeformController` | `pharos_engine.deform_controller` | module not on master |
+| bullet_strata | `TriggerSystem` | `pharos_engine.trigger` | module not on master |
+| bullet_strata | `TriggerVolume` | `pharos_engine.trigger` | module not on master |
+| bullet_strata | `DeformController` | `pharos_engine.deform_controller` | module not on master |
+| bullet_strata | `MaterialPreset` | `pharos_engine.deform_modes` | module not on master |
+| bullet_strata | `ZoneMap` | `pharos_engine.deform_zones` | module not on master |
+| bullet_strata | `SimFrequencyBudget` | `pharos_engine.deform_controller` | module not on master |
+| bullet_strata | `CrackMode` | `pharos_engine.deform_modes` | module not on master |
+| bullet_strata | `PixelMaterialMap` | `pharos_engine.pixel_material` | module not on master |
 
-Distinct missing modules (5 net): `slappyengine.trigger`,
-`slappyengine.deform_zones`, `slappyengine.deform_modes`,
-`slappyengine.deform_controller`, `slappyengine.pixel_material`,
-`slappyengine.softbody`, `slappyengine.spline`, `slappyengine.track`,
-`slappyengine.input_provider`, `slappyengine.collision_pixel`,
-`slappyengine.post_process.motion_blur` — i.e. 11 module paths covering
+Distinct missing modules (5 net): `pharos_engine.trigger`,
+`pharos_engine.deform_zones`, `pharos_engine.deform_modes`,
+`pharos_engine.deform_controller`, `pharos_engine.pixel_material`,
+`pharos_engine.softbody`, `pharos_engine.spline`, `pharos_engine.track`,
+`pharos_engine.input_provider`, `pharos_engine.collision_pixel`,
+`pharos_engine.post_process.motion_blur` — i.e. 11 module paths covering
 20 lazy-map entries.
 
 ### `SlapPyEngineTests/tests/test_game_smoke_instantiation.py` (NEW)
@@ -129,22 +129,22 @@ but ctor blows up" pathology this test file was written to catch.
 
 1. **Re-land the residual Phase C modules** so the tripwire reaches the
    expected 54 pass / 0 xfail state:
-   - `python/slappyengine/trigger.py`
+   - `python/pharos_engine/trigger.py`
      (`TriggerSystem`, `TriggerVolume`)
-   - `python/slappyengine/deform_zones.py` (`ZoneMap`)
-   - `python/slappyengine/deform_modes.py`
+   - `python/pharos_engine/deform_zones.py` (`ZoneMap`)
+   - `python/pharos_engine/deform_modes.py`
      (`CrackMode`, `MaterialPreset`)
-   - `python/slappyengine/deform_controller.py`
+   - `python/pharos_engine/deform_controller.py`
      (`DeformController`, `SimState`, `SimFrequencyBudget`)
-   - `python/slappyengine/pixel_material.py` (`PixelMaterialMap`)
-   - `python/slappyengine/softbody/vehicle.py`
+   - `python/pharos_engine/pixel_material.py` (`PixelMaterialMap`)
+   - `python/pharos_engine/softbody/vehicle.py`
      (`build_vehicle`, `VehicleSpec`, `WheelSpec`,
      `apply_drivetrain_torque`)
-   - `python/slappyengine/spline.py` (`CatmullRomSpline`)
-   - `python/slappyengine/track.py` (`SplineTrack`)
-   - `python/slappyengine/input_provider.py` (`PlayerInputProvider`)
-   - `python/slappyengine/collision_pixel.py` (`PixelCollisionPass`)
-   - `python/slappyengine/post_process/motion_blur.py` (`MotionBlurPass`)
+   - `python/pharos_engine/spline.py` (`CatmullRomSpline`)
+   - `python/pharos_engine/track.py` (`SplineTrack`)
+   - `python/pharos_engine/input_provider.py` (`PlayerInputProvider`)
+   - `python/pharos_engine/collision_pixel.py` (`PixelCollisionPass`)
+   - `python/pharos_engine/post_process/motion_blur.py` (`MotionBlurPass`)
 2. **As each module lands**, the corresponding `test_missing_module_residual_gap`
    xfail in `SlapPyEngineTests/tests/test_game_smoke_instantiation.py` will xpass — and the
    sibling tripwire failure will flip to pass — without any test edit.
@@ -158,8 +158,8 @@ but ctor blows up" pathology this test file was written to catch.
   - `SlapPyEngineTests/tests/test_game_smoke_instantiation.py` (NEW — 31 tests, 13 pass + 18 xfail)
   - `docs/sprint_1_game_compat_2026_05_30.md` (this file)
 - Files explicitly NOT touched:
-  - `python/slappyengine/__init__.py` (per sprint rules)
-  - `python/slappyengine/softbody/`, `fluid/`, `sim_field.py`
+  - `python/pharos_engine/__init__.py` (per sprint rules)
+  - `python/pharos_engine/softbody/`, `fluid/`, `sim_field.py`
   - `SlapPyEngineTests/tests/test_game_compat_tripwire.py` (the failing test is reporting a
     real, accurate gap — converting failures to xfail here would mask the
     residual Phase C work)

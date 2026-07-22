@@ -32,18 +32,18 @@ from typing import Sequence
 import numpy as np
 from PIL import Image
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     PhysicsYaml,
     load_physics_config,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.cc_label import connected_components
-from slappyengine.physics.particles import ParticleSystem
-from slappyengine.physics.particle_graph import ParticleGraph
-from slappyengine.physics.post_process import default_post_process_chain
-from slappyengine.physics.render import (
+from pharos_engine.physics.cc_label import connected_components
+from pharos_engine.physics.particles import ParticleSystem
+from pharos_engine.physics.particle_graph import ParticleGraph
+from pharos_engine.physics.post_process import default_post_process_chain
+from pharos_engine.physics.render import (
     PhysicsRenderer,
     PointLight,
     RenderConfig,

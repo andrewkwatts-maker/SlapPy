@@ -47,7 +47,7 @@ Files touched (per PP6's audit —
 |---|---|---|---|
 | `pyproject.toml` | 7 | `version = "0.3.0b0"` | `version = "0.4.0"` |
 | `Cargo.toml` | 3 | `version = "0.3.0-beta.0"` | `version = "0.4.0"` |
-| `python/slappyengine/__init__.py` | 103 | `__version__ = "0.3.0b0"` | `__version__ = "0.4.0"` |
+| `python/pharos_engine/__init__.py` | 103 | `__version__ = "0.3.0b0"` | `__version__ = "0.4.0"` |
 
 **Success gate.**
 `SlapPyEngineTests/tests/test_version_consistency.py` green
@@ -107,8 +107,8 @@ Execute in order after Step 3's push confirms.
 
 | # | Check | Command | Pass criterion |
 |---|---|---|---|
-| 4.1 | Publish wheel to PyPI | `maturin publish --release` | PyPI upload returns 200; wheel appears at `https://pypi.org/project/slappyengine/0.4.0/`. |
-| 4.2 | PyPI mirror pull test | `pip install --no-cache-dir slappyengine==0.4.0` in a fresh venv | Install succeeds, `python -c "import slappyengine; print(slappyengine.__version__)"` prints `0.4.0`. Smoke-run one demo (`python -m slappyengine.demo.hello_studio`). |
+| 4.1 | Publish wheel to PyPI | `maturin publish --release` | PyPI upload returns 200; wheel appears at `https://pypi.org/project/pharos_engine/0.4.0/`. |
+| 4.2 | PyPI mirror pull test | `pip install --no-cache-dir pharos_engine==0.4.0` in a fresh venv | Install succeeds, `python -c "import pharos_engine; print(pharos_engine.__version__)"` prints `0.4.0`. Smoke-run one demo (`python -m pharos_engine.demo.hello_studio`). |
 | 4.3 | GitHub release notes | `gh release create v0.4.0 --notes-file <(sed -n '/^## \[0.4.0\]/,/^## \[/p' CHANGELOG.md \| head -n -1)` | GitHub release page renders with body pulled from the `[0.4.0]` section of `CHANGELOG.md`. |
 
 ---
@@ -210,5 +210,5 @@ version-bump audit (`docs/version_bump_audit_2026_07_07.md`), WW7
 demo-smoke plan (`docs/sprint_rollup_2026_07_07_r7.md` § next-tick),
 UU7 API backcompat contract (`docs/api_stability_2026_07_07.md`),
 live `CHANGELOG.md:8` header, `pyproject.toml:7` +
-`Cargo.toml:3` + `python/slappyengine/__init__.py:103` version
+`Cargo.toml:3` + `python/pharos_engine/__init__.py:103` version
 cross-check. Docs-only — no version strings or Python source touched.*

@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.render.scene_walker — API Reference
+# pharos_engine.render.scene_walker — API Reference
 
 > Hand-written reference for the JJ5 scene walker.
 > Traverses an FF3 [`scenes.Scene`](../architecture_overview.md) and emits
@@ -13,7 +13,7 @@
 
 ## Overview
 
-`slappyengine.render.scene_walker` is the docs-only bridge between the
+`pharos_engine.render.scene_walker` is the docs-only bridge between the
 FF3 scene data model (entities + `params` dicts on disk) and the HH4
 renderer's `submit_mesh(mesh, transform, material)` surface. It reads a
 scene, resolves each entity's mesh and material, composes a 4x4 TRS
@@ -29,7 +29,7 @@ Python-only; hot loops still land in the HH4 renderer / Rust kernels
 ## Public surface
 
 ```python
-from slappyengine.render.scene_walker import (
+from pharos_engine.render.scene_walker import (
     AssetCache,
     EntityDrawInfo,
     Frustum,
@@ -44,7 +44,7 @@ from slappyengine.render.scene_walker import (
 
 ### `SceneWalker`
 
-_class — defined in `slappyengine.render.scene_walker`_
+_class — defined in `pharos_engine.render.scene_walker`_
 
 Walks a scene once per `walk()` call and submits entities through the
 renderer.
@@ -81,7 +81,7 @@ Raises:
 
 ### `Frustum`
 
-_dataclass — defined in `slappyengine.render.scene_walker`_
+_dataclass — defined in `pharos_engine.render.scene_walker`_
 
 Six-plane view frustum extracted from a `view_projection()` 4x4.
 
@@ -96,7 +96,7 @@ Frustum(planes: np.ndarray)  # (6, 4) float32
 
 ### `EntityDrawInfo`
 
-_dataclass — defined in `slappyengine.render.scene_walker`_
+_dataclass — defined in `pharos_engine.render.scene_walker`_
 
 Resolved per-entity draw record.
 
@@ -111,7 +111,7 @@ Resolved per-entity draw record.
 
 ### `AssetCache`
 
-_class — defined in `slappyengine.render.scene_walker`_
+_class — defined in `pharos_engine.render.scene_walker`_
 
 Small `path -> Mesh` LRU with per-entry TTL. Constructor takes
 `default_ttl_seconds: float = 600.0`. Methods: `get(path)`, `put(path, mesh)`,
@@ -119,7 +119,7 @@ Small `path -> Mesh` LRU with per-entry TTL. Constructor takes
 
 ### `RenderStats`
 
-_dataclass — defined in `slappyengine.render.scene_walker`_
+_dataclass — defined in `pharos_engine.render.scene_walker`_
 
 Per-walk metrics — `entities_walked`, `entities_culled`, `draw_calls`,
 `wall_ms`.
@@ -128,7 +128,7 @@ Per-walk metrics — `entities_walked`, `entities_culled`, `draw_calls`,
 
 ### `render_scene(scene, renderer, camera, *, lights=None, prefab_library=None, asset_cache=None, stats=None) -> RenderStats`
 
-_defined in `slappyengine.render.scene_walker`_
+_defined in `pharos_engine.render.scene_walker`_
 
 One-shot Scene -> renderer pipeline. Opens / closes the renderer's frame
 if it exposes `begin_frame` / `end_frame`, calls
@@ -136,7 +136,7 @@ if it exposes `begin_frame` / `end_frame`, calls
 
 ### `bridge_render_scene(app, scene, renderer, *, camera=None, lights=None) -> RenderStats`
 
-_defined in `slappyengine.render.scene_walker`_
+_defined in `pharos_engine.render.scene_walker`_
 
 App-level bridge used by HH1's `App.render_frame_from_scene(scene)`.
 Reads `app.camera`, `app.lights`, `app.prefab_library`, `app.asset_cache`
@@ -146,9 +146,9 @@ when the caller does not override them.
 
 ```python
 import numpy as np
-from slappyengine.render.scene_walker import SceneWalker, RenderStats
-from slappyengine.render import Camera3D, NullRenderer
-from slappyengine.scenes.scene import Scene
+from pharos_engine.render.scene_walker import SceneWalker, RenderStats
+from pharos_engine.render import Camera3D, NullRenderer
+from pharos_engine.scenes.scene import Scene
 
 scene = Scene()
 scene.entities = [
@@ -166,8 +166,8 @@ assert isinstance(stats, RenderStats)
 
 ## Skip the wrapper
 
-`slappyengine.render.scene_walker` is Python-only glue. There is **no**
-Rust equivalent under `slappyengine._core`; every function above (TRS
+`pharos_engine.render.scene_walker` is Python-only glue. There is **no**
+Rust equivalent under `pharos_engine._core`; every function above (TRS
 composition, plane extraction, AABB transform, per-entity dispatch)
 lives in this file and calls into numpy for the array math. Bypassing
 the wrapper for the walker itself would mean re-implementing the JJ5

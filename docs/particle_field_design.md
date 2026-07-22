@@ -1,7 +1,7 @@
 # ParticleField — design notes
 
 Captures what worked, what didn't, and the rationale for the Phase 1+2
-foundation cleanup. Used to seed `slappyengine/physics/` v2.
+foundation cleanup. Used to seed `pharos_engine/physics/` v2.
 
 ## What worked (keep)
 
@@ -103,7 +103,7 @@ foundation cleanup. Used to seed `slappyengine/physics/` v2.
   by name + holds particle counts + curve overrides.
 
 ### Naive _fluid_relax (vs real PBF)
-- The existing `slappyengine.fluid.pbf_step` is proper Macklin 2013
+- The existing `pharos_engine.fluid.pbf_step` is proper Macklin 2013
   with Rust kernels.
 - My naive bin-and-push approach is a poor substitute.
 - **Refactor**: bridge — fluid-material particles in ParticleField
@@ -136,7 +136,7 @@ foundation cleanup. Used to seed `slappyengine/physics/` v2.
   freeze_temp; water → ice below freeze_temp.
 - Thermal sources (campfire, lava puddle) as "heat stamps" that
   diffuse into nearby pixels.
-- Use existing `slappyengine.thermal` module? It already has heat
+- Use existing `pharos_engine.thermal` module? It already has heat
   diffusion math.
 
 ### Fragment-into-smaller-particles

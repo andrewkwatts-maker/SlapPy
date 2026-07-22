@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.render.shadows — API Reference
+# pharos_engine.render.shadows — API Reference
 
 > Hand-written reference for the JJ7 cascaded shadow maps subsystem.
 > Math + WGSL snippets for practical PSSM split scheme, directional-light
@@ -13,7 +13,7 @@
 
 ## Overview
 
-`slappyengine.render.shadows` is the math + WGSL-source layer of the
+`pharos_engine.render.shadows` is the math + WGSL-source layer of the
 Nova3D-parity cascaded shadow map (CSM) implementation. It computes
 per-cascade splits, light-space view / ortho projections, and packs the
 result into a UBO blob the shader consumes. Downstream renderers
@@ -29,7 +29,7 @@ so cascades stop shimmering as the camera slides.
 ## Public surface
 
 ```python
-from slappyengine.render.shadows import (
+from pharos_engine.render.shadows import (
     CSMBuilder,
     CascadeSplit,
     ShadowMapConfig,
@@ -45,7 +45,7 @@ from slappyengine.render.shadows import (
 
 ### `ShadowMapConfig`
 
-_dataclass — defined in `slappyengine.render.shadows`_
+_dataclass — defined in `pharos_engine.render.shadows`_
 
 ```python
 ShadowMapConfig(
@@ -63,7 +63,7 @@ logarithmic splits.
 
 ### `CascadeSplit`
 
-_dataclass — defined in `slappyengine.render.shadows`_
+_dataclass — defined in `pharos_engine.render.shadows`_
 
 Populated by `CSMBuilder.build_cascades`.
 
@@ -77,7 +77,7 @@ Populated by `CSMBuilder.build_cascades`.
 
 ### `CSMBuilder`
 
-_class — defined in `slappyengine.render.shadows`_
+_class — defined in `pharos_engine.render.shadows`_
 
 Container of static / classmethod helpers. Every method is functional
 and matrix-only — no wgpu / GPU handles.
@@ -99,14 +99,14 @@ and matrix-only — no wgpu / GPU handles.
 
 ### `pack_cascade_ubo(cascades) -> bytes`
 
-_defined in `slappyengine.render.shadows`_
+_defined in `pharos_engine.render.shadows`_
 
 Pack up to 4 `light_view_projection` matrices into a 256-byte
 `array<mat4x4<f32>, 4>` UBO blob. Missing cascades are zero-filled.
 
 ### `find_cascade_for_world_pos(world_pos, cascades) -> int`
 
-_defined in `slappyengine.render.shadows`_
+_defined in `pharos_engine.render.shadows`_
 
 Return the tightest cascade index whose projection covers `world_pos`.
 Falls back to the last cascade index for points beyond the last split so
@@ -134,9 +134,9 @@ comparison sampler the snippet reads.
 ## Usage
 
 ```python
-from slappyengine.render import Camera3D
-from slappyengine.render.light import Light
-from slappyengine.render.shadows import (
+from pharos_engine.render import Camera3D
+from pharos_engine.render.light import Light
+from pharos_engine.render.shadows import (
     CSMBuilder, ShadowMapConfig, pack_cascade_ubo,
 )
 
@@ -151,8 +151,8 @@ assert len(ubo_bytes) == 256
 
 ## Skip the wrapper
 
-`slappyengine.render.shadows` is Python-only. There is **no** Rust
-equivalent under `slappyengine._core`; the split / view / ortho math is
+`pharos_engine.render.shadows` is Python-only. There is **no** Rust
+equivalent under `pharos_engine._core`; the split / view / ortho math is
 pure numpy, and the WGSL sources are string constants that the HH4
 renderer submits directly to wgpu. Bypassing the wrapper for the CSM
 math would mean re-implementing Engel/Zhang PSSM in the caller — not

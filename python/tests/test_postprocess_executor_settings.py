@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, call
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _OCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _OCHEMA_STR = str(_OCHEMA_DIR)
@@ -29,7 +29,7 @@ def _make_ctx():
 
 
 def _executor_with_ctx(ctx=None):
-    from slappyengine.post_process.executor import PostProcessExecutor
+    from pharos_engine.post_process.executor import PostProcessExecutor
     if ctx is None:
         ctx = _make_ctx()
     ex = PostProcessExecutor(ctx)
@@ -37,7 +37,7 @@ def _executor_with_ctx(ctx=None):
 
 
 def _fake_pass(shader_path, params=None, raw_params_bytes=None, label="test"):
-    from slappyengine.post_process.chain import PostProcessPass
+    from pharos_engine.post_process.chain import PostProcessPass
     return PostProcessPass(
         shader_path=shader_path,
         params=params or {},
@@ -327,32 +327,32 @@ class TestMakeParamsBufferRawBytes:
 
 class TestDofPassMakePass:
     def test_make_pass_returns_post_process_pass(self):
-        from slappyengine.post_process.dof import DofPass
-        from slappyengine.post_process.chain import PostProcessPass
+        from pharos_engine.post_process.dof import DofPass
+        from pharos_engine.post_process.chain import PostProcessPass
         dp = DofPass()
         result = dp.make_pass("scene_tex", "depth_tex")
         assert isinstance(result, PostProcessPass)
 
     def test_make_pass_label(self):
-        from slappyengine.post_process.dof import DofPass
+        from pharos_engine.post_process.dof import DofPass
         dp = DofPass()
         p = dp.make_pass("scene_tex", "depth_tex")
         assert p.label == "dof"
 
     def test_make_pass_raw_bytes_not_none(self):
-        from slappyengine.post_process.dof import DofPass
+        from pharos_engine.post_process.dof import DofPass
         dp = DofPass()
         p = dp.make_pass("scene_tex", "depth_tex")
         assert p.raw_params_bytes is not None
 
     def test_make_pass_raw_bytes_32_bytes(self):
-        from slappyengine.post_process.dof import DofPass
+        from pharos_engine.post_process.dof import DofPass
         dp = DofPass()
         p = dp.make_pass("scene_tex", "depth_tex")
         assert len(p.raw_params_bytes) == 32
 
     def test_make_pass_default_focal_distance(self):
-        from slappyengine.post_process.dof import DofPass
+        from pharos_engine.post_process.dof import DofPass
         dp = DofPass(focal_distance=0.5)
         p = dp.make_pass("scene_tex", "depth_tex")
         # Layout: <IIfffIII>: width(0), height(0), focal_distance, focal_range, max_coc, samples, pad0, pad1
@@ -360,28 +360,28 @@ class TestDofPassMakePass:
         assert vals[2] == pytest.approx(0.5)
 
     def test_make_pass_default_focal_range(self):
-        from slappyengine.post_process.dof import DofPass
+        from pharos_engine.post_process.dof import DofPass
         dp = DofPass(focal_range=0.3)
         p = dp.make_pass("scene_tex", "depth_tex")
         vals = struct.unpack("<IIfffIII", p.raw_params_bytes)
         assert vals[3] == pytest.approx(0.3)
 
     def test_make_pass_max_coc(self):
-        from slappyengine.post_process.dof import DofPass
+        from pharos_engine.post_process.dof import DofPass
         dp = DofPass(max_coc_radius=16.0)
         p = dp.make_pass("scene_tex", "depth_tex")
         vals = struct.unpack("<IIfffIII", p.raw_params_bytes)
         assert vals[4] == pytest.approx(16.0)
 
     def test_make_pass_bokeh_samples(self):
-        from slappyengine.post_process.dof import DofPass
+        from pharos_engine.post_process.dof import DofPass
         dp = DofPass(bokeh_samples=12)
         p = dp.make_pass("scene_tex", "depth_tex")
         vals = struct.unpack("<IIfffIII", p.raw_params_bytes)
         assert vals[5] == 12
 
     def test_make_pass_width_height_zero_initially(self):
-        from slappyengine.post_process.dof import DofPass
+        from pharos_engine.post_process.dof import DofPass
         dp = DofPass()
         p = dp.make_pass("scene_tex", "depth_tex")
         vals = struct.unpack("<IIfffIII", p.raw_params_bytes)
@@ -389,7 +389,7 @@ class TestDofPassMakePass:
         assert vals[1] == 0   # height — executor fills
 
     def test_make_pass_custom_values(self):
-        from slappyengine.post_process.dof import DofPass
+        from pharos_engine.post_process.dof import DofPass
         dp = DofPass(focal_distance=0.3, focal_range=0.15,
                      max_coc_radius=8.0, bokeh_samples=8)
         p = dp.make_pass("s", "d")
@@ -406,32 +406,32 @@ class TestDofPassMakePass:
 
 class TestMotionBlurPassMakePass:
     def test_make_pass_returns_post_process_pass(self):
-        from slappyengine.post_process.motion_blur import MotionBlurPass
-        from slappyengine.post_process.chain import PostProcessPass
+        from pharos_engine.post_process.motion_blur import MotionBlurPass
+        from pharos_engine.post_process.chain import PostProcessPass
         mb = MotionBlurPass()
         result = mb.make_pass("scene_tex", "velocity_tex")
         assert isinstance(result, PostProcessPass)
 
     def test_make_pass_label(self):
-        from slappyengine.post_process.motion_blur import MotionBlurPass
+        from pharos_engine.post_process.motion_blur import MotionBlurPass
         mb = MotionBlurPass()
         p = mb.make_pass("scene_tex", "velocity_tex")
         assert p.label == "motion_blur"
 
     def test_make_pass_raw_bytes_not_none(self):
-        from slappyengine.post_process.motion_blur import MotionBlurPass
+        from pharos_engine.post_process.motion_blur import MotionBlurPass
         mb = MotionBlurPass()
         p = mb.make_pass("scene_tex", "velocity_tex")
         assert p.raw_params_bytes is not None
 
     def test_make_pass_32_bytes(self):
-        from slappyengine.post_process.motion_blur import MotionBlurPass
+        from pharos_engine.post_process.motion_blur import MotionBlurPass
         mb = MotionBlurPass()
         p = mb.make_pass("scene_tex", "velocity_tex")
         assert len(p.raw_params_bytes) == 32
 
     def test_make_pass_default_sample_count(self):
-        from slappyengine.post_process.motion_blur import MotionBlurPass
+        from pharos_engine.post_process.motion_blur import MotionBlurPass
         mb = MotionBlurPass(sample_count=8)
         p = mb.make_pass("scene_tex", "velocity_tex")
         # Layout: <IIIfIIII>: width(0), height(0), sample_count, strength, _pad x4
@@ -439,14 +439,14 @@ class TestMotionBlurPassMakePass:
         assert vals[2] == 8
 
     def test_make_pass_default_strength(self):
-        from slappyengine.post_process.motion_blur import MotionBlurPass
+        from pharos_engine.post_process.motion_blur import MotionBlurPass
         mb = MotionBlurPass(strength=1.0)
         p = mb.make_pass("scene_tex", "velocity_tex")
         vals = struct.unpack("<IIIfIIII", p.raw_params_bytes)
         assert vals[3] == pytest.approx(1.0)
 
     def test_make_pass_width_height_zero(self):
-        from slappyengine.post_process.motion_blur import MotionBlurPass
+        from pharos_engine.post_process.motion_blur import MotionBlurPass
         mb = MotionBlurPass()
         p = mb.make_pass("scene_tex", "velocity_tex")
         vals = struct.unpack("<IIIfIIII", p.raw_params_bytes)
@@ -454,7 +454,7 @@ class TestMotionBlurPassMakePass:
         assert vals[1] == 0
 
     def test_make_pass_custom_values(self):
-        from slappyengine.post_process.motion_blur import MotionBlurPass
+        from pharos_engine.post_process.motion_blur import MotionBlurPass
         mb = MotionBlurPass(sample_count=4, strength=2.0)
         p = mb.make_pass("scene_tex", "velocity_tex")
         vals = struct.unpack("<IIIfIIII", p.raw_params_bytes)

@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 # Mock webview before any import
 sys.modules.setdefault("webview", MagicMock())
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 
 # ===========================================================================
@@ -19,7 +19,7 @@ sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
 
 class TestHtmlOverlayInit:
     def _overlay(self, w=800, h=600, title=""):
-        from slappyengine.ui.html_overlay import HtmlOverlay
+        from pharos_engine.ui.html_overlay import HtmlOverlay
         return HtmlOverlay(w, h, title)
 
     def test_instantiates(self):
@@ -51,21 +51,21 @@ class TestHtmlOverlayInit:
         orig = sys.modules.get("webview")
         sys.modules["webview"] = None
         # Need to reload the module to trigger the ImportError path
-        if "slappyengine.ui.html_overlay" in sys.modules:
-            del sys.modules["slappyengine.ui.html_overlay"]
+        if "pharos_engine.ui.html_overlay" in sys.modules:
+            del sys.modules["pharos_engine.ui.html_overlay"]
         try:
             with pytest.raises(ImportError, match="pywebview"):
-                from slappyengine.ui.html_overlay import HtmlOverlay
+                from pharos_engine.ui.html_overlay import HtmlOverlay
                 HtmlOverlay(800, 600)
         finally:
             sys.modules["webview"] = orig
-            if "slappyengine.ui.html_overlay" in sys.modules:
-                del sys.modules["slappyengine.ui.html_overlay"]
+            if "pharos_engine.ui.html_overlay" in sys.modules:
+                del sys.modules["pharos_engine.ui.html_overlay"]
 
 
 class TestHtmlOverlaySetHtml:
     def _overlay(self):
-        from slappyengine.ui.html_overlay import HtmlOverlay
+        from pharos_engine.ui.html_overlay import HtmlOverlay
         return HtmlOverlay(800, 600)
 
     def test_set_html_updates_field(self):
@@ -96,7 +96,7 @@ class TestHtmlOverlaySetHtml:
 
 class TestHtmlOverlaySetHud:
     def _overlay(self):
-        from slappyengine.ui.html_overlay import HtmlOverlay
+        from pharos_engine.ui.html_overlay import HtmlOverlay
         return HtmlOverlay(800, 600)
 
     def test_set_hud_includes_keys(self):
@@ -123,7 +123,7 @@ class TestHtmlOverlaySetHud:
 
 class TestHtmlOverlayLifecycle:
     def _overlay(self):
-        from slappyengine.ui.html_overlay import HtmlOverlay
+        from pharos_engine.ui.html_overlay import HtmlOverlay
         return HtmlOverlay(800, 600)
 
     def test_hide_no_crash_without_window(self):
@@ -166,7 +166,7 @@ class TestHtmlOverlayLifecycle:
 
 class TestBindingFilter:
     def _setup(self):
-        from slappyengine.event_bus import Observable, Binding
+        from pharos_engine.event_bus import Observable, Binding
 
         class Src(Observable):
             pass
@@ -215,7 +215,7 @@ class TestBindingFilter:
 
 class TestBindingDebounce:
     def _setup(self):
-        from slappyengine.event_bus import Observable, Binding
+        from pharos_engine.event_bus import Observable, Binding
 
         class Src(Observable):
             pass
@@ -247,7 +247,7 @@ class TestBindingDebounce:
 
 class TestBindingBidirectional:
     def _setup(self):
-        from slappyengine.event_bus import Observable, Binding
+        from pharos_engine.event_bus import Observable, Binding
 
         class Src(Observable):
             pass
@@ -284,7 +284,7 @@ class TestBindingBidirectional:
 
 class TestBindingFormatter:
     def _setup(self):
-        from slappyengine.event_bus import Observable, Binding
+        from pharos_engine.event_bus import Observable, Binding
 
         class Src(Observable):
             pass
@@ -319,11 +319,11 @@ class TestBindingFormatter:
 
 class TestObservableNoPublish:
     def _bus(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         return global_bus
 
     def test_private_attr_not_published(self):
-        from slappyengine.event_bus import Observable, global_bus
+        from pharos_engine.event_bus import Observable, global_bus
         events = []
 
         class Obj(Observable):
@@ -336,7 +336,7 @@ class TestObservableNoPublish:
         assert events == []
 
     def test_no_publish_attr_skipped(self):
-        from slappyengine.event_bus import Observable, global_bus
+        from pharos_engine.event_bus import Observable, global_bus
         events = []
 
         class Obj(Observable):
@@ -349,7 +349,7 @@ class TestObservableNoPublish:
         assert events == []
 
     def test_public_attr_is_published(self):
-        from slappyengine.event_bus import Observable, global_bus
+        from pharos_engine.event_bus import Observable, global_bus
         events = []
 
         class Obj(Observable):
@@ -362,7 +362,7 @@ class TestObservableNoPublish:
         assert len(events) == 1
 
     def test_multiple_no_publish_attrs(self):
-        from slappyengine.event_bus import Observable, global_bus
+        from pharos_engine.event_bus import Observable, global_bus
         events = []
 
         class Obj(Observable):
@@ -380,7 +380,7 @@ class TestObservableNoPublish:
 
 class TestObservableInheritance:
     def test_child_publishes_with_own_name(self):
-        from slappyengine.event_bus import Observable, global_bus
+        from pharos_engine.event_bus import Observable, global_bus
         events = []
 
         class Parent(Observable):
@@ -396,7 +396,7 @@ class TestObservableInheritance:
         assert len(events) == 1
 
     def test_parent_subscribe_does_not_catch_child_event(self):
-        from slappyengine.event_bus import Observable, global_bus
+        from pharos_engine.event_bus import Observable, global_bus
         events = []
 
         class Parent(Observable):
@@ -414,7 +414,7 @@ class TestObservableInheritance:
 
 class TestObservableEventPayload:
     def test_payload_has_value(self):
-        from slappyengine.event_bus import Observable, global_bus
+        from pharos_engine.event_bus import Observable, global_bus
         events = []
 
         class Src(Observable):
@@ -429,7 +429,7 @@ class TestObservableEventPayload:
         assert inner.payload["value"] == 7
 
     def test_payload_has_attr_name(self):
-        from slappyengine.event_bus import Observable, global_bus
+        from pharos_engine.event_bus import Observable, global_bus
         events = []
 
         class Src(Observable):
@@ -444,7 +444,7 @@ class TestObservableEventPayload:
         assert inner.payload["attr"] == "score"
 
     def test_publisher_is_the_object(self):
-        from slappyengine.event_bus import Observable, global_bus
+        from pharos_engine.event_bus import Observable, global_bus
         events = []
 
         class Src(Observable):
@@ -459,7 +459,7 @@ class TestObservableEventPayload:
         assert inner.publisher is obj
 
     def test_event_name_contains_value(self):
-        from slappyengine.event_bus import Observable, global_bus
+        from pharos_engine.event_bus import Observable, global_bus
         events = []
 
         class Src(Observable):
@@ -480,7 +480,7 @@ class TestObservableEventPayload:
 
 class TestEventBusFanOut:
     def test_child_event_reaches_parent_subscriber(self):
-        from slappyengine.event_bus import global_bus, publish
+        from pharos_engine.event_bus import global_bus, publish
         events = []
         h = global_bus.subscribe("Race", lambda e: events.append("Race"))
         publish("Race.PositionsUpdated", data={})
@@ -488,7 +488,7 @@ class TestEventBusFanOut:
         assert "Race" in events
 
     def test_child_event_also_reaches_child_subscriber(self):
-        from slappyengine.event_bus import global_bus, publish
+        from pharos_engine.event_bus import global_bus, publish
         events = []
         h = global_bus.subscribe("Race.PositionsUpdated", lambda e: events.append("child"))
         publish("Race.PositionsUpdated", data={})
@@ -496,7 +496,7 @@ class TestEventBusFanOut:
         assert "child" in events
 
     def test_parent_event_does_not_reach_sibling(self):
-        from slappyengine.event_bus import global_bus, publish
+        from pharos_engine.event_bus import global_bus, publish
         events = []
         h = global_bus.subscribe("Race.OtherEvent", lambda e: events.append("sibling"))
         publish("Race.PositionsUpdated", data={})
@@ -504,11 +504,11 @@ class TestEventBusFanOut:
         assert events == []
 
     def test_listener_count_zero_for_unknown(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         assert global_bus.listener_count("Completely.Unknown.Event.XYZ") == 0
 
     def test_listener_count_increases_on_subscribe(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         evt = "__test_lc__"
         before = global_bus.listener_count(evt)
         h = global_bus.subscribe(evt, lambda e: None)
@@ -516,7 +516,7 @@ class TestEventBusFanOut:
         global_bus.unsubscribe(h)
 
     def test_listener_count_decreases_on_unsubscribe(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         evt = "__test_lc2__"
         h = global_bus.subscribe(evt, lambda e: None)
         count_with = global_bus.listener_count(evt)
@@ -524,11 +524,11 @@ class TestEventBusFanOut:
         assert global_bus.listener_count(evt) < count_with
 
     def test_publish_returns_without_subscribers(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         publish("Orphan.Event.NobodyListens", x=1)  # should not raise
 
     def test_multiple_subscribers_all_receive(self):
-        from slappyengine.event_bus import global_bus, publish
+        from pharos_engine.event_bus import global_bus, publish
         results = []
         h1 = global_bus.subscribe("Multi.Test", lambda e: results.append(1))
         h2 = global_bus.subscribe("Multi.Test", lambda e: results.append(2))

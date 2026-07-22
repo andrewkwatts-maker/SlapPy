@@ -13,7 +13,7 @@ Covers the five new action ids added by the 2026-07-04 Z7 sprint tick
 * ``theme.export_current`` — write the active :class:`ThemeSpec` to a
   ctx-provided YAML path (or via the shell's ``prompt_save_path`` hook).
 
-Every test dispatches through :class:`~slappyengine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
 so the wire-up (``action_id`` → Python fallback) is exercised end-to-end.
 No DPG context is required — everything routes through ``SimpleNamespace``
 mocks so the suite is headless.
@@ -26,7 +26,7 @@ from typing import Any
 
 import pytest
 
-from slappyengine.tool_router import (
+from pharos_engine.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -49,7 +49,7 @@ def router() -> ToolRouter:
 @pytest.fixture(autouse=True)
 def _reset_snap_grid_and_registry() -> None:
     """Reset the module-level snap-grid flag before each test."""
-    from slappyengine.actions.tool_settings_actions import (
+    from pharos_engine.actions.tool_settings_actions import (
         _reset_snap_grid_for_tests,
     )
     _reset_snap_grid_for_tests()
@@ -186,7 +186,7 @@ def test_snap_to_grid_force_false(router: ToolRouter) -> None:
 
 def test_snap_to_grid_returns_new_state_string() -> None:
     """Direct import of the fallback returns the same dict shape."""
-    from slappyengine.actions.tool_settings_actions import (
+    from pharos_engine.actions.tool_settings_actions import (
         toggle_snap_to_grid,
     )
     r = toggle_snap_to_grid({})
@@ -327,7 +327,7 @@ def test_export_current_theme_no_theme_returns_status(router: ToolRouter) -> Non
     """With no active theme and no override, the fallback bails cleanly."""
     # Force the "no active theme" path by resetting the theme registry
     # before dispatch.
-    from slappyengine.ui.theme import _reset_registry_for_tests
+    from pharos_engine.ui.theme import _reset_registry_for_tests
     _reset_registry_for_tests()
     result = router.dispatch("theme.export_current", {})
     assert result == {"status": "no_theme"}
@@ -412,12 +412,12 @@ def test_export_current_theme_from_active_registry(
     router: ToolRouter, tmp_path: Path,
 ) -> None:
     """When no ``theme`` override is passed, the active registry is queried."""
-    from slappyengine.ui.theme import (
+    from pharos_engine.ui.theme import (
         _reset_registry_for_tests,
         apply_theme,
     )
     try:
-        from slappyengine.ui.theme.themes import (
+        from pharos_engine.ui.theme.themes import (
             TEENGIRL_NOTEBOOK,
             register_all_themes,
         )
@@ -447,14 +447,14 @@ def test_export_current_theme_from_active_registry(
 
 
 def test_direct_import_toggle_snap_to_grid() -> None:
-    """Every new helper is importable from ``slappyengine.actions``."""
-    from slappyengine.actions import toggle_snap_to_grid
+    """Every new helper is importable from ``pharos_engine.actions``."""
+    from pharos_engine.actions import toggle_snap_to_grid
     r = toggle_snap_to_grid({})
     assert r["status"] == "toggled"
 
 
 def test_direct_import_zoom_in_out_reset() -> None:
-    from slappyengine.actions import zoom_in, zoom_out, zoom_reset
+    from pharos_engine.actions import zoom_in, zoom_out, zoom_reset
     camera = _make_camera(distance=5.0)
     assert zoom_in({"camera": camera})["status"] == "zoomed"
     assert zoom_out({"camera": camera})["status"] == "zoomed"
@@ -462,7 +462,7 @@ def test_direct_import_zoom_in_out_reset() -> None:
 
 
 def test_direct_import_export_current_theme(tmp_path: Path) -> None:
-    from slappyengine.actions import export_current_theme
+    from pharos_engine.actions import export_current_theme
     theme = _FakeTheme(name="direct_import")
     dest = tmp_path / "direct.theme.yaml"
     result = export_current_theme({"theme": theme, "path": str(dest)})

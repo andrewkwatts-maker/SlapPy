@@ -199,6 +199,43 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
+name = "pharos_bin"
+version = "0.3.0-beta.1"
+
+[[package]]
+name = "pharos_core"
+version = "0.3.0-beta.1"
+dependencies = [
+ "bytemuck",
+ "half",
+ "rayon",
+ "serde",
+]
+
+[[package]]
+name = "pharos_py"
+version = "0.3.0-beta.1"
+dependencies = [
+ "bytemuck",
+ "half",
+ "lz4",
+ "pyo3",
+ "rand",
+ "rayon",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+]
+
+[[package]]
+name = "pharos_render"
+version = "0.3.0-beta.1"
+dependencies = [
+ "bytemuck",
+ "half",
+]
+
+[[package]]
 name = "portable-atomic"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -417,21 +454,6 @@ name = "shlex"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
-
-[[package]]
-name = "slappyengine"
-version = "0.3.0-beta.0"
-dependencies = [
- "bytemuck",
- "half",
- "lz4",
- "pyo3",
- "rand",
- "rayon",
- "serde",
- "serde_json",
- "serde_yaml",
-]
 
 [[package]]
 name = "syn"

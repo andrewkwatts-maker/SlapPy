@@ -1,8 +1,8 @@
 """Crater explosion demo — preset-driven, runs on ParticleField.
 
-All physics now lives in :class:`slappyengine.physics.particle_field.ParticleField`;
+All physics now lives in :class:`pharos_engine.physics.particle_field.ParticleField`;
 this demo just configures a field, fills the ground, and calls
-:func:`slappyengine.physics.blast.detonate` once on the blast frame. The
+:func:`pharos_engine.physics.blast.detonate` once on the blast frame. The
 preset's knobs (cone, speeds, KE binding, drill, slump cohesion, bake
 radius, settle jitter, up/radial blast boosts) drive everything.
 
@@ -23,9 +23,9 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 
-from slappyengine.physics.blast import detonate
-from slappyengine.physics.particle_field import ParticleField
-from slappyengine.physics.splatter_presets import (
+from pharos_engine.physics.blast import detonate
+from pharos_engine.physics.particle_field import ParticleField
+from pharos_engine.physics.splatter_presets import (
     PRESETS,
     SplatterPreset,
     get as get_preset,

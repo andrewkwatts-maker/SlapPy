@@ -14,7 +14,7 @@ Covers the five new action ids added by the 2026-07-05 DD1 sprint tick
 * ``spawn.repeat_last_batch`` — re-fire the most recent spawn N times
   in a grid, applying a per-cell offset so copies don't overlap.
 
-Every test dispatches through :class:`~slappyengine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
 so the wire-up (``action_id`` -> Python fallback) is exercised end-to-end.
 No DPG context is required — the fixtures use :class:`SimpleNamespace`
 stand-ins for the shell / scene handles.
@@ -26,7 +26,7 @@ from typing import Any
 
 import pytest
 
-from slappyengine.tool_router import (
+from pharos_engine.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,
@@ -216,7 +216,7 @@ class TestCycleThemeReverse:
     def test_fallback_walks_registry_backwards(
         self, router: ToolRouter,
     ) -> None:
-        from slappyengine.actions import theme_actions as ta
+        from pharos_engine.actions import theme_actions as ta
 
         # Seed the shared cursor at "b" — reverse should land on "a".
         ta._reset_theme_cursor_for_tests()
@@ -233,7 +233,7 @@ class TestCycleThemeReverse:
     def test_fallback_no_cursor_lands_on_tail(
         self, router: ToolRouter,
     ) -> None:
-        from slappyengine.actions import theme_actions as ta
+        from pharos_engine.actions import theme_actions as ta
         ta._reset_theme_cursor_for_tests()
         result = router.dispatch(
             "theme.cycle_reverse",
@@ -475,17 +475,17 @@ class TestCtxGuards:
         ],
     )
     def test_none_ctx_raises(self, action_id: str) -> None:
-        from slappyengine.actions.layer_duplicate_actions import (
+        from pharos_engine.actions.layer_duplicate_actions import (
             duplicate_layer,
         )
-        from slappyengine.actions.theme_cycle_reverse_actions import (
+        from pharos_engine.actions.theme_cycle_reverse_actions import (
             cycle_theme_reverse,
         )
-        from slappyengine.actions.panel_visibility_actions import (
+        from pharos_engine.actions.panel_visibility_actions import (
             close_all_panels,
             restore_last_hidden_panel,
         )
-        from slappyengine.actions.spawn_batch_actions import (
+        from pharos_engine.actions.spawn_batch_actions import (
             repeat_last_batch,
         )
 
@@ -510,17 +510,17 @@ class TestCtxGuards:
         ],
     )
     def test_list_ctx_raises(self, action_id: str) -> None:
-        from slappyengine.actions.layer_duplicate_actions import (
+        from pharos_engine.actions.layer_duplicate_actions import (
             duplicate_layer,
         )
-        from slappyengine.actions.theme_cycle_reverse_actions import (
+        from pharos_engine.actions.theme_cycle_reverse_actions import (
             cycle_theme_reverse,
         )
-        from slappyengine.actions.panel_visibility_actions import (
+        from pharos_engine.actions.panel_visibility_actions import (
             close_all_panels,
             restore_last_hidden_panel,
         )
-        from slappyengine.actions.spawn_batch_actions import (
+        from pharos_engine.actions.spawn_batch_actions import (
             repeat_last_batch,
         )
 

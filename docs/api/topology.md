@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.topology — API Reference
+# pharos_engine.topology — API Reference
 
 > Hand-written reference for the SS7 pass on the SlapPyEngine graph
 > topology primitives. Owns connected-components / union-find on generic
@@ -12,7 +12,7 @@
 
 ## Overview
 
-`slappyengine.topology` is one of the small "generic numerical
+`pharos_engine.topology` is one of the small "generic numerical
 primitive" subpackages that Phase B extracted out of the old physics
 tree so both softbody fragmentation and the legacy 2-D cell-bond grid
 share one union-find implementation.
@@ -38,7 +38,7 @@ softbody uses this to skip broken beams cheaply.
 ## Public surface
 
 ```python
-from slappyengine.topology import (
+from pharos_engine.topology import (
     BACKGROUND_LABEL,
     connected_components,
     connected_components_grid,
@@ -49,7 +49,7 @@ from slappyengine.topology import (
 
 ### `connected_components(n_nodes, edges, active=None, node_mask=None) -> tuple[labels, n_components]`
 
-_defined in `slappyengine.topology`_
+_defined in `pharos_engine.topology`_
 
 Label connected components on an edge-list graph. Returns a
 `(n_nodes,)` `int32` array whose entries are dense labels in
@@ -73,7 +73,7 @@ masked-out nodes, together with `n_components: int`.
 
 ### `connected_components_grid(density, bond_e, bond_s, density_threshold=0.1, bond_threshold=0.05) -> tuple[labels_2d, n_components]`
 
-_defined in `slappyengine.topology`_
+_defined in `pharos_engine.topology`_
 
 Legacy 2-D grid convenience form. Builds an edge list from the east
 (`bond_e`) and south (`bond_s`) bond-strength arrays, uses
@@ -88,7 +88,7 @@ code should prefer :func:`connected_components` directly.
 
 ### `BACKGROUND_LABEL`
 
-_int — defined in `slappyengine.topology`_
+_int — defined in `pharos_engine.topology`_
 
 Value: `-1`. Sentinel label written into
 :func:`connected_components` output for any node whose `node_mask`
@@ -101,7 +101,7 @@ component label so callers can filter background cells with a single
 
 ```python
 import numpy as np
-from slappyengine.topology import (
+from pharos_engine.topology import (
     BACKGROUND_LABEL, connected_components,
 )
 
@@ -130,8 +130,8 @@ assert n == 3  # {0, 1}, {2}, {3}
 
 ## Skip the wrapper
 
-`slappyengine.topology` is Python-only. Grep of
-`slappyengine._core_facade.RUST_MODULE_MAP` shows **no** `topology`
+`pharos_engine.topology` is Python-only. Grep of
+`pharos_engine._core_facade.RUST_MODULE_MAP` shows **no** `topology`
 entry — the inner `_uf_find` / `_uf_union` primitives are scalar
 integer ops on a small `parent` / `size` `int64` array, and the outer
 loop runs at most `E + N` iterations. For the softbody fragmentation

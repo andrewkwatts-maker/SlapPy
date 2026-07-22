@@ -1,6 +1,6 @@
 """SlapPyEngine - Hello Studio
 
-End-to-end demo of the unified :mod:`slappyengine.studio` API on top of the
+End-to-end demo of the unified :mod:`pharos_engine.studio` API on top of the
 dynamics substrate. A 24-node rope is hung between two pinned anchors and
 recorded to ``examples/output/studio/hello_studio.gif`` with a single
 ``stage.record(...)`` call.
@@ -15,9 +15,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from slappyengine import studio
-from slappyengine.dynamics import RopeSpec, build_rope
-from slappyengine.examples_common import (
+from pharos_engine import studio
+from pharos_engine.dynamics import RopeSpec, build_rope
+from pharos_engine.examples_common import (
     build_demo_arg_parser, record_or_smoke,
 )
 

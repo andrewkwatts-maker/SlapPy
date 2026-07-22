@@ -14,7 +14,7 @@ Pins seven behaviours of the multi-subsystem composite demo:
    times right at) the defender clamp value.
 6. No NaNs leak from positions / hp / temperatures during the run.
 7. The rasterised composite scene reproduces the committed visual
-   baseline via :func:`slappyengine.testing.assert_scene_matches`.
+   baseline via :func:`pharos_engine.testing.assert_scene_matches`.
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from slappyengine.testing import assert_scene_matches
+from pharos_engine.testing import assert_scene_matches
 
 # -- Load the demo as a module so we don't depend on examples/ being on path --
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -205,7 +205,7 @@ def test_hello_composite_visual_baseline(demo):
     """Render the composite scene and diff against the committed baseline PNG.
 
     First run writes
-    ``python/slappyengine/testing/baselines/hello_composite.png``
+    ``python/pharos_engine/testing/baselines/hello_composite.png``
     and passes; subsequent runs require a max per-channel diff <= 0.05.
     """
     scene = demo.build_scene()

@@ -11,7 +11,7 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.fluid.surface import (
+from pharos_engine.fluid.surface import (
     compute_density_normals,
     extract_isolines,
     sample_density_grid,

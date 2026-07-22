@@ -1,4 +1,4 @@
-﻿"""
+"""
 Comprehensive tests for SceneUIEntity.
 
 No GPU required — SceneUIEntity operates purely on CPU numpy arrays and
@@ -12,8 +12,8 @@ importable (e.g. Rust _core extension not yet compiled).
 import pytest
 
 try:
-    from slappyengine.ui.scene_ui import SceneUIEntity
-    from slappyengine.layer import Layer
+    from pharos_engine.ui.scene_ui import SceneUIEntity
+    from pharos_engine.layer import Layer
 except Exception as e:
     pytest.skip(f"SlapPyEngine.ui not importable: {e}", allow_module_level=True)
 

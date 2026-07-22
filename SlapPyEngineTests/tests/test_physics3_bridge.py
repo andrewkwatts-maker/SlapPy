@@ -1,4 +1,4 @@
-"""Tests for slappyengine.physics3_bridge — LL7 Nova3D parity Sprint 18.
+"""Tests for pharos_engine.physics3_bridge — LL7 Nova3D parity Sprint 18.
 
 Coverage:
 * resolve_physics3_backend returns a valid tag.
@@ -18,7 +18,7 @@ import time
 
 import pytest
 
-from slappyengine.physics3_bridge import (
+from pharos_engine.physics3_bridge import (
     Body3D,
     PhysicsBackendError,
     World3D,
@@ -312,7 +312,7 @@ def test_query_aabb_tuple_pair() -> None:
 
 
 def test_query_aabb_accepts_kk1_aabb_when_available() -> None:
-    from slappyengine.physics3_bridge import AABB3D
+    from pharos_engine.physics3_bridge import AABB3D
     if AABB3D is None:
         pytest.skip("KK1 AABB3D unavailable — render tree stripped")
     w = World3D(backend="fallback")

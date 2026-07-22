@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.asset_import — API Reference
+# pharos_engine.asset_import — API Reference
 
 > Hand-written reference for the HH5 / JJ3 asset-import subpackage.
 > 3D-mesh + texture + cubemap loaders with a single dispatch entry
@@ -11,7 +11,7 @@
 
 ## Overview
 
-`slappyengine.asset_import` is the "read an asset off disk, return a
+`pharos_engine.asset_import` is the "read an asset off disk, return a
 uniform :class:`ImportResult`" layer. Every loader — OBJ, glTF, HDR
 cubemap, texture — returns the same shape so downstream code (JJ5 scene
 walker, JJ4 skinned mesh runtime, editor thumbnail cache) never has to
@@ -19,7 +19,7 @@ branch on the file extension.
 
 Format-specific dispatch runs through :class:`AssetImportDispatcher`;
 the module-level helpers (`import_asset`, `load_model`, `load_texture`)
-use a lazy shared dispatcher so `from slappyengine.asset_import import
+use a lazy shared dispatcher so `from pharos_engine.asset_import import
 load_model` is cheap.
 
 Every real loader **soft-imports** its heavy dependency
@@ -30,7 +30,7 @@ caller's install advice is unambiguous.
 ## Public surface
 
 ```python
-from slappyengine.asset_import import (
+from pharos_engine.asset_import import (
     AssetImportDispatcher,
     ImportDependencyError,
     ImportResult,
@@ -50,7 +50,7 @@ from slappyengine.asset_import import (
 
 ### `ImportResult`
 
-_dataclass — defined in `slappyengine.asset_import.import_result`_
+_dataclass — defined in `pharos_engine.asset_import.import_result`_
 
 Uniform return shape for every loader.
 
@@ -67,7 +67,7 @@ Exposes `.primary_mesh`, `.primary_texture`, `.primary_material`,
 
 ### `AssetImportDispatcher`
 
-_class — defined in `slappyengine.asset_import.dispatcher`_
+_class — defined in `pharos_engine.asset_import.dispatcher`_
 
 ```python
 disp = AssetImportDispatcher()
@@ -79,23 +79,23 @@ to add custom loaders.
 
 ### `TextureData`
 
-_dataclass — defined in `slappyengine.asset_import.import_result`_
+_dataclass — defined in `pharos_engine.asset_import.import_result`_
 
 CPU-side texture buffer with `pixels: np.ndarray[uint8]`,
 `width: int`, `height: int`, `channels: int`, `source_path: str | None`.
 
 ### `SkinnedMeshData` / `Skeleton` / `SkeletonNode`
 
-_dataclasses — defined in `slappyengine.asset_import.skinned_mesh`_
+_dataclasses — defined in `pharos_engine.asset_import.skinned_mesh`_
 
 Emitted by the glTF importer when the file carries skinning data.
-Re-exported from :mod:`slappyengine.animation` so animation callers
+Re-exported from :mod:`pharos_engine.animation` so animation callers
 don't have to know about the importer surface — see
 [`animation_skeleton.md`](animation_skeleton.md).
 
 ### `MtlMaterialDef`
 
-_dataclass — defined in `slappyengine.asset_import.mtl_resolver`_
+_dataclass — defined in `pharos_engine.asset_import.mtl_resolver`_
 
 Parsed record from an OBJ MTL sidecar (`Ka`, `Kd`, `Ks`, `Ns`, `map_Kd`,
 `map_Bump`). Consumers convert to engine :class:`Material` via
@@ -103,7 +103,7 @@ Parsed record from an OBJ MTL sidecar (`Ka`, `Kd`, `Ks`, `Ns`, `map_Kd`,
 
 ### `ImportDependencyError`
 
-_exception — defined in `slappyengine.asset_import.import_result`_
+_exception — defined in `pharos_engine.asset_import.import_result`_
 
 Raised when a loader needs an optional dep that is not installed. The
 message names the pip extra (`[assets]`, `[hdr]`, etc.) to install.
@@ -112,13 +112,13 @@ message names the pip extra (`[assets]`, `[hdr]`, etc.) to install.
 
 ### `import_asset(path) -> ImportResult`
 
-_defined in `slappyengine.asset_import.dispatcher`_
+_defined in `pharos_engine.asset_import.dispatcher`_
 
 Format-agnostic dispatch — infers the loader from the file extension.
 
 ### `load_model(path) -> Mesh | GpuMesh`
 
-_defined in `slappyengine.asset_import.dispatcher`_
+_defined in `pharos_engine.asset_import.dispatcher`_
 
 Ergonomic one-liner returning the primary mesh handle. Raises
 :class:`FileNotFoundError` when the path is missing,
@@ -127,7 +127,7 @@ installed, `ValueError` when the file has no meshes.
 
 ### `load_texture(path) -> TextureData`
 
-_defined in `slappyengine.asset_import.dispatcher`_
+_defined in `pharos_engine.asset_import.dispatcher`_
 
 Primary-texture ergonomic one-liner.
 
@@ -147,31 +147,31 @@ Primary-texture ergonomic one-liner.
 
 - `parse_mtl(text) -> list[MtlMaterialDef]`
 - `resolve_mtl_references(obj_path, mtl_names) -> list[Path]`
-- `mtl_to_material(mtl_def) -> slappyengine.material.Material`
+- `mtl_to_material(mtl_def) -> pharos_engine.material.Material`
 
 ## Usage
 
 ```python
-from slappyengine.asset_import import load_model, load_texture
+from pharos_engine.asset_import import load_model, load_texture
 
 mesh = load_model("assets/character.obj")   # returns Mesh
 tex = load_texture("assets/tile.png")       # returns TextureData
 
 # Full dispatcher for multi-mesh files:
-from slappyengine.asset_import import AssetImportDispatcher
+from pharos_engine.asset_import import AssetImportDispatcher
 disp = AssetImportDispatcher()
 result = disp.import_asset("assets/scene.gltf")
 for i, m in enumerate(result.meshes):
     print(f"mesh {i}: {m}")
 if result.primary_skeleton is not None:
-    from slappyengine.animation import Animator
+    from pharos_engine.animation import Animator
     animator = Animator(result.primary_mesh, result.primary_skeleton)
 ```
 
 ## Skip the wrapper
 
-`slappyengine.asset_import` is Python-only. There is **no** Rust
-equivalent under `slappyengine._core`; every loader is thin glue over
+`pharos_engine.asset_import` is Python-only. There is **no** Rust
+equivalent under `pharos_engine._core`; every loader is thin glue over
 `pygltflib` / `PIL` / `imageio`. Bypassing the wrapper would mean
 importing those libraries directly — reasonable if you need a feature
 the loader does not expose (e.g. glTF morph targets), but you lose

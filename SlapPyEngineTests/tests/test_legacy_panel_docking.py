@@ -70,7 +70,7 @@ class _StubBehaviorPanel:
 @pytest.fixture(autouse=True)
 def reset_theme_registry():
     """Drop the theme registry between tests."""
-    from slappyengine.ui.theme import _reset_registry_for_tests
+    from pharos_engine.ui.theme import _reset_registry_for_tests
 
     _reset_registry_for_tests()
     yield
@@ -80,7 +80,7 @@ def reset_theme_registry():
 def _make_shell(*, with_layer: bool = True, with_viewport: bool = True,
                 with_tag_painter: bool = True, with_behavior: bool = True):
     """Build an ``EditorShell`` with the chosen subset of legacy panels."""
-    from slappyengine.ui.editor.shell import EditorShell
+    from pharos_engine.ui.editor.shell import EditorShell
 
     class _StubEngine:
         def __init__(self):
@@ -301,7 +301,7 @@ class TestToggle:
 
 class TestShellSlots:
     def test_init_creates_layer_panel_slot(self):
-        from slappyengine.ui.editor.shell import EditorShell
+        from pharos_engine.ui.editor.shell import EditorShell
 
         class _StubEngine:
             scene = None
@@ -311,7 +311,7 @@ class TestShellSlots:
         assert shell._layer_panel is None
 
     def test_init_creates_tag_painter_slot(self):
-        from slappyengine.ui.editor.shell import EditorShell
+        from pharos_engine.ui.editor.shell import EditorShell
 
         class _StubEngine:
             scene = None
@@ -321,7 +321,7 @@ class TestShellSlots:
         assert shell._tag_painter is None
 
     def test_init_creates_behavior_panel_slot(self):
-        from slappyengine.ui.editor.shell import EditorShell
+        from pharos_engine.ui.editor.shell import EditorShell
 
         class _StubEngine:
             scene = None
@@ -331,7 +331,7 @@ class TestShellSlots:
         assert shell._behavior_panel is None
 
     def test_init_creates_viewport_panel_slot(self):
-        from slappyengine.ui.editor.shell import EditorShell
+        from pharos_engine.ui.editor.shell import EditorShell
 
         class _StubEngine:
             scene = None

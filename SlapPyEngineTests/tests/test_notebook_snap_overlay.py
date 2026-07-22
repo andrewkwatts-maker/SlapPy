@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.ui.editor.notebook_snap_overlay`.
+"""Tests for :mod:`pharos_engine.ui.editor.notebook_snap_overlay`.
 
 The overlay is draw-list agnostic — every test drives it with a recording
 :class:`_MockDrawList` instead of Dear PyGui so the contract runs
@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from slappyengine.ui.editor.notebook_snap_overlay import (
+from pharos_engine.ui.editor.notebook_snap_overlay import (
     NotebookSnapOverlay,
     SnapGhost,
 )
@@ -422,7 +422,7 @@ class TestRender:
 
 class TestPublicExports:
     def test_lazy_import_from_editor_pkg(self, dpg_context) -> None:
-        from slappyengine.ui import editor
+        from pharos_engine.ui import editor
 
         assert editor.NotebookSnapOverlay is NotebookSnapOverlay
         assert editor.SnapGhost is SnapGhost

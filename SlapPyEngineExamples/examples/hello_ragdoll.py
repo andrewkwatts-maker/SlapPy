@@ -2,17 +2,17 @@
 
 A 6-bone humanoid ragdoll drops onto a flat floor, lands, settles, then
 breathes. The demo can record the run as an animated GIF using the same
-``slappyengine.media`` backbone the :mod:`slappyengine.studio` helpers use,
+``pharos_engine.media`` backbone the :mod:`pharos_engine.studio` helpers use,
 or rasterise a single final-frame PNG for the smoke-test harness.
 
 The skeleton is six bones (torso, head, two arms, two legs) wired by the
-authoritative :func:`slappyengine.dynamics.build_ragdoll` builder. After
+authoritative :func:`pharos_engine.dynamics.build_ragdoll` builder. After
 landing, a small vertical sway on the head node simulates breathing without
 breaking the joint band invariants.
 
 Damping is tuned so ``solver_iterations * damping`` stays at or under
 ``0.3`` (the over-damp warning threshold documented in
-:mod:`slappyengine.dynamics.world`): ``iters=6`` and ``damping=0.05`` give
+:mod:`pharos_engine.dynamics.world`): ``iters=6`` and ``damping=0.05`` give
 ``0.30`` exactly, so the demo never trips ``RuntimeWarning``.
 
 Run::
@@ -31,8 +31,8 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.dynamics import BoneSpec, RagdollSpec, World, build_ragdoll
-from slappyengine.media import save_frames
+from pharos_engine.dynamics import BoneSpec, RagdollSpec, World, build_ragdoll
+from pharos_engine.media import save_frames
 
 
 # -- Demo parameters -------------------------------------------------------
@@ -364,7 +364,7 @@ def _default_gif_path() -> Path:
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    from slappyengine.examples_common import build_demo_arg_parser
+    from pharos_engine.examples_common import build_demo_arg_parser
 
     parser = build_demo_arg_parser(
         "Hello Ragdoll - SlapPyEngine demo",

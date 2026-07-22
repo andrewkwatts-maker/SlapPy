@@ -4,7 +4,7 @@ Round 2 lighting polish (Option B, Jimenez 2016 "Practical Realtime Strategies
 for Accurate Indirect Occlusion", SIGGRAPH 2016).
 
 The shader-side change is mirrored by a pure-Python helper
-:func:`slappyengine.post_process.gtao.compute_adaptive_radius` so we can verify
+:func:`pharos_engine.post_process.gtao.compute_adaptive_radius` so we can verify
 the math headlessly without spinning up a wgpu adapter.  These tests:
 
   1. lock the no-op case (depth_falloff = 0 yields the legacy radius);
@@ -23,7 +23,7 @@ import struct
 import numpy as np
 import pytest
 
-from slappyengine.post_process.gtao import GTAOPass, compute_adaptive_radius
+from pharos_engine.post_process.gtao import GTAOPass, compute_adaptive_radius
 
 
 # ---------------------------------------------------------------------------

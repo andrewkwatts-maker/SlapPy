@@ -1,12 +1,12 @@
 """Smoke test for ``examples/buoyancy_demo.py`` (TT3 gap-close, batch 5).
 
 The demo drops a wood block (600 kg/m^3) and a steel block (7800) into
-a PBF pool; :func:`slappyengine.fluid.apply_fluid_buoyancy` handles the
+a PBF pool; :func:`pharos_engine.fluid.apply_fluid_buoyancy` handles the
 Archimedes upthrust and the wood floats while the steel sinks. Output is
 a side-by-side GIF at ``examples/output/buoyancy/buoyancy.gif``.
 
-The demo imports from :mod:`slappyengine.fluid` and
-:mod:`slappyengine.softbody`, both WIP subpackages. This test wakes up
+The demo imports from :mod:`pharos_engine.fluid` and
+:mod:`pharos_engine.softbody`, both WIP subpackages. This test wakes up
 as soon as they land — until then it skips with a clear reason so the
 gap remains visible in the test report.
 
@@ -36,20 +36,20 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP fluid / softbody subpackages being unavailable.
     try:
-        from slappyengine.fluid import (  # noqa: F401
+        from pharos_engine.fluid import (  # noqa: F401
             FluidRenderConfig,
             FluidRenderer,
             apply_fluid_buoyancy,
             pbf_step,
         )
-        from slappyengine.softbody import make_lattice_body  # noqa: F401
-        from slappyengine.studio import (  # noqa: F401
+        from pharos_engine.softbody import make_lattice_body  # noqa: F401
+        from pharos_engine.studio import (  # noqa: F401
             fluid_with_softbody_stage,
             output_path,
         )
     except Exception as exc:
         pytest.skip(
-            "slappyengine.fluid / softbody / studio unavailable (WIP): "
+            "pharos_engine.fluid / softbody / studio unavailable (WIP): "
             f"{exc}"
         )
 

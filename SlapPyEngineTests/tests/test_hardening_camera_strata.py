@@ -1,4 +1,4 @@
-"""Negative-path tests for :class:`Camera` follow / and :mod:`slappyengine.
+"""Negative-path tests for :class:`Camera` follow / and :mod:`pharos_engine.
 strata` public-boundary validation (hardening round 11).
 
 Round 4 hardened the :class:`Camera` constructor and ``position`` / ``zoom``
@@ -45,8 +45,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "python"))
 
-from slappyengine.camera import Camera  # noqa: E402
-from slappyengine.strata import StrataLayer, StrataWorld  # noqa: E402
+from pharos_engine.camera import Camera  # noqa: E402
+from pharos_engine.strata import StrataLayer, StrataWorld  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

@@ -21,12 +21,12 @@ import argparse
 import sys
 
 import numpy as np
-import slappyengine as se
-from slappyengine.asset import Asset
-from slappyengine.layer import Layer
-from slappyengine.scene import Scene
-from slappyengine.gpu.mesh import GpuMesh
-from slappyengine.gpu.pbr_material import PbrMaterial
+import pharos_engine as se
+from pharos_engine.asset import Asset
+from pharos_engine.layer import Layer
+from pharos_engine.scene import Scene
+from pharos_engine.gpu.mesh import GpuMesh
+from pharos_engine.gpu.pbr_material import PbrMaterial
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:

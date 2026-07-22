@@ -3,7 +3,7 @@
 Companion to the NN7 sprint that polished ``slap export`` with
 ``--dry-run``, ``--verbose``, ``--exclude PATTERN``, ``--target``, and
 ``manifest.json`` inclusion.  This demo drives the *Python* face of that
-CLI — :func:`slappyengine.exporter.export_project` — end-to-end so a
+CLI — :func:`pharos_engine.exporter.export_project` — end-to-end so a
 tooling author can copy-paste a reference workflow.
 
 Scene
@@ -170,8 +170,8 @@ def main(
         Value passed through to ``manifest_targets``. Defaults to
         ``"all"``.
     """
-    from slappyengine import __version__ as engine_version
-    from slappyengine.exporter import export_project
+    from pharos_engine import __version__ as engine_version
+    from pharos_engine.exporter import export_project
 
     if exclude_patterns is None:
         exclude_patterns = list(DEFAULT_EXCLUDE_PATTERNS)

@@ -1,7 +1,7 @@
 """Regression tests for the GTAO multibounce resolve (Jiménez 2016 §2.3).
 
 The shader-side change (``shaders/ao_gtao.wgsl``) is mirrored by the
-Python helper :func:`slappyengine.post_process.gtao.multibounce_visibility`
+Python helper :func:`pharos_engine.post_process.gtao.multibounce_visibility`
 so the polynomial can be exercised headlessly without a wgpu adapter.
 
 These tests lock the three invariants the spec calls out:
@@ -32,7 +32,7 @@ import struct
 import numpy as np
 import pytest
 
-from slappyengine.post_process.gtao import (
+from pharos_engine.post_process.gtao import (
     GTAOPass,
     multibounce_visibility,
 )

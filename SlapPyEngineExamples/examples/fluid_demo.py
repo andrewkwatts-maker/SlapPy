@@ -22,9 +22,9 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from slappyengine.fluid import FluidRenderConfig, FluidRenderer, pbf_step
-from slappyengine.media import save_frames
-from slappyengine.studio import fluid_stage, output_path
+from pharos_engine.fluid import FluidRenderConfig, FluidRenderer, pbf_step
+from pharos_engine.media import save_frames
+from pharos_engine.studio import fluid_stage, output_path
 
 
 _DIVIDER_PX = 4

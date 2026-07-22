@@ -1,6 +1,6 @@
-# slappyengine.post_process — Design Reference
+# pharos_engine.post_process — Design Reference
 
-`slappyengine.post_process` is the engine's **declarative post-process
+`pharos_engine.post_process` is the engine's **declarative post-process
 chain**: a list of GPU compute passes that operate on the lighting /
 tonemap framebuffer between the renderer and the swap chain. Every
 shipped pass — TAA, Bloom, GTAO, Tonemap, SSR, DoF, Outline, Vignette,
@@ -37,7 +37,7 @@ inheriting `PostProcessPassBase`, and the chain wiring is mechanical.
 ## Chain composition
 
 ```python
-from slappyengine.post_process import PostProcessChain, BloomPass, TonemapPass
+from pharos_engine.post_process import PostProcessChain, BloomPass, TonemapPass
 
 chain = PostProcessChain()
 chain.add_bloom(threshold=1.0, knee=0.5, intensity=0.05)
@@ -239,8 +239,8 @@ learns about it.
 ## Lazy import
 
 `post_process/__init__.py` uses `_LAZY_MAP` + `__getattr__` so
-`import slappyengine` does not pull in `wgpu`. A fresh `python -c
-"import slappyengine"` does not touch `wgpu.GPUDevice` until a pass
+`import pharos_engine` does not pull in `wgpu`. A fresh `python -c
+"import pharos_engine"` does not touch `wgpu.GPUDevice` until a pass
 constructor is actually referenced. This matters for headless CI and
 for the `[editor]` / `[ai]` extras that ship without a GPU stack.
 

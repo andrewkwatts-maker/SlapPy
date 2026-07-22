@@ -32,20 +32,20 @@ from pathlib import Path
 # Additions here are permanent — every module listed becomes a
 # pinned tripwire for future deletions.
 MODULES = [
-    "slappyengine",
-    "slappyengine.event_bus",
-    "slappyengine.entity",
-    "slappyengine.layer",
-    "slappyengine.render_target",
-    "slappyengine.asset",
-    "slappyengine.app",
-    "slappyengine.dynamics",
-    "slappyengine.physics3_bridge",
-    "slappyengine.diagnostics",
-    "slappyengine.hud_bridge",
-    "slappyengine.audio_3d",
-    "slappyengine.capture",
-    "slappyengine.exporter",
+    "pharos_engine",
+    "pharos_engine.event_bus",
+    "pharos_engine.entity",
+    "pharos_engine.layer",
+    "pharos_engine.render_target",
+    "pharos_engine.asset",
+    "pharos_engine.app",
+    "pharos_engine.dynamics",
+    "pharos_engine.physics3_bridge",
+    "pharos_engine.diagnostics",
+    "pharos_engine.hud_bridge",
+    "pharos_engine.audio_3d",
+    "pharos_engine.capture",
+    "pharos_engine.exporter",
 ]
 
 
@@ -62,7 +62,7 @@ SNAPSHOT_PATH = (
 
 def _current_public_names(module_name: str) -> list[str]:
     m = importlib.import_module(module_name)
-    if module_name == "slappyengine":
+    if module_name == "pharos_engine":
         # Top-level uses PEP 562 lazy-load — enumerate __all__.
         return sorted(set(getattr(m, "__all__", [])))
     return sorted(n for n in dir(m) if not n.startswith("_"))

@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.diagnostics` + HUD widget bridge (OO6).
+"""Tests for :mod:`pharos_engine.diagnostics` + HUD widget bridge (OO6).
 
 Covers:
 
@@ -15,7 +15,7 @@ import logging
 
 import pytest
 
-from slappyengine.diagnostics import (
+from pharos_engine.diagnostics import (
     DiagnosticEvent,
     DiagnosticsCollector,
     _subsystem_from_logger_name,
@@ -37,9 +37,9 @@ def collector() -> DiagnosticsCollector:
 
 
 def test_subsystem_extraction_slappy_prefix():
-    assert _subsystem_from_logger_name("slappyengine.render.ssao") == "render"
-    assert _subsystem_from_logger_name("slappyengine.audio_3d") == "audio_3d"
-    assert _subsystem_from_logger_name("slappyengine") == "slappyengine"
+    assert _subsystem_from_logger_name("pharos_engine.render.ssao") == "render"
+    assert _subsystem_from_logger_name("pharos_engine.audio_3d") == "audio_3d"
+    assert _subsystem_from_logger_name("pharos_engine") == "pharos_engine"
 
 
 def test_subsystem_extraction_other_pkg():
@@ -54,7 +54,7 @@ def test_subsystem_extraction_other_pkg():
 
 def test_install_captures_warning(collector: DiagnosticsCollector):
     collector.install()
-    logging.getLogger("slappyengine.audio_3d").warning("bad channel count")
+    logging.getLogger("pharos_engine.audio_3d").warning("bad channel count")
     events = collector.events()
     assert len(events) == 1
     evt = events[0]
@@ -68,20 +68,20 @@ def test_install_is_idempotent(collector: DiagnosticsCollector):
     collector.install()
     collector.install()
     collector.install()
-    logging.getLogger("slappyengine.render.ssao").warning("dup handler check")
+    logging.getLogger("pharos_engine.render.ssao").warning("dup handler check")
     # Exactly one event captured — no double-fire from a second handler.
     assert len(collector.events()) == 1
     # And the underlying logger has exactly one handler pointing at us.
-    logger = logging.getLogger("slappyengine")
+    logger = logging.getLogger("pharos_engine")
     ours = [h for h in logger.handlers if getattr(h, "collector", None) is collector]
     assert len(ours) == 1
 
 
 def test_uninstall_stops_capture(collector: DiagnosticsCollector):
     collector.install()
-    logging.getLogger("slappyengine.render").warning("first")
+    logging.getLogger("pharos_engine.render").warning("first")
     collector.uninstall()
-    logging.getLogger("slappyengine.render").warning("second — should not land")
+    logging.getLogger("pharos_engine.render").warning("second — should not land")
     events = collector.events()
     assert len(events) == 1
     assert "first" in events[0].message
@@ -96,7 +96,7 @@ def test_rolling_buffer_respects_max_events():
     c = DiagnosticsCollector(max_events=500, min_level="WARNING")
     c.install()
     try:
-        log = logging.getLogger("slappyengine.render")
+        log = logging.getLogger("pharos_engine.render")
         for i in range(600):
             log.warning("noise %d", i)
         events = c.events()
@@ -111,8 +111,8 @@ def test_rolling_buffer_respects_max_events():
 
 def test_clear_empties_buffer(collector: DiagnosticsCollector):
     collector.install()
-    logging.getLogger("slappyengine.render").warning("x")
-    logging.getLogger("slappyengine.render").warning("y")
+    logging.getLogger("pharos_engine.render").warning("x")
+    logging.getLogger("pharos_engine.render").warning("y")
     assert len(collector.events()) == 2
     collector.clear()
     assert collector.events() == []
@@ -127,7 +127,7 @@ def test_min_level_error_drops_warnings():
     c = DiagnosticsCollector(max_events=100, min_level="ERROR")
     c.install()
     try:
-        log = logging.getLogger("slappyengine.audio_3d")
+        log = logging.getLogger("pharos_engine.audio_3d")
         log.warning("should be dropped")
         log.error("should land")
         events = c.events()
@@ -144,10 +144,10 @@ def test_min_level_error_drops_warnings():
 
 def test_filter_by_subsystem_returns_only_matching(collector: DiagnosticsCollector):
     collector.install()
-    logging.getLogger("slappyengine.audio_3d").warning("a1")
-    logging.getLogger("slappyengine.audio_3d").warning("a2")
-    logging.getLogger("slappyengine.render.ssao").warning("r1")
-    logging.getLogger("slappyengine.capture").warning("c1")
+    logging.getLogger("pharos_engine.audio_3d").warning("a1")
+    logging.getLogger("pharos_engine.audio_3d").warning("a2")
+    logging.getLogger("pharos_engine.render.ssao").warning("r1")
+    logging.getLogger("pharos_engine.capture").warning("c1")
 
     audio_events = collector.filter_by_subsystem("audio")
     assert len(audio_events) == 2
@@ -161,10 +161,10 @@ def test_filter_by_subsystem_returns_only_matching(collector: DiagnosticsCollect
 
 def test_stats_reports_level_and_subsystem_counts(collector: DiagnosticsCollector):
     collector.install()
-    logging.getLogger("slappyengine.audio_3d").warning("a1")
-    logging.getLogger("slappyengine.audio_3d").warning("a2")
-    logging.getLogger("slappyengine.render.ssao").error("r_err")
-    logging.getLogger("slappyengine.capture").warning("c1")
+    logging.getLogger("pharos_engine.audio_3d").warning("a1")
+    logging.getLogger("pharos_engine.audio_3d").warning("a2")
+    logging.getLogger("pharos_engine.render.ssao").error("r_err")
+    logging.getLogger("pharos_engine.capture").warning("c1")
 
     stats = collector.stats()
     assert stats["total"] == 4
@@ -205,11 +205,11 @@ class _FakeUI:
 
 
 def test_hud_widget_shows_level_counts(collector: DiagnosticsCollector):
-    from slappyengine.hud_bridge import _DiagnosticsHUDWidget
+    from pharos_engine.hud_bridge import _DiagnosticsHUDWidget
 
     collector.install()
-    logging.getLogger("slappyengine.audio_3d").warning("bad channel")
-    logging.getLogger("slappyengine.render.ssao").error("shader missing")
+    logging.getLogger("pharos_engine.audio_3d").warning("bad channel")
+    logging.getLogger("pharos_engine.render.ssao").error("shader missing")
 
     widget = _DiagnosticsHUDWidget(collector, position=(10.0, 100.0))
     ui = _FakeUI()
@@ -228,7 +228,7 @@ def test_hud_widget_shows_level_counts(collector: DiagnosticsCollector):
 
 
 def test_hud_widget_summary_zero_when_empty(collector: DiagnosticsCollector):
-    from slappyengine.hud_bridge import _DiagnosticsHUDWidget
+    from pharos_engine.hud_bridge import _DiagnosticsHUDWidget
 
     widget = _DiagnosticsHUDWidget(collector)
     assert widget.summary_text() == "ERROR: 0 | WARN: 0"
@@ -236,7 +236,7 @@ def test_hud_widget_summary_zero_when_empty(collector: DiagnosticsCollector):
 
 def test_add_diagnostics_widget_uses_global_when_none(monkeypatch):
     """`add_diagnostics_widget(app, None)` falls back to the singleton."""
-    from slappyengine.hud_bridge import add_diagnostics_widget
+    from pharos_engine.hud_bridge import add_diagnostics_widget
 
     class _FakeOverlay:
         def __init__(self):

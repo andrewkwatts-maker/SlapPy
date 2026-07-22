@@ -15,7 +15,7 @@ if str(_EXAMPLES) not in sys.path:
 
 import hello_dynamics_serialize as demo  # type: ignore[import-not-found]  # noqa: E402
 
-from slappyengine.testing import assert_scene_matches
+from pharos_engine.testing import assert_scene_matches
 
 
 def test_hello_serialize_runs_without_error() -> None:

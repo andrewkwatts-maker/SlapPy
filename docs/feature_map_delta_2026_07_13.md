@@ -10,7 +10,7 @@ batch).
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`slappyengine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `spawn.at_origin_offset`  | `spawn_origin_offset_actions.spawn_at_origin_offset`   | spawn |
 | `edit.flatten_selection`  | `edit_flatten_selection_actions.flatten_selection`     | edit  |
@@ -20,13 +20,13 @@ Five more action ids landed in this tick, moving 5 rows from STUB
 
 New action modules:
 
-* `python/slappyengine/actions/spawn_origin_offset_actions.py`
-* `python/slappyengine/actions/edit_flatten_selection_actions.py`
-* `python/slappyengine/actions/snap_angle_snap_actions.py`
-* `python/slappyengine/actions/layer_reorder_actions.py`
+* `python/pharos_engine/actions/spawn_origin_offset_actions.py`
+* `python/pharos_engine/actions/edit_flatten_selection_actions.py`
+* `python/pharos_engine/actions/snap_angle_snap_actions.py`
+* `python/pharos_engine/actions/layer_reorder_actions.py`
 
 Router entries and `_fb_*` shims live in
-`python/slappyengine/tool_router.py` under the
+`python/pharos_engine/tool_router.py` under the
 `# ── UU4 STUB-triage: spawn.at_origin_offset, edit.flatten_selection,
 snap.set_angle_snap, layer.move_up, layer.move_down (round 22) ──`
 block.

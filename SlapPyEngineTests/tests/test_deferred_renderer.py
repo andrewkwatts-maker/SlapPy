@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.render.deferred` — Nova3D pillar 2 (DDD4).
+"""Tests for :mod:`pharos_engine.render.deferred` — Nova3D pillar 2 (DDD4).
 
 Covers four seams:
 
@@ -23,7 +23,7 @@ import pytest
 
 # The deferred module is import-safe even without wgpu — the soft-import
 # lands ``_wgpu = None`` and every entrypoint short-circuits.
-from slappyengine.render import deferred as dfr
+from pharos_engine.render import deferred as dfr
 
 
 # ---------------------------------------------------------------------------
@@ -162,7 +162,7 @@ def test_unknown_shader_name_raises():
 # ---------------------------------------------------------------------------
 
 def test_cluster_lights_via_core_stub_shape():
-    core = pytest.importorskip("slappyengine._core")
+    core = pytest.importorskip("pharos_engine._core")
     if not hasattr(core, "deferred_cluster"):
         pytest.skip("_core.deferred_cluster not built (rebuild _core with 3d feature)")
 

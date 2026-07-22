@@ -18,26 +18,26 @@ class _MockLLM:
 
 class TestScriptGeneratorSystemPrompt:
     def test_system_prompt_is_string(self):
-        from slappyengine.ai.script_gen import SYSTEM_PROMPT
+        from pharos_engine.ai.script_gen import SYSTEM_PROMPT
         assert isinstance(SYSTEM_PROMPT, str)
         assert len(SYSTEM_PROMPT) > 100
 
     def test_system_prompt_mentions_entity_script(self):
-        from slappyengine.ai.script_gen import SYSTEM_PROMPT
+        from pharos_engine.ai.script_gen import SYSTEM_PROMPT
         assert "EntityScript" in SYSTEM_PROMPT
 
     def test_system_prompt_mentions_on_tick(self):
-        from slappyengine.ai.script_gen import SYSTEM_PROMPT
+        from pharos_engine.ai.script_gen import SYSTEM_PROMPT
         assert "on_tick" in SYSTEM_PROMPT
 
     def test_system_prompt_mentions_on_spawn(self):
-        from slappyengine.ai.script_gen import SYSTEM_PROMPT
+        from pharos_engine.ai.script_gen import SYSTEM_PROMPT
         assert "on_spawn" in SYSTEM_PROMPT
 
 
 class TestScriptGeneratorClean:
     def _gen(self, response="class EntityScript:\n    pass"):
-        from slappyengine.ai.script_gen import ScriptGenerator
+        from pharos_engine.ai.script_gen import ScriptGenerator
         g = ScriptGenerator(llm_client=_MockLLM(response))
         return g
 
@@ -65,13 +65,13 @@ class TestScriptGeneratorClean:
         assert result.startswith("class EntityScript")
 
     def test_from_prompt_returns_string(self):
-        from slappyengine.ai.script_gen import ScriptGenerator
+        from pharos_engine.ai.script_gen import ScriptGenerator
         gen = ScriptGenerator(llm_client=_MockLLM("class EntityScript:\n    pass"))
         result = gen.from_prompt("move right")
         assert isinstance(result, str)
 
     def test_from_prompt_strips_fences(self):
-        from slappyengine.ai.script_gen import ScriptGenerator
+        from pharos_engine.ai.script_gen import ScriptGenerator
         gen = ScriptGenerator(llm_client=_MockLLM("```python\nclass EntityScript:\n    pass\n```"))
         result = gen.from_prompt("test")
         assert "```" not in result
@@ -83,33 +83,33 @@ class TestScriptGeneratorClean:
 
 class TestPromptPathFor:
     def test_returns_path_with_prompt_extension(self):
-        from slappyengine.ai.code_sync import prompt_path_for
+        from pharos_engine.ai.code_sync import prompt_path_for
         result = prompt_path_for("entities/player.py")
         assert result.suffix == ".prompt"
 
     def test_same_stem_as_script(self):
-        from slappyengine.ai.code_sync import prompt_path_for
+        from pharos_engine.ai.code_sync import prompt_path_for
         result = prompt_path_for("entities/player.py")
         assert result.stem == "player"
 
     def test_accepts_path_object(self):
-        from slappyengine.ai.code_sync import prompt_path_for
+        from pharos_engine.ai.code_sync import prompt_path_for
         result = prompt_path_for(Path("scripts/enemy.py"))
         assert result.suffix == ".prompt"
 
     def test_preserves_parent_dir(self):
-        from slappyengine.ai.code_sync import prompt_path_for
+        from pharos_engine.ai.code_sync import prompt_path_for
         result = prompt_path_for("deep/nested/script.py")
         assert "deep" in str(result) or "nested" in str(result)
 
     def test_constant_extension(self):
-        from slappyengine.ai.code_sync import PROMPT_SIDECAR_EXT
+        from pharos_engine.ai.code_sync import PROMPT_SIDECAR_EXT
         assert PROMPT_SIDECAR_EXT == ".prompt"
 
 
 class TestWatchedScript:
     def test_init_fields(self):
-        from slappyengine.ai.code_sync import WatchedScript
+        from pharos_engine.ai.code_sync import WatchedScript
         ws = WatchedScript(
             script_path=Path("a.py"),
             prompt_path=Path("a.prompt"),
@@ -122,7 +122,7 @@ class TestWatchedScript:
         assert ws.on_prompt_updated is None
 
     def test_callbacks_stored(self):
-        from slappyengine.ai.code_sync import WatchedScript
+        from pharos_engine.ai.code_sync import WatchedScript
         cb_code = lambda c: None
         cb_prompt = lambda p: None
         ws = WatchedScript(
@@ -137,7 +137,7 @@ class TestWatchedScript:
 
 class TestCodeSyncWatcher:
     def test_init_state(self):
-        from slappyengine.ai.code_sync import CodeSyncWatcher
+        from pharos_engine.ai.code_sync import CodeSyncWatcher
         watcher = CodeSyncWatcher(llm=_MockLLM(), enabled=True)
         assert watcher._enabled is True
         assert watcher._watched == []
@@ -145,12 +145,12 @@ class TestCodeSyncWatcher:
         assert not watcher._stop_event.is_set()
 
     def test_disabled_watcher(self):
-        from slappyengine.ai.code_sync import CodeSyncWatcher
+        from pharos_engine.ai.code_sync import CodeSyncWatcher
         watcher = CodeSyncWatcher(llm=_MockLLM(), enabled=False)
         assert watcher._enabled is False
 
     def test_watch_adds_entry(self, tmp_path):
-        from slappyengine.ai.code_sync import CodeSyncWatcher
+        from pharos_engine.ai.code_sync import CodeSyncWatcher
         script = tmp_path / "test.py"
         script.write_text("class EntityScript: pass", encoding="utf-8")
         watcher = CodeSyncWatcher(llm=_MockLLM())
@@ -159,7 +159,7 @@ class TestCodeSyncWatcher:
         assert watcher._watched[0].script_path == script
 
     def test_unwatch_removes_entry(self, tmp_path):
-        from slappyengine.ai.code_sync import CodeSyncWatcher
+        from pharos_engine.ai.code_sync import CodeSyncWatcher
         script = tmp_path / "test.py"
         script.write_text("class EntityScript: pass", encoding="utf-8")
         watcher = CodeSyncWatcher(llm=_MockLLM())
@@ -168,13 +168,13 @@ class TestCodeSyncWatcher:
         assert len(watcher._watched) == 0
 
     def test_stop_signals_event(self):
-        from slappyengine.ai.code_sync import CodeSyncWatcher
+        from pharos_engine.ai.code_sync import CodeSyncWatcher
         watcher = CodeSyncWatcher(llm=_MockLLM())
         watcher.stop()
         assert watcher._stop_event.is_set()
 
     def test_watch_stores_mtime(self, tmp_path):
-        from slappyengine.ai.code_sync import CodeSyncWatcher
+        from pharos_engine.ai.code_sync import CodeSyncWatcher
         script = tmp_path / "test.py"
         script.write_text("class EntityScript: pass", encoding="utf-8")
         watcher = CodeSyncWatcher(llm=_MockLLM())
@@ -183,7 +183,7 @@ class TestCodeSyncWatcher:
         assert ws.last_script_mtime == script.stat().st_mtime
 
     def test_watch_sidecar_mtime_zero_when_absent(self, tmp_path):
-        from slappyengine.ai.code_sync import CodeSyncWatcher
+        from pharos_engine.ai.code_sync import CodeSyncWatcher
         script = tmp_path / "test.py"
         script.write_text("class EntityScript: pass", encoding="utf-8")
         # No .prompt sidecar exists
@@ -193,7 +193,7 @@ class TestCodeSyncWatcher:
         assert ws.last_prompt_mtime == pytest.approx(0.0)
 
     def test_debounce_and_poll_constants(self):
-        from slappyengine.ai.code_sync import CodeSyncWatcher
+        from pharos_engine.ai.code_sync import CodeSyncWatcher
         assert CodeSyncWatcher.DEBOUNCE_SECS > 0
         assert CodeSyncWatcher.POLL_INTERVAL > 0
         assert CodeSyncWatcher.POLL_INTERVAL < CodeSyncWatcher.DEBOUNCE_SECS
@@ -201,13 +201,13 @@ class TestCodeSyncWatcher:
 
 class TestAskSync:
     def test_returns_response_from_llm(self):
-        from slappyengine.ai.code_sync import _ask_sync
+        from pharos_engine.ai.code_sync import _ask_sync
         llm = _MockLLM("hello world")
         result = _ask_sync(llm, "sys", "user")
         assert result == "hello world"
 
     def test_returns_empty_on_exception(self):
-        from slappyengine.ai.code_sync import _ask_sync
+        from pharos_engine.ai.code_sync import _ask_sync
         class _BrokenLLM:
             def generate(self, *a, **kw):
                 raise RuntimeError("network error")
@@ -215,7 +215,7 @@ class TestAskSync:
         assert result == ""
 
     def test_strips_whitespace(self):
-        from slappyengine.ai.code_sync import _ask_sync
+        from pharos_engine.ai.code_sync import _ask_sync
         llm = _MockLLM("  hello  \n")
         result = _ask_sync(llm, "sys", "user")
         assert result == "hello"

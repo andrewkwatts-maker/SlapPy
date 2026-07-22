@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.ui.editor.diary_softbody_bridge`.
+"""Tests for :mod:`pharos_engine.ui.editor.diary_softbody_bridge`.
 
 Covers the AA3 shim that closes rows 80 + 223 in
 ``docs/engine_feature_map_2026_07_04.md`` — the diary tick's
@@ -8,10 +8,10 @@ Test surface (8 named cases):
 
 1. ``resolve_softbody_class`` returns a callable in the vanilla
    import order (dynamics available, WIP softbody may or may not be).
-2. ``resolve_softbody_class`` prefers ``slappyengine.softbody`` when
+2. ``resolve_softbody_class`` prefers ``pharos_engine.softbody`` when
    both are importable (via a mocked WIP path).
 3. ``resolve_softbody_class`` falls back to
-   ``slappyengine.dynamics`` when the WIP softbody path is missing.
+   ``pharos_engine.dynamics`` when the WIP softbody path is missing.
 4. ``resolve_softbody_class`` raises a friendly ``ImportError``
    naming both paths when both are absent.
 5. ``import_softbody_file`` round-trips a ``.softbody.json``
@@ -37,7 +37,7 @@ from typing import Any
 
 import pytest
 
-from slappyengine.ui.editor.diary_softbody_bridge import (
+from pharos_engine.ui.editor.diary_softbody_bridge import (
     _MISSING_MESSAGE,
     import_softbody_file,
     resolve_softbody_class,
@@ -50,9 +50,9 @@ from slappyengine.ui.editor.diary_softbody_bridge import (
 
 
 def _make_dynamics_world() -> Any:
-    """Return a fresh :class:`slappyengine.dynamics.World` seeded with
+    """Return a fresh :class:`pharos_engine.dynamics.World` seeded with
     enough nodes to host a small imported body."""
-    from slappyengine.dynamics import World
+    from pharos_engine.dynamics import World
 
     world = World()
     # Give the world 4 nodes so a body with node_count=4 is valid.
@@ -121,13 +121,13 @@ def test_resolve_prefers_softbody_when_present(monkeypatch) -> None:
     class _FakeWorld:
         """Sentinel — never instantiated, we just check identity."""
 
-    fake_mod = types.ModuleType("slappyengine.softbody")
+    fake_mod = types.ModuleType("pharos_engine.softbody")
     fake_mod.SoftBodyWorld = _FakeWorld
-    monkeypatch.setitem(sys.modules, "slappyengine.softbody", fake_mod)
+    monkeypatch.setitem(sys.modules, "pharos_engine.softbody", fake_mod)
 
     cls = resolve_softbody_class()
     assert cls is _FakeWorld, (
-        "resolve_softbody_class must prefer slappyengine.softbody when it "
+        "resolve_softbody_class must prefer pharos_engine.softbody when it "
         "exposes SoftBodyWorld"
     )
 
@@ -141,11 +141,11 @@ def test_resolve_falls_back_to_dynamics(monkeypatch) -> None:
     """When the WIP softbody import fails, dynamics.SoftBodyWorld wins."""
     # Force the WIP softbody import to raise by stubbing a broken module
     # into sys.modules; the bridge should catch and fall through.
-    broken = types.ModuleType("slappyengine.softbody")
+    broken = types.ModuleType("pharos_engine.softbody")
     # No SoftBodyWorld attr — mimics "package present but symbol missing".
-    monkeypatch.setitem(sys.modules, "slappyengine.softbody", broken)
+    monkeypatch.setitem(sys.modules, "pharos_engine.softbody", broken)
 
-    from slappyengine.dynamics import SoftBodyWorld as DynamicsSoftBody
+    from pharos_engine.dynamics import SoftBodyWorld as DynamicsSoftBody
 
     cls = resolve_softbody_class()
     assert cls is DynamicsSoftBody, (
@@ -162,16 +162,16 @@ def test_resolve_falls_back_to_dynamics(monkeypatch) -> None:
 def test_resolve_raises_friendly_when_both_missing(monkeypatch) -> None:
     """Both paths mocked out -> friendly ImportError naming both."""
     # Wipe both cached modules so our sentinel modules take effect.
-    for key in ("slappyengine.softbody", "slappyengine.dynamics"):
+    for key in ("pharos_engine.softbody", "pharos_engine.dynamics"):
         monkeypatch.delitem(sys.modules, key, raising=False)
 
     def _bad_softbody_import(name: str, *args: Any, **kwargs: Any):
-        if name == "slappyengine.softbody" or name.startswith(
-            "slappyengine.softbody."
+        if name == "pharos_engine.softbody" or name.startswith(
+            "pharos_engine.softbody."
         ):
             raise ImportError(f"forced-off: {name}")
-        if name == "slappyengine.dynamics" or name.startswith(
-            "slappyengine.dynamics"
+        if name == "pharos_engine.dynamics" or name.startswith(
+            "pharos_engine.dynamics"
         ):
             raise ImportError(f"forced-off: {name}")
         return _real_import(name, *args, **kwargs)
@@ -186,8 +186,8 @@ def test_resolve_raises_friendly_when_both_missing(monkeypatch) -> None:
     with pytest.raises(ImportError) as excinfo:
         resolve_softbody_class()
     msg = str(excinfo.value)
-    assert "slappyengine.softbody" in msg
-    assert "slappyengine.dynamics" in msg
+    assert "pharos_engine.softbody" in msg
+    assert "pharos_engine.dynamics" in msg
     # Sanity — bridge exports the canonical message string.
     assert _MISSING_MESSAGE == msg
 

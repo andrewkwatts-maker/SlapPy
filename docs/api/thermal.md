@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.thermal — API Reference
+# pharos_engine.thermal — API Reference
 
 > Auto-generated. Re-run `python scripts/gen_subpackage_api_docs.py`.
 > Do not hand-edit — every entry below comes from runtime introspection
@@ -14,7 +14,7 @@ Heat diffusion + pairwise heat exchange — Phase B public surface.
 
 ### `HeatField`
 
-_class — defined in `slappyengine.thermal`_
+_class — defined in `pharos_engine.thermal`_
 
 A 2D temperature grid with explicit pairwise-flux diffusion.
 
@@ -39,7 +39,7 @@ HeatField(grid: 'np.ndarray', conductivity: 'float' = 1.0, diffusivity: 'float' 
 
 ### `exchange_two_regions(t_a: 'float', m_a: 'float', k_a: 'float', t_b: 'float', m_b: 'float', k_b: 'float', dt: 'float') -> 'float'`
 
-_defined in `slappyengine.thermal`_
+_defined in `pharos_engine.thermal`_
 
 Conservative Newton's-law heat flux between two mass-weighted regions.
 

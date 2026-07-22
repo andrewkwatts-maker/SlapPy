@@ -6,8 +6,8 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import World, make_spring
-from slappyengine.dynamics.world import _reset_warning_cache
+from pharos_engine.dynamics import World, make_spring
+from pharos_engine.dynamics.world import _reset_warning_cache
 
 
 def test_spring_oscillates_and_damps():

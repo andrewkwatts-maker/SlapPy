@@ -1,7 +1,7 @@
 """Tests for :class:`NotebookNodeEditor` — the visual node graph editor.
 
 The editor lives in the diary page's "Nodes" mode and operates on the
-``slappyengine.visual_scripting.NodeGraph`` data model. Both that page
+``pharos_engine.visual_scripting.NodeGraph`` data model. Both that page
 (P3) and the data model (P4) land in sibling sprints; the editor
 soft-imports both and falls back to an in-module stub data model so it
 remains importable + testable in every state of the sprint stack.
@@ -149,7 +149,7 @@ def stub_dpg(monkeypatch):
 
 
 try:
-    from slappyengine.ui.editor.notebook_node_editor import (
+    from pharos_engine.ui.editor.notebook_node_editor import (
         BUILTIN_NODES,
         Edge,
         Node,
@@ -540,7 +540,7 @@ class TestRefresh:
 
     def test_theme_switch_updates_wire_color(self, stub_dpg):
         """When the theme changes, the next refresh queries the new accent."""
-        from slappyengine.ui.widgets.notebook_theme import (
+        from pharos_engine.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )

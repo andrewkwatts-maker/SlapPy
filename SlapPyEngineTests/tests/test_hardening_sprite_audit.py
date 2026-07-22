@@ -1,4 +1,4 @@
-"""Input-validation tests for ``slappyengine.tools.sprite_audit``.
+"""Input-validation tests for ``pharos_engine.tools.sprite_audit``.
 
 Each test exercises one rejection path. Positive paths live in
 :file:`tests/test_sprite_audit_tool.py`.
@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from slappyengine.tools.sprite_audit import (
+from pharos_engine.tools.sprite_audit import (
     SpriteInventoryEntry,
     assess_quality,
     inventory_sprites,

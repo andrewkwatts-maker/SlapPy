@@ -1,4 +1,4 @@
-"""Round-trip serialisation tests for :mod:`slappyengine.dynamics.serialize`.
+"""Round-trip serialisation tests for :mod:`pharos_engine.dynamics.serialize`.
 
 Covers in-memory round trip, on-disk round trip, malformed-input rejection,
 and post-roundtrip step determinism — the contract a game save needs to
@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import (
+from pharos_engine.dynamics import (
     JointSpec,
     RopeSpec,
     World,
@@ -135,7 +135,7 @@ def test_world_from_dict_rejects_wrong_array_shape():
     payload = world_to_dict(w)
     # Corrupt the positions array shape so it claims to be (N, 3).
     bad = np.zeros((8, 3), dtype=np.float64)
-    from slappyengine.dynamics.serialize import _encode_array
+    from pharos_engine.dynamics.serialize import _encode_array
     payload["positions"] = _encode_array(bad)
     with pytest.raises(ValueError, match=r"positions must be \(N, 2\)"):
         world_from_dict(payload)
@@ -144,7 +144,7 @@ def test_world_from_dict_rejects_wrong_array_shape():
 def test_world_from_dict_rejects_mismatched_array_length():
     w = _make_rope_world(8)
     payload = world_to_dict(w)
-    from slappyengine.dynamics.serialize import _encode_array
+    from pharos_engine.dynamics.serialize import _encode_array
     payload["inv_masses"] = _encode_array(np.ones((99,), dtype=np.float64))
     with pytest.raises(
         ValueError, match="inv_masses shape"

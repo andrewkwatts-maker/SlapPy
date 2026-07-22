@@ -1,6 +1,6 @@
 """SlapPyEngine — Hello IK Chain
 
-Minimal demo of :class:`slappyengine.dynamics.IKChainSpec` + :func:`solve_ik`.
+Minimal demo of :class:`pharos_engine.dynamics.IKChainSpec` + :func:`solve_ik`.
 
 A 5-link kinematic chain (5 nodes wired by distance joints, base pinned at
 the origin) tracks a target that orbits an off-centre anchor::
@@ -30,7 +30,7 @@ from pathlib import Path
 
 import numpy as np
 
-from slappyengine.dynamics import IKChainSpec, JointSpec, World, solve_ik
+from pharos_engine.dynamics import IKChainSpec, JointSpec, World, solve_ik
 
 
 # ── Demo parameters ────────────────────────────────────────────────────────

@@ -14,10 +14,10 @@ Output:
 """
 from __future__ import annotations
 
-from slappyengine.softbody import (
+from pharos_engine.softbody import (
     VehicleSpec, build_vehicle, make_lattice_body,
 )
-from slappyengine.studio import anchor, output_path, record, softbody_stage
+from pharos_engine.studio import anchor, output_path, record, softbody_stage
 
 
 SETTLE_FRAMES = 60  # let the vehicle land before flooring the throttle

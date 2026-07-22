@@ -2,8 +2,8 @@
 
 CC-batch sprint (2026-07-05) — task CC2. Builds four end-to-end material
 graphs directly out of the V5 material-node palette
-(:mod:`slappyengine.visual_scripting.material_nodes`) and pipes each
-through :class:`~slappyengine.ui.editor.material_graph_bridge.MaterialGraphBridge`
+(:mod:`pharos_engine.visual_scripting.material_nodes`) and pipes each
+through :class:`~pharos_engine.ui.editor.material_graph_bridge.MaterialGraphBridge`
 to produce a complete WGSL fragment shader.
 
 Graphs
@@ -35,7 +35,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from slappyengine.visual_scripting import (
+from pharos_engine.visual_scripting import (
     AddNode,
     FresnelNode,
     GradientRampNode,
@@ -49,7 +49,7 @@ from slappyengine.visual_scripting import (
     TimeNode,
     UVOffsetNode,
 )
-from slappyengine.ui.editor.material_graph_bridge import MaterialGraphBridge
+from pharos_engine.ui.editor.material_graph_bridge import MaterialGraphBridge
 
 
 # ---------------------------------------------------------------------------

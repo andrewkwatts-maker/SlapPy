@@ -190,9 +190,9 @@ def stub_dpg(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def clear_state():
-    from slappyengine import telemetry as t
-    from slappyengine.ui.widgets import notebook_theme
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine import telemetry as t
+    from pharos_engine.ui.widgets import notebook_theme
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -209,7 +209,7 @@ def clear_state():
 
 
 def _make_dashboard(**kwargs):
-    from slappyengine.ui.editor.notebook_telemetry_dashboard import (
+    from pharos_engine.ui.editor.notebook_telemetry_dashboard import (
         NotebookTelemetryDashboard,
     )
     return NotebookTelemetryDashboard(**kwargs)
@@ -231,7 +231,7 @@ class TestConstruction:
         assert d.perf == {}
 
     def test_defaults_expose_constants(self):
-        from slappyengine.ui.editor.notebook_telemetry_dashboard import (
+        from pharos_engine.ui.editor.notebook_telemetry_dashboard import (
             POLL_INTERVAL_DEFAULT_MS,
             POLL_INTERVAL_MAX_MS,
             POLL_INTERVAL_MIN_MS,
@@ -282,7 +282,7 @@ class TestSubscription:
         assert d._subscription_handle is None
 
     def test_build_auto_subscribes(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.build(parent_tag="root")
@@ -300,7 +300,7 @@ class TestSubscription:
 
 class TestAggregation:
     def test_counter_increments(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.subscribe_to_telemetry()
@@ -312,7 +312,7 @@ class TestAggregation:
             d.unsubscribe()
 
     def test_counter_default_delta_is_one(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.subscribe_to_telemetry()
@@ -324,7 +324,7 @@ class TestAggregation:
             d.unsubscribe()
 
     def test_counter_delta_per_poll(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard(poll_interval_ms=100)
         d.subscribe_to_telemetry()
@@ -343,7 +343,7 @@ class TestAggregation:
             d.unsubscribe()
 
     def test_gauge_records_current_value(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.subscribe_to_telemetry()
@@ -355,7 +355,7 @@ class TestAggregation:
             d.unsubscribe()
 
     def test_gauge_bare_value_key_recognised(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.subscribe_to_telemetry()
@@ -367,8 +367,8 @@ class TestAggregation:
 
     def test_gauge_sparkline_sample_count(self):
         """Sparkline buffer holds up to :data:`SPARKLINE_SAMPLE_COUNT`."""
-        from slappyengine import telemetry
-        from slappyengine.ui.editor.notebook_telemetry_dashboard import (
+        from pharos_engine import telemetry
+        from pharos_engine.ui.editor.notebook_telemetry_dashboard import (
             SPARKLINE_SAMPLE_COUNT,
         )
 
@@ -385,7 +385,7 @@ class TestAggregation:
             d.unsubscribe()
 
     def test_histogram_bucket_increments(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.subscribe_to_telemetry()
@@ -400,7 +400,7 @@ class TestAggregation:
             d.unsubscribe()
 
     def test_histogram_dict_payload_merges(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.subscribe_to_telemetry()
@@ -421,7 +421,7 @@ class TestAggregation:
             d.unsubscribe()
 
     def test_perf_records_duration(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.subscribe_to_telemetry()
@@ -436,7 +436,7 @@ class TestAggregation:
             d.unsubscribe()
 
     def test_perf_tab_sort_order(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.subscribe_to_telemetry()
@@ -452,7 +452,7 @@ class TestAggregation:
             d.unsubscribe()
 
     def test_unknown_payload_dropped(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.subscribe_to_telemetry()
@@ -473,7 +473,7 @@ class TestAggregation:
 
 class TestTransport:
     def test_pause_blocks_ingestion(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.subscribe_to_telemetry()
@@ -491,7 +491,7 @@ class TestTransport:
         assert d.tick(dt_seconds=10.0) is False
 
     def test_resume_restores_ingestion(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.subscribe_to_telemetry()
@@ -506,7 +506,7 @@ class TestTransport:
             d.unsubscribe()
 
     def test_clear_empties_state(self):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.subscribe_to_telemetry()
@@ -581,8 +581,8 @@ class TestTabs:
         assert d.active_tab == "Gauges"
 
     def test_every_tab_renders_under_stub(self, stub_dpg):
-        from slappyengine import telemetry
-        from slappyengine.ui.editor.notebook_telemetry_dashboard import (
+        from pharos_engine import telemetry
+        from pharos_engine.ui.editor.notebook_telemetry_dashboard import (
             TAB_NAMES,
         )
 
@@ -606,7 +606,7 @@ class TestTabs:
             d.destroy()
 
     def test_gauge_tab_draws_polyline(self, stub_dpg):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.set_active_tab("Gauges")
@@ -626,7 +626,7 @@ class TestTabs:
 
 class TestExport:
     def test_export_csv_writes_valid_file(self, tmp_path):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard()
         d.subscribe_to_telemetry()
@@ -658,7 +658,7 @@ class TestExport:
 
 class TestTheme:
     def test_theme_switch_logs(self):
-        from slappyengine.ui.widgets.notebook_theme import (
+        from pharos_engine.ui.widgets.notebook_theme import (
             NotebookTheme,
             set_active_theme,
         )
@@ -715,7 +715,7 @@ class TestBuild:
         d.destroy()
 
     def test_counter_row_appears_after_emit(self, stub_dpg):
-        from slappyengine import telemetry
+        from pharos_engine import telemetry
 
         d = _make_dashboard(poll_interval_ms=100)
         d.build(parent_tag="root")
@@ -740,11 +740,11 @@ class TestBuild:
 
 class TestRegistration:
     def test_all_contains_dashboard(self):
-        from slappyengine.ui import editor
+        from pharos_engine.ui import editor
         assert "NotebookTelemetryDashboard" in editor.__all__
 
     def test_lazy_map_maps_dashboard(self):
-        from slappyengine.ui import editor
+        from pharos_engine.ui import editor
         assert "NotebookTelemetryDashboard" in editor._LAZY_MAP
         assert (
             editor._LAZY_MAP["NotebookTelemetryDashboard"]
@@ -752,6 +752,6 @@ class TestRegistration:
         )
 
     def test_lazy_import_resolves(self):
-        from slappyengine.ui import editor
+        from pharos_engine.ui import editor
         cls = editor.NotebookTelemetryDashboard  # triggers __getattr__
         assert cls.TITLE == "Telemetry Dashboard"

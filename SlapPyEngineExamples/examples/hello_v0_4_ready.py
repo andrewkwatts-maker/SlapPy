@@ -14,7 +14,7 @@ Every subsystem has a "skip if unavailable" branch and the demo never
 raises — degraded runs are recorded in ``degradation_notes`` so tests
 can distinguish "not present" from "broken":
 
-* **HH1 / App**           — :func:`slappyengine.launch` full lifecycle.
+* **HH1 / App**           — :func:`pharos_engine.launch` full lifecycle.
 * **HH5 / JJ3**           — glTF importer probe + AssetImportDispatcher
                             (soft-touch — skinned two-bone gltf fixture).
 * **JJ4**                 — :class:`PosedSkeleton` bound to the
@@ -119,13 +119,13 @@ from typing import Any, Dict, List
 # ---------------------------------------------------------------------------
 
 try:
-    from slappyengine.asset import Asset as _Asset
-    from slappyengine.event_bus import (
+    from pharos_engine.asset import Asset as _Asset
+    from pharos_engine.event_bus import (
         EventPayload as _EventPayload,
         Observable as _Observable,
         global_bus as _global_bus,
     )
-    from slappyengine.layer import Layer as _Layer
+    from pharos_engine.layer import Layer as _Layer
 
     class PlayerVehicle(_Observable, _Asset):
         """Downstream-style entity mixing Observable + Asset (VV5 pattern)."""
@@ -198,9 +198,9 @@ def _model_path() -> str:
 
 def _headless_config() -> Any:
     """Build a headless :class:`AppConfig` sized for a 1280x720 HUD."""
-    import slappyengine
+    import pharos_engine
 
-    return slappyengine.AppConfig(
+    return pharos_engine.AppConfig(
         window_title="hello_v0_4_ready",
         window_size=(1280, 720),
         enable_gpu=False,
@@ -248,7 +248,7 @@ class _NoopSkyboxRenderer:
 def _setup_physics(state: Dict[str, Any], note) -> None:
     """LL7 / NN4 / OO2 — World3D with 20 bodies + SAH BVH."""
     try:
-        from slappyengine.physics3_bridge import Body3D, World3D
+        from pharos_engine.physics3_bridge import Body3D, World3D
 
         world = World3D(gravity=(0.0, -9.81, 0.0), backend="fallback")
         # 20 spheres in a 5x4 grid so raycasts along +X consistently hit.
@@ -279,7 +279,7 @@ def _setup_physics(state: Dict[str, Any], note) -> None:
 def _setup_audio(state: Dict[str, Any], note) -> None:
     """LL4 — listener + two orbiting Audio3DSources."""
     try:
-        from slappyengine.audio_3d import (
+        from pharos_engine.audio_3d import (
             Audio3DEngine,
             Audio3DSource,
             AudioListener,
@@ -325,7 +325,7 @@ def _setup_audio(state: Dict[str, Any], note) -> None:
 def _setup_skybox(state: Dict[str, Any], note) -> None:
     """KK4 — procedural gradient skybox."""
     try:
-        from slappyengine.render.skybox import (
+        from pharos_engine.render.skybox import (
             Skybox,
             procedural_gradient_sky,
         )
@@ -342,7 +342,7 @@ def _setup_skybox(state: Dict[str, Any], note) -> None:
 def _setup_skeleton(state: Dict[str, Any], note) -> None:
     """JJ4 — synthetic 3-joint skeleton + PosedSkeleton + AnimationClip."""
     try:
-        from slappyengine.animation.skeleton_runtime import (
+        from pharos_engine.animation.skeleton_runtime import (
             PosedSkeleton,
             Skeleton,
             SkeletonNode,
@@ -380,7 +380,7 @@ def _setup_skeleton(state: Dict[str, Any], note) -> None:
 
         # AnimationClip presence probe — optional, don't hard-fail.
         try:
-            from slappyengine.animation.clip import AnimationClip  # noqa: F401
+            from pharos_engine.animation.clip import AnimationClip  # noqa: F401
             state["subsystems_used"].add("animation_clip")
         except Exception as exc:  # pragma: no cover — defensive
             note(f"AnimationClip import failed: {exc!r}")
@@ -391,8 +391,8 @@ def _setup_skeleton(state: Dict[str, Any], note) -> None:
 def _setup_scene_walker(state: Dict[str, Any], note) -> None:
     """JJ5 — SceneWalker + Frustum over an empty Scene (touch-only)."""
     try:
-        from slappyengine.render.scene_walker import Frustum, SceneWalker
-        from slappyengine.scenes.scene import Scene
+        from pharos_engine.render.scene_walker import Frustum, SceneWalker
+        from pharos_engine.scenes.scene import Scene
 
         scene = Scene(name="v0_4_ready", entities=[])
         walker = SceneWalker(scene=scene)
@@ -409,8 +409,8 @@ def _setup_scene_walker(state: Dict[str, Any], note) -> None:
 def _setup_instanced(state: Dict[str, Any], note) -> None:
     """LL3 — 100 grass blades scattered via instanced.random_scatter."""
     try:
-        from slappyengine.render.instanced import random_scatter
-        from slappyengine.render.mesh import Mesh
+        from pharos_engine.render.instanced import random_scatter
+        from pharos_engine.render.mesh import Mesh
         import numpy as np
 
         # Minimal 3-vertex triangle mesh — the geometry doesn't matter,
@@ -443,7 +443,7 @@ def _setup_instanced(state: Dict[str, Any], note) -> None:
 def _setup_gltf_probe(state: Dict[str, Any], note) -> None:
     """HH5 / JJ3 — soft-probe the glTF importer + AssetImportDispatcher."""
     try:
-        from slappyengine.asset_import.dispatcher import (
+        from pharos_engine.asset_import.dispatcher import (
             AssetImportDispatcher,  # noqa: F401
         )
 
@@ -451,7 +451,7 @@ def _setup_gltf_probe(state: Dict[str, Any], note) -> None:
     except Exception as exc:
         note(f"AssetImportDispatcher import failed: {exc!r}")
     try:
-        from slappyengine.asset_import import gltf_importer  # noqa: F401
+        from pharos_engine.asset_import import gltf_importer  # noqa: F401
 
         state["subsystems_used"].add("gltf_importer")
     except Exception as exc:
@@ -461,7 +461,7 @@ def _setup_gltf_probe(state: Dict[str, Any], note) -> None:
 def _setup_csm(state: Dict[str, Any], note, app) -> None:
     """JJ7 — CSM cascade probe. Skip cleanly if the API drifts."""
     try:
-        from slappyengine.render.shadows import (  # noqa: F401
+        from pharos_engine.render.shadows import (  # noqa: F401
             CSMBuilder,
             ShadowMapConfig,
         )
@@ -495,9 +495,9 @@ def _setup_export_cli_probe(state: Dict[str, Any], note) -> None:
     """LL6 / NN7 — soft-probe the exporter package + manifest emitter."""
     imported = False
     for mod in (
-        "slappyengine.exporter",
-        "slappyengine.exporter.manifest",
-        "slappyengine.exporter.binary_exporter",
+        "pharos_engine.exporter",
+        "pharos_engine.exporter.manifest",
+        "pharos_engine.exporter.binary_exporter",
     ):
         try:
             __import__(mod)
@@ -540,7 +540,7 @@ def main(
     if max_frames < 1:
         raise ValueError(f"max_frames must be >= 1 (got {max_frames})")
 
-    import slappyengine
+    import pharos_engine
 
     shots_dir = (
         Path(screenshot_dir) if screenshot_dir is not None else _DEFAULT_SHOT_DIR
@@ -928,7 +928,7 @@ def main(
         a.trace.append(("v0_4_ready_on_end", int(a.frame_count)))
 
     # ---- Run --------------------------------------------------------------
-    app = slappyengine.launch(
+    app = pharos_engine.launch(
         on_begin=on_begin,
         on_tick=on_tick,
         on_end=on_end,

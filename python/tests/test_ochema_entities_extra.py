@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _OCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _OCHEMA_STR = str(_OCHEMA_DIR)
@@ -545,7 +545,7 @@ class TestFallingSkyscraper:
 
     def test_collapse_changes_collision_shape(self):
         from entities.hazard import FallingSkyscraper
-        from slappyengine.collision import AABBShape
+        from pharos_engine.collision import AABBShape
         fs = FallingSkyscraper()
         fs.position = (100.0, 200.0)
         fs.activate()

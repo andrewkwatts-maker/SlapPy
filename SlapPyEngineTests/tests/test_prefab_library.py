@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.prefabs` — Prefab dataclass + PrefabLibrary."""
+"""Tests for :mod:`pharos_engine.prefabs` — Prefab dataclass + PrefabLibrary."""
 from __future__ import annotations
 
 import math
@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine.dynamics import Body, World
-from slappyengine.prefabs import CATEGORIES, Prefab, PrefabLibrary
+from pharos_engine.dynamics import Body, World
+from pharos_engine.prefabs import CATEGORIES, Prefab, PrefabLibrary
 
 
 # ---------------------------------------------------------------------------
@@ -508,7 +508,7 @@ def test_spawn_can_step_world_without_errors(
 
 
 def test_public_surface_exports() -> None:
-    import slappyengine.prefabs as pkg
+    import pharos_engine.prefabs as pkg
     assert hasattr(pkg, "Prefab")
     assert hasattr(pkg, "PrefabLibrary")
     assert hasattr(pkg, "CATEGORIES")

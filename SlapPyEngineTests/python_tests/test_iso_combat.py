@@ -1,11 +1,11 @@
-"""Tests for slappyengine.iso.combat — Stone Keep combat + wave spawn."""
+"""Tests for pharos_engine.iso.combat — Stone Keep combat + wave spawn."""
 from __future__ import annotations
 
 import warnings
 
 import pytest
 
-from slappyengine.iso.combat import (
+from pharos_engine.iso.combat import (
     AttackResult,
     Combatant,
     SpawnEvent,

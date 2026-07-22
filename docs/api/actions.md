@@ -1,20 +1,20 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.actions — API Reference
+# pharos_engine.actions — API Reference
 
 > Hand-written reference for the `actions` subpackage — headless-safe
 > callbacks backing every ``ToolRouter`` menu / hotkey / toolbar
 > action that mutates persistent state. Owns the ``_fb_*`` fallback
 > handlers the router dispatches into when the DPG editor shell is
 > either absent (headless tests) or bypassed. Does **not** own the
-> action registry itself (see :mod:`slappyengine.tool_router` and
+> action registry itself (see :mod:`pharos_engine.tool_router` and
 > [`../tool_routing_2026_06_07.md`](../tool_routing_2026_06_07.md))
-> or the higher-level shell (:class:`slappyengine.ui.editor.EditorShell`,
+> or the higher-level shell (:class:`pharos_engine.ui.editor.EditorShell`,
 > [`ui_editor.md`](ui_editor.md)).
 
 ## Overview
 
-Every :class:`~slappyengine.tool_router.ToolAction` row in
-:data:`slappyengine.tool_router.REGISTRY` that mutates persistent
+Every :class:`~pharos_engine.tool_router.ToolAction` row in
+:data:`pharos_engine.tool_router.REGISTRY` that mutates persistent
 state (project files, editor layout, entity clipboard, theme
 selection, capture recordings, view / selection state, snap grid,
 layer stack, spawn history, panel visibility) lives here as a small
@@ -46,7 +46,7 @@ cancellation).
 ## Public surface
 
 ```python
-from slappyengine.actions import (
+from pharos_engine.actions import (
     # Project lifecycle
     save_project, new_project, open_recent,
     # Layout + panel
@@ -103,7 +103,7 @@ from slappyengine.actions import (
 
 The full ``__all__`` list has ~75 entries; the block above groups
 them by role for readability. Any symbol exposed from
-``slappyengine.actions`` is guaranteed to be a
+``pharos_engine.actions`` is guaranteed to be a
 ``ctx: dict -> dict | None`` callable (except :data:`PAN_TOOL_ID`,
 which is a constant string tool identifier).
 
@@ -117,7 +117,7 @@ def <action_helper>(ctx: dict) -> dict | None:
 ```
 
 - `ctx` is a mapping (`dict` or `collections.ChainMap`) resolved by
-  :func:`slappyengine.actions._ctx.ensure_ctx` — passing `None` or a
+  :func:`pharos_engine.actions._ctx.ensure_ctx` — passing `None` or a
   non-mapping raises `TypeError` naming the caller.
 - The return dict carries a `"status"` key describing the outcome
   (`"saved"` / `"created"` / `"no_project"` / `"missing_path"` /
@@ -136,9 +136,9 @@ the exhaustive per-helper contract.
 
 #### `save_project(ctx: dict) -> dict`
 
-_defined in `slappyengine.actions.project_actions`_
+_defined in `pharos_engine.actions.project_actions`_
 
-Save the currently-loaded :class:`slappyengine.projects.Project`.
+Save the currently-loaded :class:`pharos_engine.projects.Project`.
 Search order: `ctx["project"]` → `ctx["shell"]._project` →
 `ctx["shell"]._engine._project_manager._project`.
 
@@ -148,7 +148,7 @@ Search order: `ctx["project"]` → `ctx["shell"]._project` →
 
 #### `copy_selection(ctx: dict) -> dict`
 
-_defined in `slappyengine.actions.selection_actions`_
+_defined in `pharos_engine.actions.selection_actions`_
 
 Copy the current selection onto the entity clipboard read from
 `ctx["clipboard"]` (falling back to a shell-owned clipboard). The
@@ -157,7 +157,7 @@ router hands the reversed operation to
 
 #### `cycle_theme(ctx: dict) -> dict`
 
-_defined in `slappyengine.actions.theme_actions`_
+_defined in `pharos_engine.actions.theme_actions`_
 
 Advance the ThemeSpec registry cursor one slot forward, wrapping at
 the end. `cycle_theme_reverse` walks backwards; `hot_swap_theme`
@@ -167,7 +167,7 @@ without changing which theme is active.
 
 #### `undo_action(ctx: dict) -> dict`
 
-_defined in `slappyengine.actions.history_actions`_
+_defined in `pharos_engine.actions.history_actions`_
 
 Pop one entry off the editor undo stack. `redo_action` is the
 inverse. Both are no-ops if the stack is empty.
@@ -176,7 +176,7 @@ inverse. Both are no-ops if the stack is empty.
 
 ### `PAN_TOOL_ID`
 
-_`str` — defined in `slappyengine.actions.tool_mode_actions`_
+_`str` — defined in `pharos_engine.actions.tool_mode_actions`_
 
 Value: the canonical tool identifier the router passes to
 :func:`activate_pan_tool` when the user picks the pan tool. Exposed
@@ -186,7 +186,7 @@ underlying string.
 ## Inner modules
 
 Grouped by responsibility. Every file matches the pattern
-`slappyengine.actions.<topic>_actions` and lands one topic-scoped
+`pharos_engine.actions.<topic>_actions` and lands one topic-scoped
 set of helpers.
 
 - **Project lifecycle** — `project_actions`.
@@ -239,7 +239,7 @@ set of helpers.
 ## Usage
 
 ```python
-from slappyengine.actions import (
+from pharos_engine.actions import (
     save_project, cycle_theme, copy_selection, paste_selection,
 )
 
@@ -260,18 +260,18 @@ cycle_theme({"shell": my_shell})
 
 ## Skip the wrapper
 
-`slappyengine.actions` is pure Python — no runtime work lives in
-Rust. Grep of `slappyengine._core_facade.RUST_MODULE_MAP` shows
+`pharos_engine.actions` is pure Python — no runtime work lives in
+Rust. Grep of `pharos_engine._core_facade.RUST_MODULE_MAP` shows
 **no** `actions` entry.
 
 The router that dispatches into these helpers
-(:mod:`slappyengine.tool_router`) is *also* pure Python and by
+(:mod:`pharos_engine.tool_router`) is *also* pure Python and by
 design allows a Python fallback to shadow any Rust-backed action —
 the design intent is to let the editor / games monkeypatch a helper
 without needing a rebuilt wheel. Callers who want to invoke an
 action from a game / test without going through
-:class:`~slappyengine.tool_router.ToolRouter` can import the helper
-directly from `slappyengine.actions` and pass a synthetic `ctx`
+:class:`~pharos_engine.tool_router.ToolRouter` can import the helper
+directly from `pharos_engine.actions` and pass a synthetic `ctx`
 dict — this is the officially supported bypass path.
 
 ## Conventions

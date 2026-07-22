@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _OCHEMA_DIR = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _OCHEMA_STR = str(_OCHEMA_DIR)
@@ -161,7 +161,7 @@ class TestAiDriverScriptUpdate:
 
     def test_update_with_scriptinputprovider(self):
         from systems.ai_driver import AiDriverScript
-        from slappyengine.input_provider import ScriptInputProvider
+        from pharos_engine.input_provider import ScriptInputProvider
         v = _make_vehicle(pos=(640.0, 80.0))
         v.input_provider = ScriptInputProvider()
         ai = AiDriverScript(v)
@@ -353,7 +353,7 @@ class TestFogSystemUpdate:
         fs.teardown()
 
     def test_quality_skip_flag_set_by_event(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.fog_system import FogSystem
         fs = FogSystem(gpu=None)
         publish("Quality.TierChanged", publisher=None, tier="low",
@@ -362,7 +362,7 @@ class TestFogSystemUpdate:
         fs.teardown()
 
     def test_quality_fog_scale_applies(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.fog_system import FogSystem
         fs = FogSystem(density=0.8, gpu=None)
         publish("Quality.TierChanged", publisher=None, tier="medium",
@@ -450,7 +450,7 @@ class TestQualitySystemInit:
         assert isinstance(s, str)
 
     def test_init_publishes_tier_changed_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         from systems.quality_system import QualitySystem
         events = []
         h = subscribe("Quality.TierChanged", lambda e: events.append(e))
@@ -515,7 +515,7 @@ class TestQualitySystemUpdate:
         # No crash is sufficient — weather integration happens on tier change
 
     def test_tier_changed_event_published_on_downgrade(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         from systems.quality_system import QualitySystem, _DOWNGRADE_FRAMES
         qs = QualitySystem(target_fps=60.0)
         events = []
@@ -616,42 +616,42 @@ class TestRaceAudioSystemEventHandlers:
         return ras
 
     def test_fog_density_event_updates_state(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ras = self._ras()
         publish("SimField.peak_density", publisher=None, value=0.6)
         assert ras._fog_density == pytest.approx(0.6)
         ras.stop_all()
 
     def test_fog_density_clamped_high(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ras = self._ras()
         publish("SimField.peak_density", publisher=None, value=2.0)
         assert ras._fog_density == pytest.approx(1.0)
         ras.stop_all()
 
     def test_fog_density_clamped_low(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ras = self._ras()
         publish("SimField.peak_density", publisher=None, value=-0.5)
         assert ras._fog_density == pytest.approx(0.0)
         ras.stop_all()
 
     def test_weather_changed_updates_wind_vol(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ras = self._ras()
         publish("Weather.Changed", publisher=None, wind_speed=80.0, intensity=0.0)
         assert ras._wind_vol == pytest.approx(1.0)
         ras.stop_all()
 
     def test_weather_changed_updates_rain_vol(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ras = self._ras()
         publish("Weather.Changed", publisher=None, wind_speed=0.0, intensity=0.5)
         assert ras._rain_vol == pytest.approx(0.5)
         ras.stop_all()
 
     def test_nitro_active_event_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ras = self._ras()
         v = MagicMock()
         v.position = (100.0, 100.0)
@@ -659,25 +659,25 @@ class TestRaceAudioSystemEventHandlers:
         ras.stop_all()
 
     def test_race_started_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ras = self._ras()
         publish("Race.Started", publisher=None)
         ras.stop_all()
 
     def test_race_finished_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ras = self._ras()
         publish("Race.Finished", publisher=None)
         ras.stop_all()
 
     def test_lap_complete_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ras = self._ras()
         publish("Race.LapComplete", publisher=None)
         ras.stop_all()
 
     def test_vehicle_collision_no_crash(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         ras = self._ras()
         v = MagicMock()
         v.position = (100.0, 100.0)
@@ -685,7 +685,7 @@ class TestRaceAudioSystemEventHandlers:
         ras.stop_all()
 
     def test_collision_below_threshold_no_impact(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.audio_system import RaceAudioSystem
         ras = RaceAudioSystem(None)
         ras.subscribe_events()
@@ -745,7 +745,7 @@ class TestRaceAudioSystemDoppler:
 
 class TestRaceAudioSystemSonicBoom:
     def test_check_sonic_boom_below_threshold_no_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         from systems.audio_system import RaceAudioSystem
         ras = RaceAudioSystem(None)
         events = []
@@ -758,7 +758,7 @@ class TestRaceAudioSystemSonicBoom:
         assert len(events) == 0
 
     def test_check_sonic_boom_fires_event(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         from systems.audio_system import RaceAudioSystem
         ras = RaceAudioSystem(None)
         events = []
@@ -772,7 +772,7 @@ class TestRaceAudioSystemSonicBoom:
         assert len(events) == 1
 
     def test_check_sonic_boom_not_repeated(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         from systems.audio_system import RaceAudioSystem
         ras = RaceAudioSystem(None)
         events = []
@@ -786,7 +786,7 @@ class TestRaceAudioSystemSonicBoom:
         assert len(events) == 1
 
     def test_sos_config_change_updates_speed(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         from systems.audio_system import RaceAudioSystem
         ras = RaceAudioSystem(None)
         ras.subscribe_events()

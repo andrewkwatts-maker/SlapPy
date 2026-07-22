@@ -259,7 +259,7 @@ def test_demo_theme_walk_is_the_six_defaults() -> None:
 
 
 def test_demo_page_walk_matches_default_pages_order() -> None:
-    from slappyengine.ui.editor.diary_shell import DEFAULT_PAGES
+    from pharos_engine.ui.editor.diary_shell import DEFAULT_PAGES
 
     assert list(demo.PAGE_WALK) == [p.id for p in DEFAULT_PAGES]
 

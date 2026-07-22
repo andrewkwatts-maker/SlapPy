@@ -1,7 +1,7 @@
 """Smoke test for ``examples/multiplayer_demo.py`` (RR2 gap-close, batch 3).
 
-The demo uses ``slappyengine.net.GameSession`` (Kademlia DHT + STUN) and
-``slappyengine.input.ActionMap``.  Real DHT/STUN traffic obviously can't
+The demo uses ``pharos_engine.net.GameSession`` (Kademlia DHT + STUN) and
+``pharos_engine.input.ActionMap``.  Real DHT/STUN traffic obviously can't
 run in CI, so we stub ``GameSession.host`` + ``LockstepSync.tick_async``
 + ``asyncio.sleep`` and drive the async ``main()`` to completion.
 

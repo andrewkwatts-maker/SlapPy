@@ -11,22 +11,22 @@ class _Entity:
 
 class TestCameraInit:
     def test_default_position_origin(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera()
         assert cam.position == (0.0, 0.0)
 
     def test_default_zoom_one(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera()
         assert cam.zoom == pytest.approx(1.0)
 
     def test_default_rotation_zero(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera()
         assert cam.rotation == pytest.approx(0.0)
 
     def test_init_with_values(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera(position=(100.0, 200.0), zoom=2.0, rotation=0.5)
         assert cam.position == (100.0, 200.0)
         assert cam.zoom == pytest.approx(2.0)
@@ -35,7 +35,7 @@ class TestCameraInit:
 
 class TestCameraWorldToScreen:
     def test_origin_at_center(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera(position=(0.0, 0.0))
         cam._viewport_size = (800, 600)
         sx, sy = cam.world_to_screen((0.0, 0.0))
@@ -43,14 +43,14 @@ class TestCameraWorldToScreen:
         assert sy == pytest.approx(300.0)  # vh/2
 
     def test_world_point_right_of_cam(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera(position=(0.0, 0.0))
         cam._viewport_size = (800, 600)
         sx, sy = cam.world_to_screen((100.0, 0.0))
         assert sx == pytest.approx(500.0)  # 400 + 100
 
     def test_zoom_doubles_offset(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera(position=(0.0, 0.0), zoom=2.0)
         cam._viewport_size = (800, 600)
         sx1, _ = Camera(position=(0.0, 0.0)).world_to_screen((50.0, 0.0))
@@ -62,7 +62,7 @@ class TestCameraWorldToScreen:
 
 class TestCameraScreenToWorld:
     def test_center_maps_to_cam_position(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera(position=(0.0, 0.0))
         cam._viewport_size = (800, 600)
         wx, wy = cam.screen_to_world((400.0, 300.0))
@@ -70,7 +70,7 @@ class TestCameraScreenToWorld:
         assert wy == pytest.approx(0.0)
 
     def test_roundtrip_w2s_s2w(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera(position=(50.0, 80.0), zoom=1.5)
         cam._viewport_size = (800, 600)
         world_pt = (120.0, 240.0)
@@ -82,7 +82,7 @@ class TestCameraScreenToWorld:
 
 class TestCameraVisibleRect:
     def test_visible_rect_includes_position(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera(position=(100.0, 100.0))
         cam._viewport_size = (200, 100)
         x0, y0, x1, y1 = cam.visible_rect()
@@ -90,7 +90,7 @@ class TestCameraVisibleRect:
         assert y0 < 100.0 < y1
 
     def test_visible_rect_size_at_zoom_1(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera(position=(0.0, 0.0), zoom=1.0)
         cam._viewport_size = (800, 600)
         x0, y0, x1, y1 = cam.visible_rect()
@@ -98,7 +98,7 @@ class TestCameraVisibleRect:
         assert (y1 - y0) == pytest.approx(600.0)
 
     def test_visible_rect_smaller_at_zoom_2(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam_z1 = Camera(position=(0.0, 0.0), zoom=1.0)
         cam_z1._viewport_size = (800, 600)
         cam_z2 = Camera(position=(0.0, 0.0), zoom=2.0)
@@ -110,7 +110,7 @@ class TestCameraVisibleRect:
 
 class TestCameraFollow:
     def test_follow_snap_moves_to_target(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera(position=(0.0, 0.0))
         cam._viewport_size = (800, 600)
         entity = _Entity(400.0, 300.0)
@@ -120,7 +120,7 @@ class TestCameraFollow:
         assert cam.position[1] == pytest.approx(0.0)
 
     def test_follow_lerp_partial_move(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera(position=(0.0, 0.0))
         cam._viewport_size = (800, 600)
         entity = _Entity(800.0, 600.0)  # target cam pos → (0, 0) for 800x600 screen
@@ -130,7 +130,7 @@ class TestCameraFollow:
         assert cam.position[0] != initial_x or cam.position[1] != 0.0
 
     def test_follow_large_lerp_snaps(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera(position=(0.0, 0.0))
         cam._viewport_size = (800, 600)
         entity = _Entity(100.0, 100.0)
@@ -141,18 +141,18 @@ class TestCameraFollow:
 
 class TestCameraViewMatrix:
     def test_view_matrix_returns_16_floats(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera()
         m = cam.view_matrix()
         assert len(m) == 16
 
     def test_view_matrix_no_crash_with_rotation(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera(rotation=0.5, zoom=1.5)
         cam.view_matrix()
 
     def test_view_matrix_identity_like_at_origin(self):
-        from slappyengine.camera import Camera
+        from pharos_engine.camera import Camera
         cam = Camera(position=(0.0, 0.0), zoom=1.0, rotation=0.0)
         cam._viewport_size = (2, 2)  # simple: 2×scale/2 = scale
         m = cam.view_matrix()

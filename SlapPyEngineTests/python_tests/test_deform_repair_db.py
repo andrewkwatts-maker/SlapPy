@@ -24,38 +24,38 @@ class _FakeLayer:
 
 class TestDeformRepairerInit:
     def test_init_stores_layer(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         layer = _FakeLayer()
         dr = DeformRepairer(layer)
         assert dr._layer is layer
 
     def test_init_no_original_alpha(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         dr = DeformRepairer(_FakeLayer())
         assert dr._original_alpha is None
 
     def test_pending_empty_initially(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         dr = DeformRepairer(_FakeLayer())
         assert dr._pending == []
 
 
 class TestDeformRepairerQueue:
     def test_queue_radial_adds_event(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         dr = DeformRepairer(_FakeLayer())
         dr.queue_radial(16, 16, radius=8.0, rate=2.0)
         assert len(dr._pending) == 1
         assert dr._pending[0]["mode"] == 0  # falloff mode
 
     def test_queue_radial_no_falloff(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         dr = DeformRepairer(_FakeLayer())
         dr.queue_radial(16, 16, radius=8.0, rate=2.0, falloff=False)
         assert dr._pending[0]["mode"] == 1
 
     def test_queue_pixel(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         dr = DeformRepairer(_FakeLayer())
         dr.queue_pixel(5, 10, rate=5.0)
         assert len(dr._pending) == 1
@@ -63,14 +63,14 @@ class TestDeformRepairerQueue:
         assert dr._pending[0]["center_y"] == 10.0
 
     def test_queue_full(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         dr = DeformRepairer(_FakeLayer())
         dr.queue_full(rate=1.0)
         assert len(dr._pending) == 1
         assert dr._pending[0]["mode"] == 2
 
     def test_multiple_queues(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         dr = DeformRepairer(_FakeLayer())
         dr.queue_radial(8, 8, radius=4.0)
         dr.queue_pixel(2, 2)
@@ -80,7 +80,7 @@ class TestDeformRepairerQueue:
 
 class TestDeformRepairerDispatch:
     def test_dispatch_clears_pending(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         layer = _FakeLayer(alpha=100)
         dr = DeformRepairer(layer)
         dr.queue_full(rate=1.0)
@@ -88,12 +88,12 @@ class TestDeformRepairerDispatch:
         assert dr._pending == []
 
     def test_dispatch_empty_no_crash(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         dr = DeformRepairer(_FakeLayer())
         dr.dispatch()  # no pending — should not raise
 
     def test_full_repair_increases_alpha(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         layer = _FakeLayer(alpha=100)
         dr = DeformRepairer(layer)
         dr.queue_full(rate=10.0)
@@ -103,7 +103,7 @@ class TestDeformRepairerDispatch:
         assert np.any(layer._image_data[:, :, 3] > 100)
 
     def test_full_repair_capped_at_255(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         layer = _FakeLayer(alpha=250)
         dr = DeformRepairer(layer)
         dr.queue_full(rate=100.0)
@@ -111,7 +111,7 @@ class TestDeformRepairerDispatch:
         assert np.all(layer._image_data[:, :, 3] <= 255)
 
     def test_full_repair_capped_at_original_alpha(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         layer = _FakeLayer(alpha=50)
         original = np.full((32, 32), 150.0, dtype=np.float32)
         dr = DeformRepairer(layer, original_alpha=original)
@@ -120,7 +120,7 @@ class TestDeformRepairerDispatch:
         assert np.all(layer._image_data[:, :, 3] <= 150)
 
     def test_radial_repair_heals_center_more_than_edge(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         h, w = 64, 64
         layer = _FakeLayer(w=w, h=h, alpha=0)
         dr = DeformRepairer(layer)
@@ -131,7 +131,7 @@ class TestDeformRepairerDispatch:
         assert center_alpha > edge_alpha
 
     def test_radial_no_falloff_uniform_within_radius(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
         h, w = 64, 64
         layer = _FakeLayer(w=w, h=h, alpha=0)
         dr = DeformRepairer(layer)
@@ -144,7 +144,7 @@ class TestDeformRepairerDispatch:
         assert outside == 0
 
     def test_dispatch_with_none_image_data_no_crash(self):
-        from slappyengine.deform_repair import DeformRepairer
+        from pharos_engine.deform_repair import DeformRepairer
 
         class NoData:
             _image_data = None
@@ -159,26 +159,26 @@ class TestDeformRepairerDispatch:
 
 class TestAssetDatabase:
     def test_instance_singleton(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         a = AssetDatabase.instance()
         b = AssetDatabase.instance()
         assert a is b
 
     def test_register_handler(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         calls = []
         db.register_handler(".tst", lambda path: calls.append(path) or "loaded")
         assert ".tst" in db._handlers
 
     def test_no_handler_raises(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         with pytest.raises(ValueError):
             db.load("nonexistent.xyz_unknown_ext")
 
     def test_load_yaml(self, tmp_path):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         yf = tmp_path / "config.yml"
         yf.write_text("key: value\nnumber: 42\n", encoding="utf-8")
@@ -187,7 +187,7 @@ class TestAssetDatabase:
         assert result["number"] == 42
 
     def test_load_yaml_cached(self, tmp_path):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         yf = tmp_path / "cached.yml"
         yf.write_text("a: 1\n", encoding="utf-8")
@@ -196,7 +196,7 @@ class TestAssetDatabase:
         assert r1 is r2
 
     def test_get_record_after_load(self, tmp_path):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         yf = tmp_path / "rec.yml"
         yf.write_text("x: 1\n", encoding="utf-8")
@@ -206,12 +206,12 @@ class TestAssetDatabase:
         assert rec.asset_type == "yml"
 
     def test_get_record_none_when_not_loaded(self):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         assert db.get_record("/nonexistent/path.yml") is None
 
     def test_all_records_returns_list(self, tmp_path):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         yf = tmp_path / "list.yml"
         yf.write_text("n: 1\n", encoding="utf-8")
@@ -221,7 +221,7 @@ class TestAssetDatabase:
         assert len(records) >= 1
 
     def test_force_reload(self, tmp_path):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         yf = tmp_path / "reload.yml"
         yf.write_text("v: 1\n", encoding="utf-8")
@@ -231,7 +231,7 @@ class TestAssetDatabase:
         assert r2["v"] == 99
 
     def test_load_custom_extension(self, tmp_path):
-        from slappyengine.assets.database import AssetDatabase
+        from pharos_engine.assets.database import AssetDatabase
         db = AssetDatabase()
         custom = tmp_path / "data.myext"
         custom.write_bytes(b"raw data")

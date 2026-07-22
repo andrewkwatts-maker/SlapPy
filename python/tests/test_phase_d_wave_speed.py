@@ -27,13 +27,13 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.deform_modes import MATERIAL_CONFIGS, MaterialPreset
-from slappyengine.physics import (
+from pharos_engine.deform_modes import MATERIAL_CONFIGS, MaterialPreset
+from pharos_engine.physics import (
     PhysicsWorld,
     make_rect_silhouette,
 )
-from slappyengine.physics.cell import CELL_GRID_SIZE
-from slappyengine.physics.world import (
+from pharos_engine.physics.cell import CELL_GRID_SIZE
+from pharos_engine.physics.world import (
     CellConfig,
     CollisionConfig,
     GpuConfig,
@@ -234,7 +234,7 @@ def test_cfl_planner_requests_more_substeps_for_stiffer_materials():
 def test_existing_conservation_still_holds():
     """Phase D only retunes the wave-Laplacian path; mass conservation
     through a representative drop must remain at single-ULP-grade drift."""
-    from slappyengine.physics import make_circle_silhouette
+    from pharos_engine.physics import make_circle_silhouette
     w = PhysicsWorld(world_bounds=(-200.0, -100.0, 200.0, 250.0))
     w.create_body(
         make_rect_silhouette(240, 16), material="stone",

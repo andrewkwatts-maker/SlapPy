@@ -7,12 +7,12 @@ signature that the test asserts on.
 """
 from __future__ import annotations
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.render import PointLight, RenderConfig
+from pharos_engine.physics.render import PointLight, RenderConfig
 
 
 # Light positions and colours used by the test.  Exposed at module scope so

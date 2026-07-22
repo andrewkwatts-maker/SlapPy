@@ -3,9 +3,9 @@
 > **Status:** design doc only (Sprint 5+, 2026-06-03). No engine code lands in
 > this sprint — this file is the contract Phases A-E will be cut against.
 >
-> **Scope:** alternate look-and-feel for the SlapPyEngine editor (`slappyengine.ui.editor`).
+> **Scope:** alternate look-and-feel for the SlapPyEngine editor (`pharos_engine.ui.editor`).
 > Lives alongside the existing glassmorphism theme in
-> [`python/slappyengine/ui/editor/theme.py`](../python/slappyengine/ui/editor/theme.py).
+> [`python/pharos_engine/ui/editor/theme.py`](../python/pharos_engine/ui/editor/theme.py).
 > Opt-in via a future `apply_teengirl_notebook_theme()` entry point — never
 > the default.
 >
@@ -103,7 +103,7 @@ verbatim — the notebook texture **only** lives in editor chrome.
 ## 2. Typography
 
 All recommended fonts are SIL Open Font License (OFL) 1.1 — safe to vendor
-under `python/slappyengine/ui/editor/assets/fonts/` and redistribute with the
+under `python/pharos_engine/ui/editor/assets/fonts/` and redistribute with the
 wheel. Each font ships compressed (subset Latin + Latin-Extended-A for the
 diacritics common in user content).
 
@@ -247,7 +247,7 @@ fragment-shader hook. The supported routes are:
    wobble and glitter shimmer at acceptable cost — both are tiny rects).
 3. For larger surfaces requiring per-frame compute (the full toolbar
    background under heavy panning), the engine's existing wgpu context
-   (`slappyengine.gpu`) renders a quad with WGSL and writes the texture
+   (`pharos_engine.gpu`) renders a quad with WGSL and writes the texture
    back to DPG. This is the same texture-handoff pattern already used by
    the viewport panel.
 
@@ -440,7 +440,7 @@ glassmorphism→notebook palette, just without the sticker treatments.
 
 Phases A, B, D are independent of softbody / fluid and ship without
 touching either subsystem (constraint honoured). Phases C and E only read
-from the existing `slappyengine.gpu` and `slappyengine.ui.editor` module
+from the existing `pharos_engine.gpu` and `pharos_engine.ui.editor` module
 boundaries.
 
 Each phase is one PR with its own design checklist (palette ✅, font ✅,
@@ -477,7 +477,7 @@ theme switch ✅, headless test ✅, visual regression sample ✅).
    tears down the previous theme via a captured handle (mirroring the
    pattern used by `get_accent_button_theme()`).
 6. **Headless / CI.** Sticker placements and animated shimmer **must** be
-   off by default in `slappyengine.testing` runs — they would inflate
+   off by default in `pharos_engine.testing` runs — they would inflate
    visual-regression diff baselines. The theme module exposes
    `set_decorations_enabled(False)` for the visual-diff harness.
 7. **Sprite-audit interaction.** The notebook theme doesn't change any
@@ -504,23 +504,23 @@ theme switch ✅, headless test ✅, visual regression sample ✅).
 
 ### Engine modules to integrate against
 
-- [`python/slappyengine/ui/editor/theme.py`](../python/slappyengine/ui/editor/theme.py)
+- [`python/pharos_engine/ui/editor/theme.py`](../python/pharos_engine/ui/editor/theme.py)
   — entry point; existing glassmorphism palette + `apply_editor_theme()`
   / `get_accent_button_theme()` / `get_viewport_opaque_theme()` /
   `apply_dwm_glass()`. The notebook theme adds a sibling
   `apply_teengirl_notebook_theme()`.
-- [`python/slappyengine/ui/editor/toolbar.py`](../python/slappyengine/ui/editor/toolbar.py)
+- [`python/pharos_engine/ui/editor/toolbar.py`](../python/pharos_engine/ui/editor/toolbar.py)
   — Select / Move / Rotate / Scale tool palette consuming §4.1 icons.
-- [`python/slappyengine/ui/editor/scene_outliner.py`](../python/slappyengine/ui/editor/scene_outliner.py)
+- [`python/pharos_engine/ui/editor/scene_outliner.py`](../python/pharos_engine/ui/editor/scene_outliner.py)
   — uses §4.2 badges for the visibility / lock toggles and §6 default
   sticker placements.
-- [`python/slappyengine/ui/editor/property_inspector.py`](../python/slappyengine/ui/editor/property_inspector.py)
+- [`python/pharos_engine/ui/editor/property_inspector.py`](../python/pharos_engine/ui/editor/property_inspector.py)
   — three-section reflective inspector; §7 widget overrides land here.
-- [`python/slappyengine/ui/editor/spawn_menu.py`](../python/slappyengine/ui/editor/spawn_menu.py)
+- [`python/pharos_engine/ui/editor/spawn_menu.py`](../python/pharos_engine/ui/editor/spawn_menu.py)
   — `+ Add` modal; reuses inspector widget overrides verbatim.
-- [`python/slappyengine/ui/editor/code_mode_panel.py`](../python/slappyengine/ui/editor/code_mode_panel.py)
+- [`python/pharos_engine/ui/editor/code_mode_panel.py`](../python/pharos_engine/ui/editor/code_mode_panel.py)
   — Code Mode tab; §4.3 icons + Fira Code body font.
-- [`python/slappyengine/ui/editor/gizmo_overlay.py`](../python/slappyengine/ui/editor/gizmo_overlay.py)
+- [`python/pharos_engine/ui/editor/gizmo_overlay.py`](../python/pharos_engine/ui/editor/gizmo_overlay.py)
   — viewport drawlist gizmos; only affected by §1 accent palette (gizmo
   geometry stays as-is).
 

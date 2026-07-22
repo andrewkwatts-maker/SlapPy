@@ -18,14 +18,14 @@ import numpy as np
 import pytest
 
 try:
-    from slappyengine.ui.editor.notebook_toolbar import (
+    from pharos_engine.ui.editor.notebook_toolbar import (
         NotebookToolbar,
         _SVG_BOW_TIE,
         _SVG_FOUR_ARROW_FLOWER,
         _SVG_HEART_ARROW,
         _SVG_SPIRAL,
     )
-    from slappyengine.ui.theme import (
+    from pharos_engine.ui.theme import (
         Color,
         Font,
         Gradient,
@@ -35,11 +35,11 @@ try:
         apply_theme,
         register_theme,
     )
-    from slappyengine.ui.theme.creatures.slot_policy import SlotRegion
-    from slappyengine.ui.theme.svg_icon import SVGIcon
-    from slappyengine.ui.theme.svg_icon import clear_cache as clear_svg_cache
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
-    from slappyengine.ui.widgets.sticker_button import StickerButton
+    from pharos_engine.ui.theme.creatures.slot_policy import SlotRegion
+    from pharos_engine.ui.theme.svg_icon import SVGIcon
+    from pharos_engine.ui.theme.svg_icon import clear_cache as clear_svg_cache
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine.ui.widgets.sticker_button import StickerButton
 except Exception as exc:  # pragma: no cover - skip when deps missing
     pytest.skip(
         f"notebook_toolbar dependencies unavailable: {exc}",

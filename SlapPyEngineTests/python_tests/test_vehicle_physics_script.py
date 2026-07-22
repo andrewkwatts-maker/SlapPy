@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _GAME_ROOT = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _GAME_STR = str(_GAME_ROOT)
@@ -23,7 +23,7 @@ if _GAME_STR not in sys.path:
 
 def _make_entity(throttle=0.0, brake=0.0, steer=0.0):
     """Return a minimal fake vehicle entity with a ScriptInputProvider."""
-    from slappyengine.input_provider import ScriptInputProvider
+    from pharos_engine.input_provider import ScriptInputProvider
 
     e = MagicMock()
     e.position = (0.0, 0.0)
@@ -138,7 +138,7 @@ class TestVehiclePhysicsScriptInit:
         vps.teardown()
 
     def test_subscribes_vehicle_destroyed(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         before = global_bus.listener_count("Vehicle.Destroyed")
         vps = self._vps()
         after = global_bus.listener_count("Vehicle.Destroyed")
@@ -146,7 +146,7 @@ class TestVehiclePhysicsScriptInit:
         vps.teardown()
 
     def test_teardown_unsubscribes(self):
-        from slappyengine.event_bus import global_bus
+        from pharos_engine.event_bus import global_bus
         before = global_bus.listener_count("Vehicle.Destroyed")
         vps = self._vps()
         vps.teardown()
@@ -196,7 +196,7 @@ class TestVehiclePhysicsScriptBoost:
         vps.teardown()
 
     def test_destroyed_event_stops_processing(self):
-        from slappyengine.event_bus import publish
+        from pharos_engine.event_bus import publish
         vps = self._vps()
         publish("Vehicle.Destroyed")
         assert vps._destroyed is True

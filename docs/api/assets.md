@@ -1,7 +1,7 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.assets — API Reference
+# pharos_engine.assets — API Reference
 
-> Hand-written reference for `slappyengine.assets` — the central
+> Hand-written reference for `pharos_engine.assets` — the central
 > asset registry with hot-reload and extensible import handlers.
 > Sibling references: [`asset_import.md`](asset_import.md) is the
 > load-time loader stack (`import_asset` / `load_model` /
@@ -10,7 +10,7 @@
 
 ## Overview
 
-`slappyengine.assets` is the "one place every runtime lookup goes" layer
+`pharos_engine.assets` is the "one place every runtime lookup goes" layer
 of the asset stack. Where [`asset_import.md`](asset_import.md) owns the
 per-format parsers, this subpackage owns the process-wide **cache** of
 already-loaded assets, the **hot-reload** watcher that keeps that cache
@@ -22,7 +22,7 @@ engine.
 The public surface is a single class — :class:`AssetDatabase` — held as
 a process-wide singleton via :meth:`AssetDatabase.instance`. Every
 attribute lookup on that class validates its inputs through
-`slappyengine.assets._validation`, so authoring bugs (bad extension
+`pharos_engine.assets._validation`, so authoring bugs (bad extension
 form, empty path, non-callable loader) fail loudly with the canonical
 `TypeError` / `ValueError` shape the rest of the engine uses.
 
@@ -33,9 +33,9 @@ Load-bearing behaviour:
   only when the mtime has moved (or `force_reload=True`).
 * **Default handlers wired at construction.** Common image extensions
   (`.png`, `.jpg`, `.jpeg`, `.bmp`, `.gif`, `.tga`, `.webp`) resolve to
-  :class:`slappyengine.layer.Layer.from_image`; YAML extensions
+  :class:`pharos_engine.layer.Layer.from_image`; YAML extensions
   (`.yml`, `.yaml`) resolve to `yaml.safe_load`; the engine-native
-  `.slap` container resolves to `slappyengine.asset.Asset.load`.
+  `.slap` container resolves to `pharos_engine.asset.Asset.load`.
 * **`watchdog` is a soft dependency.** :meth:`AssetDatabase.watch`
   installs a filesystem observer when the `watchdog` package is
   present and silently no-ops when it is not — headless CI keeps the
@@ -48,7 +48,7 @@ import chain until you actually need it.
 ## Public surface
 
 ```python
-from slappyengine.assets.database import AssetDatabase, AssetRecord
+from pharos_engine.assets.database import AssetDatabase, AssetRecord
 
 db = AssetDatabase.instance()             # process-wide singleton
 layer = db.load("Content/Assets/hero.png") # returns Layer2D
@@ -61,7 +61,7 @@ layer = db.load("Content/Assets/hero.png") # returns Layer2D
 
 ### `AssetDatabase`
 
-_class — defined in `slappyengine.assets.database`_
+_class — defined in `pharos_engine.assets.database`_
 
 Process-wide singleton. Never construct directly; go through
 :meth:`AssetDatabase.instance`.
@@ -84,7 +84,7 @@ Process-wide singleton. Never construct directly; go through
 
 **Validation contract (all public methods).** `path` / `directory`
 must be a non-empty `str` or `Path` (validated via the shared
-`slappyengine._validation.validate_path_like` helper);
+`pharos_engine._validation.validate_path_like` helper);
 `force_reload` must be exactly a `bool`; `ext` must be a non-empty
 lowercase extension starting with `.`, with no path separator and no
 whitespace; `loader` must be callable. Violations raise `TypeError`
@@ -99,7 +99,7 @@ message.
 
 ### `AssetRecord`
 
-_class — defined in `slappyengine.assets.database`_
+_class — defined in `pharos_engine.assets.database`_
 
 Cache entry. `__slots__`-based so a mid-size project (a few thousand
 records) stays under a megabyte of registry overhead.
@@ -118,7 +118,7 @@ Fields:
 ## Usage
 
 ```python
-from slappyengine.assets.database import AssetDatabase
+from pharos_engine.assets.database import AssetDatabase
 
 # Grab the singleton and load a PNG (image handler is default-wired).
 db = AssetDatabase.instance()
@@ -148,8 +148,8 @@ db.watch("Content/")
 
 ## Skip the wrapper
 
-`slappyengine.assets` is Python-only. Grep of
-`slappyengine._core_facade.RUST_MODULE_MAP` shows **no** `assets`
+`pharos_engine.assets` is Python-only. Grep of
+`pharos_engine._core_facade.RUST_MODULE_MAP` shows **no** `assets`
 entry — the registry is a plain `dict[str, AssetRecord]` and the cache
 hot-path is a single `os.stat` call plus a dictionary lookup, both
 already O(1). Rewriting in Rust would move no measurable frame-time

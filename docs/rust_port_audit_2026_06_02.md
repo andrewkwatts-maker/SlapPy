@@ -42,10 +42,10 @@ The shipping `_core.cp313-win_amd64.pyd` exports **53 symbols**, but the committ
 |---|---|---|
 | `src/raster.rs` | `rasterize_lines`, `rasterize_circles`, `rasterize_lines_hdr_rs`, `rasterize_textured_triangles`, `box_blur_rgb`, `alpha_composite_rgb`, `alpha_composite_hdr_rs`, `post_process_rgb`, `post_process_hdr_rs` | `softbody/render.py`, `fluid/render.py` |
 | `src/pbf_solver.rs` | `pbf_step_full`, `pbf_iter`, `build_neighbour_table`, `friction_pass_rs` | `fluid/solver.py` |
-| `src/softbody_solver.rs` | `slappyengine_step`, `project_distance_constraints`, `project_node_beam_contacts`, `project_node_node_pairs`, `build_contact_pairs`, `apply_plasticity`, `mark_breaks` | `softbody/solver.py`, `softbody/collision.py` |
+| `src/softbody_solver.rs` | `pharos_engine_step`, `project_distance_constraints`, `project_node_beam_contacts`, `project_node_node_pairs`, `build_contact_pairs`, `apply_plasticity`, `mark_breaks` | `softbody/solver.py`, `softbody/collision.py` |
 | `src/fluid_shader.rs` | `surface_base_shade_rs`, `turbulence_foam_rs`, `refraction_warp_rs`, `specular_pass_rs`, `godrays_rs`, `speed_screen_rs`, `draw_droplet_tails_rs`, `sample_density_grid_rs`, `extract_isolines_rs`, `thermal_step_rs` | `fluid/render.py`, `fluid/surface.py`, `fluid/thermal_step.py` |
 
-> **Finding F1 (CRITICAL, deferred — pre-existing condition):** The shipping wheel was built from a working tree where these files were `mod`-declared and `register`-called. The current committed `src/lib.rs` would produce a wheel missing all 23 symbols, so the next `maturin develop` from a clean checkout will break `slappyengine.fluid`, `slappyengine.softbody`, and the renderers. This is not a port — it is a tree-hygiene bug. Recommend reading the orphaned files and either tracking them or recovering the working binary's `lib.rs` from the wheel's metadata. Out of scope for this audit; flagged for next sprint as **build-reproducibility hotfix**.
+> **Finding F1 (CRITICAL, deferred — pre-existing condition):** The shipping wheel was built from a working tree where these files were `mod`-declared and `register`-called. The current committed `src/lib.rs` would produce a wheel missing all 23 symbols, so the next `maturin develop` from a clean checkout will break `pharos_engine.fluid`, `pharos_engine.softbody`, and the renderers. This is not a port — it is a tree-hygiene bug. Recommend reading the orphaned files and either tracking them or recovering the working binary's `lib.rs` from the wheel's metadata. Out of scope for this audit; flagged for next sprint as **build-reproducibility hotfix**.
 
 ---
 
@@ -55,7 +55,7 @@ Confirmed-acceptable Python implementations that intentionally shadow a Rust ker
 
 | Module | Python symbol | Mirror in Rust | Rationale |
 |---|---|---|---|
-| `softbody/solver.py` | `_xpbd_step_numpy` | `_core.slappyengine_step` | golden reference for `SlapPyEngineTests/tests/test_softbody_numerics_parity.py` |
+| `softbody/solver.py` | `_xpbd_step_numpy` | `_core.pharos_engine_step` | golden reference for `SlapPyEngineTests/tests/test_softbody_numerics_parity.py` |
 | `physics/particle_field.py` | `_kinetic_relax_legacy` | (no Rust yet; vectorised `_kinetic_relax` is the live path) | kept for parity in commit `8b53890` |
 | `post_process/taa.py` | `TAA.resolve_numpy` | WGSL shader dispatch (not `_core`) | CPU fallback for headless test grids |
 | `numerics/__init__` | `vcycle_poisson`, `sor_smooth`, `compute_residual` | (no Rust yet — see ROI table) | pure-numpy V-cycle is the *only* path today |
@@ -75,7 +75,7 @@ ROI rank = `(measured per-frame ms × invocation frequency × scenario count it 
 | **1** | `_slide` | `physics/particle_field.py:1947` (Particle pile cellular automaton) | **63 %** of Scenario C (10 200 particles, 7.6 fps → **3.1 fps** after workload bump) and 37 % of Scenario B (4 710 particles, 8.7 fps) | 8-15× (per-particle Python branch-heavy DDA-style loop → branch-predictable Rust) | medium (1-2 weeks; needs `_column_top`, `_set_phase`, RNG round-trip) | Single biggest per-frame share of any Python function in the engine. Memory says we want `_slide` next per `project_perf_render_2026_05.md` follow-up. |
 | **2** | `World.step` (dynamics XPBD) | `dynamics/world.py:369` + `dynamics/joint.py` `resolve()` dispatch table | (not in particle baseline) ~0.7 ms / rope-20 today (stable tripwire), but scales O(`solver_iterations × len(joints)`) with a per-joint Python frame inside the inner loop | 5-10× (predicted by `docs/rust_port_plan_dynamics.md`) | medium-large (2-3 weeks; 7 joint kinds, plus Python `Joint` dataclass↔Rust ABI) | Plan already drafted in `docs/rust_port_plan_dynamics.md`. The CPU-side bottleneck for ragdolls / vehicle bodies. |
 | **3** | `_collide` + `_drill_through` + `_slump_loose` (particle field) | `physics/particle_field.py:1590` / `:1677` / `:1122` | combined ~14 % Scenario B, ~9 % Scenario C; `_slump_loose` also dominates Scenario A at **32 %** | 6-12× (per-particle Python loops with sweep DDA + cellular automaton) | medium (each ~1 week) | These are next-tier targets after `_slide`. `_slump_loose` is Amdahl-blocked behind it on big scenes but is the #1 share on the small (680-2365 particle) scene. |
-| 4 | `numerics.vcycle_poisson` (`_sor_sweep`, `_restrict_*`, `_prolong_bilinear`) | `numerics/__init__.py` | not in particle baseline, but the module docstring documents 28.9 → 11.8 ms wins from numpy edits and explicitly names "Rust port of `_sor_sweep` + `_restrict_*`" as the next perf step | 3-6× (numpy is already vectorised; Rust gains less than per-particle loops) | small-medium (1 week; well-isolated stencil kernels) | Sets up `slappyengine.numerics` as a Rust-backed kernel library reusable by future Eulerian fluids and the pressure-projection rewrite. |
+| 4 | `numerics.vcycle_poisson` (`_sor_sweep`, `_restrict_*`, `_prolong_bilinear`) | `numerics/__init__.py` | not in particle baseline, but the module docstring documents 28.9 → 11.8 ms wins from numpy edits and explicitly names "Rust port of `_sor_sweep` + `_restrict_*`" as the next perf step | 3-6× (numpy is already vectorised; Rust gains less than per-particle loops) | small-medium (1 week; well-isolated stencil kernels) | Sets up `pharos_engine.numerics` as a Rust-backed kernel library reusable by future Eulerian fluids and the pressure-projection rewrite. |
 | 5 | `topology.connected_components` | `topology/__init__.py:49` | unmeasured (only fires on softbody fragmentation events); union-find inner loop is pure Python `for k in range(n_edges)` | 15-30× (tightest Python inner loop — the ideal pyo3 target) | small (3-4 days) | Cold today but ROI per port-day is excellent; also unblocks faster `physics/cc_label` legacy path. |
 | 6 | `thermal.HeatField.step` | `thermal/__init__.py:211` | unmeasured in current benchmarks; documented to substep when `coupling > 0.225` (≥ 4 sub-steps per 60 Hz frame at α·dt·k = 1) | 4-8× | small (2-3 days; mirrors `numerics._sor_sweep` structure) | Will dominate when fluid C4 thermal pass goes live (memory `project_sprint_2026_05_29.md` — held pending). |
 
@@ -111,7 +111,7 @@ The following Python is correctly Python — it runs at authoring time, scene lo
 
 1. **`_slide` (particle pile CA)** — sole biggest per-frame win available; 63 % of Scenario C goes here today. A 10× Rust port roughly doubles end-to-end fps on the largest particle scene.
 2. **`dynamics.World.step` + joint resolver** — already has a drafted Rust plan (`docs/rust_port_plan_dynamics.md`); the per-joint Python frame inside an `iters × n_joints` loop is exactly the shape Rust eats for breakfast. Unlocks vehicle / ragdoll bodies above their current solver-iteration ceiling.
-3. **`numerics.vcycle_poisson`** — small surface area, well-isolated kernels, the module docstring already names it as the next perf step. Establishes `slappyengine.numerics` as a Rust kernel library before the Eulerian fluid step lands and starts calling it every frame.
+3. **`numerics.vcycle_poisson`** — small surface area, well-isolated kernels, the module docstring already names it as the next perf step. Establishes `pharos_engine.numerics` as a Rust kernel library before the Eulerian fluid step lands and starts calling it every frame.
 
 The three together: ~1 sprint of audit-validated, baseline-instrumented Rust work; net engine-wide fps lift estimated at **1.8-2.3×** on the heaviest scenarios.
 
@@ -129,6 +129,6 @@ The three together: ~1 sprint of audit-validated, baseline-instrumented Rust wor
 
 **Constraint compliance:**
 
-* No edits to `python/slappyengine/softbody/` or `python/slappyengine/fluid/` (verified — both are already Rust-backed and only spot-read).
+* No edits to `python/pharos_engine/softbody/` or `python/pharos_engine/fluid/` (verified — both are already Rust-backed and only spot-read).
 * No source-code ports performed — this is a read-only audit + one markdown commit.
 * No migration without explicit user approval per item.

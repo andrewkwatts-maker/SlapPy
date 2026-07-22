@@ -1,4 +1,4 @@
-"""Tripwire for ``slappyengine.visual_scripting``.
+"""Tripwire for ``pharos_engine.visual_scripting``.
 
 Backbone-only tests for the node-graph data model + 20-node starter
 palette + Python codegen. The editor UI for the system lands in a
@@ -10,7 +10,7 @@ import pytest
 
 
 def test_module_imports_clean() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         Node, NodePort, NodeRegistry, NodeGraph, Edge,
         GraphValidationError, graph_to_python, python_to_graph,
         BUILTIN_NODES, BUILTIN_REGISTRY, get_node, list_nodes,
@@ -30,11 +30,11 @@ def test_module_imports_clean() -> None:
 
 
 def test_subpackage_attached_to_top_level() -> None:
-    import slappyengine
-    mod = slappyengine.visual_scripting
+    import pharos_engine
+    mod = pharos_engine.visual_scripting
     assert mod is not None
     # cached subsequently
-    assert slappyengine.visual_scripting is mod
+    assert pharos_engine.visual_scripting is mod
 
 
 # ---------------------------------------------------------------------------
@@ -43,19 +43,19 @@ def test_subpackage_attached_to_top_level() -> None:
 
 
 def test_nodeport_constructor_validates_port_kind() -> None:
-    from slappyengine.visual_scripting import NodePort
+    from pharos_engine.visual_scripting import NodePort
     with pytest.raises(ValueError):
         NodePort("p", "not_a_port_kind")
 
 
 def test_node_constructor_validates_kind() -> None:
-    from slappyengine.visual_scripting import Node
+    from pharos_engine.visual_scripting import Node
     with pytest.raises(ValueError):
         Node(node_type="foo.bar", kind="not_a_kind")
 
 
 def test_node_auto_assigns_id() -> None:
-    from slappyengine.visual_scripting import Node
+    from pharos_engine.visual_scripting import Node
     n1 = Node(node_type="x.y", kind="math")
     n2 = Node(node_type="x.y", kind="math")
     assert n1.id != n2.id
@@ -63,7 +63,7 @@ def test_node_auto_assigns_id() -> None:
 
 
 def test_node_clone_mints_new_id() -> None:
-    from slappyengine.visual_scripting import Node, NodePort
+    from pharos_engine.visual_scripting import Node, NodePort
     n = Node(
         node_type="x.y", kind="math",
         outputs=[NodePort("o", "float")],
@@ -79,7 +79,7 @@ def test_node_clone_mints_new_id() -> None:
 
 
 def test_node_registry_register_and_get_roundtrip() -> None:
-    from slappyengine.visual_scripting import Node, NodePort, NodeRegistry
+    from pharos_engine.visual_scripting import Node, NodePort, NodeRegistry
     reg = NodeRegistry()
     proto = Node(
         node_type="custom.identity",
@@ -95,7 +95,7 @@ def test_node_registry_register_and_get_roundtrip() -> None:
 
 
 def test_node_registry_duplicate_register_raises() -> None:
-    from slappyengine.visual_scripting import Node, NodeRegistry
+    from pharos_engine.visual_scripting import Node, NodeRegistry
     reg = NodeRegistry()
     n = Node(node_type="x.y", kind="math")
     reg.register(n)
@@ -104,7 +104,7 @@ def test_node_registry_duplicate_register_raises() -> None:
 
 
 def test_node_registry_spawn_returns_unique_id() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         BUILTIN_REGISTRY,
     )
     n1 = BUILTIN_REGISTRY.spawn("math.add")
@@ -119,12 +119,12 @@ def test_node_registry_spawn_returns_unique_id() -> None:
 
 
 def test_builtin_nodes_count_is_20() -> None:
-    from slappyengine.visual_scripting import BUILTIN_NODES
+    from pharos_engine.visual_scripting import BUILTIN_NODES
     assert len(BUILTIN_NODES) == 20
 
 
 def test_get_node_math_add_returns_add_def() -> None:
-    from slappyengine.visual_scripting import get_node
+    from pharos_engine.visual_scripting import get_node
     add = get_node("math.add")
     assert add.node_type == "math.add"
     assert add.kind == "math"
@@ -133,7 +133,7 @@ def test_get_node_math_add_returns_add_def() -> None:
 
 
 def test_list_nodes_kind_math_returns_10_entries() -> None:
-    from slappyengine.visual_scripting import list_nodes
+    from pharos_engine.visual_scripting import list_nodes
     math_nodes = list_nodes(kind="math")
     assert len(math_nodes) == 10
     types = {n.node_type for n in math_nodes}
@@ -146,22 +146,22 @@ def test_list_nodes_kind_math_returns_10_entries() -> None:
 
 
 def test_list_nodes_kind_logic_returns_5_entries() -> None:
-    from slappyengine.visual_scripting import list_nodes
+    from pharos_engine.visual_scripting import list_nodes
     assert len(list_nodes(kind="logic")) == 5
 
 
 def test_list_nodes_kind_control_returns_3_entries() -> None:
-    from slappyengine.visual_scripting import list_nodes
+    from pharos_engine.visual_scripting import list_nodes
     assert len(list_nodes(kind="control")) == 3
 
 
 def test_list_nodes_kind_io_returns_2_entries() -> None:
-    from slappyengine.visual_scripting import list_nodes
+    from pharos_engine.visual_scripting import list_nodes
     assert len(list_nodes(kind="io")) == 2
 
 
 def test_every_builtin_has_template_or_is_control() -> None:
-    from slappyengine.visual_scripting import BUILTIN_NODES
+    from pharos_engine.visual_scripting import BUILTIN_NODES
     for n in BUILTIN_NODES:
         assert n.to_python_template, (
             f"node {n.node_type} missing to_python_template"
@@ -174,7 +174,7 @@ def test_every_builtin_has_template_or_is_control() -> None:
 
 
 def test_graph_add_node_and_edge_roundtrip() -> None:
-    from slappyengine.visual_scripting import NodeGraph, get_node
+    from pharos_engine.visual_scripting import NodeGraph, get_node
     g = NodeGraph(name="t")
     a = get_node("math.constant").clone()
     b = get_node("math.add").clone()
@@ -188,7 +188,7 @@ def test_graph_add_node_and_edge_roundtrip() -> None:
 
 
 def test_graph_yaml_roundtrip_preserves_topology() -> None:
-    from slappyengine.visual_scripting import NodeGraph, get_node
+    from pharos_engine.visual_scripting import NodeGraph, get_node
     g = NodeGraph(name="rt")
     a = get_node("math.constant").clone()
     a.params["value"] = 2.5
@@ -216,7 +216,7 @@ def test_graph_yaml_roundtrip_preserves_topology() -> None:
 
 
 def test_graph_validate_detects_cycle() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, Edge, GraphValidationError, get_node,
     )
     g = NodeGraph()
@@ -231,7 +231,7 @@ def test_graph_validate_detects_cycle() -> None:
 
 
 def test_graph_validate_detects_dangling_edge_ref() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, Edge, GraphValidationError, get_node,
     )
     g = NodeGraph()
@@ -248,7 +248,7 @@ def test_graph_validate_detects_dangling_edge_ref() -> None:
 
 
 def test_graph_validate_detects_port_kind_mismatch() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         Node, NodeGraph, NodePort, GraphValidationError,
     )
     g = NodeGraph()
@@ -269,7 +269,7 @@ def test_graph_validate_detects_port_kind_mismatch() -> None:
 
 
 def test_graph_validate_allows_int_to_float_widening() -> None:
-    from slappyengine.visual_scripting import Node, NodeGraph, NodePort
+    from pharos_engine.visual_scripting import Node, NodeGraph, NodePort
     g = NodeGraph()
     src = Node(
         node_type="x.src", kind="math",
@@ -289,7 +289,7 @@ def test_graph_validate_allows_int_to_float_widening() -> None:
 
 
 def test_topological_order_chain() -> None:
-    from slappyengine.visual_scripting import NodeGraph, get_node
+    from pharos_engine.visual_scripting import NodeGraph, get_node
     g = NodeGraph()
     a = get_node("math.constant").clone()
     b = get_node("math.add").clone()
@@ -304,7 +304,7 @@ def test_topological_order_chain() -> None:
 
 
 def test_topological_order_raises_on_cycle() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, GraphValidationError, get_node,
     )
     g = NodeGraph()
@@ -323,7 +323,7 @@ def test_topological_order_raises_on_cycle() -> None:
 
 
 def test_graph_to_python_returns_str() -> None:
-    from slappyengine.visual_scripting import NodeGraph, graph_to_python
+    from pharos_engine.visual_scripting import NodeGraph, graph_to_python
     g = NodeGraph()
     src = graph_to_python(g)
     assert isinstance(src, str)
@@ -331,7 +331,7 @@ def test_graph_to_python_returns_str() -> None:
 
 
 def test_graph_to_python_chain_compiles_and_runs() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, get_node, graph_to_python,
     )
     g = NodeGraph()
@@ -353,7 +353,7 @@ def test_graph_to_python_chain_compiles_and_runs() -> None:
 
 
 def test_graph_to_python_multiply_then_add_pipeline() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, get_node, graph_to_python,
     )
     g = NodeGraph()
@@ -381,7 +381,7 @@ def test_graph_to_python_multiply_then_add_pipeline() -> None:
 
 
 def test_graph_to_python_clamp_node_runs() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, get_node, graph_to_python,
     )
     g = NodeGraph()
@@ -399,7 +399,7 @@ def test_graph_to_python_clamp_node_runs() -> None:
 
 
 def test_python_to_graph_reads_back_generated_code() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, get_node, graph_to_python, python_to_graph,
     )
     g = NodeGraph()
@@ -420,20 +420,20 @@ def test_python_to_graph_reads_back_generated_code() -> None:
 
 
 def test_python_to_graph_handles_empty_source() -> None:
-    from slappyengine.visual_scripting import python_to_graph
+    from pharos_engine.visual_scripting import python_to_graph
     g = python_to_graph("def f(): pass\n")
     assert len(g.nodes) == 0
     assert len(g.edges) == 0
 
 
 def test_python_to_graph_raises_on_syntax_error() -> None:
-    from slappyengine.visual_scripting import python_to_graph
+    from pharos_engine.visual_scripting import python_to_graph
     with pytest.raises(ValueError):
         python_to_graph("def !!!! invalid")
 
 
 def test_logic_compare_uses_param_op() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, get_node, graph_to_python,
     )
     g = NodeGraph()
@@ -455,7 +455,7 @@ def test_logic_compare_uses_param_op() -> None:
 
 
 def test_control_return_terminates_function() -> None:
-    from slappyengine.visual_scripting import (
+    from pharos_engine.visual_scripting import (
         NodeGraph, get_node, graph_to_python,
     )
     g = NodeGraph()
@@ -476,7 +476,7 @@ def test_control_return_terminates_function() -> None:
 
 
 def test_graph_incoming_and_outgoing_edges() -> None:
-    from slappyengine.visual_scripting import NodeGraph, get_node
+    from pharos_engine.visual_scripting import NodeGraph, get_node
     g = NodeGraph()
     a = get_node("math.constant").clone()
     b = get_node("math.add").clone()
@@ -488,7 +488,7 @@ def test_graph_incoming_and_outgoing_edges() -> None:
 
 
 def test_graph_remove_node_drops_edges() -> None:
-    from slappyengine.visual_scripting import NodeGraph, get_node
+    from pharos_engine.visual_scripting import NodeGraph, get_node
     g = NodeGraph()
     a = get_node("math.constant").clone()
     b = get_node("math.add").clone()
@@ -500,7 +500,7 @@ def test_graph_remove_node_drops_edges() -> None:
 
 
 def test_ports_compatible_any_matches_everything() -> None:
-    from slappyengine.visual_scripting import ports_compatible, PORT_KINDS
+    from pharos_engine.visual_scripting import ports_compatible, PORT_KINDS
     for kind in PORT_KINDS:
         assert ports_compatible("any", kind)
         assert ports_compatible(kind, "any")

@@ -1,4 +1,4 @@
-"""Spatial-hash acceleration tests for :class:`slappyengine.zones.ZoneManager`.
+"""Spatial-hash acceleration tests for :class:`pharos_engine.zones.ZoneManager`.
 
 Covers the perf-zones-spatial-hash sprint:
 
@@ -21,7 +21,7 @@ import time
 
 import pytest
 
-from slappyengine.zones import RectZone, ZoneManager
+from pharos_engine.zones import RectZone, ZoneManager
 
 
 # ---------------------------------------------------------------------------

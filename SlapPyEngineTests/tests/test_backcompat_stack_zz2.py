@@ -47,7 +47,7 @@ from unittest import mock
 
 import pytest
 
-from slappyengine.event_bus import (
+from pharos_engine.event_bus import (
     EventBus,
     EventPayload,
     Observable,
@@ -129,8 +129,8 @@ class TestEventBusNoSlots:
 class TestDebugListeners:
     def test_debug_listeners_is_importable(self):
         # The failing import site was:
-        #   from slappyengine.event_bus import debug_listeners
-        from slappyengine.event_bus import debug_listeners as dl
+        #   from pharos_engine.event_bus import debug_listeners
+        from pharos_engine.event_bus import debug_listeners as dl
         assert callable(dl)
 
     def test_debug_listeners_returns_dict(self):

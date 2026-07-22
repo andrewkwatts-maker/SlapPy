@@ -2,7 +2,7 @@
 
 These exercise the standalone ``swept_aabb_overlap``,
 ``predict_contact_pairs`` and ``position_at_toi`` helpers added in
-``slappyengine.physics.ccd``. They deliberately do *not* call
+``pharos_engine.physics.ccd``. They deliberately do *not* call
 ``PhysicsWorld.step`` — the CCD module is a pure helper; integration is
 left for another sprint.
 """
@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from slappyengine.physics import HullTree
-from slappyengine.physics.ccd import (
+from pharos_engine.physics import HullTree
+from pharos_engine.physics.ccd import (
     position_at_toi,
     predict_contact_pairs,
     swept_aabb_overlap,

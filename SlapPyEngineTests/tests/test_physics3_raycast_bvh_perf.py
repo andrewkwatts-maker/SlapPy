@@ -17,7 +17,7 @@ import math
 import random
 import time
 
-from slappyengine.physics3_bridge import Body3D, World3D
+from pharos_engine.physics3_bridge import Body3D, World3D
 
 
 _SEED = 20260707

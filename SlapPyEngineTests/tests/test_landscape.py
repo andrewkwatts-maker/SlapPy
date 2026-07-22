@@ -1,12 +1,12 @@
-﻿"""
+"""
 Tests for SlapPyEngine.landscape — no GPU required.
 """
 import pytest
 import numpy as np
 
 try:
-    from slappyengine.landscape import TileCoord, Tile, Landscape
-    from slappyengine.camera import Camera
+    from pharos_engine.landscape import TileCoord, Tile, Landscape
+    from pharos_engine.camera import Camera
 except ImportError as _landscape_err:
     pytest.skip(
         f"SlapPyEngine.landscape not importable: {_landscape_err}",

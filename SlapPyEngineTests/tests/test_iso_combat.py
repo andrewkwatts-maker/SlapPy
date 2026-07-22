@@ -1,4 +1,4 @@
-"""Tests for ``slappyengine.iso.combat`` — Phase C3 (Stone Keep).
+"""Tests for ``pharos_engine.iso.combat`` — Phase C3 (Stone Keep).
 
 Pure-logic only: no GPU, no rendering, no Stone Keep imports.
 """
@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from slappyengine.iso.combat import (
+from pharos_engine.iso.combat import (
     Attacker,
     Defender,
     WaveSchedule,

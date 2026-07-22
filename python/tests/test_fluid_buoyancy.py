@@ -17,12 +17,12 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.fluid import (
+from pharos_engine.fluid import (
     FluidWorld,
     apply_fluid_buoyancy,
     pbf_step,
 )
-from slappyengine.softbody import (
+from pharos_engine.softbody import (
     MATERIALS,
     SoftBodyWorld,
     make_lattice_body,
@@ -138,7 +138,7 @@ def test_steel_block_sinks_below_surface():
 def test_neutral_density_block_hovers_near_surface():
     """A material with density == water (1000) settles near-neutral.
 
-    We construct a temporary :class:`~slappyengine.softbody.Material`
+    We construct a temporary :class:`~pharos_engine.softbody.Material`
     instance with density 1000 (matching water) and verify the lattice
     block's centroid stays within ±0.05 m of the surface after 200
     frames.

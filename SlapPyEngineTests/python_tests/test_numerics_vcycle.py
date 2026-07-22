@@ -1,4 +1,4 @@
-"""Tests for ``slappyengine.numerics.vcycle_poisson``.
+"""Tests for ``pharos_engine.numerics.vcycle_poisson``.
 
 Covers the four properties the Phase-B repackage spec calls out:
 
@@ -10,7 +10,7 @@ Covers the four properties the Phase-B repackage spec calls out:
 3. Convergence — residual decreases monotonically per cycle on a
    Gaussian-bump RHS.
 4. Cross-check — for the same input as
-   ``slappyengine.physics.pressure_multigrid``'s V-cycle helper, the
+   ``pharos_engine.physics.pressure_multigrid``'s V-cycle helper, the
    numerics module's solution matches within float tolerance.
 """
 from __future__ import annotations
@@ -20,7 +20,7 @@ import importlib
 import numpy as np
 import pytest
 
-from slappyengine.numerics import vcycle_poisson
+from pharos_engine.numerics import vcycle_poisson
 
 
 # ---------------------------------------------------------------------------
@@ -195,13 +195,13 @@ def test_cross_check_against_physics_module():
     """For the same divergence RHS and mask, the new numerics solver
     matches the working physics V-cycle to within float tolerance.
 
-    Skipped automatically if ``slappyengine.physics.pressure_multigrid``
+    Skipped automatically if ``pharos_engine.physics.pressure_multigrid``
     isn't importable (Phase D will eventually delete it; until then this
     locks behaviour parity in place).
     """
     try:
         legacy = importlib.import_module(
-            "slappyengine.physics.pressure_multigrid"
+            "pharos_engine.physics.pressure_multigrid"
         )
     except ImportError:
         pytest.skip("legacy physics.pressure_multigrid not available")

@@ -10,7 +10,7 @@ batch).
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`slappyengine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `view.toggle_safe_area`  | `view_toggle_safe_area_actions.toggle_safe_area`        | view  |
 | `edit.select_root`       | `edit_select_root_actions.select_root`                  | edit  |
@@ -20,14 +20,14 @@ Five more action ids landed in this tick, moving 5 rows from STUB
 
 New action modules:
 
-* `python/slappyengine/actions/view_toggle_safe_area_actions.py`
-* `python/slappyengine/actions/edit_select_root_actions.py`
-* `python/slappyengine/actions/spawn_at_last_click_actions.py`
-* `python/slappyengine/actions/layer_unlock_all_actions.py`
-* `python/slappyengine/actions/snap_cycle_grid_size_actions.py`
+* `python/pharos_engine/actions/view_toggle_safe_area_actions.py`
+* `python/pharos_engine/actions/edit_select_root_actions.py`
+* `python/pharos_engine/actions/spawn_at_last_click_actions.py`
+* `python/pharos_engine/actions/layer_unlock_all_actions.py`
+* `python/pharos_engine/actions/snap_cycle_grid_size_actions.py`
 
 Router entries and `_fb_*` shims live in
-`python/slappyengine/tool_router.py` under the
+`python/pharos_engine/tool_router.py` under the
 `# ── ZZ4 STUB-triage: view.toggle_safe_area, edit.select_root,
 spawn.at_last_click, layer.unlock_all, snap.cycle_grid_size
 (round 26) ──` block.

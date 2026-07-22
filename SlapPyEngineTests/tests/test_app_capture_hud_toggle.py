@@ -1,6 +1,6 @@
 """NN3 — App capture / screenshot / render-toggle façade tests.
 
-Exercises the five methods added to :class:`slappyengine.app.App` by the
+Exercises the five methods added to :class:`pharos_engine.app.App` by the
 HH1 wire-up sprint tick:
 
 * :meth:`App.start_recording`
@@ -10,8 +10,8 @@ HH1 wire-up sprint tick:
 * :meth:`App.enable_shadows`
 
 Each method is a one-liner over the LL2 / MM6 action helpers
-(:mod:`slappyengine.actions.capture_actions` /
-:mod:`slappyengine.actions.render_toggle_actions`). The tests assert
+(:mod:`pharos_engine.actions.capture_actions` /
+:mod:`pharos_engine.actions.render_toggle_actions`). The tests assert
 that:
 
 (a) the App class exposes all five methods,
@@ -30,7 +30,7 @@ from typing import Any
 
 import pytest
 
-from slappyengine.app import App, AppConfig
+from pharos_engine.app import App, AppConfig
 
 
 # ---------------------------------------------------------------------------

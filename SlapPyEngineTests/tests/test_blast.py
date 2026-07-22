@@ -1,16 +1,16 @@
-"""Tests for slappyengine.physics.blast — explosion onto a ParticleField."""
+"""Tests for pharos_engine.physics.blast — explosion onto a ParticleField."""
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from slappyengine.physics.blast import (
+from pharos_engine.physics.blast import (
     detonate,
     ensure_preset_material,
     material_from_preset,
 )
-from slappyengine.physics.particle_field import ParticleField
-from slappyengine.physics.splatter_presets import get as get_preset
+from pharos_engine.physics.particle_field import ParticleField
+from pharos_engine.physics.splatter_presets import get as get_preset
 
 
 def test_material_from_preset_inherits_cohesion_and_drag() -> None:
@@ -93,7 +93,7 @@ def test_detonate_velocities_reflect_up_and_radial_boosts() -> None:
 
 
 def test_detonate_crater_noise_breaks_smooth_bowl() -> None:
-    from slappyengine.physics.blast import DetonateCurves
+    from pharos_engine.physics.blast import DetonateCurves
     # Without noise: bowl depth is monotonically deepest at centre.
     f = ParticleField(width=128, height=96)
     f.fill_ground(top_y=60, color=(200, 160, 90))
@@ -115,7 +115,7 @@ def test_detonate_crater_noise_breaks_smooth_bowl() -> None:
 
 
 def test_detonate_blast_direction_rotates_velocity_field() -> None:
-    from slappyengine.physics.blast import DetonateCurves
+    from pharos_engine.physics.blast import DetonateCurves
     f = ParticleField(width=128, height=96)
     f.fill_ground(top_y=60, color=(200, 160, 90))
     # 90° blast direction → velocity field rotates: "up" becomes "right".
@@ -212,7 +212,7 @@ def test_detonate_falls_back_to_preset_for_unset_pixels_in_bowl() -> None:
 
 
 def test_detonate_up_velocity_scale_amplifies_vertical() -> None:
-    from slappyengine.physics.blast import DetonateCurves
+    from pharos_engine.physics.blast import DetonateCurves
     f1 = ParticleField(width=128, height=96)
     f1.fill_ground(top_y=60, color=(200, 160, 90))
     detonate(f1, get_preset("sand"), x=64, y=60,

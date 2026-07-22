@@ -44,19 +44,19 @@ class _ControlPointSpline:
 class TestBakeTrackThumbnail:
     def test_returns_pil_image(self):
         from PIL import Image
-        from slappyengine.tools.track_tools import bake_track_thumbnail
+        from pharos_engine.tools.track_tools import bake_track_thumbnail
         spline = _MockSpline()
         img = bake_track_thumbnail(spline, size=(100, 100))
         assert isinstance(img, Image.Image)
 
     def test_correct_size(self):
-        from slappyengine.tools.track_tools import bake_track_thumbnail
+        from pharos_engine.tools.track_tools import bake_track_thumbnail
         spline = _MockSpline()
         img = bake_track_thumbnail(spline, size=(80, 60))
         assert img.size == (80, 60)
 
     def test_non_black_output_with_track(self):
-        from slappyengine.tools.track_tools import bake_track_thumbnail
+        from pharos_engine.tools.track_tools import bake_track_thumbnail
         import numpy as np
         spline = _MockSpline()
         img = bake_track_thumbnail(spline, size=(128, 128))
@@ -66,7 +66,7 @@ class TestBakeTrackThumbnail:
 
     def test_empty_spline_returns_image(self):
         from PIL import Image
-        from slappyengine.tools.track_tools import bake_track_thumbnail
+        from pharos_engine.tools.track_tools import bake_track_thumbnail
         spline = _MockSpline(pts=[])
         img = bake_track_thumbnail(spline, size=(50, 50))
         assert isinstance(img, Image.Image)
@@ -74,14 +74,14 @@ class TestBakeTrackThumbnail:
 
     def test_evaluate_interface(self):
         from PIL import Image
-        from slappyengine.tools.track_tools import bake_track_thumbnail
+        from pharos_engine.tools.track_tools import bake_track_thumbnail
         spline = _EvaluateSpline()
         img = bake_track_thumbnail(spline, size=(64, 64))
         assert isinstance(img, Image.Image)
 
     def test_control_points_interface(self):
         from PIL import Image
-        from slappyengine.tools.track_tools import bake_track_thumbnail
+        from pharos_engine.tools.track_tools import bake_track_thumbnail
         spline = _ControlPointSpline()
         img = bake_track_thumbnail(spline, size=(64, 64))
         assert isinstance(img, Image.Image)
@@ -89,14 +89,14 @@ class TestBakeTrackThumbnail:
 
 class TestExportTrackBoundary:
     def test_creates_file(self, tmp_path):
-        from slappyengine.tools.track_tools import export_track_boundary
+        from pharos_engine.tools.track_tools import export_track_boundary
         spline = _MockSpline()
         out = str(tmp_path / "boundary.png")
         result = export_track_boundary(spline, width=50, out_png=out, canvas_size=(256, 256))
         assert Path(result).exists()
 
     def test_returns_absolute_path(self, tmp_path):
-        from slappyengine.tools.track_tools import export_track_boundary
+        from pharos_engine.tools.track_tools import export_track_boundary
         spline = _MockSpline()
         out = str(tmp_path / "boundary.png")
         result = export_track_boundary(spline, width=50, out_png=out, canvas_size=(128, 128))
@@ -104,7 +104,7 @@ class TestExportTrackBoundary:
 
     def test_output_size_matches_canvas(self, tmp_path):
         from PIL import Image
-        from slappyengine.tools.track_tools import export_track_boundary
+        from pharos_engine.tools.track_tools import export_track_boundary
         spline = _MockSpline()
         out = str(tmp_path / "boundary.png")
         export_track_boundary(spline, width=40, out_png=out, canvas_size=(320, 240))
@@ -113,7 +113,7 @@ class TestExportTrackBoundary:
 
     def test_output_is_rgba(self, tmp_path):
         from PIL import Image
-        from slappyengine.tools.track_tools import export_track_boundary
+        from pharos_engine.tools.track_tools import export_track_boundary
         spline = _MockSpline()
         out = str(tmp_path / "boundary.png")
         export_track_boundary(spline, width=40, out_png=out, canvas_size=(128, 128))
@@ -121,7 +121,7 @@ class TestExportTrackBoundary:
         assert img.mode == "RGBA"
 
     def test_creates_parent_dir(self, tmp_path):
-        from slappyengine.tools.track_tools import export_track_boundary
+        from pharos_engine.tools.track_tools import export_track_boundary
         spline = _MockSpline()
         out = str(tmp_path / "subdir" / "boundary.png")
         export_track_boundary(spline, width=40, out_png=out, canvas_size=(64, 64))
@@ -130,7 +130,7 @@ class TestExportTrackBoundary:
     def test_has_varying_alpha_values(self, tmp_path):
         from PIL import Image
         import numpy as np
-        from slappyengine.tools.track_tools import export_track_boundary
+        from pharos_engine.tools.track_tools import export_track_boundary
         # Use full mock spline to ensure a large enough track fits the canvas
         spline = _MockSpline()
         out = str(tmp_path / "boundary.png")
@@ -143,31 +143,31 @@ class TestExportTrackBoundary:
 
 class TestGenerateTrackDecalMask:
     def test_returns_ndarray(self):
-        from slappyengine.tools.track_tools import generate_track_decal_mask
+        from pharos_engine.tools.track_tools import generate_track_decal_mask
         spline = _MockSpline()
         mask = generate_track_decal_mask(spline, width=50)
         assert isinstance(mask, np.ndarray)
 
     def test_mask_is_boolean(self):
-        from slappyengine.tools.track_tools import generate_track_decal_mask
+        from pharos_engine.tools.track_tools import generate_track_decal_mask
         spline = _MockSpline()
         mask = generate_track_decal_mask(spline, width=50)
         assert mask.dtype == bool
 
     def test_mask_has_two_dims(self):
-        from slappyengine.tools.track_tools import generate_track_decal_mask
+        from pharos_engine.tools.track_tools import generate_track_decal_mask
         spline = _MockSpline()
         mask = generate_track_decal_mask(spline, width=50)
         assert mask.ndim == 2
 
     def test_some_true_pixels(self):
-        from slappyengine.tools.track_tools import generate_track_decal_mask
+        from pharos_engine.tools.track_tools import generate_track_decal_mask
         spline = _MockSpline()
         mask = generate_track_decal_mask(spline, width=60)
         assert mask.any(), "Expected some True pixels (road area)"
 
     def test_empty_spline_fallback(self):
-        from slappyengine.tools.track_tools import generate_track_decal_mask
+        from pharos_engine.tools.track_tools import generate_track_decal_mask
         spline = _MockSpline(pts=[])
         mask = generate_track_decal_mask(spline, width=50)
         assert isinstance(mask, np.ndarray)
@@ -180,22 +180,22 @@ class TestGenerateTrackDecalMask:
 class TestGenerateNoiseTexture:
     def test_returns_pil_image(self):
         from PIL import Image
-        from slappyengine.tools.texture_tools import generate_noise_texture
+        from pharos_engine.tools.texture_tools import generate_noise_texture
         img = generate_noise_texture(mode="fbm", width=64, height=64, octaves=2, seed=0)
         assert isinstance(img, Image.Image)
 
     def test_correct_size(self):
-        from slappyengine.tools.texture_tools import generate_noise_texture
+        from pharos_engine.tools.texture_tools import generate_noise_texture
         img = generate_noise_texture(mode="fbm", width=32, height=48)
         assert img.size == (32, 48)
 
     def test_mode_is_grayscale(self):
-        from slappyengine.tools.texture_tools import generate_noise_texture
+        from pharos_engine.tools.texture_tools import generate_noise_texture
         img = generate_noise_texture(mode="fbm", width=32, height=32)
         assert img.mode == "L"
 
     def test_fbm_has_variation(self):
-        from slappyengine.tools.texture_tools import generate_noise_texture
+        from pharos_engine.tools.texture_tools import generate_noise_texture
         import numpy as np
         img = generate_noise_texture(mode="fbm", width=64, height=64, octaves=3)
         arr = np.array(img)
@@ -203,34 +203,34 @@ class TestGenerateNoiseTexture:
 
     def test_worley_mode(self):
         from PIL import Image
-        from slappyengine.tools.texture_tools import generate_noise_texture
+        from pharos_engine.tools.texture_tools import generate_noise_texture
         img = generate_noise_texture(mode="worley", width=64, height=64, seed=7)
         assert isinstance(img, Image.Image)
         assert img.size == (64, 64)
 
     def test_worley_has_variation(self):
-        from slappyengine.tools.texture_tools import generate_noise_texture
+        from pharos_engine.tools.texture_tools import generate_noise_texture
         import numpy as np
         img = generate_noise_texture(mode="worley", width=64, height=64)
         arr = np.array(img)
         assert arr.std() > 5.0
 
     def test_seed_reproducible(self):
-        from slappyengine.tools.texture_tools import generate_noise_texture
+        from pharos_engine.tools.texture_tools import generate_noise_texture
         import numpy as np
         img1 = generate_noise_texture(mode="fbm", width=32, height=32, seed=42)
         img2 = generate_noise_texture(mode="fbm", width=32, height=32, seed=42)
         assert np.array_equal(np.array(img1), np.array(img2))
 
     def test_different_seeds_differ(self):
-        from slappyengine.tools.texture_tools import generate_noise_texture
+        from pharos_engine.tools.texture_tools import generate_noise_texture
         import numpy as np
         img1 = generate_noise_texture(mode="fbm", width=64, height=64, seed=1)
         img2 = generate_noise_texture(mode="fbm", width=64, height=64, seed=99)
         assert not np.array_equal(np.array(img1), np.array(img2))
 
     def test_unknown_mode_raises(self):
-        from slappyengine.tools.texture_tools import generate_noise_texture
+        from pharos_engine.tools.texture_tools import generate_noise_texture
         with pytest.raises(ValueError, match="Unknown noise mode"):
             generate_noise_texture(mode="invalid")
 
@@ -242,7 +242,7 @@ class TestPaintDecal:
         img.save(str(path))
 
     def test_creates_output_file(self, tmp_path):
-        from slappyengine.tools.texture_tools import paint_decal
+        from pharos_engine.tools.texture_tools import paint_decal
         target = tmp_path / "target.png"
         decal = tmp_path / "decal.png"
         out = tmp_path / "out.png"
@@ -252,7 +252,7 @@ class TestPaintDecal:
         assert Path(result).exists()
 
     def test_returns_absolute_path(self, tmp_path):
-        from slappyengine.tools.texture_tools import paint_decal
+        from pharos_engine.tools.texture_tools import paint_decal
         target = tmp_path / "target.png"
         decal = tmp_path / "decal.png"
         out = tmp_path / "out.png"
@@ -263,7 +263,7 @@ class TestPaintDecal:
 
     def test_output_size_matches_target(self, tmp_path):
         from PIL import Image
-        from slappyengine.tools.texture_tools import paint_decal
+        from pharos_engine.tools.texture_tools import paint_decal
         target = tmp_path / "target.png"
         decal = tmp_path / "decal.png"
         out = tmp_path / "out.png"
@@ -277,22 +277,22 @@ class TestPaintDecal:
 class TestGenerateGradient:
     def test_returns_pil_image(self):
         from PIL import Image
-        from slappyengine.tools.texture_tools import generate_gradient
+        from pharos_engine.tools.texture_tools import generate_gradient
         img = generate_gradient([(0, 0, 0), (255, 255, 255)], width=64, height=32)
         assert isinstance(img, Image.Image)
 
     def test_correct_size(self):
-        from slappyengine.tools.texture_tools import generate_gradient
+        from pharos_engine.tools.texture_tools import generate_gradient
         img = generate_gradient([(0, 0, 0), (255, 0, 0)], width=100, height=50)
         assert img.size == (100, 50)
 
     def test_mode_is_rgba(self):
-        from slappyengine.tools.texture_tools import generate_gradient
+        from pharos_engine.tools.texture_tools import generate_gradient
         img = generate_gradient([(0, 0, 0), (255, 255, 255)], width=32, height=32)
         assert img.mode == "RGBA"
 
     def test_horizontal_gradient_varies_left_to_right(self):
-        from slappyengine.tools.texture_tools import generate_gradient
+        from pharos_engine.tools.texture_tools import generate_gradient
         import numpy as np
         img = generate_gradient([(0, 0, 0, 255), (255, 255, 255, 255)],
                                 width=128, height=4, direction="horizontal")
@@ -301,7 +301,7 @@ class TestGenerateGradient:
         assert int(arr[0, 0, 0]) < int(arr[0, -1, 0])
 
     def test_vertical_gradient_varies_top_to_bottom(self):
-        from slappyengine.tools.texture_tools import generate_gradient
+        from pharos_engine.tools.texture_tools import generate_gradient
         import numpy as np
         img = generate_gradient([(0, 0, 0, 255), (255, 255, 255, 255)],
                                 width=4, height=128, direction="vertical")
@@ -309,17 +309,17 @@ class TestGenerateGradient:
         assert int(arr[0, 0, 0]) < int(arr[-1, 0, 0])
 
     def test_three_color_gradient(self):
-        from slappyengine.tools.texture_tools import generate_gradient
+        from pharos_engine.tools.texture_tools import generate_gradient
         img = generate_gradient([(255, 0, 0), (0, 255, 0), (0, 0, 255)],
                                 width=128, height=8)
         assert img.size == (128, 8)
 
     def test_too_few_colors_raises(self):
-        from slappyengine.tools.texture_tools import generate_gradient
+        from pharos_engine.tools.texture_tools import generate_gradient
         with pytest.raises(ValueError):
             generate_gradient([(255, 0, 0)], width=64, height=64)
 
     def test_rgba_colors_accepted(self):
-        from slappyengine.tools.texture_tools import generate_gradient
+        from pharos_engine.tools.texture_tools import generate_gradient
         img = generate_gradient([(0, 0, 0, 128), (255, 255, 255, 200)], width=32, height=32)
         assert img is not None

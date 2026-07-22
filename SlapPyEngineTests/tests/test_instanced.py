@@ -1,4 +1,4 @@
-"""Tests for slappyengine.render.instanced — LL3 Nova3D parity Sprint 16.
+"""Tests for pharos_engine.render.instanced — LL3 Nova3D parity Sprint 16.
 
 All tests use the NullRenderer path — no GPU required.
 """
@@ -9,14 +9,14 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.render import (
+from pharos_engine.render import (
     Camera3D,
     Material,
     NullRenderer,
     cube,
     quad,
 )
-from slappyengine.render.instanced import (
+from pharos_engine.render.instanced import (
     INSTANCED_MESH_WGSL,
     InstanceData,
     InstancedMesh,

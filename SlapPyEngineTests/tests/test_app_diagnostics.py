@@ -1,7 +1,7 @@
 """QQ4 — App diagnostics-collector façade tests.
 
-Exercises the five methods wired onto :class:`slappyengine.app.App` that
-plug the OO6 :class:`~slappyengine.diagnostics.DiagnosticsCollector`
+Exercises the five methods wired onto :class:`pharos_engine.app.App` that
+plug the OO6 :class:`~pharos_engine.diagnostics.DiagnosticsCollector`
 into the top-level app lifecycle:
 
 * :meth:`App.enable_diagnostics`
@@ -14,7 +14,7 @@ The tests assert:
 
 (a) all five methods exist on :class:`App`,
 (b) ``enable_diagnostics`` installs a collector that captures a warning
-    logged via the ``slappyengine`` root logger,
+    logged via the ``pharos_engine`` root logger,
 (c) subsequent calls are idempotent (same collector returned),
 (d) ``disable_diagnostics`` uninstalls so post-disable warnings are NOT
     captured,
@@ -27,8 +27,8 @@ import logging
 
 import pytest
 
-from slappyengine.app import App, AppConfig
-from slappyengine.diagnostics import DiagnosticEvent, DiagnosticsCollector
+from pharos_engine.app import App, AppConfig
+from pharos_engine.diagnostics import DiagnosticEvent, DiagnosticsCollector
 
 
 # ---------------------------------------------------------------------------
@@ -42,7 +42,7 @@ def app() -> App:
     yield a
     # Always ensure the collector is torn down between tests so a
     # leaked handler doesn't leak WARNING records into subsequent
-    # tests via the shared ``slappyengine`` root logger.
+    # tests via the shared ``pharos_engine`` root logger.
     try:
         a.disable_diagnostics()
     except Exception:
@@ -79,7 +79,7 @@ def test_enable_diagnostics_returns_collector_and_captures_warning(
     assert isinstance(collector, DiagnosticsCollector)
     assert collector.is_installed()
 
-    logging.getLogger("slappyengine.audio_3d").warning("QQ4 test channel")
+    logging.getLogger("pharos_engine.audio_3d").warning("QQ4 test channel")
 
     events = app.diagnostics_events()
     assert len(events) == 1
@@ -122,7 +122,7 @@ def test_enable_diagnostics_is_idempotent(app: App) -> None:
 
 def test_disable_diagnostics_stops_capture(app: App) -> None:
     collector = app.enable_diagnostics()
-    logging.getLogger("slappyengine.render.ssao").warning("pre-disable")
+    logging.getLogger("pharos_engine.render.ssao").warning("pre-disable")
     assert len(collector.events()) == 1
 
     result = app.disable_diagnostics()
@@ -130,7 +130,7 @@ def test_disable_diagnostics_stops_capture(app: App) -> None:
     assert app.get_diagnostics() is None
 
     # A warning after uninstall must NOT reach the (now-detached) buffer.
-    logging.getLogger("slappyengine.render.ssao").warning("post-disable")
+    logging.getLogger("pharos_engine.render.ssao").warning("post-disable")
     # The old collector object is still queryable — it just doesn't grow.
     assert len(collector.events()) == 1
 
@@ -194,9 +194,9 @@ def test_enable_diagnostics_after_hud_attaches_widget(app: App) -> None:
 def test_diagnostics_stats_counts_levels(app: App) -> None:
     app.enable_diagnostics()
 
-    logging.getLogger("slappyengine.render").warning("warn 1")
-    logging.getLogger("slappyengine.render").warning("warn 2")
-    logging.getLogger("slappyengine.audio_3d").error("err 1")
+    logging.getLogger("pharos_engine.render").warning("warn 1")
+    logging.getLogger("pharos_engine.render").warning("warn 2")
+    logging.getLogger("pharos_engine.audio_3d").error("err 1")
 
     stats = app.diagnostics_stats()
     assert isinstance(stats, dict)

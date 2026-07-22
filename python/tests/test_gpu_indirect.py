@@ -12,13 +12,13 @@ import time
 import numpy as np
 import pytest
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     PhysicsYaml,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.world import (
+from pharos_engine.physics.world import (
     CellConfig,
     CollisionConfig,
     GpuConfig,

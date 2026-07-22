@@ -12,9 +12,9 @@ creature animations: module surface, event bindings, performance
 contract, theme integration, accessibility settings, and the test
 plan that locks the contract.
 
-## 1. Module surface — `slappyengine.ui.theme.creatures`
+## 1. Module surface — `pharos_engine.ui.theme.creatures`
 
-The subsystem lives at `slappyengine.ui.theme.creatures` (sibling to
+The subsystem lives at `pharos_engine.ui.theme.creatures` (sibling to
 the existing `theme_spec` module).
 
 ### 1.1 Public dataclasses
@@ -43,7 +43,7 @@ class AnimationCurve:
     """Keyframe curve for a single animation state.
 
     Reuses the existing AnimationCurve concept from
-    ``slappyengine.animation`` (linear / ease-in / ease-out
+    ``pharos_engine.animation`` (linear / ease-in / ease-out
     interpolation between keyframes; loop / clamp modes).
     """
     duration: float            # seconds
@@ -98,7 +98,7 @@ class CreatureScheduler:
 
 ### 1.3 Helpers — event-binding wiring
 
-A separate `slappyengine.ui.theme.creature_bindings` module wires the
+A separate `pharos_engine.ui.theme.creature_bindings` module wires the
 default event-to-creature mapping. The bindings module is the **only**
 place that knows about engine event types — `Creature` itself is
 event-agnostic.
@@ -148,7 +148,7 @@ Notes:
    tracks the last user-action timestamp via `engine.user_action`
    pings (any input event resets the timer).
 2. `engine.first_run` is published once by the editor on the first ever
-   launch (persistence flag in `~/.slappyengine/state.json`).
+   launch (persistence flag in `~/.pharos_engine/state.json`).
 
 ## 3. Performance contract
 

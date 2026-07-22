@@ -1,6 +1,6 @@
 """Sprint Z3 — baked post-process chain preset regression suite.
 
-Covers the :class:`slappyengine.post_process.ChainBaker` end-to-end:
+Covers the :class:`pharos_engine.post_process.ChainBaker` end-to-end:
 
 * ``bake_defaults`` copies every baked file into the user dir
   idempotently and preserves user edits.
@@ -21,14 +21,14 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.post_process.chain_baker import (
+from pharos_engine.post_process.chain_baker import (
     BakerResult,
     ChainBaker,
     ChainBakerError,
     _chromatic_aberration_stub,
     _grain_stub,
 )
-from slappyengine.post_process.chain_manifest import (
+from pharos_engine.post_process.chain_manifest import (
     ChainManifest,
     PassSpec,
     _clear_custom_handlers,
@@ -398,7 +398,7 @@ def test_retro_film_manifest_dispatches_after_stub_registration(baker):
 
 
 def test_lazy_exports_expose_chain_baker():
-    import slappyengine.post_process as pp
+    import pharos_engine.post_process as pp
 
     assert pp.ChainBaker is ChainBaker
     assert pp.ChainBakerError is ChainBakerError
@@ -414,10 +414,10 @@ def test_suffix_constant():
     assert ChainBaker.SUFFIX == ".chain.yaml"
 
 
-def test_default_user_dir_is_home_slappyengine_postprocess_chains():
+def test_default_user_dir_is_home_pharos_engine_postprocess_chains():
     from pathlib import Path
 
-    expected = Path.home() / ".slappyengine" / "postprocess_chains"
+    expected = Path.home() / ".pharos_engine" / "postprocess_chains"
     assert ChainBaker.USER_DIR == expected
 
 

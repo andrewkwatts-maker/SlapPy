@@ -1,4 +1,4 @@
-"""Tripwire suite for :mod:`slappyengine.ui.plugin_registry` — sprint GG3.
+"""Tripwire suite for :mod:`pharos_engine.ui.plugin_registry` — sprint GG3.
 
 Covers:
 
@@ -27,7 +27,7 @@ Covers:
 * ``default_plugin_dir`` respects ``$HOME`` at call time.
 
 Every test uses ``tmp_path`` so the suite never touches the real
-``~/.slappyengine/`` directory.
+``~/.pharos_engine/`` directory.
 """
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine.ui.plugin_registry import (
+from pharos_engine.ui.plugin_registry import (
     LoadedPlugin,
     PluginDependencyError,
     PluginError,
@@ -190,7 +190,7 @@ class TestDiscover:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         home = tmp_path / "home"
-        (home / ".slappyengine" / "extensions").mkdir(parents=True)
+        (home / ".pharos_engine" / "extensions").mkdir(parents=True)
         monkeypatch.setenv("HOME", str(home))
         monkeypatch.setenv("USERPROFILE", str(home))  # windows
         reg = PluginRegistry()
@@ -203,7 +203,7 @@ class TestDiscover:
     ) -> None:
         monkeypatch.setenv("HOME", str(tmp_path))
         monkeypatch.setenv("USERPROFILE", str(tmp_path))
-        assert default_plugin_dir() == tmp_path / ".slappyengine" / "extensions"
+        assert default_plugin_dir() == tmp_path / ".pharos_engine" / "extensions"
 
 
 # ---------------------------------------------------------------------------
@@ -528,7 +528,7 @@ class TestSamplePlugin:
         sample = (
             Path(__file__).resolve().parents[2]
             / "python"
-            / "slappyengine"
+            / "pharos_engine"
             / "ui"
             / "plugin_samples"
             / "hello_plugin"
@@ -552,7 +552,7 @@ class TestSamplePlugin:
         sample = (
             Path(__file__).resolve().parents[2]
             / "python"
-            / "slappyengine"
+            / "pharos_engine"
             / "ui"
             / "plugin_samples"
             / "hello_plugin"

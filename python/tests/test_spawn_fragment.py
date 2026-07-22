@@ -18,12 +18,12 @@ from __future__ import annotations
 
 import numpy as np
 
-from slappyengine.physics import PhysicsWorld, make_rect_silhouette
-from slappyengine.physics.cell import CELL_GRID_SIZE
-from slappyengine.physics.cc_label import connected_components
+from pharos_engine.physics import PhysicsWorld, make_rect_silhouette
+from pharos_engine.physics.cell import CELL_GRID_SIZE
+from pharos_engine.physics.cc_label import connected_components
 
 # Cell-struct channel indices used directly here.  Must match
-# slappyengine.physics.cell.CELL_PIXEL_STRUCT.
+# pharos_engine.physics.cell.CELL_PIXEL_STRUCT.
 _IDX_V_X = 2
 _IDX_V_Y = 3
 _IDX_DENSITY = 9

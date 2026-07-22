@@ -5,15 +5,15 @@ from unittest.mock import MagicMock
 
 
 def _make_session(local_player_id=0, tick_rate=30, timeout_ms=100.0):
-    from slappyengine.net.session import GameSession, SessionConfig
-    from slappyengine.net.room import RoomCode
+    from pharos_engine.net.session import GameSession, SessionConfig
+    from pharos_engine.net.room import RoomCode
     cfg = SessionConfig(tick_rate=tick_rate, timeout_ms=timeout_ms)
     room = RoomCode("TESTAB")
     return GameSession(room_code=room, local_player_id=local_player_id, cfg=cfg)
 
 
 def _make_peer(peer_id, state_name="connected", alive=True):
-    from slappyengine.net.peer import Peer, PeerState
+    from pharos_engine.net.peer import Peer, PeerState
     state = PeerState(state_name)
     peer = Peer(peer_id=peer_id, external_addr=("127.0.0.1", 10000 + peer_id), state=state)
     peer.is_alive = lambda timeout=5.0: alive
@@ -26,7 +26,7 @@ def _make_peer(peer_id, state_name="connected", alive=True):
 
 class TestEnableLockstep:
     def test_returns_lockstep_sync(self):
-        from slappyengine.net.sync import LockstepSync
+        from pharos_engine.net.sync import LockstepSync
         session = _make_session()
         result = session.enable_lockstep(num_players=2)
         assert isinstance(result, LockstepSync)

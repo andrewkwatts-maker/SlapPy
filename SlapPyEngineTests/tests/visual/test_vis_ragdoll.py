@@ -1,6 +1,6 @@
 """Visual regression test: 6-bone ragdoll drops and settles on a flat floor.
 
-Builds the scene programmatically via :func:`slappyengine.dynamics.build_ragdoll`
+Builds the scene programmatically via :func:`pharos_engine.dynamics.build_ragdoll`
 - self-contained, no imports from ``examples/`` - then steps the world for
 60 frames and asserts the four documented invariants of a passive drop:
 
@@ -22,7 +22,7 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import BoneSpec, RagdollSpec, World, build_ragdoll
+from pharos_engine.dynamics import BoneSpec, RagdollSpec, World, build_ragdoll
 
 
 FRAMES = 60

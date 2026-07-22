@@ -9,7 +9,7 @@ Pins six behaviours of the thermal diffusion demo:
    total energy to within float tolerance (no cross-grid exchange).
 5. No NaNs leak from either grid.
 6. The rasterised side-by-side view reproduces the committed visual
-   baseline via :func:`slappyengine.testing.assert_scene_matches`.
+   baseline via :func:`pharos_engine.testing.assert_scene_matches`.
 """
 from __future__ import annotations
 
@@ -21,8 +21,8 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from slappyengine.testing import assert_scene_matches
-from slappyengine.thermal import HeatField
+from pharos_engine.testing import assert_scene_matches
+from pharos_engine.thermal import HeatField
 
 # ── Load the demo as a module so we don't depend on examples/ being on path ──
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -161,7 +161,7 @@ def test_hello_thermal_no_nan(demo):
 def test_hello_thermal_visual_baseline(demo):
     """Render the side-by-side panel and diff against the committed baseline.
 
-    First run writes ``python/slappyengine/testing/baselines/hello_thermal.png``
+    First run writes ``python/pharos_engine/testing/baselines/hello_thermal.png``
     and passes; subsequent runs require a max per-channel diff <= 0.05.
     """
     grid_a, grid_b = demo.build_grids()

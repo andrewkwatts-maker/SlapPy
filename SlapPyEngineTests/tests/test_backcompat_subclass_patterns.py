@@ -25,10 +25,10 @@ from __future__ import annotations
 
 import pytest
 
-from slappyengine.asset import Asset
-from slappyengine.entity import Entity
-from slappyengine.layer import Layer
-from slappyengine.render_target import RenderTarget
+from pharos_engine.asset import Asset
+from pharos_engine.entity import Entity
+from pharos_engine.layer import Layer
+from pharos_engine.render_target import RenderTarget
 
 
 # ---------------------------------------------------------------------------

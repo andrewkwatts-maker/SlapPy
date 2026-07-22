@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.render import (
+from pharos_engine.render import (
     DEPTH_ONLY_WGSL,
     DepthPrepass,
     EarlyZPass,

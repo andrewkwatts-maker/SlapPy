@@ -70,7 +70,7 @@ enumerated by TT1 and re-verified by UU3 fall into six classes:
 | # | Regression class | Status | Fix owner |
 |---|---|---|---|
 | 1 | `Observable.__init__` broke cooperative-`super()` chain — `RenderTarget.layers` never initialised | **FIXED** | UU1 (`ee732fd`) |
-| 2 | `slappyengine.event_bus.global_bus` module attribute deleted | **FIXED** | UU2 (`b29e601`) |
+| 2 | `pharos_engine.event_bus.global_bus` module attribute deleted | **FIXED** | UU2 (`b29e601`) |
 | 3 | `EventBus.unsubscribe()` signature dropped one arg (subscription-id-only vs event+id) | **FIXED** | UU2 (`b29e601`) |
 | 4 | `CacheMode` enum members `OFFSCREEN_SERIALIZE` / `ALWAYS_CACHED` deleted | **IN FLIGHT** | VV1 |
 | 5 | 3-5 further quiet deletions (`DeformConfig`, `EventDetails`, `PixelCollisionPass`, `_parse_deform`, `debug_listeners`) + kwarg drift (`DeformableLayerComponent(spring_decay=...)`) + method deletions (`AudioManager.play_loop`, `LightingSystem.load_profile`, `CollisionManager.on_overlap`) + signature drift (`PixelCollisionPass.test()`) | **IN FLIGHT** | VV2 |
@@ -100,7 +100,7 @@ recurring.
   block in CHANGELOG for the residual game-compat gap,
   and a v0.4.1 patch-release commitment.
 * **Downstream cost.** HIGH. Ochema Circuit + Bullet Strata
-  owners either (a) pin `slappyengine==0.3.0b0` and wait for
+  owners either (a) pin `pharos_engine==0.3.0b0` and wait for
   v0.4.1, (b) fork a compat layer, or (c) rewrite ~5-8
   subsystem call-sites against the new API. All three burn
   goodwill.
@@ -291,7 +291,7 @@ re-run (`docs/game_compat_2026_07_07.md`), UU3 recovery append
 (`docs/api_stability_2026_07_07.md`), TT7 sprint rollup r6
 (`docs/sprint_rollup_2026_07_07_r6.md`), live `git log`
 at commit `8fe678a`, `pyproject.toml:7` +
-`python/slappyengine/__init__.py:103` version cross-check.
+`python/pharos_engine/__init__.py:103` version cross-check.
 Docs-only — no Python source touched.*
 
 ---

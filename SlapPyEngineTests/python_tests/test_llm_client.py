@@ -1,4 +1,4 @@
-"""Headless tests for slappyengine.ai.llm_client (LLMClient).
+"""Headless tests for pharos_engine.ai.llm_client (LLMClient).
 
 httpx is mocked so no network access occurs.
 """
@@ -39,11 +39,11 @@ sys.modules.setdefault("httpx", _mock_httpx)
 
 class TestLLMClientConstants:
     def test_default_host(self):
-        from slappyengine.ai.llm_client import _DEFAULT_HOST
+        from pharos_engine.ai.llm_client import _DEFAULT_HOST
         assert _DEFAULT_HOST == "http://localhost:11434"
 
     def test_default_model(self):
-        from slappyengine.ai.llm_client import _DEFAULT_MODEL
+        from pharos_engine.ai.llm_client import _DEFAULT_MODEL
         assert _DEFAULT_MODEL == "qwen2.5-coder:7b"
 
 
@@ -53,7 +53,7 @@ class TestLLMClientConstants:
 
 class TestLLMClientInit:
     def _client(self, **kwargs):
-        from slappyengine.ai.llm_client import LLMClient
+        from pharos_engine.ai.llm_client import LLMClient
         return LLMClient(**kwargs)
 
     def test_default_host(self):
@@ -109,7 +109,7 @@ class TestLLMClientInit:
 
 class TestLLMClientIsAvailable:
     def _client(self):
-        from slappyengine.ai.llm_client import LLMClient
+        from pharos_engine.ai.llm_client import LLMClient
         return LLMClient()
 
     def test_returns_true_on_200(self):
@@ -139,7 +139,7 @@ class TestLLMClientIsAvailable:
 
 class TestLLMClientListModels:
     def _client(self):
-        from slappyengine.ai.llm_client import LLMClient
+        from pharos_engine.ai.llm_client import LLMClient
         return LLMClient()
 
     def test_returns_list_of_names(self):
@@ -183,7 +183,7 @@ class TestLLMClientListModels:
 
 class TestLLMClientGenerate:
     def _client(self):
-        from slappyengine.ai.llm_client import LLMClient
+        from pharos_engine.ai.llm_client import LLMClient
         return LLMClient()
 
     def _mock_resp(self, text="hello"):

@@ -16,7 +16,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
@@ -353,7 +353,7 @@ def test_fixed_ground_does_not_fall():
 
 def test_body_with_no_cell_grid_is_t0():
     """Bodies authored at tier T0 don't allocate a cell-pool slot."""
-    from slappyengine.physics import TIER_T0
+    from pharos_engine.physics import TIER_T0
     w = _world()
     b = w.create_body(
         make_circle_silhouette(8),

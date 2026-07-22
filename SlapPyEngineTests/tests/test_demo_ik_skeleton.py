@@ -1,10 +1,10 @@
 """Smoke test for ``examples/ik_skeleton_demo.py`` (SS2 gap-close, batch 4).
 
 The demo builds a 4-bone IK chain, orbits an IK target around the root,
-solves per-frame with :func:`slappyengine.dynamics.solve_ik`, and writes
+solves per-frame with :func:`pharos_engine.dynamics.solve_ik`, and writes
 a GIF to ``examples/output/character/ik_skeleton.gif``.
 
-The demo imports from :mod:`slappyengine.softbody`, which is a WIP
+The demo imports from :mod:`pharos_engine.softbody`, which is a WIP
 subpackage. This test wakes up as soon as it lands — until then it
 skips with a clear reason.
 
@@ -32,13 +32,13 @@ def demo():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     # Guard against WIP softbody + dynamics subpackages being unavailable.
     try:
-        from slappyengine.softbody import (  # noqa: F401
+        from pharos_engine.softbody import (  # noqa: F401
             SoftBodyRenderConfig,
             SoftBodyRenderer,
             SoftBodyWorld,
             step as softbody_step,
         )
-        from slappyengine.dynamics import (  # noqa: F401
+        from pharos_engine.dynamics import (  # noqa: F401
             IKChainSpec,
             make_distance,
             resolve_joint_specs,
@@ -46,7 +46,7 @@ def demo():
         )
     except Exception as exc:
         pytest.skip(
-            "slappyengine.softbody / dynamics unavailable (WIP): "
+            "pharos_engine.softbody / dynamics unavailable (WIP): "
             f"{exc}"
         )
 

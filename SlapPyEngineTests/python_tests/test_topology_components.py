@@ -1,8 +1,8 @@
-"""Tripwire tests for :mod:`slappyengine.topology` connected components.
+"""Tripwire tests for :mod:`pharos_engine.topology` connected components.
 
 This test guards the Phase B repackage of the union-find core out of
-``slappyengine.physics.cc_label`` into the clean public
-``slappyengine.topology`` home. If Phase D later deletes the old physics
+``pharos_engine.physics.cc_label`` into the clean public
+``pharos_engine.topology`` home. If Phase D later deletes the old physics
 shim, the public surface (and the four invariants below) must keep
 working.
 
@@ -20,7 +20,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.topology import (
+from pharos_engine.topology import (
     BACKGROUND_LABEL,
     connected_components,
     connected_components_grid,
@@ -101,7 +101,7 @@ def test_cross_check_against_physics_cc_label_grid():
     """
     # Import inside the test so collection doesn't fail if the legacy
     # module ever goes away unexpectedly.
-    from slappyengine.physics import cc_label as legacy
+    from pharos_engine.physics import cc_label as legacy
 
     rng = np.random.default_rng(20260529)
     h, w = 4, 4
@@ -145,9 +145,9 @@ def test_cross_check_against_physics_cc_label_grid():
 
 
 def test_topology_is_importable_as_submodule():
-    """``from slappyengine import topology`` must resolve to this module."""
-    import slappyengine
+    """``from pharos_engine import topology`` must resolve to this module."""
+    import pharos_engine
 
-    topology_mod = slappyengine.topology  # noqa: F841 — triggers __getattr__
+    topology_mod = pharos_engine.topology  # noqa: F841 — triggers __getattr__
     assert hasattr(topology_mod, "connected_components")
     assert hasattr(topology_mod, "BACKGROUND_LABEL")

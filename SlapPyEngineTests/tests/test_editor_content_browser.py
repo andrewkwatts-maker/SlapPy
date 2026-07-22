@@ -126,9 +126,9 @@ def clear_theme(stub_dpg):
     """Reset theme + theme-listener list between tests so theme switches
     in one test don't surface as stale state in the next.
     """
-    from slappyengine.ui.widgets import notebook_theme
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
-    from slappyengine.ui.widgets.sticker_corner import _active_stickers
+    from pharos_engine.ui.widgets import notebook_theme
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine.ui.widgets.sticker_corner import _active_stickers
 
     set_active_theme(None)
     notebook_theme._theme_listeners.clear()
@@ -174,7 +174,7 @@ def _noop(_path: Path) -> None:
 
 class TestConstruction:
     def test_constructs_with_three_callables(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -184,7 +184,7 @@ class TestConstruction:
         assert cb.get_search() == ""
 
     def test_rejects_non_callable_on_open_scene(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -192,7 +192,7 @@ class TestConstruction:
             NotebookContentBrowser("nope", _noop, _noop)  # type: ignore[arg-type]
 
     def test_rejects_non_callable_on_open_script(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -200,7 +200,7 @@ class TestConstruction:
             NotebookContentBrowser(_noop, 42, _noop)  # type: ignore[arg-type]
 
     def test_rejects_non_callable_on_open_asset(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -215,45 +215,45 @@ class TestConstruction:
 
 class TestClassifyFile:
     def test_scene_yaml_classifies_as_scenes(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             SECTION_SCENES, classify_file,
         )
 
         assert classify_file(Path("main.scene.yaml")) == SECTION_SCENES
 
     def test_py_classifies_as_scripts(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             SECTION_SCRIPTS, classify_file,
         )
 
         assert classify_file(Path("player.py")) == SECTION_SCRIPTS
 
     def test_png_classifies_as_assets(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             SECTION_ASSETS, classify_file,
         )
 
         assert classify_file(Path("hero.png")) == SECTION_ASSETS
 
     def test_wav_classifies_as_assets(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             SECTION_ASSETS, classify_file,
         )
 
         assert classify_file(Path("jump.wav")) == SECTION_ASSETS
 
     def test_hidden_file_returns_none(self):
-        from slappyengine.ui.editor.notebook_content_browser import classify_file
+        from pharos_engine.ui.editor.notebook_content_browser import classify_file
 
         assert classify_file(Path(".gitignore")) is None
 
     def test_pyc_bytecode_returns_none(self):
-        from slappyengine.ui.editor.notebook_content_browser import classify_file
+        from pharos_engine.ui.editor.notebook_content_browser import classify_file
 
         assert classify_file(Path("foo.pyc")) is None
 
     def test_pycache_dir_path_returns_none(self):
-        from slappyengine.ui.editor.notebook_content_browser import classify_file
+        from pharos_engine.ui.editor.notebook_content_browser import classify_file
 
         assert classify_file(Path("pkg/__pycache__/foo.py")) is None
 
@@ -265,7 +265,7 @@ class TestClassifyFile:
 
 class TestIcons:
     def test_every_icon_svg_under_500b(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             _FILE_ICON_SVGS,
         )
 
@@ -277,35 +277,35 @@ class TestIcons:
             )
 
     def test_icon_for_path_routes_scene(self):
-        from slappyengine.ui.editor.notebook_content_browser import icon_for_path
+        from pharos_engine.ui.editor.notebook_content_browser import icon_for_path
 
         assert icon_for_path(Path("level_1.scene.yaml")) == "scene"
 
     def test_icon_for_path_routes_script(self):
-        from slappyengine.ui.editor.notebook_content_browser import icon_for_path
+        from pharos_engine.ui.editor.notebook_content_browser import icon_for_path
 
         assert icon_for_path(Path("main.py")) == "script"
 
     def test_icon_for_path_routes_image_jpg(self):
-        from slappyengine.ui.editor.notebook_content_browser import icon_for_path
+        from pharos_engine.ui.editor.notebook_content_browser import icon_for_path
 
         assert icon_for_path(Path("portrait.jpg")) == "image"
 
     def test_icon_for_path_routes_audio_mp3(self):
-        from slappyengine.ui.editor.notebook_content_browser import icon_for_path
+        from pharos_engine.ui.editor.notebook_content_browser import icon_for_path
 
         assert icon_for_path(Path("music.mp3")) == "audio"
 
     def test_icon_svg_falls_back_to_page_for_unknown(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             _FILE_ICON_SVGS, icon_svg,
         )
 
         assert icon_svg("totally_unknown") == _FILE_ICON_SVGS["page"]
 
     def test_make_file_icon_returns_svgicon(self):
-        from slappyengine.ui.editor.notebook_content_browser import make_file_icon
-        from slappyengine.ui.theme.svg_icon import SVGIcon
+        from pharos_engine.ui.editor.notebook_content_browser import make_file_icon
+        from pharos_engine.ui.theme.svg_icon import SVGIcon
 
         icon = make_file_icon("script", size=16)
         assert isinstance(icon, SVGIcon)
@@ -319,7 +319,7 @@ class TestIcons:
 
 class TestEmptyState:
     def test_no_root_iter_rows_is_empty(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -327,7 +327,7 @@ class TestEmptyState:
         assert cb.iter_rows() == []
 
     def test_empty_root_renders_empty_state(self, tmp_path, stub_dpg):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -340,7 +340,7 @@ class TestEmptyState:
         assert "Project is empty" in flat
 
     def test_nonexistent_root_iter_rows_is_empty(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -364,7 +364,7 @@ class TestRowEnumeration:
         )
 
     def test_three_sections_appear_in_rows(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser, SECTION_ASSETS, SECTION_SCENES,
             SECTION_SCRIPTS,
         )
@@ -378,7 +378,7 @@ class TestRowEnumeration:
         assert headers == [SECTION_SCENES, SECTION_SCRIPTS, SECTION_ASSETS]
 
     def test_file_rows_carry_correct_icons(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -397,7 +397,7 @@ class TestRowEnumeration:
         assert icons_by_name["jump.wav"] == "audio"
 
     def test_build_renders_buttons_for_each_file(self, tmp_path, stub_dpg):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -419,7 +419,7 @@ class TestRowEnumeration:
 
 class TestClickRouting:
     def test_scene_row_fires_on_open_scene(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser, SECTION_SCENES,
         )
 
@@ -437,7 +437,7 @@ class TestClickRouting:
         assert captured == [scene_row["path"]]
 
     def test_script_row_fires_on_open_script(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser, SECTION_SCRIPTS,
         )
 
@@ -455,7 +455,7 @@ class TestClickRouting:
         assert captured == [script_row["path"]]
 
     def test_asset_row_fires_on_open_asset(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser, SECTION_ASSETS,
         )
 
@@ -473,7 +473,7 @@ class TestClickRouting:
         assert captured == [asset_row["path"]]
 
     def test_callback_exception_does_not_crash(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser, SECTION_SCENES,
         )
 
@@ -499,7 +499,7 @@ class TestClickRouting:
 
 class TestSearchFilter:
     def test_search_shrinks_visible_rows(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -517,7 +517,7 @@ class TestSearchFilter:
         assert after == 1
 
     def test_search_is_case_insensitive(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -536,7 +536,7 @@ class TestSearchFilter:
 
 class TestSetRoot:
     def test_set_root_records_path(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -545,7 +545,7 @@ class TestSetRoot:
         assert cb.get_root() == tmp_path
 
     def test_set_root_accepts_str(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -554,7 +554,7 @@ class TestSetRoot:
         assert cb.get_root() == Path(str(tmp_path))
 
     def test_set_root_rebuilds_the_tree(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -574,7 +574,7 @@ class TestSetRoot:
         assert len(files_b) == 2
 
     def test_refresh_does_not_crash_without_root(self):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -589,10 +589,10 @@ class TestSetRoot:
 
 class TestThemeIntegration:
     def test_theme_switch_updates_cached_palette(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
-        from slappyengine.ui.widgets.notebook_theme import (
+        from pharos_engine.ui.widgets.notebook_theme import (
             NotebookTheme, set_active_theme,
         )
 
@@ -623,7 +623,7 @@ class TestThemeIntegration:
 
 class TestContextActions:
     def test_rename_moves_the_file(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -638,7 +638,7 @@ class TestContextActions:
         assert target.name == "new.py"
 
     def test_rename_refuses_escape(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -651,7 +651,7 @@ class TestContextActions:
             cb.rename(src, "../escape.py")
 
     def test_delete_removes_file(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -664,7 +664,7 @@ class TestContextActions:
         assert not src.exists()
 
     def test_duplicate_creates_copy(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -679,7 +679,7 @@ class TestContextActions:
         assert copy.read_text(encoding="utf-8") == "data\n"
 
     def test_duplicate_handles_double_suffix(self, tmp_path):
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -694,8 +694,8 @@ class TestContextActions:
         assert "_copy" in copy.name
 
     def test_reveal_does_not_crash(self, tmp_path, monkeypatch):
-        from slappyengine.ui.editor import notebook_content_browser as mod
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor import notebook_content_browser as mod
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 
@@ -726,7 +726,7 @@ class TestContextActions:
 class TestSoftImportWatchdog:
     def test_module_imports_without_watchdog(self):
         """The browser must work even when ``watchdog`` is not installed."""
-        from slappyengine.ui.editor.notebook_content_browser import (
+        from pharos_engine.ui.editor.notebook_content_browser import (
             NotebookContentBrowser,
         )
 

@@ -7,7 +7,7 @@ changes that engine-side tests did not catch:
 
     1. ``RenderTarget.__init__`` MRO issue (subclass ``add_layer`` before
        base init).
-    2. ``global_bus`` deleted from ``slappyengine.event_bus``.
+    2. ``global_bus`` deleted from ``pharos_engine.event_bus``.
     3. ``EventBus.unsubscribe(...)`` signature change.
 
 These broke ~735 game tests across Ochema Circuit + Bullet Strata
@@ -18,7 +18,7 @@ patterns; deletions don't set off any tripwire.
 
 This module addresses the deletion class. It:
 
-* enumerates every top-level import name in ``slappyengine.__all__`` and
+* enumerates every top-level import name in ``pharos_engine.__all__`` and
 * enumerates every module-level public name in a curated list of
   load-bearing modules (``event_bus``, ``entity``, ``layer``, ...).
 
@@ -66,7 +66,7 @@ def _load_snapshot() -> dict[str, list[str]]:
 def _current_public_names(module_name: str) -> list[str]:
     """Return the current public symbol list for ``module_name``.
 
-    For the top-level ``slappyengine`` package we use ``__all__`` because
+    For the top-level ``pharos_engine`` package we use ``__all__`` because
     the package uses PEP 562 lazy-load and ``dir()`` won't enumerate lazy
     names until they've been resolved.
 
@@ -74,7 +74,7 @@ def _current_public_names(module_name: str) -> list[str]:
     names — mirrors what ``from mod import *`` would offer downstream.
     """
     m = importlib.import_module(module_name)
-    if module_name == "slappyengine":
+    if module_name == "pharos_engine":
         return sorted(set(getattr(m, "__all__", [])))
     return sorted(n for n in dir(m) if not n.startswith("_"))
 
@@ -108,20 +108,20 @@ def test_snapshot_covers_declared_modules() -> None:
     """Sanity: the snapshot must at minimum cover the load-bearing modules
     called out in the sprint spec (agent UU7, 2026-07-07)."""
     required = {
-        "slappyengine",
-        "slappyengine.event_bus",
-        "slappyengine.entity",
-        "slappyengine.layer",
-        "slappyengine.render_target",
-        "slappyengine.asset",
-        "slappyengine.app",
-        "slappyengine.dynamics",
-        "slappyengine.physics3_bridge",
-        "slappyengine.diagnostics",
-        "slappyengine.hud_bridge",
-        "slappyengine.audio_3d",
-        "slappyengine.capture",
-        "slappyengine.exporter",
+        "pharos_engine",
+        "pharos_engine.event_bus",
+        "pharos_engine.entity",
+        "pharos_engine.layer",
+        "pharos_engine.render_target",
+        "pharos_engine.asset",
+        "pharos_engine.app",
+        "pharos_engine.dynamics",
+        "pharos_engine.physics3_bridge",
+        "pharos_engine.diagnostics",
+        "pharos_engine.hud_bridge",
+        "pharos_engine.audio_3d",
+        "pharos_engine.capture",
+        "pharos_engine.exporter",
     }
     missing = required - set(SNAPSHOT.keys())
     assert not missing, (

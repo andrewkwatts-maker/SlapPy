@@ -15,7 +15,7 @@ Coverage focuses on the four invariants the task spec calls out:
 4. Sticker corners can be added / removed at runtime.
 
 Plus the validator contract — bad inputs raise ``TypeError`` /
-``ValueError`` through the shared ``slappyengine._validation`` helpers.
+``ValueError`` through the shared ``pharos_engine._validation`` helpers.
 """
 from __future__ import annotations
 
@@ -127,8 +127,8 @@ def stub_dpg(monkeypatch):
 @pytest.fixture(autouse=True)
 def clear_theme():
     """Reset the active theme + sticker registry between tests."""
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
-    from slappyengine.ui.widgets.sticker_corner import _active_stickers
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine.ui.widgets.sticker_corner import _active_stickers
 
     set_active_theme(None)
     _active_stickers.clear()
@@ -143,12 +143,12 @@ def clear_theme():
 
 class TestThemeRegistry:
     def test_no_theme_active_by_default(self):
-        from slappyengine.ui.widgets import get_active_theme
+        from pharos_engine.ui.widgets import get_active_theme
 
         assert get_active_theme() is None
 
     def test_set_active_theme_round_trips(self):
-        from slappyengine.ui.widgets import (
+        from pharos_engine.ui.widgets import (
             NotebookTheme,
             get_active_theme,
             set_active_theme,
@@ -159,7 +159,7 @@ class TestThemeRegistry:
         assert get_active_theme() is theme
 
     def test_set_active_theme_clears_with_none(self):
-        from slappyengine.ui.widgets import (
+        from pharos_engine.ui.widgets import (
             NotebookTheme,
             get_active_theme,
             set_active_theme,
@@ -170,13 +170,13 @@ class TestThemeRegistry:
         assert get_active_theme() is None
 
     def test_set_active_theme_rejects_non_theme(self):
-        from slappyengine.ui.widgets import set_active_theme
+        from pharos_engine.ui.widgets import set_active_theme
 
         with pytest.raises(TypeError):
             set_active_theme("not a theme")  # type: ignore[arg-type]
 
     def test_resolve_theme_returns_fallback_when_no_theme(self):
-        from slappyengine.ui.widgets import resolve_theme
+        from pharos_engine.ui.widgets import resolve_theme
 
         theme = resolve_theme()
         assert theme is not None
@@ -190,26 +190,26 @@ class TestThemeRegistry:
 
 class TestStickerButton:
     def test_constructs_without_dpg(self):
-        from slappyengine.ui.widgets import StickerButton
+        from pharos_engine.ui.widgets import StickerButton
 
         sb = StickerButton("Save", "star", lambda *_: None)
         assert sb.label == "Save"
         assert sb.sticker_icon == "star"
 
     def test_rejects_empty_label(self):
-        from slappyengine.ui.widgets import StickerButton
+        from pharos_engine.ui.widgets import StickerButton
 
         with pytest.raises(ValueError):
             StickerButton("", "star", lambda *_: None)
 
     def test_rejects_non_callable(self):
-        from slappyengine.ui.widgets import StickerButton
+        from pharos_engine.ui.widgets import StickerButton
 
         with pytest.raises(TypeError):
             StickerButton("Save", "star", "not callable")  # type: ignore[arg-type]
 
     def test_theme_application_changes_accent(self):
-        from slappyengine.ui.widgets import (
+        from pharos_engine.ui.widgets import (
             NotebookTheme,
             StickerButton,
             set_active_theme,
@@ -224,13 +224,13 @@ class TestStickerButton:
         assert sb.accent_color == (255, 0, 200, 255)
 
     def test_rotation_clamped(self):
-        from slappyengine.ui.widgets import StickerButton
+        from pharos_engine.ui.widgets import StickerButton
 
         sb = StickerButton("Save", "star", lambda *_: None, rotation=99.0)
         assert sb.rotation == 15.0
 
     def test_build_registers_dpg_root(self, stub_dpg):
-        from slappyengine.ui.widgets import StickerButton
+        from pharos_engine.ui.widgets import StickerButton
 
         sb = StickerButton("Save", "star", lambda *_: None)
         sb.build("parent_x")
@@ -238,7 +238,7 @@ class TestStickerButton:
         assert "add_button" in stub_dpg.calls or "group" in stub_dpg.calls
 
     def test_destroy_clears_built_flag(self, stub_dpg):
-        from slappyengine.ui.widgets import StickerButton
+        from pharos_engine.ui.widgets import StickerButton
 
         sb = StickerButton("Save", "star", lambda *_: None)
         sb.build("parent_x")
@@ -253,20 +253,20 @@ class TestStickerButton:
 
 class TestWashiPanel:
     def test_constructs_with_no_children(self):
-        from slappyengine.ui.widgets import WashiPanel
+        from pharos_engine.ui.widgets import WashiPanel
 
         wp = WashiPanel("Settings")
         assert wp.title == "Settings"
         assert wp.children == []
 
     def test_rejects_non_callable_child(self):
-        from slappyengine.ui.widgets import WashiPanel
+        from pharos_engine.ui.widgets import WashiPanel
 
         with pytest.raises(TypeError):
             WashiPanel("Settings", ["not callable"])  # type: ignore[list-item]
 
     def test_add_child_appends(self):
-        from slappyengine.ui.widgets import WashiPanel
+        from pharos_engine.ui.widgets import WashiPanel
 
         wp = WashiPanel("Settings")
         wp.add_child(lambda: None)
@@ -274,7 +274,7 @@ class TestWashiPanel:
         assert len(wp.children) == 2
 
     def test_theme_application_changes_tape_color(self):
-        from slappyengine.ui.widgets import (
+        from pharos_engine.ui.widgets import (
             NotebookTheme,
             WashiPanel,
             set_active_theme,
@@ -289,7 +289,7 @@ class TestWashiPanel:
         assert wp.tape_color == (255, 200, 220, 255)
 
     def test_build_runs_children(self, stub_dpg):
-        from slappyengine.ui.widgets import WashiPanel
+        from pharos_engine.ui.widgets import WashiPanel
 
         ran = []
         wp = WashiPanel("Settings", [lambda: ran.append(1)])
@@ -304,19 +304,19 @@ class TestWashiPanel:
 
 class TestNotebookTab:
     def test_constructs(self):
-        from slappyengine.ui.widgets import NotebookTab
+        from pharos_engine.ui.widgets import NotebookTab
 
         tab = NotebookTab("Overview")
         assert tab.label == "Overview"
 
     def test_rejects_non_callable_children(self):
-        from slappyengine.ui.widgets import NotebookTab
+        from pharos_engine.ui.widgets import NotebookTab
 
         with pytest.raises(TypeError):
             NotebookTab("Overview", [42])  # type: ignore[list-item]
 
     def test_theme_application_changes_paper(self):
-        from slappyengine.ui.widgets import (
+        from pharos_engine.ui.widgets import (
             NotebookTab,
             NotebookTheme,
             set_active_theme,
@@ -338,25 +338,25 @@ class TestNotebookTab:
 
 class TestHighlighterSlider:
     def test_constructs(self):
-        from slappyengine.ui.widgets import HighlighterSlider
+        from pharos_engine.ui.widgets import HighlighterSlider
 
         sl = HighlighterSlider("Volume", 0.5, 0.0, 1.0, lambda v: None)
         assert sl.value == 0.5
 
     def test_clamps_initial_value(self):
-        from slappyengine.ui.widgets import HighlighterSlider
+        from pharos_engine.ui.widgets import HighlighterSlider
 
         sl = HighlighterSlider("Volume", 2.0, 0.0, 1.0, lambda v: None)
         assert sl.value == 1.0
 
     def test_rejects_min_geq_max(self):
-        from slappyengine.ui.widgets import HighlighterSlider
+        from pharos_engine.ui.widgets import HighlighterSlider
 
         with pytest.raises(ValueError):
             HighlighterSlider("Volume", 0.5, 1.0, 1.0, lambda v: None)
 
     def test_callback_fires_on_set_value(self):
-        from slappyengine.ui.widgets import HighlighterSlider
+        from pharos_engine.ui.widgets import HighlighterSlider
 
         seen: list[float] = []
         sl = HighlighterSlider("Volume", 0.5, 0.0, 1.0, lambda v: seen.append(v))
@@ -364,7 +364,7 @@ class TestHighlighterSlider:
         assert seen == [0.75]
 
     def test_theme_application_changes_highlight_color(self):
-        from slappyengine.ui.widgets import (
+        from pharos_engine.ui.widgets import (
             HighlighterSlider,
             NotebookTheme,
             set_active_theme,
@@ -380,7 +380,7 @@ class TestHighlighterSlider:
         assert sl.highlight_color == (200, 250, 80, 220)
 
     def test_build_invokes_dpg(self, stub_dpg):
-        from slappyengine.ui.widgets import HighlighterSlider
+        from pharos_engine.ui.widgets import HighlighterSlider
 
         sl = HighlighterSlider("Volume", 0.5, 0.0, 1.0, lambda v: None)
         sl.build("parent")
@@ -393,19 +393,19 @@ class TestHighlighterSlider:
 
 class TestHeartCheckbox:
     def test_constructs(self):
-        from slappyengine.ui.widgets import HeartCheckbox
+        from pharos_engine.ui.widgets import HeartCheckbox
 
         hc = HeartCheckbox("Cute mode", False, lambda v: None)
         assert hc.value is False
 
     def test_rejects_non_bool_value(self):
-        from slappyengine.ui.widgets import HeartCheckbox
+        from pharos_engine.ui.widgets import HeartCheckbox
 
         with pytest.raises(TypeError):
             HeartCheckbox("Cute mode", 1, lambda v: None)  # type: ignore[arg-type]
 
     def test_toggle_fires_callback(self):
-        from slappyengine.ui.widgets import HeartCheckbox
+        from pharos_engine.ui.widgets import HeartCheckbox
 
         seen: list[bool] = []
         hc = HeartCheckbox("Cute mode", False, lambda v: seen.append(v))
@@ -414,7 +414,7 @@ class TestHeartCheckbox:
         assert seen == [True]
 
     def test_set_value_fires_callback(self):
-        from slappyengine.ui.widgets import HeartCheckbox
+        from pharos_engine.ui.widgets import HeartCheckbox
 
         seen: list[bool] = []
         hc = HeartCheckbox("Cute mode", False, lambda v: seen.append(v))
@@ -423,7 +423,7 @@ class TestHeartCheckbox:
         assert seen == [True]
 
     def test_theme_application_changes_heart_color(self):
-        from slappyengine.ui.widgets import (
+        from pharos_engine.ui.widgets import (
             HeartCheckbox,
             NotebookTheme,
             set_active_theme,
@@ -445,27 +445,27 @@ class TestHeartCheckbox:
 
 class TestDoodleSeparator:
     def test_default_style_is_wavy(self):
-        from slappyengine.ui.widgets import DoodleSeparator
+        from pharos_engine.ui.widgets import DoodleSeparator
 
         sep = DoodleSeparator()
         assert sep.style == "wavy"
 
     @pytest.mark.parametrize("style", ["wavy", "dotted", "star_chain"])
     def test_accepts_each_style(self, style):
-        from slappyengine.ui.widgets import DoodleSeparator
+        from pharos_engine.ui.widgets import DoodleSeparator
 
         sep = DoodleSeparator(style)
         assert sep.style == style
         assert sep.glyph  # non-empty
 
     def test_rejects_invalid_style(self):
-        from slappyengine.ui.widgets import DoodleSeparator
+        from pharos_engine.ui.widgets import DoodleSeparator
 
         with pytest.raises(ValueError):
             DoodleSeparator("squiggly")
 
     def test_build_invokes_dpg(self, stub_dpg):
-        from slappyengine.ui.widgets import DoodleSeparator
+        from pharos_engine.ui.widgets import DoodleSeparator
 
         sep = DoodleSeparator("dotted")
         sep.build("parent")
@@ -481,14 +481,14 @@ class TestDoodleSeparator:
 
 class TestStickerCorners:
     def test_add_returns_handle(self):
-        from slappyengine.ui.widgets import add_sticker_corner
+        from pharos_engine.ui.widgets import add_sticker_corner
 
         handle = add_sticker_corner("panel_1", "heart", "TR")
         assert isinstance(handle, str)
         assert handle
 
     def test_remove_returns_true_for_known_handle(self):
-        from slappyengine.ui.widgets import (
+        from pharos_engine.ui.widgets import (
             add_sticker_corner,
             remove_sticker_corner,
         )
@@ -498,7 +498,7 @@ class TestStickerCorners:
         assert remove_sticker_corner(h) is False  # idempotent
 
     def test_list_filters_by_parent(self):
-        from slappyengine.ui.widgets import (
+        from pharos_engine.ui.widgets import (
             add_sticker_corner,
             list_sticker_corners,
         )
@@ -511,26 +511,26 @@ class TestStickerCorners:
         assert len(list_sticker_corners()) == 3
 
     def test_add_rejects_empty_sticker_id(self):
-        from slappyengine.ui.widgets import add_sticker_corner
+        from pharos_engine.ui.widgets import add_sticker_corner
 
         with pytest.raises(ValueError):
             add_sticker_corner("panel_1", "", "TR")
 
     def test_add_rejects_invalid_corner(self):
-        from slappyengine.ui.widgets import add_sticker_corner
+        from pharos_engine.ui.widgets import add_sticker_corner
 
         with pytest.raises(ValueError):
             add_sticker_corner("panel_1", "heart", "XY")
 
     def test_corner_case_insensitive(self):
-        from slappyengine.ui.widgets import add_sticker_corner
+        from pharos_engine.ui.widgets import add_sticker_corner
 
         # lowercase should be accepted and round-trip uppercased internally
         h = add_sticker_corner("panel_1", "heart", "tl")
         assert h  # didn't raise
 
     def test_remove_unknown_handle_raises_on_bad_type(self):
-        from slappyengine.ui.widgets import remove_sticker_corner
+        from pharos_engine.ui.widgets import remove_sticker_corner
 
         with pytest.raises(TypeError):
             remove_sticker_corner(42)  # type: ignore[arg-type]
@@ -542,7 +542,7 @@ class TestStickerCorners:
 
 class TestThemeListener:
     def test_listener_invoked_on_set_active_theme(self):
-        from slappyengine.ui.widgets import (
+        from pharos_engine.ui.widgets import (
             NotebookTheme,
             register_theme_listener,
             set_active_theme,
@@ -561,7 +561,7 @@ class TestThemeListener:
         assert len(seen) == 2  # no further callback after unregister
 
     def test_widget_refresh_after_theme_change(self):
-        from slappyengine.ui.widgets import (
+        from pharos_engine.ui.widgets import (
             NotebookTheme,
             StickerButton,
             set_active_theme,

@@ -2,12 +2,12 @@
 
 The protocols formalise long-standing duck types across the public API:
 
-* :class:`slappyengine.dynamics.WorldLike` — dual surface for
+* :class:`pharos_engine.dynamics.WorldLike` — dual surface for
   ``dynamics.World`` / ``softbody.SoftBodyWorld`` accepted by IK,
   joint-spec resolution, and the studio dynamics stage.
-* :class:`slappyengine.studio.Renderable` — per-frame ``render(frame)``
+* :class:`pharos_engine.studio.Renderable` — per-frame ``render(frame)``
   shape for the ``Stage.render_fn`` slot and third-party renderers.
-* :class:`slappyengine.post_process.PostProcessParams` — ``pack_params()
+* :class:`pharos_engine.post_process.PostProcessParams` — ``pack_params()
   -> bytes`` for ``PARAMS_LAYOUT``-driven post-process passes (so the
   executor's UBO splice helper can type-check non-base-class passes).
 
@@ -25,16 +25,16 @@ from __future__ import annotations
 import numpy as np
 from PIL import Image
 
-from slappyengine.dynamics import (
+from pharos_engine.dynamics import (
     DynamicsWorldLike,
     World,
     WorldLike,
 )
-from slappyengine.post_process import PostProcessParams
-from slappyengine.post_process.bloom import BloomPass
-from slappyengine.post_process.outline import OutlinePass
-from slappyengine.post_process.tonemap import TonemapPass
-from slappyengine.studio import Renderable, Stage, dynamics_stage
+from pharos_engine.post_process import PostProcessParams
+from pharos_engine.post_process.bloom import BloomPass
+from pharos_engine.post_process.outline import OutlinePass
+from pharos_engine.post_process.tonemap import TonemapPass
+from pharos_engine.studio import Renderable, Stage, dynamics_stage
 
 
 # ---------------------------------------------------------------------------
@@ -99,7 +99,7 @@ def test_dynamicsworldlike_lookalike_matches() -> None:
 
 def test_worldlike_used_by_solve_ik_and_dynamics_stage() -> None:
     """End-to-end: ``solve_ik`` accepts a :class:`World` (WorldLike)."""
-    from slappyengine.dynamics import IKChainSpec, solve_ik
+    from pharos_engine.dynamics import IKChainSpec, solve_ik
 
     w = World()
     # Build a tiny 3-node chain at (0,0), (1,0), (2,0).
@@ -155,8 +155,8 @@ def test_renderable_missing_render_method_is_rejected() -> None:
 
 
 def test_renderable_exported_from_studio_module() -> None:
-    """``Renderable`` is in ``slappyengine.studio.__all__``."""
-    from slappyengine import studio
+    """``Renderable`` is in ``pharos_engine.studio.__all__``."""
+    from pharos_engine import studio
 
     assert "Renderable" in studio.__all__
 
@@ -232,7 +232,7 @@ def test_post_process_params_missing_method_is_rejected() -> None:
 
 def test_post_process_params_exported_from_post_process_package() -> None:
     """``PostProcessParams`` is publicly importable + in __all__."""
-    from slappyengine import post_process
+    from pharos_engine import post_process
 
     assert "PostProcessParams" in post_process.__all__
     # Lazy-loadable.

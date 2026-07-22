@@ -38,10 +38,10 @@ arrays kept as derived views so the 99 tests stay green.
    scale_y, rotation) tuple. Standalone module, 8 tests.
 3. **`physics/thermal.py`** — `ThermalProfile` per material,
    `step_temperatures` and `detect_phase_changes` functions,
-   `TemperatureField` wrapping the existing `slappyengine.thermal`
+   `TemperatureField` wrapping the existing `pharos_engine.thermal`
    HeatField. Standalone, 9 tests.
 4. **`physics/fluid_bridge.py`** — `bridge_step` wraps the canonical
-   PBF (`slappyengine.fluid.solver.pbf_step`, Rust-accelerated) so
+   PBF (`pharos_engine.fluid.solver.pbf_step`, Rust-accelerated) so
    ParticleField fluid materials use proper Macklin 2013 density
    relaxation instead of a naive substitute. Standalone, 4 tests.
 
@@ -127,7 +127,7 @@ test_fluid_bridge.py        4 pass
   fluid pixels.
 - Proper rigid-body inter-particle collision (current pairwise
   push-apart is a relaxation approximation).
-- Bridge to existing `slappyengine.fluid` rendering (surface_mode,
+- Bridge to existing `pharos_engine.fluid` rendering (surface_mode,
   marching squares with refraction + godrays).
 
 ## Visual regression at end

@@ -24,16 +24,16 @@ from typing import Any, List
 import numpy as np
 import pytest
 
-from slappyengine import event_bus as _event_bus_mod
-from slappyengine.asset_import.async_import_queue import (
+from pharos_engine import event_bus as _event_bus_mod
+from pharos_engine.asset_import.async_import_queue import (
     AsyncImportQueue,
     ImportResult,
 )
-from slappyengine.asset_import.thumbnail_cache import (
+from pharos_engine.asset_import.thumbnail_cache import (
     ThumbnailCache,
     ThumbnailCacheStats,
 )
-from slappyengine.asset_import.type_router import (
+from pharos_engine.asset_import.type_router import (
     THUMBNAIL_SIZE,
     ImportRouteResult,
 )
@@ -353,7 +353,7 @@ class TestAsyncImportQueueStats:
 
 class TestAssetImportPanelIntegration:
     def test_tick_drains_async_completions_into_cards(self, tmp_path, cache_root):
-        from slappyengine.ui.editor.asset_import_panel import AssetImportPanel
+        from pharos_engine.ui.editor.asset_import_panel import AssetImportPanel
 
         cache = ThumbnailCache(cache_root)
         queue = AsyncImportQueue(max_workers=2, router=_fake_router)
@@ -385,7 +385,7 @@ class TestAssetImportPanelIntegration:
             panel.shutdown()
 
     def test_panel_cache_stats_expose_public_shape(self, tmp_path, cache_root):
-        from slappyengine.ui.editor.asset_import_panel import AssetImportPanel
+        from pharos_engine.ui.editor.asset_import_panel import AssetImportPanel
 
         cache = ThumbnailCache(cache_root)
         queue = AsyncImportQueue(max_workers=1, router=_fake_router)

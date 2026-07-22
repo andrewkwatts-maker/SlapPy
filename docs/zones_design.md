@@ -1,6 +1,6 @@
-# slappyengine.zones - Design Reference
+# pharos_engine.zones - Design Reference
 
-`slappyengine.zones` is the canonical home for **named axis-aligned
+`pharos_engine.zones` is the canonical home for **named axis-aligned
 rectangular regions** with optional enter/exit callbacks, material tags,
 and scalar threshold events. The same primitive backs three game-logic
 needs:
@@ -14,7 +14,7 @@ needs:
 The data model is `RectZone` -> `ThresholdZone` (a `RectZone` plus a
 scalar threshold and `on_threshold` callback) -> `ZoneManager` (the
 collection that owns per-frame dispatch). See the module docstring in
-`python/slappyengine/zones/__init__.py` for full API.
+`python/pharos_engine/zones/__init__.py` for full API.
 
 ## Two independent update streams
 

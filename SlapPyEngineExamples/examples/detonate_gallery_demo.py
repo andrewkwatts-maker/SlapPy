@@ -30,9 +30,9 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 
-from slappyengine.physics.blast import DetonateCurves, detonate
-from slappyengine.physics.particle_field import ParticleField
-from slappyengine.physics.splatter_presets import PRESETS, get as get_preset
+from pharos_engine.physics.blast import DetonateCurves, detonate
+from pharos_engine.physics.particle_field import ParticleField
+from pharos_engine.physics.splatter_presets import PRESETS, get as get_preset
 
 
 CELL_W, CELL_H = 320, 200

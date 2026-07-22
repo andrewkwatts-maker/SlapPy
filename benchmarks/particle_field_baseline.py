@@ -31,10 +31,10 @@ _PKG_ROOT = _REPO_ROOT / "python"
 if str(_PKG_ROOT) not in sys.path:
     sys.path.insert(0, str(_PKG_ROOT))
 
-from slappyengine.physics import particle_field as _pf_module  # noqa: E402
-from slappyengine.physics.blast import detonate  # noqa: E402
-from slappyengine.physics.particle_field import ParticleField  # noqa: E402
-from slappyengine.physics.splatter_presets import get as get_preset  # noqa: E402
+from pharos_engine.physics import particle_field as _pf_module  # noqa: E402
+from pharos_engine.physics.blast import detonate  # noqa: E402
+from pharos_engine.physics.particle_field import ParticleField  # noqa: E402
+from pharos_engine.physics.splatter_presets import get as get_preset  # noqa: E402
 
 
 # Methods we time on the field instance.

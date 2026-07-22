@@ -2,7 +2,7 @@
 
 These tests prevent the canonical dynamics reference from rotting silently
 when new joint kinds or composite primitives are added to
-``slappyengine.dynamics``.
+``pharos_engine.dynamics``.
 """
 from __future__ import annotations
 
@@ -26,8 +26,8 @@ def test_doc_exists():
 
 
 def test_doc_mentions_all_joint_kinds():
-    """Every JointSpec kind exported by slappyengine.dynamics is documented."""
-    from slappyengine.dynamics import KIND_PARAM_KEYS
+    """Every JointSpec kind exported by pharos_engine.dynamics is documented."""
+    from pharos_engine.dynamics import KIND_PARAM_KEYS
 
     text = _read_doc()
     missing = [kind for kind in KIND_PARAM_KEYS if kind not in text]
@@ -85,7 +85,7 @@ def test_doc_references_macklin_xpbd_paper():
 
 def test_doc_keys_match_module_schema():
     """Every kind-specific params key documented in KIND_PARAM_KEYS appears in the doc."""
-    from slappyengine.dynamics import KIND_PARAM_KEYS
+    from pharos_engine.dynamics import KIND_PARAM_KEYS
 
     text = _read_doc()
     interesting_keys: set[str] = set()

@@ -18,7 +18,7 @@ core-engine / hardening audits flagged as "fix before tag".
 ### Physics core — softbody / fluid WIP commit
 
 - **What:** the in-progress edits parked under
-  `python/slappyengine/softbody/` and `python/slappyengine/fluid/` are
+  `python/pharos_engine/softbody/` and `python/pharos_engine/fluid/` are
   off-limits for the polish sprints (deliberate freeze — see the
   `2026-06-01 v3 refresh` reminder block in
   `benchmarks/baseline_report.md`). The next physics sprint reconciles
@@ -46,9 +46,9 @@ core-engine / hardening audits flagged as "fix before tag".
   v0.3 subsystem (asset, audio, camera, dynamics, event bus, gpu, iso,
   layer, numerics, node-material, post-process, residency, telemetry,
   sprite_audit, action map, input manager, animation, assetdb). Open
-  candidates: `slappyengine.compute` (ComputePass dispatch ranges +
-  buffer sizes), `slappyengine.gi` (cascade params + denoiser feedback
-  history), `slappyengine.material.MaterialMap`, the studio Stage
+  candidates: `pharos_engine.compute` (ComputePass dispatch ranges +
+  buffer sizes), `pharos_engine.gi` (cascade params + denoiser feedback
+  history), `pharos_engine.material.MaterialMap`, the studio Stage
   builders (range checks on `view_box`, `floor_y`, etc.).
 - **Source:** `docs/hardening_audit_2026_05_29.md`; companion
   `SlapPyEngineTests/tests/test_hardening_*.py` (20 files at v0.3.0b0); memory note
@@ -98,14 +98,14 @@ analysis (`docs/sprint_4_serialization_gaps.md`).
 
 ### `ai` / `animation` exposure
 
-- **What:** `slappyengine.ai` ships LLM-client + Ollama-manager + code
+- **What:** `pharos_engine.ai` ships LLM-client + Ollama-manager + code
   sync helpers but has no entry in the public surface map and no
-  `docs/api/ai.md`. `slappyengine.animation` has a hand-authored API
+  `docs/api/ai.md`. `pharos_engine.animation` has a hand-authored API
   reference but the AnimationGraph state-machine surface is still
   marked "Phase A" in places. Both subpackages need a v0.3-style audit
   and a `docs/api/<x>.md` mirror.
 - **Source:** memory note `project_editor_sprint.md` (Ollama manager
-  shipped under `slappyengine.ai`);
+  shipped under `pharos_engine.ai`);
   `docs/core_engine_audit_2026_06_02.md` § subpackage discoverability;
   `docs/api/animation.md`.
 
@@ -119,13 +119,13 @@ analysis (`docs/sprint_4_serialization_gaps.md`).
   scheduling chains, how the existing `engine.tick` loop binds to
   per-subsystem `step(dt)` calls).
 - **Source:** memory note `project_completion.md`;
-  `python/slappyengine/__init__.py` top-level docstring (the engine-
+  `python/pharos_engine/__init__.py` top-level docstring (the engine-
   as-library tour already groups by Simulation / Rendering /
   Authoring / Game-compat).
 
 ### Audio backend hardening
 
-- **What:** `slappyengine.audio_runtime` switches between `sounddevice +
+- **What:** `pharos_engine.audio_runtime` switches between `sounddevice +
   soundfile` and a silent stub at import time; the
   `AudioManager.play` boundary picked up `validate_handle` /
   `validate_volume` in round 8 but the *backend* path (sample-rate
@@ -137,7 +137,7 @@ analysis (`docs/sprint_4_serialization_gaps.md`).
 
 ### Multiplayer rough patches
 
-- **What:** the `slappy-engine[network]` extra installs Kademlia DHT +
+- **What:** the `pharos-engine[network]` extra installs Kademlia DHT +
   ICE hole-punching dependencies but the integration is under-
   documented. No `docs/api/network.md`. v0.4 candidate: spec the
   authoritative-host vs. relay-fallback path, document the discovery
@@ -163,7 +163,7 @@ analysis (`docs/sprint_4_serialization_gaps.md`).
   blocking the publisher) is not addressed. v0.4 candidate: an async
   dispatch tier or a ring-buffer drop policy.
 - **Source:** `docs/telemetry_design.md`;
-  `python/slappyengine/telemetry.py`; memory note
+  `python/pharos_engine/telemetry.py`; memory note
   `project_phase_b_repackage.md`.
 
 ---
@@ -189,7 +189,7 @@ Bullet Strata, Stone Keep) migrating off the legacy compat surface.
   `SimFrequencyBudget`, `DeformController`, `ZoneMap`, `CellMaterial`,
   `cell_material_for` resolve through `_LAZY_MAP` → `_compat.py` purely
   to satisfy the game-compat tripwire test. Zero direct
-  `from slappyengine import` callers exist on master today.
+  `from pharos_engine import` callers exist on master today.
 - **Source:** `docs/core_engine_audit_2026_06_02.md` § 1b (compat-routed
   symbol usage). The audit lists exact migration targets per symbol
   (e.g. `MaterialPreset.X` → `"x"` string against

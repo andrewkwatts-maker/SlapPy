@@ -124,9 +124,9 @@ the same reason string):
 
 | File | Lines | Count | Category | Reason (verbatim or paraphrased) | Action |
 |---|---|---:|---|---|---|
-| `test_actions_stub_triage_r15.py` | 379, 416 | 2 | legit-env | `slappyengine.ui.theme not importable in this env` | keep |
+| `test_actions_stub_triage_r15.py` | 379, 416 | 2 | legit-env | `pharos_engine.ui.theme not importable in this env` | keep |
 | `test_api_polish_aa2.py` | 336 | 1 | legit-dep | `pyyaml not installed — line tracking unavailable` | keep |
-| `test_app_integration.py` | 65, 75, 197, 214, 229, 245, 265, 278, 280, 293, 307, 380, 439 | 13 | legit-env | `slappyengine.render not importable` / `wgpu not available in this environment` | keep |
+| `test_app_integration.py` | 65, 75, 197, 214, 229, 245, 265, 278, 280, 293, 307, 380, 439 | 13 | legit-env | `pharos_engine.render not importable` / `wgpu not available in this environment` | keep |
 | `test_app_lifecycle_stress.py` | 193 | 1 | legit-upstream-drift | `physics3 unavailable: {exc}` (physics3_bridge WIP) | keep |
 | `test_asset_import.py` | 447 | 1 | legit-dep | `pygltflib is installed; can't test missing-dep path` (inverted guard) | keep |
 | `test_chain_manifest.py` | 477, 481 | 2 | legit-env | `GPUContext unavailable / GPU context could not be created` | keep |
@@ -159,7 +159,7 @@ the same reason string):
 | `test_demo_landscape.py` | 58, 71, 87, 99, 106 | 5 | legit-upstream-drift | demo missing / load fail / `Landscape module not importable` / `upstream drift` | keep |
 | `test_demo_layered_character.py` | 61, 74, 78 | 3 | legit-upstream-drift | demo missing / load fail / main upstream drift | keep |
 | `test_demo_multiplayer.py` | 32, 41 | 2 | legit-upstream-drift | demo missing / import fail | keep |
-| `test_demo_particles_sample.py` | 29, 34, 43, 75, 100 | 5 | legit-upstream-drift | demo missing / `slappyengine.physics.particles unavailable` (WIP) / import fail / main upstream drift | keep |
+| `test_demo_particles_sample.py` | 29, 34, 43, 75, 100 | 5 | legit-upstream-drift | demo missing / `pharos_engine.physics.particles unavailable` (WIP) / import fail / main upstream drift | keep |
 | `test_demo_visual_check.py` | 29, 35, 44, 67, 80 | 5 | legit-upstream-drift | demo missing / `particle physics WIP unavailable` / import fail / preset missing / run_preset upstream drift | keep |
 | `test_docs_api_handauthored_preserved.py` | 92 | 1 | legit-env | `no hand-authored docs to protect` (empty set edge case) | keep |
 | `test_docs_api_ref.py` | 86 | 1 | legit-env | `hand-authored doc — schema is owned by the author` | keep |
@@ -198,7 +198,7 @@ the same reason string):
 | `test_postprocess.py` | 10, 86, 100, 111, 125, 142 | 6 | legit-env | `RenderTarget / SceneUIEntity not importable` | keep |
 | `test_render_pipeline_wgpu.py` | 52, 58, 61, 67 | 4 | legit-env | `wgpu not installed / no adapter / device failure / NullRenderer fallback` | keep |
 | `test_resize_handles.py` | 34 | 1 | legit-env | resize handles module not importable | keep |
-| `test_rust_bypass.py` | 73, 140, 143, 167, 186, 202, 221, 234, 260, 263, 274, 277, 290, 293, 305, 308 | 16 | legit-env | `slappyengine._core not compiled — expected on headless CI` / individual wheel-symbol absence | keep |
+| `test_rust_bypass.py` | 73, 140, 143, 167, 186, 202, 221, 234, 260, 263, 274, 277, 290, 293, 305, 308 | 16 | legit-env | `pharos_engine._core not compiled — expected on headless CI` / individual wheel-symbol absence | keep |
 | `test_scaffold.py` | 207 | 1 | legit-env | `chmod +x is a no-op on Windows` | keep |
 | `test_scene_ui.py` | 18, 342, 352, 368, 378, 391, 400, 412, 426, 428, 442, 444, 459, 461, 475, 477 | 16 | legit-env | `SlapPyEngine.ui not importable` / `handle_keyboard not yet implemented` / `set_key_callback not yet implemented` | keep |
 | `test_sdf_text.py` | 141 | 1 | legit-env | `PIL default font could not rasterise ASCII 'A'` | keep |
@@ -230,13 +230,13 @@ All 45 are `legit-dep` optional-dependency guards. Files:
 | `test_demo_hello_export_cli.py` | 81 | 1 | `yaml` |
 | `test_demo_hello_full_lifecycle.py` | 51 | 1 | `yaml` |
 | `test_demo_hello_gltf_character.py` | 265 | 1 | `PIL` |
-| `test_demo_hello_hud_smoke.py` | 73, 92, 106, 125, 144, 161 | 6 | `slappyengine.hud_bridge` / `slappyengine` |
+| `test_demo_hello_hud_smoke.py` | 73, 92, 106, 125, 144, 161 | 6 | `pharos_engine.hud_bridge` / `pharos_engine` |
 | `test_demo_hello_positional_audio.py` | 77 | 1 | `yaml` |
-| `test_demo_hello_rust_bypass.py` | 34, 88 (+top-level) | 3 | `slappyengine._core` / `yaml` |
+| `test_demo_hello_rust_bypass.py` | 34, 88 (+top-level) | 3 | `pharos_engine._core` / `yaml` |
 | `test_demo_hello_showcase_v3.py` | 126 | 1 | `yaml` |
-| `test_demo_humanoid_standing.py` | 32, 33 | 2 | `slappyengine.dynamics` / `slappyengine.studio` |
-| `test_dynamics_builder_conventions.py` | 127, 140, 187, 203, 222 | 5 | `slappyengine.softbody` (WIP-frozen) |
-| `test_dynamics_make_distance.py` | 125 | 1 | `slappyengine.softbody` |
+| `test_demo_humanoid_standing.py` | 32, 33 | 2 | `pharos_engine.dynamics` / `pharos_engine.studio` |
+| `test_dynamics_builder_conventions.py` | 127, 140, 187, 203, 222 | 5 | `pharos_engine.softbody` (WIP-frozen) |
+| `test_dynamics_make_distance.py` | 125 | 1 | `pharos_engine.softbody` |
 | `test_editor_theming_editor.py` | 272 | 1 | `numpy` |
 | `test_gpu_headless.py` | 9 | 1 | `wgpu` |
 | `test_gpu_mesh_pipeline_binding.py` | 143 | 1 | `wgpu` |
@@ -258,7 +258,7 @@ All 11 are `legit-dep` (optional dep gate) or `legit-env`. Files:
 | `test_animation.py` | 56 | legit-env | `AnimUpdate not yet defined` (module-level guard) |
 | `test_audio_runtime.py` | 44 | legit-dep | `sounddevice not installed in this env` |
 | `test_asset_tools.py` | 186 | legit-dep | `soundfile not installed` |
-| `test_hardening_compute_pipeline.py` | 52 | legit-env | `slappyengine unavailable: {_SKIP}` (module-level `pytestmark`) |
+| `test_hardening_compute_pipeline.py` | 52 | legit-env | `pharos_engine unavailable: {_SKIP}` (module-level `pytestmark`) |
 | `test_hardening_gpu.py` | 46 | legit-env | same pattern |
 | `test_hardening_residency.py` | 27 | legit-env | same pattern |
 | `test_residency.py` | 27 | legit-env | `SlapPyEngine not importable: {_ENGINE_SKIP_REASON}` |

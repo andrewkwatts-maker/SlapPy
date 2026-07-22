@@ -1,4 +1,4 @@
-﻿"""Visual test: 2D deferred lighting — point lights, directional, cone."""
+"""Visual test: 2D deferred lighting — point lights, directional, cone."""
 from __future__ import annotations
 import math
 import pytest
@@ -10,8 +10,8 @@ TEST_NAME = "lighting_2d"
 
 def _build_scene():
     try:
-        from slappyengine.scene import Scene
-        from slappyengine.lighting import PointLight, DirectionalLight, LightingSystem
+        from pharos_engine.scene import Scene
+        from pharos_engine.lighting import PointLight, DirectionalLight, LightingSystem
         scene = Scene()
         # LightingSystem requires a live GPUContext; collect light objects instead
         lights = []

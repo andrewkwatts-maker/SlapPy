@@ -24,7 +24,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-PIPELINE_PY = REPO_ROOT / "python" / "slappyengine" / "gpu" / "mesh_pipeline.py"
+PIPELINE_PY = REPO_ROOT / "python" / "pharos_engine" / "gpu" / "mesh_pipeline.py"
 SHADER_DIR = REPO_ROOT / "shaders"
 
 # Matches `@group(N) @binding(M)` with arbitrary whitespace.
@@ -161,7 +161,7 @@ def test_mesh_pipeline_builds_on_real_adapter():
     if device is None:
         pytest.skip("No GPU adapter available")
 
-    from slappyengine.gpu.mesh_pipeline import MeshPipeline
+    from pharos_engine.gpu.mesh_pipeline import MeshPipeline
 
     # `rgba8unorm` is the universal swap-chain format; works on every backend.
     pipeline = MeshPipeline(device, output_format="rgba8unorm")

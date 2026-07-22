@@ -5,7 +5,7 @@ import pytest
 
 
 def _square_spline():
-    from slappyengine.spline import CatmullRomSpline
+    from pharos_engine.spline import CatmullRomSpline
     pts = [(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)]
     return CatmullRomSpline(pts, closed=True)
 
@@ -81,7 +81,7 @@ class TestCatmullRomSplineLength:
         assert spline.length() > 300.0
 
     def test_longer_spline_has_larger_length(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         small = CatmullRomSpline([(0, 0), (50, 0), (50, 50), (0, 50)], closed=True)
         big = CatmullRomSpline([(0, 0), (200, 0), (200, 200), (0, 200)], closed=True)
         assert big.length() > small.length()
@@ -123,14 +123,14 @@ class TestCatmullRomSplineUniformSamples:
 
 class TestCatmullRomSplineOpenCurve:
     def test_open_spline_no_crash(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         pts = [(0.0, 0.0), (50.0, 25.0), (100.0, 0.0)]
         spline = CatmullRomSpline(pts, closed=False)
         spline.sample(0.0)
         spline.sample(0.5)
 
     def test_open_spline_has_length(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         pts = [(0.0, 0.0), (100.0, 0.0), (200.0, 0.0)]
         spline = CatmullRomSpline(pts, closed=False)
         assert spline.length() > 0.0
@@ -138,7 +138,7 @@ class TestCatmullRomSplineOpenCurve:
 
 class TestCatmullRomSplineTension:
     def test_different_tension_different_curve(self):
-        from slappyengine.spline import CatmullRomSpline
+        from pharos_engine.spline import CatmullRomSpline
         pts = [(0.0, 0.0), (100.0, 0.0), (100.0, 100.0), (0.0, 100.0)]
         s1 = CatmullRomSpline(pts, tension=0.0)
         s2 = CatmullRomSpline(pts, tension=1.0)

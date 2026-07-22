@@ -17,7 +17,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "python"))
 
-from slappyengine.layer import Layer, Layer2D, Layer3D, LayerDataBuffer  # noqa: E402
+from pharos_engine.layer import Layer, Layer2D, Layer3D, LayerDataBuffer  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-"""Tests for slappyengine.render.scene_walker — JJ5 Nova3D parity.
+"""Tests for pharos_engine.render.scene_walker — JJ5 Nova3D parity.
 
 Covers:
 * EntityDrawInfo composition (mesh_ref, prefab_ref, defaults).
@@ -21,12 +21,12 @@ from typing import Any
 import numpy as np
 import pytest
 
-from slappyengine.render import NullRenderer
-from slappyengine.render.camera import Camera3D
-from slappyengine.render.light import Light
-from slappyengine.render.material import Material
-from slappyengine.render.mesh import Mesh, cube
-from slappyengine.render.scene_walker import (
+from pharos_engine.render import NullRenderer
+from pharos_engine.render.camera import Camera3D
+from pharos_engine.render.light import Light
+from pharos_engine.render.material import Material
+from pharos_engine.render.mesh import Mesh, cube
+from pharos_engine.render.scene_walker import (
     AssetCache,
     EntityDrawInfo,
     Frustum,
@@ -40,7 +40,7 @@ from slappyengine.render.scene_walker import (
     bridge_render_scene,
     render_scene,
 )
-from slappyengine.scenes.scene import Scene
+from pharos_engine.scenes.scene import Scene
 
 
 # ----------------------------------------------------------------------
@@ -542,7 +542,7 @@ def test_scene_walker_reuses_cached_mesh_from_path(monkeypatch):
         call_count["n"] += 1
         return _Result(primary_mesh=_tri_mesh())
 
-    import slappyengine.render.scene_walker as scene_walker
+    import pharos_engine.render.scene_walker as scene_walker
 
     def _fake_dispatch(mesh_path):
         return _fake_import(mesh_path)

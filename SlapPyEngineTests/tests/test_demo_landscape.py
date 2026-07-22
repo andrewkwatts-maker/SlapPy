@@ -24,7 +24,7 @@ _DEMO_PATH = _REPO_ROOT / "SlapPyEngineExamples" / "examples" / "landscape_demo.
 
 
 def _install_engine_stubs(monkeypatch):
-    from slappyengine import engine as engine_mod
+    from pharos_engine import engine as engine_mod
 
     class _StubCanvas:
         def __init__(self, *_, **__):
@@ -82,7 +82,7 @@ def test_landscape_module_imports(demo):
 def test_landscape_paint_sample_tiles_writes_pngs(demo, tmp_path):
     """Painting 4x4 tiles emits at least one on-disk tile PNG."""
     try:
-        from slappyengine.landscape import Landscape
+        from pharos_engine.landscape import Landscape
     except ImportError:
         pytest.skip("Landscape module not importable")
     landscape = Landscape(tile_size=256, tile_dir=tmp_path, cache_size=16)
@@ -101,7 +101,7 @@ def test_landscape_main_runs_and_binds_landscape(demo):
     # module dependency imports OK and the Landscape class exposes
     # ``tile_size``.
     try:
-        from slappyengine.landscape import Landscape
+        from pharos_engine.landscape import Landscape
     except ImportError:
         pytest.skip("Landscape not importable")
     ls = Landscape(tile_size=256, tile_dir=Path("."), cache_size=1)

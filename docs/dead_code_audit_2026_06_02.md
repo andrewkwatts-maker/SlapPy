@@ -6,7 +6,7 @@ safe fixes have already landed in the companion commit.
 
 ## Safe fixes landed in this sweep
 
-1. **Duplicate `_LAZY_MAP["CacheMode"]` key removed.** `python/slappyengine/__init__.py`
+1. **Duplicate `_LAZY_MAP["CacheMode"]` key removed.** `python/pharos_engine/__init__.py`
    had `"CacheMode": ".residency.manager"` mapped at both line 246
    (under `# input + collision`) and line 286 (under `# residency`). Both
    pointed to the same module; the second binding silently won. Kept the
@@ -59,40 +59,40 @@ warning disappears from CI.
 
 Subpackage `__all__` entries with **zero** observed callers in
 `python/`, `SlapPyEngineTests/tests/`, `SlapPyEngineExamples/examples/` (after excluding the subpackage's own
-`__init__.py` *and* top-level `slappyengine` re-exports). These are
+`__init__.py` *and* top-level `pharos_engine` re-exports). These are
 candidates only — downstream games (Ochema Circuit, Bullet Strata,
 Stone Keep, periodica-app) may still import them, so removal must wait
 for a compat-tripwire sweep against the game repos.
 
-- `slappyengine.dynamics` — 38 candidates, mostly serialiser pairs
+- `pharos_engine.dynamics` — 38 candidates, mostly serialiser pairs
   (`*_to_dict` / `*_from_dict`, `world_to_dict`, etc.). These are the
   documented `save_world` / `load_world` surface — keep.
-- `slappyengine.numerics` — `compute_residual`, `sor_smooth` (used
+- `pharos_engine.numerics` — `compute_residual`, `sor_smooth` (used
   internally by `vcycle_poisson`; promote to private or document).
-- `slappyengine.topology` — `BACKGROUND_LABEL`,
+- `pharos_engine.topology` — `BACKGROUND_LABEL`,
   `connected_components_grid`.
-- `slappyengine.material` — `KNOWN_NODE_TYPES`, `KNOWN_PORT_TYPES`,
+- `pharos_engine.material` — `KNOWN_NODE_TYPES`, `KNOWN_PORT_TYPES`,
   `validate_node_graph`.
-- `slappyengine.post_process` — `ContactShadowsPass`, `GTAOPass`,
+- `pharos_engine.post_process` — `ContactShadowsPass`, `GTAOPass`,
   `PostProcessExecutor`, `PostProcessPassBase`, `ShadowCSM`, `TAAPass`,
   `VolumetricFog`, `arcade_chain`, `cinematic_chain`,
   `iso_strategy_chain` (mostly preset chains and pass base classes —
   legit public surface).
-- `slappyengine.compute` — 10 candidates (`AABB`, `AssetComputeAPI`,
+- `pharos_engine.compute` — 10 candidates (`AABB`, `AssetComputeAPI`,
   `ComputePass`, `ComputePipeline`, `PixelAPI`, `PixelMutator`,
   `ReadbackBuffer`, `SpatialCompute`, `StatsCompute`, `StatsResult`).
-- `slappyengine.gi` — `RadianceCascadeSystem`, `ReSTIRSystem`,
+- `pharos_engine.gi` — `RadianceCascadeSystem`, `ReSTIRSystem`,
   `SVGFDenoiser`.
-- `slappyengine.iso` — `IsoCamera`, `IsoCell`, `IsoViewpoint`.
-- `slappyengine.residency` — `SLAP_MAGIC`, `SLAP_VERSION`,
+- `pharos_engine.iso` — `IsoCamera`, `IsoCell`, `IsoViewpoint`.
+- `pharos_engine.residency` — `SLAP_MAGIC`, `SLAP_VERSION`,
   `compress_array`, `compress_raw`, `decompress_array`,
   `decompress_raw`, `read_asset_from_slap`, `read_world_slap`,
   `write_asset_to_slap`, `write_world_slap` (the `.slap` format
   surface — public API by design).
-- `slappyengine.testing` — `DIFF_DIR`, `render_scene_to_png`.
-- `slappyengine.physics` — 12 candidates including `PhysicsBody`,
+- `pharos_engine.testing` — `DIFF_DIR`, `render_scene_to_png`.
+- `pharos_engine.physics` — 12 candidates including `PhysicsBody`,
   `PhysicsYaml`, `TIER_T1`, `TIER_T2`, `CellGridPool`, etc.
-- `slappyengine.gpu` — 14 candidates including `BufferManager`,
+- `pharos_engine.gpu` — 14 candidates including `BufferManager`,
   `Cluster3DSystem`, `GPUContext`, `MeshPipeline`, `TextureManager`.
 
 Triage: most of these are reasonable public surface (serialisers,
@@ -104,8 +104,8 @@ repos (Ochema, Bullet Strata, Stone Keep) before any removal.
 
 Distinct implementations sharing a top-level name across modules:
 
-- `validate_bool` — shared `slappyengine._validation` + intentional
-  legacy-message twin in `slappyengine/assets/_validation.py`
+- `validate_bool` — shared `pharos_engine._validation` + intentional
+  legacy-message twin in `pharos_engine/assets/_validation.py`
   (docstring already explains the divergence; keep).
 - `validate_layer_arg` — `_asset_validation.py` + `_layer_validation.py`.
 - `validate_name` — `_asset_validation.py` +
@@ -126,7 +126,7 @@ Distinct implementations sharing a top-level name across modules:
   intentional; documented in both module docstrings.
 
 Recommended follow-up: consolidate the four `validate_*` twins into
-`slappyengine._validation` (the `material/_node_validation.py` pair is
+`pharos_engine._validation` (the `material/_node_validation.py` pair is
 the easiest — same signatures, shared message format). Defer
 `connected_components` migration until the physics legacy stack is
 formally retired.

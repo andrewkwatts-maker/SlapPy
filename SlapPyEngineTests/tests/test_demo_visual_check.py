@@ -28,9 +28,9 @@ def demo():
     if not _DEMO_PATH.is_file():
         pytest.skip(f"demo missing: {_DEMO_PATH}")
     try:
-        from slappyengine.physics.blast import detonate  # noqa: F401
-        from slappyengine.physics.particle_field import ParticleField  # noqa: F401
-        from slappyengine.physics.splatter_presets import get as _get  # noqa: F401
+        from pharos_engine.physics.blast import detonate  # noqa: F401
+        from pharos_engine.physics.particle_field import ParticleField  # noqa: F401
+        from pharos_engine.physics.splatter_presets import get as _get  # noqa: F401
     except Exception as exc:
         pytest.skip(f"particle physics WIP unavailable: {exc}")
 
@@ -59,7 +59,7 @@ def test_visual_check_preset_names(demo):
         f"preset set drifted: {demo.PRESET_NAMES}"
     )
     # Cross-check against the source of truth.
-    from slappyengine.physics.splatter_presets import get as _get
+    from pharos_engine.physics.splatter_presets import get as _get
     for name in demo.PRESET_NAMES:
         try:
             preset = _get(name)
@@ -72,7 +72,7 @@ def test_visual_check_preset_names(demo):
 
 def test_visual_check_single_preset_runs(demo):
     """``run_preset('sand')`` returns FRAMES worth of PIL images + stats."""
-    from slappyengine.physics.splatter_presets import get as _get
+    from pharos_engine.physics.splatter_presets import get as _get
     try:
         preset = _get("sand")
         frames, stats = demo.run_preset(preset)

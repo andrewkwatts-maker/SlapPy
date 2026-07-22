@@ -32,7 +32,7 @@ batch):
   Distinct from RR1's ``snap.toggle_incremental`` (incremental
   grid-cell stepping) and from CC1's one-shot ``edit.snap_to_grid``.
 
-Every test dispatches through :class:`~slappyengine.tool_router.ToolRouter`
+Every test dispatches through :class:`~pharos_engine.tool_router.ToolRouter`
 so the wire-up is exercised end-to-end. No DPG context — fixtures use
 :class:`SimpleNamespace` stand-ins for shell / scene / entity handles.
 """
@@ -42,7 +42,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from slappyengine.tool_router import (
+from pharos_engine.tool_router import (
     REGISTRY,
     ToolRouter,
     register_default_actions,

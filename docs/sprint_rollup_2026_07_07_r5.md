@@ -51,7 +51,7 @@ needed. Strong direct-commit cadence continued from NN.
 | **OO3** | `a28db30` | `hello_render_real_hud` combined demo (LL1 HUD + MM7 real-asset render together) | 1 demo test (`test_demo_hello_render_real_hud.py`) |
 | **OO4** | `d90ef04` | Fixed 2 upstream bugs in `hello_showcase_v3.py` (MM5) + unskipped its test; demo now green | — (existing test unskipped) |
 | **OO5** | `758ec21` | `hello_export_cli` demo (LL6 `slap export` walkthrough) + trace + smoke test | 1 demo test |
-| **OO6** | `f313fb1` | `slappyengine.diagnostics` aggregator (subsystem-health probe) + HUD widget bridge; top-level API entry | 15 (`test_diagnostics.py`) |
+| **OO6** | `f313fb1` | `pharos_engine.diagnostics` aggregator (subsystem-health probe) + HUD widget bridge; top-level API entry | 15 (`test_diagnostics.py`) |
 | **OO7** | `543e51f` | **v0.4 release readiness audit** (`v0_4_release_readiness_2026_07_06.md`, 414 lines): 15-gate ship checklist, feature-completeness table, STUB roster with size buckets, 5 WIP-frozen subpackages documented, YELLOW verdict + OO+PP sprint recommendation | — (docs-only) |
 
 **OO batch impact**: 7 commits, ~70 new test cases, feature-map delta at
@@ -125,7 +125,7 @@ Cumulative router-action rollout across the 4 rounds:
 
 **Total across r14–r17**: **20 new actions wired** across 4 rounds.
 
-`python/slappyengine/actions/` module count: **64 files** (was ~54 at
+`python/pharos_engine/actions/` module count: **64 files** (was ~54 at
 r4 close, +10 = 2 rounds × 5 modules per round for r16 + r17).
 
 **Remaining STUB count** (from OO7 audit § 5 roster, unchanged by r16/r17

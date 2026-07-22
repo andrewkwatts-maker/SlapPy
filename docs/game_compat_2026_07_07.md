@@ -120,9 +120,9 @@ Traceback shape (representative — Bullet Strata):
 ```
 entities/player.py:41: in __init__
     self.add_layer(_layer)
-python/slappyengine/asset.py:49: in add_layer
+python/pharos_engine/asset.py:49: in add_layer
     return super().add_layer(layer)
-python/slappyengine/render_target.py:18: in add_layer
+python/pharos_engine/render_target.py:18: in add_layer
     self.layers.append(layer)
 E   AttributeError: 'PlayerEntity' object has no attribute 'layers'
 ```
@@ -148,24 +148,24 @@ between F1 (`~ base of project_beta_2026_05.md`) and TT6 (`fc5d94f`);
 identify the commit that reordered `layers` initialisation; either
 revert or add a `layers` defensive default via `Entity.__init_subclass__`.
 
-### 4.2 `ImportError: cannot import name 'global_bus' from 'slappyengine.event_bus'`
+### 4.2 `ImportError: cannot import name 'global_bus' from 'pharos_engine.event_bus'`
 
 Traceback shape (representative — Ochema `test_sprint6_race_loop`):
 
 ```
 systems/race_manager.py:7: in <module>
-    from slappyengine.event_bus import publish, global_bus
-E   ImportError: cannot import name 'global_bus' from 'slappyengine.event_bus'
-     (H:/Github/SlapPyEngine/python/slappyengine/event_bus.py)
+    from pharos_engine.event_bus import publish, global_bus
+E   ImportError: cannot import name 'global_bus' from 'pharos_engine.event_bus'
+     (H:/Github/SlapPyEngine/python/pharos_engine/event_bus.py)
 ```
 
-Diagnosis: `slappyengine.event_bus.global_bus` was removed / renamed
+Diagnosis: `pharos_engine.event_bus.global_bus` was removed / renamed
 between F1 and TT6. This is a **public-API symbol deletion**, not a
 subtle MRO shift — a downstream repo that imported the old name gets
 a hard `ImportError` at collection time.
 
 **Owner sprint prescription**: either re-export `global_bus` as an
-alias in `slappyengine.event_bus.__all__`, or CHANGELOG the removal
+alias in `pharos_engine.event_bus.__all__`, or CHANGELOG the removal
 under `[0.4.0] — Breaking changes` and instruct downstream games to
 migrate to whatever replaced it. Given `event_bus` is a load-bearing
 public surface, the alias route is cheaper.
@@ -173,11 +173,11 @@ public surface, the alias route is cheaper.
 ### 4.3 `TypeError: unsubscribe() missing 1 required positional argument: 'listener'`
 
 Observed once in Bullet Strata (`test_features.py:591`). Diagnosis:
-`slappyengine.event_bus.unsubscribe` (or a comparable subscribe API)
+`pharos_engine.event_bus.unsubscribe` (or a comparable subscribe API)
 now requires an extra positional argument (`listener`). This is also
 a **breaking API signature change**.
 
-### 4.4 `ImportError: cannot import ... from 'slappyengine…'` (misc)
+### 4.4 `ImportError: cannot import ... from 'pharos_engine…'` (misc)
 
 Ochema `test_scene.test_import_all_modules` and `test_hud_standalone`
 fail with generic import errors — additional public-symbol drift.
@@ -234,7 +234,7 @@ Recommended next-slot action (blocker for `git tag v0.4.0`):
    (§ 4.1) — either restore F1-era MRO or add a defensive default
    via `Entity.__init_subclass__` / dataclass field default.
 2. Re-export `global_bus` as an alias in
-   `slappyengine.event_bus.__all__` (§ 4.2), OR bump the tag to
+   `pharos_engine.event_bus.__all__` (§ 4.2), OR bump the tag to
    `v0.4.0-breaking` and CHANGELOG the deletion.
 3. Restore the F1 `unsubscribe(listener?)` signature or CHANGELOG
    the new required arg (§ 4.3).
@@ -253,7 +253,7 @@ reaches PyPI installers.
 * No file under either game repo touched — read-only pytest
   invocation from an alternate `PYTHONPATH`; both repos remained
   clean per SVN semantics.
-* No file under `python/slappyengine/` touched — verified via
+* No file under `python/pharos_engine/` touched — verified via
   `git status`: TT1's working tree touches only `docs/` (this doc +
   gate-reconciliation refresh + inventory description update).
 * No WIP subpackage touched — `softbody/`, `fluid/`, `physics/`,
@@ -303,9 +303,9 @@ fix the two dominant breakage classes flagged in § 4:
 * **UU2** (`b29e601` — "Restore event_bus.global_bus + unsubscribe
   backcompat") — targeted § 4.2 + § 4.3 (public-API deletions).
 * **UU1** (`ee732fd` — "Fix RenderTarget MRO regression") — targeted
-  § 4.1. UU1's fix touches `python/slappyengine/render_target.py`
+  § 4.1. UU1's fix touches `python/pharos_engine/render_target.py`
   (defensive-`hasattr` fallback on `add_layer` / `remove_layer`) and
-  `python/slappyengine/event_bus.py` (cooperative `super().__init__()`
+  `python/pharos_engine/event_bus.py` (cooperative `super().__init__()`
   chain restore inside `Observable.__init__` so that mixing Observable
   into an Entity/Asset subclass no longer short-circuits the MRO and
   leaves `RenderTarget.__init__` unrun).
@@ -333,7 +333,7 @@ Grep of UU3's re-run logs against the § 4 failure fingerprints:
 | § | Fingerprint (TT1) | UU3 occurrences | Verdict |
 |---|---|---|---|
 | 4.1 | `AttributeError: '<*Entity>' object has no attribute 'layers'` | **0** | **RESOLVED by UU1** |
-| 4.2 | `ImportError: cannot import name 'global_bus' from 'slappyengine.event_bus'` | **0** | **RESOLVED by UU2** |
+| 4.2 | `ImportError: cannot import name 'global_bus' from 'pharos_engine.event_bus'` | **0** | **RESOLVED by UU2** |
 | 4.3 | `TypeError: unsubscribe() missing 1 required positional argument: 'listener'` | **0** | **RESOLVED by UU2** |
 | 4.4 | Misc downstream ImportErrors | 5 distinct symbols still failing | UNCHANGED (§ 9.3 below) |
 
@@ -356,7 +356,7 @@ Distinct top-level error strings ranked by observed multiplicity:
    arguments: 'layer_a_tex', 'layer_a_rect', 'layer_b_tex', and
    'layer_b_rect'` — Ochema, collision API signature drift.
 4. `ImportError: cannot import name '<symbol>' from
-   'slappyengine.<module>'` — Ochema (5 distinct symbols:
+   'pharos_engine.<module>'` — Ochema (5 distinct symbols:
    `DeformConfig`, `EventDetails`, `PixelCollisionPass`,
    `_parse_deform`, `debug_listeners`) — additional public-API
    deletions in the UU2 style.
@@ -402,7 +402,7 @@ work should close the residual gap and flip gate #12 to GREEN.
 
 * No file under either game repo touched — read-only pytest
   invocation.
-* No file under `python/slappyengine/` touched by UU3 (UU1's WIP
+* No file under `python/pharos_engine/` touched by UU3 (UU1's WIP
   edits are in the working tree but attribute to UU1, not UU3).
 * No WIP subpackage touched.
 * Commit scoped: `docs/game_compat_2026_07_07.md` (this § 9 append)
@@ -480,7 +480,7 @@ Grep of VV3's re-run logs against the § 9.3 failure fingerprints:
 | 1 | `AttributeError: type object 'CacheMode' has no attribute 'OFFSCREEN_SERIALIZE'` / `'ALWAYS_CACHED'` | many | **0** | **RESOLVED by VV1** |
 | 2 | `TypeError: DeformableLayerComponent.__init__() ... 'spring_decay'` | ~20 | **0** (dispatched via other repair, or tests now passing collateral) | UNEXPECTED bonus close |
 | 3 | `TypeError: PixelCollisionPass.test() missing 4 required positional arguments` | present | **0** | UNEXPECTED bonus close |
-| 4 | `ImportError: cannot import name '<symbol>' from 'slappyengine.<module>'` | 5 distinct | **1** (`PixelCollisionPass` remains, 9 sites) | Partial |
+| 4 | `ImportError: cannot import name '<symbol>' from 'pharos_engine.<module>'` | 5 distinct | **1** (`PixelCollisionPass` remains, 9 sites) | Partial |
 | 5 | Manager-method deletions (`AudioManager.play_loop` + 2 more) | 3 distinct | 18 sites remain (9+6+3) | UNCHANGED |
 
 The +210 Ochema delta comes primarily from CacheMode-blocked test
@@ -509,7 +509,7 @@ Ochema Circuit runs (`grep -E "^E " | sort | uniq -c | sort -rn`):
 4. **10 sites** — `TypeError: ConeLight.__init__() got an unexpected
    keyword argument 'volumetric'` — light kwarg drift.
 5. **9 sites** — `ImportError: cannot import name 'PixelCollisionPass'
-   from 'slappyengine.collision'` — module surface drift (symbol lives
+   from 'pharos_engine.collision'` — module surface drift (symbol lives
    elsewhere now).
 6. **9 sites** — `AttributeError: 'AudioManager' object has no
    attribute 'play_loop'` — carried over from § 9.3 item 5.
@@ -559,7 +559,7 @@ Recommended next-slot action stack (in priority order):
    `_stress_strain_buf` init).
 2. Restore `ConeLight(volumetric=...)` kwarg + `Observable(name=...)`
    kwarg (§ 10.3 items 4 + 8).
-3. Re-export `PixelCollisionPass` from `slappyengine.collision`
+3. Re-export `PixelCollisionPass` from `pharos_engine.collision`
    (§ 10.3 item 5).
 4. Restore `AudioManager.play_loop`, `LightingSystem.load_profile`,
    `CollisionManager.on_overlap` (§ 10.3 items 6/7/9).
@@ -570,7 +570,7 @@ Recommended next-slot action stack (in priority order):
 
 * No file under either game repo touched — read-only pytest invocation
   from an alternate `PYTHONPATH`; both SVN working copies remain clean.
-* No file under `python/slappyengine/` touched — VV3 is docs-only.
+* No file under `python/pharos_engine/` touched — VV3 is docs-only.
 * No WIP subpackage touched — `softbody/`, `fluid/`, `physics/`,
   `physics2/` remain untracked.
 * Commit scoped: `docs/game_compat_2026_07_07.md` (this § 10 append)
@@ -670,7 +670,7 @@ across Ochema Circuit runs:
 3. **20 sites** — `TypeError: Co...` (`ConeLight(volumetric=…)` +
    collision kwarg drift, ~2 sub-classes).
 4. **20 sites** — `ImportError: cannot import name '<X>' from
-   'slappyengine.<mod>'` — assorted deletions still shipping.
+   'pharos_engine.<mod>'` — assorted deletions still shipping.
 5. **18 sites** — `ValueError: dictionary ...` (dictionary size /
    key mismatch in event dispatch).
 6. **18 sites** — `AttributeError: 'AudioManager' object has ...`
@@ -771,7 +771,7 @@ push to ~90-92%, still short of GREEN's 95%.
 * No file under either game repo touched — read-only pytest
   invocation from an alternate `PYTHONPATH`; both SVN working copies
   remain clean.
-* No file under `python/slappyengine/` touched — WW3 is docs-only.
+* No file under `python/pharos_engine/` touched — WW3 is docs-only.
 * No WIP subpackage touched — `softbody/`, `fluid/`, `physics/`,
   `physics2/` remain untracked.
 * Commit scoped: `docs/game_compat_2026_07_07.md` (this § 11 append)
@@ -885,7 +885,7 @@ across Ochema Circuit runs:
    has no attribute 'integrity_from_strain'` / `_compute_integrity_from_ss`
    / `_gpu_dispatch_enabled` — internal method surface still drifted.
 4. **1 site** — `ImportError: cannot import name 'debug_listeners'
-   from 'slappyengine.event_bus'` — last surviving § 11.4 ImportError.
+   from 'pharos_engine.event_bus'` — last surviving § 11.4 ImportError.
 5. **~55 sites** — numeric-assertion tail (`assert 138 <= 136`,
    `assert 0 == 15`, `assert 0.0 > 0.0`, missing tick fires,
    listener-leak sentinels) — these are downstream logic assertions
@@ -945,7 +945,7 @@ In priority order (site counts × pass-recovery leverage):
 3. **EventBus dataclass `__slots__` relaxation** — 3 sites. Remove
    `__slots__` or add `_debug_overlay_orig_pub` slot; also make
    `listener_count` a regular attr (not property).
-4. **`slappyengine.event_bus.debug_listeners` alias export** —
+4. **`pharos_engine.event_bus.debug_listeners` alias export** —
    1 site. Trivial.
 5. **Numeric-assertion tail** — ~55 sites. Requires per-test
    investigation; no single fix. Deferrable to v0.4.1 without
@@ -962,7 +962,7 @@ downstream test tolerance investigation.
 * No file under either game repo touched — read-only pytest
   invocation from an alternate `PYTHONPATH`; both SVN working copies
   remain clean.
-* No file under `python/slappyengine/` touched — YY3 is docs-only.
+* No file under `python/pharos_engine/` touched — YY3 is docs-only.
 * No WIP subpackage touched — `softbody/`, `fluid/`, `physics/`,
   `physics2/` remain untracked.
 * Commit scoped: `docs/game_compat_2026_07_07.md` (this § 12 append)
@@ -1078,7 +1078,7 @@ tail deferrable):
    `_gpu_dispatch_enabled`) — 7 Ochema sites. **~7 pass leverage.**
 3. **EventBus dataclass `__slots__` relaxation** — 3 sites.
    **~3 pass leverage.**
-4. **`slappyengine.event_bus.debug_listeners` alias export** — 1 site.
+4. **`pharos_engine.event_bus.debug_listeners` alias export** — 1 site.
 
 Total leverage of items 1-4: ~22 passes if every site converts.
 GREEN threshold needs +37 passes (1082 → 1119). Gap after items 1-4:
@@ -1113,7 +1113,7 @@ EventBus `__slots__` + `debug_listeners` alias) should push to **~95%**
 * No file under either game repo touched — read-only pytest invocation
   from `PYTHONPATH=h:/Github/SlapPyEngine/python`; both SVN working
   copies remain clean.
-* No file under `python/slappyengine/` touched — ZZ3 is docs-only.
+* No file under `python/pharos_engine/` touched — ZZ3 is docs-only.
 * No WIP subpackage touched — `softbody/`, `fluid/`, `physics/`,
   `physics2/`, `fluid/`, `softbody/` remain untracked as at YY3.
 * Commit scoped: `docs/game_compat_2026_07_07.md` (this § 13 append)
@@ -1343,7 +1343,7 @@ misses, Option F takes over as the primary path.
 * No file under either game repo touched — read-only pytest invocation
   from `PYTHONPATH=h:/Github/SlapPyEngine/python`; both SVN working
   copies remain clean.
-* No file under `python/slappyengine/` touched — AAA3 is docs-only.
+* No file under `python/pharos_engine/` touched — AAA3 is docs-only.
 * No WIP subpackage touched — `softbody/`, `fluid/`, `physics/`,
   `physics2/` remain untracked as at ZZ3 (gate #11 DEFERRED per
   AAA5 wip-subpackages deferral doc).

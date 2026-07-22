@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.ui.theme.declarative — API Reference
+# pharos_engine.ui.theme.declarative — API Reference
 
 ## Declarative Theme Grammar
 
@@ -20,7 +20,7 @@ Switcher to pick up.
 ## Public surface
 
 ```python
-from slappyengine.ui.theme import (
+from pharos_engine.ui.theme import (
     DeclarativeTheme, DeclarativeThemeError, NAMED_COLORS, load_declarative,
 )
 
@@ -81,7 +81,7 @@ sunflower, lavender, mint, peach, seafoam,
 white, black, transparent, red, green, blue
 ```
 
-The full list lives in `slappyengine.ui.theme.NAMED_COLORS`. Unknown
+The full list lives in `pharos_engine.ui.theme.NAMED_COLORS`. Unknown
 names raise `DeclarativeThemeError` at parse time with a line/column.
 
 ### Sizes
@@ -117,7 +117,7 @@ Python list at parse time. Two common shapes:
 ### Python interpolation — `${...}`
 
 Any value fragment can hold `${expr}` blocks; each is evaluated through
-`slappyengine.math.evaluate` (the sandbox-locked eval used across the
+`pharos_engine.math.evaluate` (the sandbox-locked eval used across the
 engine — see [`math.md`](math.md)). The sandbox exposes stdlib `math`
 symbols plus a small builtins bag; anything else (imports, `open`,
 attribute access, dunders) raises. Quoted-string payloads pass through
@@ -158,7 +158,7 @@ file picker filtered to `.theme.css`. On selection:
 3. `apply_theme(name)` is called on the freshly-parsed theme.
 
 A parsed-marker file is written into
-`~/.slappyengine/themes/<name>.cache.json` so subsequent editor launches
+`~/.pharos_engine/themes/<name>.cache.json` so subsequent editor launches
 can pre-populate the "Recently Imported" section. The cache is advisory
 — parsing is fast enough (< 1 ms for a typical 100-line theme) that the
 cache is diagnostic rather than a speed-critical path.
@@ -292,7 +292,7 @@ diverges wherever a CSS token would create parse ambiguity. Specifically:
   never has to guess which block is authoritative.
 
 The parser refuses attribute access, subscripting, and dunder names in
-interpolation payloads by delegating to `slappyengine.math.evaluate`,
+interpolation payloads by delegating to `pharos_engine.math.evaluate`,
 which walks the AST in `_ensure_safe_ast`. That's the same sandbox the
 formula-editor uses across the engine, so declarative themes inherit
 every hardening improvement the sandbox picks up over time.

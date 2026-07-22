@@ -1,10 +1,10 @@
-"""Tests for slappyengine.physics.particle_field — unified material sim."""
+"""Tests for pharos_engine.physics.particle_field — unified material sim."""
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from slappyengine.physics.particle_field import (
+from pharos_engine.physics.particle_field import (
     BUILTIN_MATERIALS,
     MUD_MAT,
     Material,

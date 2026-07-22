@@ -1,14 +1,14 @@
-﻿"""
+"""
 M7 animation system tests — no GPU or Rust extension required for most cases.
 """
 import pytest
 
-from slappyengine.animation.graph import AnimationGraph, AnimState, AnimTransition
-from slappyengine.cube_array import CubeArray
-from slappyengine.animation.procedural import ControlPoint, ProceduralRig
+from pharos_engine.animation.graph import AnimationGraph, AnimState, AnimTransition
+from pharos_engine.cube_array import CubeArray
+from pharos_engine.animation.procedural import ControlPoint, ProceduralRig
 
 try:
-    from slappyengine.animation.graph import AnimUpdate
+    from pharos_engine.animation.graph import AnimUpdate
     _has_animupdate = True
 except ImportError:
     _has_animupdate = False

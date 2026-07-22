@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.studio — API Reference
+# pharos_engine.studio — API Reference
 
 > Hand-curated reference for the studio subpackage.
 > The studio module is high-level scenario sugar: it wraps world setup,
@@ -9,7 +9,7 @@
 > run your own loop, and bring your own renderer.
 
 ```python
-from slappyengine.studio import (
+from pharos_engine.studio import (
     Stage,
     record,
     softbody_stage,
@@ -25,7 +25,7 @@ from slappyengine.studio import (
 
 ## Overview
 
-`slappyengine.studio` is the demo-authoring sugar layer: every helper
+`pharos_engine.studio` is the demo-authoring sugar layer: every helper
 returns or operates on a [`Stage`](#stage) bundle, and the module-level
 [`record()`](#recordstage-frames180-output-none--fps30-step_worldtrue-pre_stepnone-post_stepnone-overlaynone---path)
 turns that bundle into a GIF. Each `*_stage` factory is opinionated
@@ -44,7 +44,7 @@ The central handle: a `dataclass` bundle of world(s) + renderer + view
 | `world` | `Any` | `None` | Primary world used for stepping. |
 | `softbody` | `Any` | `None` | Optional softbody world. |
 | `fluid` | `Any` | `None` | Optional fluid world. |
-| `dynamics` | `Any` | `None` | Optional `slappyengine.dynamics.World`. |
+| `dynamics` | `Any` | `None` | Optional `pharos_engine.dynamics.World`. |
 | `renderer` | `Any` | `None` | `FluidRenderer` / `SoftBodyRenderer`, or `None` when a `render_fn` is supplied. |
 | `view_box` | `(wx0, wy0, wx1, wy1)` | `(-2, -1, 2, 5)` | Camera rectangle in world coords. |
 | `dt` | `float` | `1/60` | Per-frame timestep consumed by `record`. |
@@ -87,14 +87,14 @@ skeleton, then optionally `place_feet_on_terrain` or `wrap_in_flesh`.
 Composite scene: a fluid world *and* a softbody world, drawn by a
 shared `FluidRenderer` that paints both. Defaults match the buoyancy
 demo — deep pool, walls in, fluid-softbody coupling disabled (use
-`apply_fluid_buoyancy` from `slappyengine.fluid` for explicit
+`apply_fluid_buoyancy` from `pharos_engine.fluid` for explicit
 Archimedes). When `pool is None`, a sensible water block sized for the
 default `view_box` is added. `stage.surface_y` is set from the settled
 pool top.
 
 ### `dynamics_stage(world=None, *, gravity=(0,-9.81), solver_iterations=None, view_box=(-3,-3,3,3), width=480, height=320, floor_y=None, dt=None, render_fn=None, **render_overrides) -> Stage`
 
-Builds a stage around a `slappyengine.dynamics.World`. The dynamics
+Builds a stage around a `pharos_engine.dynamics.World`. The dynamics
 world is the substrate for ropes, ragdolls, springs, motors and IK
 chains. Unlike softbody / fluid, dynamics has **no shipped GPU
 rasteriser** — this helper wires in a pure-PIL fallback
@@ -182,13 +182,13 @@ substrate, which has no GPU rasteriser of its own.
 
 ## Inner module surface
 
-- `slappyengine.studio.Stage` — bundle dataclass.
-- `slappyengine.studio.record` — frame loop + GIF writer.
-- `slappyengine.studio.softbody_stage` / `fluid_stage` /
+- `pharos_engine.studio.Stage` — bundle dataclass.
+- `pharos_engine.studio.record` — frame loop + GIF writer.
+- `pharos_engine.studio.softbody_stage` / `fluid_stage` /
   `humanoid_stage` / `fluid_with_softbody_stage` / `dynamics_stage` —
   factories.
-- `slappyengine.studio.terrain_overlay` / `output_path` — helpers.
-- `slappyengine.studio.kick` / `anchor` / `centroid` / `translate` —
+- `pharos_engine.studio.terrain_overlay` / `output_path` — helpers.
+- `pharos_engine.studio.kick` / `anchor` / `centroid` / `translate` —
   node-slice ops.
 
 ## See also

@@ -169,7 +169,7 @@ def stub_dpg(monkeypatch):
 
 
 def test_canvas_builds_under_stub_dpg(stub_dpg) -> None:
-    from slappyengine.ui.editor.material_graph_canvas import (
+    from pharos_engine.ui.editor.material_graph_canvas import (
         MaterialGraphCanvas,
         NODE_PALETTE,
     )
@@ -198,7 +198,7 @@ def test_canvas_builds_under_stub_dpg(stub_dpg) -> None:
 
 
 def test_place_node_updates_graph(stub_dpg) -> None:
-    from slappyengine.ui.editor.material_graph_canvas import (
+    from pharos_engine.ui.editor.material_graph_canvas import (
         MaterialGraphCanvas,
     )
 
@@ -223,7 +223,7 @@ def test_place_node_updates_graph(stub_dpg) -> None:
 
 
 def test_wire_const_color_to_multiply_accepted(stub_dpg) -> None:
-    from slappyengine.ui.editor.material_graph_canvas import (
+    from pharos_engine.ui.editor.material_graph_canvas import (
         MaterialGraphCanvas,
     )
 
@@ -247,7 +247,7 @@ def test_wire_const_color_to_multiply_accepted(stub_dpg) -> None:
 
 
 def test_wire_incompatible_dtype_rejected(stub_dpg) -> None:
-    from slappyengine.ui.editor.material_graph_canvas import (
+    from pharos_engine.ui.editor.material_graph_canvas import (
         MaterialGraphCanvas,
         is_compatible,
     )
@@ -272,7 +272,7 @@ def test_wire_incompatible_dtype_rejected(stub_dpg) -> None:
 
 
 def test_compile_produces_wgsl(stub_dpg) -> None:
-    from slappyengine.ui.editor.material_graph_canvas import (
+    from pharos_engine.ui.editor.material_graph_canvas import (
         MaterialGraphCanvas,
     )
 
@@ -297,7 +297,7 @@ def test_compile_produces_wgsl(stub_dpg) -> None:
 
 
 def test_save_load_yaml_round_trip(stub_dpg, tmp_path) -> None:
-    from slappyengine.ui.editor.material_graph_canvas import (
+    from pharos_engine.ui.editor.material_graph_canvas import (
         MaterialGraphCanvas,
     )
 
@@ -333,7 +333,7 @@ def test_save_load_yaml_round_trip(stub_dpg, tmp_path) -> None:
 
 
 def test_delete_selected_removes_node_and_edges(stub_dpg) -> None:
-    from slappyengine.ui.editor.material_graph_canvas import (
+    from pharos_engine.ui.editor.material_graph_canvas import (
         MaterialGraphCanvas,
     )
 
@@ -367,7 +367,7 @@ def test_delete_selected_removes_node_and_edges(stub_dpg) -> None:
 
 
 def test_palette_has_ten_entries() -> None:
-    from slappyengine.ui.editor.material_graph_canvas import NODE_PALETTE
+    from pharos_engine.ui.editor.material_graph_canvas import NODE_PALETTE
 
     assert len(NODE_PALETTE) == 10
     keys = {k for k, _lbl, _cls in NODE_PALETTE}
@@ -383,8 +383,8 @@ def test_palette_has_ten_entries() -> None:
 
 
 def test_open_material_graph_helper(stub_dpg) -> None:
-    from slappyengine.editor.helpers import open_material_graph
-    from slappyengine.ui.editor.material_graph_canvas import (
+    from pharos_engine.editor.helpers import open_material_graph
+    from pharos_engine.ui.editor.material_graph_canvas import (
         MaterialGraphCanvas,
     )
 

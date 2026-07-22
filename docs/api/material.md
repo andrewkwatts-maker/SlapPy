@@ -1,17 +1,17 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.material — API Reference
+# pharos_engine.material — API Reference
 
 > Hand-written reference for the material subpackage.
 > Covers `NodeMaterial` graph authoring, the `KNOWN_NODE_TYPES` registry,
 > and the 18 node-factory functions restored in Sprint 1B. For the
 > material-tag side (color-range / behavior tags consumed by
-> `material_editor.py`) see [`map.py`](../../python/slappyengine/material/map.py)
+> `material_editor.py`) see [`map.py`](../../python/pharos_engine/material/map.py)
 > and the in-tree [`material_catalog.md`](../material_catalog.md).
 
 
 The subpackage is **lazy-loaded**: `__init__.py` registers names in
 `_LAZY_MAP` and resolves them through `__getattr__`, so
-`import slappyengine` does not pull in `wgpu` or the Rust `_core`
+`import pharos_engine` does not pull in `wgpu` or the Rust `_core`
 extension until a graph is actually compiled.
 
 Pipeline shape: build a `NodeMaterial`, call factory functions to append
@@ -40,7 +40,7 @@ through `_core.compile_node_graph`.
 > `RayMarchNode`, `ForceOutputNode`, `ReduceOutputNode`) were
 > **restored** in Sprint 1B alongside the 19 corresponding entries in
 > `KNOWN_NODE_TYPES`. They are not in `__all__` (yet) but are importable
-> from `slappyengine.material.node_material` and are the canonical
+> from `pharos_engine.material.node_material` and are the canonical
 > contract checked by `test_node_material_lighting_obs.py` and
 > `test_nodegraph_compiler_e1.py`.
 
@@ -48,7 +48,7 @@ through `_core.compile_node_graph`.
 
 ### `NodeDef`
 
-_dataclass — defined in `slappyengine.material.node_material`_
+_dataclass — defined in `pharos_engine.material.node_material`_
 
 One node in a material graph. `id` defaults to an 8-character hex slug
 via `_gen_id()` so graphs can be built without manual id wrangling and
@@ -72,7 +72,7 @@ NodeDef(
 
 ### `NodeMaterial`
 
-_class — defined in `slappyengine.material.node_material`_
+_class — defined in `pharos_engine.material.node_material`_
 
 Ordered graph of `NodeDef` records plus a list of edges. The class is
 deliberately small: it owns the topology, the JSON round-trip, the
@@ -187,7 +187,7 @@ category:
 
 ### `KNOWN_NODE_TYPES`
 
-_frozenset[str] — defined in `slappyengine.material.graph_schema`_
+_frozenset[str] — defined in `pharos_engine.material.graph_schema`_
 
 The 31-entry allow-list of node-type strings. Validation emits a
 non-fatal warning for unknown types (still returns an `errors` entry,
@@ -202,7 +202,7 @@ restored in Sprint 1B (`read_field`, `write_field`, `sample_sim_field`,
 
 ### `KNOWN_PORT_TYPES`
 
-_dict[str, dict] — defined in `slappyengine.material.graph_schema`_
+_dict[str, dict] — defined in `pharos_engine.material.graph_schema`_
 
 Per-kind `{"inputs": [...], "outputs": [...]}` port manifest. Only the
 classic node types are listed today; the lower-case sim-field kinds
@@ -212,7 +212,7 @@ are validated structurally without a port manifest entry.
 
 ### `validate_node_graph(graph_dict: dict) -> list[str]`
 
-_defined in `slappyengine.material.graph_schema`_
+_defined in `pharos_engine.material.graph_schema`_
 
 Structural validator that returns a list of error strings (empty on
 success). Catches:
@@ -239,7 +239,7 @@ on the referenced node types (that is the Rust compiler's job).
 ## Conventions
 
 - **Lazy import.** `__init__.py` resolves names through a `_LAZY_MAP`
-  + `__getattr__` so a bare `import slappyengine` never imports the
+  + `__getattr__` so a bare `import pharos_engine` never imports the
   Rust `_core` extension.
 - **Capitalised vs lowercase node types.** Classic render-path kinds
   use `PascalCase` (`UV`, `FinalColor`); sim-field / math / output

@@ -13,7 +13,7 @@ import sys
 from unittest.mock import MagicMock
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 import pytest
 
@@ -24,7 +24,7 @@ import pytest
 
 class TestDataComponentContains:
     def _dc(self, **kwargs):
-        from slappyengine.data_component import DataComponent
+        from pharos_engine.data_component import DataComponent
         return DataComponent(**kwargs)
 
     def test_contains_existing_field(self):
@@ -47,7 +47,7 @@ class TestDataComponentContains:
 
 class TestDataComponentGetattr:
     def _dc(self, **kwargs):
-        from slappyengine.data_component import DataComponent
+        from pharos_engine.data_component import DataComponent
         return DataComponent(**kwargs)
 
     def test_getattr_existing(self):
@@ -72,7 +72,7 @@ class TestDataComponentGetattr:
 
 class TestDataComponentSetattr:
     def _dc(self, **kwargs):
-        from slappyengine.data_component import DataComponent
+        from pharos_engine.data_component import DataComponent
         return DataComponent(**kwargs)
 
     def test_setattr_updates_value(self):
@@ -103,17 +103,17 @@ class TestDataComponentSetattr:
 
 class TestDataComponentRepr:
     def test_repr_contains_class_name(self):
-        from slappyengine.data_component import DataComponent
+        from pharos_engine.data_component import DataComponent
         dc = DataComponent(hp=100)
         assert "DataComponent" in repr(dc)
 
     def test_repr_contains_field_name(self):
-        from slappyengine.data_component import DataComponent
+        from pharos_engine.data_component import DataComponent
         dc = DataComponent(hp=100, speed=5.0)
         assert "hp" in repr(dc)
 
     def test_repr_is_string(self):
-        from slappyengine.data_component import DataComponent
+        from pharos_engine.data_component import DataComponent
         dc = DataComponent()
         assert isinstance(repr(dc), str)
 
@@ -124,7 +124,7 @@ class TestDataComponentRepr:
 
 class TestTagRegistryContains:
     def _reg(self):
-        from slappyengine.tags import TagRegistry
+        from pharos_engine.tags import TagRegistry
         return TagRegistry()
 
     def test_defined_tag_in_registry(self):
@@ -146,7 +146,7 @@ class TestTagRegistryContains:
 
 class TestTagRegistryGetitem:
     def _reg(self):
-        from slappyengine.tags import TagRegistry
+        from pharos_engine.tags import TagRegistry
         return TagRegistry()
 
     def test_getitem_returns_mask(self):
@@ -180,30 +180,30 @@ class TestTagRegistryGetitem:
 
 class TestZLayerHash:
     def test_hash_returns_int(self):
-        from slappyengine.z_height import ZLayer
+        from pharos_engine.z_height import ZLayer
         zl = ZLayer(name="ground", z=0.0)
         assert isinstance(hash(zl), int)
 
     def test_two_distinct_layers_different_hash(self):
-        from slappyengine.z_height import ZLayer
+        from pharos_engine.z_height import ZLayer
         z1 = ZLayer(name="ground")
         z2 = ZLayer(name="ground")  # same data, different object
         # hash(obj) = id(obj) → different objects → different ids
         assert hash(z1) != hash(z2)
 
     def test_same_object_consistent_hash(self):
-        from slappyengine.z_height import ZLayer
+        from pharos_engine.z_height import ZLayer
         zl = ZLayer(name="sky", z=100.0)
         assert hash(zl) == hash(zl)
 
     def test_usable_as_dict_key(self):
-        from slappyengine.z_height import ZLayer
+        from pharos_engine.z_height import ZLayer
         zl = ZLayer(name="mid", z=50.0)
         d = {zl: "mid_layer"}
         assert d[zl] == "mid_layer"
 
     def test_usable_in_set(self):
-        from slappyengine.z_height import ZLayer
+        from pharos_engine.z_height import ZLayer
         z1 = ZLayer(name="a")
         z2 = ZLayer(name="b")
         s = {z1, z2}
@@ -216,24 +216,24 @@ class TestZLayerHash:
 
 class TestEventBusRepr:
     def test_repr_contains_eventbus(self):
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         bus = EventBus()
         assert "EventBus" in repr(bus)
 
     def test_repr_is_string(self):
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         bus = EventBus()
         assert isinstance(repr(bus), str)
 
     def test_repr_shows_listener_count(self):
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         bus = EventBus()
         bus.subscribe("foo", lambda e: None)
         r = repr(bus)
         assert "1" in r  # 1 type with listeners
 
     def test_repr_empty_bus(self):
-        from slappyengine.event_bus import EventBus
+        from pharos_engine.event_bus import EventBus
         bus = EventBus()
         r = repr(bus)
         assert "0" in r  # no types
@@ -245,7 +245,7 @@ class TestEventBusRepr:
 
 class TestEventDetailsGetattr:
     def _evt(self, **payload):
-        from slappyengine.event_bus import EventDetails
+        from pharos_engine.event_bus import EventDetails
         return EventDetails(name="Test.Event", payload=payload)
 
     def test_payload_field_accessible_as_attr(self):
@@ -272,17 +272,17 @@ class TestEventDetailsGetattr:
 
 class TestEventDetailsRepr:
     def test_repr_is_string(self):
-        from slappyengine.event_bus import EventDetails
+        from pharos_engine.event_bus import EventDetails
         evt = EventDetails(name="Foo.Bar", payload={"x": 1})
         assert isinstance(repr(evt), str)
 
     def test_repr_contains_event_name(self):
-        from slappyengine.event_bus import EventDetails
+        from pharos_engine.event_bus import EventDetails
         evt = EventDetails(name="Vehicle.Hit", payload={"damage": 10})
         assert "Vehicle.Hit" in repr(evt)
 
     def test_repr_shows_payload_keys(self):
-        from slappyengine.event_bus import EventDetails
+        from pharos_engine.event_bus import EventDetails
         evt = EventDetails(name="Test", payload={"damage": 10, "pos": (0, 0)})
         r = repr(evt)
         assert "damage" in r or "pos" in r
@@ -294,7 +294,7 @@ class TestEventDetailsRepr:
 
 class TestBindingRepr:
     def test_repr_is_string(self):
-        from slappyengine.event_bus import Binding, Observable
+        from pharos_engine.event_bus import Binding, Observable
 
         class _Src(Observable):
             speed: float = 0.0
@@ -308,7 +308,7 @@ class TestBindingRepr:
         assert isinstance(repr(b), str)
 
     def test_repr_contains_source_attr(self):
-        from slappyengine.event_bus import Binding, Observable
+        from pharos_engine.event_bus import Binding, Observable
 
         class _Src(Observable):
             throttle: float = 0.0
@@ -324,7 +324,7 @@ class TestBindingRepr:
 
 class TestBindingOnSourceChanged:
     def test_updates_target_attr(self):
-        from slappyengine.event_bus import Binding, Observable
+        from pharos_engine.event_bus import Binding, Observable
 
         class _Src(Observable):
             speed: float = 0.0
@@ -339,7 +339,7 @@ class TestBindingOnSourceChanged:
         assert dst.speed == pytest.approx(99.0)
 
     def test_formatter_applied(self):
-        from slappyengine.event_bus import Binding, Observable
+        from pharos_engine.event_bus import Binding, Observable
 
         class _Src(Observable):
             val: float = 0.0
@@ -354,7 +354,7 @@ class TestBindingOnSourceChanged:
         assert dst.text == "3.1"
 
     def test_callable_target(self):
-        from slappyengine.event_bus import Binding, Observable
+        from pharos_engine.event_bus import Binding, Observable
 
         class _Src(Observable):
             x: float = 0.0
@@ -367,7 +367,7 @@ class TestBindingOnSourceChanged:
         assert 42.0 in received
 
     def test_not_reentrant(self):
-        from slappyengine.event_bus import Binding, Observable
+        from pharos_engine.event_bus import Binding, Observable
 
         class _Src(Observable):
             y: float = 0.0
@@ -384,7 +384,7 @@ class TestBindingOnSourceChanged:
 
 class TestBindingAttachSource:
     def test_attach_source_observable_creates_handle(self):
-        from slappyengine.event_bus import Binding, Observable, unsubscribe
+        from pharos_engine.event_bus import Binding, Observable, unsubscribe
 
         class _Src(Observable):
             fuel: float = 1.0
@@ -399,7 +399,7 @@ class TestBindingAttachSource:
         b.detach()
 
     def test_source_change_propagates_to_target(self):
-        from slappyengine.event_bus import Binding, Observable
+        from pharos_engine.event_bus import Binding, Observable
 
         class _Src(Observable):
             health: float = 100.0

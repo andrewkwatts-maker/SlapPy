@@ -361,7 +361,7 @@ def _constructor_signature(cls: type) -> str:
 
 
 HEADER_TEMPLATE = (
-    "# slappyengine.{subpackage} — API Reference\n"
+    "# pharos_engine.{subpackage} — API Reference\n"
     "\n"
     "> Auto-generated. Re-run `python scripts/gen_subpackage_api_docs.py`.\n"
     "> Do not hand-edit — every entry below comes from runtime introspection\n"
@@ -379,11 +379,11 @@ def _render_subpackage(subpackage: str) -> str:
     lines.append(HEADER_TEMPLATE.format(subpackage=subpackage))
 
     try:
-        module = importlib.import_module(f"slappyengine.{subpackage}")
+        module = importlib.import_module(f"pharos_engine.{subpackage}")
     except Exception as exc:
         lines.append("")
         lines.append(
-            f"_Could not import `slappyengine.{subpackage}`: "
+            f"_Could not import `pharos_engine.{subpackage}`: "
             f"`{type(exc).__name__}: {exc}`._"
         )
         lines.append("")
@@ -530,7 +530,7 @@ def _render_subpackage(subpackage: str) -> str:
         lines.append("")
         lines.append(f"### `{entry.name}`")
         lines.append("")
-        lines.append(f"_{type_name} — defined in `{entry.qualname or 'slappyengine.' + subpackage}`_")
+        lines.append(f"_{type_name} — defined in `{entry.qualname or 'pharos_engine.' + subpackage}`_")
         # Suppress docstrings for built-in / stdlib primitives whose
         # ``__doc__`` is the type's help text (e.g. ``int.__doc__`` is
         # ``"int([x]) -> integer"``, ``Path.__doc__`` describes the class).
@@ -586,7 +586,7 @@ def _render_index_block() -> str:
         "",
     ]
     for sub in TARGET_SUBPACKAGES:
-        lines.append(f"- [`slappyengine.{sub}`](api/{sub}.md)")
+        lines.append(f"- [`pharos_engine.{sub}`](api/{sub}.md)")
     lines.append("")
     lines.append(INDEX_BLOCK_END)
     return "\n".join(lines)

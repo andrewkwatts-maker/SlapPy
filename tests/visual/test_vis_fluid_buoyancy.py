@@ -16,11 +16,11 @@ from __future__ import annotations
 import numpy as np
 from PIL import Image
 
-from slappyengine.fluid import (
+from pharos_engine.fluid import (
     FluidRenderConfig, FluidRenderer, FluidWorld,
     apply_fluid_buoyancy, pbf_step,
 )
-from slappyengine.softbody import (
+from pharos_engine.softbody import (
     SoftBodyWorld, make_lattice_body, step as softbody_step,
 )
 

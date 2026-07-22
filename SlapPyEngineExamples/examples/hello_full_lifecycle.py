@@ -7,7 +7,7 @@ lifecycle walkthrough so downstream users (and CI) have one canonical
 Subsystems exercised
 --------------------
 
-* **HH1 / App**       — ``slappyengine.launch(on_begin, on_tick, on_end)``.
+* **HH1 / App**       — ``pharos_engine.launch(on_begin, on_tick, on_end)``.
 * **NN3 / capture**   — :meth:`App.load_model`, :meth:`App.spawn_light`,
                         :meth:`App.spawn_camera`, :meth:`App.enable_hud`,
                         :meth:`App.start_recording`,
@@ -111,9 +111,9 @@ def _model_path() -> str:
 
 def _headless_config() -> Any:
     """Build a headless :class:`AppConfig` sized for a 1280x720 HUD."""
-    import slappyengine
+    import pharos_engine
 
-    return slappyengine.AppConfig(
+    return pharos_engine.AppConfig(
         window_title="hello_full_lifecycle",
         window_size=(1280, 720),
         enable_gpu=False,
@@ -191,7 +191,7 @@ def main(
     if max_frames < 1:
         raise ValueError(f"max_frames must be >= 1 (got {max_frames})")
 
-    import slappyengine
+    import pharos_engine
 
     shots_dir = (
         Path(screenshot_dir) if screenshot_dir is not None else _DEFAULT_SHOT_DIR
@@ -279,7 +279,7 @@ def main(
 
         # --- Physics3 world (NN4 / OO2 / QQ7) ---
         try:
-            from slappyengine.physics3_bridge import Body3D, World3D
+            from pharos_engine.physics3_bridge import Body3D, World3D
 
             world = World3D(gravity=(0.0, -9.81, 0.0), backend="fallback")
             # Five bodies laid out in a shallow arc so raycasts along +X
@@ -312,7 +312,7 @@ def main(
 
         # --- Audio (LL4) ---
         try:
-            from slappyengine.audio_3d import (
+            from pharos_engine.audio_3d import (
                 Audio3DEngine,
                 Audio3DSource,
                 AudioListener,
@@ -478,7 +478,7 @@ def main(
         #    ``submit_skybox`` / ``draw_skybox`` / ``draw_log``.
         if not state["warning_triggered"] and frame >= WARNING_TRIGGER_FRAME:
             try:
-                from slappyengine.render.skybox import (
+                from pharos_engine.render.skybox import (
                     Skybox,
                     procedural_gradient_sky,
                 )
@@ -519,7 +519,7 @@ def main(
         a.trace.append(("full_lifecycle_on_end", int(a.frame_count)))
 
     # ---- Run --------------------------------------------------------------
-    app = slappyengine.launch(
+    app = pharos_engine.launch(
         on_begin=on_begin,
         on_tick=on_tick,
         on_end=on_end,

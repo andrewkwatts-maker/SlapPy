@@ -38,12 +38,12 @@ def _load_demo():
     try:
         # The diagnostics module is stdlib-only, but audio_3d + render
         # are heavier — probe them so the skip has a useful message.
-        import slappyengine.diagnostics  # noqa: F401
-        import slappyengine.audio_3d  # noqa: F401
-        import slappyengine.render.skybox  # noqa: F401
-        import slappyengine.hud_bridge  # noqa: F401
+        import pharos_engine.diagnostics  # noqa: F401
+        import pharos_engine.audio_3d  # noqa: F401
+        import pharos_engine.render.skybox  # noqa: F401
+        import pharos_engine.hud_bridge  # noqa: F401
     except Exception as exc:  # pragma: no cover — defensive
-        pytest.skip(f"slappyengine subsystems unavailable: {exc}")
+        pytest.skip(f"pharos_engine subsystems unavailable: {exc}")
 
     spec = importlib.util.spec_from_file_location(
         "hello_diagnostics_hud_demo", _DEMO_PATH

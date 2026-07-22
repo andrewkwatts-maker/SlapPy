@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 def test_circle_observer():
-    from slappyengine.visibility import VisibilityField, VisibilityObserver
+    from pharos_engine.visibility import VisibilityField, VisibilityObserver
     vf = VisibilityField(size=(200, 200), blend_radius=0.0, decay_rate=0.0)
 
     class FakeEntity:
@@ -18,7 +18,7 @@ def test_circle_observer():
     assert vf.sample((0, 0)) == pytest.approx(0.0, abs=0.05)
 
 def test_add_remove_observer():
-    from slappyengine.visibility import VisibilityField, VisibilityObserver
+    from pharos_engine.visibility import VisibilityField, VisibilityObserver
     vf = VisibilityField((100, 100))
     class FakeEntity:
         position = (50, 50)
@@ -28,7 +28,7 @@ def test_add_remove_observer():
     assert len(vf._observers) == 0
 
 def test_decay():
-    from slappyengine.visibility import VisibilityField, VisibilityObserver
+    from pharos_engine.visibility import VisibilityField, VisibilityObserver
     vf = VisibilityField((100, 100), decay_rate=0.5, blend_radius=0.0)
     class FakeEntity:
         position = (50, 50)
@@ -41,7 +41,7 @@ def test_decay():
     assert after < before  # decayed
 
 def test_overlap_mode_max():
-    from slappyengine.visibility import VisibilityField, VisibilityObserver
+    from pharos_engine.visibility import VisibilityField, VisibilityObserver
     vf = VisibilityField((200, 200), overlap_mode="max", blend_radius=0.0)
     class E1:
         position = (50, 100)
@@ -55,7 +55,7 @@ def test_overlap_mode_max():
     assert vf.sample((150, 100)) > 0.5
 
 def test_blend_radius_soft_edge():
-    from slappyengine.visibility import VisibilityField, VisibilityObserver
+    from pharos_engine.visibility import VisibilityField, VisibilityObserver
     vf = VisibilityField((200, 200), blend_radius=30.0, decay_rate=0.0)
     class FakeEntity:
         position = (100, 100)
@@ -67,7 +67,7 @@ def test_blend_radius_soft_edge():
     assert inner_sample > boundary_sample
 
 def test_get_layer():
-    from slappyengine.visibility import VisibilityField, VisibilityObserver
+    from pharos_engine.visibility import VisibilityField, VisibilityObserver
     vf = VisibilityField((64, 64))
     class FakeEntity:
         position = (32, 32)
@@ -78,7 +78,7 @@ def test_get_layer():
     assert layer._image_data is not None
 
 def test_cone_observer():
-    from slappyengine.visibility import VisibilityField, VisibilityObserver
+    from pharos_engine.visibility import VisibilityField, VisibilityObserver
     vf = VisibilityField((200, 200), blend_radius=0.0)
     class FakeEntity:
         position = (100, 100)

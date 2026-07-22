@@ -1,6 +1,6 @@
 """Regression coverage for ``make_distance`` + ``resolve_joint_specs``.
 
-Both helpers were briefly dropped from ``slappyengine.dynamics``'s public
+Both helpers were briefly dropped from ``pharos_engine.dynamics``'s public
 API and ``examples/ik_skeleton_demo.py`` regressed to an import error in
 the 2026-06-01 examples-smoke audit (``docs/examples_smoke_2026_06_01.md``,
 commit ``106faea``). These tests pin both:
@@ -20,7 +20,7 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import (
+from pharos_engine.dynamics import (
     JointSpec,
     World,
     make_distance,
@@ -122,7 +122,7 @@ def test_resolve_joint_specs_world_can_step_after_install():
 
 def test_resolve_joint_specs_routes_distance_specs_into_softbody_beams():
     # The IK skeleton demo wires its rigid bones via this code path.
-    sb = pytest.importorskip("slappyengine.softbody")
+    sb = pytest.importorskip("pharos_engine.softbody")
     world = sb.SoftBodyWorld()
     pos = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]], dtype=np.float32)
     mass = np.full(3, 1.0, dtype=np.float32)

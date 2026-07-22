@@ -4,7 +4,7 @@ from __future__ import annotations
 import math
 import pytest
 
-from slappyengine.animation.graph import (
+from pharos_engine.animation.graph import (
     AnimState,
     AnimTransition,
     AnimationGraph,

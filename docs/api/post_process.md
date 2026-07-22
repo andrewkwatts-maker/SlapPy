@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.post_process — API Reference
+# pharos_engine.post_process — API Reference
 
 > Hand-written reference for the post-process subpackage.
 > Covers chain composition, per-pass param-struct conventions, and the
@@ -9,7 +9,7 @@
 
 The subpackage is **lazy-loaded**: `__init__.py` registers names in
 `_LAZY_MAP` and resolves them through `__getattr__`, so
-`import slappyengine` does not pull in `wgpu`. Pipeline shape: build a
+`import pharos_engine` does not pull in `wgpu`. Pipeline shape: build a
 :class:`PostProcessChain` (or call a preset factory), append
 :class:`PostProcessPass` records front-to-back, hand the chain to a
 :class:`PostProcessExecutor`, let the executor walk it once per frame
@@ -33,7 +33,7 @@ Internal helpers also exposed per-module: `BloomPass`, `DofPass`,
 
 ### `PostProcessPass`
 
-_dataclass — defined in `slappyengine.post_process.chain`_
+_dataclass — defined in `pharos_engine.post_process.chain`_
 
 One compute pass.
 
@@ -67,7 +67,7 @@ PostProcessPass(
 
 ### `PostProcessChain`
 
-_class — defined in `slappyengine.post_process.chain`_
+_class — defined in `pharos_engine.post_process.chain`_
 
 Ordered chain with `add()`, `remove(label)`, and the `passes` property
 (enabled subset, insertion order). Strongly-typed helpers for every
@@ -93,7 +93,7 @@ built-in effect — each ships with backward-compat defaults:
 
 ### `PostProcessExecutor`
 
-_class — defined in `slappyengine.post_process.executor`_
+_class — defined in `pharos_engine.post_process.executor`_
 
 Owns the ping-pong RT pair (`rgba8unorm`, recreated on resize),
 caches compute pipelines by `f"{shader_path}::{entry_point}"`, and
@@ -104,7 +104,7 @@ touching the owning class's struct layout.
 
 ### `TAAPass`
 
-_class — defined in `slappyengine.post_process.taa`_
+_class — defined in `pharos_engine.post_process.taa`_
 
 Temporal anti-aliasing with a YCoCg neighbourhood AABB clip and an
 optional Karis luminance-inverse blend.
@@ -143,7 +143,7 @@ regression suite.
 
 ### `BloomPass`
 
-_class — defined in `slappyengine.post_process.bloom`_
+_class — defined in `pharos_engine.post_process.bloom`_
 
 Lottes 2017 smooth-knee extraction; the soft curve avoids popping when
 emissive pixels sweep across the threshold. Reference luma is
@@ -172,7 +172,7 @@ downsample + tent upsample pyramid).
 
 ### `GTAOPass`
 
-_class — defined in `slappyengine.post_process.gtao`_
+_class — defined in `pharos_engine.post_process.gtao`_
 
 Ground-truth ambient occlusion with Jiménez 2016 distance-aware radius
 and §2.3 multibounce.
@@ -222,7 +222,7 @@ Occlusion* SIGGRAPH (horizon-search formulation).
 
 ### `TonemapPass`
 
-_dataclass — defined in `slappyengine.post_process.tonemap`_
+_dataclass — defined in `pharos_engine.post_process.tonemap`_
 
 Wraps `tonemap.wgsl` with the round-7 colour-grading knobs
 (`saturation`, `contrast`, per-channel `lift`/`gain`, `gamma`) and
@@ -255,7 +255,7 @@ source files for full UBO layouts:
 
 ### Preset chain factories
 
-_defined in `slappyengine.post_process.preset_chains`_
+_defined in `pharos_engine.post_process.preset_chains`_
 
 Each returns a fully populated `PostProcessChain` and never mutates
 global state — opting out is as simple as building a bare chain.
@@ -289,7 +289,7 @@ global state — opting out is as simple as building a bare chain.
 
 ## Base class contract
 
-_class — defined in `slappyengine.post_process._pass_base`_
+_class — defined in `pharos_engine.post_process._pass_base`_
 
 `PostProcessPassBase` factors out the boilerplate that every pass
 wrapper (`BloomPass`, `TonemapPass`, `OutlinePass`, `VignettePass`,

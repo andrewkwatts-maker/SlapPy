@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.ext — API Reference
+# pharos_engine.ext — API Reference
 
 > Hand-written reference for the optional-extensions subpackage.
 > `ext` is the canonical home for the heavier / optional engine modules
@@ -10,15 +10,15 @@
 
 ```python
 # Both of these resolve to the same symbols:
-from slappyengine.ext.lighting import LightingSystem, PointLight
-from slappyengine.lighting     import LightingSystem, PointLight
+from pharos_engine.ext.lighting import LightingSystem, PointLight
+from pharos_engine.lighting     import LightingSystem, PointLight
 ```
 
 ## Overview
 
 The shim layout exists for two reasons:
 
-1. It gives the engine a single namespace (`slappyengine.ext`) where
+1. It gives the engine a single namespace (`pharos_engine.ext`) where
    "everything that requires an extra dependency" lives, so the
    ARCHITECTURE doc can point at one directory rather than nine.
 2. It preserves the long-standing import paths consumed by
@@ -27,7 +27,7 @@ The shim layout exists for two reasons:
    `project_editor_sprint.md` calls this out: the shims add ~zero bytes
    to the wheel and are load-bearing for back-compat — do not delete.
 
-`slappyengine.ext.__all__` lists ten names, one per subordinate module
+`pharos_engine.ext.__all__` lists ten names, one per subordinate module
 or subpackage:
 
 ```python
@@ -37,7 +37,7 @@ __all__ = [
 ]
 ```
 
-`__all__` lists module names, not symbols — `from slappyengine.ext
+`__all__` lists module names, not symbols — `from pharos_engine.ext
 import *` gives you the modules. The actual re-exported classes /
 functions live one level deeper.
 
@@ -45,7 +45,7 @@ functions live one level deeper.
 
 ### `ext.lighting` — GPU lighting system
 
-Pure re-export of `slappyengine.lighting`. Surface:
+Pure re-export of `pharos_engine.lighting`. Surface:
 
 | Symbol | Role |
 |---|---|
@@ -65,7 +65,7 @@ the lighting kernels.
 ### `ext.fluid_sim` — global fluid simulation
 
 Re-exports the **Eulerian / global** fluid path (not the PBF particle
-sim under `slappyengine.fluid`, which is a separate subpackage —
+sim under `pharos_engine.fluid`, which is a separate subpackage —
 see [`fluid_design.md`](../fluid_design.md)).
 
 | Symbol | Role |
@@ -76,14 +76,14 @@ see [`fluid_design.md`](../fluid_design.md)).
 | `water_config()` | Pre-tuned `FluidSimConfig` for shallow water. |
 | `smoke_config()` | Pre-tuned `FluidSimConfig` for combat smoke. |
 
-Both the `ext.fluid_sim` shim and the canonical `slappyengine.fluid_sim`
+Both the `ext.fluid_sim` shim and the canonical `pharos_engine.fluid_sim`
 module are off-limits to the constraint in the sprint brief — do **not**
 edit these. Documenting the surface is fine; the docs reference the
 public-API contract rather than reaching into implementation.
 
 ### `ext.angle_sprite` — angle-blended sprites
 
-Re-exports `slappyengine.angle_sprite`.
+Re-exports `pharos_engine.angle_sprite`.
 
 | Symbol | Role |
 |---|---|
@@ -91,12 +91,12 @@ Re-exports `slappyengine.angle_sprite`.
 | `AngleSpriteMap` | Maps a continuous facing angle to the nearest discrete sprite (with optional blend). |
 | `make_angle_map_from_spritesheet(path, angle_count, …)` | Slice a strip-sheet into N evenly-spaced angle entries. |
 
-Requires Pillow (in the base install). Used by `slappyengine.iso` for
+Requires Pillow (in the base install). Used by `pharos_engine.iso` for
 per-viewpoint sprite swapping on camera rotation.
 
 ### `ext.split_screen` — N-player split screen
 
-Re-exports `slappyengine.split_screen`.
+Re-exports `pharos_engine.split_screen`.
 
 | Symbol | Role |
 |---|---|
@@ -107,7 +107,7 @@ Pure-CPU; no extras required.
 
 ### `ext.iso` — isometric rendering
 
-`from slappyengine.iso import *` (subpackage shim). The full surface is
+`from pharos_engine.iso import *` (subpackage shim). The full surface is
 documented in [`iso.md`](iso.md) — `IsoViewpoint`, `IsoTileDef`,
 `IsoCell`, `IsoGrid`, `IsoEntity`, `IsoCamera`, `IsoScene`, plus the
 `iso.combat` Stone Keep module. The shim re-uses the canonical
@@ -115,7 +115,7 @@ documented in [`iso.md`](iso.md) — `IsoViewpoint`, `IsoTileDef`,
 
 ### `ext.net` — P2P networking
 
-Requires the `[network]` extra. Re-exports `slappyengine.net`. The
+Requires the `[network]` extra. Re-exports `pharos_engine.net`. The
 surface is small (matchmaking + reliable-UDP transport + ack ledger);
 see the source for details — it has not had a hand-authored API ref
 yet (deferred).
@@ -123,7 +123,7 @@ yet (deferred).
 ### `ext.ai` — AI code tools
 
 Requires the `[ai]` extra (Ollama + tree-sitter). Re-exports
-`slappyengine.ai`:
+`pharos_engine.ai`:
 
 | Symbol | Role |
 |---|---|
@@ -137,7 +137,7 @@ editor's "Code Mode" panel.
 
 ### `ext.animation` — full animation system
 
-Re-exports `slappyengine.animation`. Surface documented in
+Re-exports `pharos_engine.animation`. Surface documented in
 [`animation.md`](animation.md): `AnimationGraph`, `AnimState`,
 `AnimTransition`, `AnimUpdate`, `ProceduralRig`, `ControlPoint`. The
 `[video]` extra unlocks the video-frame importer (`AnimationGraph
@@ -145,15 +145,15 @@ Re-exports `slappyengine.animation`. Surface documented in
 
 ### `ext.input` — action-map / bindings layer
 
-Re-exports `slappyengine.input`. Subpackage with `ActionMap`,
+Re-exports `pharos_engine.input`. Subpackage with `ActionMap`,
 `InputManager`, gamepad+keyboard providers. The top-level
-`slappyengine.input` shim survives for older imports; the canonical
-path is `slappyengine.input` for now.
+`pharos_engine.input` shim survives for older imports; the canonical
+path is `pharos_engine.input` for now.
 
 ### `ext.ui` — editor UI
 
-Re-exports `slappyengine.ui`. The `ext.ui.editor` sub-shim re-exports
-`slappyengine.ui.editor` (full surface in [`ui_editor.md`](ui_editor.md))
+Re-exports `pharos_engine.ui`. The `ext.ui.editor` sub-shim re-exports
+`pharos_engine.ui.editor` (full surface in [`ui_editor.md`](ui_editor.md))
 and requires the `[editor]` extra (PyQt6 + qtawesome) before any
 class is instantiated — importing the module is cheap, instantiating
 `EditorShell` is not.

@@ -1,5 +1,5 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.render.bvh_3d — API Reference
+# pharos_engine.render.bvh_3d — API Reference
 
 > Hand-written reference for the KK1 3D SAH bounding volume hierarchy.
 > Accelerates the JJ5 scene walker's linear frustum loop by ~O(log N).
@@ -9,7 +9,7 @@
 
 ## Overview
 
-`slappyengine.render.bvh_3d` is a docs-only top-down SAH BVH built
+`pharos_engine.render.bvh_3d` is a docs-only top-down SAH BVH built
 around three primitives: :class:`AABB3D` (immutable axis-aligned box),
 :class:`BVHNode` (internal or leaf), and :class:`BVH3D` (the tree +
 query surface). It plugs into [`render_scene_walker.py`](../architecture_overview.md)
@@ -42,14 +42,14 @@ after many refits skew the tree.
 ## Public surface
 
 ```python
-from slappyengine.render.bvh_3d import AABB3D, BVH3D, BVHNode
+from pharos_engine.render.bvh_3d import AABB3D, BVH3D, BVHNode
 ```
 
 ## Classes
 
 ### `AABB3D`
 
-_dataclass — defined in `slappyengine.render.bvh_3d`_
+_dataclass — defined in `pharos_engine.render.bvh_3d`_
 
 ```python
 AABB3D(
@@ -65,7 +65,7 @@ degenerate boxes where `min == max` represent a point. Exposes
 
 ### `BVHNode`
 
-_dataclass — defined in `slappyengine.render.bvh_3d`_
+_dataclass — defined in `pharos_engine.render.bvh_3d`_
 
 Internal / leaf node — carries `aabb`, `left`, `right`, `entity_ids`
 (empty for internal nodes), and `depth`. Callers rarely construct
@@ -73,7 +73,7 @@ Internal / leaf node — carries `aabb`, `left`, `right`, `entity_ids`
 
 ### `BVH3D`
 
-_class — defined in `slappyengine.render.bvh_3d`_
+_class — defined in `pharos_engine.render.bvh_3d`_
 
 ```python
 BVH3D(entries: list[tuple[str, AABB3D]])
@@ -103,9 +103,9 @@ Raises:
 ## Usage
 
 ```python
-from slappyengine.render.bvh_3d import AABB3D, BVH3D
-from slappyengine.render.scene_walker import Frustum
-from slappyengine.render import Camera3D
+from pharos_engine.render.bvh_3d import AABB3D, BVH3D
+from pharos_engine.render.scene_walker import Frustum
+from pharos_engine.render import Camera3D
 
 entries = [
     ("cube_a", AABB3D((-0.5, -0.5, -0.5), (0.5, 0.5, 0.5))),
@@ -122,8 +122,8 @@ assert isinstance(visible, list)
 
 ## Skip the wrapper
 
-`slappyengine.render.bvh_3d` is Python-only. There is **no** Rust
-equivalent under `slappyengine._core` today. The FF4 rust-migration
+`pharos_engine.render.bvh_3d` is Python-only. There is **no** Rust
+equivalent under `pharos_engine._core` today. The FF4 rust-migration
 audit ([`../rust_migration_audit_2026_07_05.md`](../rust_migration_audit_2026_07_05.md))
 identifies BVH build/query as a plausible future kernel candidate when
 scene sizes push into the thousands of entities; today all build and

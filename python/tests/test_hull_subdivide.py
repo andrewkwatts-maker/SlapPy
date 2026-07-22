@@ -11,12 +11,12 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.physics.cell import (
+from pharos_engine.physics.cell import (
     CELL_GRID_SIZE,
     CELL_PIXEL_STRUCT,
     CellGridPool,
 )
-from slappyengine.physics.hull import (
+from pharos_engine.physics.hull import (
     NO_CELL_GRID,
     HullTree,
     TIER_T2,

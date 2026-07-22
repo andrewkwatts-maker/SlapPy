@@ -71,7 +71,7 @@ def _install_hybrid_hooks() -> None:
     Idempotent -- ``hasattr`` guards make repeated calls safe.
     """
     try:
-        from slappyengine.layer import Layer as _Layer
+        from pharos_engine.layer import Layer as _Layer
     except Exception:
         return
 
@@ -306,9 +306,9 @@ def _build_scene(state: DemoState, width: int, height: int) -> None:
     """Create the three hybrid layers + attach them to a Scene."""
     _install_hybrid_hooks()
 
-    from slappyengine.layer import Layer2D, Layer3D
-    from slappyengine.scene import Scene
-    from slappyengine.render.layer_compositor import LayerCompositor
+    from pharos_engine.layer import Layer2D, Layer3D
+    from pharos_engine.scene import Scene
+    from pharos_engine.render.layer_compositor import LayerCompositor
 
     scene = Scene(name="HelloHybridLayers")
     # DDD1 has landed Scene.add_layer / Scene.layers -- if the attribute
@@ -483,9 +483,9 @@ def main(
     state = DemoState()
 
     try:
-        import slappyengine
+        import pharos_engine
     except Exception:
-        slappyengine = None  # type: ignore[assignment]
+        pharos_engine = None  # type: ignore[assignment]
 
     def on_begin(app: Any) -> None:
         _build_scene(state, width, height)
@@ -508,8 +508,8 @@ def main(
             ))
         state.summary = summary  # type: ignore[attr-defined]
 
-    if slappyengine is not None and hasattr(slappyengine, "launch"):
-        slappyengine.launch(
+    if pharos_engine is not None and hasattr(pharos_engine, "launch"):
+        pharos_engine.launch(
             on_begin=on_begin,
             on_tick=on_tick,
             on_end=on_end,

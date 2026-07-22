@@ -10,7 +10,7 @@ listener, failing Bullet Strata's
 ``TestArenaInfoHUDReactive.test_teardown_unsubscribes_arena_events``.
 
 DO NOT REMOVE without a v1.0 deprecation cycle — this same pattern is
-also used by ``slappyengine.ui.widgets.Widget.bind_event/unbind_all``
+also used by ``pharos_engine.ui.widgets.Widget.bind_event/unbind_all``
 and by Ochema Circuit's Sprint P1 observable tests.
 """
 from __future__ import annotations
@@ -18,7 +18,7 @@ from __future__ import annotations
 
 def test_subscribe_returns_callback_as_handle_module_level():
     """Module-level ``subscribe`` returns the callback so it can be used as a handle."""
-    from slappyengine.event_bus import subscribe, unsubscribe
+    from pharos_engine.event_bus import subscribe, unsubscribe
 
     def cb(evt):
         pass
@@ -32,7 +32,7 @@ def test_subscribe_returns_callback_as_handle_module_level():
 
 def test_subscribe_returns_callback_as_handle_bus_method():
     """``EventBus.subscribe`` returns the callback so it can be used as a handle."""
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
 
     bus = EventBus()
 
@@ -45,7 +45,7 @@ def test_subscribe_returns_callback_as_handle_bus_method():
 
 def test_unsubscribe_handle_arity_module_level():
     """``unsubscribe(h)`` where h is a callable drops it from every topic."""
-    from slappyengine.event_bus import subscribe, unsubscribe, global_bus
+    from pharos_engine.event_bus import subscribe, unsubscribe, global_bus
 
     def cb(evt):
         pass
@@ -65,7 +65,7 @@ def test_unsubscribe_handle_arity_module_level():
 
 def test_unsubscribe_handle_arity_bus_method():
     """``EventBus.unsubscribe(h)`` where h is a callable drops it from every topic."""
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
 
     bus = EventBus()
 
@@ -99,7 +99,7 @@ def test_hud_teardown_pattern_end_to_end():
         for h in self._sub_handles:
             unsubscribe(h)
     """
-    from slappyengine.event_bus import subscribe, unsubscribe, global_bus
+    from pharos_engine.event_bus import subscribe, unsubscribe, global_bus
 
     def killed(evt):
         pass
@@ -123,7 +123,7 @@ def test_hud_teardown_pattern_end_to_end():
 
 def test_legacy_unsubscribe_shapes_still_work():
     """The AAA6 shim must NOT break the pre-existing unsubscribe forms."""
-    from slappyengine.event_bus import EventBus
+    from pharos_engine.event_bus import EventBus
 
     bus = EventBus()
 

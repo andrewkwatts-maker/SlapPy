@@ -19,15 +19,15 @@ import pytest
 
 pygltflib = pytest.importorskip("pygltflib")
 
-from slappyengine.asset_import.gltf_importer import (  # noqa: E402
+from pharos_engine.asset_import.gltf_importer import (  # noqa: E402
     _extract_inverse_bind_matrices,
     _extract_joints_weights,
     _extract_skeleton,
     _load_buffers,
     import_gltf,
 )
-from slappyengine.asset_import.import_result import ImportResult  # noqa: E402
-from slappyengine.asset_import.skinned_mesh import (  # noqa: E402
+from pharos_engine.asset_import.import_result import ImportResult  # noqa: E402
+from pharos_engine.asset_import.skinned_mesh import (  # noqa: E402
     Skeleton,
     SkeletonNode,
     SkinnedMeshData,

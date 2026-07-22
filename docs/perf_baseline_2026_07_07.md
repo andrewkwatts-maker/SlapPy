@@ -39,7 +39,7 @@ All six hot paths measured within envelope. **Gate #13 verdict: GREEN.**
 ## 2. Results
 
 Captured on Windows 11 workstation, single fresh Python process,
-`slappyengine._core` present, tracked backend (`_core` = 40a79bd),
+`pharos_engine._core` present, tracked backend (`_core` = 40a79bd),
 2026-07-07 late evening.
 
 | bench | min (ms) | mean (ms) | stdev (ms) | unit |
@@ -155,7 +155,7 @@ python benchmarks/perf_baseline_2026_07_07.py
 python benchmarks/perf_baseline_2026_07_07.py --json > perf_ss4.json
 ```
 
-Skips cleanly if `slappyengine._core` isn't built (falls back to PIL
+Skips cleanly if `pharos_engine._core` isn't built (falls back to PIL
 reference for the raster benches, skips the `_core.*` benches with a
 message).
 

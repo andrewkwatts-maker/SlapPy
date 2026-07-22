@@ -28,17 +28,17 @@ def reset_globals(monkeypatch, tmp_path):
     * Theme registry + active theme.
     * Default creature scheduler (so the per-test scheduler is fresh).
     * The :class:`ProjectRegistry` singleton — redirected at a temp
-      directory so the test's registry never pollutes ``~/.slappyengine``.
+      directory so the test's registry never pollutes ``~/.pharos_engine``.
     * The global :class:`EventBus` (``engine.scene_loaded`` /
       ``engine.save`` bus subscribers leak across tests otherwise).
     """
-    from slappyengine import event_bus as eb
-    from slappyengine.projects import registry as reg
-    from slappyengine.ui.theme import _reset_registry_for_tests
-    from slappyengine.ui.theme.creatures import (
+    from pharos_engine import event_bus as eb
+    from pharos_engine.projects import registry as reg
+    from pharos_engine.ui.theme import _reset_registry_for_tests
+    from pharos_engine.ui.theme.creatures import (
         _reset_default_scheduler_for_tests,
     )
-    from slappyengine.ui.widgets.notebook_theme import set_active_theme
+    from pharos_engine.ui.widgets.notebook_theme import set_active_theme
 
     _reset_registry_for_tests()
     set_active_theme(None)
@@ -64,7 +64,7 @@ def reset_globals(monkeypatch, tmp_path):
 
 def _make_shell(ui_settings=None):
     """Build a headless :class:`EditorShell` with a stub engine."""
-    from slappyengine.ui.editor.shell import EditorShell
+    from pharos_engine.ui.editor.shell import EditorShell
 
     class _StubEngine:
         def __init__(self):
@@ -88,7 +88,7 @@ def _make_shell(ui_settings=None):
 
 def _make_project(tmp_path: Path, name: str = "test_project") -> "Project":
     """Scaffold a fresh :class:`Project` rooted in *tmp_path*."""
-    from slappyengine.projects import Project
+    from pharos_engine.projects import Project
 
     root = tmp_path / name
     return Project.new(root, name)
@@ -156,7 +156,7 @@ class TestLoadProject:
         assert "(no project)" in shell._last_window_title
 
     def test_content_browser_reroots(self, tmp_path):
-        from slappyengine.ui.editor.content_browser import ContentBrowser
+        from pharos_engine.ui.editor.content_browser import ContentBrowser
 
         shell = _make_shell()
         shell._content_browser = ContentBrowser()
@@ -190,7 +190,7 @@ class TestLoadProject:
         assert shell._notebook_status_bar.project_name == "PaperGarden"
 
     def test_fires_engine_scene_loaded_event(self, tmp_path):
-        from slappyengine.event_bus import get_default_bus
+        from pharos_engine.event_bus import get_default_bus
 
         events: list[dict] = []
         get_default_bus().subscribe(
@@ -205,7 +205,7 @@ class TestLoadProject:
         assert events[0]["project_name"] == "EventGame"
 
     def test_adds_to_registry_recents(self, tmp_path):
-        from slappyengine.projects import get_default_registry
+        from pharos_engine.projects import get_default_registry
 
         shell = _make_shell()
         project = _make_project(tmp_path, "RecentsGame")
@@ -258,7 +258,7 @@ class TestSaveScene:
         assert shell._engine.save_scene_calls == []
 
     def test_fires_engine_save_event(self, tmp_path):
-        from slappyengine.event_bus import get_default_bus
+        from pharos_engine.event_bus import get_default_bus
 
         events: list[dict] = []
         get_default_bus().subscribe(
@@ -404,7 +404,7 @@ class TestMenuWiring:
 
 class TestWindowTitle:
     def test_format_with_project_name(self):
-        from slappyengine.ui.editor.notebook_window_title import (
+        from pharos_engine.ui.editor.notebook_window_title import (
             format_window_title,
         )
         title = format_window_title(
@@ -417,7 +417,7 @@ class TestWindowTitle:
         assert "main" in title
 
     def test_format_no_project_placeholder(self):
-        from slappyengine.ui.editor.notebook_window_title import (
+        from pharos_engine.ui.editor.notebook_window_title import (
             format_window_title,
         )
         title = format_window_title(
@@ -439,7 +439,7 @@ class TestWindowTitle:
 
     def test_format_legacy_signature_unchanged(self):
         """Three-arg call (pre-M6) must still emit the legacy format."""
-        from slappyengine.ui.editor.notebook_window_title import (
+        from pharos_engine.ui.editor.notebook_window_title import (
             format_window_title,
         )
         title = format_window_title(

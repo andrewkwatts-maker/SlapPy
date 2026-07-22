@@ -83,7 +83,7 @@ def test_four_wgsl_files_written(demo, tmp_path):
 
 def test_lint_wgsl_soft_imported(demo, tmp_path):
     try:
-        from slappyengine.ui.theme.shader_lint import lint_wgsl
+        from pharos_engine.ui.theme.shader_lint import lint_wgsl
     except Exception:
         pytest.skip("lint_wgsl unavailable — soft-import contract satisfied")
         return
@@ -175,7 +175,7 @@ def test_each_shader_has_wgsl_markers(demo, tmp_path):
 
 
 def test_bridge_body_has_let_bindings(demo):
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
 
@@ -219,7 +219,7 @@ def test_main_prints_summary_and_returns_zero(demo, monkeypatch, tmp_path):
 
 
 def test_expected_uniforms_appear(demo):
-    from slappyengine.ui.editor.material_graph_bridge import (
+    from pharos_engine.ui.editor.material_graph_bridge import (
         MaterialGraphBridge,
     )
 
@@ -249,7 +249,7 @@ def test_expected_uniforms_appear(demo):
 
 
 def test_local_constant_nodes_emit_wgsl(demo):
-    from slappyengine.visual_scripting.material_nodes import (
+    from pharos_engine.visual_scripting.material_nodes import (
         DefaultWgslEmitContext,
     )
 

@@ -56,7 +56,7 @@ wheel missing 20+ symbols — a build-reproducibility bug tracked in
 | File | Purpose | PyO3 exports | Python caller |
 |---|---|---|---|
 | `src/raster.rs` | Software rasterisation (lines, disks, blur, composite, LUT/CA) | `rasterize_lines` (`:95`), `rasterize_circles` (`:245`), `box_blur_rgb` (`:310`), `alpha_composite_rgb` (`:441`), `post_process_rgb` (`:500`), `rasterize_textured_triangles` (`:740`) | `softbody/render.py`, `fluid/render.py` |
-| `src/softbody_solver.rs` | XPBD constraint projection + broadphase | `project_distance_constraints` (`:115`), `apply_plasticity` (`:292`), `mark_breaks` (`:383`), `build_contact_pairs` (`:487`), `project_node_beam_contacts` (`:838`), `project_node_node_pairs` (`:1132`), `slappyengine_step` (`:1942`) | `softbody/solver.py`, `softbody/collision.py` |
+| `src/softbody_solver.rs` | XPBD constraint projection + broadphase | `project_distance_constraints` (`:115`), `apply_plasticity` (`:292`), `mark_breaks` (`:383`), `build_contact_pairs` (`:487`), `project_node_beam_contacts` (`:838`), `project_node_node_pairs` (`:1132`), `pharos_engine_step` (`:1942`) | `softbody/solver.py`, `softbody/collision.py` |
 | `src/pbf_solver.rs` | PBF density solve + neighbour table + friction + thermal | `build_neighbour_table` (`:72`), `pbf_iter` (`:243`), `friction_pass_rs` (`:528`), `thermal_step_rs` (`:672`), `pbf_step_full` (`:1307`) | `fluid/solver.py`, `fluid/thermal_step.py` |
 | `src/fluid_shader.rs` | Fluid surface polish passes (foam, godrays, isolines, etc.) | `turbulence_foam_rs` (`:66`), `refraction_warp_rs` (`:123`), `godrays_rs` (`:213`), `specular_pass_rs` (`:293`), `draw_droplet_tails_rs` (`:467`), `alpha_composite_hdr_rs` (`:543`), `post_process_hdr_rs` (`:586`), `rasterize_lines_hdr_rs` (`:691`), `surface_base_shade_rs` (`:750`), `speed_screen_rs` (`:979`), `sample_density_grid_rs` (`:1056`), `extract_isolines_rs` (`:1225`) | `fluid/render.py`, `fluid/surface.py` |
 
@@ -155,7 +155,7 @@ is `ast.parse`, which is already C-implemented.
 
 `PreviewBaker` (510 lines) — bakes 64×64 PIL previews for the editor
 spawn menu. Called once per prefab at first-run scaffold time; the
-result is checked into `python/slappyengine/prefabs/baked/previews/*.png`.
+result is checked into `python/pharos_engine/prefabs/baked/previews/*.png`.
 
 **Verdict**: One-shot authoring pipeline. No Rust win.
 

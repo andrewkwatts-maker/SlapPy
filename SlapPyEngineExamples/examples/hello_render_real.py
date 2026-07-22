@@ -19,7 +19,7 @@ The demo is headless-safe: ``enable_gpu=False`` on the :class:`AppConfig`
 so the runtime falls back to the logging stub renderer used everywhere
 in CI. When someone runs the module ``__main__`` block with GPU-enabled
 config, the same call chain plugs into the wgpu backend via
-:mod:`slappyengine.app_integration` without a code change here.
+:mod:`pharos_engine.app_integration` without a code change here.
 
 Variants
 --------
@@ -62,9 +62,9 @@ def _demo_config():
     ``clear_color`` matches the task-spec sky blue so screenshots frame
     the bunny against a familiar backdrop when the real renderer runs.
     """
-    import slappyengine
+    import pharos_engine
 
-    return slappyengine.AppConfig(
+    return pharos_engine.AppConfig(
         window_title="hello_render_real",
         window_size=(960, 540),
         enable_gpu=False,                 # tests + CI live here
@@ -127,7 +127,7 @@ def _try_capture_screenshot(app, out_path: Path) -> bool:
     if renderer is None or not hasattr(renderer, "read_pixels"):
         return False
     try:
-        from slappyengine.capture import CaptureManager
+        from pharos_engine.capture import CaptureManager
     except Exception:
         return False
     try:
@@ -145,12 +145,12 @@ def _try_capture_screenshot(app, out_path: Path) -> bool:
 def main() -> Any:
     """Real 3D scene: bunny + key light + orbit camera over 120 frames.
 
-    Returns the :class:`~slappyengine.App` so callers/tests can inspect
+    Returns the :class:`~pharos_engine.App` so callers/tests can inspect
     ``app.models``, ``app.trace``, and the stub renderer log.
     """
-    import slappyengine
+    import pharos_engine
 
-    app = slappyengine.App(config=_demo_config())
+    app = pharos_engine.App(config=_demo_config())
     bunny = _spawn_bunny_and_scene(app)
     app.run(on_tick=_make_orbit_tick(bunny), max_frames=120)
 
@@ -165,22 +165,22 @@ def main() -> Any:
 
 
 def with_shadows() -> Any:
-    """``main`` plus a JJ7 :class:`~slappyengine.post_process.ShadowCSM` pass.
+    """``main`` plus a JJ7 :class:`~pharos_engine.post_process.ShadowCSM` pass.
 
     The pass is soft-attached to the app under ``app.shadow_pass`` so the
     real renderer can pick it up when it's live. Under the stub renderer
     the pass simply exists as configuration state — the test just checks
     the attribute was populated with the right type.
     """
-    import slappyengine
+    import pharos_engine
 
-    app = slappyengine.App(config=_demo_config())
+    app = pharos_engine.App(config=_demo_config())
     bunny = _spawn_bunny_and_scene(app)
 
     # Attach the CSM shadow post-pass. Imported lazily so the demo module
     # keeps import-time cheap for headless test collection.
     try:
-        from slappyengine.post_process.shadow_csm import ShadowCSM
+        from pharos_engine.post_process.shadow_csm import ShadowCSM
 
         app.shadow_pass = ShadowCSM(
             num_cascades=4,
@@ -203,17 +203,17 @@ def with_shadows() -> Any:
 
 
 def with_ssao() -> Any:
-    """``main`` plus a KK3 :class:`~slappyengine.post_process.GTAOPass`.
+    """``main`` plus a KK3 :class:`~pharos_engine.post_process.GTAOPass`.
 
     Attaches the pass to ``app.ssao_pass``.
     """
-    import slappyengine
+    import pharos_engine
 
-    app = slappyengine.App(config=_demo_config())
+    app = pharos_engine.App(config=_demo_config())
     bunny = _spawn_bunny_and_scene(app)
 
     try:
-        from slappyengine.post_process.gtao import GTAOPass
+        from pharos_engine.post_process.gtao import GTAOPass
 
         app.ssao_pass = GTAOPass()
     except Exception:  # pragma: no cover
@@ -236,16 +236,16 @@ def with_full_pipeline() -> Any:
     ``("hud", frame, fps)`` into :attr:`App.trace` so tests can prove the
     HUD wiring ran without needing a real overlay.
     """
-    import slappyengine
+    import pharos_engine
 
-    app = slappyengine.App(config=_demo_config())
+    app = pharos_engine.App(config=_demo_config())
     bunny = _spawn_bunny_and_scene(app)
 
     # Shadows + SSAO passes — same attachment pattern as the sibling
     # variants so tests can dedupe.
     try:
-        from slappyengine.post_process.shadow_csm import ShadowCSM
-        from slappyengine.post_process.gtao import GTAOPass
+        from pharos_engine.post_process.shadow_csm import ShadowCSM
+        from pharos_engine.post_process.gtao import GTAOPass
 
         app.shadow_pass = ShadowCSM()
         app.ssao_pass = GTAOPass()

@@ -9,7 +9,7 @@ OO1's round-16 ``layer.solo`` / ``layer.merge_down`` / ``selection.grow``
 Five more action ids landed in this tick, moving 5 rows from STUB
 (implicit — the ids were not yet registered on the router) to WIRED:
 
-| Action id | Fallback module (`slappyengine.actions.*`) | Category |
+| Action id | Fallback module (`pharos_engine.actions.*`) | Category |
 |-----------|--------------------------------------------|----------|
 | `selection.shrink`          | `selection_shrink_actions.shrink_selection`               | selection |
 | `selection.invert_by_type`  | `selection_invert_by_type_actions.invert_by_type`         | selection |
@@ -19,14 +19,14 @@ Five more action ids landed in this tick, moving 5 rows from STUB
 
 New action modules:
 
-* `python/slappyengine/actions/selection_shrink_actions.py`
-* `python/slappyengine/actions/selection_invert_by_type_actions.py`
-* `python/slappyengine/actions/view_toggle_wireframe_actions.py`
-* `python/slappyengine/actions/edit_rename_actions.py`
-* `python/slappyengine/actions/edit_duplicate_at_cursor_actions.py`
+* `python/pharos_engine/actions/selection_shrink_actions.py`
+* `python/pharos_engine/actions/selection_invert_by_type_actions.py`
+* `python/pharos_engine/actions/view_toggle_wireframe_actions.py`
+* `python/pharos_engine/actions/edit_rename_actions.py`
+* `python/pharos_engine/actions/edit_duplicate_at_cursor_actions.py`
 
 Router entries and `_fb_*` shims live in
-`python/slappyengine/tool_router.py` under the
+`python/pharos_engine/tool_router.py` under the
 `# ── PP1 STUB-triage: selection shrink / invert-by-type + view
 wireframe + edit rename / duplicate-at-cursor (round 17) ──` block.
 

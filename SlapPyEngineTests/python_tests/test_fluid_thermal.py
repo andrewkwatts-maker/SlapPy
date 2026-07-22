@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.fluid import (
+from pharos_engine.fluid import (
     FluidWorld,
     LAVA,
     ICE,
@@ -109,7 +109,7 @@ def test_thermal_step_returns_phase_change_count():
     # Have to ensure WATER is in the world's materials list for the
     # phase-change lookup. Add a water block then remove its particles
     # by resetting count (easier: just register the material via API).
-    from slappyengine.fluid import WATER as _W
+    from pharos_engine.fluid import WATER as _W
     if _W not in w.materials:
         w.materials.append(_W)
     n_changes = thermal_step(w, i_idx, j_idx, sub_dt=0.001,
@@ -124,7 +124,7 @@ def test_lava_block_cools_over_time():
     """A lava blob isolated in cold air should cool monotonically.
     Emits a GIF of the cooling via the fluid renderer."""
     from python.tests._visual_snapshot import output_dir, save_softbody_sequence
-    from slappyengine.fluid import FluidRenderer, FluidRenderConfig
+    from pharos_engine.fluid import FluidRenderer, FluidRenderConfig
 
     w = FluidWorld()
     w.config["gravity"] = [0.0, 0.0]

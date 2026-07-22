@@ -26,7 +26,7 @@ import pytest
 
 def _install_stubs(monkeypatch):
     """Patch out WgpuCanvas + Engine._setup_gpu so run(max_frames=N) is GPU-free."""
-    from slappyengine import engine as engine_mod
+    from pharos_engine import engine as engine_mod
 
     # --- Fake canvas ----------------------------------------------------------
     class _StubCanvas:
@@ -105,7 +105,7 @@ def test_run_max_frames_returns_after_n_ticks(monkeypatch):
     """run(max_frames=3) ticks _draw three times then returns."""
     _install_stubs(monkeypatch)
 
-    import slappyengine as se
+    import pharos_engine as se
 
     engine = se.Engine()
     assert engine._frame_index == 0
@@ -126,7 +126,7 @@ def test_run_max_frames_zero_is_noop(monkeypatch):
     """run(max_frames=0) returns immediately without ticking _draw."""
     _install_stubs(monkeypatch)
 
-    import slappyengine as se
+    import pharos_engine as se
 
     engine = se.Engine()
     engine.run(max_frames=0)
@@ -137,7 +137,7 @@ def test_run_max_frames_negative_raises(monkeypatch):
     """run(max_frames=-1) is a programming error and rejected."""
     _install_stubs(monkeypatch)
 
-    import slappyengine as se
+    import pharos_engine as se
 
     engine = se.Engine()
     with pytest.raises(ValueError):
@@ -160,7 +160,7 @@ def test_engine_run_calls_update_max_frames_times(monkeypatch):
     """
     _install_stubs(monkeypatch)
 
-    import slappyengine as se
+    import pharos_engine as se
 
     class _CountingScene:
         landscape = None
@@ -201,7 +201,7 @@ def test_engine_run_with_max_frames_returns_within_2x_expected_duration(monkeypa
     """
     _install_stubs(monkeypatch)
 
-    import slappyengine as se
+    import pharos_engine as se
 
     engine = se.Engine()
 
@@ -226,7 +226,7 @@ def test_engine_run_clean_shutdown_releases_gpu_resources(monkeypatch):
     """
     _install_stubs(monkeypatch)
 
-    from slappyengine import engine as engine_mod
+    from pharos_engine import engine as engine_mod
 
     destroyed = {"buf": 0, "tex": 0}
 
@@ -248,7 +248,7 @@ def test_engine_run_clean_shutdown_releases_gpu_resources(monkeypatch):
 
     monkeypatch.setattr(engine_mod.Engine, "_setup_gpu", _stub_setup_with_managers)
 
-    import slappyengine as se
+    import pharos_engine as se
 
     engine = se.Engine()
     engine.run(max_frames=3)
@@ -269,7 +269,7 @@ def test_engine_run_handles_exception_in_update(monkeypatch):
     """
     _install_stubs(monkeypatch)
 
-    import slappyengine as se
+    import pharos_engine as se
 
     class _ExplodingScene:
         landscape = None
@@ -307,7 +307,7 @@ def test_env_var_sets_max_frames_when_kwarg_omitted(monkeypatch):
     _install_stubs(monkeypatch)
     monkeypatch.setenv("SLAPPYENGINE_MAX_FRAMES", "4")
 
-    import slappyengine as se
+    import pharos_engine as se
 
     engine = se.Engine()
     engine.run()  # no kwarg — env var must take over
@@ -320,7 +320,7 @@ def test_kwarg_wins_over_env_var(monkeypatch):
     _install_stubs(monkeypatch)
     monkeypatch.setenv("SLAPPYENGINE_MAX_FRAMES", "99")
 
-    import slappyengine as se
+    import pharos_engine as se
 
     engine = se.Engine()
     engine.run(max_frames=2)
@@ -333,7 +333,7 @@ def test_env_var_invalid_value_raises(monkeypatch):
     _install_stubs(monkeypatch)
     monkeypatch.setenv("SLAPPYENGINE_MAX_FRAMES", "not-a-number")
 
-    import slappyengine as se
+    import pharos_engine as se
 
     engine = se.Engine()
     with pytest.raises(ValueError, match="SLAPPYENGINE_MAX_FRAMES"):

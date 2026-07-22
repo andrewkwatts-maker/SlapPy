@@ -19,8 +19,8 @@ import types
 
 import pytest
 
-from slappyengine.tool_router import ToolAction, ToolRouter
-from slappyengine.ui.hotkey_remap import HotkeyBinding, HotkeyMap
+from pharos_engine.tool_router import ToolAction, ToolRouter
+from pharos_engine.ui.hotkey_remap import HotkeyBinding, HotkeyMap
 
 
 # ---------------------------------------------------------------------------
@@ -156,7 +156,7 @@ def _fake_map(rows: list[tuple[str, str]]) -> HotkeyMap:
 
 
 def _make_bar(**kwargs):
-    from slappyengine.ui.editor.notebook_menu_bar import NotebookMenuBar
+    from pharos_engine.ui.editor.notebook_menu_bar import NotebookMenuBar
     return NotebookMenuBar(**kwargs)
 
 
@@ -206,13 +206,13 @@ class TestConstruction:
 
 class TestMenuOrder:
     def test_menu_order_is_canonical(self):
-        from slappyengine.ui.editor.notebook_menu_bar import MENU_ORDER
+        from pharos_engine.ui.editor.notebook_menu_bar import MENU_ORDER
         assert MENU_ORDER == (
             "file", "edit", "view", "tool", "panel", "theme", "spawn", "help",
         )
 
     def test_category_glyphs_cover_menu_order(self):
-        from slappyengine.ui.editor.notebook_menu_bar import (
+        from pharos_engine.ui.editor.notebook_menu_bar import (
             CATEGORY_GLYPHS,
             MENU_ORDER,
         )
@@ -222,7 +222,7 @@ class TestMenuOrder:
             assert CATEGORY_GLYPHS[cat] != ""
 
     def test_diary_glyph_values(self):
-        from slappyengine.ui.editor.notebook_menu_bar import CATEGORY_GLYPHS
+        from pharos_engine.ui.editor.notebook_menu_bar import CATEGORY_GLYPHS
         assert CATEGORY_GLYPHS["file"] == "✎"
         assert CATEGORY_GLYPHS["edit"] == "✂"
         assert CATEGORY_GLYPHS["view"] == "◇"
@@ -247,12 +247,12 @@ class TestMenuOrder:
 
 class TestEditorRegistration:
     def test_lazy_import_via_editor_init(self):
-        from slappyengine.ui.editor import NotebookMenuBar
+        from pharos_engine.ui.editor import NotebookMenuBar
         bar = NotebookMenuBar()
         assert bar.router is None
 
     def test_all_contains_menu_bar_alphabetically(self):
-        import slappyengine.ui.editor as ed
+        import pharos_engine.ui.editor as ed
         assert "NotebookMenuBar" in ed.__all__
         i_me = ed.__all__.index("NotebookMaterialEditor")
         i_mb = ed.__all__.index("NotebookMenuBar")
@@ -260,7 +260,7 @@ class TestEditorRegistration:
         assert i_me < i_mb < i_ml
 
     def test_lazy_map_contains_module_path(self):
-        from slappyengine.ui.editor import _LAZY_MAP
+        from pharos_engine.ui.editor import _LAZY_MAP
         assert _LAZY_MAP["NotebookMenuBar"] == ".notebook_menu_bar"
 
 
@@ -325,7 +325,7 @@ class TestCategoryPartition:
             ("spawn.rope", "Rope", "spawn"),
         ])
         bar = _make_bar(router=r)
-        from slappyengine.ui.editor.notebook_menu_bar import MENU_ORDER
+        from pharos_engine.ui.editor.notebook_menu_bar import MENU_ORDER
         for cat in MENU_ORDER:
             if cat == "help":
                 # Help has no direct actions in this fixture — skip.
@@ -573,7 +573,7 @@ class TestEmptyRegistry:
     def test_empty_router_yields_stable_groups(self):
         bar = _make_bar(router=ToolRouter())
         groups = bar.groups()
-        from slappyengine.ui.editor.notebook_menu_bar import MENU_ORDER
+        from pharos_engine.ui.editor.notebook_menu_bar import MENU_ORDER
         # All canonical categories still present.
         cats = [g.category for g in groups]
         assert cats == list(MENU_ORDER)
@@ -725,7 +725,7 @@ class TestBuild:
 
 class TestCategoryCount:
     def test_eight_canonical_categories(self):
-        from slappyengine.ui.editor.notebook_menu_bar import MENU_ORDER
+        from pharos_engine.ui.editor.notebook_menu_bar import MENU_ORDER
         assert len(MENU_ORDER) == 8
 
     def test_groups_return_eight_entries(self):
@@ -741,23 +741,23 @@ class TestCategoryCount:
 
 class TestFormatShortcut:
     def test_none_returns_empty(self):
-        from slappyengine.ui.editor.notebook_menu_bar import format_shortcut
+        from pharos_engine.ui.editor.notebook_menu_bar import format_shortcut
         assert format_shortcut(None) == ""
 
     def test_empty_returns_empty(self):
-        from slappyengine.ui.editor.notebook_menu_bar import format_shortcut
+        from pharos_engine.ui.editor.notebook_menu_bar import format_shortcut
         assert format_shortcut("") == ""
 
     def test_single_key(self):
-        from slappyengine.ui.editor.notebook_menu_bar import format_shortcut
+        from pharos_engine.ui.editor.notebook_menu_bar import format_shortcut
         assert format_shortcut("ctrl+s") == "Ctrl+S"
 
     def test_multi_chord(self):
-        from slappyengine.ui.editor.notebook_menu_bar import format_shortcut
+        from pharos_engine.ui.editor.notebook_menu_bar import format_shortcut
         assert format_shortcut("ctrl+x ctrl+s") == "Ctrl+X Ctrl+S"
 
     def test_function_key(self):
-        from slappyengine.ui.editor.notebook_menu_bar import format_shortcut
+        from pharos_engine.ui.editor.notebook_menu_bar import format_shortcut
         assert format_shortcut("f1") == "F1"
 
 
@@ -768,7 +768,7 @@ class TestFormatShortcut:
 
 class TestRealRegistry:
     def test_real_registry_populates_every_menu(self):
-        from slappyengine.tool_router import REGISTRY
+        from pharos_engine.tool_router import REGISTRY
         bar = _make_bar(router=REGISTRY)
         groups = {g.category: g for g in bar.groups()}
         # Every canonical category with real actions should be populated.
@@ -783,7 +783,7 @@ class TestRealRegistry:
         assert len(groups["help"]) >= 1
 
     def test_help_alias_includes_editor_help(self):
-        from slappyengine.tool_router import REGISTRY
+        from pharos_engine.tool_router import REGISTRY
         bar = _make_bar(router=REGISTRY)
         help_group = next(g for g in bar.groups() if g.category == "help")
         assert any(i.action_id == "editor.help" for i in help_group.items)

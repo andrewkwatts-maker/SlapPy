@@ -15,7 +15,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from slappyengine.physics.particle_field import (
+from pharos_engine.physics.particle_field import (
     ParticleField,
     SAND_MAT,
 )
@@ -160,7 +160,7 @@ def test_drill_cpu_gpu_parity():
     * BULLET_MAT has drill_eject_gain=0 so no ejecta spawn — keeps
       RNG-dependent paths out of the test.
     """
-    from slappyengine.physics.particle_field import (
+    from pharos_engine.physics.particle_field import (
         ParticleField, Material,
     )
 
@@ -423,7 +423,7 @@ def test_thermal_step_cpu_gpu_parity():
     DT = 1.0 / 60.0
     for _ in range(5):
         cpu._thermal_step(DT)
-        from slappyengine.physics.particle_gpu import gpu_thermal_step
+        from pharos_engine.physics.particle_gpu import gpu_thermal_step
         gpu_thermal_step(gpu, DT)
 
     np.testing.assert_allclose(
@@ -610,7 +610,7 @@ def test_detach_isolated_pixels_cpu_gpu_parity():
     kernel exactly; both should detach the FIVE non-fixed lone pixels
     and nothing else.
     """
-    from slappyengine.physics.particle_gpu import (
+    from pharos_engine.physics.particle_gpu import (
         gpu_detach_isolated_pixels,
         _numpy_detach_isolated_pixels,
         is_gpu_detach_available,

@@ -3,9 +3,9 @@
 Asserts the generated doc is in sync with the actual public surface:
 
 * the doc file exists,
-* every name in :data:`slappyengine.__all__` is mentioned,
+* every name in :data:`pharos_engine.__all__` is mentioned,
 * every subpackage in the ``_subpackages`` set inside
-  ``slappyengine.__init__.__getattr__`` is mentioned,
+  ``pharos_engine.__init__.__getattr__`` is mentioned,
 * the four required section headers are present.
 
 If the doc drifts, run::
@@ -23,11 +23,11 @@ from pathlib import Path
 
 import pytest
 
-import slappyengine
+import pharos_engine
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DOC_PATH = REPO_ROOT / "docs" / "engine_surface_v030.md"
-INIT_PATH = REPO_ROOT / "python" / "slappyengine" / "__init__.py"
+INIT_PATH = REPO_ROOT / "python" / "pharos_engine" / "__init__.py"
 
 
 def _read_subpackages_from_init() -> set[str]:
@@ -78,7 +78,7 @@ def test_doc_has_required_headers(doc_text: str) -> None:
 def test_doc_mentions_every_top_level_name(doc_text: str) -> None:
     """Every entry in ``__all__`` must appear in the doc."""
     missing = []
-    for name in sorted(slappyengine.__all__):
+    for name in sorted(pharos_engine.__all__):
         # Match the name as a backticked code span so we don't false-positive
         # on substring matches (e.g. ``Layer`` inside ``Layer2D``).
         pattern = re.compile(rf"`{re.escape(name)}`")
@@ -93,7 +93,7 @@ def test_doc_mentions_every_subpackage(doc_text: str) -> None:
     assert subs, "no subpackages discovered — generator/test out of sync"
     missing = []
     for name in sorted(subs):
-        pattern = re.compile(rf"`slappyengine\.{re.escape(name)}`")
+        pattern = re.compile(rf"`pharos_engine\.{re.escape(name)}`")
         if not pattern.search(doc_text):
             missing.append(name)
     assert not missing, f"subpackages missing from doc: {missing}"
@@ -106,9 +106,9 @@ def test_every_all_name_resolves() -> None:
     contract is silently incomplete. Flag them loudly.
     """
     failures: list[tuple[str, str]] = []
-    for name in sorted(slappyengine.__all__):
+    for name in sorted(pharos_engine.__all__):
         try:
-            getattr(slappyengine, name)
+            getattr(pharos_engine, name)
         except Exception as exc:  # pragma: no cover - diagnostic
             failures.append((name, f"{type(exc).__name__}: {exc}"))
     assert not failures, f"unresolvable __all__ names: {failures}"

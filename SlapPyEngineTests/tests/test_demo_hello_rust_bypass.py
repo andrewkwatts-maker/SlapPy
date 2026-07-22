@@ -1,6 +1,6 @@
 """Tests for the ``examples/hello_rust_bypass.py`` demo (PP7 sprint).
 
-The demo is only meaningful when the compiled ``slappyengine._core``
+The demo is only meaningful when the compiled ``pharos_engine._core``
 extension is present — on a bare source install without maturin, the
 whole test file is skipped via :func:`pytest.importorskip` at the top.
 
@@ -31,7 +31,7 @@ import pytest
 # assertion below assumes _core is importable.
 # ---------------------------------------------------------------------------
 
-pytest.importorskip("slappyengine._core")
+pytest.importorskip("pharos_engine._core")
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]

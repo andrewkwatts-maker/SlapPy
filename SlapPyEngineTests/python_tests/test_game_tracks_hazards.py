@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 sys.modules.setdefault("wgpu", MagicMock())
-sys.modules.setdefault("slappyengine.compute.asset_compute", MagicMock())
+sys.modules.setdefault("pharos_engine.compute.asset_compute", MagicMock())
 
 _GAME_ROOT = Path(__file__).parent.parent.parent.parent.parent / "DaedalusSVN" / "Ochema Circuit"
 _GAME_STR = str(_GAME_ROOT)
@@ -161,13 +161,13 @@ class TestAcidPool:
         assert a.damage_rate > 0.0
 
     def test_custom_size(self):
-        from slappyengine.collision import AABBShape
+        from pharos_engine.collision import AABBShape
         a = self._a(width=60, height=30)
         assert a.collision_shape.width == 60
         assert a.collision_shape.height == 30
 
     def test_has_collision_shape(self):
-        from slappyengine.collision import AABBShape
+        from pharos_engine.collision import AABBShape
         a = self._a()
         assert isinstance(a.collision_shape, AABBShape)
 
@@ -208,7 +208,7 @@ class TestTurretRaider:
         assert t.hp > 0.0
 
     def test_has_collision_shape(self):
-        from slappyengine.collision import AABBShape
+        from pharos_engine.collision import AABBShape
         t = self._t()
         assert isinstance(t.collision_shape, AABBShape)
 
@@ -246,7 +246,7 @@ class TestTurretRaider:
         assert t.hp == 0.0
 
     def test_take_hit_triggers_destroyed_event_when_scene(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         t = self._t()
         t.position = (0.0, 0.0)
         scene = MagicMock()
@@ -359,7 +359,7 @@ class TestFallingSkyscraper:
 
     def test_collapse_changes_collision_shape(self):
         import yaml
-        from slappyengine.collision import AABBShape
+        from pharos_engine.collision import AABBShape
         cfg = yaml.safe_load((_GAME_ROOT / "config.yml").read_text())["track"]
         collapse_time = cfg["skyscraper_collapse_time"]
         f = self._f()
@@ -414,7 +414,7 @@ class TestVehicleEntityInit:
             assert v is not None
 
     def test_observable_mixin(self):
-        from slappyengine.event_bus import Observable
+        from pharos_engine.event_bus import Observable
         from entities.vehicle import VehicleEntity
         assert issubclass(VehicleEntity, Observable)
 
@@ -493,7 +493,7 @@ class TestVehicleEntityObservable:
         return VehicleEntity(driver_id=0)
 
     def test_speed_is_tracked_attr(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         v = self._v()
         received = []
         h = subscribe("VehicleEntity.speed", lambda e: received.append(e))
@@ -502,7 +502,7 @@ class TestVehicleEntityObservable:
         assert len(received) >= 1
 
     def test_throttle_is_tracked_attr(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         v = self._v()
         received = []
         h = subscribe("VehicleEntity.throttle", lambda e: received.append(e))
@@ -511,7 +511,7 @@ class TestVehicleEntityObservable:
         assert len(received) >= 1
 
     def test_hull_integrity_is_tracked_attr(self):
-        from slappyengine.event_bus import subscribe, unsubscribe
+        from pharos_engine.event_bus import subscribe, unsubscribe
         v = self._v()
         received = []
         h = subscribe("VehicleEntity.hull_integrity", lambda e: received.append(e))

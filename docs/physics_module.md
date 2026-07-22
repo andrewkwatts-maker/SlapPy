@@ -1,4 +1,4 @@
-# Physics Module — `slappyengine.physics`
+# Physics Module — `pharos_engine.physics`
 
 Entry point for the hierarchical-hull per-pixel physics module.
 
@@ -10,23 +10,23 @@ Entry point for the hierarchical-hull per-pixel physics module.
 ## 1. Quickstart
 
 Drop a steel ball onto a stone floor, run 90 frames, write a GIF.
-Every symbol below is re-exported from `slappyengine.physics`.
+Every symbol below is re-exported from `pharos_engine.physics`.
 
 ```python
 from pathlib import Path
 
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld,
     make_circle_silhouette,
     make_rect_silhouette,
 )
-from slappyengine.physics.render import (
+from pharos_engine.physics.render import (
     PhysicsRenderer,
     RenderConfig,
     render_world_gif,
 )
-from slappyengine.physics.particles import ParticleSystem
-from slappyengine.physics.debug_hud import DebugHUD
+from pharos_engine.physics.particles import ParticleSystem
+from pharos_engine.physics.debug_hud import DebugHUD
 
 world = PhysicsWorld(world_bounds=(-200.0, -100.0, 200.0, 250.0))
 
@@ -101,7 +101,7 @@ Materials are the **source of truth** for every coefficient the kernel
 multiplies into stress, strain, heat, and fracture. Swap a material to
 swap the body's full mechanical character; the simulator never changes.
 
-Resolve a material via `slappyengine.deform_modes.cell_material_for(name)`
+Resolve a material via `pharos_engine.deform_modes.cell_material_for(name)`
 or pass the name string directly to `world.create_body(..., material=...)`.
 
 | Name           | Character                                         | Key params |
@@ -139,10 +139,10 @@ public rigid state on `HullTree` (position, velocity, angle, omega).
 The solver respects `config.physics.constraints.enabled`.
 
 ```python
-from slappyengine.physics import (
+from pharos_engine.physics import (
     PhysicsWorld, make_circle_silhouette, make_rect_silhouette,
 )
-from slappyengine.physics.constraints import (
+from pharos_engine.physics.constraints import (
     ConstraintSolver, PinConstraint, DistanceConstraint, WeldConstraint,
 )
 
@@ -204,19 +204,19 @@ Top-level sections (each maps to a dataclass on `PhysicsYaml`):
 | `boundary_exchange:` | Cross-seam heat conduction (`enabled`, `strip_depth`)                   |
 | `profile:`           | Hardware preset overlay — `desktop | mobile | web | high_end | auto`    |
 | `memory:`            | Hard caps: `max_bodies`, `max_cell_pool_slots`, `max_particle_count`    |
-| `media:`             | Default `fps`, `quality`, GIF palette size for `slappyengine.media`     |
+| `media:`             | Default `fps`, `quality`, GIF palette size for `pharos_engine.media`     |
 
 Apply a profile programmatically:
 
 ```python
-from slappyengine.physics import load_with_profile, PROFILE_MOBILE
+from pharos_engine.physics import load_with_profile, PROFILE_MOBILE
 world_yaml = load_with_profile(profile=PROFILE_MOBILE)
 ```
 
 Enforce the `memory:` caps:
 
 ```python
-from slappyengine.physics import MemoryBudget
+from pharos_engine.physics import MemoryBudget
 budget = MemoryBudget.from_config()
 budget.check(bodies=len(world.bodies),
              cell_slots=world.cell_pool.in_use_count)
@@ -253,7 +253,7 @@ Performance (RTX 3070 Ti, wgpu 0.31, 60-frame median):
 - Headline medians from `benchmarks/run_benchmarks.py`: solo drop
   0.18 ms, fifty-body 7.83 ms, idle-settled 1.36 ms.
 
-Profiling harness: `slappyengine.physics.profile.run_benchmark(...)`
+Profiling harness: `pharos_engine.physics.profile.run_benchmark(...)`
 and `baseline_scenarios()`.
 
 ---

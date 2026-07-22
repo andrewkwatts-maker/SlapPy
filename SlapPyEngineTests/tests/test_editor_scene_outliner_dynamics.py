@@ -76,12 +76,12 @@ def stub_dearpygui(monkeypatch):
 # ---------------------------------------------------------------------------
 
 try:
-    from slappyengine.ui.editor.scene_outliner import (  # noqa: F401
+    from pharos_engine.ui.editor.scene_outliner import (  # noqa: F401
         SceneOutliner,
         _is_humanoid_body,
     )
-    from slappyengine.dynamics.world import World as _DynWorld  # noqa: F401
-    from slappyengine.dynamics.body import Body as _Body  # noqa: F401
+    from pharos_engine.dynamics.world import World as _DynWorld  # noqa: F401
+    from pharos_engine.dynamics.body import Body as _Body  # noqa: F401
 except Exception as _import_err:  # pragma: no cover
     pytest.skip(
         f"scene_outliner or dynamics not importable: {_import_err}",
@@ -99,7 +99,7 @@ def _spawn_rope(world):
     Resolves through the public spawn-menu surface so the test exercises the
     same code path the editor's ``+ Add`` button would.
     """
-    from slappyengine.ui.editor.spawn_menu import (
+    from pharos_engine.ui.editor.spawn_menu import (
         SPAWN_ACTIONS,
         _resolve_factory,
         _spec_to_kwargs,
@@ -118,7 +118,7 @@ def _spawn_rope(world):
 class TestEmptyWorld:
     def test_empty_world_has_no_rows(self):
         """Zero bodies + zero joints → empty enumeration (nothing to draw)."""
-        from slappyengine.dynamics.world import World
+        from pharos_engine.dynamics.world import World
 
         outliner = SceneOutliner()
         outliner.set_dynamics_world(World())
@@ -138,7 +138,7 @@ class TestEmptyWorld:
 class TestSingleRope:
     def test_single_rope_top_level_groups(self):
         """Spawning one rope yields the 3-row spine: World / Bodies / Joints."""
-        from slappyengine.dynamics.world import World
+        from pharos_engine.dynamics.world import World
 
         world = World()
         rope_body = _spawn_rope(world)
@@ -171,7 +171,7 @@ class TestSingleRope:
 
     def test_joints_are_grouped_by_kind(self):
         """Joints sub-tree groups identical ``kind`` values together."""
-        from slappyengine.dynamics.world import World
+        from pharos_engine.dynamics.world import World
 
         world = World()
         _spawn_rope(world)
@@ -196,8 +196,8 @@ class TestHumanoidBody:
     def _world_with_humanoid_body(self):
         """Construct a dynamics world holding a humanoid-tagged Body."""
         import numpy as np
-        from slappyengine.dynamics.world import World
-        from slappyengine.dynamics.body import Body
+        from pharos_engine.dynamics.world import World
+        from pharos_engine.dynamics.body import Body
 
         world = World()
         # The 15-node humanoid skeleton (pelvis + neck + head + 2 arms of 3
@@ -236,7 +236,7 @@ class TestHumanoidBody:
 
     def test_humanoid_helper_predicate(self):
         """``_is_humanoid_body`` matches both tag and kind conventions."""
-        from slappyengine.dynamics.body import Body
+        from pharos_engine.dynamics.body import Body
 
         tagged = Body(kind="ragdoll", parameters={"humanoid": True})
         kinded = Body(kind="humanoid", parameters={})
@@ -254,7 +254,7 @@ class TestHumanoidBody:
 class TestSelectionCallback:
     def test_select_callback_fires_with_body_ref(self):
         """`_on_select_dynamics` invokes the registered on-select hook."""
-        from slappyengine.dynamics.world import World
+        from pharos_engine.dynamics.world import World
 
         world = World()
         rope_body = _spawn_rope(world)
@@ -273,7 +273,7 @@ class TestSelectionCallback:
 
     def test_select_callback_fires_with_joint_ref(self):
         """Joint clicks also route through the standard hook."""
-        from slappyengine.dynamics.world import World
+        from pharos_engine.dynamics.world import World
 
         world = World()
         _spawn_rope(world)

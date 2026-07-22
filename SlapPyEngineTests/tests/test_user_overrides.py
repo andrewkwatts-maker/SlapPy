@@ -1,4 +1,4 @@
-"""Tests for :mod:`slappyengine.ui.user_overrides`.
+"""Tests for :mod:`pharos_engine.ui.user_overrides`.
 
 Verifies the brief's contract:
 
@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from slappyengine.ui.user_overrides import (
+from pharos_engine.ui.user_overrides import (
     UserOverrideBundle,
     UserOverrideLoader,
     _CONFIG_DEFAULTS,
@@ -34,7 +34,7 @@ from slappyengine.ui.user_overrides import (
 
 @pytest.fixture()
 def loader(tmp_path: Path) -> UserOverrideLoader:
-    """A loader rooted at a tmp path (never touches ``~/.slappyengine``)."""
+    """A loader rooted at a tmp path (never touches ``~/.pharos_engine``)."""
     return UserOverrideLoader(root=tmp_path / "ui")
 
 
@@ -57,10 +57,10 @@ def test_bundle_defaults_empty() -> None:
     }
 
 
-def test_default_root_is_home_dot_slappyengine_ui() -> None:
-    """Loader without explicit root points at ``~/.slappyengine/ui``."""
+def test_default_root_is_home_dot_pharos_engine_ui() -> None:
+    """Loader without explicit root points at ``~/.pharos_engine/ui``."""
     loader = UserOverrideLoader()
-    assert loader.root == Path.home() / ".slappyengine" / "ui"
+    assert loader.root == Path.home() / ".pharos_engine" / "ui"
 
 
 def test_root_override_respected(tmp_path: Path) -> None:

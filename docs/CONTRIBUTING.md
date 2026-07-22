@@ -20,8 +20,8 @@ landed through v0.3.0b0; new public surfaces follow the same shape.
 
 | Module                                          | Owns                                                                  |
 |-------------------------------------------------|------------------------------------------------------------------------|
-| `slappyengine._validation`                      | Shared canonical helpers (`validate_str`, `validate_finite_float`, `validate_positive_int`, `validate_finite_2tuple`, `validate_bool`, `validate_callback`, `validate_path`, …). |
-| `slappyengine._<module>_validation.py`          | Domain-specific validators that build on the shared helpers (`validate_event_type`, `validate_joint`, `validate_layer_mode`, …). |
+| `pharos_engine._validation`                      | Shared canonical helpers (`validate_str`, `validate_finite_float`, `validate_positive_int`, `validate_finite_2tuple`, `validate_bool`, `validate_callback`, `validate_path`, …). |
+| `pharos_engine._<module>_validation.py`          | Domain-specific validators that build on the shared helpers (`validate_event_type`, `validate_joint`, `validate_layer_mode`, …). |
 
 The shared helpers enforce canonical rules across the whole engine:
 
@@ -38,14 +38,14 @@ The shared helpers enforce canonical rules across the whole engine:
 
 ```python
 # Shared canonical helpers — always prefer these
-from slappyengine._validation import (
+from pharos_engine._validation import (
     validate_finite_float,
     validate_str,
     validate_callback,
 )
 
 # Domain-specific helpers — only when no shared equivalent exists
-from slappyengine._event_bus_validation import validate_event_type
+from pharos_engine._event_bus_validation import validate_event_type
 ```
 
 If a new shared check is broadly applicable, add it to `_validation.py`
@@ -57,7 +57,7 @@ Validators are called *exactly once* at the outermost public method.
 Internal helpers trust their inputs.
 
 ```python
-# python/slappyengine/event_bus.py (excerpt)
+# python/pharos_engine/event_bus.py (excerpt)
 class EventBus:
     def subscribe(self, event_type: str, callback) -> None:
         event_type = validate_event_type("event_type", "EventBus.subscribe", event_type)
@@ -105,7 +105,7 @@ introduce a `_DEBUG_VALIDATE` skip flag.
   The generator skips files with that marker. The conformance test
   `SlapPyEngineTests/tests/test_docs_api_template_conformance.py` asserts every
   hand-authored doc starts with the marker, carries an H1 of the form
-  `# slappyengine.<X> — API Reference`, and includes at least one of
+  `# pharos_engine.<X> — API Reference`, and includes at least one of
   `## Overview`, `## Public surface`, `## Usage`.
 
 The full template lives at `docs/api/_template.md` and documents the
@@ -169,12 +169,12 @@ PYTHONPATH=python python -m pytest tests/test_docs*.py --no-header -q
 
 ## Adding a post-process pass
 
-`slappyengine.post_process` uses a declarative base class
+`pharos_engine.post_process` uses a declarative base class
 (`PostProcessPassBase`) that centralises config loading, UBO packing,
 and chain wiring. New passes follow this skeleton:
 
 ```python
-# python/slappyengine/post_process/<pass_name>.py
+# python/pharos_engine/post_process/<pass_name>.py
 from typing import ClassVar
 from ._pass_base import PostProcessPassBase
 from ._ubo import UboField

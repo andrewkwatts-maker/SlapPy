@@ -1,7 +1,7 @@
 """Humanoid factory smoke + invariants.
 
 Covers ``build_humanoid``, ``build_flesh_wrap``, ``place_feet_on_terrain``
-against ``slappyengine.softbody.SoftBodyWorld`` — the same world type
+against ``pharos_engine.softbody.SoftBodyWorld`` — the same world type
 the four humanoid examples and ``test_vis_humanoid_destruction.py`` use.
 """
 from __future__ import annotations
@@ -10,7 +10,7 @@ import math
 
 import numpy as np
 
-from slappyengine.dynamics import (
+from pharos_engine.dynamics import (
     Humanoid,
     LAYER_BONE,
     LAYER_MUSCLE,
@@ -19,7 +19,7 @@ from slappyengine.dynamics import (
     place_feet_on_terrain,
     build_flesh_wrap,
 )
-from slappyengine.softbody import SoftBodyWorld, step
+from pharos_engine.softbody import SoftBodyWorld, step
 
 
 def _bare_world() -> SoftBodyWorld:

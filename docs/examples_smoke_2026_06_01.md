@@ -6,7 +6,7 @@ The v1 audit at `docs/examples_smoke_2026_05_31.md` (commit `8bc56fd`) recorded
 41/47 GREEN with 4 humanoid demos blocked at import time and 2 demos
 (`hello_gi.py`, `ik_skeleton_demo.py`) failing at runtime. Since then,
 Sprint 2A (`f0facb9`) restored `make_humanoid` / `wrap_in_flesh` /
-`place_feet_on_terrain` in `slappyengine.dynamics`, Sprint 2B (`4edb294`)
+`place_feet_on_terrain` in `pharos_engine.dynamics`, Sprint 2B (`4edb294`)
 restored `SVGFDenoiser.reset_history`, Sprint 2C (`f0e9a40`) added
 `Engine.run(max_frames=N)` so pure event-loop demos can now be driven end-to-end
 in-process, Sprint 4G (`2f7028d`) polished `hello_ragdoll`, and Sprint 5G
@@ -82,7 +82,7 @@ Categories: **GREEN** / **RUNTIME_ERROR** / **IMPORT_MISSING_OTHER** /
 | humanoid_ik_terrain_demo.py | GREEN | NEWLY GREEN. `--frames 5`; writes `SlapPyEngineExamples/examples/output/humanoid/humanoid_ik_terrain.gif` (Sprint 5G polish). Fixed by Sprint 2A `place_feet_on_terrain`. |
 | humanoid_standing_demo.py | GREEN | NEWLY GREEN. No-args; pose head y=1.840 pelvis y=2.550 ankle_l y=3.500. Fixed by Sprint 2A `make_humanoid` + `place_feet_on_terrain`. |
 | humanoid_walking_demo.py | GREEN | NEWLY GREEN. No-args; writes `SlapPyEngineExamples/examples/output/humanoid/humanoid_walking.gif`. Fixed by Sprint 2A. |
-| ik_skeleton_demo.py | IMPORT_MISSING_OTHER | STILL BROKEN, NEW FAILURE MODE. `ImportError: cannot import name 'make_distance' from 'slappyengine.dynamics'` at `ik_skeleton_demo.py:23`. Also imports `resolve_joint_specs`, also absent. In v1 the demo got past import but died at runtime on `SoftBodyWorld.positions`; the public `slappyengine.dynamics` surface has since been narrowed (current public names: `Body, BoneSpec, Humanoid, IKChainSpec, JointSpec, Material, MotorSpec, RagdollSpec, RopeSpec, SoftBodyWorld, SpringSpec, World, build_ragdoll, build_rope, make_humanoid, make_motor, make_spring, place_feet_on_terrain, resolve_joint, save_world, load_world, solve_ik, wrap_in_flesh, world_from_dict, world_to_dict`). Re-export `make_distance` and `resolve_joint_specs` to land this demo. |
+| ik_skeleton_demo.py | IMPORT_MISSING_OTHER | STILL BROKEN, NEW FAILURE MODE. `ImportError: cannot import name 'make_distance' from 'pharos_engine.dynamics'` at `ik_skeleton_demo.py:23`. Also imports `resolve_joint_specs`, also absent. In v1 the demo got past import but died at runtime on `SoftBodyWorld.positions`; the public `pharos_engine.dynamics` surface has since been narrowed (current public names: `Body, BoneSpec, Humanoid, IKChainSpec, JointSpec, Material, MotorSpec, RagdollSpec, RopeSpec, SoftBodyWorld, SpringSpec, World, build_ragdoll, build_rope, make_humanoid, make_motor, make_spring, place_feet_on_terrain, resolve_joint, save_world, load_world, solve_ik, wrap_in_flesh, world_from_dict, world_to_dict`). Re-export `make_distance` and `resolve_joint_specs` to land this demo. |
 | landscape_demo.py | GREEN | `Engine.run(max_frames=5)`; landscape streamer initialised. |
 | layered_character.py | GREEN | `Engine.run(max_frames=5)`; warrior tick wired. |
 | layered_creature_drop.py | GREEN | No-args; writes `creature_drop.gif`; centroid drift 1.173. |
@@ -126,7 +126,7 @@ Both are GPU pipeline bugs that were latent in v1 and are now exposed by
 Sprint 2C's real-frame `Engine.run(max_frames=N)` path. v1's audit
 patched `Engine.run` to a no-op, so the GPU mesh pipeline was never
 built. With max_frames driving real draws, the pipeline-layout mismatch
-in `python/slappyengine/gpu/mesh_pipeline.py:124` surfaces.
+in `python/pharos_engine/gpu/mesh_pipeline.py:124` surfaces.
 
 | Example | v1 | v2 | Root cause |
 |---|---|---|---|
@@ -137,12 +137,12 @@ in `python/slappyengine/gpu/mesh_pipeline.py:124` surfaces.
 
 | Example | v1 | v2 |
 |---|---|---|
-| ik_skeleton_demo.py | RUNTIME_ERROR at `dynamics/joint.py:177` (`SoftBodyWorld.positions`) | IMPORT_MISSING_OTHER — `make_distance` and `resolve_joint_specs` no longer in `slappyengine.dynamics` public API. |
+| ik_skeleton_demo.py | RUNTIME_ERROR at `dynamics/joint.py:177` (`SoftBodyWorld.positions`) | IMPORT_MISSING_OTHER — `make_distance` and `resolve_joint_specs` no longer in `pharos_engine.dynamics` public API. |
 
 ## Action items for Sprint 2D / 3
 
 1. **Restore `make_distance` and `resolve_joint_specs` in
-   `slappyengine.dynamics.__init__`.** Both names were used by
+   `pharos_engine.dynamics.__init__`.** Both names were used by
    `ik_skeleton_demo.py` and presumably by external callers; the
    internal `dynamics/joint.py` module still has the underlying logic.
 2. **Fix `gpu/mesh_pipeline.py:124` shader binding layout.** The

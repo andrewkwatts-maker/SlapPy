@@ -9,7 +9,7 @@ Pins six behaviours of the trigger-zone demo:
    gets lost or double-counted by the manager.
 5. Every entity position emitted by the path closed-form is finite.
 6. The rendered arena reproduces a stable golden master via
-   :func:`slappyengine.testing.assert_scene_matches`.
+   :func:`pharos_engine.testing.assert_scene_matches`.
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from slappyengine.testing import assert_scene_matches
+from pharos_engine.testing import assert_scene_matches
 
 # ── Load the demo as a module so we don't depend on examples/ being on path ──
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -150,7 +150,7 @@ def test_hello_zone_no_nan(demo):
 def test_hello_zone_visual_baseline(demo):
     """Render the arena and diff against the committed baseline PNG.
 
-    First run writes ``python/slappyengine/testing/baselines/hello_zone.png``
+    First run writes ``python/pharos_engine/testing/baselines/hello_zone.png``
     and passes; subsequent runs require a max per-channel diff <= 0.05.
     """
     manager, _records = demo.build_manager()

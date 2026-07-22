@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.softbody import (
+from pharos_engine.softbody import (
     MATERIALS,
     SoftBodyRenderer,
     SoftBodyWorld,
@@ -91,7 +91,7 @@ def test_layered_creature_renders_three_layers():
         radii=[0.10, 0.20, 0.30],
         position=(0.0, 0.0),
     )
-    from slappyengine.softbody import SoftBodyRenderConfig
+    from pharos_engine.softbody import SoftBodyRenderConfig
     # This test inspects the *per-layer* render colours (bone/muscle/skin).
     # The flat-colour skin fill only paints the outermost layer, so we
     # disable it and opt the per-beam + per-node wireframe back on so

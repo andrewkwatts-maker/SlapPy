@@ -1,11 +1,11 @@
-"""Tests for slappyengine.physics.profiles."""
+"""Tests for pharos_engine.physics.profiles."""
 from __future__ import annotations
 
 import copy
 
 import pytest
 
-from slappyengine.physics.profiles import (
+from pharos_engine.physics.profiles import (
     BUILTIN_PROFILES,
     PROFILE_DESKTOP,
     PROFILE_HIGH_END,
@@ -17,7 +17,7 @@ from slappyengine.physics.profiles import (
     get_profile,
     load_with_profile,
 )
-from slappyengine.physics.world import PhysicsYaml, load_physics_config
+from pharos_engine.physics.world import PhysicsYaml, load_physics_config
 
 
 def test_all_4_builtins_exist():
@@ -95,7 +95,7 @@ def test_auto_detect_respects_env_override(monkeypatch):
 def test_yaml_profile_section_parses():
     """The shipped physics.yml exposes a profile.active entry."""
     import yaml
-    from slappyengine.physics.world import _find_physics_yml
+    from pharos_engine.physics.world import _find_physics_yml
 
     path = _find_physics_yml()
     assert path is not None, "config/physics.yml must be discoverable"

@@ -1,4 +1,4 @@
-"""Tests for slappyengine.topology — connected components on arbitrary graphs."""
+"""Tests for pharos_engine.topology — connected components on arbitrary graphs."""
 from __future__ import annotations
 
 import warnings
@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.topology import (
+from pharos_engine.topology import (
     BACKGROUND_LABEL,
     connected_components,
     connected_components_grid,

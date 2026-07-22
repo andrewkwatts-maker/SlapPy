@@ -1,6 +1,6 @@
 ## studio Quickstart
 
-A 5-minute tour of `slappyengine.studio` — the high-level scene-scaffolding
+A 5-minute tour of `pharos_engine.studio` — the high-level scene-scaffolding
 helpers that wrap the rebuild physics stack (softbody + fluid + dynamics) into
 ~15-line demos. Every helper here is additive sugar: drop down to the raw
 `SoftBodyWorld` / `FluidWorld` APIs whenever you outgrow it.
@@ -35,8 +35,8 @@ A brittle stone cube dropped from height shatters on impact. The
 and `plasticity_rate == 0`, so beams snap cleanly past their break threshold.
 
 ```python
-from slappyengine.softbody import make_lattice_body
-from slappyengine.studio import softbody_stage, record
+from pharos_engine.softbody import make_lattice_body
+from pharos_engine.studio import softbody_stage, record
 
 stage = softbody_stage(view_box=(-1.6, 1.0, 1.6, 5.3),
                        width=320, height=240,
@@ -59,7 +59,7 @@ A small column of water dropped into a walled basin. `pool=` is forwarded to
 `FluidWorld.add_block_of_particles`.
 
 ```python
-from slappyengine.studio import fluid_stage, record
+from pharos_engine.studio import fluid_stage, record
 
 stage = fluid_stage(view_box=(-1.6, 2.0, 1.6, 5.3),
                     width=384, height=288,
@@ -80,9 +80,9 @@ pool plus an empty softbody world; the buoyancy hook applies per-node
 Archimedes upthrust each frame.
 
 ```python
-from slappyengine.fluid import apply_fluid_buoyancy
-from slappyengine.softbody import make_lattice_body
-from slappyengine.studio import Stage, fluid_with_softbody_stage, record
+from pharos_engine.fluid import apply_fluid_buoyancy
+from pharos_engine.softbody import make_lattice_body
+from pharos_engine.studio import Stage, fluid_with_softbody_stage, record
 
 stage = fluid_with_softbody_stage(
     view_box=(-2.0, 2.0, 2.0, 6.2), width=480, height=320,
@@ -118,8 +118,8 @@ zero, contact off, and the floor far below, so the user fully controls poses
 each frame.
 
 ```python
-from slappyengine.dynamics import make_humanoid, place_feet_on_terrain
-from slappyengine.studio import humanoid_stage, record
+from pharos_engine.dynamics import make_humanoid, place_feet_on_terrain
+from pharos_engine.studio import humanoid_stage, record
 
 stage = humanoid_stage(view_box=(-1.2, 0.0, 1.2, 4.0),
                        width=320, height=400)
@@ -146,7 +146,7 @@ Every builder returns a `BodyMeta` (or `HumanoidSkeleton`) whose helpers
 are the chainable duals of the module-level functions:
 
 ```python
-from slappyengine.softbody import SoftBodyWorld, make_lattice_body
+from pharos_engine.softbody import SoftBodyWorld, make_lattice_body
 
 world = SoftBodyWorld()
 plank = (make_lattice_body(world, "wood", width_cells=6, height_cells=1,
@@ -159,7 +159,7 @@ print(plank.node_count(), plank.beam_count())
 ```
 
 All four (`anchor` / `kick` / `translate` / `centroid`) also exist as
-module-level functions in `slappyengine.studio` that take a `node_slice`
+module-level functions in `pharos_engine.studio` that take a `node_slice`
 tuple directly — useful when operating on partial slices or composite
 bodies.
 
@@ -173,12 +173,12 @@ plain attributes:
 |---|---|
 | Set per-node mass, fixed flag, or damping | `stage.world.nodes.mass[i]`, `.fixed[i]`, `.damping[i]` |
 | Add custom beam constraints | `stage.world.beams.append(...)` |
-| Step the world yourself | `slappyengine.softbody.step(world, dt=...)` |
-| Step a fluid world yourself | `slappyengine.fluid.pbf_step(fluid)` |
+| Step the world yourself | `pharos_engine.softbody.step(world, dt=...)` |
+| Step a fluid world yourself | `pharos_engine.fluid.pbf_step(fluid)` |
 | Add particles at runtime | `stage.fluid.add_block_of_particles(material, ...)` |
-| Build vehicles / ropes / ragdolls | `slappyengine.softbody.build_vehicle`, `slappyengine.dynamics.make_rope`, `slappyengine.dynamics.make_ragdoll` |
-| Apply motor torque to a joint | `slappyengine.dynamics.apply_motor` |
-| Solve a kinematic IK chain | `slappyengine.dynamics.solve_ik` |
+| Build vehicles / ropes / ragdolls | `pharos_engine.softbody.build_vehicle`, `pharos_engine.dynamics.make_rope`, `pharos_engine.dynamics.make_ragdoll` |
+| Apply motor torque to a joint | `pharos_engine.dynamics.apply_motor` |
+| Solve a kinematic IK chain | `pharos_engine.dynamics.solve_ik` |
 
 `record(...)` is also optional — it's a 20-line loop over `pre_step` →
 `softbody_step` / `pbf_step` → `post_step` → `renderer.render` →

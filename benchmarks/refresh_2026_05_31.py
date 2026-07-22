@@ -24,8 +24,8 @@ Per the sprint constraints:
 * At least 5 iterations + report median (we run 7 to give a stable
   median with two warmups discarded — for the heavier benches we ramp
   up to 10 iterations).
-* Does not touch ``python/slappyengine/softbody/`` or
-  ``python/slappyengine/fluid/`` (those directories don't exist in this
+* Does not touch ``python/pharos_engine/softbody/`` or
+  ``python/pharos_engine/fluid/`` (those directories don't exist in this
   layout — the actual Rust softbody is reached via dynamics.World).
 
 Usage::
@@ -91,9 +91,9 @@ def bench_pbf_bridge_step() -> tuple[float, float, list[float]]:
     """Scenario B medium — measures the combined snow+mud field.step.
     The PBF bridge inside particle_field.step() dominates this scenario
     (~30% share per the baseline report)."""
-    from slappyengine.physics.particle_field import ParticleField
-    from slappyengine.physics.splatter_presets import get
-    from slappyengine.physics.blast import detonate
+    from pharos_engine.physics.particle_field import ParticleField
+    from pharos_engine.physics.splatter_presets import get
+    from pharos_engine.physics.blast import detonate
 
     W, H = 640, 360
     GROUND_Y = 280
@@ -127,7 +127,7 @@ def bench_softbody_step() -> tuple[float, float, list[float]]:
     """20-node distance-joint rope, one ``World.step`` at steady-state.
     This is the same surrogate ``test_perf_no_regression.py`` uses for
     the XPBD/Rust dynamics core."""
-    from slappyengine.dynamics import JointSpec, World
+    from pharos_engine.dynamics import JointSpec, World
 
     world = World(gravity=(0.0, -9.81))
     pos = np.array([(float(i), 0.0) for i in range(20)], dtype=np.float64)
@@ -152,9 +152,9 @@ def bench_softbody_step() -> tuple[float, float, list[float]]:
 def _build_scenario_c_field():
     """Replicates scenario C from baseline_report.md (10 staggered sand
     detonates, ~10200 particles).  Returns the warmed field."""
-    from slappyengine.physics.particle_field import ParticleField
-    from slappyengine.physics.splatter_presets import get
-    from slappyengine.physics.blast import detonate
+    from pharos_engine.physics.particle_field import ParticleField
+    from pharos_engine.physics.splatter_presets import get
+    from pharos_engine.physics.blast import detonate
 
     W, H = 640, 360
     GROUND_Y = 280
@@ -191,7 +191,7 @@ def bench_kinetic_relax_gpu() -> tuple[float, float, list[float]]:
     numpy reference when wgpu isn't available — the wrapper still
     iterates 3 sub-steps internally so it captures the Sprint 3B
     sub-iter cost."""
-    from slappyengine.physics.particle_gpu import gpu_kinetic_relax
+    from pharos_engine.physics.particle_gpu import gpu_kinetic_relax
     field, dt = _build_scenario_c_field()
 
     def step():
@@ -204,7 +204,7 @@ def bench_bloom_pyramid() -> tuple[float, float, list[float]]:
     """One full pyramid stage: downsample 256x256 -> 128x128 then
     upsample back to 256x256.  Uses ``karis_clamp=False`` on the
     downsample (linear low-pass) to match the steady-state pyramid."""
-    from slappyengine.post_process.bloom import downsample_mn13, upsample_tent9
+    from pharos_engine.post_process.bloom import downsample_mn13, upsample_tent9
 
     rng = np.random.default_rng(0xB100)
     rgb = rng.random((256, 256, 3), dtype=np.float32) * 4.0  # HDR-ish
@@ -220,7 +220,7 @@ def bench_taa_resolve() -> tuple[float, float, list[float]]:
     """TAA resolve_numpy on a 128x128 frame, zero-motion path, with the
     Sprint 3D tight variance clip turned on (the post-refresh default
     in the lighting-AAAA polish work)."""
-    from slappyengine.post_process.taa import TAAPass
+    from pharos_engine.post_process.taa import TAAPass
 
     taa = TAAPass(alpha=0.1, variance_clip_gamma=1.0,
                   karis_weight=False, tight_variance_clip=True)
@@ -238,7 +238,7 @@ def bench_gtao_adaptive_radius() -> tuple[float, float, list[float]]:
     """Per-pixel ``compute_adaptive_radius`` over a 128x128 depth buffer.
     The full GTAO pass is GPU-only; this is the CPU reference for the
     Jimenez 2016 adaptive-radius helper, called once per pixel."""
-    from slappyengine.post_process.gtao import compute_adaptive_radius
+    from pharos_engine.post_process.gtao import compute_adaptive_radius
 
     rng = np.random.default_rng(0x6740)
     depth = rng.random((128, 128), dtype=np.float32) * 10.0

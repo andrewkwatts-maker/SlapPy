@@ -1,11 +1,11 @@
 <!-- handauthored: do not regenerate -->
-# slappyengine.perf — API Reference
+# pharos_engine.perf — API Reference
 
 > Hand-written reference for the `perf` subpackage — a
 > dependency-free perf regression tripwire around the
 > `hello_ragdoll` demo. Owns the run-bench + baseline-YAML + compare
 > pipeline that gates every perf sprint. Does **not** own runtime
-> profiling (see `slappyengine.diagnostics` for the App-lifecycle
+> profiling (see `pharos_engine.diagnostics` for the App-lifecycle
 > aggregator sibling reference at [`diagnostics.md`](diagnostics.md))
 > or the six-hot-path perf dashboard doc (see
 > [`../perf_dashboard.md`](../perf_dashboard.md) for the tripwire's
@@ -13,7 +13,7 @@
 
 ## Overview
 
-`slappyengine.perf` benches exactly one demo — `hello_ragdoll` —
+`pharos_engine.perf` benches exactly one demo — `hello_ragdoll` —
 with a fixed load (`world.step` at `dt = 1/60 s`, per-frame timing
 via `time.perf_counter_ns`) and compares the summary statistics
 against a YAML baseline that ships alongside the module at
@@ -32,14 +32,14 @@ default tolerance band, tagging faster-than-baseline drops beyond
 −5% as improvements.
 
 Public symbols are re-exported lazily via a module-level
-`__getattr__` — `python -m slappyengine.perf.tripwire` does not trip
+`__getattr__` — `python -m pharos_engine.perf.tripwire` does not trip
 Python's "module found in `sys.modules` before execution"
 `RuntimeWarning`.
 
 ## Public surface
 
 ```python
-from slappyengine.perf import (
+from pharos_engine.perf import (
     ComparisonReport,
     DEFAULT_BASELINE_PATH,
     PerfResult,
@@ -58,7 +58,7 @@ from slappyengine.perf import (
 
 ### `PerfResult`
 
-_dataclass — defined in `slappyengine.perf.tripwire`_
+_dataclass — defined in `pharos_engine.perf.tripwire`_
 
 One bench run's summary statistics. Every duration field is
 milliseconds; every counter field is an integer.
@@ -88,7 +88,7 @@ names compared field-by-field in :meth:`PerfTripwire.compare`.
 
 ### `ComparisonReport`
 
-_dataclass — defined in `slappyengine.perf.tripwire`_
+_dataclass — defined in `pharos_engine.perf.tripwire`_
 
 Outcome of comparing a fresh :class:`PerfResult` to a baseline.
 
@@ -108,7 +108,7 @@ Outcome of comparing a fresh :class:`PerfResult` to a baseline.
 
 ### `PerfTripwire`
 
-_class — defined in `slappyengine.perf.tripwire`_
+_class — defined in `pharos_engine.perf.tripwire`_
 
 Runs the `hello_ragdoll` bench and manages baseline comparisons.
 Intentionally stateless — every entry point takes the parameters it
@@ -144,7 +144,7 @@ Two class-level tunables:
 
 ### `DEFAULT_BASELINE_PATH`
 
-_`pathlib.Path` — defined in `slappyengine.perf`_
+_`pathlib.Path` — defined in `pharos_engine.perf`_
 
 Ships as `baseline_ragdoll.yaml` alongside `tripwire.py` inside the
 wheel. Read-only unless the caller passes `--write-baseline` on the
@@ -152,16 +152,16 @@ CLI.
 
 ## Inner modules
 
-- `slappyengine.perf.tripwire` — the runner, the dataclasses, and the
+- `pharos_engine.perf.tripwire` — the runner, the dataclasses, and the
   compare logic.
-- `slappyengine.perf.cli` — argparse wrapper. Exits `0` on pass /
+- `pharos_engine.perf.cli` — argparse wrapper. Exits `0` on pass /
   when `--write-baseline` succeeds with no prior baseline; `1`
-  otherwise. Invoked via `python -m slappyengine.perf.tripwire`.
+  otherwise. Invoked via `python -m pharos_engine.perf.tripwire`.
 
 ## Usage
 
 ```python
-from slappyengine.perf import PerfTripwire, DEFAULT_BASELINE_PATH
+from pharos_engine.perf import PerfTripwire, DEFAULT_BASELINE_PATH
 
 tw = PerfTripwire()
 
@@ -182,8 +182,8 @@ if not report.passed:
 
 ## Skip the wrapper
 
-`slappyengine.perf` is pure Python + `pyyaml` — no runtime work
-lives in Rust. Grep of `slappyengine._core_facade.RUST_MODULE_MAP`
+`pharos_engine.perf` is pure Python + `pyyaml` — no runtime work
+lives in Rust. Grep of `pharos_engine._core_facade.RUST_MODULE_MAP`
 shows **no** `perf` entry. The demo the tripwire loads
 (`hello_ragdoll`) *does* transitively call into Rust via the
 softbody / dynamics solver kernels (`softbody_solver` +

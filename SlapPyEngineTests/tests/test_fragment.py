@@ -1,4 +1,4 @@
-"""Tests for slappyengine.physics.fragment — polygon-based shapes."""
+"""Tests for pharos_engine.physics.fragment — polygon-based shapes."""
 from __future__ import annotations
 
 import math
@@ -6,7 +6,7 @@ import math
 import numpy as np
 import pytest
 
-from slappyengine.physics.fragment import (
+from pharos_engine.physics.fragment import (
     BUILTIN_FAMILIES,
     FragmentFamily,
     FragmentShape,

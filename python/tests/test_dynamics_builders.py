@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import pytest
 
-from slappyengine.dynamics import (
+from pharos_engine.dynamics import (
     BoneSpec,
     IKChainSpec,
     RagdollSpec,
@@ -15,8 +15,8 @@ from slappyengine.dynamics import (
     make_rope,
     solve_ik,
 )
-from slappyengine.softbody import SoftBodyWorld
-from slappyengine.softbody.solver import step as softbody_step
+from pharos_engine.softbody import SoftBodyWorld
+from pharos_engine.softbody.solver import step as softbody_step
 
 
 @pytest.fixture(autouse=True)
@@ -58,7 +58,7 @@ def test_rope_sags_under_gravity():
         output_dir,
         save_softbody_sequence,
     )
-    from slappyengine.softbody import SoftBodyRenderConfig, SoftBodyRenderer
+    from pharos_engine.softbody import SoftBodyRenderConfig, SoftBodyRenderer
 
     w = SoftBodyWorld()
     # Softer rope + heavier nodes so the catenary droop is visible. The
@@ -144,7 +144,7 @@ def test_ragdoll_drops_without_blowing_up():
         output_dir,
         save_softbody_sequence,
     )
-    from slappyengine.softbody import SoftBodyRenderConfig, SoftBodyRenderer
+    from pharos_engine.softbody import SoftBodyRenderConfig, SoftBodyRenderer
 
     w = SoftBodyWorld()
     spec = _humanoid_spec()
@@ -211,7 +211,7 @@ def test_ik_converges_for_reachable_target():
     Emits a GIF of the chain solving across a sweeping target.
     """
     from python.tests._visual_snapshot import output_dir, save_chain_render
-    from slappyengine.media import save_frames
+    from pharos_engine.media import save_frames
     from PIL import Image
 
     w = SoftBodyWorld()

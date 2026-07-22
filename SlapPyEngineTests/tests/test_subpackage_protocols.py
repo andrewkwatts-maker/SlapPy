@@ -4,14 +4,14 @@ The Round 3 Protocols (``WorldLike`` / ``Renderable`` / ``PostProcessParams``)
 formalised cross-cutting duck types; the F6 batch extends Protocol coverage
 to every subpackage that has plug-in extensibility:
 
-* ``slappyengine.zones.ZoneProtocol``
-* ``slappyengine.thermal.HeatSourceProtocol``
-* ``slappyengine.material.NodeProtocol``
-* ``slappyengine.post_process.PostProcessPassProtocol``
-* ``slappyengine.telemetry.EventEmitterProtocol``
-* ``slappyengine.telemetry.EventSubscriberProtocol``
-* ``slappyengine.compute.ComputeKernelProtocol``
-* ``slappyengine.ai.LLMBackendProtocol``
+* ``pharos_engine.zones.ZoneProtocol``
+* ``pharos_engine.thermal.HeatSourceProtocol``
+* ``pharos_engine.material.NodeProtocol``
+* ``pharos_engine.post_process.PostProcessPassProtocol``
+* ``pharos_engine.telemetry.EventEmitterProtocol``
+* ``pharos_engine.telemetry.EventSubscriberProtocol``
+* ``pharos_engine.compute.ComputeKernelProtocol``
+* ``pharos_engine.ai.LLMBackendProtocol``
 
 Each Protocol is ``@runtime_checkable``. Tests exercise:
 
@@ -31,14 +31,14 @@ import pytest
 
 
 def test_zone_protocol_rectzone_matches() -> None:
-    from slappyengine.zones import RectZone, ZoneProtocol
+    from pharos_engine.zones import RectZone, ZoneProtocol
 
     z = RectZone(name="pad", x=0.0, y=0.0, w=10.0, h=10.0)
     assert isinstance(z, ZoneProtocol)
 
 
 def test_zone_protocol_threshold_zone_matches() -> None:
-    from slappyengine.zones import ThresholdZone, ZoneProtocol
+    from pharos_engine.zones import ThresholdZone, ZoneProtocol
 
     z = ThresholdZone(
         name="windshield", x=0.0, y=0.0, w=10.0, h=4.0, threshold=0.3,
@@ -47,7 +47,7 @@ def test_zone_protocol_threshold_zone_matches() -> None:
 
 
 def test_zone_protocol_lookalike_matches() -> None:
-    from slappyengine.zones import ZoneProtocol
+    from pharos_engine.zones import ZoneProtocol
 
     class RadialZone:
         def __init__(self) -> None:
@@ -61,7 +61,7 @@ def test_zone_protocol_lookalike_matches() -> None:
 
 
 def test_zone_protocol_bare_object_rejected() -> None:
-    from slappyengine.zones import ZoneProtocol
+    from pharos_engine.zones import ZoneProtocol
 
     class Bare:
         pass
@@ -70,7 +70,7 @@ def test_zone_protocol_bare_object_rejected() -> None:
 
 
 def test_zone_protocol_exported() -> None:
-    from slappyengine import zones
+    from pharos_engine import zones
 
     assert "ZoneProtocol" in zones.__all__
 
@@ -81,7 +81,7 @@ def test_zone_protocol_exported() -> None:
 
 
 def test_heat_source_protocol_lookalike_matches() -> None:
-    from slappyengine.thermal import HeatField, HeatSourceProtocol
+    from pharos_engine.thermal import HeatField, HeatSourceProtocol
 
     class Brazier:
         temperature: float = 800.0
@@ -93,7 +93,7 @@ def test_heat_source_protocol_lookalike_matches() -> None:
 
 
 def test_heat_source_protocol_bare_object_rejected() -> None:
-    from slappyengine.thermal import HeatSourceProtocol
+    from pharos_engine.thermal import HeatSourceProtocol
 
     class Bare:
         temperature: float = 1.0
@@ -104,7 +104,7 @@ def test_heat_source_protocol_bare_object_rejected() -> None:
 
 def test_heat_source_protocol_apply_actually_writes() -> None:
     """Round-trip: a conforming source writes into a real HeatField."""
-    from slappyengine.thermal import HeatField, HeatSourceProtocol
+    from pharos_engine.thermal import HeatField, HeatSourceProtocol
 
     grid = np.zeros((4, 4), dtype=np.float64)
     field = HeatField(grid)
@@ -122,7 +122,7 @@ def test_heat_source_protocol_apply_actually_writes() -> None:
 
 
 def test_heat_source_protocol_exported() -> None:
-    from slappyengine import thermal
+    from pharos_engine import thermal
 
     assert "HeatSourceProtocol" in thermal.__all__
 
@@ -133,7 +133,7 @@ def test_heat_source_protocol_exported() -> None:
 
 
 def test_node_protocol_nodedef_matches() -> None:
-    from slappyengine.material import NodeDef, NodeProtocol, UVNode
+    from pharos_engine.material import NodeDef, NodeProtocol, UVNode
 
     n = UVNode()
     assert isinstance(n, NodeDef)
@@ -141,7 +141,7 @@ def test_node_protocol_nodedef_matches() -> None:
 
 
 def test_node_protocol_lookalike_matches() -> None:
-    from slappyengine.material import NodeProtocol
+    from pharos_engine.material import NodeProtocol
 
     class CustomNode:
         node_type: str = "MyCustom"
@@ -151,7 +151,7 @@ def test_node_protocol_lookalike_matches() -> None:
 
 
 def test_node_protocol_bare_object_rejected() -> None:
-    from slappyengine.material import NodeProtocol
+    from pharos_engine.material import NodeProtocol
 
     class Bare:
         # No node_type or params at all.
@@ -161,7 +161,7 @@ def test_node_protocol_bare_object_rejected() -> None:
 
 
 def test_node_protocol_exported() -> None:
-    from slappyengine import material
+    from pharos_engine import material
 
     assert "NodeProtocol" in material.__all__
 
@@ -172,7 +172,7 @@ def test_node_protocol_exported() -> None:
 
 
 def test_post_process_pass_protocol_canonical_matches() -> None:
-    from slappyengine.post_process import (
+    from pharos_engine.post_process import (
         PostProcessPass,
         PostProcessPassProtocol,
     )
@@ -182,7 +182,7 @@ def test_post_process_pass_protocol_canonical_matches() -> None:
 
 
 def test_post_process_pass_protocol_lookalike_matches() -> None:
-    from slappyengine.post_process import PostProcessPassProtocol
+    from pharos_engine.post_process import PostProcessPassProtocol
 
     class ThirdPartyPass:
         shader_path: str = "neon.wgsl"
@@ -193,7 +193,7 @@ def test_post_process_pass_protocol_lookalike_matches() -> None:
 
 
 def test_post_process_pass_protocol_bare_object_rejected() -> None:
-    from slappyengine.post_process import PostProcessPassProtocol
+    from pharos_engine.post_process import PostProcessPassProtocol
 
     class Bare:
         shader_path: str = "x.wgsl"
@@ -203,7 +203,7 @@ def test_post_process_pass_protocol_bare_object_rejected() -> None:
 
 
 def test_post_process_pass_protocol_exported() -> None:
-    from slappyengine import post_process
+    from pharos_engine import post_process
 
     assert "PostProcessPassProtocol" in post_process.__all__
 
@@ -214,7 +214,7 @@ def test_post_process_pass_protocol_exported() -> None:
 
 
 def test_event_emitter_protocol_lookalike_matches() -> None:
-    from slappyengine.telemetry import EventEmitterProtocol
+    from pharos_engine.telemetry import EventEmitterProtocol
 
     class PerSystemEmitter:
         def __init__(self, source: str) -> None:
@@ -228,7 +228,7 @@ def test_event_emitter_protocol_lookalike_matches() -> None:
 
 
 def test_event_emitter_protocol_bare_object_rejected() -> None:
-    from slappyengine.telemetry import EventEmitterProtocol
+    from pharos_engine.telemetry import EventEmitterProtocol
 
     class Bare:
         pass
@@ -237,7 +237,7 @@ def test_event_emitter_protocol_bare_object_rejected() -> None:
 
 
 def test_event_subscriber_protocol_callable_matches() -> None:
-    from slappyengine.telemetry import EventSubscriberProtocol, TelemetryEvent
+    from pharos_engine.telemetry import EventSubscriberProtocol, TelemetryEvent
 
     class Handler:
         def __init__(self) -> None:
@@ -252,7 +252,7 @@ def test_event_subscriber_protocol_callable_matches() -> None:
 
 def test_event_subscriber_protocol_plain_function_matches() -> None:
     """Plain functions are also valid subscribers (they have __call__)."""
-    from slappyengine.telemetry import EventSubscriberProtocol, TelemetryEvent
+    from pharos_engine.telemetry import EventSubscriberProtocol, TelemetryEvent
 
     def handle(event: TelemetryEvent) -> None:
         pass
@@ -261,7 +261,7 @@ def test_event_subscriber_protocol_plain_function_matches() -> None:
 
 
 def test_telemetry_protocols_exported() -> None:
-    from slappyengine import telemetry
+    from pharos_engine import telemetry
 
     assert "EventEmitterProtocol" in telemetry.__all__
     assert "EventSubscriberProtocol" in telemetry.__all__
@@ -273,7 +273,7 @@ def test_telemetry_protocols_exported() -> None:
 
 
 def test_compute_kernel_protocol_canonical_matches() -> None:
-    from slappyengine.compute import ComputeKernelProtocol, ComputePass
+    from pharos_engine.compute import ComputeKernelProtocol, ComputePass
 
     p = ComputePass(
         source="@compute @workgroup_size(1) fn main() {}",
@@ -284,7 +284,7 @@ def test_compute_kernel_protocol_canonical_matches() -> None:
 
 
 def test_compute_kernel_protocol_lookalike_matches() -> None:
-    from slappyengine.compute import ComputeKernelProtocol
+    from pharos_engine.compute import ComputeKernelProtocol
 
     class GeneratedKernel:
         source: str = "@compute @workgroup_size(64) fn main() {}"
@@ -295,7 +295,7 @@ def test_compute_kernel_protocol_lookalike_matches() -> None:
 
 
 def test_compute_kernel_protocol_bare_object_rejected() -> None:
-    from slappyengine.compute import ComputeKernelProtocol
+    from pharos_engine.compute import ComputeKernelProtocol
 
     class Bare:
         source: str = "x"
@@ -305,7 +305,7 @@ def test_compute_kernel_protocol_bare_object_rejected() -> None:
 
 
 def test_compute_kernel_protocol_exported() -> None:
-    from slappyengine import compute
+    from pharos_engine import compute
 
     assert "ComputeKernelProtocol" in compute.__all__
 
@@ -316,7 +316,7 @@ def test_compute_kernel_protocol_exported() -> None:
 
 
 def test_llm_backend_protocol_lookalike_matches() -> None:
-    from slappyengine.ai import LLMBackendProtocol
+    from pharos_engine.ai import LLMBackendProtocol
 
     class StubBackend:
         def generate(
@@ -341,7 +341,7 @@ def test_llm_backend_protocol_lookalike_matches() -> None:
 
 
 def test_llm_backend_protocol_missing_method_rejected() -> None:
-    from slappyengine.ai import LLMBackendProtocol
+    from pharos_engine.ai import LLMBackendProtocol
 
     class PartialBackend:
         def generate(self, prompt: str, system_prompt: str = "",
@@ -353,7 +353,7 @@ def test_llm_backend_protocol_missing_method_rejected() -> None:
 
 
 def test_llm_backend_protocol_bare_object_rejected() -> None:
-    from slappyengine.ai import LLMBackendProtocol
+    from pharos_engine.ai import LLMBackendProtocol
 
     class Bare:
         pass
@@ -362,7 +362,7 @@ def test_llm_backend_protocol_bare_object_rejected() -> None:
 
 
 def test_llm_backend_protocol_exported() -> None:
-    from slappyengine import ai
+    from pharos_engine import ai
 
     assert "LLMBackendProtocol" in ai.__all__
 

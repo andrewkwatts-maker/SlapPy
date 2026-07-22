@@ -1,10 +1,10 @@
-"""Tests for slappyengine.physics.baked_terrain — bake + region grid."""
+"""Tests for pharos_engine.physics.baked_terrain — bake + region grid."""
 from __future__ import annotations
 
 import numpy as np
 import pytest
 
-from slappyengine.physics.baked_terrain import (
+from pharos_engine.physics.baked_terrain import (
     RegionGrid,
     RegionState,
     bake_settled_particles,

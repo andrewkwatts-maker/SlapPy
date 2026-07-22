@@ -1,6 +1,6 @@
-# slappyengine.dynamics — Quickstart
+# pharos_engine.dynamics — Quickstart
 
-`slappyengine.dynamics` is the unified 2D constraint subsystem for
+`pharos_engine.dynamics` is the unified 2D constraint subsystem for
 SlapPyEngine. It is an **Extended Position-Based Dynamics (XPBD) solver** —
 positions are projected directly, no separate force / acceleration pass —
 exposed through a single `World.step()` entry point. There is no split
@@ -16,22 +16,22 @@ of every public class / function see [api/dynamics.md](api/dynamics.md).
 
 ## 0. Install
 
-`slappyengine.dynamics` ships with the main wheel — no extra dependency.
+`pharos_engine.dynamics` ships with the main wheel — no extra dependency.
 Pure numpy on the hot path; the optional Rust kernels accelerate softbody
 / fluid layers but are not required for the joint solver itself.
 
 ```python
-# pip install slappy-engine
-import slappyengine
-from slappyengine.dynamics import World, make_spring
+# pip install pharos-engine
+import pharos_engine
+from pharos_engine.dynamics import World, make_spring
 
-print(slappyengine.__version__)
+print(pharos_engine.__version__)
 world = World(gravity=(0.0, -9.81))
 assert hasattr(world, "step")
 ```
 
 If you plan to follow the humanoid / softbody sections, also import
-`slappyengine.softbody.SoftBodyWorld` — that path needs the Rust kernel
+`pharos_engine.softbody.SoftBodyWorld` — that path needs the Rust kernel
 (bundled in the wheel) but no separate install step.
 
 ## 1. Your first rope
@@ -41,7 +41,7 @@ no GPU — pure numpy plus the engine. This is the canonical "does the
 solver step" smoke test.
 
 ```python
-from slappyengine.dynamics import World, make_spring
+from pharos_engine.dynamics import World, make_spring
 
 # 1. Build a world. Gravity is the standard engine convention (y up).
 world = World(gravity=(0.0, -9.81))
@@ -81,7 +81,7 @@ between grandparent → child relative to the parent pivot.
 
 ```python
 import math
-from slappyengine.dynamics import BoneSpec, RagdollSpec, World, build_ragdoll
+from pharos_engine.dynamics import BoneSpec, RagdollSpec, World, build_ragdoll
 
 bones = [
     BoneSpec(parent_idx=-1, length=0.6, mass=4.0, direction=(0.0, -1.0)),
@@ -110,7 +110,7 @@ the tip toward `spec.target`. Returns `True` when the tip lands within
 — pair it with `step()` for combined kinematic + dynamic chains.
 
 ```python
-from slappyengine.dynamics import IKChainSpec, JointSpec, World, solve_ik
+from pharos_engine.dynamics import IKChainSpec, JointSpec, World, solve_ik
 
 world = World(gravity=(0.0, 0.0))
 chain = [world.add_node((i, 0.0), mass=0.0 if i == 0 else 1.0)
@@ -136,7 +136,7 @@ returns a `JointSpec(kind="spring")` with bouncy author defaults. Use for
 suspension, tethers, anything that should oscillate visibly.
 
 ```python
-from slappyengine.dynamics import World, make_spring
+from pharos_engine.dynamics import World, make_spring
 
 world = World(gravity=(0.0, -9.81))
 anchor = world.add_node((0.0, 2.0), mass=0.0)
@@ -159,7 +159,7 @@ impulse that drives them toward `target_omega` (rad/s). `max_torque` caps
 the per-substep |Δv|.
 
 ```python
-from slappyengine.dynamics import World, make_motor
+from pharos_engine.dynamics import World, make_motor
 
 world = World(gravity=(0.0, 0.0))
 hub   = world.add_node((0.0, 0.0), mass=0.0)
@@ -192,14 +192,14 @@ recognised values and the `params` dict each one consumes:
 | `"prismatic"` | `{"axis": (ax, ay), "min": float, "max": float}`     | Slot constraint: along-axis range, perpendicular drift cancelled. |
 
 The full per-kind schema is in
-[`KIND_PARAM_KEYS`](../python/slappyengine/dynamics/joint.py). Validation
+[`KIND_PARAM_KEYS`](../python/pharos_engine/dynamics/joint.py). Validation
 runs in `JointSpec.__post_init__`: unknown kinds, negative indices, equal
 nodes, NaN / infinite values, or out-of-range damping all raise at
 construction.
 
 ## 4a. Builder conventions
 
-Every public builder in `slappyengine.dynamics` falls into one of three
+Every public builder in `pharos_engine.dynamics` falls into one of three
 buckets. Learn the prefix and the contract follows.
 
 | Prefix     | Returns                  | Mutates a world? | Use when                                          |
@@ -235,8 +235,8 @@ call. The old names will keep working for the v0.x line so games like
 Ochema Circuit and Bullet Strata can migrate at their own pace.
 
 ```python
-from slappyengine.dynamics import build_humanoid, build_flesh_wrap
-from slappyengine.softbody import SoftBodyWorld
+from pharos_engine.dynamics import build_humanoid, build_flesh_wrap
+from pharos_engine.softbody import SoftBodyWorld
 
 world = SoftBodyWorld()
 hum   = build_humanoid(world, root_position=(0.0, 1.0))   # build_*: mutates, returns Humanoid
@@ -257,7 +257,7 @@ optionally adds bend joints across `(i, i+2)` for cable stiffness.
 Returns a `Body` covering the spawned nodes.
 
 ```python
-from slappyengine.dynamics import RopeSpec, World, build_rope
+from pharos_engine.dynamics import RopeSpec, World, build_rope
 
 world = World(gravity=(0.0, -9.81))
 world.solver_iterations = 16
@@ -281,8 +281,8 @@ neck, head, shoulders / elbows / wrists, hips / knees / ankles) on a
 for analytic 2-bone foot IK.
 
 ```python
-from slappyengine.softbody import SoftBodyWorld
-from slappyengine.dynamics import build_humanoid, build_flesh_wrap
+from pharos_engine.softbody import SoftBodyWorld
+from pharos_engine.dynamics import build_humanoid, build_flesh_wrap
 
 world = SoftBodyWorld()
 hum   = build_humanoid(world, root_position=(0.0, 1.0))
@@ -307,7 +307,7 @@ it to the engine renderer by reading `world.positions` each frame and
 feeding the resulting points to whichever layer you prefer.
 
 ```python
-from slappyengine.dynamics import World, make_spring
+from pharos_engine.dynamics import World, make_spring
 
 world = World(gravity=(0.0, -9.81))
 anchor = world.add_node((0.0, 2.0), mass=0.0)
@@ -351,10 +351,10 @@ computed effective damping, and a suggested replacement value. Subsequent
 joints with the **same** `(kind, damping, iters)` tuple are silenced via
 the process-wide throttle introduced in Sprint 2G (see
 `_OVER_DAMPED_WARNED` in
-[`world.py`](../python/slappyengine/dynamics/world.py)) — without it,
+[`world.py`](../python/pharos_engine/dynamics/world.py)) — without it,
 demos like `hello_rope` would emit 70+ identical diagnostics on startup.
 Tests that need to re-observe the warning call
-`slappyengine.dynamics.world._reset_warning_cache()` in a fixture.
+`pharos_engine.dynamics.world._reset_warning_cache()` in a fixture.
 
 To silence the warning entirely set `world.warn_overdamping = False`.
 
@@ -376,10 +376,10 @@ To silence the warning entirely set `world.warn_overdamping = False`.
 Every dynamics dataclass (`Body`, `Material`, `JointSpec`, `MotorSpec`,
 `SpringSpec`, `RopeSpec`, `IKChainSpec`, `RagdollSpec`, `BoneSpec`) is a
 plain Python dataclass, so the editor's
-[`PropertyInspector`](../python/slappyengine/ui/editor/property_inspector.py)
+[`PropertyInspector`](../python/pharos_engine/ui/editor/property_inspector.py)
 reflects them through the standard primitive-widget path. Spawn-menu
 actions live in
-[`spawn_menu.py`](../python/slappyengine/ui/editor/spawn_menu.py); Sprint
+[`spawn_menu.py`](../python/pharos_engine/ui/editor/spawn_menu.py); Sprint
 3G added the **Humanoid** spawn entry mirroring `make_humanoid`'s kwargs.
 
 ### Performance

@@ -1,4 +1,4 @@
-"""Tests for the Phase B ``slappyengine.thermal.HeatField`` public surface.
+"""Tests for the Phase B ``pharos_engine.thermal.HeatField`` public surface.
 
 These cover the spec'd Phase B API:
 
@@ -23,7 +23,7 @@ import pytest
 
 def test_grid_constructor_holds_reference_and_mutates_in_place():
     """``HeatField(grid)`` must mutate the caller's array in place."""
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     T = np.zeros((8, 8), dtype=np.float64)
     T[4, 4] = 100.0
@@ -41,24 +41,24 @@ def test_grid_constructor_holds_reference_and_mutates_in_place():
 
 
 def test_grid_constructor_requires_2d():
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     with pytest.raises(ValueError):
         HeatField(np.zeros(16, dtype=np.float64))
 
 
 def test_grid_constructor_requires_ndarray():
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     with pytest.raises(TypeError):
         HeatField([[0.0, 1.0], [2.0, 3.0]])  # type: ignore[arg-type]
 
 
 def test_subpackage_lazy_import():
-    """``from slappyengine import thermal`` must resolve via ``_LAZY_MAP``."""
-    import slappyengine
+    """``from pharos_engine import thermal`` must resolve via ``_LAZY_MAP``."""
+    import pharos_engine
 
-    th = slappyengine.thermal
+    th = pharos_engine.thermal
     assert hasattr(th, "HeatField")
     assert hasattr(th, "exchange_two_regions")
 
@@ -69,7 +69,7 @@ def test_subpackage_lazy_import():
 def test_hot_blob_diffuses_outward_with_energy_conservation():
     """A hot central blob spreads to its neighbours; peak drops, total
     heat stays put (conservation comes from the pairwise edge formula)."""
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     T = np.zeros((16, 16), dtype=np.float64)
     T[8, 8] = 1000.0
@@ -103,7 +103,7 @@ def test_hot_blob_diffuses_outward_with_energy_conservation():
 
 
 def test_step_with_zero_dt_is_noop():
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     T = np.full((4, 4), 5.0, dtype=np.float64)
     T_ref = T.copy()
@@ -113,7 +113,7 @@ def test_step_with_zero_dt_is_noop():
 
 
 def test_step_rejects_unknown_boundary():
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     f = HeatField(np.zeros((4, 4), dtype=np.float64))
     with pytest.raises(ValueError):
@@ -126,7 +126,7 @@ def test_step_rejects_unknown_boundary():
 def test_exchange_with_moves_heat_hot_to_cold_and_conserves_total():
     """Two fields, one hot cell vs one cold cell — heat flows hot → cold,
     total energy across both fields stays constant."""
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     A = np.zeros((4, 4), dtype=np.float64)
     B = np.zeros((4, 4), dtype=np.float64)
@@ -152,7 +152,7 @@ def test_exchange_with_moves_heat_hot_to_cold_and_conserves_total():
 def test_exchange_with_equilibrates_over_time():
     """Repeated exchanges across the same pair drive the two cells to
     equal temperature; total ΔE ≈ 0."""
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     A = np.array([[80.0]], dtype=np.float64)
     B = np.array([[0.0]], dtype=np.float64)
@@ -184,7 +184,7 @@ def test_exchange_with_equilibrates_over_time():
 
 
 def test_exchange_with_no_op_for_equal_temperatures():
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     A = np.full((3, 3), 25.0, dtype=np.float64)
     B = np.full((3, 3), 25.0, dtype=np.float64)
@@ -197,7 +197,7 @@ def test_exchange_with_no_op_for_equal_temperatures():
 
 
 def test_exchange_with_skips_out_of_bounds_pairs():
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     A = np.zeros((2, 2), dtype=np.float64)
     B = np.zeros((2, 2), dtype=np.float64)
@@ -222,7 +222,7 @@ def test_exchange_with_skips_out_of_bounds_pairs():
 def test_clamp_boundary_does_not_leak_through_edges():
     """With ``boundary='clamp'``, a hot strip on the east edge does NOT warm
     the west edge — there's no toroidal wrap."""
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     T = np.zeros((8, 8), dtype=np.float64)
     T[:, 7] = 100.0  # entire east edge hot
@@ -249,7 +249,7 @@ def test_periodic_boundary_wraps_heat_around_edges():
     """With ``boundary='periodic'`` (default), heat injected on the east
     edge quickly warms the west edge via toroidal wrap — much faster than
     direct diffusion would predict for a single step."""
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     # Periodic case
     T_per = np.zeros((4, 8), dtype=np.float64)
@@ -280,7 +280,7 @@ def test_periodic_boundary_wraps_heat_around_edges():
 def test_clamp_explicit_conservation_long_run():
     """30 frames with hot/cold random pattern, ``boundary='clamp'`` — Σ T
     is invariant to float tolerance."""
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     rng = np.random.default_rng(42)
     T = rng.uniform(0.0, 100.0, size=(12, 12))
@@ -297,7 +297,7 @@ def test_clamp_explicit_conservation_long_run():
 
 def test_periodic_explicit_conservation_long_run():
     """Same long-run check for the periodic boundary."""
-    from slappyengine.thermal import HeatField
+    from pharos_engine.thermal import HeatField
 
     rng = np.random.default_rng(7)
     T = rng.uniform(0.0, 100.0, size=(12, 12))

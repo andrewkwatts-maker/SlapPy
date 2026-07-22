@@ -23,7 +23,7 @@ import types
 import pytest
 
 try:
-    from slappyengine.ui.editor.notebook_toolbar import NotebookToolbar
+    from pharos_engine.ui.editor.notebook_toolbar import NotebookToolbar
 except Exception as exc:  # pragma: no cover - dep gate
     pytest.skip(
         f"notebook_toolbar dependencies unavailable: {exc}",
@@ -285,7 +285,7 @@ def test_menu_bar_shell_wires_full_menu_set():
     """
     from pathlib import Path
 
-    import slappyengine.ui.editor.shell as shell_module
+    import pharos_engine.ui.editor.shell as shell_module
 
     src = Path(shell_module.__file__).read_text(encoding="utf-8")
     for label in ("File", "Edit", "View", "Help"):
@@ -298,7 +298,7 @@ def test_menu_bar_shell_has_placeholder_callbacks():
     """Every menu item wired in shell.py must attach a callable callback."""
     from pathlib import Path
 
-    import slappyengine.ui.editor.shell as shell_module
+    import pharos_engine.ui.editor.shell as shell_module
 
     src = Path(shell_module.__file__).read_text(encoding="utf-8")
     # A cheap grep: every ``dpg.add_menu_item(`` block near a shell
