@@ -568,6 +568,9 @@ class App:
         config: AppConfig | None = None,
         *,
         config_path: str | Path | None = None,
+        enable_http: bool = False,
+        http_port: int = 8787,
+        http_host: str = "127.0.0.1",
     ) -> None:
         if config_path is not None:
             p = Path(config_path)
@@ -618,6 +621,24 @@ class App:
         # :meth:`enable_diagnostics`. ``None`` until opted in so
         # ``getattr(app, "_diagnostics", None)`` reflects state.
         self._diagnostics: Any = None
+
+        # Sprint 6: HTML5 buffer server (optional, aiohttp-backed).
+        self._http_bridge: Any = None
+        self._http_commands: dict[str, Callable[..., Any]] = {}
+        if enable_http:
+            try:
+                from pharos_engine.net.http_bridge import HttpBridge
+
+                self._http_bridge = HttpBridge(
+                    app=self, host=http_host, port=http_port,
+                )
+                self._http_bridge.start()
+            except Exception as exc:
+                logger.warning(
+                    "App: enable_http requested but bridge failed to start (%s); "
+                    "install the [http] extra for aiohttp support.", exc,
+                )
+                self._http_bridge = None
 
         logger.debug("App initialised (renderer=%s)", type(self._renderer).__name__)
 
@@ -1042,6 +1063,14 @@ class App:
                 _close()
             except Exception as exc:  # pragma: no cover
                 logger.warning("renderer.close() raised %s", exc)
+        # Sprint 6: tear down the HTML5 bridge if one was started.
+        bridge = getattr(self, "_http_bridge", None)
+        if bridge is not None:
+            try:
+                bridge.stop()
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.debug("App.close: http_bridge.stop raised %s", exc)
+            self._http_bridge = None
         self._closed = True
         self.trace.append(("close",))
         if App._implicit is self:

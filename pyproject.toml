@@ -121,10 +121,15 @@ network = [
 #   maturin build --features 3d
 # Install with: pip install pharos-engine[3d]
 3d = []
+# Sprint 6: HTML5 buffer server. aiohttp powers the REST + WebSocket
+# bridge documented under ``pharos_engine.net.http_bridge``. Install
+# with ``pip install "pharos-engine[http]"`` to enable
+# ``App(enable_http=True)``.
+http = ["aiohttp>=3.9"]
 # Meta-extra: pull in every optional runtime dep except the (~800 MB)
 # ``ai`` bundle. This is the "install everything I might reasonably
 # want" bucket; the heavy torch + transformers path stays opt-in.
-all = ["pharos-engine[editor,assets,hud,math,video,audio,network]"]
+all = ["pharos-engine[editor,assets,hud,math,video,audio,network,http]"]
 
 [tool.maturin]
 python-source = "python"

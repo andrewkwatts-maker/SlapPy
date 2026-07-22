@@ -1,0 +1,87 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Pharos HTTP bridge — live status</title>
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    max-width: 720px;
+    margin: 32px auto;
+    padding: 0 16px;
+  }
+  h1 { color: #58a6ff; }
+  code { background: #161b22; padding: 2px 6px; border-radius: 4px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+  th, td { padding: 6px 12px; border-bottom: 1px solid #30363d; text-align: left; }
+  #log {
+    height: 200px;
+    overflow-y: auto;
+    background: #010409;
+    border: 1px solid #30363d;
+    padding: 8px;
+    font-family: monospace;
+    font-size: 13px;
+  }
+  input { padding: 6px; width: 100%; margin: 4px 0; box-sizing: border-box; }
+  button { padding: 6px 12px; margin: 4px 4px 4px 0; }
+</style>
+<h1>Pharos HTTP bridge</h1>
+<p>Point this page at a Pharos App started with <code>enable_http=True</code>.
+Paste your bearer token (found in <code>~/.pharos/http_token</code>) and hit connect.</p>
+
+<label>Server URL <input id="url" value="http://localhost:8787"></label>
+<label>Bearer token <input id="token" placeholder="paste your token"></label>
+<button onclick="connect()">Connect</button>
+
+<h2>Status</h2>
+<table>
+  <tr><th>Frame</th><td id="frame">—</td></tr>
+  <tr><th>Elapsed</th><td id="elapsed">—</td></tr>
+  <tr><th>Running</th><td id="running">—</td></tr>
+  <tr><th>Headless</th><td id="headless">—</td></tr>
+</table>
+
+<h2>Telemetry stream</h2>
+<div id="log"></div>
+
+<script>
+let ws = null;
+let pollTimer = null;
+
+function log(msg) {
+  const el = document.getElementById('log');
+  el.textContent += msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+
+async function connect() {
+  const base = document.getElementById('url').value.trim();
+  const token = document.getElementById('token').value.trim();
+  if (!token) { log('token required'); return; }
+  const headers = { 'Authorization': 'Bearer ' + token };
+
+  clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    try {
+      const r = await fetch(base + '/api/status', { headers });
+      if (!r.ok) { log('status ' + r.status); return; }
+      const d = await r.json();
+      document.getElementById('frame').textContent = d.frame;
+      document.getElementById('elapsed').textContent = d.elapsed.toFixed(3);
+      document.getElementById('running').textContent = d.running;
+      document.getElementById('headless').textContent = d.headless;
+    } catch (e) {
+      log('status err: ' + e);
+    }
+  }, 500);
+
+  if (ws) ws.close();
+  const wsUrl = base.replace(/^http/, 'ws') + '/ws/telemetry';
+  ws = new WebSocket(wsUrl);
+  ws.onopen = () => { log('telemetry stream connected'); };
+  ws.onmessage = (ev) => { log(ev.data); };
+  ws.onclose = () => { log('telemetry stream closed'); };
+  ws.onerror = (e) => { log('telemetry err: ' + e.type); };
+}
+</script>
