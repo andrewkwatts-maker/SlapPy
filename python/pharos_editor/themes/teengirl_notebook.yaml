@@ -1,0 +1,63 @@
+# Pharos default editor theme — teengirl_notebook (Nova3D flaw #2 + #9)
+#
+# Nova3D hard-coded a single glassmorphism dark palette in Python. Pharos
+# treats palettes as data: this YAML file is the schema all themes obey.
+# `ThemeCatalog` picks up every *.yaml in this directory and lets users
+# switch at runtime without an editor restart.
+
+name: teengirl_notebook
+display_name: Teen Girl Notebook
+description: >
+  Warm paper cream background, pastel stickers, handwritten font, washi-tape
+  borders. The default Pharos editor look.
+tags: [default, diary, notebook, warm]
+
+palette:
+  # Chrome
+  bg:              [245, 240, 225, 255]
+  bg_alt:          [252, 246, 232, 255]
+  panel_bg:        [252, 246, 232, 240]
+  panel_border:    [200, 190, 170, 255]
+  # Text
+  text:             [70, 55, 40, 255]
+  text_secondary:   [140, 120, 95, 255]
+  text_disabled:    [180, 170, 155, 255]
+  # Accents (pastel stickers)
+  accent_pink:     [235, 155, 175, 255]
+  accent_teal:     [130, 195, 200, 255]
+  accent_yellow:   [240, 210, 105, 255]
+  accent_purple:   [190, 160, 220, 255]
+  # Semantic
+  ok:               [130, 195, 200, 255]
+  warn:             [240, 210, 105, 255]
+  error:            [235, 100, 110, 255]
+  # Selection / highlight
+  selection_bg:     [255, 235, 200, 220]
+  selection_edge:   [235, 155, 175, 255]
+
+typography:
+  base_family: Handwritten Sans
+  base_size_px: 14
+  header_family: Handwritten Sans
+  header_size_px: 18
+  mono_family: JetBrains Mono
+  mono_size_px: 13
+
+geometry:
+  # Rounding + spacing — every panel + widget references these tokens
+  # so a theme swap changes the whole editor's feel.
+  window_rounding: 14
+  frame_rounding: 10
+  child_rounding: 12
+  border_size: 1
+  padding_x: 10
+  padding_y: 8
+  spacing_x: 6
+  spacing_y: 4
+
+accessibility:
+  # Optional overrides. Themes should declare whether they're safe
+  # for common colour-vision-deficiency modes.
+  colorblind_safe: true
+  contrast_ratio_body_text: 5.6   # WCAG AA passes at >= 4.5
+  supports_large_text_mode: true

@@ -1,0 +1,54 @@
+# Legacy Nova3D dark glass theme (deprecated).
+#
+# Preserved as opt-in for users who miss the pre-notebook glassmorphism
+# aesthetic. NOT the default — see teengirl_notebook.yaml for that.
+# Retained to satisfy the "no compat shim except for opt-in themes"
+# clause of the Pharos rename.
+
+name: legacy_glass
+display_name: Nova3D Legacy Glass
+description: >
+  The pre-Pharos Nova3D glassmorphism dark palette. Semi-transparent
+  windows with rounded corners. Historical; retained opt-in only.
+tags: [legacy, dark, deprecated]
+
+palette:
+  bg:              [ 18,  18,  26, 200]
+  bg_alt:          [ 24,  24,  34, 200]
+  panel_bg:        [ 20,  20,  30, 220]
+  panel_border:    [ 60,  70,  95, 220]
+  text:             [220, 220, 240, 255]
+  text_secondary:   [160, 165, 190, 255]
+  text_disabled:    [ 95, 100, 125, 255]
+  accent_pink:     [235, 100, 190, 255]
+  accent_teal:     [ 90, 200, 220, 255]
+  accent_yellow:   [255, 210, 105, 255]
+  accent_purple:   [180, 130, 240, 255]
+  ok:               [100, 220, 160, 255]
+  warn:             [255, 210, 105, 255]
+  error:            [255, 105, 130, 255]
+  selection_bg:     [120, 160, 255, 100]
+  selection_edge:   [120, 160, 255, 255]
+
+typography:
+  base_family: Inter
+  base_size_px: 14
+  header_family: Inter
+  header_size_px: 17
+  mono_family: JetBrains Mono
+  mono_size_px: 13
+
+geometry:
+  window_rounding: 14
+  frame_rounding: 8
+  child_rounding: 12
+  border_size: 1
+  padding_x: 8
+  padding_y: 6
+  spacing_x: 5
+  spacing_y: 3
+
+accessibility:
+  colorblind_safe: false
+  contrast_ratio_body_text: 8.9
+  supports_large_text_mode: false

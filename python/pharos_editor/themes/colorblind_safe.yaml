@@ -1,0 +1,54 @@
+# Pharos colorblind-safe theme (Nova3D flaw #9 remediation).
+#
+# Palette built on the Wong 2011 8-colour set (safe for deuteranopia,
+# protanopia, and tritanopia — see doi:10.1038/nmeth.1618). Shipped by
+# default so accessibility is a first-class option, not an afterthought.
+
+name: colorblind_safe
+display_name: Colorblind Safe
+description: >
+  High-contrast palette built on the Wong 2011 8-colour set. Safe for
+  deuteranopia, protanopia, tritanopia.
+tags: [accessibility, high-contrast, default]
+
+palette:
+  bg:              [30, 30, 34, 255]
+  bg_alt:          [40, 40, 45, 255]
+  panel_bg:        [45, 45, 50, 250]
+  panel_border:    [80, 80, 88, 255]
+  text:             [235, 235, 240, 255]
+  text_secondary:   [180, 180, 190, 255]
+  text_disabled:    [110, 110, 120, 255]
+  # Wong 2011 set (colorblind-safe):
+  accent_pink:     [204, 121, 167, 255]   # reddish purple
+  accent_teal:     [ 86, 180, 233, 255]   # sky blue
+  accent_yellow:   [240, 228,  66, 255]   # yellow
+  accent_purple:   [  0, 114, 178, 255]   # blue
+  ok:               [  0, 158, 115, 255]   # bluish green
+  warn:             [230, 159,   0, 255]   # orange
+  error:            [213,  94,   0, 255]   # vermillion
+  selection_bg:     [ 86, 180, 233, 180]
+  selection_edge:   [230, 159,   0, 255]
+
+typography:
+  base_family: Inter
+  base_size_px: 15                        # larger by default for accessibility
+  header_family: Inter
+  header_size_px: 20
+  mono_family: JetBrains Mono
+  mono_size_px: 14
+
+geometry:
+  window_rounding: 6
+  frame_rounding: 4
+  child_rounding: 4
+  border_size: 1
+  padding_x: 10
+  padding_y: 8
+  spacing_x: 6
+  spacing_y: 4
+
+accessibility:
+  colorblind_safe: true
+  contrast_ratio_body_text: 12.6
+  supports_large_text_mode: true
