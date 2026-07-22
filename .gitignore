@@ -22,6 +22,10 @@ __pycache__/
 venv/
 env/
 
+# Runtime scratch dirs used during development
+tmp/
+save/
+
 # Test cache
 .pytest_cache/
 .coverage

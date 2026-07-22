@@ -130,6 +130,9 @@ all = ["pharos-engine[editor,assets,hud,math,video,audio,network]"]
 python-source = "python"
 module-name = "pharos_engine._core"
 features = ["pyo3/extension-module"]
+# Rust extension lives in the pharos_py workspace member (Sprint 3
+# split kernels into pharos_core; pharos_py is the thin cdylib).
+manifest-path = "crates/pharos_py/Cargo.toml"
 # Non-Python package data that must ship inside the wheel. Maturin auto-
 # includes ``*.py`` files under ``python-source`` but skips other file
 # types unless they are named here. The baked diary themes are

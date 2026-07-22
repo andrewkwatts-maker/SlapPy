@@ -1,0 +1,13 @@
+# Repo-local Cargo config.
+#
+# The Windows Store Python-launcher shim at
+# C:\Users\Andrew\AppData\Local\Microsoft\WindowsApps\python.exe is
+# what `python` resolves to on this system, but PyO3's build script
+# cannot invoke it (the shim only works as an interactive `python.exe`
+# launch, not as a subprocess with `import sys` probes). Pinning
+# PYO3_PYTHON to the real interpreter installed by the .msi lets
+# `cargo check --workspace` and `maturin develop` work with no
+# environment override at the CLI.
+
+[env]
+PYO3_PYTHON = "C:/Users/Andrew/AppData/Local/Programs/Python/Python313/python.exe"
