@@ -1,0 +1,21 @@
+name: example_mod
+display_name: Example Mod Theme
+description: Sample theme shipped by the example_mod plugin.
+tags: [sample, plugin]
+
+palette:
+  background: [24, 30, 42]
+  foreground: [225, 232, 240]
+  accent: [255, 140, 90]
+
+typography:
+  font_family: "Inter"
+  font_size: 14
+
+geometry:
+  panel_radius: 8
+  panel_padding: 12
+
+accessibility:
+  high_contrast: false
+  large_text: false

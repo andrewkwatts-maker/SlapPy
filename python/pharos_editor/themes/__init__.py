@@ -28,13 +28,23 @@ class Theme:
 class ThemeCatalog:
     """Discovers + loads all themes under this directory."""
 
-    def __init__(self, themes_dir: Path | None = None) -> None:
+    def __init__(self, themes_dir: Path | None = None,
+                 user_themes_dir: Path | None = None) -> None:
         self._dir = themes_dir or Path(__file__).parent
+        # Sprint 7 extension architecture: also scan `~/.pharos/themes/`
+        # (or the caller-provided override) so user-installed / plugin
+        # themes surface without touching the wheel.
+        self._user_dir = user_themes_dir or (Path.home() / ".pharos" / "themes")
         self._themes: dict[str, Theme] = {}
         self.reload()
 
     def reload(self) -> None:
-        """Re-scan the directory. Called on startup + hot-reload."""
+        """Re-scan the shipped + user theme directories.
+
+        Called on startup + hot-reload. When a user theme has the same
+        `name` as a shipped theme, the user copy wins — that's the
+        override contract for extension authors.
+        """
         try:
             import yaml  # type: ignore
         except ImportError as exc:
@@ -43,21 +53,33 @@ class ThemeCatalog:
                 "(pip install pharos-editor pulls it transitively)"
             ) from exc
         found: dict[str, Theme] = {}
-        for path in sorted(self._dir.glob("*.yaml")):
-            if path.name.startswith("_"):
-                continue
-            with path.open("r", encoding="utf-8") as fh:
-                raw = yaml.safe_load(fh)
-            found[raw["name"]] = Theme(
-                name=raw["name"],
-                display_name=raw.get("display_name", raw["name"]),
-                description=raw.get("description", ""),
-                tags=raw.get("tags", []),
-                palette=raw.get("palette", {}),
-                typography=raw.get("typography", {}),
-                geometry=raw.get("geometry", {}),
-                accessibility=raw.get("accessibility", {}),
-            )
+
+        def _load_dir(directory: Path) -> None:
+            if not directory.is_dir():
+                return
+            for path in sorted(directory.glob("*.yaml")):
+                if path.name.startswith("_"):
+                    continue
+                try:
+                    with path.open("r", encoding="utf-8") as fh:
+                        raw = yaml.safe_load(fh)
+                except Exception:
+                    continue
+                if not isinstance(raw, dict) or "name" not in raw:
+                    continue
+                found[raw["name"]] = Theme(
+                    name=raw["name"],
+                    display_name=raw.get("display_name", raw["name"]),
+                    description=raw.get("description", ""),
+                    tags=raw.get("tags", []),
+                    palette=raw.get("palette", {}),
+                    typography=raw.get("typography", {}),
+                    geometry=raw.get("geometry", {}),
+                    accessibility=raw.get("accessibility", {}),
+                )
+
+        _load_dir(self._dir)
+        _load_dir(self._user_dir)
         self._themes = found
 
     def names(self) -> list[str]:
@@ -75,4 +97,13 @@ class ThemeCatalog:
         return next(iter(self._themes.values()))
 
 
-__all__ = ["Theme", "ThemeCatalog"]
+def list_theme_ids() -> list[str]:
+    """Return every discoverable theme name (shipped + user).
+
+    Called by :mod:`pharos_engine.net.http_bridge` for the
+    ``GET /api/themes`` endpoint.
+    """
+    return ThemeCatalog().names()
+
+
+__all__ = ["Theme", "ThemeCatalog", "list_theme_ids"]

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "example-mod"
+version = "0.1.0"
+description = "Sample Pharos editor plugin — 1 panel, 1 theme, 1 route, 1 command."
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+[project.entry-points."pharos_editor.plugins"]
+example = "example_mod:register"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["example_mod*"]
+
+[tool.setuptools.package-data]
+"example_mod" = ["themes/*.yaml"]
