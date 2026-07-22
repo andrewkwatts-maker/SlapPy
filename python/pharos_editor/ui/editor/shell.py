@@ -2567,6 +2567,17 @@ class EditorShell:
                 "Install it with: pip install Pharos Engine[editor]"
             ) from exc
 
+        # Sprint 8: wire the seven Sprint 9 UI polish primitives into
+        # every notebook panel that has been mounted on this shell.
+        # Safe / idempotent — the integration re-uses existing bindings
+        # so calling it more than once is a no-op.
+        try:
+            from pharos_editor.notebook_integration import install_all
+            install_all(self)
+        except Exception as _exc:  # pragma: no cover - defensive
+            from pharos_editor.errors import route
+            route(_exc, "shell.install_notebook_integration", level="warn")
+
         self._running = True
         import time as _time
         last_t = _time.monotonic()
