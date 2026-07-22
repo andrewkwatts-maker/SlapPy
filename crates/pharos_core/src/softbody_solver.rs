@@ -2198,3 +2198,59 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(pharos_engine_step, m)?)?;
     Ok(())
 }
+
+// -- Sprint 4 SOLID refactor: Propagator adapter --
+//
+// Thin wrapper letting the composite render loop drive a softbody
+// solver through the shared `sim::Propagator` trait. Kernel bodies
+// stay untouched — the adapter owns bookkeeping only.
+
+use crate::sim::{Event, EventBus, Propagator};
+
+/// Adapter implementing `sim::Propagator` on top of the XPBD softbody
+/// kernels. Absorption is per-material and drives Beer-Lambert on
+/// refracted contributions in VCR Stage 4. Median beam speed feeds
+/// motion-blur / temporal-reproject weighting on the renderer side.
+#[derive(Debug, Clone)]
+pub struct SoftbodyPropagator {
+    pub median_speed: f32,
+    pub absorption: f32,
+    pub last_dt: f32,
+    pub queued_impulses: Vec<Event>,
+}
+
+impl Default for SoftbodyPropagator {
+    fn default() -> Self {
+        SoftbodyPropagator {
+            median_speed: 0.0,
+            absorption: 0.15,   // rubber-like
+            last_dt: 0.0,
+            queued_impulses: Vec::new(),
+        }
+    }
+}
+
+impl Propagator for SoftbodyPropagator {
+    fn speed_at(&self, _pos: [f32; 3]) -> f32 {
+        self.median_speed
+    }
+    fn absorption_at(&self, _pos: [f32; 3]) -> f32 {
+        self.absorption
+    }
+    fn step(&mut self, dt: f32) {
+        self.last_dt = dt;
+        self.queued_impulses.clear();
+    }
+    fn consume(&mut self, bus: &mut EventBus) {
+        let mut leftovers: Vec<Event> = Vec::new();
+        for ev in bus.drain() {
+            match &ev {
+                Event::Impulse { .. } => self.queued_impulses.push(ev),
+                _ => leftovers.push(ev),
+            }
+        }
+        for ev in leftovers {
+            bus.push(ev);
+        }
+    }
+}

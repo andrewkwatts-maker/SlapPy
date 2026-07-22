@@ -25,6 +25,7 @@
 
 pub mod backend;
 pub mod compute;
+pub mod features;
 pub mod pipeline;
 pub mod resource;
 pub mod scene;
@@ -38,6 +39,7 @@ pub mod vcr;
 pub mod legacy;
 
 pub use backend::{Backend, BackendKind, WgpuBackend};
+pub use features::RenderFeatures;
 pub use pipeline::{ForwardPass, GBufferPass};
 pub use scene::{Camera3D, DrawItem, Mesh, RenderScene, Vertex};
 
@@ -54,6 +56,10 @@ pub struct Renderer {
     backend: Box<dyn Backend>,
     width: u32,
     height: u32,
+    /// Cached feature probe. Populated at construction; every
+    /// conditional path in the render backend reads from here rather
+    /// than re-querying the adapter.
+    features: RenderFeatures,
 }
 
 impl Renderer {
@@ -76,7 +82,7 @@ impl Renderer {
                 }
             }
         };
-        Ok(Renderer { backend, width, height })
+        Ok(Renderer { backend, width, height, features: RenderFeatures::baseline() })
     }
 
     /// Render one frame and return the composited RGBA framebuffer.
@@ -86,6 +92,12 @@ impl Renderer {
 
     pub fn size(&self) -> (u32, u32) {
         (self.width, self.height)
+    }
+
+    /// Access the cached feature probe. Conditional paths in downstream
+    /// crates read from here rather than re-querying the adapter.
+    pub fn features(&self) -> &RenderFeatures {
+        &self.features
     }
 }
 

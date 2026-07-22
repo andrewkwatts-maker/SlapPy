@@ -1507,3 +1507,66 @@ pub fn register(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(pbf_step_full, m)?)?;
     Ok(())
 }
+
+// -- Sprint 4 SOLID refactor: Propagator adapter --
+//
+// Thin wrapper that lets the composite render loop drive a PBF solver
+// through the shared `sim::Propagator` trait. Kernel bodies (pbf_iter,
+// pbf_step_full) stay untouched — the adapter owns bookkeeping only.
+
+use crate::sim::{Event, EventBus, Propagator};
+
+/// Adapter implementing `sim::Propagator` on top of the PBF kernels.
+///
+/// Holds the material parameters (median SPH particle speed,
+/// absorption coefficient for VCR Beer-Lambert) plus a queued-impulse
+/// buffer drained from the EventBus every frame. The actual position
+/// / velocity arrays live in Python (numpy) — a real integration wires
+/// this to a live `pbf_step_full` call driven by dt.
+#[derive(Debug, Clone)]
+pub struct PbfPropagator {
+    pub median_speed: f32,
+    pub absorption: f32,
+    pub last_dt: f32,
+    pub queued_impulses: Vec<Event>,
+}
+
+impl Default for PbfPropagator {
+    fn default() -> Self {
+        PbfPropagator {
+            median_speed: 0.0,
+            absorption: 0.05,   // water-like
+            last_dt: 0.0,
+            queued_impulses: Vec::new(),
+        }
+    }
+}
+
+impl Propagator for PbfPropagator {
+    fn speed_at(&self, _pos: [f32; 3]) -> f32 {
+        self.median_speed
+    }
+    fn absorption_at(&self, _pos: [f32; 3]) -> f32 {
+        self.absorption
+    }
+    fn step(&mut self, dt: f32) {
+        self.last_dt = dt;
+        // Real integration lives in pbf_step_full — the adapter here
+        // simply records that a frame ticked so drivers can verify the
+        // Propagator contract without touching numpy buffers.
+        self.queued_impulses.clear();
+    }
+    fn consume(&mut self, bus: &mut EventBus) {
+        // PBF handles impulses; leave everything else for downstream solvers.
+        let mut leftovers: Vec<Event> = Vec::new();
+        for ev in bus.drain() {
+            match &ev {
+                Event::Impulse { .. } => self.queued_impulses.push(ev),
+                _ => leftovers.push(ev),
+            }
+        }
+        for ev in leftovers {
+            bus.push(ev);
+        }
+    }
+}

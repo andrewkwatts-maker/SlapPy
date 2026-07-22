@@ -22,6 +22,9 @@ pub mod sdf_collision;
 pub mod pbf_solver;
 pub mod softbody_solver;
 
+// Sprint 4 SOLID refactor: shared simulation substrate.
+pub mod sim;
+
 // 3D geometry kernels — gated behind the `3d` feature.
 #[cfg(feature = "3d")]
 pub mod math_3d;
