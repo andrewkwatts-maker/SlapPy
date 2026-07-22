@@ -4,6 +4,9 @@
 //! pharos_core + Python; scenes hand this crate an already-transformed
 //! list of drawables.
 
+pub mod walker;
+pub use walker::{Frustum, SubmitItem, WorldAabb, walk};
+
 use glam::{Mat4, Vec3, Vec4};
 use serde::{Deserialize, Serialize};
 
