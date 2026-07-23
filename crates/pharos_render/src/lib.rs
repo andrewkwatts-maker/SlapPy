@@ -27,6 +27,7 @@ pub mod backend;
 pub mod compute;
 pub mod features;
 pub mod pipeline;
+pub mod postprocess;
 pub mod resource;
 pub mod scene;
 pub mod shadow;
