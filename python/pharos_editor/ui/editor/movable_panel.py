@@ -466,7 +466,27 @@ class MovablePanelWindow:
             "modal": self._modal,
             "min_size": list(self._min_size),
         }
+        # Sprint 1 (Nova3D-parity): opt every wrapped panel into DPG's
+        # native docking so tab-merge + split-drop work. Modal windows
+        # skip docking (they're transient overlays, not layout panels).
+        # `no_title_bar=True` panels (like the top toolbar + bottom
+        # status bar which pin to viewport edges) also skip docking so
+        # they don't accidentally get grabbed and dropped as a tab.
+        if not self._modal and not self._no_title_bar:
+            kwargs["no_bring_to_front_on_focus"] = False
+            # DPG accepts either `dockable=True` (newer builds) or a
+            # noop on older builds. Guard via try/except in the
+            # instantiation block below.
+            kwargs["_dockable_hint"] = True
 
+        # Strip the internal `_dockable_hint` marker and translate it to
+        # whatever the running DPG build understands. On DPG 2.x the
+        # dockable flag is implicit (any non-modal window with a title
+        # bar participates in the dockspace when configure_app enabled
+        # docking). We keep this indirection so future DPG builds that
+        # switch to an explicit `dockable=` kwarg can be honored by
+        # editing this block only.
+        _dockable = kwargs.pop("_dockable_hint", False)
         try:
             with dpg.window(**kwargs):
                 try:
@@ -484,6 +504,9 @@ class MovablePanelWindow:
                 self._panel.build(self._window_tag)
             except Exception:
                 pass
+        # Silence unused-var warning on older DPG builds; the flag is
+        # advisory today.
+        _ = _dockable
 
         # Apply the theme last so the per-window override sits on top
         # of any colour pushed by the panel build.

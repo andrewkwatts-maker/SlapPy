@@ -1607,6 +1607,15 @@ class EditorShell:
         # entire editor look and was already applied by
         # ``setup_theme_subsystem``.
         dpg.create_context()
+        # DPG native docking is NOT enabled: DPG 2.x doesn't expose the
+        # dear-imgui `DockBuilder` API that Nova3D uses to script an
+        # initial layout, and enabling `docking=True` alone with our
+        # positioned MovablePanelWindows produces overlap + hidden
+        # panels (verified 2026-07-24, reverted). Our own DockZoneManager
+        # + LayoutPersistence + MovablePanelWindow already provides
+        # drag / snap / persist; we just need the overlay preview to
+        # render for the whole drag, not just on hover (see
+        # _tick_panel_drag + the preview loop around line 2380).
         # Tell the DPG theme bridge that a context is up so it stops
         # routing every call through the headless stub. The bridge will
         # rebuild the global theme handle here too.
@@ -2378,6 +2387,12 @@ class EditorShell:
                     pass
 
         # ── Dock zone preview rectangles ─────────────────────────────
+        # Render ALL five snap targets for the entire drag (not just the
+        # currently-hovered one) so the user can see where they can drop.
+        # The active zone gets a brighter, thicker outline; idle zones
+        # get a dim translucent tint. Matches every DCC's dock UX
+        # (Nova3D / Unity / Blender all show the full target set on
+        # drag).
         if self._dock_zones is not None:
             try:
                 is_active = self._dock_zones.is_active()
@@ -2388,26 +2403,35 @@ class EditorShell:
                     active = self._dock_zones.current_zone()
                 except Exception:
                     active = None
-                if active is not None:
+                try:
+                    zones = self._dock_zones.compute_zones()
+                except Exception:
+                    zones = []
+                for zone in zones:
+                    x, y, w, h = zone.bounds
+                    is_hover = zone.zone is active
+                    if is_hover:
+                        # Full-alpha semantic tint + thick border.
+                        fill = zone.color
+                        border = zone.color
+                        thickness = 3
+                    else:
+                        # Dimmed to ~30% alpha for the idle preview.
+                        r, g, b, a = zone.color
+                        fill = (r, g, b, max(30, a // 3))
+                        border = (r, g, b, max(80, a // 2))
+                        thickness = 2
                     try:
-                        zones = self._dock_zones.compute_zones()
+                        dpg.draw_rectangle(
+                            parent=dl,
+                            pmin=(x, y),
+                            pmax=(x + w, y + h),
+                            color=border,
+                            fill=fill,
+                            thickness=thickness,
+                        )
                     except Exception:
-                        zones = []
-                    for zone in zones:
-                        if zone.zone is not active:
-                            continue
-                        x, y, w, h = zone.bounds
-                        try:
-                            dpg.draw_rectangle(
-                                parent=dl,
-                                pmin=(x, y),
-                                pmax=(x + w, y + h),
-                                color=zone.color,
-                                fill=zone.color,
-                                thickness=2,
-                            )
-                        except Exception:
-                            pass
+                        pass
 
     def _tick_panel_drag(self) -> None:
         """Poll each movable panel's DPG position; apply snap on drag."""
