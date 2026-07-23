@@ -29,10 +29,15 @@ dependencies = [
     "dearpygui>=1.11",
     "pywebview>=4.0",
     "arithma>=2.0.2",
+    # v2 editor (imgui-bundle backend) — ships alongside the DPG v1
+    # while panels migrate one-by-one. Enables Nova3D-parity docking
+    # via `hello_imgui.DockingParams` (DockBuilder-equivalent API).
+    "imgui-bundle>=1.6",
 ]
 
 [project.scripts]
 pharos-edit = "pharos_editor.__main__:main"
+pharos-edit-v2 = "pharos_editor.ui.editor_v2.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/andrewkwatts-maker/SlapPyEngine"
