@@ -26,6 +26,16 @@ env/
 tmp/
 save/
 
+# Orphan pre-rename copies of the test/example dirs. The tracked
+# location is PharosEngineTests/ + PharosEngineExamples/ (Sprint 3
+# rename). Local checkouts that predate the rename may still hold
+# __pycache__/output leftovers here — ignore them.
+SlapPyEngineTests/
+SlapPyEngineExamples/
+
+# Local scratch scripts
+new_script_*.py
+
 # Test cache
 .pytest_cache/
 .coverage
