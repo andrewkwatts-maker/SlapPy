@@ -106,7 +106,7 @@ class PanelHost:
 
             _emit(
                 "pharos.editor.panel.slow",
-                {"panel_id": panel_id, "tick_ms": elapsed_ms, "budget_ms": BUDGET_WARN_MS},
+                panel_id=panel_id, tick_ms=elapsed_ms, budget_ms=BUDGET_WARN_MS,
             )
         except Exception:
             # Telemetry may not be loaded in stripped-down test envs.

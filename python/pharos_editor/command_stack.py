@@ -116,7 +116,7 @@ class CommandStack:
             from pharos_engine.telemetry import emit as _emit_t
             _emit_t(
                 "pharos.editor.command",
-                {"verb": verb, "label": label, "undo_depth": len(self._undo)},
+                verb=verb, label=label, undo_depth=len(self._undo),
             )
         except Exception:
             pass  # noqa: pharos-errors-lint (telemetry best-effort)

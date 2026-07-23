@@ -15,7 +15,12 @@ from pathlib import Path
 class BreadcrumbHistory:
     """Back/forward stack + current path pointer."""
 
-    def __init__(self, root: Path, initial: Path | None = None) -> None:
+    def __init__(self, root: Path | None = None, initial: Path | None = None) -> None:
+        # Defensive default: when the shell hasn't opened a project yet
+        # (pharos-edit with no project path), fall back to the current
+        # working directory so the content-browser still renders.
+        if root is None:
+            root = Path.cwd()
         self.root = root.resolve()
         current = (initial or root).resolve()
         # Store paths as absolute to avoid ambiguity.

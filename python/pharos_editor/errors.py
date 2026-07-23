@@ -104,15 +104,16 @@ def route(
     except Exception:
         return
     try:
+        # pharos_engine.telemetry.emit takes payload as **kwargs, not a
+        # positional dict. Splatting here so both the current and any
+        # future emit signature stays satisfied.
         _emit(
             "pharos.editor.error",
-            {
-                "context": context,
-                "exc_type": type(exc).__name__,
-                "message": str(exc),
-                "level": level,
-                "timestamp": datetime.datetime.utcnow().isoformat(),
-            },
+            context=context,
+            exc_type=type(exc).__name__,
+            message=str(exc),
+            level=level,
+            timestamp=datetime.datetime.utcnow().isoformat(),
         )
     except Exception as emit_exc:
         log.error("telemetry emit raised: %s", emit_exc)
