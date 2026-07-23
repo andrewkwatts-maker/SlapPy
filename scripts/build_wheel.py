@@ -1,17 +1,22 @@
 """Build + install the pharos_engine wheel into the local venv.
 
-The Windows Store Python-launcher shim at
+On Windows the historical workaround here is required — the Windows
+Store Python-launcher shim at
 ``C:\\Users\\Andrew\\AppData\\Local\\Microsoft\\WindowsApps\\python.exe``
 prevents ``maturin develop`` from working (Access is denied when
-maturin probes the shim for sysconfig metadata). Workaround: build a
+maturin probes the shim for sysconfig metadata), so we build a
 wheel with ``maturin build --interpreter <real python>`` and pip-
 install it into the venv.
 
+On non-Windows platforms the script uses the current interpreter
+(``sys.executable``) as both the wheel target and the venv seed.
+
 Usage::
 
-    py -3.13 scripts/build_wheel.py           # release build
-    py -3.13 scripts/build_wheel.py --debug   # unoptimised build
-    py -3.13 scripts/build_wheel.py --no-install  # build-only
+    py -3.13 scripts/build_wheel.py           # release build (Windows)
+    python3   scripts/build_wheel.py           # release build (Linux/macOS)
+    python3   scripts/build_wheel.py --debug   # unoptimised build
+    python3   scripts/build_wheel.py --no-install  # build-only
 
 The script is idempotent — running twice re-builds + re-installs the
 wheel. Cargo caches keep incremental rebuilds under 10 seconds after
@@ -22,15 +27,23 @@ from __future__ import annotations
 import argparse
 import glob
 import os
+import platform
 import subprocess
 import sys
 from pathlib import Path
 
 
-REAL_PYTHON = Path(r"C:\Users\Andrew\AppData\Local\Programs\Python\Python313\python.exe")
 REPO_ROOT = Path(__file__).resolve().parent.parent
-VENV_PYTHON = REPO_ROOT / ".venv" / "Scripts" / "python.exe"
 WHEEL_DIR = REPO_ROOT / "target" / "wheels"
+
+_IS_WINDOWS = platform.system() == "Windows"
+
+if _IS_WINDOWS:
+    REAL_PYTHON = Path(r"C:\Users\Andrew\AppData\Local\Programs\Python\Python313\python.exe")
+    VENV_PYTHON = REPO_ROOT / ".venv" / "Scripts" / "python.exe"
+else:
+    REAL_PYTHON = Path(sys.executable)
+    VENV_PYTHON = REPO_ROOT / ".venv" / "bin" / "python"
 
 
 def ensure_venv() -> Path:
