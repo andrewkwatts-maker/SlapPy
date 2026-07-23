@@ -3,7 +3,7 @@
 Covers:
 - pharos_engine.net.session   (SessionConfig, GameSession.__init__ state)
 - pharos_engine.tools.gen_placeholders (_star_points, _new pure-Python helpers)
-- pharos_engine.ext.*         (shim re-export smoke tests)
+- pharos_engine.{angle_sprite,fluid_sim,lighting,split_screen} canonical modules
 """
 from __future__ import annotations
 import math
@@ -256,82 +256,72 @@ class TestNewHelper:
 
 
 # ---------------------------------------------------------------------------
-# ext/ shim smoke tests — import only, verify exported names present
+# canonical single-file modules — import smoke tests
 # ---------------------------------------------------------------------------
 
-class TestExtAngleSpriteShim:
+class TestAngleSprite:
     def test_angle_entry_importable(self):
-        from pharos_engine.ext.angle_sprite import AngleEntry
+        from pharos_engine.angle_sprite import AngleEntry
         assert AngleEntry is not None
 
     def test_angle_sprite_map_importable(self):
-        from pharos_engine.ext.angle_sprite import AngleSpriteMap
+        from pharos_engine.angle_sprite import AngleSpriteMap
         assert AngleSpriteMap is not None
 
     def test_make_angle_map_importable(self):
-        from pharos_engine.ext.angle_sprite import make_angle_map_from_spritesheet
+        from pharos_engine.angle_sprite import make_angle_map_from_spritesheet
         assert callable(make_angle_map_from_spritesheet)
 
 
-class TestExtFluidSimShim:
+class TestFluidSim:
     def test_fluid_sim_config_importable(self):
-        from pharos_engine.ext.fluid_sim import FluidSimConfig
+        from pharos_engine.fluid_sim import FluidSimConfig
         assert FluidSimConfig is not None
 
     def test_global_fluid_sim_importable(self):
-        from pharos_engine.ext.fluid_sim import GlobalFluidSim
+        from pharos_engine.fluid_sim import GlobalFluidSim
         assert GlobalFluidSim is not None
 
     def test_fog_config_importable(self):
-        from pharos_engine.ext.fluid_sim import fog_config
+        from pharos_engine.fluid_sim import fog_config
         assert callable(fog_config)
 
     def test_water_config_importable(self):
-        from pharos_engine.ext.fluid_sim import water_config
+        from pharos_engine.fluid_sim import water_config
         assert callable(water_config)
 
     def test_smoke_config_importable(self):
-        from pharos_engine.ext.fluid_sim import smoke_config
+        from pharos_engine.fluid_sim import smoke_config
         assert callable(smoke_config)
 
 
-class TestExtLightingShim:
+class TestLighting:
     def test_lighting_system_importable(self):
-        from pharos_engine.ext.lighting import LightingSystem
+        from pharos_engine.lighting import LightingSystem
         assert LightingSystem is not None
 
     def test_point_light_importable(self):
-        from pharos_engine.ext.lighting import PointLight
+        from pharos_engine.lighting import PointLight
         assert PointLight is not None
 
     def test_cone_light_importable(self):
-        from pharos_engine.ext.lighting import ConeLight
+        from pharos_engine.lighting import ConeLight
         assert ConeLight is not None
 
     def test_directional_light_importable(self):
-        from pharos_engine.ext.lighting import DirectionalLight
+        from pharos_engine.lighting import DirectionalLight
         assert DirectionalLight is not None
 
     def test_flash_light_importable(self):
-        from pharos_engine.ext.lighting import FlashLight
+        from pharos_engine.lighting import FlashLight
         assert FlashLight is not None
 
 
-class TestExtSplitScreenShim:
+class TestSplitScreen:
     def test_viewport_importable(self):
-        from pharos_engine.ext.split_screen import Viewport
+        from pharos_engine.split_screen import Viewport
         assert Viewport is not None
 
     def test_split_screen_manager_importable(self):
-        from pharos_engine.ext.split_screen import SplitScreenManager
+        from pharos_engine.split_screen import SplitScreenManager
         assert SplitScreenManager is not None
-
-    def test_viewport_is_same_as_canonical(self):
-        from pharos_engine.ext.split_screen import Viewport as ExtViewport
-        from pharos_engine.split_screen import Viewport as CanonicalViewport
-        assert ExtViewport is CanonicalViewport
-
-    def test_manager_is_same_as_canonical(self):
-        from pharos_engine.ext.split_screen import SplitScreenManager as Ext
-        from pharos_engine.split_screen import SplitScreenManager as Canonical
-        assert Ext is Canonical

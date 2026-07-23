@@ -2,50 +2,44 @@
 # pharos_engine.ext — API Reference
 
 > Hand-written reference for the optional-extensions subpackage.
-> `ext` is the canonical home for the heavier / optional engine modules
-> (lighting, fluid, animation, networking, AI tooling, editor UI…).
-> Every module here is a thin **re-export shim** over a canonical
-> top-level module — both paths work, and downstream games may freely
-> mix them.
-
-```python
-# Both of these resolve to the same symbols:
-from pharos_engine.ext.lighting import LightingSystem, PointLight
-from pharos_engine.lighting     import LightingSystem, PointLight
-```
+> `ext` is the canonical home for the heavier / optional engine
+> subpackages (iso, net, ai, animation, input, ui).
+>
+> **Note on the single-file modules.** Prior to v0.3 the ext namespace
+> also carried thin re-export shims for four single-file modules
+> (`ext.lighting`, `ext.fluid_sim`, `ext.angle_sprite`,
+> `ext.split_screen`). Those shims were removed in the Sprint 3 dead-
+> code purge. Import the canonical modules directly:
+>
+> ```python
+> from pharos_engine.lighting     import LightingSystem, PointLight
+> from pharos_engine.fluid_sim    import GlobalFluidSim
+> from pharos_engine.angle_sprite import AngleSpriteMap
+> from pharos_engine.split_screen import Viewport, SplitScreenManager
+> ```
 
 ## Overview
 
-The shim layout exists for two reasons:
-
-1. It gives the engine a single namespace (`pharos_engine.ext`) where
-   "everything that requires an extra dependency" lives, so the
-   ARCHITECTURE doc can point at one directory rather than nine.
-2. It preserves the long-standing import paths consumed by
-   **Ochema Circuit** and **Bullet Strata** while the engine
-   internally repackages modules. The memory note
-   `project_editor_sprint.md` calls this out: the shims add ~zero bytes
-   to the wheel and are load-bearing for back-compat — do not delete.
-
-`pharos_engine.ext.__all__` lists ten names, one per subordinate module
-or subpackage:
+`pharos_engine.ext` groups the optional / heavier **subpackages** — one
+namespace where "everything that requires an extra dependency" lives, so
+the ARCHITECTURE doc can point at one directory rather than several.
+`__all__` lists six subpackage names:
 
 ```python
 __all__ = [
-    "lighting", "fluid_sim", "angle_sprite", "split_screen",
     "iso", "net", "ai", "animation", "input", "ui",
 ]
 ```
 
 `__all__` lists module names, not symbols — `from pharos_engine.ext
-import *` gives you the modules. The actual re-exported classes /
-functions live one level deeper.
+import *` gives you the subpackages. The actual classes / functions
+live one level deeper.
 
-## Module-by-module catalogue
+## Canonical single-file modules (importable directly)
 
-### `ext.lighting` — GPU lighting system
+These live at the top of `pharos_engine`, not under `.ext.`:
 
-Pure re-export of `pharos_engine.lighting`. Surface:
+### `pharos_engine.lighting` — GPU lighting system
 
 | Symbol | Role |
 |---|---|
@@ -62,11 +56,11 @@ Requires wgpu; safe to import without a GPU but the dispatch methods
 will raise on first use. See [`gi.md`](gi.md) for the compute side of
 the lighting kernels.
 
-### `ext.fluid_sim` — global fluid simulation
+### `pharos_engine.fluid_sim` — global fluid simulation
 
-Re-exports the **Eulerian / global** fluid path (not the PBF particle
-sim under `pharos_engine.fluid`, which is a separate subpackage —
-see [`fluid_design.md`](../fluid_design.md)).
+The **Eulerian / global** fluid path (not the PBF particle sim under
+`pharos_engine.fluid`, which is a separate subpackage — see
+[`fluid_design.md`](../fluid_design.md)).
 
 | Symbol | Role |
 |---|---|
@@ -76,14 +70,7 @@ see [`fluid_design.md`](../fluid_design.md)).
 | `water_config()` | Pre-tuned `FluidSimConfig` for shallow water. |
 | `smoke_config()` | Pre-tuned `FluidSimConfig` for combat smoke. |
 
-Both the `ext.fluid_sim` shim and the canonical `pharos_engine.fluid_sim`
-module are off-limits to the constraint in the sprint brief — do **not**
-edit these. Documenting the surface is fine; the docs reference the
-public-API contract rather than reaching into implementation.
-
-### `ext.angle_sprite` — angle-blended sprites
-
-Re-exports `pharos_engine.angle_sprite`.
+### `pharos_engine.angle_sprite` — angle-blended sprites
 
 | Symbol | Role |
 |---|---|
@@ -94,9 +81,7 @@ Re-exports `pharos_engine.angle_sprite`.
 Requires Pillow (in the base install). Used by `pharos_engine.iso` for
 per-viewpoint sprite swapping on camera rotation.
 
-### `ext.split_screen` — N-player split screen
-
-Re-exports `pharos_engine.split_screen`.
+### `pharos_engine.split_screen` — N-player split screen
 
 | Symbol | Role |
 |---|---|
@@ -104,6 +89,8 @@ Re-exports `pharos_engine.split_screen`.
 | `SplitScreenManager` | Lays N viewports out (1×1, 1×2, 2×2, …) and dispatches input per-viewport. |
 
 Pure-CPU; no extras required.
+
+## Subpackage catalogue (under `pharos_engine.ext`)
 
 ### `ext.iso` — isometric rendering
 
@@ -146,9 +133,7 @@ Re-exports `pharos_engine.animation`. Surface documented in
 ### `ext.input` — action-map / bindings layer
 
 Re-exports `pharos_engine.input`. Subpackage with `ActionMap`,
-`InputManager`, gamepad+keyboard providers. The top-level
-`pharos_engine.input` shim survives for older imports; the canonical
-path is `pharos_engine.input` for now.
+`InputManager`, gamepad+keyboard providers.
 
 ### `ext.ui` — editor UI
 
@@ -169,27 +154,13 @@ class is instantiated — importing the module is cheap, instantiating
 | `[video]` | `animation.from_video` (video-frame import) |
 
 Importing any module without its extra produces a clear
-`ModuleNotFoundError` the first time the missing dependency is touched;
-the shim itself never raises on import.
-
-## Stability guarantee
-
-The `ext` re-export shims are part of the **stable** API surface
-covered by the v0.3 contract — renaming a canonical module is a
-breaking change unless the `ext` shim continues to point at the new
-location. See `docs/sprint_1_game_compat_2026_05_30.md` for the
-contract check that runs against Ochema Circuit and Bullet Strata on
-every release.
+`ModuleNotFoundError` the first time the missing dependency is touched.
 
 ## Design notes
 
-No separate `ext_design.md` ships — `ext` is a re-export namespace,
-not a substantive subpackage. The design (one namespace for
-"everything that requires an extra dependency", load-bearing back-
-compat for Ochema / Bullet Strata import paths, ~zero wheel-size cost
-because every entry is a thin shim) is documented inline above.
-
-For the canonical modules behind each shim, follow the linked design
-docs in the per-module catalogue (`ext.lighting` → `lighting`
-internals; `ext.iso` → [`../api/iso.md`](iso.md); `ext.animation` →
-[`animation.md`](animation.md); etc.).
+No separate `ext_design.md` ships — `ext` is a namespace grouping the
+optional / heavier subpackages, not a substantive subpackage of its
+own. For the canonical modules behind each subpackage, follow the
+linked design docs in the per-module catalogue (`ext.iso` →
+[`iso.md`](iso.md); `ext.animation` → [`animation.md`](animation.md);
+etc.).

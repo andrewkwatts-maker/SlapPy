@@ -7,11 +7,7 @@ Core install (pip install Pharos Engine):
     Pharos Engine.engine, .scene, .entity, .asset, .layer, .camera,
     .material, .compute, .gpu, .residency, .post_process
 
-Extensions (always included but heavier, activate via extras):
-    Pharos Engine.ext.lighting       — GPU lighting system   (wgpu)
-    Pharos Engine.ext.fluid_sim      — fluid simulation      (wgpu + numpy)
-    Pharos Engine.ext.angle_sprite   — angle-blended sprites (Pillow)
-    Pharos Engine.ext.split_screen   — N-player split screen
+Extensions (subpackages under .ext):
     Pharos Engine.ext.iso            — isometric rendering
     Pharos Engine.ext.net            — P2P networking        [network] extra
     Pharos Engine.ext.ai             — AI code tools         [ai] extra
@@ -19,19 +15,16 @@ Extensions (always included but heavier, activate via extras):
     Pharos Engine.ext.input          — action map / bindings
     Pharos Engine.ext.ui             — editor UI             [editor] extra
 
-Backward-compatible aliases are kept in the original locations
-(Pharos Engine.lighting, Pharos Engine.iso, etc.) — both import paths work.
+Canonical single-file modules (imported directly from ``pharos_engine``):
+    pharos_engine.lighting, pharos_engine.fluid_sim,
+    pharos_engine.angle_sprite, pharos_engine.split_screen
 """
 
 __all__ = [
     "ai",
-    "angle_sprite",
     "animation",
-    "fluid_sim",
     "input",
     "iso",
-    "lighting",
     "net",
-    "split_screen",
     "ui",
 ]
