@@ -44,6 +44,7 @@ DEFAULT_LAYOUT = EditorLayout(
     theme="teengirl_notebook",
     viewport_size=(1280, 800),
     panels={
+        # Docked chrome (always visible)
         "notebook_toolbar": PanelLayoutState(
             panel_id="notebook_toolbar",
             position=(0, 24),
@@ -68,17 +69,84 @@ DEFAULT_LAYOUT = EditorLayout(
             size=(1280, 200),
             docked_to="bottom",
         ),
+        # Bottom siblings — visible but offset in Y so they don't
+        # stack on top of the content browser. User can drag them
+        # into a tabbed group next to the notebook if they prefer.
+        "asset_import_panel": PanelLayoutState(
+            panel_id="asset_import_panel",
+            position=(280, 100),
+            size=(720, 460),
+            visible=False,
+            docked_to="floating",
+        ),
+        "repl_panel": PanelLayoutState(
+            panel_id="repl_panel",
+            position=(320, 140),
+            size=(720, 400),
+            visible=False,
+            docked_to="floating",
+        ),
+        "wgsl_panel": PanelLayoutState(
+            panel_id="wgsl_panel",
+            position=(360, 180),
+            size=(760, 460),
+            visible=False,
+            docked_to="floating",
+        ),
+        "material_graph_canvas": PanelLayoutState(
+            panel_id="material_graph_canvas",
+            position=(400, 220),
+            size=(820, 500),
+            visible=False,
+            docked_to="floating",
+        ),
+        "material_editor": PanelLayoutState(
+            panel_id="material_editor",
+            position=(1000, 80),
+            size=(300, 520),
+            visible=False,
+            docked_to="floating",
+        ),
+        "post_process_panel": PanelLayoutState(
+            panel_id="post_process_panel",
+            position=(880, 200),
+            size=(380, 400),
+            visible=False,
+            docked_to="floating",
+        ),
+        "animation_panel": PanelLayoutState(
+            panel_id="animation_panel",
+            position=(360, 460),
+            size=(560, 320),
+            visible=False,
+            docked_to="floating",
+        ),
+        "telemetry_panel": PanelLayoutState(
+            panel_id="telemetry_panel",
+            position=(840, 140),
+            size=(420, 320),
+            visible=False,
+            docked_to="floating",
+        ),
+        "spawn_menu": PanelLayoutState(
+            panel_id="spawn_menu",
+            position=(280, 140),
+            size=(720, 520),
+            visible=False,
+            docked_to="floating",
+        ),
+        # Modeless floating utilities (Ctrl+P command palette, etc.)
         "notebook_code_panel": PanelLayoutState(
             panel_id="notebook_code_panel",
             position=(300, 100),
-            size=(640, 400),
+            size=(720, 480),
             visible=False,
             docked_to="floating",
         ),
         "theme_switcher_panel": PanelLayoutState(
             panel_id="theme_switcher_panel",
-            position=(280, 200),
-            size=(280, 360),
+            position=(940, 100),
+            size=(320, 400),
             visible=False,
             docked_to="floating",
         ),

@@ -31,6 +31,13 @@ class NotebookThemePicker:
     the theme via its existing theming stack.
     """
 
+    #: Minimum window size — a theme card needs ~280 px wide for the
+    #: swatch strip, and ~400 px tall to fit at least three cards.
+    #: MovablePanelWindow's clamp respects these over its default 200x150.
+    TITLE: str = "Themes"
+    MIN_WIDTH: int = 300
+    MIN_HEIGHT: int = 400
+
     def __init__(
         self,
         catalog: ThemeCatalog | None = None,

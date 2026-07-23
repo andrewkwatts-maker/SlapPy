@@ -228,9 +228,14 @@ class NotebookCommandPalette:
     TITLE: str = "Command Palette"
 
     # Overlay window minimums — the palette is tall + narrow like the
-    # VS Code Ctrl+Shift+P dialog.
+    # VS Code Ctrl+Shift+P dialog. `MIN_WIDTH` / `MIN_HEIGHT` are the
+    # names MovablePanelWindow reads for its own clamp; `WIDTH` /
+    # `HEIGHT` are the panel's own preferred default (used when the
+    # palette is rendered as a standalone widget rather than wrapped).
     WIDTH: int = 520
     HEIGHT: int = 420
+    MIN_WIDTH: int = 520
+    MIN_HEIGHT: int = 400
     ROW_HEIGHT: int = 22
 
     # ------------------------------------------------------------------

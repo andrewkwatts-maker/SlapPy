@@ -2578,6 +2578,13 @@ class EditorShell:
             from pharos_editor.errors import route
             route(_exc, "shell.install_notebook_integration", level="warn")
 
+        # Restore the last saved layout — global fallback fires when no
+        # project has been opened yet, so the user's chrome persists
+        # across `pharos-edit` launches even before they pick a project.
+        # The project-open path in :meth:`open_project` re-runs this
+        # with the project-scoped persistence handle.
+        self._apply_saved_or_default_layout()
+
         self._running = True
         import time as _time
         last_t = _time.monotonic()
@@ -3600,3 +3607,44 @@ class EditorShell:
             persistence.save(layout)
         except Exception:
             pass
+
+    def _apply_saved_or_default_layout(self) -> None:
+        """Restore the last saved layout, or apply the shipped default.
+
+        Called once from :meth:`run` after panel construction + Sprint 8
+        notebook integration. Precedence:
+
+        1. If a project has been opened and its ``.pharos/layout.yaml``
+           exists, replay it. (Already handled by :meth:`open_project`
+           at construction time — this call is a no-op then.)
+        2. Otherwise if a global fallback exists at
+           ``~/.pharos_engine/default_layout.yaml``, replay it.
+        3. Otherwise apply the shipped ``DEFAULT_LAYOUT`` preset so the
+           chrome lands in a sensible place instead of the DPG defaults.
+
+        Fully guarded — a corrupt layout file downgrades to the default
+        preset, never a crash.
+        """
+        persistence = getattr(self, "_layout_persistence", None)
+        if persistence is None:
+            return
+        try:
+            saved = persistence.load()
+        except Exception as _exc:
+            from pharos_editor.errors import route
+            route(_exc, "shell.load_saved_layout", level="warn")
+            saved = None
+        if saved is not None:
+            try:
+                persistence.apply_to_shell(self, saved)
+                return
+            except Exception as _exc:
+                from pharos_editor.errors import route
+                route(_exc, "shell.apply_saved_layout", level="warn")
+        # Fall back to the shipped default preset.
+        try:
+            from pharos_editor.ui.editor.default_layouts import DEFAULT_LAYOUT
+            persistence.apply_to_shell(self, DEFAULT_LAYOUT)
+        except Exception as _exc:
+            from pharos_editor.errors import route
+            route(_exc, "shell.apply_default_layout", level="warn")

@@ -393,6 +393,11 @@ class NotebookNodeEditor:
     """
 
     TITLE = "Nodes"
+    # MovablePanelWindow reads these to clamp the window minimum.
+    # The node canvas is unusable below ~600 px wide (nodes + palette)
+    # and ~400 px tall (three sticker cards visible).
+    MIN_WIDTH = 620
+    MIN_HEIGHT = 420
     NODE_W = 160
     NODE_H = 80
     PORT_RADIUS = 6
