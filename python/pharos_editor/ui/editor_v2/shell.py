@@ -25,6 +25,19 @@ from __future__ import annotations
 
 from imgui_bundle import hello_imgui, imgui
 
+from pharos_editor.ui.editor_v2.theme_bridge import apply_theme_to_imgui
+
+
+# Which theme to boot with. Reading the same ThemeCatalog v1 uses so
+# users don't have two competing "current theme" states.
+def _active_theme_name() -> str | None:
+    try:
+        from pharos_editor.themes import ThemeCatalog
+
+        return ThemeCatalog().default().name
+    except Exception:
+        return None
+
 
 def _make_docking_splits() -> list[hello_imgui.DockingSplit]:
     """Build the four DockingSplit calls that partition MainDockSpace.
@@ -232,6 +245,17 @@ def build_runner_params() -> hello_imgui.RunnerParams:
     params.docking_params.dockable_windows = windows
     params.docking_params.docking_splits = _make_docking_splits()
     params.docking_params.layout_name = "Default"
+
+    # Push the notebook-theme YAML into imgui's style table once at
+    # startup — same YAMLs v1 uses, so switching editors keeps the
+    # user's picked theme. Sprint 2 wires a runtime "swap theme" that
+    # re-runs apply_theme_to_imgui without a restart.
+    _initial_theme = _active_theme_name()
+
+    def _post_init() -> None:
+        apply_theme_to_imgui(_initial_theme)
+
+    params.callbacks.post_init = _post_init
 
     return params
 
