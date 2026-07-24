@@ -449,6 +449,10 @@ class ContentBrowserPanel:
             self._history = None
         self._root = root.resolve()
         self._thumb_cache: dict[str, Any] = {}   # path -> ndarray or None
+        self._ctx_target: Path | None = None
+        # Ephemeral state for rename modal.
+        self._rename_target: Path | None = None
+        self._rename_buffer: str = ""
 
     def gui(self) -> None:
         # ── Breadcrumb toolbar ─────────────────────────────────────────
@@ -497,6 +501,9 @@ class ContentBrowserPanel:
             else:
                 col = 0
 
+        # Rename modal renders on top of the grid when active.
+        self._draw_rename_modal()
+
     def _draw_item(self, path: Path) -> None:
         # Small vertical group so image + label align.
         imgui.begin_group()
@@ -509,6 +516,100 @@ class ContentBrowserPanel:
         imgui.end_group()
         if imgui.is_item_clicked(0):
             self._on_activate(path)
+        # Right-click on the group -> per-item context menu.
+        popup_id = f"##cb_item_ctx_{path}"
+        if imgui.is_item_clicked(1):
+            self._ctx_target = path
+            imgui.open_popup(popup_id)
+        if imgui.begin_popup(popup_id):
+            if imgui.menu_item_simple("Open" if path.is_dir() else "Reveal"):
+                self._on_activate(path)
+                if not path.is_dir():
+                    self._reveal_in_explorer(path)
+            if imgui.menu_item_simple("Show in Explorer"):
+                self._reveal_in_explorer(path)
+            imgui.separator()
+            if imgui.menu_item_simple("Rename…"):
+                self._rename_target = path
+                self._rename_buffer = path.name
+                imgui.close_current_popup()
+            if imgui.menu_item_simple("Copy Path"):
+                try:
+                    from pharos_editor.clipboard import Clipboard, ClipboardPayload
+
+                    Clipboard.copy(ClipboardPayload(
+                        kind="path", schema_version=1,
+                        payload={"path": str(path.resolve())},
+                    ))
+                except Exception:
+                    pass
+            imgui.separator()
+            if imgui.menu_item_simple("Delete", "Del"):
+                self._delete_path(path)
+            imgui.end_popup()
+
+    def _reveal_in_explorer(self, path: Path) -> None:
+        """Open the OS file browser at `path` (or its parent for files)."""
+        try:
+            import subprocess
+            import sys
+
+            target = str(path if path.is_dir() else path.parent)
+            if sys.platform == "win32":
+                subprocess.Popen(["explorer", target])
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", target])
+            else:
+                subprocess.Popen(["xdg-open", target])
+        except Exception:
+            pass
+
+    def _delete_path(self, path: Path) -> None:
+        """Best-effort recursive delete + drop from thumb cache."""
+        try:
+            import shutil
+
+            if path.is_dir():
+                shutil.rmtree(path, ignore_errors=True)
+            else:
+                path.unlink(missing_ok=True)
+            self._thumb_cache.pop(str(path), None)
+        except Exception:
+            pass
+
+    def _draw_rename_modal(self) -> None:
+        """Modal input for the rename action; called from gui()."""
+        if self._rename_target is None:
+            return
+        target = self._rename_target
+        if not imgui.is_popup_open("##cb_rename_modal"):
+            imgui.open_popup("##cb_rename_modal")
+        # Center on the main viewport.
+        vp = imgui.get_main_viewport()
+        imgui.set_next_window_pos(
+            imgui.ImVec2(vp.work_pos.x + vp.work_size.x * 0.5,
+                         vp.work_pos.y + vp.work_size.y * 0.5),
+            imgui.Cond_.appearing, imgui.ImVec2(0.5, 0.5),
+        )
+        if imgui.begin_popup_modal("##cb_rename_modal", None,
+                                    imgui.WindowFlags_.always_auto_resize)[0]:
+            imgui.text(f"Rename {target.name} to:")
+            _, self._rename_buffer = imgui.input_text("##rename_input", self._rename_buffer)
+            if imgui.button("Rename") or imgui.is_key_pressed(imgui.Key.enter, False):
+                new_path = target.parent / self._rename_buffer
+                try:
+                    if self._rename_buffer and new_path != target:
+                        target.rename(new_path)
+                        self._thumb_cache.pop(str(target), None)
+                except Exception:
+                    pass
+                self._rename_target = None
+                imgui.close_current_popup()
+            imgui.same_line()
+            if imgui.button("Cancel") or imgui.is_key_pressed(imgui.Key.escape, False):
+                self._rename_target = None
+                imgui.close_current_popup()
+            imgui.end_popup()
 
     def _draw_thumbnail(self, path: Path) -> None:
         # Try to load image files via PIL; folders + non-images get a

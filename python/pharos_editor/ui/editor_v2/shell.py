@@ -12,6 +12,7 @@ from imgui_bundle import hello_imgui, imgui
 
 from pharos_editor.ui.editor_v2.theme_bridge import apply_theme_to_imgui
 from pharos_editor.ui.editor_v2.editor_state import EditorState
+from pharos_editor.ui.editor_v2.perf_hud import PerfHud
 from pharos_editor.ui.editor_v2.panels import (
     ConsolePanel,
     ContentBrowserPanel,
@@ -19,6 +20,15 @@ from pharos_editor.ui.editor_v2.panels import (
     PropertiesPanel,
     ViewportPanel,
 )
+
+
+def _tt(text: str) -> None:
+    """Attach a delayed tooltip to the widget the caller just built."""
+    try:
+        if imgui.is_item_hovered(imgui.HoveredFlags_.delay_normal):
+            imgui.set_tooltip(text)
+    except Exception:
+        pass
 
 
 def _active_theme_name() -> str | None:
@@ -125,16 +135,21 @@ class _MenuBar:
         if imgui.begin_menu("File"):
             if imgui.menu_item_simple("New Scene"):
                 self._dispatch("scene.new")
+            _tt("Clear the current scene and start fresh.")
             if imgui.menu_item_simple("Open Scene…"):
                 self._dispatch("scene.open")
+            _tt("Load a *.scene.yaml from disk.")
             imgui.separator()
             if imgui.menu_item_simple("Save", "Ctrl+S"):
                 self._dispatch("scene.save")
+            _tt("Save the current scene to its file.")
             if imgui.menu_item_simple("Save As…", "Ctrl+Shift+S"):
                 self._dispatch("scene.save_as")
+            _tt("Save the current scene to a new location.")
             imgui.separator()
             if imgui.menu_item_simple("Exit"):
                 hello_imgui.get_runner_params().app_shall_exit = True
+            _tt("Quit the editor. Unsaved changes are lost.")
             imgui.end_menu()
 
         # Edit
@@ -317,6 +332,7 @@ def build_runner_params(engine: Any | None = None) -> hello_imgui.RunnerParams:
     console = ConsolePanel()
     menu = _MenuBar(state, hierarchy)
     status = _StatusBar(state)
+    perf_hud = PerfHud()
 
     params = hello_imgui.RunnerParams()
     params.app_window_params.window_title = "Pharos Editor v2"
@@ -332,7 +348,6 @@ def build_runner_params(engine: Any | None = None) -> hello_imgui.RunnerParams:
 
     # Global input + pending-theme handler runs before the panels paint.
     def _before_gui() -> None:
-        # Consume any theme-pending set by the menu last frame.
         pending = menu.consume_theme_pending()
         if pending:
             apply_theme_to_imgui(pending)
@@ -340,6 +355,10 @@ def build_runner_params(engine: Any | None = None) -> hello_imgui.RunnerParams:
         _apply_global_hotkeys(state, hierarchy)
 
     params.callbacks.before_imgui_render = _before_gui
+
+    # Perf HUD paints every frame outside the dockspace via show_gui
+    # so it floats above all panels — matches Nova3D's corner FPS.
+    params.callbacks.show_gui = perf_hud.show
 
     windows: list[hello_imgui.DockableWindow] = []
     for label, dock, body in [
