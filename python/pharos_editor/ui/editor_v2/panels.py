@@ -642,19 +642,42 @@ class ViewportPanel:
         return True
 
     def _push_camera(self) -> None:
-        if self._renderer is None:
+        """Sync FlyCameraController state into the Rust RenderScene."""
+        if self._renderer is None or self._render_scene is None:
             return
         try:
+            from pharos_engine._core import render as _r
+
             px, py, pz = self._camera.position()
             tx, ty, tz = self._camera.target
-            # PyRenderer wraps set_clear_colour but doesn't expose
-            # camera setters yet — those come with a Sprint 4 render
-            # scene surface. For now the clear + throttle path is the
-            # observable signal that the camera state changed.
-            # When Renderer.set_camera lands, this call site pushes
-            # (px, py, pz) + (tx, ty, tz) straight through.
-            self._renderer.set_clear_colour(0.09, 0.09, 0.11, 1.0)
-            _ = (px, py, pz, tx, ty, tz)
+            w, h = self._render_size
+            aspect = (w / h) if h > 0 else (16.0 / 9.0)
+            cam = _r.Camera3D(
+                position=(px, py, pz),
+                target=(tx, ty, tz),
+                up=(0.0, 1.0, 0.0),
+                fov_y_deg=60.0,
+                aspect=aspect,
+                near=0.1,
+                far=1000.0,
+            )
+            # PyO3 exposes `set_camera` as a Python setter via the
+            # `#[setter]` attribute, so the assignment form is what
+            # actually invokes the Rust side; calling `.set_camera(cam)`
+            # raises AttributeError.
+            self._render_scene.camera = cam
+            # Tint the clear colour based on the camera's pitch angle so
+            # the orbit motion is visually apparent even before scene
+            # submission lands. Pitch = -pi/2 (looking straight down)
+            # -> warm; pitch = +pi/2 (up) -> cool. Keeps the same base
+            # dark grey the theme expects.
+            import math
+
+            t = (math.sin(self._camera.pitch) + 1.0) * 0.5  # 0..1
+            r = 0.09 + 0.04 * (1.0 - t)
+            g = 0.09 + 0.02 * t
+            b = 0.11 + 0.05 * t
+            self._render_scene.set_clear_colour((r, g, b, 1.0))
         except Exception:
             pass
 
