@@ -20,6 +20,9 @@ serde_yaml.workspace = true
 bytemuck.workspace = true
 rand.workspace = true
 half.workspace = true
+# Needed by the render_bindings scene-mutation helpers (build model
+# matrices from Python-supplied translation + scale tuples).
+glam.workspace = true
 
 # Kernel crate: hosts physics/fluid/softbody/geometry #[pyfunction]s
 # and #[pyclass]es. pharos_py re-registers them under the _core module

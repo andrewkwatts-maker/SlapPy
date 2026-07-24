@@ -701,6 +701,7 @@ class ViewportPanel:
         self._last_render_t: float = 0.0
         self._render_period_s: float = 1.0 / 30.0
         self._camera = FlyCameraController()
+        self._last_entity_count: int = 0
         # Subscribe to "frame selection" broadcasts from Hierarchy.
         self._attach_frame_selection()
 
@@ -742,13 +743,21 @@ class ViewportPanel:
                 return False
         return True
 
-    def _push_camera(self) -> None:
-        """Sync FlyCameraController state into the Rust RenderScene."""
+    def _push_camera_and_scene(self) -> None:
+        """Sync fly-camera + engine entities into the Rust RenderScene.
+
+        Each entity is submitted as a unit cube at its (x, 0, z)
+        position via `add_cube_at`. The wgpu backend today only
+        renders a clear (vertex submission lands in a later render
+        sprint), but the round-trip is complete so when the mesh
+        pipeline flips on, geometry starts drawing automatically.
+        """
         if self._renderer is None or self._render_scene is None:
             return
         try:
             from pharos_engine._core import render as _r
 
+            # Camera.
             px, py, pz = self._camera.position()
             tx, ty, tz = self._camera.target
             w, h = self._render_size
@@ -762,21 +771,28 @@ class ViewportPanel:
                 near=0.1,
                 far=1000.0,
             )
-            # PyO3 exposes `set_camera` as a Python setter via the
-            # `#[setter]` attribute, so the assignment form is what
-            # actually invokes the Rust side; calling `.set_camera(cam)`
-            # raises AttributeError.
             self._render_scene.camera = cam
-            # Tint the clear colour based on the camera's pitch angle so
-            # the orbit motion is visually apparent even before scene
-            # submission lands. Pitch = -pi/2 (looking straight down)
-            # -> warm; pitch = +pi/2 (up) -> cool. Keeps the same base
-            # dark grey the theme expects.
+
+            # Scene items — rebuild every frame from engine.scene.
+            self._render_scene.clear_items()
+            scene = getattr(self._state.engine, "scene", None)
+            entity_count = 0
+            if scene is not None:
+                for e in getattr(scene, "entities", []) or []:
+                    pos = getattr(e, "position", (0.0, 0.0))
+                    x = float(pos[0]) if pos else 0.0
+                    z = float(pos[1]) if pos and len(pos) > 1 else 0.0
+                    self._render_scene.add_cube_at((x, 0.0, z), 1.0, 0, 0)
+                    entity_count += 1
+            self._last_entity_count = entity_count
+
+            # Clear tint — pitch-based, plus subtle green shift when
+            # entities are submitted so the round-trip is observable.
             import math
 
-            t = (math.sin(self._camera.pitch) + 1.0) * 0.5  # 0..1
+            t = (math.sin(self._camera.pitch) + 1.0) * 0.5
             r = 0.09 + 0.04 * (1.0 - t)
-            g = 0.09 + 0.02 * t
+            g = 0.09 + 0.02 * t + min(0.05, entity_count * 0.002)
             b = 0.11 + 0.05 * t
             self._render_scene.set_clear_colour((r, g, b, 1.0))
         except Exception:
@@ -788,7 +804,7 @@ class ViewportPanel:
         try:
             now = time.perf_counter()
             if (now - self._last_render_t) >= self._render_period_s or self._frame_np is None:
-                self._push_camera()
+                self._push_camera_and_scene()
                 pixels = self._renderer.render_to_rgba(self._render_scene)
                 self._last_render_t = now
                 import numpy as np
@@ -840,9 +856,10 @@ class ViewportPanel:
         self._camera.tick(viewport_hovered)
 
         if self._blit_rust_frame(w, h):
+            # Entity markers first so gizmo axes draw on top.
+            self._draw_entity_overlay(w, h)
             if self.gizmo:
                 self._draw_gizmo_overlay(w, h)
-            # Overlay HUD text: hovered / camera pos.
             self._draw_hud(w, h)
             return
 
@@ -872,6 +889,99 @@ class ViewportPanel:
         col = imgui.get_color_u32(imgui.ImVec4(0.85, 0.85, 0.90, 0.85))
         px, py, pz = self._camera.position()
         line1 = f"cam ({px:+.2f}, {py:+.2f}, {pz:+.2f})   r={self._camera.radius:.2f}"
-        line2 = "RMB drag: orbit   MMB drag: pan   scroll: dolly   RMB+WASD/QE: fly"
+        line2 = f"entities: {self._last_entity_count}   |   RMB drag: orbit   MMB drag: pan   scroll: dolly   RMB+WASD/QE: fly"
         dl.add_text(imgui.ImVec2(ox + 12, oy - h + 12), col, line1)
         dl.add_text(imgui.ImVec2(ox + 12, oy - h + 28), col, line2)
+
+    def _draw_entity_overlay(self, w: int, h: int) -> None:
+        """Project entity positions to screen and draw markers.
+
+        Until the wgpu backend renders vertex geometry, this gives
+        visible feedback: entities in the Hierarchy appear as dots in
+        the Viewport at their world-space positions projected through
+        the fly camera. Selected entities get a filled diamond +
+        entity name label; others get a small hollow circle.
+        """
+        scene = getattr(self._state.engine, "scene", None)
+        if scene is None:
+            return
+        entities = getattr(scene, "entities", []) or []
+        if not entities:
+            return
+        import math
+
+        cam_pos = self._camera.position()
+        cam_target = tuple(self._camera.target)
+        fwd = (
+            cam_target[0] - cam_pos[0],
+            cam_target[1] - cam_pos[1],
+            cam_target[2] - cam_pos[2],
+        )
+        fl = math.sqrt(sum(c * c for c in fwd))
+        if fl < 1e-6:
+            return
+        f = (fwd[0] / fl, fwd[1] / fl, fwd[2] / fl)
+        world_up = (0.0, 1.0, 0.0)
+        rx = f[1] * world_up[2] - f[2] * world_up[1]
+        ry = f[2] * world_up[0] - f[0] * world_up[2]
+        rz = f[0] * world_up[1] - f[1] * world_up[0]
+        rl = math.sqrt(rx * rx + ry * ry + rz * rz)
+        if rl < 1e-6:
+            return
+        rx, ry, rz = rx / rl, ry / rl, rz / rl
+        ux = ry * f[2] - rz * f[1]
+        uy = rz * f[0] - rx * f[2]
+        uz = rx * f[1] - ry * f[0]
+
+        # Simple perspective projection (fov 60 deg).
+        fov_scale = 1.0 / math.tan(math.radians(60.0) * 0.5)
+        aspect = w / h if h > 0 else (16.0 / 9.0)
+
+        dl = imgui.get_window_draw_list()
+        ox, oy = imgui.get_cursor_screen_pos()
+        # imgui.image_display advanced the cursor by (w, h); the image
+        # occupies (ox, oy - h) to (ox + w, oy). Same coord system used
+        # by _draw_hud.
+        origin_x = ox
+        origin_y = oy - h
+
+        selected_ids = set(self._state.selected_ids())
+        for e in entities:
+            pos = getattr(e, "position", (0.0, 0.0))
+            wx = float(pos[0]) if pos else 0.0
+            wz = float(pos[1]) if pos and len(pos) > 1 else 0.0
+            wy = 0.0
+            # World relative to camera.
+            dx = wx - cam_pos[0]
+            dy = wy - cam_pos[1]
+            dz = wz - cam_pos[2]
+            # Project into view space.
+            view_x = dx * rx + dy * ry + dz * rz
+            view_y = dx * ux + dy * uy + dz * uz
+            view_z = dx * f[0] + dy * f[1] + dz * f[2]
+            if view_z <= 0.05:
+                continue
+            ndc_x = (view_x / view_z) * fov_scale / aspect
+            ndc_y = (view_y / view_z) * fov_scale
+            if abs(ndc_x) > 1.0 or abs(ndc_y) > 1.0:
+                continue
+            sx = origin_x + (ndc_x * 0.5 + 0.5) * w
+            sy = origin_y + (1.0 - (ndc_y * 0.5 + 0.5)) * h
+
+            eid = getattr(e, "id", "")
+            name = getattr(e, "name", "") or "<unnamed>"
+            if eid in selected_ids:
+                col = imgui.get_color_u32(imgui.ImVec4(0.31, 0.81, 0.69, 1.0))
+                # Filled diamond.
+                pts = [
+                    imgui.ImVec2(sx, sy - 7),
+                    imgui.ImVec2(sx + 7, sy),
+                    imgui.ImVec2(sx, sy + 7),
+                    imgui.ImVec2(sx - 7, sy),
+                ]
+                dl.add_convex_poly_filled(pts, col)
+                # Name label above.
+                dl.add_text(imgui.ImVec2(sx + 10, sy - 8), col, name)
+            else:
+                col = imgui.get_color_u32(imgui.ImVec4(0.80, 0.80, 0.85, 0.75))
+                dl.add_circle(imgui.ImVec2(sx, sy), 5.0, col, 12, 1.5)

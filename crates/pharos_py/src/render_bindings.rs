@@ -13,7 +13,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyModule;
 
 use pharos_render::vcr::Preset;
-use pharos_render::{BackendKind, Camera3D as RCamera3D, RenderScene as RRenderScene, Renderer as RRenderer};
+use pharos_render::{BackendKind, Camera3D as RCamera3D, DrawItem as RDrawItem, RenderScene as RRenderScene, Renderer as RRenderer};
 
 /// Perspective camera. Mirrors `pharos_render::Camera3D` with a Python
 /// constructor and repr.
@@ -118,6 +118,30 @@ impl PyRenderScene {
     /// sRGB swap chain on wgpu backends.
     fn set_clear_colour(&mut self, rgba: (f32, f32, f32, f32)) {
         self.inner.clear_colour = [rgba.0, rgba.1, rgba.2, rgba.3];
+    }
+
+    /// Append one draw item to the scene.
+    ///
+    /// The tuple `translation = (x, y, z)` builds a translation-only
+    /// model matrix (glam::Mat4::from_translation). Callers that need
+    /// full rotation + scale should upload a Mat4 directly via
+    /// `add_draw_item_mat4`.
+    fn add_cube_at(&mut self, translation: (f32, f32, f32), scale: f32, mesh: u32, material: u32) {
+        let m = glam::Mat4::from_scale_rotation_translation(
+            glam::Vec3::splat(scale.max(0.001)),
+            glam::Quat::IDENTITY,
+            glam::Vec3::new(translation.0, translation.1, translation.2),
+        );
+        self.inner.items.push(RDrawItem {
+            model: m,
+            mesh,
+            material,
+        });
+    }
+
+    /// Clear the draw-item vec so the next frame starts empty.
+    fn clear_items(&mut self) {
+        self.inner.items.clear();
     }
 
     fn __repr__(&self) -> String {
