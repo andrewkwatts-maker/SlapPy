@@ -1,23 +1,8 @@
 """imgui-bundle editor shell — the v2 Nova3D-parity chrome.
 
 Mirrors :file:`H:/Github/Nova3D/engine/editor/EditorApplication.cpp`
-lines 1865-1918 (`BuildDefaultLayout` / `RenderDockSpace`). Same
-5-panel layout Nova3D screenshotted:
-
-::
-
-    +------------+-------------------------+
-    | Hierarchy  |                         |
-    |            |        Viewport         |
-    +------------+                         |
-    | Properties |                         |
-    +------------+-------------+-----------+
-    | Content Browser          | Console   |
-    +--------------------------+-----------+
-
-Split ratios ported verbatim from Nova3D. Real panel bodies live in
-:mod:`pharos_editor.ui.editor_v2.panels`; the shell just owns the
-DockingParams scaffold + menu / status bar + theme hook.
+lines 1865-1918. Panel bodies live in :mod:`panels`; shell owns the
+DockingParams scaffold + menu bar + status bar + shared EditorState.
 """
 from __future__ import annotations
 
@@ -26,6 +11,7 @@ from typing import Any
 from imgui_bundle import hello_imgui, imgui
 
 from pharos_editor.ui.editor_v2.theme_bridge import apply_theme_to_imgui
+from pharos_editor.ui.editor_v2.editor_state import EditorState
 from pharos_editor.ui.editor_v2.panels import (
     ConsolePanel,
     ContentBrowserPanel,
@@ -36,7 +22,6 @@ from pharos_editor.ui.editor_v2.panels import (
 
 
 def _active_theme_name() -> str | None:
-    """Read the same ThemeCatalog v1 uses so v2 boots into the user's theme."""
     try:
         from pharos_editor.themes import ThemeCatalog
 
@@ -45,8 +30,17 @@ def _active_theme_name() -> str | None:
         return None
 
 
+def _all_theme_names() -> list[str]:
+    try:
+        from pharos_editor.themes import ThemeCatalog
+
+        return ThemeCatalog().names()
+    except Exception:
+        return []
+
+
 # ---------------------------------------------------------------------------
-# Docking split scaffold — mirrors Nova3D BuildDefaultLayout ratios
+# Docking split scaffold — Nova3D BuildDefaultLayout ratios
 # ---------------------------------------------------------------------------
 
 def _make_docking_splits() -> list[hello_imgui.DockingSplit]:
@@ -84,15 +78,14 @@ def _make_docking_splits() -> list[hello_imgui.DockingSplit]:
 
 
 # ---------------------------------------------------------------------------
-# Menu bar — wired to ToolRouter when possible; graceful stubs otherwise
+# Menu bar
 # ---------------------------------------------------------------------------
 
 class _MenuBar:
-    """Builds the top menu strip; dispatches leaf clicks through ToolRouter."""
-
-    def __init__(self, engine: Any, hierarchy: HierarchyPanel) -> None:
-        self._engine = engine
+    def __init__(self, state: EditorState, hierarchy: HierarchyPanel) -> None:
+        self._state = state
         self._hierarchy = hierarchy
+        self._theme_pending: str | None = None
         self._router: Any = None
         try:
             from pharos_editor.tool_router import REGISTRY
@@ -102,13 +95,12 @@ class _MenuBar:
             self._router = None
 
     def _dispatch(self, action_id: str) -> None:
-        """Send an action through ToolRouter with a minimal editor context."""
         if self._router is None:
-            self._toast(f"[stub] {action_id} — ToolRouter not loaded")
+            self._toast(f"[stub] {action_id}")
             return
         ctx = {
-            "engine": self._engine,
-            "selected_id": self._hierarchy._selected,
+            "engine": self._state.engine,
+            "selected_ids": self._state.selected_ids(),
             "editor": "v2",
         }
         try:
@@ -117,11 +109,10 @@ class _MenuBar:
             self._toast(f"[not-impl] {action_id}: {exc}")
         except KeyError:
             self._toast(f"[unknown] {action_id}")
-        except Exception as exc:  # noqa: broad — menu clicks must never crash the shell
+        except Exception as exc:
             self._toast(f"[error] {action_id}: {exc}")
 
     def _toast(self, message: str) -> None:
-        """Emit an info-level telemetry event; the Console panel picks it up."""
         try:
             from pharos_engine.telemetry import emit
 
@@ -130,6 +121,7 @@ class _MenuBar:
             pass
 
     def show(self) -> None:
+        # File
         if imgui.begin_menu("File"):
             if imgui.menu_item_simple("New Scene"):
                 self._dispatch("scene.new")
@@ -145,59 +137,84 @@ class _MenuBar:
                 hello_imgui.get_runner_params().app_shall_exit = True
             imgui.end_menu()
 
+        # Edit
         if imgui.begin_menu("Edit"):
-            if imgui.menu_item_simple("Undo", "Ctrl+Z"):
-                self._dispatch("edit.undo")
-            if imgui.menu_item_simple("Redo", "Ctrl+Shift+Z"):
-                self._dispatch("edit.redo")
+            cs = self._state.command_stack
+            undo_label = cs.peek_undo() if cs and cs.can_undo() else None
+            redo_label = cs.peek_redo() if cs and cs.can_redo() else None
+            if imgui.menu_item(
+                f"Undo{': ' + undo_label if undo_label else ''}", "Ctrl+Z",
+                False,
+            )[0]:
+                if cs:
+                    cs.undo()
+            if imgui.menu_item(
+                f"Redo{': ' + redo_label if redo_label else ''}", "Ctrl+Shift+Z",
+                False,
+            )[0]:
+                if cs:
+                    cs.redo()
             imgui.separator()
             if imgui.menu_item_simple("Cut", "Ctrl+X"):
                 self._dispatch("edit.cut")
             if imgui.menu_item_simple("Copy", "Ctrl+C"):
-                self._dispatch("edit.copy")
+                self._hierarchy._copy_selection()
             if imgui.menu_item_simple("Paste", "Ctrl+V"):
-                self._dispatch("edit.paste")
+                self._hierarchy._paste_from_clipboard()
             if imgui.menu_item_simple("Duplicate", "Ctrl+D"):
-                self._dispatch("edit.duplicate")
+                self._hierarchy._duplicate_selection()
             if imgui.menu_item_simple("Delete", "Del"):
-                self._dispatch("edit.delete")
+                self._hierarchy._delete_selection()
             imgui.end_menu()
 
+        # View
         if imgui.begin_menu("View"):
             if imgui.menu_item_simple("Reset Layout"):
-                params = hello_imgui.get_runner_params()
-                params.docking_params.layout_reset = True
+                hello_imgui.get_runner_params().docking_params.layout_reset = True
+            if imgui.begin_menu("Theme"):
+                current = self._state.active_theme
+                for name in _all_theme_names():
+                    is_current = name == current
+                    clicked, _ = imgui.menu_item(name, "", is_current)
+                    if clicked and not is_current:
+                        self._theme_pending = name
+                imgui.end_menu()
             imgui.end_menu()
 
+        # GameObject
         if imgui.begin_menu("GameObject"):
             if imgui.menu_item_simple("Create Empty"):
                 self._hierarchy._spawn_default_entity()
             imgui.end_menu()
 
+        # Component
         if imgui.begin_menu("Component"):
             if imgui.menu_item_simple("Add Component…"):
                 self._dispatch("component.add")
             imgui.end_menu()
 
+        # AI
         if imgui.begin_menu("AI"):
             if imgui.menu_item_simple("Ollama Manager"):
                 self._dispatch("ai.ollama_manager")
             imgui.end_menu()
 
+        # Window (dockable-window visibility)
         if imgui.begin_menu("Window"):
-            # Toggle panel visibility via DockingParams.dockable_windows.
             params = hello_imgui.get_runner_params()
             for w in params.docking_params.dockable_windows:
-                clicked, new_visible = imgui.menu_item(w.label, "", w.is_visible)
+                clicked, new_vis = imgui.menu_item(w.label, "", w.is_visible)
                 if clicked:
-                    w.is_visible = new_visible
+                    w.is_visible = new_vis
             imgui.end_menu()
 
+        # Build
         if imgui.begin_menu("Build"):
             if imgui.menu_item_simple("Build Settings…"):
                 self._dispatch("build.settings")
             imgui.end_menu()
 
+        # Help
         if imgui.begin_menu("Help"):
             if imgui.menu_item_simple("Documentation"):
                 self._dispatch("help.docs")
@@ -205,23 +222,33 @@ class _MenuBar:
                 self._dispatch("help.about")
             imgui.end_menu()
 
+    def consume_theme_pending(self) -> str | None:
+        """One-shot getter used by the shell's per-frame theme applier."""
+        t = self._theme_pending
+        self._theme_pending = None
+        return t
+
 
 # ---------------------------------------------------------------------------
-# Status bar — selection, tool, coord space, FPS, ready badge
+# Status bar
 # ---------------------------------------------------------------------------
 
 class _StatusBar:
-    def __init__(self, hierarchy: HierarchyPanel) -> None:
-        self._hierarchy = hierarchy
+    def __init__(self, state: EditorState) -> None:
+        self._state = state
 
     def show(self) -> None:
-        ent = self._hierarchy.selected_entity()
-        sel_text = getattr(ent, "name", None) if ent else None
-        imgui.text(sel_text if sel_text else "No selection")
+        entities = self._state.selected_entities()
+        if not entities:
+            sel_text = "No selection"
+        elif len(entities) == 1:
+            sel_text = getattr(entities[0], "name", None) or "<unnamed>"
+        else:
+            sel_text = f"{len(entities)} selected"
+        imgui.text(sel_text)
         imgui.same_line()
         imgui.text_disabled(" | Translate | World")
 
-        # Right-align FPS + Ready badge.
         io = imgui.get_io()
         fps_text = f"{io.framerate:>5.0f} FPS"
         ready_text = "  Ready  "
@@ -234,19 +261,44 @@ class _StatusBar:
 
 
 # ---------------------------------------------------------------------------
+# Global hotkeys
+# ---------------------------------------------------------------------------
+
+def _apply_global_hotkeys(state: EditorState, hierarchy: HierarchyPanel) -> None:
+    """Poll imgui input for editor-wide shortcuts once per frame."""
+    io = imgui.get_io()
+    if io.want_capture_keyboard:
+        # When a text input is focused, don't fire chord hotkeys.
+        return
+    ctrl = io.key_ctrl
+    shift = io.key_shift
+
+    # Undo / redo
+    if ctrl and imgui.is_key_pressed(imgui.Key.z, False):
+        if state.command_stack:
+            if shift:
+                state.command_stack.redo()
+            else:
+                state.command_stack.undo()
+    # Copy / paste / duplicate / delete
+    if ctrl and imgui.is_key_pressed(imgui.Key.c, False):
+        hierarchy._copy_selection()
+    if ctrl and imgui.is_key_pressed(imgui.Key.v, False):
+        hierarchy._paste_from_clipboard()
+    if ctrl and imgui.is_key_pressed(imgui.Key.d, False):
+        hierarchy._duplicate_selection()
+    if imgui.is_key_pressed(imgui.Key.delete, False):
+        hierarchy._delete_selection()
+    # Frame selection
+    if not ctrl and imgui.is_key_pressed(imgui.Key.f, False):
+        hierarchy._frame_selection()
+
+
+# ---------------------------------------------------------------------------
 # Assemble RunnerParams
 # ---------------------------------------------------------------------------
 
 def build_runner_params(engine: Any | None = None) -> hello_imgui.RunnerParams:
-    """Assemble the Hello ImGui RunnerParams for the v2 editor.
-
-    Parameters
-    ----------
-    engine:
-        Optional preconstructed pharos_engine.Engine. When ``None``,
-        the shell constructs its own Engine so smoke tests can boot v2
-        without wiring an outer app.
-    """
     if engine is None:
         try:
             from pharos_engine import Engine
@@ -255,14 +307,16 @@ def build_runner_params(engine: Any | None = None) -> hello_imgui.RunnerParams:
         except Exception:
             engine = None
 
-    # Panel state objects — one instance each, kept alive across frames.
-    hierarchy = HierarchyPanel(engine)
-    properties = PropertiesPanel(hierarchy)
-    viewport = ViewportPanel()
+    initial_theme = _active_theme_name()
+    state = EditorState.build(engine, initial_theme=initial_theme)
+
+    hierarchy = HierarchyPanel(state)
+    properties = PropertiesPanel(state)
+    viewport = ViewportPanel(state)
     content_browser = ContentBrowserPanel()
     console = ConsolePanel()
-    menu = _MenuBar(engine, hierarchy)
-    status = _StatusBar(hierarchy)
+    menu = _MenuBar(state, hierarchy)
+    status = _StatusBar(state)
 
     params = hello_imgui.RunnerParams()
     params.app_window_params.window_title = "Pharos Editor v2"
@@ -275,6 +329,17 @@ def build_runner_params(engine: Any | None = None) -> hello_imgui.RunnerParams:
     params.imgui_window_params.show_status_bar = True
     params.callbacks.show_menus = menu.show
     params.callbacks.show_status = status.show
+
+    # Global input + pending-theme handler runs before the panels paint.
+    def _before_gui() -> None:
+        # Consume any theme-pending set by the menu last frame.
+        pending = menu.consume_theme_pending()
+        if pending:
+            apply_theme_to_imgui(pending)
+            state.set_theme(pending)
+        _apply_global_hotkeys(state, hierarchy)
+
+    params.callbacks.before_imgui_render = _before_gui
 
     windows: list[hello_imgui.DockableWindow] = []
     for label, dock, body in [
@@ -297,10 +362,9 @@ def build_runner_params(engine: Any | None = None) -> hello_imgui.RunnerParams:
     params.docking_params.docking_splits = _make_docking_splits()
     params.docking_params.layout_name = "Default"
 
-    _initial_theme = _active_theme_name()
-
     def _post_init() -> None:
-        apply_theme_to_imgui(_initial_theme)
+        apply_theme_to_imgui(initial_theme)
+        state.active_theme = initial_theme or ""
 
     params.callbacks.post_init = _post_init
 
