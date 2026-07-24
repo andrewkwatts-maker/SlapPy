@@ -340,7 +340,14 @@ class ContentBrowserPanel:
 # ---------------------------------------------------------------------------
 
 class ViewportPanel:
-    """3D viewport placeholder. Draws an in-imgui grid + toolbar."""
+    """3D viewport. Blits Rust-rendered wgpu frames into imgui.
+
+    Architecture contract: Python-side owns the panel state + input,
+    Rust (``pharos_engine._core.render.Renderer``) owns wgpu + the
+    frame pixels. Python never touches wgpu directly — every viewport
+    tick calls Rust for a fresh RGBA buffer and hands it to
+    ``immvision.image_display`` which manages the GL texture upload.
+    """
 
     def __init__(self) -> None:
         self.mode: str = "Lit"
@@ -349,6 +356,77 @@ class ViewportPanel:
         self.bounds: bool = False
         self.lights: bool = True
         self.persp: bool = True
+        # Rust renderer + last-known texture size. Constructed lazily
+        # on first gui() call so the wgpu init cost doesn't fire until
+        # the panel is actually visible.
+        self._renderer: Any = None
+        self._render_scene: Any = None
+        self._render_size: tuple[int, int] = (0, 0)
+        self._render_err: str | None = None
+        self._frame_np: Any = None
+        # Frame throttle: cap render to 30 fps for the viewport panel
+        # so idle UI doesn't burn GPU on unchanging scenes. UI reacts
+        # to every input event regardless — this only affects the
+        # per-frame wgpu blit rate.
+        self._last_render_t: float = 0.0
+        self._render_period_s: float = 1.0 / 30.0
+
+    def _ensure_renderer(self, w: int, h: int) -> bool:
+        """Lazy-construct + resize the Rust wgpu renderer.
+
+        Returns True on success, False when the backend can't init
+        (headless CI without an adapter, driver issue) — the panel
+        then falls back to the imgui-drawlist placeholder.
+        """
+        if self._render_err is not None:
+            return False
+        if self._renderer is None or self._render_size != (w, h):
+            try:
+                from pharos_engine._core import render as _r
+
+                self._renderer = _r.Renderer(w, h, "wgpu")
+                self._render_scene = _r.RenderScene()
+                # Match the theme's panel_bg-ish grey for the empty scene.
+                self._render_scene.set_clear_colour((0.09, 0.09, 0.11, 1.0))
+                self._render_size = (w, h)
+            except Exception as exc:
+                self._render_err = str(exc)
+                return False
+        return True
+
+    def _blit_rust_frame(self, w: int, h: int) -> bool:
+        """Ask Rust for pixels, upload via immvision. Returns True on paint."""
+        if not self._ensure_renderer(w, h):
+            return False
+        try:
+            import time
+
+            now = time.perf_counter()
+            if (now - self._last_render_t) >= self._render_period_s or self._frame_np is None:
+                pixels = self._renderer.render_to_rgba(self._render_scene)
+                self._last_render_t = now
+                import numpy as np
+
+                arr = np.frombuffer(pixels, dtype=np.uint8).reshape(h, w, 4)
+                # immvision wants RGB or BGR; drop alpha for the display path.
+                self._frame_np = np.ascontiguousarray(arr[:, :, :3])
+        except Exception as exc:
+            self._render_err = str(exc)
+            return False
+
+        try:
+            from imgui_bundle import immvision
+
+            immvision.image_display(
+                "##viewport_rust_frame",
+                self._frame_np,
+                image_display_size=(w, h),
+                refresh_image=True,
+            )
+            return True
+        except Exception as exc:
+            self._render_err = str(exc)
+            return False
 
     def gui(self) -> None:
         # Toolbar row
@@ -373,46 +451,53 @@ class ViewportPanel:
         imgui.separator()
 
         avail = imgui.get_content_region_avail()
+        w = max(64, int(avail.x))
+        h = max(64, int(avail.y))
+
+        # Preferred path: Rust wgpu -> RGBA bytes -> immvision blit.
+        if self._blit_rust_frame(w, h):
+            # Draw the axis crosshair overlay on top when gizmo is on —
+            # cheap enough to do in imgui rather than round-trip Rust.
+            if self.gizmo:
+                dl = imgui.get_window_draw_list()
+                ox, oy = imgui.get_cursor_screen_pos()
+                # imgui.image_display advances the cursor by (w, h) —
+                # walk back to the centre of the just-painted image.
+                cx = ox + w * 0.5
+                cy = oy - h * 0.5
+                axis_x = imgui.get_color_u32(imgui.ImVec4(0.90, 0.30, 0.30, 1.0))
+                axis_z = imgui.get_color_u32(imgui.ImVec4(0.30, 0.50, 0.90, 1.0))
+                dl.add_line(imgui.ImVec2(cx - 30, cy), imgui.ImVec2(cx + 30, cy), axis_x, 2.0)
+                dl.add_line(imgui.ImVec2(cx, cy - 30), imgui.ImVec2(cx, cy + 30), axis_z, 2.0)
+            return
+
+        # Fallback path: pure-imgui placeholder when Rust backend can't
+        # init (headless CI, unsupported driver). Small "NO RENDER"
+        # banner so the failure mode is visible.
         dl = imgui.get_window_draw_list()
         ox, oy = imgui.get_cursor_screen_pos()
-
-        # Background
         bg = imgui.get_color_u32(imgui.ImVec4(0.09, 0.09, 0.11, 1.0))
         dl.add_rect_filled(
             imgui.ImVec2(ox, oy),
             imgui.ImVec2(ox + avail.x, oy + avail.y),
             bg,
         )
-
-        # Grid overlay (only when Grid checkbox on).
         if self.grid:
             step = 32.0
             grid_col = imgui.get_color_u32(imgui.ImVec4(0.20, 0.22, 0.28, 1.0))
             x = 0.0
             while x < avail.x:
-                dl.add_line(
-                    imgui.ImVec2(ox + x, oy),
-                    imgui.ImVec2(ox + x, oy + avail.y),
-                    grid_col,
-                )
+                dl.add_line(imgui.ImVec2(ox + x, oy), imgui.ImVec2(ox + x, oy + avail.y), grid_col)
                 x += step
             y = 0.0
             while y < avail.y:
-                dl.add_line(
-                    imgui.ImVec2(ox, oy + y),
-                    imgui.ImVec2(ox + avail.x, oy + y),
-                    grid_col,
-                )
+                dl.add_line(imgui.ImVec2(ox, oy + y), imgui.ImVec2(ox + avail.x, oy + y), grid_col)
                 y += step
-
-        # Axis crosshair at centre (gizmo toggle).
-        if self.gizmo:
-            cx = ox + avail.x * 0.5
-            cy = oy + avail.y * 0.5
-            axis_x = imgui.get_color_u32(imgui.ImVec4(0.90, 0.30, 0.30, 1.0))
-            axis_z = imgui.get_color_u32(imgui.ImVec4(0.30, 0.50, 0.90, 1.0))
-            dl.add_line(imgui.ImVec2(cx - 30, cy), imgui.ImVec2(cx + 30, cy), axis_x, 2.0)
-            dl.add_line(imgui.ImVec2(cx, cy - 30), imgui.ImVec2(cx, cy + 30), axis_z, 2.0)
-
-        # Reserve the space so the next widget lays out below.
+        # Warning banner.
+        warn_col = imgui.get_color_u32(imgui.ImVec4(0.95, 0.35, 0.30, 1.0))
+        dl.add_text(
+            imgui.ImVec2(ox + 12, oy + 12),
+            warn_col,
+            f"[wgpu unavailable: {self._render_err or 'unknown'}]",
+        )
         imgui.dummy(avail)

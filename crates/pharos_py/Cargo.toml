@@ -25,11 +25,14 @@ half.workspace = true
 # and #[pyclass]es. pharos_py re-registers them under the _core module
 # via each kernel's `pub fn register(m)` entry point.
 pharos_core = { path = "../pharos_core" }
-# Sprint 2: render surface (Renderer / RenderScene / VcrPipeline) +
-# legacy CPU kernels (raster / fluid_shader / etc.) live here now.
-# `legacy-cpu` gates the pyo3 wrappers for the moved kernels so the
-# default build still ships them (existing games depend on the
-# pyfunctions).
+# Render crate: wgpu/Vulkan backend + VCR pipeline + moved CPU
+# kernels. pharos_py exposes a `render` submodule (Renderer /
+# RenderScene / Camera3D / VcrPipeline) so Python consumers can
+# request Rust-rendered frames without depending on the Python
+# wgpu-py binding — Python is a thin wrapper, wgpu/Vulkan lives in
+# Rust. `legacy-cpu` gates the pyo3 wrappers for the raster / fluid
+# shader kernels moved out of pharos_py in Sprint 2 so downstream
+# games keep their #[pyfunction] surface.
 pharos_render = { path = "../pharos_render", features = ["legacy-cpu"] }
 
 [features]
